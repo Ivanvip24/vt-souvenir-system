@@ -288,6 +288,60 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* Search Bar */
+.search-container {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+    margin: 0 16px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 40px 10px 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: white;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-input::placeholder {
+    color: var(--gray-400);
+}
+
+.search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--gray-200);
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-600);
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.search-clear:hover {
+    background: var(--gray-300);
+    color: var(--gray-800);
+}
+
 /* ==========================================
    ORDERS LIST
    ========================================== */
@@ -329,6 +383,52 @@ body {
     font-size: 18px;
     color: var(--gray-900);
     font-weight: 700;
+}
+
+/* Quick Action Buttons */
+.quick-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.quick-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 2px solid;
+    background: white;
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: bold;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.approve-btn {
+    color: #10b981;
+    border-color: #10b981;
+}
+
+.approve-btn:hover {
+    background: #10b981;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.reject-btn {
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.reject-btn:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .status-badge {
@@ -649,6 +749,52 @@ body {
 }
 
 /* ==========================================
+   ANIMATIONS
+   ========================================== */
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ==========================================
    RESPONSIVE
    ========================================== */
 
@@ -680,5 +826,237 @@ body {
     .order-header {
         flex-direction: column;
         gap: 12px;
+    }
+}
+
+/* ==========================================
+   PRICES MODULE
+   ========================================== */
+
+/* Price Tabs */
+.price-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--gray-200);
+    padding-bottom: 2px;
+}
+
+.price-tab-btn {
+    background: none;
+    border: none;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-600);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+    top: 2px;
+}
+
+.price-tab-btn:hover {
+    color: var(--primary);
+    background: var(--gray-50);
+}
+
+.price-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.price-tab-content {
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.price-tab-content.active {
+    display: block;
+}
+
+/* Summary Cards */
+.stat-card-large {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s;
+}
+
+.stat-card-large:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.stat-card-large .stat-icon {
+    font-size: 40px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    width: 70px;
+    height: 70px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-card-large .stat-label {
+    font-size: 13px;
+    color: var(--gray-600);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card-large .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-top: 4px;
+}
+
+/* Card Component */
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+    color: var(--gray-900);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Data Table */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table thead {
+    background: var(--gray-50);
+}
+
+.data-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 700;
+    color: var(--gray-700);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-700);
+}
+
+.data-table tbody tr {
+    transition: background 0.2s;
+}
+
+.data-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+/* Alerts */
+.alert {
+    padding: 16px 20px;
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-size: 14px;
+}
+
+.alert-danger {
+    background: #fee2e2;
+    border-left-color: var(--danger);
+    color: #7f1d1d;
+}
+
+.alert-warning {
+    background: #fef3c7;
+    border-left-color: var(--warning);
+    color: #78350f;
+}
+
+.alert-info {
+    background: #dbeafe;
+    border-left-color: var(--info);
+    color: #1e3a8a;
+}
+
+.alert-success {
+    background: #d1fae5;
+    border-left-color: var(--success);
+    color: #065f46;
+}
+
+/* Button Small */
+.btn-small {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-small:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design for Prices */
+@media (max-width: 768px) {
+    .price-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .price-tab-btn {
+        white-space: nowrap;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .stat-card-large {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .data-table {
+        font-size: 12px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 8px 12px;
     }
 }

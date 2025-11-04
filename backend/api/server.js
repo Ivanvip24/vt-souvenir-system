@@ -3,13 +3,15 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from 'dotenv';
-import { testConnection } from '../shared/database.js';
+import { testConnection, query } from '../shared/database.js';
 import * as notionAgent from '../agents/notion-agent/index.js';
 import * as notionSync from '../agents/notion-agent/sync.js';
 import * as analyticsAgent from '../agents/analytics-agent/index.js';
 import { getDateRange } from '../shared/utils.js';
 import clientRoutes from './client-routes.js';
 import inventoryRoutes from './inventory-routes.js';
+import adminRoutes from './admin-routes.js';
+import priceRoutes from './price-routes.js';
 
 config();
 
@@ -51,9 +53,19 @@ app.get('/health', async (req, res) => {
 app.use('/api/client', clientRoutes);
 
 // ========================================
+// ADMIN AUTHENTICATION ROUTES
+// ========================================
+app.use('/api/admin', adminRoutes);
+
+// ========================================
 // INVENTORY MANAGEMENT ROUTES
 // ========================================
 app.use('/api/inventory', inventoryRoutes);
+
+// ========================================
+// PRICE TRACKING & ANALYTICS ROUTES
+// ========================================
+app.use('/api/prices', priceRoutes);
 
 // ========================================
 // NOTION AGENT ENDPOINTS
@@ -78,22 +90,151 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Get orders with filters
+// Get orders with filters - Query PostgreSQL directly
 app.get('/api/orders', async (req, res) => {
   try {
-    const filters = {
-      status: req.query.status,
-      department: req.query.department,
-      clientName: req.query.client,
-      dateFrom: req.query.from,
-      dateTo: req.query.to
-    };
+    console.log('🔍 Querying orders from PostgreSQL...');
 
-    const result = await notionAgent.queryOrders(filters);
+    // Build WHERE clause based on filters
+    const conditions = [];
+    const params = [];
+    let paramIndex = 1;
+
+    if (req.query.status) {
+      conditions.push(`o.status = $${paramIndex++}`);
+      params.push(req.query.status);
+    }
+
+    if (req.query.department) {
+      conditions.push(`o.department = $${paramIndex++}`);
+      params.push(req.query.department);
+    }
+
+    if (req.query.client) {
+      conditions.push(`c.name ILIKE $${paramIndex++}`);
+      params.push(`%${req.query.client}%`);
+    }
+
+    if (req.query.from) {
+      conditions.push(`o.order_date >= $${paramIndex++}`);
+      params.push(req.query.from);
+    }
+
+    if (req.query.to) {
+      conditions.push(`o.order_date <= $${paramIndex++}`);
+      params.push(req.query.to);
+    }
+
+    const whereClause = conditions.length > 0
+      ? `WHERE ${conditions.join(' AND ')}`
+      : '';
+
+    // Query orders with client info and items
+    const result = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.order_date,
+        o.event_type,
+        o.event_date,
+        o.client_notes,
+        o.subtotal,
+        o.total_price,
+        o.total_production_cost,
+        o.deposit_amount,
+        o.deposit_paid,
+        o.payment_method,
+        o.approval_status,
+        o.status,
+        o.department,
+        o.priority,
+        o.shipping_label_generated,
+        o.tracking_number,
+        o.delivery_date,
+        o.notes,
+        o.internal_notes,
+        o.notion_page_id,
+        o.notion_page_url,
+        o.created_at,
+        c.name as client_name,
+        c.phone as client_phone,
+        c.email as client_email,
+        c.address as client_address,
+        c.city as client_city,
+        c.state as client_state,
+        json_agg(
+          json_build_object(
+            'id', oi.id,
+            'productId', oi.product_id,
+            'productName', oi.product_name,
+            'quantity', oi.quantity,
+            'unitPrice', oi.unit_price,
+            'unitCost', oi.unit_cost,
+            'lineTotal', oi.line_total,
+            'lineCost', oi.line_cost,
+            'lineProfit', oi.line_profit
+          ) ORDER BY oi.id
+        ) FILTER (WHERE oi.id IS NOT NULL) as items
+      FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      ${whereClause}
+      GROUP BY o.id, c.name, c.phone, c.email, c.address, c.city, c.state
+      ORDER BY o.created_at DESC
+    `, params);
+
+    // Transform data to match frontend expectations
+    const orders = result.rows.map(order => ({
+      id: order.id.toString(),
+      orderNumber: order.order_number,
+      orderDate: order.order_date,
+      eventDate: order.event_date,
+      eventType: order.event_type,
+      // Client info
+      clientName: order.client_name || '',
+      clientPhone: order.client_phone || '',
+      clientEmail: order.client_email || '',
+      clientAddress: order.client_address || '',
+      clientCity: order.client_city || '',
+      clientState: order.client_state || '',
+      // Financial
+      totalPrice: parseFloat(order.total_price) || 0,
+      productionCost: parseFloat(order.total_production_cost) || 0,
+      profit: parseFloat(order.total_price) - parseFloat(order.total_production_cost),
+      profitMargin: order.total_price > 0
+        ? ((parseFloat(order.total_price) - parseFloat(order.total_production_cost)) / parseFloat(order.total_price) * 100).toFixed(2)
+        : 0,
+      depositAmount: parseFloat(order.deposit_amount) || 0,
+      depositPaid: order.deposit_paid || false,
+      paymentMethod: order.payment_method || '',
+      // Status
+      status: order.status || 'new',
+      approvalStatus: order.approval_status || 'pending_review',
+      department: order.department || 'pending',
+      priority: order.priority || 'normal',
+      // Items
+      items: order.items || [],
+      // Notes
+      notes: order.notes || order.client_notes || '',
+      clientNotes: order.client_notes || '',
+      internalNotes: order.internal_notes || '',
+      // Shipping
+      shippingLabelGenerated: order.shipping_label_generated || false,
+      trackingNumber: order.tracking_number || '',
+      deliveryDate: order.delivery_date,
+      // Notion sync
+      notionPageId: order.notion_page_id,
+      notionPageUrl: order.notion_page_url,
+      // Summary for compatibility
+      summary: order.client_notes || ''
+    }));
+
+    console.log(`✅ Found ${orders.length} orders in PostgreSQL`);
 
     res.json({
       success: true,
-      data: result
+      count: orders.length,
+      data: orders
     });
   } catch (error) {
     console.error('Error querying orders:', error);
@@ -185,6 +326,84 @@ app.post('/api/orders/sync/bulk', async (req, res) => {
     });
   } catch (error) {
     console.error('Error in bulk sync:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Approve order
+app.post('/api/orders/:orderId/approve', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+
+    console.log(`✅ Approving order ${orderId}...`);
+
+    // Update order status in database
+    await query(
+      `UPDATE orders
+       SET approval_status = 'approved',
+           status = 'in_production'
+       WHERE id = $1`,
+      [orderId]
+    );
+
+    // Sync to Notion if needed
+    try {
+      await notionSync.syncOrderToNotion(orderId);
+    } catch (notionError) {
+      console.error('Failed to sync approval to Notion:', notionError);
+    }
+
+    console.log(`✅ Order ${orderId} approved successfully`);
+
+    res.json({
+      success: true,
+      message: 'Order approved successfully'
+    });
+  } catch (error) {
+    console.error('Error approving order:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Reject order
+app.post('/api/orders/:orderId/reject', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { reason } = req.body;
+
+    console.log(`❌ Rejecting order ${orderId}...`);
+
+    // Update order status in database
+    await query(
+      `UPDATE orders
+       SET approval_status = 'rejected',
+           status = 'cancelled',
+           internal_notes = COALESCE(internal_notes || E'\n\n', '') || 'Rechazado: ' || $2
+       WHERE id = $1`,
+      [orderId, reason || 'Sin razón especificada']
+    );
+
+    // Sync to Notion if needed
+    try {
+      await notionSync.syncOrderToNotion(orderId);
+    } catch (notionError) {
+      console.error('Failed to sync rejection to Notion:', notionError);
+    }
+
+    console.log(`❌ Order ${orderId} rejected successfully`);
+
+    res.json({
+      success: true,
+      message: 'Order rejected successfully'
+    });
+  } catch (error) {
+    console.error('Error rejecting order:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -392,6 +611,11 @@ app.get('/', (req, res) => {
   res.redirect('/order');
 });
 
+// Admin login redirect (handle /admin/login without .html extension)
+app.get('/admin/login', (req, res) => {
+  res.redirect('/admin/login.html');
+});
+
 // ========================================
 // ERROR HANDLING
 // ========================================
@@ -457,7 +681,8 @@ async function startServer() {
       console.log('  POST /api/reports/monthly/send');
       console.log('  GET  /api/reports/schedule');
       console.log('  POST /api/test/email');
-      console.log('  📦 /api/inventory/* (Materials, Alerts, BOM, Forecasting)\n');
+      console.log('  📦 /api/inventory/* (Materials, Alerts, BOM, Forecasting)');
+      console.log('  💰 /api/prices/* (Price Tracking, Trends, Margins, Insights)\n');
     });
 
   } catch (error) {

@@ -4,12 +4,30 @@
  */
 
 import express from 'express';
+import multer from 'multer';
 import { query } from '../shared/database.js';
 import { generateOrderNumber, formatCurrency } from '../shared/utils.js';
 import * as notionSync from '../agents/notion-agent/sync.js';
 import * as emailSender from '../agents/analytics-agent/email-sender.js';
+import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
 
 const router = express.Router();
+
+// Configure multer for file uploads (in-memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos de imagen'), false);
+    }
+  }
+});
 
 // ========================================
 // PRODUCT CATALOG
@@ -142,6 +160,16 @@ router.post('/orders/submit', async (req, res) => {
       });
     }
 
+    // Validate quantities
+    for (const item of items) {
+      if (!item.quantity || item.quantity <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'La cantidad debe ser mayor a cero'
+        });
+      }
+    }
+
     // 1. Calculate totals and prepare order items
     let subtotal = 0;
     const orderItems = [];
@@ -213,6 +241,7 @@ router.post('/orders/submit', async (req, res) => {
         event_type,
         event_date,
         client_notes,
+        subtotal,
         total_price,
         total_production_cost,
         deposit_amount,
@@ -221,7 +250,7 @@ router.post('/orders/submit', async (req, res) => {
         status,
         department,
         deposit_paid
-      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, 'pending_review', 'new', 'pending', false)
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, 'pending_review', 'new', 'pending', false)
       RETURNING id`,
       [
         orderNumber,
@@ -230,6 +259,7 @@ router.post('/orders/submit', async (req, res) => {
         eventDate,
         clientNotes,
         subtotal,
+        subtotal, // total_price = subtotal for now (no tax/shipping in client orders)
         orderItems.reduce((sum, item) => sum + (item.unitCost * item.quantity), 0),
         depositAmount,
         paymentMethod
@@ -249,7 +279,18 @@ router.post('/orders/submit', async (req, res) => {
 
     await query('COMMIT');
 
-    // 5. Send notification to admin
+    // 5. Sync to Notion
+    try {
+      console.log(`🔄 Syncing order ${orderNumber} to Notion...`);
+      await notionSync.syncOrderToNotion(orderId);
+      console.log(`✅ Order ${orderNumber} synced to Notion successfully`);
+    } catch (notionError) {
+      console.error('❌ Failed to sync to Notion:', notionError);
+      // Don't fail the order if Notion sync fails
+      // Order is safely in database, Notion can be synced later
+    }
+
+    // 6. Send notification to admin
     try {
       await sendAdminNotification(orderId, orderNumber, clientName, subtotal, depositAmount);
     } catch (emailError) {
@@ -257,7 +298,7 @@ router.post('/orders/submit', async (req, res) => {
       // Don't fail the order if email fails
     }
 
-    // 6. Response based on payment method
+    // 7. Response based on payment method
     const response = {
       success: true,
       orderId,
@@ -290,6 +331,62 @@ router.post('/orders/submit', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error al procesar el pedido'
+    });
+  }
+});
+
+/**
+ * POST /api/client/upload-file
+ * Upload a file to Google Drive and get the URL
+ * Accepts multipart/form-data with 'file' field
+ */
+router.post('/upload-file', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se proporcionó ningún archivo'
+      });
+    }
+
+    // Check if Google Drive is configured
+    if (!isGoogleDriveConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: 'Google Drive no está configurado. Contacta al administrador.'
+      });
+    }
+
+    const { orderNumber, fileType } = req.body; // orderNumber for naming, fileType: 'payment_proof' or 'reference'
+    const timestamp = Date.now();
+    const fileExtension = req.file.originalname.split('.').pop();
+    const fileName = `${fileType || 'file'}-${orderNumber || 'unknown'}-${timestamp}.${fileExtension}`;
+
+    console.log(`📤 Uploading file to Google Drive: ${fileName}`);
+
+    // Upload to Google Drive
+    const result = await uploadToGoogleDrive({
+      fileData: req.file.buffer,
+      fileName: fileName,
+      mimeType: req.file.mimetype
+    });
+
+    console.log(`✅ File uploaded successfully: ${result.directImageUrl}`);
+
+    res.json({
+      success: true,
+      message: 'Archivo subido exitosamente',
+      fileUrl: result.directImageUrl,
+      viewUrl: result.viewUrl,
+      downloadUrl: result.downloadUrl,
+      thumbnailUrl: result.thumbnailUrl
+    });
+
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error al subir el archivo'
     });
   }
 });

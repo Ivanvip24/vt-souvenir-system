@@ -19,7 +19,8 @@ const state = {
   orders: [],
   filteredOrders: [],
   currentFilter: 'all',
-  selectedOrder: null
+  selectedOrder: null,
+  searchQuery: ''
 };
 
 // ==========================================
@@ -116,14 +117,26 @@ function initializeFilters() {
 function applyFilter(filter) {
   state.currentFilter = filter;
 
-  if (filter === 'all') {
-    state.filteredOrders = state.orders;
-  } else {
-    state.filteredOrders = state.orders.filter(
-      order => order.approvalStatus === filter
-    );
+  // First apply status filter
+  let filtered = state.orders;
+  if (filter !== 'all') {
+    filtered = filtered.filter(order => order.approvalStatus === filter);
   }
 
+  // Then apply search filter if there's a search query
+  if (state.searchQuery && state.searchQuery.trim() !== '') {
+    const query = state.searchQuery.toLowerCase().trim();
+    filtered = filtered.filter(order => {
+      return (
+        (order.orderNumber && order.orderNumber.toLowerCase().includes(query)) ||
+        (order.clientName && order.clientName.toLowerCase().includes(query)) ||
+        (order.clientPhone && order.clientPhone.toString().includes(query)) ||
+        (order.status && order.status.toLowerCase().includes(query))
+      );
+    });
+  }
+
+  state.filteredOrders = filtered;
   renderOrders();
 }
 
@@ -212,6 +225,16 @@ function createOrderCard(order) {
         <h3>${order.orderNumber}</h3>
         <span class="status-badge ${statusClass}">${statusText}</span>
       </div>
+      ${order.approvalStatus === 'pending_review' ? `
+        <div class="quick-actions">
+          <button class="quick-action-btn approve-btn" onclick="event.stopPropagation(); approveOrder(${order.id});" title="Aprobar pedido">
+            ✓
+          </button>
+          <button class="quick-action-btn reject-btn" onclick="event.stopPropagation(); rejectOrder(${order.id});" title="Rechazar pedido">
+            ✕
+          </button>
+        </div>
+      ` : ''}
     </div>
 
     <div class="order-meta">
@@ -321,8 +344,8 @@ async function showOrderDetail(orderId) {
               <div style="font-size: 20px;">📱</div>
               <div>
                 <div style="font-size: 11px; color: var(--gray-600); font-weight: 600;">TELÉFONO</div>
-                <a href="tel:${order.phone || ''}" style="font-size: 15px; font-weight: 600; color: var(--primary); text-decoration: none;">
-                  ${order.phone || 'No disponible'}
+                <a href="tel:${order.clientPhone || ''}" style="font-size: 15px; font-weight: 600; color: var(--primary); text-decoration: none;">
+                  ${order.clientPhone || 'No disponible'}
                 </a>
               </div>
             </div>
@@ -330,8 +353,8 @@ async function showOrderDetail(orderId) {
               <div style="font-size: 20px;">📧</div>
               <div>
                 <div style="font-size: 11px; color: var(--gray-600); font-weight: 600;">EMAIL</div>
-                <a href="mailto:${order.email || ''}" style="font-size: 15px; font-weight: 600; color: var(--primary); text-decoration: none; overflow: hidden; text-overflow: ellipsis;">
-                  ${order.email || 'No disponible'}
+                <a href="mailto:${order.clientEmail || ''}" style="font-size: 15px; font-weight: 600; color: var(--primary); text-decoration: none; overflow: hidden; text-overflow: ellipsis;">
+                  ${order.clientEmail || 'No disponible'}
                 </a>
               </div>
             </div>
@@ -574,8 +597,43 @@ function formatDate(dateString) {
   });
 }
 
+// ==========================================
+// SEARCH FUNCTIONALITY
+// ==========================================
+
+function handleSearch(query) {
+  state.searchQuery = query;
+
+  // Show/hide clear button
+  const clearBtn = document.getElementById('search-clear');
+  if (clearBtn) {
+    clearBtn.style.display = query.trim() !== '' ? 'flex' : 'none';
+  }
+
+  // Reapply filters with new search query
+  applyFilter(state.currentFilter);
+}
+
+function clearSearch() {
+  const searchInput = document.getElementById('search-input');
+  const clearBtn = document.getElementById('search-clear');
+
+  if (searchInput) {
+    searchInput.value = '';
+  }
+
+  if (clearBtn) {
+    clearBtn.style.display = 'none';
+  }
+
+  state.searchQuery = '';
+  applyFilter(state.currentFilter);
+}
+
 // Make functions globally accessible for onclick handlers
 window.loadOrders = loadOrders;
 window.closeOrderDetail = closeOrderDetail;
 window.approveOrder = approveOrder;
 window.rejectOrder = rejectOrder;
+window.handleSearch = handleSearch;
+window.clearSearch = clearSearch;
