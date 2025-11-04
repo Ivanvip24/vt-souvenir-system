@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - VT Anunciando</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Authentication check - runs before page loads
+        (function() {
+            const token = localStorage.getItem('admin_token');
+            if (!token) {
+                // No token, redirect to login
+                window.location.href = '/admin/login';
+            }
+        })();
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <div class="logo-area">
+                <span class="logo-icon">🎨</span>
+                <div>
+                    <h1>VT Anunciando</h1>
+                    <p class="subtitle">Panel de Administración</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-card">
+                    <span class="stat-label">Pedidos Pendientes</span>
+                    <span class="stat-value" id="pending-count">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Total Hoy</span>
+                    <span class="stat-value" id="today-revenue">$0</span>
+                </div>
+                <button onclick="logout()" style="padding: 10px 20px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    🚪 Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="orders">
+                    <span class="nav-icon">📋</span>
+                    <span>Pedidos</span>
+                </button>
+                <button class="nav-item" data-view="analytics">
+                    <span class="nav-icon">📊</span>
+                    <span>Analíticas</span>
+                </button>
+                <button class="nav-item" data-view="products">
+                    <span class="nav-icon">🛍️</span>
+                    <span>Productos</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Orders View -->
+            <section id="orders-view" class="view active">
+                <!-- Filters -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <button class="filter-btn active" data-filter="all">
+                            Todos <span class="badge" id="all-count">0</span>
+                        </button>
+                        <button class="filter-btn" data-filter="pending_review">
+                            Pendientes <span class="badge badge-warning" id="pending-count-badge">0</span>
+                        </button>
+                        <button class="filter-btn" data-filter="approved">
+                            Aprobados <span class="badge badge-success" id="approved-count">0</span>
+                        </button>
+                    </div>
+                    <button class="btn-refresh" onclick="loadOrders()">
+                        <span id="refresh-icon">🔄</span> Actualizar
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="orders-loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Cargando pedidos...</p>
+                </div>
+
+                <!-- Orders List -->
+                <div id="orders-container" class="orders-list"></div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state hidden">
+                    <span class="empty-icon">📦</span>
+                    <h3>No hay pedidos</h3>
+                    <p>Los pedidos aparecerán aquí cuando los clientes los envíen</p>
+                </div>
+            </section>
+
+            <!-- Order Detail Modal -->
+            <div id="order-detail-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modal-title">Detalles del Pedido</h2>
+                        <button class="modal-close" onclick="closeOrderDetail()">×</button>
+                    </div>
+                    <div class="modal-body" id="modal-body">
+                        <!-- Content loaded dynamically -->
+                    </div>
+                </div>
+                <div class="modal-backdrop" onclick="closeOrderDetail()"></div>
+            </div>
+
+            <!-- Analytics View (Placeholder) -->
+            <section id="analytics-view" class="view">
+                <div class="view-header">
+                    <h2>Analíticas</h2>
+                </div>
+                <div class="coming-soon">
+                    <span class="coming-soon-icon">📊</span>
+                    <h3>Próximamente</h3>
+                    <p>Reportes de ventas, productos más vendidos, y métricas de rendimiento</p>
+                </div>
+            </section>
+
+            <!-- Products / Inventory View -->
+            <section id="products-view" class="view">
+                <div class="view-header">
+                    <h2>📦 Inventario de Materiales</h2>
+                    <button class="btn btn-primary" onclick="showAddMaterialModal()">
+                        ➕ Agregar Material
+                    </button>
+                </div>
+
+                <!-- Alert Summary -->
+                <div id="alert-summary" class="alert-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <!-- Dynamic content -->
+                </div>
+
+                <!-- Loading State -->
+                <div id="inventory-loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Cargando inventario...</p>
+                </div>
+
+                <!-- Materials Grid -->
+                <div id="materials-container" class="materials-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+                    <!-- Dynamic content -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="inventory-empty-state" class="empty-state hidden">
+                    <span class="empty-icon">📦</span>
+                    <h3>No hay materiales</h3>
+                    <p>Agrega tu primer material para comenzar a gestionar el inventario</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Material Detail Modal -->
+    <div id="material-detail-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="material-modal-title">Material</h2>
+                <button class="modal-close" onclick="closeMaterialDetail()">×</button>
+            </div>
+            <div class="modal-body" id="material-modal-body">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+        <div class="modal-backdrop" onclick="closeMaterialDetail()"></div>
+    </div>
+
+    <!-- Add/Edit Material Modal -->
+    <div id="add-material-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agregar Material</h2>
+                <button class="modal-close" onclick="closeAddMaterialModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="material-form" onsubmit="handleMaterialSubmit(event)">
+                    <div style="display: grid; gap: 16px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Nombre del Material *</label>
+                            <input type="text" name="name" required style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Descripción</label>
+                            <textarea name="description" rows="3" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;"></textarea>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Tipo de Unidad *</label>
+                                <input type="text" name="unitType" required placeholder="ej: hojas, unidades, litros" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Stock Inicial *</label>
+                                <input type="number" name="currentStock" required min="0" step="0.01" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Stock Mínimo *</label>
+                                <input type="number" name="minStockLevel" required min="0" step="0.01" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Punto de Reorden *</label>
+                                <input type="number" name="reorderPoint" required min="0" step="0.01" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Proveedor</label>
+                                <input type="text" name="supplierName" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Tiempo de Entrega (días)</label>
+                                <input type="number" name="supplierLeadTimeDays" min="1" value="7" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Costo por Unidad</label>
+                            <input type="number" name="costPerUnit" min="0" step="0.01" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div style="display: flex; gap: 12px; margin-top: 16px;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Material</button>
+                            <button type="button" onclick="closeAddMaterialModal()" class="btn" style="flex: 1; background: #e5e7eb; color: #374151;">Cancelar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal-backdrop" onclick="closeAddMaterialModal()"></div>
+    </div>
+
+    <script src="dashboard.js"></script>
+    <script src="inventory.js"></script>
+</body>
+</html>

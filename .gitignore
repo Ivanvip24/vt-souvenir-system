@@ -1,0 +1,121 @@
+# ============================================
+# SENSITIVE FILES - NEVER COMMIT THESE!
+# ============================================
+
+# Environment variables (contains passwords, API keys, etc.)
+.env
+.env.local
+.env.production
+.env.development
+*.env
+
+# Google Drive credentials (contains private keys)
+backend/google-drive-credentials.json
+**/google-drive-credentials.json
+
+# Database credentials
+*.pem
+*.key
+
+# ============================================
+# NODE.JS / NPM
+# ============================================
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ============================================
+# LOGS
+# ============================================
+
+logs/
+*.log
+*.log.*
+
+# ============================================
+# OS FILES
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ============================================
+# IDE / EDITOR
+# ============================================
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+
+# Temp folders
+tmp/
+temp/
+.tmp/
+
+# Build outputs
+dist/
+build/
+out/
+
+# ============================================
+# PROJECT-SPECIFIC
+# ============================================
+
+# Uploaded files (if you store locally)
+uploads/
+files/
+
+# Reports
+reports/*.pdf
+reports/*.html
+
+# Database dumps
+*.sql
+*.sqlite
+*.db
+
+# Active system marker
+SYSTEM_ACTIVE.md
+
+# ============================================
+# SECURITY NOTE
+# ============================================
+#
+# This .gitignore protects:
+# ✅ Database passwords (in .env)
+# ✅ Notion API token (in .env)
+# ✅ Google Drive service account key
+# ✅ Admin credentials (in .env)
+#
+# Before committing, always run: git status
+# And verify no sensitive files are staged!
+# ============================================

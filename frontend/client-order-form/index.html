@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hacer Pedido - Souvenirs Personalizados</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+
+        <!-- STEP 1: Login/Account -->
+        <section id="step-login" class="step active">
+            <div class="header">
+                <div class="logo">🎨</div>
+                <h1>Souvenirs Personalizados</h1>
+                <p class="subtitle">Haz tu pedido en minutos</p>
+            </div>
+
+            <div class="card">
+                <h2>Bienvenido</h2>
+                <p class="help-text">Ingresa tu teléfono y correo para comenzar</p>
+
+                <div class="form-group">
+                    <label for="phone">Número de Teléfono *</label>
+                    <input type="tel"
+                           id="phone"
+                           placeholder="55 1234 5678"
+                           maxlength="10"
+                           pattern="[0-9]{10}"
+                           autocomplete="tel"
+                           required>
+                    <span class="input-hint">10 dígitos, sin espacios</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-email">Correo Electrónico *</label>
+                    <input type="email"
+                           id="login-email"
+                           placeholder="tucorreo@ejemplo.com"
+                           autocomplete="email"
+                           required>
+                    <span class="input-hint">Usaremos este correo para confirmar tu pedido</span>
+                </div>
+
+                <button id="continue-phone" class="btn btn-primary btn-large">
+                    Continuar →
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 1.5: Confirm Client Data (for returning clients) -->
+        <section id="step-confirm" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 20%"></div>
+            </div>
+
+            <button class="btn-back" onclick="goBack()">← Atrás</button>
+
+            <div class="card">
+                <h2>Confirma tus Datos</h2>
+                <p class="help-text">¿La información que se muestra aquí corresponde con tus datos?</p>
+
+                <div class="info-box" style="background: #eff6ff; border-left: 4px solid var(--primary);">
+                    <div class="icon">📦</div>
+                    <div>
+                        <strong>Esta información será usada para enviar tu pedido</strong>
+                        <p style="margin-top: 8px; color: var(--gray-700);">
+                            Asegúrate que todo esté correcto antes de continuar
+                        </p>
+                    </div>
+                </div>
+
+                <div id="confirm-data-display" style="background: var(--gray-50); padding: 20px; border-radius: 12px; margin: 20px 0;">
+                    <!-- Data will be populated by JavaScript -->
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button id="edit-data-btn" class="btn btn-secondary" style="flex: 1;" onclick="editClientData()">
+                        ✏️ Modificar Datos
+                    </button>
+                    <button id="confirm-data-btn" class="btn btn-primary" style="flex: 2;">
+                        ✅ Datos Correctos, Continuar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 2: Client Info (for new clients or edit) -->
+        <section id="step-info" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 25%"></div>
+            </div>
+
+            <button class="btn-back" onclick="goBack()">← Atrás</button>
+
+            <div class="card">
+                <h2>Tus Datos</h2>
+                <p class="help-text" id="info-help-text">Completa tu información</p>
+
+                <div class="form-group">
+                    <label for="client-name">Nombre Completo *</label>
+                    <input type="text"
+                           id="client-name"
+                           placeholder="María González"
+                           autocomplete="name"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="client-email">Correo Electrónico (opcional)</label>
+                    <input type="email"
+                           id="client-email"
+                           placeholder="maria@ejemplo.com"
+                           autocomplete="email">
+                </div>
+
+                <!-- Delivery Address Warning -->
+                <div class="info-box" style="background: #fef3c7; border-left: 4px solid #f59e0b; margin: 20px 0;">
+                    <div class="icon">📦</div>
+                    <div>
+                        <strong>Información de Envío</strong>
+                        <p style="margin-top: 8px; color: var(--gray-700); font-size: 14px;">
+                            Esta dirección será usada para enviar tu pedido. <strong>Asegúrate de que todos los datos sean correctos</strong>, de lo contrario tu paquete no llegará a su destino.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="client-address">Calle y Número *</label>
+                    <input type="text"
+                           id="client-address"
+                           placeholder="Ej: Av. Insurgentes Sur 1234"
+                           autocomplete="street-address"
+                           required>
+                    <span class="input-hint">Incluye nombre de la calle y número exterior/interior</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="client-colonia">Colonia *</label>
+                    <input type="text"
+                           id="client-colonia"
+                           placeholder="Ej: Del Valle"
+                           required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="client-city">Ciudad/Municipio *</label>
+                        <input type="text"
+                               id="client-city"
+                               placeholder="Ej: Benito Juárez"
+                               autocomplete="address-level2"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-state">Estado *</label>
+                        <input type="text"
+                               id="client-state"
+                               placeholder="Ej: CDMX"
+                               autocomplete="address-level1"
+                               required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="client-postal">Código Postal *</label>
+                    <input type="text"
+                           id="client-postal"
+                           placeholder="Ej: 03100"
+                           maxlength="5"
+                           pattern="[0-9]{5}"
+                           autocomplete="postal-code"
+                           required>
+                    <span class="input-hint">5 dígitos</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="client-references">Referencias de Ubicación (opcional)</label>
+                    <textarea id="client-references"
+                              rows="2"
+                              placeholder="Ej: Entre calle X y Y, edificio azul, portón negro"></textarea>
+                    <span class="input-hint">Ayúdanos a encontrar tu domicilio más fácil</span>
+                </div>
+
+                <button id="continue-info" class="btn btn-primary btn-large">
+                    Continuar →
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 3: Product Selection -->
+        <section id="step-products" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 50%"></div>
+            </div>
+
+            <button class="btn-back" onclick="goBack()">← Atrás</button>
+
+            <div class="sticky-header">
+                <h2>Selecciona tus Productos</h2>
+                <div class="order-total-mini">
+                    Total: <strong id="total-mini">$0.00</strong>
+                </div>
+            </div>
+
+            <div id="products-loading" class="loading">
+                <div class="spinner"></div>
+                <p>Cargando productos...</p>
+            </div>
+
+            <div id="products-container" class="products-grid"></div>
+
+            <div class="sticky-footer">
+                <div class="summary">
+                    <div class="summary-row">
+                        <span>Total:</span>
+                        <strong id="order-total">$0.00</strong>
+                    </div>
+                    <div class="summary-row deposit">
+                        <span>Anticipo (50%):</span>
+                        <strong id="deposit-amount">$0.00</strong>
+                    </div>
+                </div>
+                <button id="continue-products" class="btn btn-primary btn-large" disabled>
+                    Continuar al Evento →
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 4: Event Details -->
+        <section id="step-event" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 75%"></div>
+            </div>
+
+            <button class="btn-back" onclick="goBack()">← Atrás</button>
+
+            <div class="card">
+                <h2>Detalles del Pedido</h2>
+
+                <div class="form-group">
+                    <label for="event-date">¿Necesitas la mercancía para una fecha en especial?</label>
+                    <input type="date" id="event-date">
+                    <span class="input-hint">Opcional - Si tienes un evento o fecha límite, indícala aquí</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="client-notes">Notas del pedido</label>
+                    <textarea id="client-notes"
+                              rows="4"
+                              placeholder="Cosas que te gustaría que supieramos de tu pedido"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Imágenes de Referencia (opcional)</label>
+                    <div class="file-upload-area" id="file-upload-area">
+                        <input type="file"
+                               id="reference-images"
+                               accept="image/*"
+                               multiple
+                               max="5"
+                               hidden>
+                        <div class="upload-prompt">
+                            <span class="upload-icon">📷</span>
+                            <p>Toca para subir imágenes</p>
+                            <span class="file-hint">Sube aquí fotos de diseños/fotos que te hayan gustado</span>
+                        </div>
+                        <div id="file-preview" class="file-preview"></div>
+                    </div>
+                </div>
+
+                <button id="continue-event" class="btn btn-primary btn-large">
+                    Continuar al Pago →
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 5: Payment Method -->
+        <section id="step-payment" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 90%"></div>
+            </div>
+
+            <button class="btn-back" onclick="goBack()">← Atrás</button>
+
+            <div class="card">
+                <h2>Método de Pago</h2>
+
+                <div class="payment-summary-box">
+                    <div class="summary-row">
+                        <span>Total del Pedido:</span>
+                        <strong id="payment-total"></strong>
+                    </div>
+                    <div class="summary-row highlight">
+                        <span>Anticipo a Pagar (50%):</span>
+                        <strong id="payment-deposit"></strong>
+                    </div>
+                </div>
+
+                <div class="payment-methods">
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="stripe" checked>
+                        <div class="payment-card">
+                            <div class="payment-icon">💳</div>
+                            <div class="payment-info">
+                                <strong>Tarjeta de Crédito/Débito</strong>
+                                <p>Pago seguro con Stripe</p>
+                            </div>
+                        </div>
+                    </label>
+
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="bank_transfer">
+                        <div class="payment-card">
+                            <div class="payment-icon">🏦</div>
+                            <div class="payment-info">
+                                <strong>Transferencia Bancaria</strong>
+                                <p>Sube tu comprobante de pago</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Bank Transfer Details (hidden initially) -->
+                <div id="bank-details" class="bank-details hidden">
+                    <h3>Datos Bancarios</h3>
+
+                    <p style="font-weight: 600; margin-bottom: 16px;">Opción 1: Transferencia Bancaria</p>
+                    <div class="bank-info">
+                        <div class="info-row">
+                            <span>Banco:</span>
+                            <strong id="bank-name">BBVA</strong>
+                        </div>
+                        <div class="info-row">
+                            <span>Cuenta:</span>
+                            <strong id="bank-account">012 180 01571714055 4</strong>
+                        </div>
+                        <div class="info-row">
+                            <span>Titular:</span>
+                            <strong id="bank-holder">Iván Valencia</strong>
+                        </div>
+                        <div class="info-row">
+                            <span>Monto:</span>
+                            <strong id="bank-amount" class="highlight-amount"></strong>
+                        </div>
+                    </div>
+
+                    <p style="font-weight: 600; margin: 24px 0 16px;">Opción 2: Depósito en Banco/Cajero/Oxxo</p>
+                    <div class="bank-info">
+                        <div class="info-row">
+                            <span>Banco:</span>
+                            <strong>BBVA</strong>
+                        </div>
+                        <div class="info-row">
+                            <span>Tarjeta:</span>
+                            <strong>4152 3138 4049 8567</strong>
+                        </div>
+                        <div class="info-row">
+                            <span>Titular:</span>
+                            <strong>Iván Valencia</strong>
+                        </div>
+                        <div class="info-row">
+                            <span>Monto:</span>
+                            <strong id="card-amount" class="highlight-amount"></strong>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Subir Comprobante de Pago</label>
+                        <div class="file-upload-area" id="proof-upload-area">
+                            <input type="file"
+                                   id="payment-proof"
+                                   accept="image/*,application/pdf"
+                                   hidden>
+                            <div class="upload-prompt">
+                                <span class="upload-icon">📄</span>
+                                <p>Toca para subir comprobante</p>
+                                <span class="file-hint">Imagen o PDF</span>
+                            </div>
+                            <div id="proof-preview" class="file-preview"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="submit-order" class="btn btn-primary btn-large">
+                    <span id="submit-text">✅ Enviar Pedido</span>
+                    <span id="submit-loader" class="hidden">
+                        <span class="spinner-small"></span> Procesando...
+                    </span>
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 6: Success -->
+        <section id="step-success" class="step">
+            <div class="success-container">
+                <div class="success-icon">✅</div>
+                <h2>¡Pedido Enviado!</h2>
+
+                <div class="success-details">
+                    <p class="order-number">
+                        Tu número de pedido:<br>
+                        <strong id="success-order-number"></strong>
+                    </p>
+
+                    <div class="info-box">
+                        <p><strong>¿Qué sigue?</strong></p>
+                        <ul>
+                            <li>✓ Recibirás confirmación por correo</li>
+                            <li>✓ Revisaremos tu pedido</li>
+                            <li>✓ Te contactaremos pronto</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button onclick="window.location.reload()" class="btn btn-secondary btn-large">
+                    Hacer Otro Pedido
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="order-form.js"></script>
+</body>
+</html>

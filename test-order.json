@@ -1,0 +1,12 @@
+{
+  "items": [{"productId": 1, "quantity": 100}],
+  "eventDate": "2025-12-15",
+  "clientNotes": "Diseño con colores azul y blanco",
+  "clientName": "Test Cliente",
+  "clientPhone": "5512345678",
+  "clientEmail": "test@test.com",
+  "clientAddress": "Calle Test 123",
+  "clientCity": "CDMX",
+  "clientState": "CDMX",
+  "paymentMethod": "bank_transfer"
+}
