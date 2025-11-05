@@ -9,13 +9,22 @@ config();
 let pool;
 
 if (process.env.DB_TYPE === 'postgres') {
-  pool = new Pool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-  });
+  // Use DATABASE_URL if available (Render.com, Heroku, etc.)
+  if (process.env.DATABASE_URL) {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
+  } else {
+    // Fallback to individual environment variables (local development)
+    pool = new Pool({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+    });
+  }
 } else {
   // SQLite support can be added here if needed
   console.warn('Only PostgreSQL is currently supported');
