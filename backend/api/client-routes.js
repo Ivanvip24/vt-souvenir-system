@@ -46,7 +46,8 @@ router.get('/products', async (req, res) => {
         description,
         category,
         base_price,
-        dimensions
+        dimensions,
+        image_url
       FROM products
       WHERE is_active = true
       ORDER BY name ASC
