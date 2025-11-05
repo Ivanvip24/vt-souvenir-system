@@ -63,6 +63,9 @@ function initializeEventListeners() {
   document.getElementById('continue-phone').addEventListener('click', handlePhoneSubmit);
   document.getElementById('phone').addEventListener('input', formatPhoneInput);
 
+  // Auto-fill feature: Listen for phone number changes with debounce
+  document.getElementById('phone').addEventListener('input', debounce(handlePhoneAutofill, 500));
+
   // Step 1.5: Confirm Data
   const confirmBtn = document.getElementById('confirm-data-btn');
   if (confirmBtn) {
@@ -137,6 +140,150 @@ function goBack() {
 }
 
 // ==========================================
+// AUTO-FILL FEATURE
+// ==========================================
+
+// Debounce utility to avoid too many API calls
+function debounce(func, delay) {
+  let timeoutId;
+  return function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+// Handle phone number auto-fill
+async function handlePhoneAutofill(e) {
+  const phone = e.target.value.replace(/\D/g, '');
+
+  // Only trigger lookup if we have a complete 10-digit phone number
+  if (phone.length !== 10) {
+    hideAutofillMessage();
+    return;
+  }
+
+  // Show loading indicator
+  showAutofillLoading();
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/lookup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ phone })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      // Client not found - this is okay, they're a new customer
+      hideAutofillMessage();
+      return;
+    }
+
+    // Check if client info exists
+    if (data.clientInfo && data.clientInfo.name) {
+      // Auto-populate state with client info
+      state.client.name = data.clientInfo.name || '';
+      state.client.email = data.clientInfo.email || '';
+      state.client.address = data.clientInfo.address || '';
+      state.client.colonia = data.clientInfo.colonia || '';
+      state.client.city = data.clientInfo.city || '';
+      state.client.state = data.clientInfo.state || '';
+      state.client.postal = data.clientInfo.postal || '';
+      state.client.references = data.clientInfo.references || '';
+      state.client.phone = phone;
+
+      // Auto-fill the email field on the login screen
+      const emailInput = document.getElementById('login-email');
+      if (emailInput && state.client.email) {
+        emailInput.value = state.client.email;
+      }
+
+      // Show welcome back message
+      showAutofillSuccess(data.clientInfo.name);
+    } else {
+      // No client info available
+      hideAutofillMessage();
+    }
+
+  } catch (error) {
+    console.error('Error during auto-fill lookup:', error);
+    hideAutofillMessage();
+  }
+}
+
+// Show loading state during lookup
+function showAutofillLoading() {
+  let messageDiv = document.getElementById('autofill-message');
+
+  if (!messageDiv) {
+    messageDiv = document.createElement('div');
+    messageDiv.id = 'autofill-message';
+    messageDiv.style.cssText = `
+      margin-top: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      animation: fadeIn 0.3s ease-in;
+    `;
+    const phoneGroup = document.getElementById('phone').closest('.form-group');
+    phoneGroup.parentNode.insertBefore(messageDiv, phoneGroup.nextSibling);
+  }
+
+  messageDiv.style.background = '#dbeafe';
+  messageDiv.style.border = '1px solid #3b82f6';
+  messageDiv.style.color = '#1e40af';
+  messageDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="spinner-small" style="width: 16px; height: 16px; border: 2px solid #3b82f6; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <span>Buscando tu información...</span>
+    </div>
+  `;
+}
+
+// Show success message when client is found
+function showAutofillSuccess(clientName) {
+  let messageDiv = document.getElementById('autofill-message');
+
+  if (!messageDiv) {
+    messageDiv = document.createElement('div');
+    messageDiv.id = 'autofill-message';
+    messageDiv.style.cssText = `
+      margin-top: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      animation: fadeIn 0.3s ease-in;
+    `;
+    const phoneGroup = document.getElementById('phone').closest('.form-group');
+    phoneGroup.parentNode.insertBefore(messageDiv, phoneGroup.nextSibling);
+  }
+
+  messageDiv.style.background = '#d1fae5';
+  messageDiv.style.border = '1px solid #10b981';
+  messageDiv.style.color = '#065f46';
+  messageDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 18px;">👋</span>
+      <div>
+        <strong>Bienvenido de nuevo, ${clientName}!</strong><br>
+        <span style="font-size: 13px;">Tu información ha sido pre-llenada. Puedes editarla si es necesario.</span>
+      </div>
+    </div>
+  `;
+}
+
+// Hide the auto-fill message
+function hideAutofillMessage() {
+  const messageDiv = document.getElementById('autofill-message');
+  if (messageDiv) {
+    messageDiv.remove();
+  }
+}
+
+// ==========================================
 // STEP 1: PHONE LOGIN
 // ==========================================
 
@@ -168,7 +315,15 @@ async function handlePhoneSubmit() {
   state.client.phone = phone;
   state.client.email = email;
 
-  // Check if returning client (match both phone AND email)
+  // Check if we already have client data from auto-fill
+  if (state.client.name && state.client.address) {
+    // Client data was auto-filled, show confirmation step
+    state.client.isReturning = true;
+    showStep(1.5); // Show confirmation step
+    return;
+  }
+
+  // Check localStorage as fallback (match both phone AND email)
   const savedData = localStorage.getItem(STORAGE_KEY);
   if (savedData) {
     try {
