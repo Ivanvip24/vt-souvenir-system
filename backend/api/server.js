@@ -567,10 +567,10 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
       [orderId]
     );
 
-    // Send receipt email to client
-    try {
-      console.log('📧 Sending receipt email to client...');
-      await sendReceiptEmail(
+    // Send receipt email to client in background - don't block response
+    setImmediate(() => {
+      console.log('📧 Sending receipt email to client in background...');
+      sendReceiptEmail(
         {
           orderNumber: order.order_number,
           orderDate: order.order_date,
@@ -584,12 +584,12 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
           email: order.client_email
         },
         pdfPath
-      );
-      console.log('✅ Receipt email sent successfully');
-    } catch (emailError) {
-      console.error('⚠️  Failed to send receipt email:', emailError);
-      // Continue even if email fails - don't block the approval
-    }
+      )
+        .then(() => console.log('✅ Receipt email sent successfully'))
+        .catch(emailError => {
+          console.error('⚠️  Failed to send receipt email:', emailError);
+        });
+    });
 
     // Sync to Notion if needed
     try {

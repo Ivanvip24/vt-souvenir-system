@@ -6,10 +6,18 @@ config();
 // Create email transporter
 let transporter;
 
+// Connection pooling configuration for faster email sending
+const connectionPool = {
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 100
+};
+
 function createTransporter() {
   if (process.env.EMAIL_SERVICE === 'gmail') {
     return nodemailer.createTransport({
       service: 'gmail',
+      ...connectionPool,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD
@@ -21,6 +29,7 @@ function createTransporter() {
       host: process.env.EMAIL_HOST,
       port: parseInt(process.env.EMAIL_PORT || '587'),
       secure: process.env.EMAIL_SECURE === 'true',
+      ...connectionPool,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD
