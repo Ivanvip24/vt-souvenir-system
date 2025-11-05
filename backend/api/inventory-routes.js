@@ -4,10 +4,12 @@
  */
 
 import express from 'express';
+import { query } from '../shared/database.js';
 import MaterialManager from '../agents/inventory/material-manager.js';
 import BOMManager from '../agents/inventory/bom-manager.js';
 import ForecastingEngine from '../agents/inventory/forecasting-engine.js';
 import OrderIntegration from '../agents/inventory/order-integration.js';
+import QRCode from 'qrcode';
 
 const router = express.Router();
 
@@ -335,6 +337,412 @@ router.get('/dashboard/overview', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching dashboard overview:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// =====================================================
+// BARCODE & LABEL GENERATION ENDPOINTS
+// =====================================================
+
+// Generate QR code labels for materials
+router.get('/labels/generate', async (req, res) => {
+  try {
+    const materialIds = req.query.materials ? req.query.materials.split(',').map(id => parseInt(id)) : null;
+
+    console.log('🏷️ Generating labels...');
+
+    // Get materials from database
+    let materials;
+    if (materialIds) {
+      const placeholders = materialIds.map((_, i) => `$${i + 1}`).join(',');
+      const result = await query(`SELECT * FROM materials WHERE id IN (${placeholders})`, materialIds);
+      materials = result.rows;
+    } else {
+      const result = await query('SELECT * FROM materials WHERE is_active = true');
+      materials = result.rows;
+    }
+
+    // Generate QR codes as data URLs (server-side)
+    const labels = await Promise.all(materials.map(async (m) => {
+      const qrDataURL = await QRCode.toDataURL(m.barcode, {
+        width: 150,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      return {
+        barcode: m.barcode,
+        name: m.name,
+        currentStock: m.current_stock,
+        unitType: m.unit_type,
+        qrDataURL: qrDataURL
+      };
+    }));
+
+    // Generate printable HTML
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Material Labels - VT Anunciando</title>
+  <style>
+    @page { margin: 0.5in; size: letter; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    .label-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .label {
+      border: 2px solid #333;
+      padding: 20px;
+      border-radius: 8px;
+      page-break-inside: avoid;
+      height: 3in;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .qr-code img {
+      width: 150px;
+      height: 150px;
+      margin: 10px 0;
+    }
+    .barcode-text {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 10px 0;
+      font-family: 'Courier New', monospace;
+    }
+    .material-name {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    .stock-info {
+      font-size: 14px;
+      color: #666;
+      margin: 5px 0;
+    }
+    @media print {
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+    <h2 style="margin: 0 0 10px 0;">Material Labels</h2>
+    <p style="margin: 5px 0;">Generated: ${new Date().toLocaleString()}</p>
+    <p style="margin: 5px 0;">Total Labels: ${labels.length}</p>
+    <button onclick="window.print()" style="padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600;">
+      🖨️ Print Labels
+    </button>
+  </div>
+
+  <div class="label-grid">
+    ${labels.map(label => `
+      <div class="label">
+        <div class="barcode-text">${label.barcode}</div>
+        <div class="qr-code">
+          <img src="${label.qrDataURL}" alt="${label.barcode}" />
+        </div>
+        <div class="material-name">${label.name}</div>
+        <div class="stock-info">Stock: ${label.currentStock} ${label.unitType}</div>
+      </div>
+    `).join('')}
+  </div>
+</body>
+</html>
+    `;
+
+    console.log(`✅ Generated ${labels.length} labels`);
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+
+  } catch (error) {
+    console.error('Error generating labels:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// =====================================================
+// SMART BARCODE SHEET
+// =====================================================
+
+router.get('/smart-barcodes/sheet', async (req, res) => {
+  try {
+    console.log('🏷️📊 Generating smart barcode sheet...');
+
+    const quantities = [1, 5, 10, 25, 50, 100, 200, 500, 1000];
+    const actions = [
+      { code: 'ACTION-CONFIRM', label: 'CONFIRM', description: 'Auto-submit transaction', color: '#10b981' },
+      { code: 'ACTION-CLEAR', label: 'CLEAR', description: 'Clear current entry', color: '#f59e0b' },
+      { code: 'ACTION-CANCEL', label: 'CANCEL', description: 'Close Quick Receive', color: '#ef4444' }
+    ];
+
+    // Generate QR codes for quantities (server-side)
+    const quantityQRs = await Promise.all(quantities.map(async (qty) => {
+      const qrDataURL = await QRCode.toDataURL(`QTY-${qty}`, {
+        width: 120,
+        margin: 1,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      });
+      return { qty, qrDataURL };
+    }));
+
+    // Generate QR codes for actions (server-side)
+    const actionQRs = await Promise.all(actions.map(async (action) => {
+      const qrDataURL = await QRCode.toDataURL(action.code, {
+        width: 120,
+        margin: 1,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      });
+      return { ...action, qrDataURL };
+    }));
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Barcode Sheet - VT Anunciando</title>
+  <style>
+    @page { margin: 0.5in; size: letter; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: white;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white;
+      border-radius: 12px;
+    }
+    .header h1 {
+      margin: 0 0 10px 0;
+      font-size: 28px;
+    }
+    .header p {
+      margin: 5px 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .section {
+      margin-bottom: 30px;
+      page-break-inside: avoid;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      border-left: 4px solid #6366f1;
+    }
+    .barcode-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .barcode-item {
+      border: 3px solid;
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      background: white;
+      page-break-inside: avoid;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .barcode-item.quantity {
+      border-color: #3b82f6;
+    }
+    .barcode-item.action {
+      border-color: #10b981;
+    }
+    .qr-container img {
+      width: 120px;
+      height: 120px;
+      margin: 10px auto;
+      display: block;
+    }
+    .barcode-label {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 8px 0;
+      color: #111827;
+    }
+    .barcode-code {
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .workflow-guide {
+      background: #fef3c7;
+      border: 3px solid #f59e0b;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+    .workflow-guide h3 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      color: #92400e;
+    }
+    .workflow-steps {
+      display: grid;
+      gap: 12px;
+    }
+    .workflow-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .step-number {
+      width: 32px;
+      height: 32px;
+      background: #f59e0b;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .tips-box {
+      background: #dbeafe;
+      border: 3px solid #3b82f6;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+    .tips-box h3 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      color: #1e40af;
+    }
+    .tips-box ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .tips-box li {
+      margin-bottom: 8px;
+      color: #1e3a8a;
+    }
+    @media print {
+      .no-print { display: none; }
+      body { background: white; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Print Button -->
+  <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+    <button onclick="window.print()" style="padding: 12px 32px; background: #4f46e5; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      🖨️ Print Smart Barcode Sheet
+    </button>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>🏷️📊 SMART BARCODE SHEET</h1>
+    <p>VT Anunciando - Inventory Management System</p>
+    <p>Keep this sheet near your barcode scanner for fast inventory operations</p>
+    <p style="margin-top: 10px; font-size: 12px;">Generated: ${new Date().toLocaleString('es-MX')}</p>
+  </div>
+
+  <!-- Workflow Guide -->
+  <div class="workflow-guide">
+    <h3>⚡ QUICK WORKFLOW GUIDE</h3>
+    <div class="workflow-steps">
+      <div class="workflow-step">
+        <div class="step-number">1</div>
+        <div>Scan material barcode (MAT-XXX)</div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-number">2</div>
+        <div>Scan quantity barcode (below)</div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-number">3</div>
+        <div>Scan CONFIRM to complete transaction</div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-number">4</div>
+        <div>Repeat for next item!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quantity Barcodes -->
+  <div class="section">
+    <div class="section-title">📊 QUANTITY BARCODES (Scan to enter quantity)</div>
+    <div class="barcode-grid">
+      ${quantityQRs.map(q => `
+        <div class="barcode-item quantity">
+          <div class="barcode-label">${q.qty}</div>
+          <div class="qr-container">
+            <img src="${q.qrDataURL}" alt="QTY-${q.qty}" />
+          </div>
+          <div class="barcode-code">QTY-${q.qty}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <!-- Action Barcodes -->
+  <div class="section">
+    <div class="section-title">⚡ ACTION BARCODES (Quick commands)</div>
+    <div class="barcode-grid">
+      ${actionQRs.map(action => `
+        <div class="barcode-item action" style="border-color: ${action.color};">
+          <div class="barcode-label" style="color: ${action.color};">${action.label}</div>
+          <div class="qr-container">
+            <img src="${action.qrDataURL}" alt="${action.code}" />
+          </div>
+          <div class="barcode-code">${action.code}</div>
+          <div style="font-size: 11px; color: #6b7280; margin-top: 8px;">${action.description}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <!-- Tips & Best Practices -->
+  <div class="tips-box">
+    <h3>💡 TIPS FOR FASTEST SCANNING</h3>
+    <ul>
+      <li><strong>Keep this sheet visible</strong> - Place it near your scanning station</li>
+      <li><strong>Use Quick Receive mode</strong> - Click "⚡ Quick Receive" button in inventory view</li>
+      <li><strong>Scanner speed</strong> - Most USB scanners work like a keyboard (instant input)</li>
+      <li><strong>Auto-submit</strong> - After scanning quantity, transaction auto-submits in 2 seconds or scan CONFIRM immediately</li>
+      <li><strong>Error correction</strong> - Scan CLEAR to reset current entry without closing the modal</li>
+      <li><strong>Exit quickly</strong> - Scan CANCEL to close Quick Receive mode</li>
+      <li><strong>Common quantities</strong> - Print multiple copies and keep them handy for your most-used quantities</li>
+    </ul>
+  </div>
+</body>
+</html>
+    `;
+
+    console.log('✅ Smart barcode sheet generated');
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (error) {
+    console.error('Error generating smart barcodes:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

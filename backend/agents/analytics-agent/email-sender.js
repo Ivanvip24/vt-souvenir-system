@@ -287,6 +287,120 @@ export async function sendOrderConfirmation(order, client) {
 }
 
 /**
+ * Send receipt PDF to client
+ * @param {Object} order - Order details
+ * @param {Object} client - Client information
+ * @param {string} pdfPath - Path to PDF receipt file
+ */
+export async function sendReceiptEmail(order, client, pdfPath) {
+  try {
+    if (!client.email) {
+      console.log('⚠️  Client email not provided, skipping receipt email');
+      return { success: false, reason: 'No email address' };
+    }
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: white; padding: 30px; border: 1px solid #E5E7EB; }
+          .footer { background: #F3F4F6; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #6B7280; }
+          .detail { margin: 15px 0; padding: 12px; background: #F9FAFB; border-left: 4px solid #059669; }
+          .label { font-weight: bold; color: #374151; }
+          .highlight { background: #FEF3C7; padding: 16px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #F59E0B; }
+          .amount { font-size: 24px; font-weight: bold; color: #B45309; margin-top: 8px; }
+          .deposit { font-size: 20px; font-weight: bold; color: #059669; margin-top: 8px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📄 Recibo de Pago</h1>
+            <p style="margin: 0; font-size: 18px;">Orden Aprobada</p>
+          </div>
+          <div class="content">
+            <p>Hola <strong>${client.name}</strong>,</p>
+            <p>¡Tu orden ha sido aprobada! Adjunto encontrarás el recibo de pago con todos los detalles.</p>
+
+            <div class="detail">
+              <div class="label">Número de Orden:</div>
+              <div style="font-size: 18px; font-weight: bold; margin-top: 4px;">${order.orderNumber}</div>
+            </div>
+
+            <div class="detail">
+              <div class="label">Fecha de Orden:</div>
+              <div>${new Date(order.orderDate).toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>
+
+            <div class="detail">
+              <div class="label">Total:</div>
+              <div style="font-size: 20px; font-weight: bold; margin-top: 4px;">${formatCurrency(order.totalPrice)}</div>
+            </div>
+
+            <div class="detail">
+              <div class="label">Anticipo Recibido:</div>
+              <div class="deposit">${formatCurrency(order.actualDepositAmount)}</div>
+            </div>
+
+            <div class="highlight">
+              <div style="font-size: 14px; color: #92400E; font-weight: 600;">Saldo Restante a Pagar:</div>
+              <div class="amount">${formatCurrency(order.remainingBalance)}</div>
+              <div style="font-size: 13px; color: #92400E; margin-top: 8px;">
+                Este monto deberá ser pagado antes de la entrega del pedido.
+              </div>
+            </div>
+
+            ${order.eventDate ? `
+            <div class="detail">
+              <div class="label">📅 Fecha del Evento:</div>
+              <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: #7C3AED;">
+                ${new Date(order.eventDate).toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+            </div>
+            ` : ''}
+
+            <p style="margin-top: 30px;">Para consultar el estado de tu pedido en cualquier momento, visita nuestra página y usa la opción "Ya tengo una orden de compra" con tu teléfono registrado.</p>
+
+            <p>¡Gracias por tu preferencia!</p>
+
+            <p style="margin-top: 30px; border-top: 1px solid #E5E7EB; padding-top: 20px;">
+              <strong>${process.env.COMPANY_NAME || 'Souvenir Management'}</strong><br>
+              ${process.env.COMPANY_EMAIL || process.env.EMAIL_USER || ''}
+            </p>
+          </div>
+          <div class="footer">
+            <p>Este es un mensaje automático. El recibo adjunto es un comprobante oficial de tu pedido.</p>
+            <p>Si tienes preguntas, no dudes en contactarnos.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await sendEmail({
+      to: client.email,
+      subject: `📄 Recibo de Pago - Orden ${order.orderNumber}`,
+      html,
+      attachments: [
+        {
+          filename: `Recibo-${order.orderNumber}.pdf`,
+          path: pdfPath,
+          contentType: 'application/pdf'
+        }
+      ]
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending receipt email:', error);
+    throw error;
+  }
+}
+
+/**
  * Test email configuration
  */
 export async function testEmailConfig() {
@@ -339,5 +453,6 @@ export default {
   sendMonthlyReport,
   sendLowMarginAlert,
   sendOrderConfirmation,
+  sendReceiptEmail,
   testEmailConfig
 };

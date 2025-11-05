@@ -224,6 +224,11 @@ function createOrderCard(order) {
       <div class="order-title">
         <h3>${order.orderNumber}</h3>
         <span class="status-badge ${statusClass}">${statusText}</span>
+        ${order.secondPaymentStatus === 'uploaded' && order.secondPaymentReceipt ? `
+          <span style="background: #fb923c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-left: 8px;">
+            💳 Pago Final Pendiente
+          </span>
+        ` : ''}
       </div>
       ${order.approvalStatus === 'pending_review' ? `
         <div class="quick-actions">
@@ -232,6 +237,16 @@ function createOrderCard(order) {
           </button>
           <button class="quick-action-btn reject-btn" onclick="event.stopPropagation(); rejectOrder(${order.id});" title="Rechazar pedido">
             ✕
+          </button>
+        </div>
+      ` : ''}
+      ${order.approvalStatus === 'approved' && order.receiptPdfUrl ? `
+        <div class="quick-actions">
+          <button class="quick-action-btn receipt-btn" onclick="event.stopPropagation(); downloadReceipt('${order.receiptPdfUrl}', '${order.orderNumber}');" title="Descargar recibo">
+            📥
+          </button>
+          <button class="quick-action-btn receipt-btn" onclick="event.stopPropagation(); shareReceipt('${order.receiptPdfUrl}');" title="Compartir enlace">
+            🔗
           </button>
         </div>
       ` : ''}
@@ -322,6 +337,19 @@ async function showOrderDetail(orderId) {
           </button>
           <button class="btn btn-danger" onclick="rejectOrder(${order.id})">
             ❌ Rechazar Pedido
+          </button>
+        </div>
+      ` : ''}
+
+      ${order.approvalStatus === 'approved' && order.receiptPdfUrl ? `
+        <div class="action-buttons" style="margin-top: 16px;">
+          <button class="btn btn-primary" onclick="downloadReceipt('${order.receiptPdfUrl}', '${order.orderNumber}')" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+            <span style="font-size: 20px;">📥</span>
+            <span>Descargar Recibo</span>
+          </button>
+          <button class="btn btn-secondary" onclick="shareReceipt('${order.receiptPdfUrl}')" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+            <span style="font-size: 20px;">🔗</span>
+            <span>Compartir Enlace</span>
           </button>
         </div>
       ` : ''}
@@ -432,7 +460,7 @@ async function showOrderDetail(orderId) {
     <!-- Payment Proof -->
     ${order.paymentMethod === 'bank_transfer' && order.paymentProofUrl ? `
       <div class="detail-section">
-        <h3>Comprobante de Pago</h3>
+        <h3>Comprobante de Pago (Anticipo)</h3>
         <div style="background: var(--gray-50); padding: 16px; border-radius: 12px; text-align: center;">
           <img src="${order.paymentProofUrl}"
                alt="Comprobante de pago"
@@ -448,9 +476,76 @@ async function showOrderDetail(orderId) {
       </div>
     ` : order.paymentMethod === 'bank_transfer' ? `
       <div class="detail-section">
-        <h3>Comprobante de Pago</h3>
+        <h3>Comprobante de Pago (Anticipo)</h3>
         <div style="background: #fff3cd; padding: 16px; border-radius: 12px; color: #856404;">
           ⏳ Pendiente de subir comprobante
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Second Payment Receipt -->
+    ${order.secondPaymentReceipt ? `
+      <div class="detail-section">
+        <h3>Comprobante de Pago Final</h3>
+        <div style="background: #fef3c7; border: 2px solid #fb923c; padding: 20px; border-radius: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <span style="font-size: 32px;">💳</span>
+            <div>
+              <div style="font-size: 16px; font-weight: 700; color: #92400e;">Pago Final Recibido</div>
+              <div style="font-size: 13px; color: #92400e; margin-top: 4px;">
+                ${order.secondPaymentDate ? `Subido: ${formatDate(order.secondPaymentDate)}` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div style="background: white; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 16px;">
+            <img src="${order.secondPaymentReceipt}"
+                 alt="Comprobante de pago final"
+                 style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                 onclick="window.open('${order.secondPaymentReceipt}', '_blank')">
+            <div style="margin-top: 12px;">
+              <a href="${order.secondPaymentReceipt}"
+                 target="_blank"
+                 style="color: var(--primary); font-size: 14px; font-weight: 600; text-decoration: none;">
+                📥 Descargar Comprobante
+              </a>
+            </div>
+          </div>
+
+          ${order.secondPaymentStatus === 'uploaded' ? `
+            <div style="background: #fff; border: 2px solid #059669; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+              <div style="font-size: 14px; font-weight: 600; color: #065f46; margin-bottom: 8px;">
+                ⚠️ Este pago requiere confirmación
+              </div>
+              <div style="font-size: 13px; color: #065f46;">
+                Revisa el comprobante y confirma que el pago se ha completado correctamente.
+              </div>
+            </div>
+            <button class="btn btn-success" onclick="confirmSecondPayment(${order.id})" style="width: 100%; padding: 14px; font-size: 16px;">
+              ✅ Confirmar Pago y Completar Pedido
+            </button>
+          ` : order.secondPaymentStatus === 'confirmed' ? `
+            <div style="background: #d1fae5; border: 2px solid #059669; padding: 16px; border-radius: 8px; text-align: center;">
+              <div style="font-size: 20px; margin-bottom: 8px;">✅</div>
+              <div style="font-size: 15px; font-weight: 700; color: #065f46;">
+                Pago Confirmado
+              </div>
+              <div style="font-size: 13px; color: #065f46; margin-top: 4px;">
+                El cliente ha sido notificado por email
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    ` : order.approvalStatus === 'approved' && parseFloat(order.totalPrice - order.depositAmount) > 0 ? `
+      <div class="detail-section">
+        <h3>Comprobante de Pago Final</h3>
+        <div style="background: #f3f4f6; padding: 16px; border-radius: 12px; text-align: center; color: #6b7280;">
+          <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+          <div style="font-size: 15px; font-weight: 600;">Esperando comprobante del cliente</div>
+          <div style="font-size: 13px; margin-top: 8px;">
+            Saldo restante: ${formatCurrency(order.totalPrice - order.depositAmount)}
+          </div>
         </div>
       </div>
     ` : ''}
@@ -478,23 +573,100 @@ function closeOrderDetail() {
 // ORDER ACTIONS
 // ==========================================
 
+// Global variable to track the order being approved
+let orderToApprove = null;
+
 async function approveOrder(orderId) {
-  if (!confirm('¿Aprobar este pedido? El cliente será notificado.')) {
+  // Find the order in state - check both filteredOrders and orders
+  let order = state.filteredOrders.find(o => o.id === orderId);
+
+  if (!order) {
+    order = state.orders.find(o => o.id === orderId);
+  }
+
+  // If still not found, fetch it from the API
+  if (!order) {
+    console.log('Order not found in state, fetching from API...', orderId);
+    try {
+      const response = await fetch(`${API_BASE}/orders/${orderId}`, {
+        headers: getAuthHeaders()
+      });
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        order = data.data;
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+    }
+  }
+
+  if (!order) {
+    alert('No se pudo encontrar el pedido. Por favor recarga la página.');
+    console.error('Order not found anywhere:', orderId);
+    return;
+  }
+
+  // Store the order for later use
+  orderToApprove = order;
+
+  // Populate the deposit modal with order information
+  document.getElementById('deposit-order-number').textContent = order.orderNumber;
+  document.getElementById('deposit-client-name').textContent = order.clientName;
+  document.getElementById('deposit-total-price').textContent = formatCurrency(order.totalPrice);
+
+  // Pre-fill with expected deposit amount (default to half)
+  const suggestedDeposit = order.depositAmount || (order.totalPrice / 2);
+  document.getElementById('actual-deposit-amount').value = suggestedDeposit.toFixed(2);
+
+  // Open the deposit modal
+  document.getElementById('deposit-confirmation-modal').classList.remove('hidden');
+}
+
+function closeDepositModal() {
+  document.getElementById('deposit-confirmation-modal').classList.add('hidden');
+  document.getElementById('actual-deposit-amount').value = '';
+  orderToApprove = null;
+}
+
+async function confirmApproveWithDeposit() {
+  const actualDepositAmount = parseFloat(document.getElementById('actual-deposit-amount').value);
+
+  // Validation
+  if (!actualDepositAmount || actualDepositAmount <= 0) {
+    alert('Por favor ingresa un monto válido para el anticipo');
+    return;
+  }
+
+  if (!orderToApprove) {
+    alert('Error: No se encontró el pedido');
+    return;
+  }
+
+  if (actualDepositAmount > orderToApprove.totalPrice) {
+    alert('El monto del anticipo no puede ser mayor que el total del pedido');
     return;
   }
 
   try {
-    const response = await fetch(`${API_BASE}/orders/${orderId}/approve`, {
+    const response = await fetch(`${API_BASE}/orders/${orderToApprove.id}/approve`, {
       method: 'POST',
-      headers: getAuthHeaders()
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        actualDepositAmount: actualDepositAmount
+      })
     });
 
     const data = await response.json();
 
     if (data.success) {
-      alert('✅ Pedido aprobado exitosamente');
+      closeDepositModal();
       closeOrderDetail();
       loadOrders();
+      alert('✅ Pedido aprobado exitosamente. Se ha generado y enviado el recibo al cliente.');
     } else {
       alert('Error: ' + (data.error || 'No se pudo aprobar el pedido'));
     }
@@ -505,6 +677,10 @@ async function approveOrder(orderId) {
 }
 
 async function rejectOrder(orderId) {
+  if (!confirm('¿Estás seguro que deseas rechazar este pedido?')) {
+    return;
+  }
+
   const reason = prompt('¿Por qué se rechaza este pedido? (El cliente recibirá este mensaje)');
 
   if (!reason) return;
@@ -519,7 +695,6 @@ async function rejectOrder(orderId) {
     const data = await response.json();
 
     if (data.success) {
-      alert('✅ Pedido rechazado');
       closeOrderDetail();
       loadOrders();
     } else {
@@ -539,12 +714,28 @@ function updateStats() {
   const pendingCount = state.orders.filter(o => o.approvalStatus === 'pending_review').length;
   const approvedCount = state.orders.filter(o => o.approvalStatus === 'approved').length;
 
+  // Count orders with pending second payment receipts
+  const pendingSecondPayments = state.orders.filter(o =>
+    o.secondPaymentStatus === 'uploaded' && o.secondPaymentReceipt
+  ).length;
+
   // Update header stats
   document.getElementById('pending-count').textContent = pendingCount;
 
+  // Show second payment notification badge if there are pending confirmations
+  const secondPaymentBadge = document.getElementById('second-payment-badge');
+  if (secondPaymentBadge) {
+    secondPaymentBadge.textContent = pendingSecondPayments;
+    secondPaymentBadge.style.display = pendingSecondPayments > 0 ? 'inline-flex' : 'none';
+  }
+
   // Calculate today's revenue
   const today = new Date().toISOString().split('T')[0];
-  const todayOrders = state.orders.filter(o => o.orderDate === today);
+  const todayOrders = state.orders.filter(o => {
+    // Extract date part from timestamp (e.g., "2025-11-04T08:00:00.000Z" -> "2025-11-04")
+    const orderDatePart = o.orderDate ? o.orderDate.split('T')[0] : '';
+    return orderDatePart === today;
+  });
   const todayRevenue = todayOrders.reduce((sum, o) => sum + o.totalPrice, 0);
   document.getElementById('today-revenue').textContent = formatCurrency(todayRevenue);
 
@@ -630,6 +821,259 @@ function clearSearch() {
   applyFilter(state.currentFilter);
 }
 
+// ==========================================
+// CLIENT LOOKUP FUNCTIONALITY
+// ==========================================
+
+function openClientLookup() {
+  const modal = document.getElementById('client-lookup-modal');
+  modal.classList.remove('hidden');
+  document.getElementById('lookup-phone').value = '';
+  document.getElementById('lookup-email').value = '';
+  document.getElementById('lookup-results').classList.add('hidden');
+}
+
+function closeClientLookup() {
+  const modal = document.getElementById('client-lookup-modal');
+  modal.classList.add('hidden');
+}
+
+async function lookupClientOrders() {
+  const phone = document.getElementById('lookup-phone').value.trim();
+  const email = document.getElementById('lookup-email').value.trim();
+
+  if (!phone && !email) {
+    alert('Por favor ingrese al menos un teléfono o email');
+    return;
+  }
+
+  const loadingDiv = document.getElementById('lookup-loading');
+  const resultsDiv = document.getElementById('lookup-results');
+  const ordersList = document.getElementById('lookup-orders-list');
+
+  // Show loading
+  loadingDiv.classList.remove('hidden');
+  resultsDiv.classList.add('hidden');
+
+  try {
+    const response = await fetch(`${API_BASE}/client/orders/lookup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ phone, email })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      alert(data.error || 'Error al buscar pedidos');
+      return;
+    }
+
+    // Hide loading
+    loadingDiv.classList.add('hidden');
+
+    if (!data.orders || data.orders.length === 0) {
+      ordersList.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #6b7280;">
+          <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+          <p style="font-size: 16px; font-weight: 600;">No se encontraron pedidos activos</p>
+          <p style="font-size: 14px; margin-top: 8px;">No hay pedidos en proceso para este cliente</p>
+        </div>
+      `;
+      resultsDiv.classList.remove('hidden');
+      return;
+    }
+
+    // Display orders
+    ordersList.innerHTML = data.orders.map(order => `
+      <div style="background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+          <div>
+            <div style="font-size: 18px; font-weight: 700; color: #111827;">${order.orderNumber}</div>
+            <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">
+              ${new Date(order.orderDate).toLocaleDateString('es-MX')}
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            <span class="badge badge-${getStatusBadgeClass(order.approvalStatus)}" style="font-size: 12px;">
+              ${order.approvalStatus}
+            </span>
+            <span class="badge" style="font-size: 12px; background: #dbeafe; color: #1e40af;">
+              ${order.status}
+            </span>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 4px;">Total del Pedido:</div>
+              <div style="font-size: 20px; font-weight: 700; color: #111827;">${order.totalPriceFormatted}</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 4px;">Anticipo:</div>
+              <div style="font-size: 20px; font-weight: 700; color: #059669;">${order.depositAmountFormatted}</div>
+              ${order.depositPaid ? '<div style="font-size: 12px; color: #059669;">✓ Pagado</div>' : '<div style="font-size: 12px; color: #dc2626;">⏳ Pendiente</div>'}
+            </div>
+          </div>
+
+          <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px;">
+            <div style="font-size: 12px; color: #92400e; font-weight: 600; margin-bottom: 4px;">Saldo Restante:</div>
+            <div style="font-size: 24px; font-weight: 700; color: #b45309;">${order.remainingBalanceFormatted}</div>
+            <div style="font-size: 12px; color: #92400e; margin-top: 4px;">
+              Este monto debe pagarse antes de la entrega
+            </div>
+          </div>
+
+          ${order.eventDate ? `
+            <div style="margin-top: 12px; padding: 8px; background: #ede9fe; border-radius: 8px;">
+              <span style="font-size: 12px; color: #5b21b6; font-weight: 600;">📅 Fecha del Evento:</span>
+              <span style="font-size: 14px; color: #5b21b6; font-weight: 700; margin-left: 8px;">
+                ${new Date(order.eventDate).toLocaleDateString('es-MX')}
+              </span>
+            </div>
+          ` : ''}
+        </div>
+
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+          <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 8px;">Productos:</div>
+          ${order.items.map(item => `
+            <div style="font-size: 14px; color: #374151; margin-bottom: 4px;">
+              • ${item.productName} (${item.quantity} unidades)
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+
+    resultsDiv.classList.remove('hidden');
+
+  } catch (error) {
+    console.error('Error looking up orders:', error);
+    alert('Error al buscar pedidos. Por favor intente nuevamente.');
+  } finally {
+    loadingDiv.classList.add('hidden');
+  }
+}
+
+// ==========================================
+// RECEIPT ACTIONS
+// ==========================================
+
+/**
+ * Download receipt PDF
+ * @param {string} receiptUrl - URL to the receipt PDF
+ * @param {string} orderNumber - Order number for filename
+ */
+function downloadReceipt(receiptUrl, orderNumber) {
+  if (!receiptUrl) {
+    alert('No hay recibo disponible para este pedido');
+    return;
+  }
+
+  try {
+    // Create a temporary anchor element to trigger download
+    const link = document.createElement('a');
+    link.href = receiptUrl;
+    link.download = `Recibo-${orderNumber}.pdf`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    console.log(`📥 Downloading receipt for order ${orderNumber}`);
+  } catch (error) {
+    console.error('Error downloading receipt:', error);
+    alert('Error al descargar el recibo');
+  }
+}
+
+/**
+ * Share receipt URL by copying to clipboard
+ * @param {string} receiptUrl - URL to the receipt PDF
+ */
+async function shareReceipt(receiptUrl) {
+  if (!receiptUrl) {
+    alert('No hay recibo disponible para este pedido');
+    return;
+  }
+
+  try {
+    // Get the full URL (in case it's a relative path)
+    const fullUrl = receiptUrl.startsWith('http')
+      ? receiptUrl
+      : `${window.location.origin}${receiptUrl}`;
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(fullUrl);
+
+    alert('✅ Enlace del recibo copiado al portapapeles');
+    console.log(`🔗 Receipt URL copied: ${fullUrl}`);
+  } catch (error) {
+    console.error('Error copying receipt URL:', error);
+
+    // Fallback for browsers that don't support clipboard API
+    const textArea = document.createElement('textarea');
+    textArea.value = receiptUrl;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      document.execCommand('copy');
+      alert('✅ Enlace del recibo copiado al portapapeles');
+    } catch (err) {
+      alert('No se pudo copiar el enlace. Por favor cópialo manualmente: ' + receiptUrl);
+    }
+
+    document.body.removeChild(textArea);
+  }
+}
+
+function getStatusBadgeClass(status) {
+  const statusClasses = {
+    'pending_review': 'warning',
+    'approved': 'success',
+    'rejected': 'danger',
+    'needs_changes': 'warning'
+  };
+  return statusClasses[status] || '';
+}
+
+// ==========================================
+// SECOND PAYMENT CONFIRMATION
+// ==========================================
+
+async function confirmSecondPayment(orderId) {
+  if (!confirm('¿Confirmar que el pago final ha sido recibido?\n\nEsto marcará el pedido como "Entregado" y enviará una notificación al cliente.')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}/confirm-second-payment`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert('✅ Pago confirmado exitosamente. El cliente ha sido notificado por email.');
+      closeOrderDetail();
+      loadOrders();
+    } else {
+      alert('Error: ' + (data.error || 'No se pudo confirmar el pago'));
+    }
+  } catch (error) {
+    console.error('Error confirming second payment:', error);
+    alert('Error al confirmar el pago. Por favor intenta nuevamente.');
+  }
+}
+
 // Make functions globally accessible for onclick handlers
 window.loadOrders = loadOrders;
 window.closeOrderDetail = closeOrderDetail;
@@ -637,3 +1081,11 @@ window.approveOrder = approveOrder;
 window.rejectOrder = rejectOrder;
 window.handleSearch = handleSearch;
 window.clearSearch = clearSearch;
+window.openClientLookup = openClientLookup;
+window.closeClientLookup = closeClientLookup;
+window.lookupClientOrders = lookupClientOrders;
+window.closeDepositModal = closeDepositModal;
+window.confirmApproveWithDeposit = confirmApproveWithDeposit;
+window.downloadReceipt = downloadReceipt;
+window.shareReceipt = shareReceipt;
+window.confirmSecondPayment = confirmSecondPayment;

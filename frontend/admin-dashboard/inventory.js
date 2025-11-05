@@ -6,7 +6,8 @@
 const inventoryState = {
   materials: [],
   alerts: [],
-  selectedMaterial: null
+  selectedMaterial: null,
+  quickReceiveSession: []
 };
 
 // Load inventory when Products tab is activated
@@ -417,6 +418,7 @@ async function handlePurchaseSubmit(event, materialId) {
 
   const formData = new FormData(event.target);
   const data = {
+    materialId: materialId,
     quantity: parseFloat(formData.get('quantity')),
     unitCost: parseFloat(formData.get('unitCost')),
     supplierName: formData.get('supplierName'),
@@ -424,7 +426,7 @@ async function handlePurchaseSubmit(event, materialId) {
   };
 
   try {
-    const response = await fetch(`${API_BASE}/inventory/materials/${materialId}/purchase`, {
+    const response = await fetch(`${API_BASE}/inventory/purchases`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -483,13 +485,13 @@ async function handleAdjustSubmit(event, materialId) {
 
   const formData = new FormData(event.target);
   const data = {
+    materialId: materialId,
     newQuantity: parseFloat(formData.get('newQuantity')),
-    reason: formData.get('reason'),
-    performedBy: 'Admin'
+    reason: formData.get('reason')
   };
 
   try {
-    const response = await fetch(`${API_BASE}/inventory/materials/${materialId}/adjust`, {
+    const response = await fetch(`${API_BASE}/inventory/adjustments`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -510,6 +512,575 @@ async function handleAdjustSubmit(event, materialId) {
   }
 }
 
+// ==========================================
+// INVOICE UPLOAD MODAL
+// ==========================================
+
+function showInvoiceUploadModal() {
+  document.getElementById('invoice-upload-modal').classList.remove('hidden');
+}
+
+function closeInvoiceUploadModal() {
+  document.getElementById('invoice-upload-modal').classList.add('hidden');
+  document.getElementById('invoice-preview').innerHTML = '';
+  document.getElementById('invoice-file-input').value = '';
+}
+
+function handleInvoiceFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const preview = document.getElementById('invoice-preview');
+    preview.innerHTML = `
+      <img src="${e.target.result}" style="max-width: 100%; max-height: 400px; border-radius: 8px;">
+    `;
+    document.getElementById('invoice-upload-btn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleInvoiceUpload() {
+  const fileInput = document.getElementById('invoice-file-input');
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert('Please select an invoice image first');
+    return;
+  }
+
+  const uploadBtn = document.getElementById('invoice-upload-btn');
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Processing...';
+
+  try {
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const imageData = e.target.result;
+
+      const response = await fetch(`${API_BASE}/inventory/invoices/process`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ imageData })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showInvoiceReviewModal(result.extractedData);
+        closeInvoiceUploadModal();
+      } else {
+        alert('Error: ' + result.error);
+      }
+
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Process Invoice';
+    };
+    reader.readAsDataURL(file);
+
+  } catch (error) {
+    console.error('Error uploading invoice:', error);
+    alert('Failed to process invoice');
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Process Invoice';
+  }
+}
+
+function showInvoiceReviewModal(extractedData) {
+  const modal = document.getElementById('invoice-review-modal');
+  const body = document.getElementById('invoice-review-body');
+
+  let html = `
+    <div style="background: #f0f9ff; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+      <h3 style="margin: 0 0 12px 0;">Invoice Details</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div><strong>Supplier:</strong> ${extractedData.supplier}</div>
+        <div><strong>Invoice #:</strong> ${extractedData.invoiceNumber}</div>
+        <div><strong>Date:</strong> ${extractedData.invoiceDate}</div>
+        <div><strong>Total:</strong> $${extractedData.total.toFixed(2)}</div>
+      </div>
+    </div>
+
+    <h3 style="margin: 20px 0 12px 0;">Line Items</h3>
+    <div id="invoice-line-items">
+  `;
+
+  extractedData.lineItems.forEach((item, index) => {
+    html += `
+      <div style="background: white; border: 2px solid #e5e7eb; padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+        <div style="display: grid; gap: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div>
+              <strong>${item.description}</strong>
+              ${item.matchedMaterial ? `
+                <div style="color: #10b981; font-size: 12px; margin-top: 4px;">
+                  Matched: ${item.matchedMaterial.name} (${Math.round(item.matchConfidence * 100)}% confidence)
+                </div>
+              ` : `
+                <div style="color: #f59e0b; font-size: 12px; margin-top: 4px;">
+                  No match found - select material manually
+                </div>
+              `}
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Material</label>
+              <select id="material-select-${index}" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px;">
+                <option value="">Select Material</option>
+                ${inventoryState.materials.map(m => `
+                  <option value="${m.id}" ${item.matchedMaterial && item.matchedMaterial.id === m.id ? 'selected' : ''}>
+                    ${m.name} (${m.barcode})
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Quantity</label>
+              <input type="number" id="quantity-${index}" value="${item.quantity}" step="0.01" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Unit Cost</label>
+              <input type="number" id="unit-cost-${index}" value="${item.unitCost}" step="0.01" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px;">
+            </div>
+          </div>
+
+          <div style="text-align: right; font-weight: 600;">
+            Total: $<span id="line-total-${index}">${item.total.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `
+    </div>
+    <div style="margin-top: 20px; display: flex; gap: 12px;">
+      <button onclick="approveInvoice()" class="btn btn-success" style="flex: 1;">Approve & Record All</button>
+      <button onclick="closeInvoiceReviewModal()" class="btn" style="flex: 1;">Cancel</button>
+    </div>
+  `;
+
+  body.innerHTML = html;
+
+  // Store extracted data for approval
+  window.currentInvoiceData = extractedData;
+
+  modal.classList.remove('hidden');
+}
+
+function closeInvoiceReviewModal() {
+  document.getElementById('invoice-review-modal').classList.add('hidden');
+  window.currentInvoiceData = null;
+}
+
+async function approveInvoice() {
+  const extractedData = window.currentInvoiceData;
+  if (!extractedData) return;
+
+  const lineItems = extractedData.lineItems.map((item, index) => ({
+    materialId: document.getElementById(`material-select-${index}`).value,
+    quantity: parseFloat(document.getElementById(`quantity-${index}`).value),
+    unitCost: parseFloat(document.getElementById(`unit-cost-${index}`).value)
+  }));
+
+  // Validate
+  const invalid = lineItems.some(item => !item.materialId || !item.quantity || !item.unitCost);
+  if (invalid) {
+    alert('Please select a material for all line items');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/inventory/invoices/approve`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        invoiceData: extractedData,
+        lineItems
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert(`Invoice approved! ${result.transactionsCreated} transactions recorded.`);
+      closeInvoiceReviewModal();
+      loadInventory();
+    } else {
+      alert('Error: ' + result.error);
+    }
+  } catch (error) {
+    console.error('Error approving invoice:', error);
+    alert('Failed to approve invoice');
+  }
+}
+
+// ==========================================
+// PRINT LABELS
+// ==========================================
+
+function showPrintLabelsModal() {
+  const modal = document.getElementById('print-labels-modal');
+  const body = document.getElementById('print-labels-body');
+
+  let html = `
+    <div style="margin-bottom: 20px;">
+      <p>Select materials to print labels for:</p>
+    </div>
+    <div style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+  `;
+
+  inventoryState.materials.forEach(material => {
+    html += `
+      <label style="display: block; padding: 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 8px; cursor: pointer;">
+        <input type="checkbox" class="label-material-checkbox" value="${material.id}" checked style="margin-right: 8px;">
+        <strong>${material.name}</strong> (${material.barcode})
+      </label>
+    `;
+  });
+
+  html += `
+    </div>
+    <div style="display: flex; gap: 12px;">
+      <button onclick="generateLabels()" class="btn btn-primary" style="flex: 1;">Generate Labels</button>
+      <button onclick="closePrintLabelsModal()" class="btn" style="flex: 1;">Cancel</button>
+    </div>
+  `;
+
+  body.innerHTML = html;
+  modal.classList.remove('hidden');
+}
+
+function closePrintLabelsModal() {
+  document.getElementById('print-labels-modal').classList.add('hidden');
+}
+
+function generateLabels() {
+  const checkboxes = document.querySelectorAll('.label-material-checkbox:checked');
+  const materialIds = Array.from(checkboxes).map(cb => cb.value);
+
+  if (materialIds.length === 0) {
+    alert('Please select at least one material');
+    return;
+  }
+
+  const token = localStorage.getItem('admin_token');
+  const url = `${API_BASE}/inventory/labels/generate?materials=${materialIds.join(',')}`;
+
+  // Open in new window
+  window.open(url + `&token=${token}`, '_blank');
+
+  closePrintLabelsModal();
+}
+
+// ==========================================
+// QUICK RECEIVE MODE
+// ==========================================
+
+function showQuickReceiveModal() {
+  inventoryState.quickReceiveSession = [];
+  const modal = document.getElementById('quick-receive-modal');
+  modal.classList.remove('hidden');
+
+  // Focus on barcode input
+  setTimeout(() => {
+    document.getElementById('quick-barcode-input').focus();
+  }, 100);
+
+  updateQuickReceiveDisplay();
+}
+
+function closeQuickReceiveModal() {
+  document.getElementById('quick-receive-modal').classList.add('hidden');
+  inventoryState.quickReceiveSession = [];
+}
+
+async function handleQuickReceiveScan(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+
+    const input = event.target.value.trim().toUpperCase();
+    if (!input) return;
+
+    console.log('Scanned barcode:', input);
+
+    // Check if it's a quantity barcode (QTY-XX)
+    if (input.startsWith('QTY-')) {
+      const quantity = input.replace('QTY-', '');
+      const quantityNum = parseFloat(quantity);
+
+      if (isNaN(quantityNum) || quantityNum <= 0) {
+        showQuickReceiveMessage('Invalid quantity barcode', 'error');
+        event.target.value = '';
+        return;
+      }
+
+      // Auto-fill quantity
+      document.getElementById('quick-quantity-input').value = quantityNum;
+      showQuickReceiveMessage(`Quantity set to ${quantityNum}`, 'success');
+
+      // Clear barcode input and refocus
+      event.target.value = '';
+
+      // If material is selected, trigger auto-submit after 2 seconds
+      if (window.currentQuickReceiveMaterial) {
+        // Clear any existing timer
+        if (window.quickReceiveAutoSubmitTimer) {
+          clearTimeout(window.quickReceiveAutoSubmitTimer);
+        }
+
+        // Set new timer
+        window.quickReceiveAutoSubmitTimer = setTimeout(() => {
+          handleQuickReceiveSubmit();
+        }, 2000);
+
+        document.getElementById('quick-barcode-input').focus();
+      } else {
+        // No material selected yet, wait for material scan
+        event.target.focus();
+      }
+      return;
+    }
+
+    // Check if it's an action barcode
+    if (input.startsWith('ACTION-')) {
+      const action = input.replace('ACTION-', '');
+
+      if (action === 'CONFIRM') {
+        // Auto-submit the form
+        await handleQuickReceiveSubmit();
+      } else if (action === 'CLEAR') {
+        // Clear current selection
+        clearQuickReceiveForm();
+        showQuickReceiveMessage('Form cleared', 'info');
+      } else if (action === 'CANCEL') {
+        // Close modal
+        closeQuickReceiveModal();
+      }
+
+      event.target.value = '';
+      return;
+    }
+
+    // It's a material barcode - look it up
+    const barcode = input;
+
+    try {
+      const response = await fetch(`${API_BASE}/inventory/materials/barcode/${barcode}`, {
+        headers: getAuthHeaders()
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Show material found, focus on quantity
+        document.getElementById('quick-material-info').innerHTML = `
+          <div style="background: #d1fae5; padding: 16px; border-radius: 12px; border: 2px solid #10b981;">
+            <div style="font-size: 18px; font-weight: 700; color: #065f46; margin-bottom: 8px;">
+              ${result.material.name}
+            </div>
+            <div style="color: #065f46;">
+              Barcode: ${result.material.barcode} | Current Stock: ${result.material.current_stock} ${result.material.unit_type}
+            </div>
+          </div>
+        `;
+
+        // Store current material
+        window.currentQuickReceiveMaterial = result.material;
+
+        // Focus on quantity input
+        document.getElementById('quick-quantity-input').focus();
+        document.getElementById('quick-quantity-input').select();
+      } else {
+        document.getElementById('quick-material-info').innerHTML = `
+          <div style="background: #fee2e2; padding: 16px; border-radius: 12px; border: 2px solid #ef4444; color: #991b1b;">
+            Material not found: ${barcode}
+          </div>
+        `;
+        event.target.value = '';
+      }
+    } catch (error) {
+      console.error('Error looking up material:', error);
+      document.getElementById('quick-material-info').innerHTML = `
+        <div style="background: #fee2e2; padding: 16px; border-radius: 12px; border: 2px solid #ef4444; color: #991b1b;">
+          Error looking up material
+        </div>
+      `;
+      event.target.value = '';
+    }
+  }
+}
+
+function showQuickReceiveMessage(message, type = 'info') {
+  const colors = {
+    success: { bg: '#d1fae5', border: '#10b981', text: '#065f46' },
+    error: { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
+    info: { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' }
+  };
+
+  const color = colors[type] || colors.info;
+
+  const messageDiv = document.createElement('div');
+  messageDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${color.bg};
+    border: 2px solid ${color.border};
+    color: ${color.text};
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease-out;
+  `;
+  messageDiv.textContent = message;
+
+  document.body.appendChild(messageDiv);
+
+  setTimeout(() => {
+    messageDiv.style.animation = 'slideOut 0.3s ease-in';
+    setTimeout(() => messageDiv.remove(), 300);
+  }, 2000);
+}
+
+function clearQuickReceiveForm() {
+  document.getElementById('quick-barcode-input').value = '';
+  document.getElementById('quick-quantity-input').value = '';
+  document.getElementById('quick-material-info').innerHTML = '';
+  window.currentQuickReceiveMaterial = null;
+
+  // Clear any auto-submit timer
+  if (window.quickReceiveAutoSubmitTimer) {
+    clearTimeout(window.quickReceiveAutoSubmitTimer);
+    window.quickReceiveAutoSubmitTimer = null;
+  }
+
+  document.getElementById('quick-barcode-input').focus();
+}
+
+async function handleQuickReceiveQuantity(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    await handleQuickReceiveSubmit();
+  }
+}
+
+async function handleQuickReceiveSubmit() {
+  const quantity = parseFloat(document.getElementById('quick-quantity-input').value);
+  if (!quantity || quantity <= 0) {
+    showQuickReceiveMessage('Please enter a valid quantity', 'error');
+    return;
+  }
+
+  const material = window.currentQuickReceiveMaterial;
+  if (!material) {
+    showQuickReceiveMessage('No material selected', 'error');
+    return;
+  }
+
+  // Clear any auto-submit timer
+  if (window.quickReceiveAutoSubmitTimer) {
+    clearTimeout(window.quickReceiveAutoSubmitTimer);
+    window.quickReceiveAutoSubmitTimer = null;
+  }
+
+  // Record the receive
+  try {
+    const response = await fetch(`${API_BASE}/inventory/quick-receive`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        barcode: material.barcode,
+        quantity: quantity
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Add to session
+      inventoryState.quickReceiveSession.unshift({
+        material: result.material,
+        transaction: result.transaction
+      });
+
+      // Keep only last 10
+      if (inventoryState.quickReceiveSession.length > 10) {
+        inventoryState.quickReceiveSession.pop();
+      }
+
+      updateQuickReceiveDisplay();
+      showQuickReceiveMessage(`Received: ${quantity} ${material.unit_type} of ${material.name}`, 'success');
+
+      // Clear and refocus on barcode input
+      clearQuickReceiveForm();
+    } else {
+      showQuickReceiveMessage('Error: ' + result.error, 'error');
+    }
+  } catch (error) {
+    console.error('Error recording quick receive:', error);
+    showQuickReceiveMessage('Failed to record receive', 'error');
+  }
+}
+
+function updateQuickReceiveDisplay() {
+  const container = document.getElementById('quick-receive-history');
+
+  if (inventoryState.quickReceiveSession.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: #9ca3af; padding: 40px;">
+        No items received yet in this session
+      </div>
+    `;
+    return;
+  }
+
+  let html = '<div style="display: grid; gap: 12px;">';
+
+  inventoryState.quickReceiveSession.forEach(item => {
+    html += `
+      <div style="background: white; padding: 16px; border-radius: 12px; border: 2px solid #e5e7eb;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 700; font-size: 18px; margin-bottom: 4px;">${item.material.name}</div>
+            <div style="color: #6b7280; font-size: 14px;">${item.material.barcode}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 24px; font-weight: 700; color: #10b981;">+${item.transaction.quantity}</div>
+            <div style="font-size: 12px; color: #6b7280;">${item.material.unit_type}</div>
+          </div>
+        </div>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+          Stock: ${item.transaction.stockBefore} → ${item.transaction.stockAfter}
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+
+// ==========================================
+// PRINT SMART BARCODES
+// ==========================================
+
+function printSmartBarcodes() {
+  const token = localStorage.getItem('admin_token');
+  const url = `${API_BASE}/inventory/smart-barcodes/sheet`;
+
+  // Open in new window
+  window.open(url, '_blank');
+
+  console.log('Opening smart barcode sheet...');
+}
+
 // Make functions globally accessible
 window.loadInventory = loadInventory;
 window.showMaterialDetail = showMaterialDetail;
@@ -521,3 +1092,20 @@ window.showPurchaseModal = showPurchaseModal;
 window.handlePurchaseSubmit = handlePurchaseSubmit;
 window.showAdjustModal = showAdjustModal;
 window.handleAdjustSubmit = handleAdjustSubmit;
+window.showInvoiceUploadModal = showInvoiceUploadModal;
+window.closeInvoiceUploadModal = closeInvoiceUploadModal;
+window.handleInvoiceFileSelect = handleInvoiceFileSelect;
+window.handleInvoiceUpload = handleInvoiceUpload;
+window.showInvoiceReviewModal = showInvoiceReviewModal;
+window.closeInvoiceReviewModal = closeInvoiceReviewModal;
+window.approveInvoice = approveInvoice;
+window.showPrintLabelsModal = showPrintLabelsModal;
+window.closePrintLabelsModal = closePrintLabelsModal;
+window.generateLabels = generateLabels;
+window.showQuickReceiveModal = showQuickReceiveModal;
+window.closeQuickReceiveModal = closeQuickReceiveModal;
+window.handleQuickReceiveScan = handleQuickReceiveScan;
+window.handleQuickReceiveQuantity = handleQuickReceiveQuantity;
+window.printSmartBarcodes = printSmartBarcodes;
+window.handleQuickReceiveSubmit = handleQuickReceiveSubmit;
+window.clearQuickReceiveForm = clearQuickReceiveForm;

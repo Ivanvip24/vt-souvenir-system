@@ -203,7 +203,9 @@ router.post('/orders/submit', async (req, res) => {
       });
     }
 
-    const depositAmount = subtotal * 0.5; // 50% deposit
+    // Calculate deposit amount (default 50% if not specified)
+    const depositPercentage = req.body.depositPercentage || 50;
+    const depositAmount = subtotal * (depositPercentage / 100);
 
     // 2. Create or find client
     let clientId;
@@ -484,6 +486,123 @@ router.get('/orders/:orderId/status', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error al consultar estado del pedido'
+    });
+  }
+});
+
+/**
+ * POST /api/client/orders/lookup
+ * Lookup orders by client phone and/or email
+ */
+router.post('/orders/lookup', async (req, res) => {
+  try {
+    const { phone, email } = req.body;
+
+    if (!phone && !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debe proporcionar teléfono o correo electrónico'
+      });
+    }
+
+    // Build query conditions
+    const conditions = [];
+    const params = [];
+    let paramIndex = 1;
+
+    if (phone) {
+      conditions.push(`c.phone = $${paramIndex++}`);
+      params.push(phone);
+    }
+
+    if (email) {
+      conditions.push(`c.email = $${paramIndex++}`);
+      params.push(email);
+    }
+
+    const whereClause = conditions.join(' OR ');
+
+    // Query orders with payment info
+    const result = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.order_date,
+        o.event_type,
+        o.event_date,
+        o.status,
+        o.approval_status,
+        o.total_price,
+        o.deposit_amount,
+        o.deposit_paid,
+        o.payment_method,
+        o.second_payment_receipt,
+        c.name as client_name,
+        c.phone as client_phone,
+        c.email as client_email,
+        json_agg(
+          json_build_object(
+            'productName', oi.product_name,
+            'quantity', oi.quantity,
+            'unitPrice', oi.unit_price
+          ) ORDER BY oi.id
+        ) FILTER (WHERE oi.id IS NOT NULL) as items
+      FROM orders o
+      JOIN clients c ON o.client_id = c.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE (${whereClause})
+        AND o.status NOT IN ('delivered', 'cancelled')
+        AND o.approval_status != 'rejected'
+      GROUP BY o.id, c.name, c.phone, c.email
+      ORDER BY o.created_at DESC
+    `, params);
+
+    if (result.rows.length === 0) {
+      return res.json({
+        success: true,
+        orders: [],
+        message: 'No se encontraron pedidos activos'
+      });
+    }
+
+    // Format orders with payment status
+    const orders = result.rows.map(order => ({
+      id: order.id,
+      orderId: order.id,
+      orderNumber: order.order_number,
+      orderDate: order.order_date,
+      eventType: order.event_type,
+      eventDate: order.event_date,
+      status: getStatusText(order.status),
+      approvalStatus: order.approval_status,
+      totalPrice: order.total_price,
+      depositAmount: order.deposit_amount,
+      depositPaid: order.deposit_paid,
+      remainingBalance: order.total_price - order.deposit_amount,
+      paymentMethod: order.payment_method,
+      secondPaymentReceipt: order.second_payment_receipt,
+      totalPriceFormatted: formatCurrency(order.total_price),
+      depositAmountFormatted: formatCurrency(order.deposit_amount),
+      remainingBalanceFormatted: formatCurrency(order.total_price - order.deposit_amount),
+      items: order.items || [],
+      clientName: order.client_name
+    }));
+
+    res.json({
+      success: true,
+      orders,
+      clientInfo: {
+        name: result.rows[0].client_name,
+        phone: result.rows[0].client_phone,
+        email: result.rows[0].client_email
+      }
+    });
+
+  } catch (error) {
+    console.error('Error looking up orders:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al buscar pedidos'
     });
   }
 });

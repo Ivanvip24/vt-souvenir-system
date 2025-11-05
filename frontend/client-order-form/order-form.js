@@ -371,7 +371,8 @@ function createProductCard(product) {
   div.dataset.productId = product.id;
 
   const quantity = state.cart[product.id]?.quantity || 0;
-  const subtotal = product.base_price * quantity;
+  const price = parseFloat(product.base_price);
+  const subtotal = price * quantity;
 
   div.innerHTML = `
     <div class="product-header">
@@ -382,7 +383,7 @@ function createProductCard(product) {
         <div class="product-category">${getCategoryLabel(product.category)}</div>
         <h3>${product.name}</h3>
         <div class="product-price">
-          $${product.base_price.toFixed(2)} <span>por unidad</span>
+          $${price.toFixed(2)} <span>por unidad</span>
         </div>
       </div>
     </div>
@@ -447,7 +448,7 @@ window.handleQuantityChange = function(productId, value) {
   // Update UI
   const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
   const subtotalEl = document.getElementById(`subtotal-${productId}`);
-  const subtotal = product.base_price * quantity;
+  const subtotal = parseFloat(product.base_price) * quantity;
 
   if (quantity > 0) {
     card.classList.add('selected');
@@ -466,7 +467,7 @@ function updateOrderTotals() {
   let subtotal = 0;
 
   Object.values(state.cart).forEach(({ product, quantity }) => {
-    subtotal += product.base_price * quantity;
+    subtotal += parseFloat(product.base_price) * quantity;
   });
 
   const deposit = subtotal * 0.5; // 50% deposit
@@ -784,3 +785,248 @@ function showSuccessScreen(orderNumber) {
 function formatCurrency(amount) {
   return `$${parseFloat(amount).toFixed(2)}`;
 }
+
+// ==========================================
+// CLIENT ORDER LOOKUP FUNCTIONALITY
+// ==========================================
+
+// Open the client lookup modal
+window.openClientLookup = function() {
+  const modal = document.getElementById('client-lookup-modal');
+  modal.style.display = 'block';
+  document.getElementById('lookup-phone').value = '';
+  document.getElementById('lookup-email').value = '';
+  document.getElementById('lookup-results').style.display = 'none';
+};
+
+// Close the client lookup modal
+window.closeClientLookup = function() {
+  const modal = document.getElementById('client-lookup-modal');
+  modal.style.display = 'none';
+};
+
+// Lookup client orders by phone/email
+window.lookupClientOrders = async function() {
+  const phone = document.getElementById('lookup-phone').value.trim();
+  const email = document.getElementById('lookup-email').value.trim();
+
+  if (!phone && !email) {
+    alert('Por favor ingrese al menos un teléfono o email');
+    return;
+  }
+
+  const loadingDiv = document.getElementById('lookup-loading');
+  const resultsDiv = document.getElementById('lookup-results');
+  const ordersList = document.getElementById('lookup-orders-list');
+
+  // Show loading
+  loadingDiv.style.display = 'block';
+  resultsDiv.style.display = 'none';
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/lookup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ phone, email })
+    });
+
+    const data = await response.json();
+
+    // Hide loading
+    loadingDiv.style.display = 'none';
+
+    if (!data.success) {
+      alert(data.error || 'Error al buscar pedidos');
+      return;
+    }
+
+    if (!data.orders || data.orders.length === 0) {
+      ordersList.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #6b7280;">
+          <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+          <p style="font-size: 16px; font-weight: 600;">No se encontraron pedidos activos</p>
+          <p style="font-size: 14px; margin-top: 8px;">No hay pedidos en proceso para este cliente</p>
+        </div>
+      `;
+      resultsDiv.style.display = 'block';
+      return;
+    }
+
+    // Display orders with prominent remaining balance
+    ordersList.innerHTML = data.orders.map(order => `
+      <div style="background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+          <div>
+            <div style="font-size: 18px; font-weight: 700; color: #111827;">${order.orderNumber}</div>
+            <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">
+              ${new Date(order.orderDate).toLocaleDateString('es-MX')}
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            <span style="font-size: 12px; padding: 4px 8px; border-radius: 4px; ${getStatusBadgeStyle(order.approvalStatus)}">
+              ${order.approvalStatus}
+            </span>
+            <span style="font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #dbeafe; color: #1e40af;">
+              ${order.status}
+            </span>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 4px;">Total del Pedido:</div>
+              <div style="font-size: 20px; font-weight: 700; color: #111827;">${order.totalPriceFormatted}</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 4px;">Anticipo:</div>
+              <div style="font-size: 20px; font-weight: 700; color: #059669;">${order.depositAmountFormatted}</div>
+              ${order.depositPaid ? '<div style="font-size: 12px; color: #059669;">✓ Pagado</div>' : '<div style="font-size: 12px; color: #dc2626;">⏳ Pendiente</div>'}
+            </div>
+          </div>
+
+          <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px;">
+            <div style="font-size: 12px; color: #92400e; font-weight: 600; margin-bottom: 4px;">Saldo Restante:</div>
+            <div style="font-size: 24px; font-weight: 700; color: #b45309;">${order.remainingBalanceFormatted}</div>
+            <div style="font-size: 12px; color: #92400e; margin-top: 4px;">
+              Este monto debe pagarse antes de la entrega
+            </div>
+
+            ${order.approvalStatus === 'approved' && parseFloat(order.remainingBalance) > 0 && !order.secondPaymentReceipt ? `
+              <div style="margin-top: 12px; border-top: 1px solid #fbbf24; padding-top: 12px;">
+                <div style="font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 8px;">
+                  💳 Sube tu comprobante de pago final
+                </div>
+                <input type="file"
+                       id="second-payment-upload-${order.id}"
+                       accept="image/*"
+                       style="display: none;"
+                       onchange="handleSecondPaymentUpload(${order.id}, this.files[0])">
+                <div id="upload-status-${order.id}" style="margin-bottom: 8px;"></div>
+                <button
+                  onclick="document.getElementById('second-payment-upload-${order.id}').click()"
+                  style="width: 100%; padding: 12px; background: #059669; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                  📸 Subir Comprobante de Pago
+                </button>
+              </div>
+            ` : order.secondPaymentReceipt ? `
+              <div style="margin-top: 12px; padding: 10px; background: #d1fae5; border: 1px solid #059669; border-radius: 8px; text-align: center;">
+                <div style="font-size: 13px; font-weight: 600; color: #065f46;">
+                  ✅ Comprobante de pago recibido
+                </div>
+                <div style="font-size: 12px; color: #047857; margin-top: 4px;">
+                  Estamos verificando tu pago
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          ${order.eventDate ? `
+            <div style="margin-top: 12px; padding: 8px; background: #ede9fe; border-radius: 8px;">
+              <span style="font-size: 12px; color: #5b21b6; font-weight: 600;">📅 Fecha del Evento:</span>
+              <span style="font-size: 14px; color: #5b21b6; font-weight: 700; margin-left: 8px;">
+                ${new Date(order.eventDate).toLocaleDateString('es-MX')}
+              </span>
+            </div>
+          ` : ''}
+        </div>
+
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+          <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 8px;">Productos:</div>
+          ${order.items.map(item => `
+            <div style="font-size: 14px; color: #374151; margin-bottom: 4px;">
+              • ${item.productName} (${item.quantity} unidades)
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+
+    resultsDiv.style.display = 'block';
+
+  } catch (error) {
+    console.error('Error looking up orders:', error);
+    alert('Error al buscar pedidos. Por favor intente nuevamente.');
+    loadingDiv.style.display = 'none';
+  }
+};
+
+// Helper function to get badge styling
+function getStatusBadgeStyle(status) {
+  const styles = {
+    'pending_review': 'background: #fef3c7; color: #92400e;',
+    'approved': 'background: #d1fae5; color: #065f46;',
+    'rejected': 'background: #fee2e2; color: #991b1b;',
+    'needs_changes': 'background: #fef3c7; color: #92400e;'
+  };
+  return styles[status] || 'background: #f3f4f6; color: #374151;';
+}
+
+// Handle second payment upload
+window.handleSecondPaymentUpload = async function(orderId, file) {
+  if (!file) return;
+
+  const statusDiv = document.getElementById(`upload-status-${orderId}`);
+
+  // Show loading
+  statusDiv.innerHTML = `
+    <div style="padding: 8px; background: #dbeafe; border-radius: 6px; text-align: center; font-size: 13px; color: #1e40af;">
+      ⏳ Subiendo comprobante...
+    </div>
+  `;
+
+  try {
+    // Convert file to base64
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    // Upload to API
+    const response = await fetch(`${API_BASE}/../orders/${orderId}/second-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ paymentProof: base64 })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al subir el comprobante');
+    }
+
+    // Show success
+    statusDiv.innerHTML = `
+      <div style="padding: 8px; background: #d1fae5; border-radius: 6px; text-align: center; font-size: 13px; color: #065f46;">
+        ✅ ¡Comprobante recibido! Verificaremos tu pago pronto.
+      </div>
+    `;
+
+    // Refresh the order list after 2 seconds
+    setTimeout(() => {
+      window.lookupClientOrders();
+    }, 2000);
+
+  } catch (error) {
+    console.error('Error uploading second payment:', error);
+    statusDiv.innerHTML = `
+      <div style="padding: 8px; background: #fee2e2; border-radius: 6px; text-align: center; font-size: 13px; color: #991b1b;">
+        ❌ Error: ${error.message}
+      </div>
+    `;
+  }
+};
+
+// Attach event listener to the lookup button
+document.addEventListener('DOMContentLoaded', function() {
+  const lookupBtn = document.getElementById('btn-lookup-orders');
+  if (lookupBtn) {
+    lookupBtn.addEventListener('click', window.openClientLookup);
+  }
+});

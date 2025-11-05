@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
 import * as notionAgent from './agents/notion-agent/index.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from './utils/google-drive.js';
 
@@ -17,7 +18,14 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'VTAnunciando2025!';
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // Increased limit for image uploads
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+});
 
 // Authentication middleware
 function authenticateToken(req, res, next) {
@@ -62,6 +70,7 @@ let clientCounter = 1;
 const demoMaterials = [
   {
     id: 1,
+    barcode: 'MAT-001',
     name: 'MDF Board 1.22x2.44m',
     description: 'Standard MDF board for laser cutting',
     unit_type: 'sheets',
@@ -78,6 +87,7 @@ const demoMaterials = [
   },
   {
     id: 2,
+    barcode: 'MAT-002',
     name: 'Circular Black Magnets',
     description: 'Small circular magnets for souvenirs',
     unit_type: 'units',
@@ -94,6 +104,7 @@ const demoMaterials = [
   },
   {
     id: 3,
+    barcode: 'MAT-003',
     name: 'Transparent Protective Backs',
     description: 'Clear protective backing for souvenirs',
     unit_type: 'units',
@@ -110,6 +121,7 @@ const demoMaterials = [
   },
   {
     id: 4,
+    barcode: 'MAT-004',
     name: 'Industrial Glue',
     description: 'Strong adhesive for magnets',
     unit_type: 'bottles',
@@ -710,11 +722,16 @@ app.post('/api/inventory/materials', authenticateToken, (req, res) => {
     reorder_point,
     supplier_name,
     supplier_lead_time_days = 7,
-    cost_per_unit
+    cost_per_unit,
+    barcode
   } = req.body;
+
+  // Auto-generate barcode if not provided
+  const materialBarcode = barcode || `MAT-${String(materialCounter).padStart(3, '0')}`;
 
   const newMaterial = {
     id: materialCounter++,
+    barcode: materialBarcode,
     name,
     description,
     unit_type,
@@ -733,7 +750,7 @@ app.post('/api/inventory/materials', authenticateToken, (req, res) => {
 
   demoMaterials.push(newMaterial);
 
-  console.log(`✅ Material created: ${name}`);
+  console.log(`✅ Material created: ${name} (${materialBarcode})`);
 
   res.json({
     success: true,
@@ -1035,6 +1052,655 @@ app.get('/api/inventory/alerts/summary', authenticateToken, (req, res) => {
       total: critical + warning
     }
   });
+});
+
+// ========================================
+// BARCODE & INVOICE PROCESSING ROUTES
+// ========================================
+
+// Get material by barcode
+app.get('/api/inventory/materials/barcode/:barcode', authenticateToken, (req, res) => {
+  const barcode = req.params.barcode.toUpperCase();
+
+  console.log(`🔍 Looking up material by barcode: ${barcode}`);
+
+  const material = demoMaterials.find(m => m.barcode === barcode);
+
+  if (!material) {
+    return res.status(404).json({
+      success: false,
+      error: 'Material not found'
+    });
+  }
+
+  console.log(`✅ Material found: ${material.name}`);
+
+  res.json({
+    success: true,
+    material
+  });
+});
+
+// Quick receive (optimized for barcode scanner)
+app.post('/api/inventory/quick-receive', authenticateToken, (req, res) => {
+  const {
+    barcode,
+    quantity,
+    supplier,
+    poNumber,
+    unitCost
+  } = req.body;
+
+  console.log(`📦 Quick receive: ${barcode} x ${quantity}`);
+
+  const material = demoMaterials.find(m => m.barcode === barcode);
+
+  if (!material) {
+    return res.status(404).json({
+      success: false,
+      error: 'Material not found'
+    });
+  }
+
+  const stockBefore = material.current_stock;
+  const stockAfter = stockBefore + parseFloat(quantity);
+  const totalCost = unitCost ? parseFloat(quantity) * parseFloat(unitCost) : 0;
+
+  // Update material stock
+  material.current_stock = stockAfter;
+  material.available_stock = stockAfter - material.reserved_stock;
+
+  // Update stock status
+  if (material.available_stock >= material.reorder_point) {
+    material.stock_status = 'healthy';
+  } else if (material.available_stock >= material.min_stock_level) {
+    material.stock_status = 'low';
+  } else if (material.available_stock > 0) {
+    material.stock_status = 'critical';
+  } else {
+    material.stock_status = 'out_of_stock';
+  }
+
+  // Record transaction
+  const transaction = {
+    id: transactionCounter++,
+    material_id: material.id,
+    material_name: material.name,
+    transaction_type: 'purchase',
+    quantity: parseFloat(quantity),
+    stock_before: stockBefore,
+    stock_after: stockAfter,
+    unit_cost: unitCost ? parseFloat(unitCost) : material.cost_per_unit,
+    total_cost: totalCost || (parseFloat(quantity) * material.cost_per_unit),
+    supplier_name: supplier || material.supplier_name,
+    purchase_order_number: poNumber,
+    notes: 'Quick receive via barcode scanner',
+    performed_by: req.user.username,
+    transaction_date: new Date().toISOString()
+  };
+
+  demoMaterialTransactions.push(transaction);
+
+  console.log(`✅ Quick receive completed: ${material.name} - New stock: ${stockAfter}`);
+
+  res.json({
+    success: true,
+    material: {
+      id: material.id,
+      name: material.name,
+      barcode: material.barcode,
+      unit_type: material.unit_type
+    },
+    transaction: {
+      quantity: parseFloat(quantity),
+      stockBefore,
+      stockAfter,
+      timestamp: transaction.transaction_date
+    }
+  });
+});
+
+// Process invoice image
+app.post('/api/inventory/invoices/process', authenticateToken, upload.single('invoice'), async (req, res) => {
+  try {
+    console.log('📸 Processing invoice image...');
+
+    if (!req.file && !req.body.imageData) {
+      return res.status(400).json({
+        success: false,
+        error: 'No image provided'
+      });
+    }
+
+    // Get image data (either from file upload or base64)
+    let imageData;
+    if (req.file) {
+      imageData = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    } else {
+      imageData = req.body.imageData;
+    }
+
+    // Simulate AI processing (in production, this would use Claude's vision API)
+    // For demo purposes, we'll extract some mock data
+    const extractedData = {
+      supplier: 'Demo Supplier Inc.',
+      invoiceNumber: `INV-${Date.now()}`,
+      invoiceDate: new Date().toISOString().split('T')[0],
+      lineItems: [
+        {
+          description: 'MDF Board 1.22x2.44m',
+          quantity: 50,
+          unitCost: 245.00,
+          total: 12250.00,
+          matchedMaterial: demoMaterials.find(m => m.name.includes('MDF')),
+          matchConfidence: 0.95
+        },
+        {
+          description: 'Black Magnets - Circular',
+          quantity: 5000,
+          unitCost: 0.48,
+          total: 2400.00,
+          matchedMaterial: demoMaterials.find(m => m.name.includes('Magnet')),
+          matchConfidence: 0.92
+        }
+      ],
+      total: 14650.00,
+      notes: 'Extracted via AI vision processing'
+    };
+
+    console.log(`✅ Invoice processed: ${extractedData.lineItems.length} items extracted`);
+
+    res.json({
+      success: true,
+      extractedData
+    });
+
+  } catch (error) {
+    console.error('Error processing invoice:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process invoice image'
+    });
+  }
+});
+
+// Approve and record invoice
+app.post('/api/inventory/invoices/approve', authenticateToken, (req, res) => {
+  try {
+    const { invoiceData, lineItems } = req.body;
+
+    console.log(`📋 Approving invoice: ${invoiceData.invoiceNumber}`);
+
+    const transactions = [];
+    const errors = [];
+
+    // Process each line item
+    lineItems.forEach((item, index) => {
+      if (!item.materialId) {
+        errors.push(`Line ${index + 1}: No material selected`);
+        return;
+      }
+
+      const material = demoMaterials.find(m => m.id === parseInt(item.materialId));
+
+      if (!material) {
+        errors.push(`Line ${index + 1}: Material not found`);
+        return;
+      }
+
+      const stockBefore = material.current_stock;
+      const stockAfter = stockBefore + parseFloat(item.quantity);
+      const totalCost = parseFloat(item.quantity) * parseFloat(item.unitCost);
+
+      // Update material stock
+      material.current_stock = stockAfter;
+      material.available_stock = stockAfter - material.reserved_stock;
+
+      // Update stock status
+      if (material.available_stock >= material.reorder_point) {
+        material.stock_status = 'healthy';
+      } else if (material.available_stock >= material.min_stock_level) {
+        material.stock_status = 'low';
+      } else if (material.available_stock > 0) {
+        material.stock_status = 'critical';
+      } else {
+        material.stock_status = 'out_of_stock';
+      }
+
+      // Record transaction
+      const transaction = {
+        id: transactionCounter++,
+        material_id: material.id,
+        material_name: material.name,
+        transaction_type: 'purchase',
+        quantity: parseFloat(item.quantity),
+        stock_before: stockBefore,
+        stock_after: stockAfter,
+        unit_cost: parseFloat(item.unitCost),
+        total_cost: totalCost,
+        supplier_name: invoiceData.supplier,
+        purchase_order_number: invoiceData.invoiceNumber,
+        notes: `Invoice processing: ${invoiceData.invoiceNumber}`,
+        performed_by: req.user.username,
+        transaction_date: new Date().toISOString()
+      };
+
+      demoMaterialTransactions.push(transaction);
+      transactions.push(transaction);
+
+      console.log(`✅ Processed: ${material.name} - Qty: ${item.quantity}`);
+    });
+
+    if (errors.length > 0) {
+      console.log(`⚠️ Invoice approved with ${errors.length} errors`);
+    } else {
+      console.log(`✅ Invoice fully approved: ${transactions.length} transactions created`);
+    }
+
+    res.json({
+      success: true,
+      transactionsCreated: transactions.length,
+      transactions,
+      errors
+    });
+
+  } catch (error) {
+    console.error('Error approving invoice:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to approve invoice'
+    });
+  }
+});
+
+// Generate QR code labels
+app.get('/api/inventory/labels/generate', authenticateToken, (req, res) => {
+  const materialIds = req.query.materials ? req.query.materials.split(',').map(id => parseInt(id)) : null;
+
+  console.log('🏷️ Generating labels...');
+
+  // Filter materials if specific IDs provided
+  const materialsToLabel = materialIds
+    ? demoMaterials.filter(m => materialIds.includes(m.id))
+    : demoMaterials;
+
+  // Generate simple QR code data (in production, use a QR code library)
+  const labels = materialsToLabel.map(m => ({
+    barcode: m.barcode,
+    name: m.name,
+    currentStock: m.current_stock,
+    unitType: m.unit_type,
+    qrData: m.barcode // This would be used by QR code generator
+  }));
+
+  // Generate printable HTML
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Material Labels - VT Anunciando</title>
+  <style>
+    @page { margin: 0.5in; size: letter; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    .label-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .label {
+      border: 2px solid #333;
+      padding: 20px;
+      border-radius: 8px;
+      page-break-inside: avoid;
+      height: 3in;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .qr-code {
+      width: 150px;
+      height: 150px;
+      background: white;
+      border: 2px solid #ddd;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #999;
+    }
+    .barcode-text {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 10px 0;
+      font-family: 'Courier New', monospace;
+    }
+    .material-name {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    .stock-info {
+      font-size: 14px;
+      color: #666;
+      margin: 5px 0;
+    }
+    @media print {
+      .no-print { display: none; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="no-print" style="margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+    <h2 style="margin: 0 0 10px 0;">Material Labels</h2>
+    <p style="margin: 5px 0;">Generated: ${new Date().toLocaleString()}</p>
+    <p style="margin: 5px 0;">Total Labels: ${labels.length}</p>
+    <button onclick="window.print()" style="padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600;">
+      🖨️ Print Labels
+    </button>
+  </div>
+
+  <div class="label-grid">
+    ${labels.map(label => `
+      <div class="label">
+        <div class="barcode-text">${label.barcode}</div>
+        <div class="qr-code" id="qr-${label.barcode}"></div>
+        <div class="material-name">${label.name}</div>
+        <div class="stock-info">Stock: ${label.currentStock} ${label.unitType}</div>
+      </div>
+    `).join('')}
+  </div>
+
+  <script>
+    // Generate QR codes for each label
+    ${labels.map(label => `
+      QRCode.toCanvas(
+        document.getElementById('qr-${label.barcode}'),
+        '${label.barcode}',
+        { width: 150, margin: 1 },
+        function(error) { if (error) console.error(error); }
+      );
+    `).join('\n')}
+  </script>
+</body>
+</html>
+  `;
+
+  console.log(`✅ Generated ${labels.length} labels`);
+
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
+
+// Generate smart barcode sheet
+app.get('/api/inventory/smart-barcodes/sheet', authenticateToken, (req, res) => {
+  console.log('🏷️📊 Generating smart barcode sheet...');
+
+  const quantities = [1, 5, 10, 25, 50, 100, 200, 500, 1000];
+  const actions = [
+    { code: 'ACTION-CONFIRM', label: 'CONFIRM', description: 'Auto-submit transaction', color: '#10b981' },
+    { code: 'ACTION-CLEAR', label: 'CLEAR', description: 'Clear current entry', color: '#f59e0b' },
+    { code: 'ACTION-CANCEL', label: 'CANCEL', description: 'Close Quick Receive', color: '#ef4444' }
+  ];
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Barcode Sheet - VT Anunciando</title>
+  <style>
+    @page { margin: 0.5in; size: letter; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: white;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white;
+      border-radius: 12px;
+    }
+    .header h1 {
+      margin: 0 0 10px 0;
+      font-size: 28px;
+    }
+    .header p {
+      margin: 5px 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .section {
+      margin-bottom: 30px;
+      page-break-inside: avoid;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      border-left: 4px solid #6366f1;
+    }
+    .barcode-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .barcode-item {
+      border: 3px solid;
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      background: white;
+      page-break-inside: avoid;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .barcode-item.quantity {
+      border-color: #3b82f6;
+    }
+    .barcode-item.action {
+      border-color: #10b981;
+    }
+    .qr-container {
+      width: 120px;
+      height: 120px;
+      margin: 10px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .barcode-label {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 8px 0;
+      color: #111827;
+    }
+    .barcode-code {
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .workflow-guide {
+      background: #fef3c7;
+      border: 3px solid #f59e0b;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+    .workflow-guide h3 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      color: #92400e;
+    }
+    .workflow-steps {
+      display: grid;
+      gap: 12px;
+    }
+    .workflow-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .step-number {
+      width: 32px;
+      height: 32px;
+      background: #f59e0b;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .tips-box {
+      background: #dbeafe;
+      border: 3px solid #3b82f6;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+    .tips-box h3 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      color: #1e40af;
+    }
+    .tips-box ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .tips-box li {
+      margin-bottom: 8px;
+      color: #1e3a8a;
+    }
+    @media print {
+      .no-print { display: none; }
+      body { background: white; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+  <!-- Print Button -->
+  <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+    <button onclick="window.print()" style="padding: 12px 32px; background: #4f46e5; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      🖨️ Print Smart Barcode Sheet
+    </button>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>🏷️📊 SMART BARCODE SHEET</h1>
+    <p>VT Anunciando - Inventory Management System</p>
+    <p>Keep this sheet near your barcode scanner for fast inventory operations</p>
+    <p style="margin-top: 10px; font-size: 12px;">Generated: ${new Date().toLocaleString('es-MX')}</p>
+  </div>
+
+  <!-- Workflow Guide -->
+  <div class="workflow-guide">
+    <h3>⚡ QUICK WORKFLOW GUIDE</h3>
+    <div class="workflow-steps">
+      <div class="workflow-step">
+        <div class="step-number">1</div>
+        <div>Scan material barcode (MAT-XXX)</div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-number">2</div>
+        <div>Scan quantity barcode (below)</div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-number">3</div>
+        <div>Scan CONFIRM to complete transaction</div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-number">4</div>
+        <div>Repeat for next item!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quantity Barcodes -->
+  <div class="section">
+    <div class="section-title">📊 QUANTITY BARCODES (Scan to enter quantity)</div>
+    <div class="barcode-grid">
+      ${quantities.map(qty => `
+        <div class="barcode-item quantity">
+          <div class="barcode-label">${qty}</div>
+          <div class="qr-container" id="qr-qty-${qty}"></div>
+          <div class="barcode-code">QTY-${qty}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <!-- Action Barcodes -->
+  <div class="section">
+    <div class="section-title">⚡ ACTION BARCODES (Quick commands)</div>
+    <div class="barcode-grid">
+      ${actions.map(action => `
+        <div class="barcode-item action" style="border-color: ${action.color};">
+          <div class="barcode-label" style="color: ${action.color};">${action.label}</div>
+          <div class="qr-container" id="qr-${action.code}"></div>
+          <div class="barcode-code">${action.code}</div>
+          <div style="font-size: 11px; color: #6b7280; margin-top: 8px;">${action.description}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <!-- Tips & Best Practices -->
+  <div class="tips-box">
+    <h3>💡 TIPS FOR FASTEST SCANNING</h3>
+    <ul>
+      <li><strong>Keep this sheet visible</strong> - Place it near your scanning station</li>
+      <li><strong>Use Quick Receive mode</strong> - Click "⚡ Quick Receive" button in inventory view</li>
+      <li><strong>Scanner speed</strong> - Most USB scanners work like a keyboard (instant input)</li>
+      <li><strong>Auto-submit</strong> - After scanning quantity, transaction auto-submits in 2 seconds or scan CONFIRM immediately</li>
+      <li><strong>Error correction</strong> - Scan CLEAR to reset current entry without closing the modal</li>
+      <li><strong>Exit quickly</strong> - Scan CANCEL to close Quick Receive mode</li>
+      <li><strong>Common quantities</strong> - Print multiple copies and keep them handy for your most-used quantities</li>
+    </ul>
+  </div>
+
+  <script>
+    // Generate QR codes for quantities
+    ${quantities.map(qty => `
+      QRCode.toCanvas(
+        document.getElementById('qr-qty-${qty}'),
+        'QTY-${qty}',
+        { width: 120, margin: 1 },
+        function(error) { if (error) console.error(error); }
+      );
+    `).join('\n')}
+
+    // Generate QR codes for actions
+    ${actions.map(action => `
+      QRCode.toCanvas(
+        document.getElementById('qr-${action.code}'),
+        '${action.code}',
+        { width: 120, margin: 1 },
+        function(error) { if (error) console.error(error); }
+      );
+    `).join('\n')}
+  </script>
+</body>
+</html>
+  `;
+
+  console.log('✅ Smart barcode sheet generated');
+
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
 });
 
 // ========================================

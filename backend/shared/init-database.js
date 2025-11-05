@@ -60,6 +60,11 @@ CREATE TABLE IF NOT EXISTS orders (
   department VARCHAR(50) DEFAULT 'design',
   priority VARCHAR(20) DEFAULT 'normal',
 
+  -- Event details (for client orders)
+  event_type VARCHAR(100),
+  event_date DATE,
+  client_notes TEXT,
+
   -- Financial
   subtotal DECIMAL(10, 2) NOT NULL,
   tax DECIMAL(10, 2) DEFAULT 0,
@@ -73,6 +78,14 @@ CREATE TABLE IF NOT EXISTS orders (
       ELSE 0
     END
   ) STORED,
+
+  -- Payment details (for client orders)
+  deposit_amount DECIMAL(10, 2),
+  deposit_paid BOOLEAN DEFAULT false,
+  payment_method VARCHAR(50),
+  payment_proof_url TEXT,
+  stripe_payment_id TEXT,
+  approval_status VARCHAR(50) DEFAULT 'pending_review',
 
   -- Shipping
   shipping_label_generated BOOLEAN DEFAULT false,
@@ -151,6 +164,59 @@ CREATE TABLE IF NOT EXISTS production_tracking (
 CREATE INDEX idx_production_order_id ON production_tracking(order_id);
 CREATE INDEX idx_production_department ON production_tracking(department);
 CREATE INDEX idx_production_status ON production_tracking(status);
+
+-- =====================================================
+-- PAYMENTS TABLE (for client order payments)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS payments (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+
+  payment_type VARCHAR(50) NOT NULL, -- 'deposit', 'final_payment', 'refund'
+  amount DECIMAL(10, 2) NOT NULL,
+
+  -- Payment details
+  payment_method VARCHAR(50), -- 'stripe', 'bank_transfer', 'cash'
+  transaction_id TEXT,
+  stripe_payment_intent_id TEXT,
+
+  -- Status
+  status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'completed', 'failed', 'refunded'
+
+  -- Proof (for bank transfers)
+  proof_url TEXT,
+
+  -- Timestamps
+  payment_date TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_payments_order_id ON payments(order_id);
+CREATE INDEX idx_payments_status ON payments(status);
+CREATE INDEX idx_payments_payment_type ON payments(payment_type);
+
+-- =====================================================
+-- ORDER FILES TABLE (for reference images and design files)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS order_files (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+
+  file_type VARCHAR(50) NOT NULL, -- 'reference_image', 'design_proof', 'final_design'
+  file_url TEXT NOT NULL,
+  file_name VARCHAR(255),
+  file_size INTEGER, -- in bytes
+  mime_type VARCHAR(100),
+
+  -- Who uploaded
+  uploaded_by VARCHAR(50), -- 'client', 'admin'
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_order_files_order_id ON order_files(order_id);
+CREATE INDEX idx_order_files_type ON order_files(file_type);
 
 -- =====================================================
 -- REPORTS HISTORY TABLE
@@ -295,9 +361,11 @@ async function initializeDatabase() {
     console.log('\nCreated tables:');
     console.log('  - clients');
     console.log('  - products');
-    console.log('  - orders');
+    console.log('  - orders (with client order fields)');
     console.log('  - order_items');
     console.log('  - production_tracking');
+    console.log('  - payments');
+    console.log('  - order_files');
     console.log('  - reports_history');
     console.log('  - analytics_cache');
     console.log('\nCreated views:');

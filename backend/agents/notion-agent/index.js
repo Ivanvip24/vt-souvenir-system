@@ -113,7 +113,7 @@ export async function queryOrders(filters = {}) {
         filter: notionFilters.length > 0 ? { and: notionFilters } : undefined,
         sorts: [
           {
-            property: propertyMappings.orderDate,
+            timestamp: 'created_time',
             direction: 'descending'
           }
         ]
@@ -287,31 +287,72 @@ function buildOrderProperties(orderData, isUpdate = false) {
 function parseNotionPage(page) {
   const props = page.properties;
 
+  // Extract raw data from Notion
+  const eventDate = extractDate(props[propertyMappings.eventDate]);
+  const firstDeposit = extractNumber(props[propertyMappings.firstDeposit]);
+  const secondDeposit = extractNumber(props[propertyMappings.secondDeposit]);
+  const totalPrice = extractNumber(props[propertyMappings.totalPrice]);
+
+  // Transform to match frontend expectations
   return {
+    // Frontend expects 'id', not 'notionPageId'
+    id: page.id,
     notionPageId: page.id,
     notionPageUrl: page.url,
-    orderNumber: extractText(props[propertyMappings.orderNumber]),
-    orderDate: extractDate(props[propertyMappings.orderDate]),
-    clientName: extractText(props[propertyMappings.clientName]),
-    clientPhone: extractPhone(props[propertyMappings.clientPhone]),
-    clientAddress: extractText(props[propertyMappings.clientAddress]),
-    clientCity: extractText(props[propertyMappings.clientCity]),
-    clientState: extractText(props[propertyMappings.clientState]),
-    products: extractText(props[propertyMappings.products]),
-    quantities: extractText(props[propertyMappings.quantities]),
-    totalPrice: extractNumber(props[propertyMappings.totalPrice]),
-    productionCost: extractNumber(props[propertyMappings.productionCost]),
-    profit: extractNumber(props[propertyMappings.profit]),
-    profitMargin: extractNumber(props[propertyMappings.profitMargin]),
-    status: extractSelect(props[propertyMappings.status]),
-    department: extractSelect(props[propertyMappings.department]),
-    priority: extractSelect(props[propertyMappings.priority]),
-    shippingLabelGenerated: extractCheckbox(props[propertyMappings.shippingLabelGenerated]),
-    trackingNumber: extractText(props[propertyMappings.trackingNumber]),
-    deliveryDate: extractDate(props[propertyMappings.deliveryDate]),
-    notes: extractText(props[propertyMappings.notes]),
-    internalNotes: extractText(props[propertyMappings.internalNotes]),
+    // DESTINO (title) contains the order destination/number
+    orderNumber: extractText(props[propertyMappings.title]),
+    orderDate: eventDate, // Use event date as order date
+    eventDate: eventDate,
+    // Client information
+    clientName: extractSelect(props[propertyMappings.clientName]), // Select type
+    clientPhone: String(extractNumber(props[propertyMappings.clientPhone]) || ''), // Number type
+    clientAddress: '',
+    clientCity: '',
+    clientState: '',
+    // Financial data
+    totalPrice: totalPrice,
+    depositAmount: firstDeposit, // Frontend expects depositAmount
+    depositPaid: firstDeposit > 0, // Boolean based on whether deposit exists
+    firstDeposit: firstDeposit,
+    secondDeposit: secondDeposit,
+    productionCost: 0,
+    profit: totalPrice - 0, // Simple profit calculation
+    profitMargin: 0,
+    // Status - frontend expects 'approvalStatus'
+    status: extractStatus(props[propertyMappings.status]), // Status type
+    approvalStatus: mapNotionStatusToApprovalStatus(extractStatus(props[propertyMappings.status])),
+    // Notes/Summary
+    summary: extractText(props[propertyMappings.summary]),
+    notes: extractText(props[propertyMappings.summary]),
+    internalNotes: '',
+    // Items - frontend expects an array (parse from summary or empty)
+    items: [],
+    // Additional fields
+    products: '',
+    quantities: '',
+    department: '',
+    priority: '',
+    shippingLabelGenerated: false,
+    trackingNumber: '',
+    deliveryDate: eventDate,
   };
+}
+
+/**
+ * Map Notion status to frontend approval status
+ */
+function mapNotionStatusToApprovalStatus(notionStatus) {
+  const statusMap = {
+    'Diseño': 'pending',
+    'Printing': 'pending',
+    'Cutting': 'pending',
+    'Counting': 'pending',
+    'Shipping': 'approved',
+    'Delivered': 'approved',
+    'Cancelled': 'approved',
+    'New': 'pending'
+  };
+  return statusMap[notionStatus] || 'pending';
 }
 
 /**
@@ -384,6 +425,10 @@ function extractDate(prop) {
 
 function extractSelect(prop) {
   return prop?.select?.name || '';
+}
+
+function extractStatus(prop) {
+  return prop?.status?.name || '';
 }
 
 function extractCheckbox(prop) {

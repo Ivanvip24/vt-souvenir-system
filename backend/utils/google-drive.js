@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 import path from 'path';
+import fs from 'fs';
 
 /**
  * Google Drive Integration Module
@@ -34,6 +35,11 @@ function initializeDrive() {
     // Check if credentials file exists
     const credentialsPath = path.join(process.cwd(), 'google-drive-credentials.json');
 
+    // Check if file actually exists before trying to use it
+    if (!fs.existsSync(credentialsPath)) {
+      throw new Error('Credentials file not found');
+    }
+
     const auth = new google.auth.GoogleAuth({
       keyFile: credentialsPath,
       scopes: ['https://www.googleapis.com/auth/drive.file'],
@@ -46,6 +52,7 @@ function initializeDrive() {
     console.log('⚠️  Google Drive not configured. Files will be stored locally.');
     console.log('   To enable: Add google-drive-credentials.json and GOOGLE_DRIVE_FOLDER_ID to .env');
     isConfigured = false;
+    drive = null;
   }
 }
 

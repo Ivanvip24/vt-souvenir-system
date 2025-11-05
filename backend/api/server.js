@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { config } from 'dotenv';
 import { testConnection, query } from '../shared/database.js';
@@ -12,6 +13,10 @@ import clientRoutes from './client-routes.js';
 import inventoryRoutes from './inventory-routes.js';
 import adminRoutes from './admin-routes.js';
 import priceRoutes from './price-routes.js';
+import bomRoutes from './bom-routes.js';
+import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
+import { sendReceiptEmail } from '../agents/analytics-agent/email-sender.js';
+import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
 
 config();
 
@@ -31,6 +36,17 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
+
+// ========================================
+// STATIC FILES - Serve PDF Receipts & Payment Proofs
+// ========================================
+const receiptsPath = path.join(__dirname, '../receipts');
+app.use('/receipts', express.static(receiptsPath));
+console.log(`📁 Serving receipts from: ${receiptsPath}`);
+
+const paymentReceiptsPath = path.join(__dirname, '../payment-receipts');
+app.use('/payment-receipts', express.static(paymentReceiptsPath));
+console.log(`📁 Serving payment receipts from: ${paymentReceiptsPath}`);
 
 // ========================================
 // HEALTH CHECK
@@ -66,6 +82,11 @@ app.use('/api/inventory', inventoryRoutes);
 // PRICE TRACKING & ANALYTICS ROUTES
 // ========================================
 app.use('/api/prices', priceRoutes);
+
+// ========================================
+// BILL OF MATERIALS ROUTES
+// ========================================
+app.use('/api/bom', bomRoutes);
 
 // ========================================
 // NOTION AGENT ENDPOINTS
@@ -143,6 +164,7 @@ app.get('/api/orders', async (req, res) => {
         o.total_production_cost,
         o.deposit_amount,
         o.deposit_paid,
+        o.actual_deposit_amount,
         o.payment_method,
         o.approval_status,
         o.status,
@@ -155,6 +177,11 @@ app.get('/api/orders', async (req, res) => {
         o.internal_notes,
         o.notion_page_id,
         o.notion_page_url,
+        o.receipt_pdf_url,
+        o.receipt_path,
+        o.second_payment_receipt,
+        o.second_payment_date,
+        o.second_payment_status,
         o.created_at,
         c.name as client_name,
         c.phone as client_phone,
@@ -205,6 +232,7 @@ app.get('/api/orders', async (req, res) => {
         ? ((parseFloat(order.total_price) - parseFloat(order.total_production_cost)) / parseFloat(order.total_price) * 100).toFixed(2)
         : 0,
       depositAmount: parseFloat(order.deposit_amount) || 0,
+      actualDepositAmount: parseFloat(order.actual_deposit_amount) || 0,
       depositPaid: order.deposit_paid || false,
       paymentMethod: order.payment_method || '',
       // Status
@@ -225,6 +253,9 @@ app.get('/api/orders', async (req, res) => {
       // Notion sync
       notionPageId: order.notion_page_id,
       notionPageUrl: order.notion_page_url,
+      // Receipt
+      receiptPdfUrl: order.receipt_pdf_url || '',
+      receiptPath: order.receipt_path || '',
       // Summary for compatibility
       summary: order.client_notes || ''
     }));
@@ -245,18 +276,147 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// Get single order
-app.get('/api/orders/:pageId', async (req, res) => {
+// Get single order by ID
+app.get('/api/orders/:orderId', async (req, res) => {
   try {
-    const result = await notionAgent.getOrder(req.params.pageId);
+    const orderId = parseInt(req.params.orderId);
+
+    if (isNaN(orderId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid order ID'
+      });
+    }
+
+    console.log(`🔍 Fetching order ${orderId} from PostgreSQL...`);
+
+    // Query order with client info and items
+    const result = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.order_date,
+        o.event_type,
+        o.event_date,
+        o.client_notes,
+        o.subtotal,
+        o.total_price,
+        o.total_production_cost,
+        o.deposit_amount,
+        o.deposit_paid,
+        o.actual_deposit_amount,
+        o.payment_method,
+        o.approval_status,
+        o.status,
+        o.department,
+        o.priority,
+        o.shipping_label_generated,
+        o.tracking_number,
+        o.delivery_date,
+        o.notes,
+        o.internal_notes,
+        o.notion_page_id,
+        o.notion_page_url,
+        o.receipt_pdf_url,
+        o.receipt_path,
+        o.second_payment_receipt,
+        o.second_payment_date,
+        o.second_payment_status,
+        o.created_at,
+        c.name as client_name,
+        c.phone as client_phone,
+        c.email as client_email,
+        c.address as client_address,
+        c.city as client_city,
+        c.state as client_state,
+        json_agg(
+          json_build_object(
+            'id', oi.id,
+            'productId', oi.product_id,
+            'productName', oi.product_name,
+            'quantity', oi.quantity,
+            'unitPrice', oi.unit_price,
+            'unitCost', oi.unit_cost,
+            'lineTotal', oi.line_total,
+            'lineCost', oi.line_cost,
+            'lineProfit', oi.line_profit
+          ) ORDER BY oi.id
+        ) FILTER (WHERE oi.id IS NOT NULL) as items
+      FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE o.id = $1
+      GROUP BY o.id, c.name, c.phone, c.email, c.address, c.city, c.state
+    `, [orderId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = result.rows[0];
+
+    // Transform data to match frontend expectations
+    const orderData = {
+      id: order.id.toString(),
+      orderNumber: order.order_number,
+      orderDate: order.order_date,
+      eventDate: order.event_date,
+      eventType: order.event_type,
+      // Client info
+      clientName: order.client_name || '',
+      clientPhone: order.client_phone || '',
+      clientEmail: order.client_email || '',
+      clientAddress: order.client_address || '',
+      clientCity: order.client_city || '',
+      clientState: order.client_state || '',
+      // Financial
+      totalPrice: parseFloat(order.total_price) || 0,
+      productionCost: parseFloat(order.total_production_cost) || 0,
+      profit: parseFloat(order.total_price) - parseFloat(order.total_production_cost),
+      profitMargin: order.total_price > 0
+        ? ((parseFloat(order.total_price) - parseFloat(order.total_production_cost)) / parseFloat(order.total_price) * 100).toFixed(2)
+        : 0,
+      depositAmount: parseFloat(order.deposit_amount) || 0,
+      actualDepositAmount: parseFloat(order.actual_deposit_amount) || 0,
+      depositPaid: order.deposit_paid || false,
+      paymentMethod: order.payment_method || '',
+      // Status
+      status: order.status || 'new',
+      approvalStatus: order.approval_status || 'pending_review',
+      department: order.department || 'pending',
+      priority: order.priority || 'normal',
+      // Items
+      items: order.items || [],
+      // Notes
+      notes: order.notes || order.client_notes || '',
+      clientNotes: order.client_notes || '',
+      internalNotes: order.internal_notes || '',
+      // Shipping
+      shippingLabelGenerated: order.shipping_label_generated || false,
+      trackingNumber: order.tracking_number || '',
+      deliveryDate: order.delivery_date,
+      // Notion sync
+      notionPageId: order.notion_page_id,
+      notionPageUrl: order.notion_page_url,
+      // Receipt
+      receiptPdfUrl: order.receipt_pdf_url || '',
+      receiptPath: order.receipt_path || '',
+      // Summary for compatibility
+      summary: order.client_notes || ''
+    };
+
+    console.log(`✅ Found order ${orderId}`);
 
     res.json({
       success: true,
-      data: result
+      data: orderData
     });
   } catch (error) {
     console.error('Error getting order:', error);
-    res.status(404).json({
+    res.status(500).json({
       success: false,
       error: error.message
     });
@@ -337,17 +497,122 @@ app.post('/api/orders/sync/bulk', async (req, res) => {
 app.post('/api/orders/:orderId/approve', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
+    const { actualDepositAmount } = req.body;
 
-    console.log(`✅ Approving order ${orderId}...`);
+    console.log(`✅ Approving order ${orderId} with deposit: $${actualDepositAmount}...`);
 
-    // Update order status in database
+    // Validate deposit amount
+    if (!actualDepositAmount || actualDepositAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Actual deposit amount is required and must be greater than 0'
+      });
+    }
+
+    // Fetch full order details with items and client info
+    const orderResult = await query(
+      `SELECT
+        o.*,
+        c.name as client_name,
+        c.phone as client_phone,
+        c.email as client_email
+       FROM orders o
+       JOIN clients c ON o.client_id = c.id
+       WHERE o.id = $1`,
+      [orderId]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Validate deposit doesn't exceed total
+    if (actualDepositAmount > order.total_price) {
+      return res.status(400).json({
+        success: false,
+        error: 'Deposit amount cannot exceed total order price'
+      });
+    }
+
+    // Fetch order items
+    const itemsResult = await query(
+      `SELECT
+        oi.*,
+        p.name as product_name
+       FROM order_items oi
+       LEFT JOIN products p ON oi.product_id = p.id
+       WHERE oi.order_id = $1`,
+      [orderId]
+    );
+
+    const items = itemsResult.rows.map(item => ({
+      productName: item.product_name || item.product_name_override || 'Producto',
+      quantity: item.quantity,
+      unitPrice: parseFloat(item.unit_price),
+      lineTotal: parseFloat(item.line_total)
+    }));
+
+    // Calculate remaining balance
+    const remainingBalance = order.total_price - actualDepositAmount;
+
+    // Generate PDF receipt
+    console.log('📄 Generating PDF receipt...');
+    const pdfPath = await generateReceipt({
+      orderNumber: order.order_number,
+      clientName: order.client_name,
+      clientPhone: order.client_phone,
+      clientEmail: order.client_email,
+      orderDate: order.order_date,
+      items: items,
+      totalPrice: parseFloat(order.total_price),
+      actualDepositAmount: parseFloat(actualDepositAmount),
+      remainingBalance: parseFloat(remainingBalance),
+      eventDate: order.event_date
+    });
+
+    const receiptUrl = getReceiptUrl(pdfPath);
+    console.log(`✅ PDF generated: ${receiptUrl}`);
+
+    // Update order status and payment info in database
     await query(
       `UPDATE orders
        SET approval_status = 'approved',
-           status = 'in_production'
+           status = 'in_production',
+           actual_deposit_amount = $2,
+           receipt_pdf_url = $3,
+           receipt_path = $4
        WHERE id = $1`,
-      [orderId]
+      [orderId, actualDepositAmount, receiptUrl, pdfPath]
     );
+
+    // Send receipt email to client
+    try {
+      console.log('📧 Sending receipt email to client...');
+      await sendReceiptEmail(
+        {
+          orderNumber: order.order_number,
+          orderDate: order.order_date,
+          totalPrice: parseFloat(order.total_price),
+          actualDepositAmount: parseFloat(actualDepositAmount),
+          remainingBalance: parseFloat(remainingBalance),
+          eventDate: order.event_date
+        },
+        {
+          name: order.client_name,
+          email: order.client_email
+        },
+        pdfPath
+      );
+      console.log('✅ Receipt email sent successfully');
+    } catch (emailError) {
+      console.error('⚠️  Failed to send receipt email:', emailError);
+      // Continue even if email fails - don't block the approval
+    }
 
     // Sync to Notion if needed
     try {
@@ -360,7 +625,8 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Order approved successfully'
+      message: 'Order approved successfully, receipt generated and emailed to client',
+      receiptUrl: receiptUrl
     });
   } catch (error) {
     console.error('Error approving order:', error);
@@ -404,6 +670,216 @@ app.post('/api/orders/:orderId/reject', async (req, res) => {
     });
   } catch (error) {
     console.error('Error rejecting order:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Upload second payment receipt (for clients)
+app.post('/api/orders/:orderId/second-payment', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { paymentProof } = req.body; // Base64 encoded image
+
+    console.log(`💰 Uploading second payment receipt for order ${orderId}...`);
+
+    if (!paymentProof) {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment proof is required'
+      });
+    }
+
+    // Verify order exists and has remaining balance
+    const orderCheck = await query(
+      'SELECT id, order_number, total_price, deposit_amount, approval_status FROM orders WHERE id = $1',
+      [orderId]
+    );
+
+    if (orderCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = orderCheck.rows[0];
+    const remainingBalance = parseFloat(order.total_price) - parseFloat(order.deposit_amount);
+
+    if (order.approval_status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        error: 'Order must be approved before uploading second payment'
+      });
+    }
+
+    if (remainingBalance <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Order has no remaining balance'
+      });
+    }
+
+    // Upload to Google Drive or save locally
+    let imageUrl;
+    const filename = `second-payment-${order.order_number}-${Date.now()}.jpg`;
+
+    if (isGoogleDriveConfigured()) {
+      // Upload to Google Drive
+      console.log(`📤 Uploading to Google Drive: ${filename}`);
+      const uploadResult = await uploadToGoogleDrive({
+        fileData: paymentProof,
+        fileName: filename,
+        mimeType: 'image/jpeg'
+      });
+
+      imageUrl = uploadResult.directImageUrl; // URL that can be used in <img> tags
+      console.log(`✅ Uploaded to Google Drive: ${imageUrl}`);
+    } else {
+      // Fallback to local storage if Google Drive not configured
+      console.log('⚠️  Google Drive not configured, saving locally');
+      const paymentsDir = path.join(__dirname, '../payment-receipts');
+      if (!fs.existsSync(paymentsDir)) {
+        fs.mkdirSync(paymentsDir, { recursive: true });
+      }
+
+      const filepath = path.join(paymentsDir, filename);
+      const base64Data = paymentProof.replace(/^data:image\/\w+;base64,/, '');
+      fs.writeFileSync(filepath, Buffer.from(base64Data, 'base64'));
+
+      imageUrl = `/payment-receipts/${filename}`;
+      console.log(`✅ Payment proof saved locally: ${filepath}`);
+    }
+
+    // Update order in database
+    await query(
+      `UPDATE orders
+       SET second_payment_receipt = $2,
+           second_payment_date = NOW(),
+           second_payment_status = 'uploaded'
+       WHERE id = $1`,
+      [orderId, imageUrl]
+    );
+
+    console.log(`✅ Second payment receipt uploaded for order ${orderId}`);
+
+    res.json({
+      success: true,
+      message: 'Payment receipt uploaded successfully. We will verify it shortly.',
+      filename: filename
+    });
+  } catch (error) {
+    console.error('Error uploading second payment receipt:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Confirm second payment and complete order (for admin)
+app.post('/api/orders/:orderId/confirm-second-payment', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+
+    console.log(`✅ Confirming second payment for order ${orderId}...`);
+
+    // Get order details for email
+    const orderResult = await query(`
+      SELECT o.*, c.name as client_name, c.email as client_email
+      FROM orders o
+      JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Update order status to completed
+    await query(`
+      UPDATE orders
+      SET second_payment_status = 'confirmed',
+          status = 'delivered'
+      WHERE id = $1
+    `, [orderId]);
+
+    console.log(`✅ Order ${orderId} marked as completed`);
+
+    // Send completion email to client
+    try {
+      const emailBody = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">¡Pago Confirmado!</h1>
+          </div>
+
+          <div style="padding: 30px; background: #f9fafb;">
+            <p style="font-size: 16px; color: #374151;">Hola <strong>${order.client_name}</strong>,</p>
+
+            <p style="font-size: 16px; color: #374151;">
+              ¡Excelentes noticias! Hemos confirmado tu pago final para el pedido <strong>${order.order_number}</strong>.
+            </p>
+
+            <div style="background: #d1fae5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #065f46; font-weight: 600;">
+                ✅ Tu pedido está completo y listo para entrega
+              </p>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #1e40af; margin-top: 0;">Detalles del Pedido:</h3>
+              <p><strong>Número de Pedido:</strong> ${order.order_number}</p>
+              <p><strong>Total Pagado:</strong> $${parseFloat(order.total_price).toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+              <p><strong>Estado:</strong> Completo y Listo</p>
+            </div>
+
+            <p style="font-size: 16px; color: #374151;">
+              Nos pondremos en contacto contigo pronto para coordinar la entrega de tu pedido.
+            </p>
+
+            <p style="font-size: 16px; color: #374151;">
+              ¡Gracias por confiar en nosotros!
+            </p>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                ${process.env.COMPANY_NAME || 'VT Anunciando - Souvenirs Personalizados'}
+              </p>
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0 0 0;">
+                ${process.env.COMPANY_EMAIL || 'informacion@vtanunciando.com'}
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      await emailService.sendEmail({
+        to: order.client_email,
+        subject: `¡Pago Confirmado! - Pedido ${order.order_number}`,
+        html: emailBody
+      });
+
+      console.log(`📧 Completion email sent to ${order.client_email}`);
+    } catch (emailError) {
+      console.error('Failed to send completion email:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Second payment confirmed and order completed'
+    });
+
+  } catch (error) {
+    console.error('Error confirming second payment:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -682,7 +1158,8 @@ async function startServer() {
       console.log('  GET  /api/reports/schedule');
       console.log('  POST /api/test/email');
       console.log('  📦 /api/inventory/* (Materials, Alerts, BOM, Forecasting)');
-      console.log('  💰 /api/prices/* (Price Tracking, Trends, Margins, Insights)\n');
+      console.log('  💰 /api/prices/* (Price Tracking, Trends, Margins, Insights)');
+      console.log('  🔧 /api/bom/* (Bill of Materials, Components, Cost Calculations)\n');
     });
 
   } catch (error) {

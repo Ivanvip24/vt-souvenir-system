@@ -305,10 +305,11 @@ export async function createOrderBothSystems(orderData) {
         status,
         department,
         priority,
+        subtotal,
         total_price,
         total_production_cost,
         notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id`,
       [
         orderData.orderNumber,
@@ -317,6 +318,7 @@ export async function createOrderBothSystems(orderData) {
         orderData.status || 'new',
         orderData.department || 'design',
         orderData.priority || 'normal',
+        orderData.subtotal || orderData.totalPrice || 0,
         orderData.totalPrice,
         orderData.productionCost,
         orderData.notes
