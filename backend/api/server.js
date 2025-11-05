@@ -176,9 +176,7 @@ app.get('/api/orders', async (req, res) => {
         o.internal_notes,
         o.notion_page_id,
         o.notion_page_url,
-        o.receipt_pdf_url,
         o.receipt_path,
-        o.second_payment_receipt,
         o.second_payment_date,
         o.second_payment_status,
         o.created_at,
@@ -252,7 +250,6 @@ app.get('/api/orders', async (req, res) => {
       notionPageId: order.notion_page_id,
       notionPageUrl: order.notion_page_url,
       // Receipt
-      receiptPdfUrl: order.receipt_pdf_url || '',
       receiptPath: order.receipt_path || '',
       // Summary for compatibility
       summary: order.client_notes || ''
@@ -314,9 +311,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
         o.internal_notes,
         o.notion_page_id,
         o.notion_page_url,
-        o.receipt_pdf_url,
         o.receipt_path,
-        o.second_payment_receipt,
         o.second_payment_date,
         o.second_payment_status,
         o.created_at,
@@ -398,7 +393,6 @@ app.get('/api/orders/:orderId', async (req, res) => {
       notionPageId: order.notion_page_id,
       notionPageUrl: order.notion_page_url,
       // Receipt
-      receiptPdfUrl: order.receipt_pdf_url || '',
       receiptPath: order.receipt_path || '',
       // Summary for compatibility
       summary: order.client_notes || ''
@@ -579,10 +573,9 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
       `UPDATE orders
        SET approval_status = 'approved',
            status = 'in_production',
-           receipt_pdf_url = $2,
-           receipt_path = $3
+           receipt_path = $2
        WHERE id = $1`,
-      [orderId, receiptUrl, pdfPath]
+      [orderId, pdfPath]
     );
 
     // Send receipt email to client
@@ -751,11 +744,10 @@ app.post('/api/orders/:orderId/second-payment', async (req, res) => {
     // Update order in database
     await query(
       `UPDATE orders
-       SET second_payment_receipt = $2,
-           second_payment_date = NOW(),
+       SET second_payment_date = NOW(),
            second_payment_status = 'uploaded'
        WHERE id = $1`,
-      [orderId, imageUrl]
+      [orderId]
     );
 
     console.log(`✅ Second payment receipt uploaded for order ${orderId}`);
