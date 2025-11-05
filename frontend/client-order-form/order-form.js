@@ -9,7 +9,7 @@
 
 const API_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:3000/api/client'
-  : '/api/client';
+  : 'https://vt-souvenir-backend.onrender.com/api/client';
 
 const STORAGE_KEY = 'souvenir_client_data';
 
