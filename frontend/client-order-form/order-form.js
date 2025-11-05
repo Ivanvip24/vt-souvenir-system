@@ -20,7 +20,7 @@ const STORAGE_KEY = 'souvenir_client_data';
 
 const state = {
   currentStep: 1,
-  maxSteps: 6,
+  maxSteps: 5,
   client: {
     phone: '',
     name: '',
@@ -33,10 +33,7 @@ const state = {
   products: [],
   cart: {}, // { productId: { product, quantity } }
   order: {
-    eventType: '',
-    eventDate: '',
-    clientNotes: '',
-    referenceImages: []
+    clientNotes: ''
   },
   payment: {
     method: 'stripe',
@@ -78,12 +75,9 @@ function initializeEventListeners() {
   // Step 3: Products (loaded dynamically)
   document.getElementById('continue-products').addEventListener('click', handleProductsSubmit);
 
-  // Step 4: Event Details
-  document.getElementById('continue-event').addEventListener('click', handleEventSubmit);
-  setupFileUpload('file-upload-area', 'reference-images', 'file-preview', handleReferenceUpload);
-
-  // Step 5: Payment
+  // Step 4: Payment
   document.getElementById('submit-order').addEventListener('click', handleOrderSubmit);
+  document.getElementById('stripe-pay-btn').addEventListener('click', handleStripePayment);
   document.querySelectorAll('input[name="payment"]').forEach(radio => {
     radio.addEventListener('change', handlePaymentMethodChange);
   });
@@ -113,9 +107,8 @@ function showStep(stepNumber) {
     1.5: 'step-confirm',
     2: 'step-info',
     3: 'step-products',
-    4: 'step-event',
-    5: 'step-payment',
-    6: 'step-success'
+    4: 'step-payment',
+    5: 'step-success'
   };
 
   const currentStepEl = document.getElementById(stepMap[stepNumber]);
@@ -128,7 +121,7 @@ function showStep(stepNumber) {
     populateConfirmationData();
   } else if (stepNumber === 3) {
     loadProducts();
-  } else if (stepNumber === 5) {
+  } else if (stepNumber === 4) {
     populatePaymentSummary();
   }
 }
@@ -647,41 +640,11 @@ function handleProductsSubmit() {
     return;
   }
 
-  showStep(4);
+  showStep(4); // Go directly to payment
 }
 
 // ==========================================
-// STEP 4: EVENT DETAILS
-// ==========================================
-
-function handleEventSubmit() {
-  const eventDate = document.getElementById('event-date').value;
-  const clientNotes = document.getElementById('client-notes').value.trim();
-
-  // Validation - date is now optional
-  if (eventDate) {
-    // Only validate if a date was provided
-    const selectedDate = new Date(eventDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (selectedDate < today) {
-      alert('La fecha no puede ser en el pasado');
-      document.getElementById('event-date').focus();
-      return;
-    }
-  }
-
-  // Save to state
-  state.order.eventType = 'general'; // Default since we removed the field
-  state.order.eventDate = eventDate || null; // null if not provided
-  state.order.clientNotes = clientNotes;
-
-  showStep(5);
-}
-
-// ==========================================
-// FILE UPLOAD HANDLING
+// FILE UPLOAD HANDLING (for payment proof)
 // ==========================================
 
 function setupFileUpload(areaId, inputId, previewId, handler) {
@@ -693,33 +656,6 @@ function setupFileUpload(areaId, inputId, previewId, handler) {
 
   input.addEventListener('change', (e) => {
     handler(e.target.files, preview);
-  });
-}
-
-function handleReferenceUpload(files, previewEl) {
-  const maxFiles = 5;
-  const currentFiles = state.order.referenceImages.length;
-
-  if (currentFiles + files.length > maxFiles) {
-    alert(`Máximo ${maxFiles} imágenes permitidas`);
-    return;
-  }
-
-  Array.from(files).forEach(file => {
-    if (!file.type.startsWith('image/')) {
-      alert(`${file.name} no es una imagen válida`);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      state.order.referenceImages.push({
-        file,
-        dataUrl: e.target.result
-      });
-      renderFilePreview(previewEl, state.order.referenceImages, 'reference');
-    };
-    reader.readAsDataURL(file);
   });
 }
 
@@ -768,21 +704,14 @@ function renderFilePreview(container, files, type) {
 }
 
 function removeFile(type, index) {
-  if (type === 'reference') {
-    state.order.referenceImages.splice(index, 1);
-    renderFilePreview(
-      document.getElementById('file-preview'),
-      state.order.referenceImages,
-      'reference'
-    );
-  } else if (type === 'proof') {
+  if (type === 'proof') {
     state.payment.proofFile = null;
     document.getElementById('proof-preview').innerHTML = '';
   }
 }
 
 // ==========================================
-// STEP 5: PAYMENT
+// STEP 4: PAYMENT
 // ==========================================
 
 function populatePaymentSummary() {
@@ -796,10 +725,94 @@ function handlePaymentMethodChange(e) {
   state.payment.method = e.target.value;
 
   const bankDetails = document.getElementById('bank-details');
+  const stripeLink = document.getElementById('stripe-payment-link');
+  const submitBtn = document.getElementById('submit-order');
+
   if (e.target.value === 'bank_transfer') {
     bankDetails.classList.remove('hidden');
+    stripeLink.style.display = 'none';
+    submitBtn.style.display = 'block';
   } else {
     bankDetails.classList.add('hidden');
+    stripeLink.style.display = 'block';
+    submitBtn.style.display = 'none';
+  }
+}
+
+async function handleStripePayment() {
+  // Get notes from payment step
+  const clientNotes = document.getElementById('client-notes').value.trim();
+  state.order.clientNotes = clientNotes;
+
+  // First, submit the order to our backend
+  const submitBtn = document.getElementById('stripe-pay-btn');
+  const originalText = submitBtn.innerHTML;
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-small"></span> Creando pedido...';
+
+  try {
+    // Prepare order data
+    const orderData = {
+      // Products
+      items: Object.values(state.cart).map(({ product, quantity }) => ({
+        productId: product.id,
+        quantity
+      })),
+
+      // Client notes
+      clientNotes: state.order.clientNotes,
+
+      // Client info
+      clientName: state.client.name,
+      clientPhone: state.client.phone,
+      clientEmail: state.client.email,
+      clientAddress: state.client.address,
+      clientColonia: state.client.colonia,
+      clientCity: state.client.city,
+      clientState: state.client.state,
+      clientPostal: state.client.postal,
+      clientReferences: state.client.references,
+
+      // Payment
+      paymentMethod: 'stripe'
+    };
+
+    console.log('Submitting order:', orderData);
+
+    // Submit order
+    const response = await fetch(`${API_BASE}/orders/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orderData)
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al procesar el pedido');
+    }
+
+    console.log('Order created:', result);
+
+    // Open Stripe payment link in new tab
+    window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
+
+    // Show success message
+    alert('¡Pedido creado! Se ha abierto la página de pago de Stripe. Por favor completa tu pago y regresa aquí.');
+
+    // Show success screen
+    showSuccessScreen(result.orderNumber);
+
+  } catch (error) {
+    console.error('Error submitting order:', error);
+    alert(`Error: ${error.message}`);
+
+    // Re-enable button
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalText;
   }
 }
 
@@ -813,6 +826,10 @@ async function handleOrderSubmit() {
     alert('Por favor sube el comprobante de pago');
     return;
   }
+
+  // Get notes from payment step
+  const clientNotes = document.getElementById('client-notes').value.trim();
+  state.order.clientNotes = clientNotes;
 
   // Disable button
   submitBtn.disabled = true;
@@ -828,9 +845,7 @@ async function handleOrderSubmit() {
         quantity
       })),
 
-      // Event details
-      eventType: state.order.eventType,
-      eventDate: state.order.eventDate,
+      // Client notes
       clientNotes: state.order.clientNotes,
 
       // Client info
@@ -926,11 +941,11 @@ async function uploadPaymentProof(orderId) {
 
 function showSuccessScreen(orderNumber) {
   document.getElementById('success-order-number').textContent = orderNumber;
-  showStep(6);
+  showStep(5);
 
   // Clear cart for next order
   state.cart = {};
-  state.order.referenceImages = [];
+  state.order.clientNotes = '';
   state.payment.proofFile = null;
 }
 

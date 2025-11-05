@@ -232,13 +232,13 @@
                     </div>
                 </div>
                 <button id="continue-products" class="btn btn-primary btn-large" disabled>
-                    Continuar al Evento →
+                    Continuar al Pago →
                 </button>
             </div>
         </section>
 
-        <!-- STEP 4: Event Details -->
-        <section id="step-event" class="step">
+        <!-- STEP 4: Payment Method -->
+        <section id="step-payment" class="step">
             <div class="progress-bar">
                 <div class="progress" style="width: 75%"></div>
             </div>
@@ -246,55 +246,14 @@
             <button class="btn-back" onclick="goBack()">← Atrás</button>
 
             <div class="card">
-                <h2>Detalles del Pedido</h2>
-
-                <div class="form-group">
-                    <label for="event-date">¿Necesitas la mercancía para una fecha en especial?</label>
-                    <input type="date" id="event-date">
-                    <span class="input-hint">Opcional - Si tienes un evento o fecha límite, indícala aquí</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="client-notes">Notas del pedido</label>
-                    <textarea id="client-notes"
-                              rows="4"
-                              placeholder="Cosas que te gustaría que supieramos de tu pedido"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Imágenes de Referencia (opcional)</label>
-                    <div class="file-upload-area" id="file-upload-area">
-                        <input type="file"
-                               id="reference-images"
-                               accept="image/*"
-                               multiple
-                               max="5"
-                               hidden>
-                        <div class="upload-prompt">
-                            <span class="upload-icon">📷</span>
-                            <p>Toca para subir imágenes</p>
-                            <span class="file-hint">Sube aquí fotos de diseños/fotos que te hayan gustado</span>
-                        </div>
-                        <div id="file-preview" class="file-preview"></div>
-                    </div>
-                </div>
-
-                <button id="continue-event" class="btn btn-primary btn-large">
-                    Continuar al Pago →
-                </button>
-            </div>
-        </section>
-
-        <!-- STEP 5: Payment Method -->
-        <section id="step-payment" class="step">
-            <div class="progress-bar">
-                <div class="progress" style="width: 90%"></div>
-            </div>
-
-            <button class="btn-back" onclick="goBack()">← Atrás</button>
-
-            <div class="card">
                 <h2>Método de Pago</h2>
+
+                <div class="form-group">
+                    <label for="client-notes">Notas del pedido (opcional)</label>
+                    <textarea id="client-notes"
+                              rows="3"
+                              placeholder="Cosas que te gustaría que supiéramos de tu pedido (opcional)"></textarea>
+                </div>
 
                 <div class="payment-summary-box">
                     <div class="summary-row">
@@ -329,6 +288,16 @@
                             </div>
                         </div>
                     </label>
+                </div>
+
+                <!-- Stripe Payment Link (shown when card payment selected) -->
+                <div id="stripe-payment-link" class="stripe-payment-container" style="margin-top: 20px;">
+                    <button type="button" id="stripe-pay-btn" class="btn btn-primary btn-large" style="background: linear-gradient(135deg, #635bff, #4f46e5);">
+                        💳 Pagar con Tarjeta →
+                    </button>
+                    <p style="text-align: center; font-size: 13px; color: var(--gray-600); margin-top: 12px;">
+                        Se abrirá una página segura de Stripe para completar tu pago
+                    </p>
                 </div>
 
                 <!-- Bank Transfer Details (hidden initially) -->
@@ -392,7 +361,7 @@
                     </div>
                 </div>
 
-                <button id="submit-order" class="btn btn-primary btn-large">
+                <button id="submit-order" class="btn btn-primary btn-large" style="display: none;">
                     <span id="submit-text">✅ Enviar Pedido</span>
                     <span id="submit-loader" class="hidden">
                         <span class="spinner-small"></span> Procesando...
@@ -401,7 +370,7 @@
             </div>
         </section>
 
-        <!-- STEP 6: Success -->
+        <!-- STEP 5: Success -->
         <section id="step-success" class="step">
             <div class="success-container">
                 <div class="success-icon">✅</div>
