@@ -176,7 +176,6 @@ app.get('/api/orders', async (req, res) => {
         o.internal_notes,
         o.notion_page_id,
         o.notion_page_url,
-        o.receipt_path,
         o.second_payment_date,
         o.second_payment_status,
         o.created_at,
@@ -249,8 +248,6 @@ app.get('/api/orders', async (req, res) => {
       // Notion sync
       notionPageId: order.notion_page_id,
       notionPageUrl: order.notion_page_url,
-      // Receipt
-      receiptPath: order.receipt_path || '',
       // Summary for compatibility
       summary: order.client_notes || ''
     }));
@@ -311,7 +308,6 @@ app.get('/api/orders/:orderId', async (req, res) => {
         o.internal_notes,
         o.notion_page_id,
         o.notion_page_url,
-        o.receipt_path,
         o.second_payment_date,
         o.second_payment_status,
         o.created_at,
@@ -392,8 +388,6 @@ app.get('/api/orders/:orderId', async (req, res) => {
       // Notion sync
       notionPageId: order.notion_page_id,
       notionPageUrl: order.notion_page_url,
-      // Receipt
-      receiptPath: order.receipt_path || '',
       // Summary for compatibility
       summary: order.client_notes || ''
     };
@@ -572,10 +566,9 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
     await query(
       `UPDATE orders
        SET approval_status = 'approved',
-           status = 'in_production',
-           receipt_path = $2
+           status = 'in_production'
        WHERE id = $1`,
-      [orderId, pdfPath]
+      [orderId]
     );
 
     // Send receipt email to client
