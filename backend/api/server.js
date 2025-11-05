@@ -176,8 +176,6 @@ app.get('/api/orders', async (req, res) => {
         o.internal_notes,
         o.notion_page_id,
         o.notion_page_url,
-        o.second_payment_date,
-        o.second_payment_status,
         o.created_at,
         c.name as client_name,
         c.phone as client_phone,
@@ -308,8 +306,6 @@ app.get('/api/orders/:orderId', async (req, res) => {
         o.internal_notes,
         o.notion_page_id,
         o.notion_page_url,
-        o.second_payment_date,
-        o.second_payment_status,
         o.created_at,
         c.name as client_name,
         c.phone as client_phone,
@@ -734,14 +730,8 @@ app.post('/api/orders/:orderId/second-payment', async (req, res) => {
       console.log(`✅ Payment proof saved locally: ${filepath}`);
     }
 
-    // Update order in database
-    await query(
-      `UPDATE orders
-       SET second_payment_date = NOW(),
-           second_payment_status = 'uploaded'
-       WHERE id = $1`,
-      [orderId]
-    );
+    // Log second payment upload (columns don't exist in DB yet)
+    console.log(`📋 Second payment uploaded for order ${orderId} - awaiting confirmation`);
 
     console.log(`✅ Second payment receipt uploaded for order ${orderId}`);
 
@@ -786,8 +776,7 @@ app.post('/api/orders/:orderId/confirm-second-payment', async (req, res) => {
     // Update order status to completed
     await query(`
       UPDATE orders
-      SET second_payment_status = 'confirmed',
-          status = 'delivered'
+      SET status = 'delivered'
       WHERE id = $1
     `, [orderId]);
 
