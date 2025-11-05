@@ -164,7 +164,6 @@ app.get('/api/orders', async (req, res) => {
         o.total_production_cost,
         o.deposit_amount,
         o.deposit_paid,
-        o.actual_deposit_amount,
         o.payment_method,
         o.approval_status,
         o.status,
@@ -232,7 +231,6 @@ app.get('/api/orders', async (req, res) => {
         ? ((parseFloat(order.total_price) - parseFloat(order.total_production_cost)) / parseFloat(order.total_price) * 100).toFixed(2)
         : 0,
       depositAmount: parseFloat(order.deposit_amount) || 0,
-      actualDepositAmount: parseFloat(order.actual_deposit_amount) || 0,
       depositPaid: order.deposit_paid || false,
       paymentMethod: order.payment_method || '',
       // Status
@@ -304,7 +302,6 @@ app.get('/api/orders/:orderId', async (req, res) => {
         o.total_production_cost,
         o.deposit_amount,
         o.deposit_paid,
-        o.actual_deposit_amount,
         o.payment_method,
         o.approval_status,
         o.status,
@@ -380,7 +377,6 @@ app.get('/api/orders/:orderId', async (req, res) => {
         ? ((parseFloat(order.total_price) - parseFloat(order.total_production_cost)) / parseFloat(order.total_price) * 100).toFixed(2)
         : 0,
       depositAmount: parseFloat(order.deposit_amount) || 0,
-      actualDepositAmount: parseFloat(order.actual_deposit_amount) || 0,
       depositPaid: order.deposit_paid || false,
       paymentMethod: order.payment_method || '',
       // Status
@@ -583,11 +579,10 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
       `UPDATE orders
        SET approval_status = 'approved',
            status = 'in_production',
-           actual_deposit_amount = $2,
-           receipt_pdf_url = $3,
-           receipt_path = $4
+           receipt_pdf_url = $2,
+           receipt_path = $3
        WHERE id = $1`,
-      [orderId, actualDepositAmount, receiptUrl, pdfPath]
+      [orderId, receiptUrl, pdfPath]
     );
 
     // Send receipt email to client
