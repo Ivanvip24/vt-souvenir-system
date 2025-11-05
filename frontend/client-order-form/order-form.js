@@ -7,9 +7,10 @@
 // CONFIGURATION
 // ==========================================
 
+// Use same domain for API calls (works on both localhost and Render)
 const API_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:3000/api/client'
-  : 'https://vt-souvenir-backend.onrender.com/api/client';
+  : '/api/client';
 
 const STORAGE_KEY = 'souvenir_client_data';
 
