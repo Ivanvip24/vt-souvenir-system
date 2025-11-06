@@ -1294,48 +1294,75 @@ window.handleSecondPaymentUpload = async function(orderId, file) {
   // Show loading
   statusDiv.innerHTML = `
     <div style="padding: 8px; background: #dbeafe; border-radius: 6px; text-align: center; font-size: 13px; color: #1e40af;">
-      ⏳ Subiendo comprobante...
+      ⏳ Comprimiendo imagen...
     </div>
   `;
 
   try {
-    // Convert file to base64
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+    // Compress image before upload (same as first payment)
+    const compressedFile = await compressImage(file);
+    console.log(`📦 Compressed: ${(file.size / 1024).toFixed(0)}KB → ${(compressedFile.size / 1024).toFixed(0)}KB`);
+
+    statusDiv.innerHTML = `
+      <div style="padding: 8px; background: #dbeafe; border-radius: 6px; text-align: center; font-size: 13px; color: #1e40af;">
+        ⏳ Subiendo a Cloudinary...
+      </div>
+    `;
+
+    // Upload to Cloudinary first
+    const formData = new FormData();
+    formData.append('receipt', compressedFile);
+
+    const uploadResponse = await fetch(`${API_BASE}/upload/payment-receipt`, {
+      method: 'POST',
+      body: formData
     });
 
-    // Upload to API
-    const response = await fetch(`${API_BASE}/../orders/${orderId}/second-payment`, {
+    const uploadData = await uploadResponse.json();
+
+    if (!uploadData.success) {
+      throw new Error(uploadData.error || 'Error al subir el archivo');
+    }
+
+    console.log('✅ Receipt uploaded to Cloudinary:', uploadData.url);
+
+    statusDiv.innerHTML = `
+      <div style="padding: 8px; background: #dbeafe; border-radius: 6px; text-align: center; font-size: 13px; color: #1e40af;">
+        ⏳ Guardando comprobante...
+      </div>
+    `;
+
+    // Send Cloudinary URL to API
+    const response = await fetch(`${API_BASE}/orders/${orderId}/second-payment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ paymentProof: base64 })
+      body: JSON.stringify({ paymentProofUrl: uploadData.url })
     });
 
     const result = await response.json();
 
     if (!result.success) {
-      throw new Error(result.error || 'Error al subir el comprobante');
+      throw new Error(result.error || 'Error al guardar el comprobante');
     }
 
-    // Show success
+    // Show success - keep it visible
     statusDiv.innerHTML = `
-      <div style="padding: 8px; background: #d1fae5; border-radius: 6px; text-align: center; font-size: 13px; color: #065f46;">
+      <div style="padding: 8px; background: #d1fae5; border-radius: 6px; text-align: center; font-size: 13px; color: #065f46; font-weight: 600;">
         ✅ ¡Comprobante recibido! Verificaremos tu pago pronto.
       </div>
     `;
 
-    // Refresh the order list after 2 seconds
+    console.log('✅ Second payment proof saved successfully');
+
+    // Refresh the order list after 3 seconds to show updated status
     setTimeout(() => {
       window.lookupClientOrders();
-    }, 2000);
+    }, 3000);
 
   } catch (error) {
-    console.error('Error uploading second payment:', error);
+    console.error('❌ Error uploading second payment:', error);
     statusDiv.innerHTML = `
       <div style="padding: 8px; background: #fee2e2; border-radius: 6px; text-align: center; font-size: 13px; color: #991b1b;">
         ❌ Error: ${error.message}
