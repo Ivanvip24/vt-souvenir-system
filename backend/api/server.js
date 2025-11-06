@@ -14,6 +14,7 @@ import inventoryRoutes from './inventory-routes.js';
 import adminRoutes from './admin-routes.js';
 import priceRoutes from './price-routes.js';
 import bomRoutes from './bom-routes.js';
+import webhookRoutes from './webhook-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { sendReceiptEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
@@ -87,6 +88,11 @@ app.use('/api/prices', priceRoutes);
 // BILL OF MATERIALS ROUTES
 // ========================================
 app.use('/api/bom', bomRoutes);
+
+// ========================================
+// MAKE.COM WEBHOOK ROUTES
+// ========================================
+app.use('/api/webhooks', webhookRoutes);
 
 // ========================================
 // NOTION AGENT ENDPOINTS
