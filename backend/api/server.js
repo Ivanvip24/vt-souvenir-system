@@ -15,6 +15,7 @@ import adminRoutes from './admin-routes.js';
 import priceRoutes from './price-routes.js';
 import bomRoutes from './bom-routes.js';
 import webhookRoutes from './webhook-routes.js';
+import uploadRoutes from './upload-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { sendReceiptEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
@@ -93,6 +94,11 @@ app.use('/api/bom', bomRoutes);
 // MAKE.COM WEBHOOK ROUTES
 // ========================================
 app.use('/api/webhooks', webhookRoutes);
+
+// ========================================
+// FILE UPLOAD ROUTES (Cloudinary)
+// ========================================
+app.use('/api/upload', uploadRoutes);
 
 // ========================================
 // NOTION AGENT ENDPOINTS

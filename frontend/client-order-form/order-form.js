@@ -714,26 +714,72 @@ function setupFileUpload(areaId, inputId, previewId, handler) {
   });
 }
 
-function handleProofUpload(files, previewEl) {
+async function handleProofUpload(files, previewEl) {
   if (files.length === 0) return;
 
   const file = files[0];
-  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp', 'application/pdf'];
 
   if (!validTypes.includes(file.type)) {
-    alert('Solo se permiten imágenes (JPG, PNG) o PDF');
+    alert('Solo se permiten imágenes (JPG, PNG, GIF, WEBP) o PDF');
     return;
   }
 
+  // Check file size (10MB max)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('El archivo es demasiado grande. Tamaño máximo: 10MB');
+    return;
+  }
+
+  // Show preview first
   const reader = new FileReader();
   reader.onload = (e) => {
     state.payment.proofFile = {
       file,
-      dataUrl: e.target.result
+      dataUrl: e.target.result,
+      uploading: true
     };
     renderFilePreview(previewEl, [state.payment.proofFile], 'proof');
   };
   reader.readAsDataURL(file);
+
+  // Upload to Cloudinary
+  try {
+    const formData = new FormData();
+    formData.append('receipt', file);
+
+    const response = await fetch(`${API_BASE}/upload/payment-receipt`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Update state with uploaded URL
+      state.payment.proofFile = {
+        file,
+        dataUrl: data.url,
+        cloudinaryUrl: data.url,
+        publicId: data.publicId,
+        uploading: false,
+        uploaded: true
+      };
+      console.log('Receipt uploaded successfully:', data.url);
+
+      // Update preview with success indicator
+      renderFilePreview(previewEl, [state.payment.proofFile], 'proof');
+    } else {
+      throw new Error(data.error || 'Error al subir el archivo');
+    }
+  } catch (error) {
+    console.error('Upload error:', error);
+    alert('Error al subir el comprobante de pago. Por favor intenta de nuevo.');
+
+    // Clear the failed upload
+    state.payment.proofFile = null;
+    previewEl.innerHTML = '';
+  }
 }
 
 function renderFilePreview(container, files, type) {
@@ -965,11 +1011,10 @@ async function handleOrderSubmit() {
 }
 
 async function uploadPaymentProof(orderId) {
-  if (!state.payment.proofFile) return;
+  if (!state.payment.proofFile || !state.payment.proofFile.cloudinaryUrl) return;
 
-  // In production, upload to Cloudinary/S3 first to get URL
-  // For now, we'll use a placeholder URL
-  const proofUrl = 'https://placeholder-proof-url.com/proof.jpg';
+  // Use the Cloudinary URL from the already-uploaded receipt
+  const proofUrl = state.payment.proofFile.cloudinaryUrl;
 
   try {
     const response = await fetch(`${API_BASE}/orders/${orderId}/upload-proof`, {
