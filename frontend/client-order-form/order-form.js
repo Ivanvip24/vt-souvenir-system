@@ -714,6 +714,53 @@ function setupFileUpload(areaId, inputId, previewId, handler) {
   });
 }
 
+async function compressImage(file, maxWidth = 1200, quality = 0.8) {
+  // Skip compression for PDFs or already small files (< 200KB)
+  if (file.type === 'application/pdf' || file.size < 200000) {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to blob
+        canvas.toBlob(
+          (blob) => {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            console.log(`📦 Compressed: ${(file.size / 1024).toFixed(0)}KB → ${(compressedFile.size / 1024).toFixed(0)}KB`);
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function handleProofUpload(files, previewEl) {
   if (files.length === 0) return;
 
@@ -743,11 +790,16 @@ async function handleProofUpload(files, previewEl) {
   };
   reader.readAsDataURL(file);
 
-  // Upload to Cloudinary
+  // Upload to Cloudinary with compression
   try {
-    const formData = new FormData();
-    formData.append('receipt', file);
+    // Compress image before upload
+    console.log('⏳ Compressing image...');
+    const compressedFile = await compressImage(file);
 
+    const formData = new FormData();
+    formData.append('receipt', compressedFile);
+
+    console.log('⏳ Uploading to Cloudinary...');
     const response = await fetch(`${API_BASE}/upload/payment-receipt`, {
       method: 'POST',
       body: formData
@@ -765,7 +817,7 @@ async function handleProofUpload(files, previewEl) {
         uploading: false,
         uploaded: true
       };
-      console.log('Receipt uploaded successfully:', data.url);
+      console.log('✅ Receipt uploaded successfully:', data.url);
 
       // Update preview with success indicator
       renderFilePreview(previewEl, [state.payment.proofFile], 'proof');
@@ -773,7 +825,7 @@ async function handleProofUpload(files, previewEl) {
       throw new Error(data.error || 'Error al subir el archivo');
     }
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('❌ Upload error:', error);
     alert('Error al subir el comprobante de pago. Por favor intenta de nuevo.');
 
     // Clear the failed upload
