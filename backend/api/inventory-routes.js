@@ -9,7 +9,7 @@ import MaterialManager from '../agents/inventory/material-manager.js';
 import BOMManager from '../agents/inventory/bom-manager.js';
 import ForecastingEngine from '../agents/inventory/forecasting-engine.js';
 import OrderIntegration from '../agents/inventory/order-integration.js';
-import QRCode from 'qrcode';
+import bwipjs from 'bwip-js';
 
 const router = express.Router();
 
@@ -363,24 +363,37 @@ router.get('/labels/generate', async (req, res) => {
       materials = result.rows;
     }
 
-    // Generate QR codes as data URLs (server-side)
+    // Generate Code 128 barcodes as PNG data URLs (server-side)
     const labels = await Promise.all(materials.map(async (m) => {
-      const qrDataURL = await QRCode.toDataURL(m.barcode, {
-        width: 150,
-        margin: 1,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
+      try {
+        // Ensure barcode is a string
+        const barcodeText = m.barcode ? String(m.barcode) : `MAT-${String(m.id).padStart(3, '0')}`;
 
-      return {
-        barcode: m.barcode,
-        name: m.name,
-        currentStock: m.current_stock,
-        unitType: m.unit_type,
-        qrDataURL: qrDataURL
-      };
+        console.log(`  Generating barcode for ${m.name}: "${barcodeText}" (type: ${typeof barcodeText})`);
+
+        const png = await bwipjs.toBuffer({
+          bcid: 'code128',       // Barcode type: Code 128
+          text: barcodeText,      // Text to encode
+          scale: 3,               // 3x scaling factor
+          height: 10,             // Bar height, in millimeters
+          includetext: true,      // Show human-readable text
+          textxalign: 'center',   // Center the text
+        });
+
+        const barcodeDataURL = `data:image/png;base64,${png.toString('base64')}`;
+
+        return {
+          barcode: barcodeText,
+          name: m.name,
+          currentStock: m.current_stock,
+          unitType: m.unit_type,
+          barcodeDataURL: barcodeDataURL
+        };
+      } catch (error) {
+        console.error(`  ❌ Error generating barcode for ${m.name}:`, error.message);
+        console.error(`     Material:`, m);
+        throw error;
+      }
     }));
 
     // Generate printable HTML
@@ -405,16 +418,22 @@ router.get('/labels/generate', async (req, res) => {
       align-items: center;
       text-align: center;
     }
-    .qr-code img {
-      width: 150px;
-      height: 150px;
-      margin: 10px 0;
+    .barcode-image {
+      margin: 15px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .barcode-image img {
+      max-width: 100%;
+      height: auto;
     }
     .barcode-text {
-      font-size: 24px;
+      font-size: 18px;
       font-weight: bold;
       margin: 10px 0;
       font-family: 'Courier New', monospace;
+      color: #333;
     }
     .material-name {
       font-size: 16px;
@@ -444,11 +463,10 @@ router.get('/labels/generate', async (req, res) => {
   <div class="label-grid">
     ${labels.map(label => `
       <div class="label">
-        <div class="barcode-text">${label.barcode}</div>
-        <div class="qr-code">
-          <img src="${label.qrDataURL}" alt="${label.barcode}" />
-        </div>
         <div class="material-name">${label.name}</div>
+        <div class="barcode-image">
+          <img src="${label.barcodeDataURL}" alt="${label.barcode}" />
+        </div>
         <div class="stock-info">Stock: ${label.currentStock} ${label.unitType}</div>
       </div>
     `).join('')}
@@ -483,24 +501,32 @@ router.get('/smart-barcodes/sheet', async (req, res) => {
       { code: 'ACTION-CANCEL', label: 'CANCEL', description: 'Close Quick Receive', color: '#ef4444' }
     ];
 
-    // Generate QR codes for quantities (server-side)
-    const quantityQRs = await Promise.all(quantities.map(async (qty) => {
-      const qrDataURL = await QRCode.toDataURL(`QTY-${qty}`, {
-        width: 120,
-        margin: 1,
-        color: { dark: '#000000', light: '#FFFFFF' }
+    // Generate Code 128 barcodes for quantities (server-side)
+    const quantityBarcodes = await Promise.all(quantities.map(async (qty) => {
+      const png = await bwipjs.toBuffer({
+        bcid: 'code128',
+        text: `QTY-${qty}`,
+        scale: 3,
+        height: 10,
+        includetext: true,
+        textxalign: 'center',
       });
-      return { qty, qrDataURL };
+      const barcodeDataURL = `data:image/png;base64,${png.toString('base64')}`;
+      return { qty, barcodeDataURL };
     }));
 
-    // Generate QR codes for actions (server-side)
-    const actionQRs = await Promise.all(actions.map(async (action) => {
-      const qrDataURL = await QRCode.toDataURL(action.code, {
-        width: 120,
-        margin: 1,
-        color: { dark: '#000000', light: '#FFFFFF' }
+    // Generate Code 128 barcodes for actions (server-side)
+    const actionBarcodes = await Promise.all(actions.map(async (action) => {
+      const png = await bwipjs.toBuffer({
+        bcid: 'code128',
+        text: action.code,
+        scale: 3,
+        height: 10,
+        includetext: true,
+        textxalign: 'center',
       });
-      return { ...action, qrDataURL };
+      const barcodeDataURL = `data:image/png;base64,${png.toString('base64')}`;
+      return { ...action, barcodeDataURL };
     }));
 
     const html = `
@@ -567,11 +593,16 @@ router.get('/smart-barcodes/sheet', async (req, res) => {
     .barcode-item.action {
       border-color: #10b981;
     }
-    .qr-container img {
-      width: 120px;
-      height: 120px;
+    .barcode-container {
       margin: 10px auto;
-      display: block;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 60px;
+    }
+    .barcode-container img {
+      max-width: 100%;
+      height: auto;
     }
     .barcode-label {
       font-size: 18px;
@@ -691,11 +722,11 @@ router.get('/smart-barcodes/sheet', async (req, res) => {
   <div class="section">
     <div class="section-title">📊 QUANTITY BARCODES (Scan to enter quantity)</div>
     <div class="barcode-grid">
-      ${quantityQRs.map(q => `
+      ${quantityBarcodes.map(q => `
         <div class="barcode-item quantity">
           <div class="barcode-label">${q.qty}</div>
-          <div class="qr-container">
-            <img src="${q.qrDataURL}" alt="QTY-${q.qty}" />
+          <div class="barcode-container">
+            <img src="${q.barcodeDataURL}" alt="QTY-${q.qty}" />
           </div>
           <div class="barcode-code">QTY-${q.qty}</div>
         </div>
@@ -707,11 +738,11 @@ router.get('/smart-barcodes/sheet', async (req, res) => {
   <div class="section">
     <div class="section-title">⚡ ACTION BARCODES (Quick commands)</div>
     <div class="barcode-grid">
-      ${actionQRs.map(action => `
+      ${actionBarcodes.map(action => `
         <div class="barcode-item action" style="border-color: ${action.color};">
           <div class="barcode-label" style="color: ${action.color};">${action.label}</div>
-          <div class="qr-container">
-            <img src="${action.qrDataURL}" alt="${action.code}" />
+          <div class="barcode-container">
+            <img src="${action.barcodeDataURL}" alt="${action.code}" />
           </div>
           <div class="barcode-code">${action.code}</div>
           <div style="font-size: 11px; color: #6b7280; margin-top: 8px;">${action.description}</div>

@@ -674,11 +674,11 @@ app.post('/api/orders/:orderId/reject', async (req, res) => {
 app.post('/api/orders/:orderId/second-payment', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
-    const { paymentProof } = req.body; // Base64 encoded image
+    const { paymentProof, paymentProofUrl } = req.body; // Base64 encoded image or Cloudinary URL
 
     console.log(`💰 Uploading second payment receipt for order ${orderId}...`);
 
-    if (!paymentProof) {
+    if (!paymentProof && !paymentProofUrl) {
       return res.status(400).json({
         success: false,
         error: 'Payment proof is required'
@@ -715,35 +715,43 @@ app.post('/api/orders/:orderId/second-payment', async (req, res) => {
       });
     }
 
-    // Upload to Google Drive or save locally
+    // Upload to Google Drive or save locally, OR use provided Cloudinary URL
     let imageUrl;
-    const filename = `second-payment-${order.order_number}-${Date.now()}.jpg`;
 
-    if (isGoogleDriveConfigured()) {
-      // Upload to Google Drive
-      console.log(`📤 Uploading to Google Drive: ${filename}`);
-      const uploadResult = await uploadToGoogleDrive({
-        fileData: paymentProof,
-        fileName: filename,
-        mimeType: 'image/jpeg'
-      });
+    if (paymentProofUrl) {
+      // Use provided Cloudinary URL (already uploaded)
+      imageUrl = paymentProofUrl;
+      console.log(`✅ Using Cloudinary URL: ${imageUrl}`);
+    } else if (paymentProof) {
+      // Legacy path: upload base64 to Google Drive or local storage
+      const filename = `second-payment-${order.order_number}-${Date.now()}.jpg`;
 
-      imageUrl = uploadResult.directImageUrl; // URL that can be used in <img> tags
-      console.log(`✅ Uploaded to Google Drive: ${imageUrl}`);
-    } else {
-      // Fallback to local storage if Google Drive not configured
-      console.log('⚠️  Google Drive not configured, saving locally');
-      const paymentsDir = path.join(__dirname, '../payment-receipts');
-      if (!fs.existsSync(paymentsDir)) {
-        fs.mkdirSync(paymentsDir, { recursive: true });
+      if (isGoogleDriveConfigured()) {
+        // Upload to Google Drive
+        console.log(`📤 Uploading to Google Drive: ${filename}`);
+        const uploadResult = await uploadToGoogleDrive({
+          fileData: paymentProof,
+          fileName: filename,
+          mimeType: 'image/jpeg'
+        });
+
+        imageUrl = uploadResult.directImageUrl; // URL that can be used in <img> tags
+        console.log(`✅ Uploaded to Google Drive: ${imageUrl}`);
+      } else {
+        // Fallback to local storage if Google Drive not configured
+        console.log('⚠️  Google Drive not configured, saving locally');
+        const paymentsDir = path.join(__dirname, '../payment-receipts');
+        if (!fs.existsSync(paymentsDir)) {
+          fs.mkdirSync(paymentsDir, { recursive: true });
+        }
+
+        const filepath = path.join(paymentsDir, filename);
+        const base64Data = paymentProof.replace(/^data:image\/\w+;base64,/, '');
+        fs.writeFileSync(filepath, Buffer.from(base64Data, 'base64'));
+
+        imageUrl = `/payment-receipts/${filename}`;
+        console.log(`✅ Payment proof saved locally: ${filepath}`);
       }
-
-      const filepath = path.join(paymentsDir, filename);
-      const base64Data = paymentProof.replace(/^data:image\/\w+;base64,/, '');
-      fs.writeFileSync(filepath, Buffer.from(base64Data, 'base64'));
-
-      imageUrl = `/payment-receipts/${filename}`;
-      console.log(`✅ Payment proof saved locally: ${filepath}`);
     }
 
     // Log second payment upload (columns don't exist in DB yet)

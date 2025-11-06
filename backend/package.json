@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@notionhq/client": "^2.2.15",
+    "bwip-js": "^4.7.0",
     "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "date-fns": "^2.30.0",

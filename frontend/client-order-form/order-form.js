@@ -1332,8 +1332,12 @@ window.handleSecondPaymentUpload = async function(orderId, file) {
       </div>
     `;
 
-    // Send Cloudinary URL to API
-    const response = await fetch(`${API_BASE}/orders/${orderId}/second-payment`, {
+    // Send Cloudinary URL to API (use absolute path - endpoint is on admin route not client)
+    const apiUrl = window.location.hostname === 'localhost'
+      ? `http://localhost:3000/api/orders/${orderId}/second-payment`
+      : `/api/orders/${orderId}/second-payment`;
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
