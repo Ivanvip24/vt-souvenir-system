@@ -284,24 +284,26 @@ router.post('/orders/submit', async (req, res) => {
 
     await query('COMMIT');
 
-    // 5. Sync to Notion
-    try {
-      console.log(`🔄 Syncing order ${orderNumber} to Notion...`);
-      await notionSync.syncOrderToNotion(orderId);
-      console.log(`✅ Order ${orderNumber} synced to Notion successfully`);
-    } catch (notionError) {
-      console.error('❌ Failed to sync to Notion:', notionError);
-      // Don't fail the order if Notion sync fails
-      // Order is safely in database, Notion can be synced later
-    }
+    // 5. Sync to Notion (background - don't block response)
+    setImmediate(async () => {
+      try {
+        console.log(`🔄 Syncing order ${orderNumber} to Notion...`);
+        await notionSync.syncOrderToNotion(orderId);
+        console.log(`✅ Order ${orderNumber} synced to Notion successfully`);
+      } catch (notionError) {
+        console.error('❌ Failed to sync to Notion:', notionError);
+        // Order is safely in database, Notion can be synced later
+      }
+    });
 
-    // 6. Send notification to admin
-    try {
-      await sendAdminNotification(orderId, orderNumber, clientName, subtotal, depositAmount);
-    } catch (emailError) {
-      console.error('Failed to send admin notification:', emailError);
-      // Don't fail the order if email fails
-    }
+    // 6. Send notification to admin (background - don't block response)
+    setImmediate(async () => {
+      try {
+        await sendAdminNotification(orderId, orderNumber, clientName, subtotal, depositAmount);
+      } catch (emailError) {
+        console.error('Failed to send admin notification:', emailError);
+      }
+    });
 
     // 7. Response based on payment method
     const response = {
