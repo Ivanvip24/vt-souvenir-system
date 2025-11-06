@@ -98,7 +98,7 @@ app.use('/api/webhooks', webhookRoutes);
 // ========================================
 // FILE UPLOAD ROUTES (Cloudinary)
 // ========================================
-app.use('/api/upload', uploadRoutes);
+app.use('/api/client/upload', uploadRoutes);
 
 // ========================================
 // NOTION AGENT ENDPOINTS
