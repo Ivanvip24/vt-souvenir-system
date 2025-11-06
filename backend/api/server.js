@@ -242,6 +242,7 @@ app.get('/api/orders', async (req, res) => {
       depositPaid: order.deposit_paid || false,
       paymentMethod: order.payment_method || '',
       paymentProofUrl: order.payment_proof_url || null,
+      secondPaymentReceipt: order.second_payment_proof_url || null,
       // Status
       status: order.status || 'new',
       approvalStatus: order.approval_status || 'pending_review',
@@ -382,6 +383,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
       depositPaid: order.deposit_paid || false,
       paymentMethod: order.payment_method || '',
       paymentProofUrl: order.payment_proof_url || null,
+      secondPaymentReceipt: order.second_payment_proof_url || null,
       // Status
       status: order.status || 'new',
       approvalStatus: order.approval_status || 'pending_review',
@@ -757,15 +759,19 @@ app.post('/api/orders/:orderId/second-payment', async (req, res) => {
       }
     }
 
-    // Log second payment upload (columns don't exist in DB yet)
-    console.log(`📋 Second payment uploaded for order ${orderId} - awaiting confirmation`);
+    // Save second payment proof URL to database
+    await query(
+      'UPDATE orders SET second_payment_proof_url = $1 WHERE id = $2',
+      [imageUrl, orderId]
+    );
 
-    console.log(`✅ Second payment receipt uploaded for order ${orderId}`);
+    console.log(`✅ Second payment receipt uploaded and saved to database for order ${orderId}`);
 
     res.json({
       success: true,
       message: 'Payment receipt uploaded successfully. We will verify it shortly.',
-      filename: filename
+      filename: filename,
+      imageUrl: imageUrl
     });
   } catch (error) {
     console.error('Error uploading second payment receipt:', error);
