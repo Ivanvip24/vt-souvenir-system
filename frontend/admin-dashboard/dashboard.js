@@ -262,6 +262,10 @@ function createOrderCard(order) {
         <span class="meta-value">${formatDate(order.orderDate)}</span>
       </div>
       <div class="meta-item">
+        <span class="meta-label">Hora de Creación</span>
+        <span class="meta-value">${formatTime(order.createdAt || order.orderDate)}</span>
+      </div>
+      <div class="meta-item">
         <span class="meta-label">Fecha de Entrega</span>
         <span class="meta-value">${formatDate(order.eventDate)}</span>
       </div>
@@ -785,6 +789,16 @@ function formatDate(dateString) {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
+  });
+}
+
+function formatTime(dateString) {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('es-MX', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
   });
 }
 
