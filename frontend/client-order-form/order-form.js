@@ -10,7 +10,7 @@
 // Use same domain for API calls (works on both localhost and Render)
 const API_BASE = window.location.hostname === 'localhost'
   ? 'http://localhost:3000/api/client'
-  : '/api/client';
+  : 'https://vt-souvenir-backend.onrender.com/api/client';
 
 const STORAGE_KEY = 'souvenir_client_data';
 
@@ -1432,7 +1432,7 @@ window.confirmSecondPaymentUpload = async function(orderId) {
     // Send Cloudinary URL to API
     const apiUrl = window.location.hostname === 'localhost'
       ? `http://localhost:3000/api/orders/${orderId}/second-payment`
-      : `/api/orders/${orderId}/second-payment`;
+      : `https://vt-souvenir-backend.onrender.com/api/orders/${orderId}/second-payment`;
 
     const response = await fetch(apiUrl, {
       method: 'POST',
