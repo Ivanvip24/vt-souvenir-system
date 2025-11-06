@@ -89,12 +89,6 @@ router.get('/order/:identifier', verifyWebhookSecret, async (req, res) => {
     const isId = !isNaN(identifier);
     const field = isId ? 'id' : 'order_number';
 
-    // Validate field against whitelist to prevent SQL injection
-    const allowedFields = ['id', 'order_number'];
-    if (!allowedFields.includes(field)) {
-      return res.status(400).json({ error: 'Invalid field' });
-    }
-
     const result = await query(`
       SELECT
         o.*,

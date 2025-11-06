@@ -11,7 +11,7 @@ import * as analyticsAgent from '../agents/analytics-agent/index.js';
 import { getDateRange } from '../shared/utils.js';
 import clientRoutes from './client-routes.js';
 import inventoryRoutes from './inventory-routes.js';
-import adminRoutes, { authMiddleware } from './admin-routes.js';
+import adminRoutes from './admin-routes.js';
 import priceRoutes from './price-routes.js';
 import bomRoutes from './bom-routes.js';
 import webhookRoutes from './webhook-routes.js';
@@ -104,8 +104,8 @@ app.use('/api/client/upload', uploadRoutes);
 // NOTION AGENT ENDPOINTS
 // ========================================
 
-// Create order in Notion and local database (ADMIN ONLY)
-app.post('/api/orders', authMiddleware, async (req, res) => {
+// Create order in Notion and local database
+app.post('/api/orders', async (req, res) => {
   try {
     const result = await notionSync.createOrderBothSystems(req.body);
 
@@ -123,8 +123,8 @@ app.post('/api/orders', authMiddleware, async (req, res) => {
   }
 });
 
-// Get orders with filters - Query PostgreSQL directly (ADMIN ONLY)
-app.get('/api/orders', authMiddleware, async (req, res) => {
+// Get orders with filters - Query PostgreSQL directly
+app.get('/api/orders', async (req, res) => {
   try {
     console.log('🔍 Querying orders from PostgreSQL...');
 
@@ -280,8 +280,8 @@ app.get('/api/orders', authMiddleware, async (req, res) => {
   }
 });
 
-// Get single order by ID (ADMIN ONLY)
-app.get('/api/orders/:orderId', authMiddleware, async (req, res) => {
+// Get single order by ID
+app.get('/api/orders/:orderId', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
@@ -419,8 +419,8 @@ app.get('/api/orders/:orderId', authMiddleware, async (req, res) => {
   }
 });
 
-// Update order status (ADMIN ONLY)
-app.patch('/api/orders/:orderId/status', authMiddleware, async (req, res) => {
+// Update order status
+app.patch('/api/orders/:orderId/status', async (req, res) => {
   try {
     const { status } = req.body;
 
@@ -450,8 +450,8 @@ app.patch('/api/orders/:orderId/status', authMiddleware, async (req, res) => {
   }
 });
 
-// Sync order to Notion (ADMIN ONLY)
-app.post('/api/orders/:orderId/sync', authMiddleware, async (req, res) => {
+// Sync order to Notion
+app.post('/api/orders/:orderId/sync', async (req, res) => {
   try {
     const result = await notionSync.syncOrderToNotion(parseInt(req.params.orderId));
 
@@ -469,8 +469,8 @@ app.post('/api/orders/:orderId/sync', authMiddleware, async (req, res) => {
   }
 });
 
-// Bulk sync orders to Notion (ADMIN ONLY)
-app.post('/api/orders/sync/bulk', authMiddleware, async (req, res) => {
+// Bulk sync orders to Notion
+app.post('/api/orders/sync/bulk', async (req, res) => {
   try {
     const limit = req.body.limit || 100;
     const result = await notionSync.syncAllOrdersToNotion(limit);
@@ -489,8 +489,8 @@ app.post('/api/orders/sync/bulk', authMiddleware, async (req, res) => {
   }
 });
 
-// Approve order (ADMIN ONLY)
-app.post('/api/orders/:orderId/approve', authMiddleware, async (req, res) => {
+// Approve order
+app.post('/api/orders/:orderId/approve', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { actualDepositAmount } = req.body;
@@ -630,8 +630,8 @@ app.post('/api/orders/:orderId/approve', authMiddleware, async (req, res) => {
   }
 });
 
-// Reject order (ADMIN ONLY)
-app.post('/api/orders/:orderId/reject', authMiddleware, async (req, res) => {
+// Reject order
+app.post('/api/orders/:orderId/reject', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { reason } = req.body;
@@ -776,8 +776,8 @@ app.post('/api/orders/:orderId/second-payment', async (req, res) => {
   }
 });
 
-// Confirm second payment and complete order (ADMIN ONLY)
-app.post('/api/orders/:orderId/confirm-second-payment', authMiddleware, async (req, res) => {
+// Confirm second payment and complete order
+app.post('/api/orders/:orderId/confirm-second-payment', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 

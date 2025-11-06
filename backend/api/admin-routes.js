@@ -7,17 +7,12 @@ import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
-// JWT secret from environment (use strong secret in production!)
-const JWT_SECRET = process.env.JWT_SECRET || 'default-jwt-secret-change-in-production';
+// JWT secret from environment or default
+const JWT_SECRET = process.env.JWT_SECRET || 'default-jwt-secret';
 
-// Admin credentials from environment variables
+// Admin credentials from environment variables or defaults
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-
-// Warn if using default credentials
-if (!process.env.JWT_SECRET || !process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) {
-  console.warn('⚠️  WARNING: Using default admin credentials. Set JWT_SECRET, ADMIN_USERNAME, and ADMIN_PASSWORD in production!');
-}
 
 // ========================================
 // AUTHENTICATION

@@ -1,14 +1,9 @@
 import { v2 as cloudinary } from 'cloudinary';
 
-// Cloudinary configuration from environment variables
+// Cloudinary configuration from environment variables or defaults
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || 'demo';
 const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || '123456789';
 const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || 'demo-secret';
-
-// Warn if using defaults
-if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-  console.warn('⚠️  WARNING: Cloudinary not fully configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET for image uploads.');
-}
 
 // Configure Cloudinary
 cloudinary.config({
