@@ -1,12 +1,13 @@
 import { v2 as cloudinary } from 'cloudinary';
 
-// Validate required Cloudinary environment variables
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
-const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+// Cloudinary configuration from environment variables
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || 'demo';
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || '123456789';
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || 'demo-secret';
 
-if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-  throw new Error('Cloudinary configuration is required: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET must be set in environment variables');
+// Warn if using defaults
+if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+  console.warn('⚠️  WARNING: Cloudinary not fully configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET for image uploads.');
 }
 
 // Configure Cloudinary
