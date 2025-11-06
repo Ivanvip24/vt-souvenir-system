@@ -241,6 +241,7 @@ app.get('/api/orders', async (req, res) => {
       depositAmount: parseFloat(order.deposit_amount) || 0,
       depositPaid: order.deposit_paid || false,
       paymentMethod: order.payment_method || '',
+      paymentProofUrl: order.payment_proof_url || null,
       // Status
       status: order.status || 'new',
       approvalStatus: order.approval_status || 'pending_review',
@@ -380,6 +381,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
       depositAmount: parseFloat(order.deposit_amount) || 0,
       depositPaid: order.deposit_paid || false,
       paymentMethod: order.payment_method || '',
+      paymentProofUrl: order.payment_proof_url || null,
       // Status
       status: order.status || 'new',
       approvalStatus: order.approval_status || 'pending_review',
