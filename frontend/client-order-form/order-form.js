@@ -1216,7 +1216,7 @@ window.lookupClientOrders = async function() {
             </div>
 
             ${order.approvalStatus === 'approved' && parseFloat(order.remainingBalance) > 0 && !order.secondPaymentReceipt ? `
-              <div style="margin-top: 12px; border-top: 1px solid #fbbf24; padding-top: 12px;">
+              <div style="margin-top: 12px; border-top: 1px solid #fbbf24; padding-top: 12px;" id="second-payment-section-${order.id}">
                 <div style="font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 8px;">
                   💳 Sube tu comprobante de pago final
                 </div>
@@ -1224,21 +1224,32 @@ window.lookupClientOrders = async function() {
                        id="second-payment-upload-${order.id}"
                        accept="image/*"
                        style="display: none;"
-                       onchange="handleSecondPaymentUpload(${order.id}, this.files[0])">
-                <div id="upload-status-${order.id}" style="margin-bottom: 8px;"></div>
-                <button
-                  onclick="document.getElementById('second-payment-upload-${order.id}').click()"
-                  style="width: 100%; padding: 12px; background: #059669; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
-                  📸 Subir Comprobante de Pago
-                </button>
+                       onchange="handleSecondPaymentSelect(${order.id}, this.files[0])">
+                <div id="upload-preview-${order.id}" style="margin-bottom: 8px;"></div>
+                <div id="upload-buttons-${order.id}">
+                  <button
+                    onclick="document.getElementById('second-payment-upload-${order.id}').click()"
+                    style="width: 100%; padding: 12px; background: #059669; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                    📸 Seleccionar Comprobante de Pago
+                  </button>
+                </div>
               </div>
             ` : order.secondPaymentReceipt ? `
-              <div style="margin-top: 12px; padding: 10px; background: #d1fae5; border: 1px solid #059669; border-radius: 8px; text-align: center;">
-                <div style="font-size: 13px; font-weight: 600; color: #065f46;">
-                  ✅ Comprobante de pago recibido
+              <div style="margin-top: 12px; padding: 12px; background: #d1fae5; border: 1px solid #059669; border-radius: 8px;">
+                <div style="font-size: 13px; font-weight: 600; color: #065f46; margin-bottom: 8px; text-align: center;">
+                  ✅ Segundo recibo de pago enviado
                 </div>
-                <div style="font-size: 12px; color: #047857; margin-top: 4px;">
+                <div style="font-size: 12px; color: #047857; margin-bottom: 8px; text-align: center;">
                   Estamos verificando tu pago
+                </div>
+                <div style="background: white; padding: 8px; border-radius: 6px; text-align: center;">
+                  <img src="${order.secondPaymentReceipt}"
+                       alt="Comprobante de pago final"
+                       style="max-width: 100%; max-height: 200px; border-radius: 4px; cursor: pointer;"
+                       onclick="window.open('${order.secondPaymentReceipt}', '_blank')">
+                  <div style="font-size: 11px; color: #059669; margin-top: 4px;">
+                    Click para ver en tamaño completo
+                  </div>
                 </div>
               </div>
             ` : ''}
@@ -1285,27 +1296,112 @@ function getStatusBadgeStyle(status) {
   return styles[status] || 'background: #f3f4f6; color: #374151;';
 }
 
-// Handle second payment upload
-window.handleSecondPaymentUpload = async function(orderId, file) {
+// Global variable to store selected file temporarily
+let selectedSecondPaymentFiles = {};
+
+// Handle second payment file selection (preview first, don't upload yet)
+window.handleSecondPaymentSelect = async function(orderId, file) {
   if (!file) return;
 
-  const statusDiv = document.getElementById(`upload-status-${orderId}`);
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    alert('Solo se permiten imágenes (JPG, PNG, GIF, WEBP)');
+    return;
+  }
 
-  // Show loading
-  statusDiv.innerHTML = `
-    <div style="padding: 8px; background: #dbeafe; border-radius: 6px; text-align: center; font-size: 13px; color: #1e40af;">
-      ⏳ Comprimiendo imagen...
+  // Validate file size (10MB max)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('El archivo es demasiado grande. Tamaño máximo: 10MB');
+    return;
+  }
+
+  // Store file temporarily
+  selectedSecondPaymentFiles[orderId] = file;
+
+  // Show preview
+  const previewDiv = document.getElementById(`upload-preview-${orderId}`);
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    previewDiv.innerHTML = `
+      <div style="background: white; border: 2px solid #059669; border-radius: 8px; padding: 8px; margin-bottom: 8px;">
+        <img src="${e.target.result}"
+             alt="Preview"
+             style="width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px;">
+      </div>
+    `;
+  };
+  reader.readAsDataURL(file);
+
+  // Show confirmation buttons
+  const buttonsDiv = document.getElementById(`upload-buttons-${orderId}`);
+  buttonsDiv.innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <button
+        onclick="resetSecondPaymentUpload(${orderId})"
+        style="padding: 12px; background: #6b7280; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+        🔄 Escoger Otra Imagen
+      </button>
+      <button
+        onclick="confirmSecondPaymentUpload(${orderId})"
+        style="padding: 12px; background: #059669; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+        ✅ Enviar Recibo
+      </button>
+    </div>
+  `;
+};
+
+// Reset second payment upload (user wants to pick a different image)
+window.resetSecondPaymentUpload = function(orderId) {
+  // Clear stored file
+  delete selectedSecondPaymentFiles[orderId];
+
+  // Clear preview
+  const previewDiv = document.getElementById(`upload-preview-${orderId}`);
+  previewDiv.innerHTML = '';
+
+  // Reset buttons
+  const buttonsDiv = document.getElementById(`upload-buttons-${orderId}`);
+  buttonsDiv.innerHTML = `
+    <button
+      onclick="document.getElementById('second-payment-upload-${orderId}').click()"
+      style="width: 100%; padding: 12px; background: #059669; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+      📸 Seleccionar Comprobante de Pago
+    </button>
+  `;
+
+  // Reset file input
+  document.getElementById(`second-payment-upload-${orderId}`).value = '';
+};
+
+// Confirm and upload second payment receipt
+window.confirmSecondPaymentUpload = async function(orderId) {
+  const file = selectedSecondPaymentFiles[orderId];
+  if (!file) {
+    alert('No hay archivo seleccionado');
+    return;
+  }
+
+  const previewDiv = document.getElementById(`upload-preview-${orderId}`);
+  const buttonsDiv = document.getElementById(`upload-buttons-${orderId}`);
+
+  // Disable buttons during upload
+  buttonsDiv.innerHTML = `
+    <div style="padding: 12px; background: #dbeafe; border-radius: 8px; text-align: center; font-size: 13px; color: #1e40af;">
+      <div style="font-weight: 600; margin-bottom: 4px;">⏳ Comprimiendo imagen...</div>
+      <div style="font-size: 11px;">Por favor espera</div>
     </div>
   `;
 
   try {
-    // Compress image before upload (same as first payment)
+    // Compress image before upload
     const compressedFile = await compressImage(file);
     console.log(`📦 Compressed: ${(file.size / 1024).toFixed(0)}KB → ${(compressedFile.size / 1024).toFixed(0)}KB`);
 
-    statusDiv.innerHTML = `
-      <div style="padding: 8px; background: #dbeafe; border-radius: 6px; text-align: center; font-size: 13px; color: #1e40af;">
-        ⏳ Subiendo a Cloudinary...
+    buttonsDiv.innerHTML = `
+      <div style="padding: 12px; background: #dbeafe; border-radius: 8px; text-align: center; font-size: 13px; color: #1e40af;">
+        <div style="font-weight: 600; margin-bottom: 4px;">⏳ Subiendo a Cloudinary...</div>
+        <div style="font-size: 11px;">Por favor espera</div>
       </div>
     `;
 
@@ -1326,13 +1422,14 @@ window.handleSecondPaymentUpload = async function(orderId, file) {
 
     console.log('✅ Receipt uploaded to Cloudinary:', uploadData.url);
 
-    statusDiv.innerHTML = `
-      <div style="padding: 8px; background: #dbeafe; border-radius: 6px; text-align: center; font-size: 13px; color: #1e40af;">
-        ⏳ Guardando comprobante...
+    buttonsDiv.innerHTML = `
+      <div style="padding: 12px; background: #dbeafe; border-radius: 8px; text-align: center; font-size: 13px; color: #1e40af;">
+        <div style="font-weight: 600; margin-bottom: 4px;">⏳ Guardando comprobante...</div>
+        <div style="font-size: 11px;">Por favor espera</div>
       </div>
     `;
 
-    // Send Cloudinary URL to API (use absolute path - endpoint is on admin route not client)
+    // Send Cloudinary URL to API
     const apiUrl = window.location.hostname === 'localhost'
       ? `http://localhost:3000/api/orders/${orderId}/second-payment`
       : `/api/orders/${orderId}/second-payment`;
@@ -1351,25 +1448,50 @@ window.handleSecondPaymentUpload = async function(orderId, file) {
       throw new Error(result.error || 'Error al guardar el comprobante');
     }
 
-    // Show success - keep it visible
-    statusDiv.innerHTML = `
-      <div style="padding: 8px; background: #d1fae5; border-radius: 6px; text-align: center; font-size: 13px; color: #065f46; font-weight: 600;">
-        ✅ ¡Comprobante recibido! Verificaremos tu pago pronto.
+    console.log('✅ Second payment proof saved successfully');
+
+    // Show success and update UI to show "Segundo recibo enviado"
+    const sectionDiv = document.getElementById(`second-payment-section-${orderId}`);
+    sectionDiv.innerHTML = `
+      <div style="padding: 12px; background: #d1fae5; border: 1px solid #059669; border-radius: 8px;">
+        <div style="font-size: 13px; font-weight: 600; color: #065f46; margin-bottom: 8px; text-align: center;">
+          ✅ Segundo recibo de pago enviado
+        </div>
+        <div style="font-size: 12px; color: #047857; margin-bottom: 8px; text-align: center;">
+          Estamos verificando tu pago
+        </div>
+        <div style="background: white; padding: 8px; border-radius: 6px; text-align: center;">
+          <img src="${uploadData.url}"
+               alt="Comprobante de pago final"
+               style="max-width: 100%; max-height: 200px; border-radius: 4px; cursor: pointer;"
+               onclick="window.open('${uploadData.url}', '_blank')">
+          <div style="font-size: 11px; color: #059669; margin-top: 4px;">
+            Click para ver en tamaño completo
+          </div>
+        </div>
       </div>
     `;
 
-    console.log('✅ Second payment proof saved successfully');
-
-    // Refresh the order list after 3 seconds to show updated status
-    setTimeout(() => {
-      window.lookupClientOrders();
-    }, 3000);
+    // Clear stored file
+    delete selectedSecondPaymentFiles[orderId];
 
   } catch (error) {
     console.error('❌ Error uploading second payment:', error);
-    statusDiv.innerHTML = `
-      <div style="padding: 8px; background: #fee2e2; border-radius: 6px; text-align: center; font-size: 13px; color: #991b1b;">
+    buttonsDiv.innerHTML = `
+      <div style="padding: 8px; background: #fee2e2; border-radius: 6px; text-align: center; font-size: 13px; color: #991b1b; margin-bottom: 8px;">
         ❌ Error: ${error.message}
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button
+          onclick="resetSecondPaymentUpload(${orderId})"
+          style="padding: 12px; background: #6b7280; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+          🔄 Intentar Otra Vez
+        </button>
+        <button
+          onclick="confirmSecondPaymentUpload(${orderId})"
+          style="padding: 12px; background: #059669; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+          ✅ Reintentar Envío
+        </button>
       </div>
     `;
   }
