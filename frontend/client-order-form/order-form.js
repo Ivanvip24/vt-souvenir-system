@@ -60,8 +60,8 @@ function initializeEventListeners() {
   document.getElementById('continue-phone').addEventListener('click', handlePhoneSubmit);
   document.getElementById('phone').addEventListener('input', formatPhoneInput);
 
-  // Auto-fill feature: Listen for phone number changes with debounce
-  document.getElementById('phone').addEventListener('input', debounce(handlePhoneAutofill, 500));
+  // Auto-fill feature DISABLED - Only check on Continue button click
+  // document.getElementById('phone').addEventListener('input', debounce(handlePhoneAutofill, 500));
 
   // Step 1.5: Confirm Data
   const confirmBtn = document.getElementById('confirm-data-btn');
@@ -308,32 +308,87 @@ async function handlePhoneSubmit() {
   state.client.phone = phone;
   state.client.email = email;
 
-  // Check if we already have client data from auto-fill
-  if (state.client.name && state.client.address) {
-    // Client data was auto-filled, show confirmation step
-    state.client.isReturning = true;
-    showStep(1.5); // Show confirmation step
-    return;
-  }
+  // Show loading indicator
+  const continueBtn = document.getElementById('continue-phone');
+  const originalText = continueBtn.textContent;
+  continueBtn.disabled = true;
+  continueBtn.innerHTML = '<span class="spinner"></span> Verificando...';
 
-  // Check localStorage as fallback (match both phone AND email)
-  const savedData = localStorage.getItem(STORAGE_KEY);
-  if (savedData) {
-    try {
-      const parsed = JSON.parse(savedData);
-      if (parsed.phone === phone && parsed.email === email) {
-        // Returning client! Show confirmation step
-        state.client = { ...parsed, isReturning: true };
+  try {
+    // Check database for existing client
+    const response = await fetch(`${API_BASE}/orders/lookup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ phone })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.clientInfo && data.clientInfo.name) {
+      // Client found in database! Pre-fill their information
+      state.client.name = data.clientInfo.name || '';
+      state.client.email = data.clientInfo.email || email; // Use provided email if DB doesn't have one
+      state.client.address = data.clientInfo.address || '';
+      state.client.colonia = data.clientInfo.colonia || '';
+      state.client.city = data.clientInfo.city || '';
+      state.client.state = data.clientInfo.state || '';
+      state.client.postal = data.clientInfo.postal || '';
+      state.client.references = data.clientInfo.references || '';
+      state.client.phone = phone;
+      state.client.isReturning = true;
+
+      // Show welcome message
+      showAutofillSuccess(data.clientInfo.name);
+
+      // Delay a bit so user can see the welcome message, then show confirmation step
+      setTimeout(() => {
+        hideAutofillMessage();
         showStep(1.5); // Show confirmation step
-        return;
-      }
-    } catch (e) {
-      console.error('Error parsing saved data:', e);
-    }
-  }
+      }, 1500);
 
-  // New client - go to info step
-  showStep(2);
+      continueBtn.disabled = false;
+      continueBtn.textContent = originalText;
+      return;
+    }
+
+    // Check localStorage as fallback (match both phone AND email)
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.phone === phone && parsed.email === email) {
+          // Returning client from local storage
+          state.client = { ...parsed, isReturning: true };
+          showAutofillSuccess(parsed.name);
+
+          setTimeout(() => {
+            hideAutofillMessage();
+            showStep(1.5); // Show confirmation step
+          }, 1500);
+
+          continueBtn.disabled = false;
+          continueBtn.textContent = originalText;
+          return;
+        }
+      } catch (e) {
+        console.error('Error parsing saved data:', e);
+      }
+    }
+
+    // New client - go directly to info step
+    continueBtn.disabled = false;
+    continueBtn.textContent = originalText;
+    showStep(2);
+
+  } catch (error) {
+    console.error('Error during client lookup:', error);
+    // On error, just proceed to info step
+    continueBtn.disabled = false;
+    continueBtn.textContent = originalText;
+    showStep(2);
+  }
 }
 
 function populateConfirmationData() {
