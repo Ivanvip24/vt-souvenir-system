@@ -1074,55 +1074,6 @@ app.get('/admin/login', (req, res) => {
 });
 
 // ========================================
-// ERROR HANDLING
-// ========================================
-
-// ========================================
-// FRONTEND STATIC FILE SERVING
-// ========================================
-
-// Path to frontend directories
-const frontendPath = path.join(__dirname, '../../frontend');
-const clientOrderFormPath = path.join(frontendPath, 'client-order-form');
-const adminDashboardPath = path.join(frontendPath, 'admin-dashboard');
-
-console.log(`📁 Frontend paths:`);
-console.log(`   Client Order Form: ${clientOrderFormPath}`);
-console.log(`   Admin Dashboard: ${adminDashboardPath}`);
-
-// Serve specific admin HTML pages
-app.get('/admin/login', (req, res) => {
-  res.sendFile(path.join(adminDashboardPath, 'login.html'));
-});
-
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(adminDashboardPath, 'index.html'));
-});
-
-// Serve admin dashboard static files
-app.use('/admin', express.static(adminDashboardPath));
-
-// Serve client order form static files at root
-app.use(express.static(clientOrderFormPath));
-
-// Fallback route for client order form (SPA)
-app.get('*', (req, res) => {
-  // Don't serve index.html for API or static file routes
-  if (req.path.startsWith('/api/') ||
-      req.path.startsWith('/receipts/') ||
-      req.path.startsWith('/payment-receipts/') ||
-      req.path.startsWith('/admin')) {
-    return res.status(404).json({
-      success: false,
-      error: 'Endpoint not found'
-    });
-  }
-
-  // Serve client order form for all other routes
-  res.sendFile(path.join(clientOrderFormPath, 'index.html'));
-});
-
-// ========================================
 // ERROR HANDLER MIDDLEWARE
 // ========================================
 
