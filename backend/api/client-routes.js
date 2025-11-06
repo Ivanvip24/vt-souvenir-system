@@ -143,6 +143,7 @@ router.post('/orders/submit', async (req, res) => {
 
       // Payment method
       paymentMethod, // 'stripe' or 'bank_transfer'
+      paymentProofUrl, // Cloudinary URL for payment receipt
     } = req.body;
 
     // Validation
@@ -248,11 +249,12 @@ router.post('/orders/submit', async (req, res) => {
         total_production_cost,
         deposit_amount,
         payment_method,
+        payment_proof_url,
         approval_status,
         status,
         department,
         deposit_paid
-      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, 'pending_review', 'new', 'pending', false)
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false)
       RETURNING id`,
       [
         orderNumber,
@@ -264,7 +266,8 @@ router.post('/orders/submit', async (req, res) => {
         subtotal, // total_price = subtotal for now (no tax/shipping in client orders)
         orderItems.reduce((sum, item) => sum + (item.unitCost * item.quantity), 0),
         depositAmount,
-        paymentMethod
+        paymentMethod,
+        paymentProofUrl || null
       ]
     );
 

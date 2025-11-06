@@ -961,7 +961,8 @@ async function handleOrderSubmit() {
       clientReferences: state.client.references,
 
       // Payment
-      paymentMethod: state.payment.method
+      paymentMethod: state.payment.method,
+      paymentProofUrl: state.payment.proofFile?.cloudinaryUrl || null
     };
 
     console.log('Submitting order:', orderData);
@@ -991,12 +992,9 @@ async function handleOrderSubmit() {
       submitText.classList.remove('hidden');
       submitLoader.classList.add('hidden');
       return;
-    } else if (result.requiresProofUpload) {
-      // Upload payment proof
-      await uploadPaymentProof(result.orderId);
     }
 
-    // Show success
+    // Show success (payment proof was already included in order submission)
     showSuccessScreen(result.orderNumber);
 
   } catch (error) {
