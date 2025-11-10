@@ -60,10 +60,29 @@ router.post('/payment-receipt', upload.single('receipt'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Upload error:', error.message);
+    console.error('❌ Upload error:', error);
+
+    // Check for specific Cloudinary errors
+    let errorMessage = error.message || 'Error al subir el archivo';
+    let errorType = 'upload_failed';
+
+    if (error.message && error.message.includes('cloud_name')) {
+      errorMessage = 'Cloudinary no está configurado correctamente';
+      errorType = 'config_error';
+      console.error('⚠️ Cloudinary config issue - check environment variables');
+    } else if (error.message && error.message.includes('Invalid image file')) {
+      errorMessage = 'Archivo de imagen no válido';
+      errorType = 'invalid_file';
+    } else if (error.http_code === 401) {
+      errorMessage = 'Credenciales de Cloudinary inválidas';
+      errorType = 'auth_error';
+    }
+
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al subir el archivo'
+      error: errorMessage,
+      errorType,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

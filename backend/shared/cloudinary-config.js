@@ -5,6 +5,14 @@ const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || 'demo';
 const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || '123456789';
 const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || 'demo-secret';
 
+// Log configuration status (without exposing secrets)
+console.log('🔧 Cloudinary Config:', {
+  cloud_name: CLOUDINARY_CLOUD_NAME,
+  api_key_set: !!process.env.CLOUDINARY_API_KEY,
+  api_secret_set: !!process.env.CLOUDINARY_API_SECRET,
+  using_demo: CLOUDINARY_CLOUD_NAME === 'demo'
+});
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: CLOUDINARY_CLOUD_NAME,

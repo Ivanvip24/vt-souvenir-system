@@ -870,11 +870,30 @@ async function handleProofUpload(files, previewEl) {
     }
   } catch (error) {
     console.error('❌ Upload error:', error);
-    alert('Error al subir el comprobante de pago. Por favor intenta de nuevo.');
 
-    // Clear the failed upload
-    state.payment.proofFile = null;
-    previewEl.innerHTML = '';
+    // More detailed error message
+    let errorMessage = 'Error al subir el comprobante de pago.\n\n';
+
+    if (error.message.includes('Failed to fetch')) {
+      errorMessage += 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+    } else if (error.message.includes('cloud_name') || error.message.includes('api_key')) {
+      errorMessage += 'Error de configuración del servidor. Por favor contacta al administrador.';
+    } else if (error.message.includes('timeout')) {
+      errorMessage += 'La carga tardó demasiado. Intenta con una imagen más pequeña.';
+    } else {
+      errorMessage += `Detalles: ${error.message}`;
+    }
+
+    errorMessage += '\n\n¿Deseas intentar de nuevo?';
+
+    if (confirm(errorMessage)) {
+      // Let them try again - don't clear the file
+      console.log('User will retry upload');
+    } else {
+      // Clear the failed upload only if they don't want to retry
+      state.payment.proofFile = null;
+      previewEl.innerHTML = '';
+    }
   }
 }
 
