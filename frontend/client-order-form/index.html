@@ -135,15 +135,27 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="client-address">Calle y Número *</label>
-                    <input type="text"
-                           id="client-address"
-                           placeholder="Ej: Av. Insurgentes Sur 1234"
-                           autocomplete="street-address"
-                           required>
-                    <span class="input-hint">Incluye nombre de la calle y número exterior/interior</span>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label for="client-street">Calle *</label>
+                        <input type="text"
+                               id="client-street"
+                               placeholder="Ej: Av. Insurgentes Sur"
+                               autocomplete="address-line1"
+                               required>
+                        <span class="input-hint">Nombre de la calle</span>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="client-street-number">Número *</label>
+                        <input type="text"
+                               id="client-street-number"
+                               placeholder="Ej: 1234 int 5"
+                               required>
+                        <span class="input-hint">Exterior e interior</span>
+                    </div>
                 </div>
+                <!-- Keep hidden client-address for backward compatibility -->
+                <input type="hidden" id="client-address">
 
                 <div class="form-group">
                     <label for="client-colonia">Colonia *</label>
@@ -188,8 +200,9 @@
                     <label for="client-references">Referencias de Ubicación (opcional)</label>
                     <textarea id="client-references"
                               rows="2"
-                              placeholder="Ej: Entre calle X y Y, edificio azul, portón negro"></textarea>
-                    <span class="input-hint">Ayúdanos a encontrar tu domicilio más fácil</span>
+                              maxlength="35"
+                              placeholder="Ej: Entre calle X y Y, edificio azul"></textarea>
+                    <span class="input-hint" id="references-counter">Máximo 35 caracteres (0/35)</span>
                 </div>
 
                 <button id="continue-info" class="btn btn-primary btn-large">

@@ -25,9 +25,14 @@ const state = {
     phone: '',
     name: '',
     email: '',
-    address: '',
+    address: '', // Legacy field (for backward compatibility)
+    street: '', // New: Street name
+    streetNumber: '', // New: Street number
+    colonia: '',
     city: '',
     state: '',
+    postal: '',
+    references: '',
     isReturning: false
   },
   products: [],
@@ -71,6 +76,21 @@ function initializeEventListeners() {
 
   // Step 2: Client Info
   document.getElementById('continue-info').addEventListener('click', handleInfoSubmit);
+
+  // Add character counter for references field
+  const referencesField = document.getElementById('client-references');
+  const referencesCounter = document.getElementById('references-counter');
+  if (referencesField && referencesCounter) {
+    referencesField.addEventListener('input', () => {
+      const length = referencesField.value.length;
+      referencesCounter.textContent = `Máximo 35 caracteres (${length}/35)`;
+      if (length >= 35) {
+        referencesCounter.style.color = '#dc2626';
+      } else {
+        referencesCounter.style.color = '#6b7280';
+      }
+    });
+  }
 
   // Step 3: Products (loaded dynamically)
   document.getElementById('continue-products').addEventListener('click', handleProductsSubmit);
@@ -181,6 +201,8 @@ async function handlePhoneAutofill(e) {
       state.client.name = data.clientInfo.name || '';
       state.client.email = data.clientInfo.email || '';
       state.client.address = data.clientInfo.address || '';
+      state.client.street = data.clientInfo.street || data.clientInfo.address || '';
+      state.client.streetNumber = data.clientInfo.streetNumber || '';
       state.client.colonia = data.clientInfo.colonia || '';
       state.client.city = data.clientInfo.city || '';
       state.client.state = data.clientInfo.state || '';
@@ -331,6 +353,8 @@ async function handlePhoneSubmit() {
       state.client.name = data.clientInfo.name || '';
       state.client.email = data.clientInfo.email || email; // Use provided email if DB doesn't have one
       state.client.address = data.clientInfo.address || '';
+      state.client.street = data.clientInfo.street || data.clientInfo.address || '';
+      state.client.streetNumber = data.clientInfo.streetNumber || '';
       state.client.colonia = data.clientInfo.colonia || '';
       state.client.city = data.clientInfo.city || '';
       state.client.state = data.clientInfo.state || '';
@@ -395,7 +419,7 @@ function populateConfirmationData() {
   const container = document.getElementById('confirm-data-display');
 
   const fullAddress = [
-    state.client.address,
+    `${state.client.street} ${state.client.streetNumber}`.trim() || state.client.address,
     state.client.colonia,
     `${state.client.city}, ${state.client.state}`,
     `CP ${state.client.postal}`
@@ -453,12 +477,22 @@ function showReturningClientMessage(name) {
 function prefillClientInfo() {
   document.getElementById('client-name').value = state.client.name || '';
   document.getElementById('client-email').value = state.client.email || '';
-  document.getElementById('client-address').value = state.client.address || '';
+  document.getElementById('client-street').value = state.client.street || '';
+  document.getElementById('client-street-number').value = state.client.streetNumber || '';
+  // Update hidden address field for compatibility
+  document.getElementById('client-address').value = state.client.address || `${state.client.street || ''} ${state.client.streetNumber || ''}`.trim();
   document.getElementById('client-colonia').value = state.client.colonia || '';
   document.getElementById('client-city').value = state.client.city || '';
   document.getElementById('client-state').value = state.client.state || '';
   document.getElementById('client-postal').value = state.client.postal || '';
   document.getElementById('client-references').value = state.client.references || '';
+
+  // Update character counter for references
+  const referencesCounter = document.getElementById('references-counter');
+  if (referencesCounter) {
+    const length = (state.client.references || '').length;
+    referencesCounter.textContent = `Máximo 35 caracteres (${length}/35)`;
+  }
 }
 
 // ==========================================
@@ -468,7 +502,9 @@ function prefillClientInfo() {
 function handleInfoSubmit() {
   const name = document.getElementById('client-name').value.trim();
   const email = document.getElementById('client-email').value.trim();
-  const address = document.getElementById('client-address').value.trim();
+  const street = document.getElementById('client-street').value.trim();
+  const streetNumber = document.getElementById('client-street-number').value.trim();
+  const address = `${street} ${streetNumber}`.trim(); // Combined for backward compatibility
   const colonia = document.getElementById('client-colonia').value.trim();
   const city = document.getElementById('client-city').value.trim();
   const stateVal = document.getElementById('client-state').value.trim();
@@ -482,9 +518,15 @@ function handleInfoSubmit() {
     return;
   }
 
-  if (!address) {
-    alert('Por favor ingresa la calle y número');
-    document.getElementById('client-address').focus();
+  if (!street) {
+    alert('Por favor ingresa el nombre de la calle');
+    document.getElementById('client-street').focus();
+    return;
+  }
+
+  if (!streetNumber) {
+    alert('Por favor ingresa el número de la calle');
+    document.getElementById('client-street-number').focus();
     return;
   }
 
@@ -508,7 +550,9 @@ function handleInfoSubmit() {
   // Save to state
   state.client.name = name;
   state.client.email = email;
-  state.client.address = address;
+  state.client.address = address; // Combined for compatibility
+  state.client.street = street;
+  state.client.streetNumber = streetNumber;
   state.client.colonia = colonia;
   state.client.city = city;
   state.client.state = stateVal;
@@ -920,7 +964,9 @@ async function handleStripePayment() {
       clientName: state.client.name,
       clientPhone: state.client.phone,
       clientEmail: state.client.email,
-      clientAddress: state.client.address,
+      clientAddress: state.client.address, // Legacy field
+      clientStreet: state.client.street,
+      clientStreetNumber: state.client.streetNumber,
       clientColonia: state.client.colonia,
       clientCity: state.client.city,
       clientState: state.client.state,
@@ -974,10 +1020,12 @@ async function handleOrderSubmit() {
   const submitText = document.getElementById('submit-text');
   const submitLoader = document.getElementById('submit-loader');
 
-  // Validate bank transfer has proof
-  if (state.payment.method === 'bank_transfer' && !state.payment.proofFile) {
-    alert('Por favor sube el comprobante de pago');
-    return;
+  // Validate bank transfer has proof AND it's uploaded to Cloudinary
+  if (state.payment.method === 'bank_transfer') {
+    if (!state.payment.proofFile || !state.payment.proofFile.cloudinaryUrl) {
+      alert('Por favor sube el comprobante de pago y espera a que se complete la carga');
+      return;
+    }
   }
 
   // Get notes from payment step
@@ -1005,7 +1053,9 @@ async function handleOrderSubmit() {
       clientName: state.client.name,
       clientPhone: state.client.phone,
       clientEmail: state.client.email,
-      clientAddress: state.client.address,
+      clientAddress: state.client.address, // Legacy field
+      clientStreet: state.client.street,
+      clientStreetNumber: state.client.streetNumber,
       clientColonia: state.client.colonia,
       clientCity: state.client.city,
       clientState: state.client.state,

@@ -137,9 +137,14 @@ router.post('/orders/submit', async (req, res) => {
       clientName,
       clientPhone,
       clientEmail,
-      clientAddress,
+      clientAddress, // Legacy full address (will use if street not provided)
+      clientStreet, // New: Street name
+      clientStreetNumber, // New: Street number
+      clientColonia,
       clientCity,
       clientState,
+      clientPostal,
+      clientReferences,
 
       // Payment method
       paymentMethod, // 'stripe' or 'bank_transfer'
@@ -217,18 +222,53 @@ router.post('/orders/submit', async (req, res) => {
 
     if (existingClient.rows.length > 0) {
       clientId = existingClient.rows[0].id;
-      // Update client info
+      // Update client info with new address fields
       await query(
-        `UPDATE clients SET name = $1, email = $2, address = $3, city = $4, state = $5, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $6`,
-        [clientName, clientEmail, clientAddress, clientCity, clientState, clientId]
+        `UPDATE clients SET
+         name = $1,
+         email = $2,
+         address = $3,
+         street = $4,
+         street_number = $5,
+         colonia = $6,
+         city = $7,
+         state = $8,
+         postal = $9,
+         reference_notes = $10,
+         updated_at = CURRENT_TIMESTAMP
+         WHERE id = $11`,
+        [
+          clientName,
+          clientEmail,
+          clientAddress || `${clientStreet || ''} ${clientStreetNumber || ''}`.trim(), // Keep full address for compatibility
+          clientStreet || clientAddress, // Use street or fallback to full address
+          clientStreetNumber || '',
+          clientColonia || '',
+          clientCity,
+          clientState,
+          clientPostal || '',
+          clientReferences ? clientReferences.substring(0, 35) : '', // Enforce 35 char limit
+          clientId
+        ]
       );
     } else {
       const newClient = await query(
-        `INSERT INTO clients (name, phone, email, address, city, state)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO clients (name, phone, email, address, street, street_number, colonia, city, state, postal, reference_notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING id`,
-        [clientName, clientPhone, clientEmail, clientAddress, clientCity, clientState]
+        [
+          clientName,
+          clientPhone,
+          clientEmail,
+          clientAddress || `${clientStreet || ''} ${clientStreetNumber || ''}`.trim(), // Keep full address for compatibility
+          clientStreet || clientAddress, // Use street or fallback to full address
+          clientStreetNumber || '',
+          clientColonia || '',
+          clientCity,
+          clientState,
+          clientPostal || '',
+          clientReferences ? clientReferences.substring(0, 35) : '' // Enforce 35 char limit
+        ]
       );
       clientId = newClient.rows[0].id;
     }
@@ -544,6 +584,14 @@ router.post('/orders/lookup', async (req, res) => {
         c.name as client_name,
         c.phone as client_phone,
         c.email as client_email,
+        c.address as client_address,
+        c.street as client_street,
+        c.street_number as client_street_number,
+        c.colonia as client_colonia,
+        c.city as client_city,
+        c.state as client_state,
+        c.postal as client_postal,
+        c.reference_notes as client_references,
         json_agg(
           json_build_object(
             'productName', oi.product_name,
@@ -557,7 +605,7 @@ router.post('/orders/lookup', async (req, res) => {
       WHERE (${whereClause})
         AND o.status NOT IN ('delivered', 'cancelled')
         AND o.approval_status != 'rejected'
-      GROUP BY o.id, c.name, c.phone, c.email
+      GROUP BY o.id, c.name, c.phone, c.email, c.address, c.street, c.street_number, c.colonia, c.city, c.state, c.postal, c.reference_notes
       ORDER BY o.created_at DESC
     `, params);
 
@@ -597,7 +645,15 @@ router.post('/orders/lookup', async (req, res) => {
       clientInfo: {
         name: result.rows[0].client_name,
         phone: result.rows[0].client_phone,
-        email: result.rows[0].client_email
+        email: result.rows[0].client_email,
+        address: result.rows[0].client_address,
+        street: result.rows[0].client_street,
+        streetNumber: result.rows[0].client_street_number,
+        colonia: result.rows[0].client_colonia,
+        city: result.rows[0].client_city,
+        state: result.rows[0].client_state,
+        postal: result.rows[0].client_postal,
+        references: result.rows[0].client_references
       }
     });
 
