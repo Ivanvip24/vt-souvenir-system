@@ -119,7 +119,16 @@ function applyFilter(filter) {
 
   // First apply status filter
   let filtered = state.orders;
-  if (filter !== 'all') {
+  if (filter === 'active') {
+    // Active = not delivered and not cancelled
+    filtered = filtered.filter(order =>
+      order.status !== 'delivered' && order.status !== 'cancelled'
+    );
+  } else if (filter === 'completed') {
+    // Completed = delivered orders
+    filtered = filtered.filter(order => order.status === 'delivered');
+  } else if (filter !== 'all') {
+    // Original approval status filters
     filtered = filtered.filter(order => order.approvalStatus === filter);
   }
 
@@ -214,6 +223,14 @@ function renderOrders() {
 function createOrderCard(order) {
   const card = document.createElement('div');
   card.className = 'order-card';
+
+  // Add special styling for completed orders
+  if (order.status === 'delivered') {
+    card.className += ' order-completed';
+    card.style.opacity = '0.85';
+    card.style.background = '#f9fafb';
+  }
+
   card.onclick = () => showOrderDetail(order.id);
 
   const statusClass = `status-${order.approvalStatus}`;
@@ -743,10 +760,16 @@ function updateStats() {
   const todayRevenue = todayOrders.reduce((sum, o) => sum + o.totalPrice, 0);
   document.getElementById('today-revenue').textContent = formatCurrency(todayRevenue);
 
+  // Calculate additional stats for new filters
+  const activeCount = state.orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length;
+  const completedCount = state.orders.filter(o => o.status === 'delivered').length;
+
   // Update filter badges
   document.getElementById('all-count').textContent = state.orders.length;
+  document.getElementById('active-count').textContent = activeCount;
   document.getElementById('pending-count-badge').textContent = pendingCount;
   document.getElementById('approved-count').textContent = approvedCount;
+  document.getElementById('completed-count').textContent = completedCount;
 }
 
 // ==========================================

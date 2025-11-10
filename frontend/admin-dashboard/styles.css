@@ -261,6 +261,16 @@ body {
     color: white;
 }
 
+.badge-info {
+    background: #3b82f6;
+    color: white;
+}
+
+.badge-secondary {
+    background: #6b7280;
+    color: white;
+}
+
 .btn-refresh {
     padding: 10px 16px;
     border: 2px solid var(--gray-200);
