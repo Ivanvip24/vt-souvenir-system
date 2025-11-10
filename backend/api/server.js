@@ -1102,6 +1102,26 @@ app.post('/api/test/email', async (req, res) => {
   }
 });
 
+// Check email environment variables (diagnostic)
+app.get('/api/test/email-config', (req, res) => {
+  const config = {
+    EMAIL_SERVICE: process.env.EMAIL_SERVICE || 'NOT SET',
+    EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
+    EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? `SET (${process.env.EMAIL_PASSWORD.length} chars)` : 'NOT SET',
+    COMPANY_NAME: process.env.COMPANY_NAME || 'NOT SET',
+    COMPANY_EMAIL: process.env.COMPANY_EMAIL || 'NOT SET',
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET',
+  };
+
+  console.log('📋 Email Configuration Check:', config);
+
+  res.json({
+    success: true,
+    config: config,
+    note: 'Gmail App Password should be 16 characters (4 groups of 4). Regular Gmail password will NOT work.'
+  });
+});
+
 // ========================================
 // FRONTEND ROUTES (Serve HTML pages)
 // ========================================
