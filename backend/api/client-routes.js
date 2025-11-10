@@ -10,6 +10,7 @@ import { generateOrderNumber, formatCurrency } from '../shared/utils.js';
 import * as notionSync from '../agents/notion-agent/sync.js';
 import * as emailSender from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
+import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 
 const router = express.Router();
 
@@ -345,23 +346,57 @@ router.post('/orders/submit', async (req, res) => {
       }
     });
 
-    // 6b. Send order confirmation to customer (background - don't block response)
+    // 6b. Generate PDF receipt and send to customer (background - don't block response)
     setImmediate(async () => {
       try {
-        await emailSender.sendOrderConfirmation(
+        console.log(`📄 Generating PDF receipt for order ${orderNumber}...`);
+
+        // Calculate remaining balance (total - deposit)
+        const remainingBalance = subtotal - depositAmount;
+
+        // Generate PDF receipt
+        const pdfPath = await generateReceipt({
+          orderNumber,
+          clientName,
+          clientPhone,
+          clientEmail,
+          orderDate: new Date(),
+          items: orderItems.map(item => ({
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            lineTotal: item.lineTotal
+          })),
+          totalPrice: subtotal,
+          actualDepositAmount: depositAmount,
+          remainingBalance: remainingBalance,
+          eventDate: eventDate || null,
+          eventType: eventType || null
+        });
+
+        console.log(`✅ PDF receipt generated: ${pdfPath}`);
+
+        // Send receipt email with PDF attachment
+        await emailSender.sendReceiptEmail(
           {
             orderNumber,
             orderDate: new Date(),
-            totalPrice: subtotal
+            totalPrice: subtotal,
+            actualDepositAmount: depositAmount,
+            remainingBalance: remainingBalance,
+            eventDate: eventDate || null
           },
           {
             name: clientName,
             email: clientEmail
-          }
+          },
+          pdfPath
         );
-        console.log(`✅ Order confirmation sent to customer: ${clientEmail}`);
+
+        console.log(`✅ Receipt email with PDF sent to customer: ${clientEmail}`);
       } catch (emailError) {
-        console.error('Failed to send customer confirmation:', emailError);
+        console.error('❌ Failed to generate PDF or send receipt email:', emailError);
+        // Don't fail the order if email fails
       }
     });
 
