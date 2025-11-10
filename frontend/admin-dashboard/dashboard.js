@@ -675,49 +675,71 @@ function closeDepositModal() {
 }
 
 async function confirmApproveWithDeposit() {
+  console.log('🚀 Starting order approval process...');
+
   const actualDepositAmount = parseFloat(document.getElementById('actual-deposit-amount').value);
+  console.log(`💰 Deposit amount entered: $${actualDepositAmount}`);
 
   // Validation
   if (!actualDepositAmount || actualDepositAmount <= 0) {
+    console.error('❌ Invalid deposit amount');
     alert('Por favor ingresa un monto válido para el anticipo');
     return;
   }
 
   if (!orderToApprove) {
+    console.error('❌ No order found in orderToApprove variable');
     alert('Error: No se encontró el pedido');
     return;
   }
 
+  console.log(`📦 Approving order: ${orderToApprove.orderNumber} (ID: ${orderToApprove.id})`);
+  console.log(`💵 Total: $${orderToApprove.totalPrice}, Deposit: $${actualDepositAmount}`);
+
   if (actualDepositAmount > orderToApprove.totalPrice) {
+    console.error('❌ Deposit exceeds total price');
     alert('El monto del anticipo no puede ser mayor que el total del pedido');
     return;
   }
 
   try {
-    const response = await fetch(`${API_BASE}/orders/${orderToApprove.id}/approve`, {
+    const endpoint = `${API_BASE}/orders/${orderToApprove.id}/approve`;
+    const payload = { actualDepositAmount: actualDepositAmount };
+
+    console.log(`📤 Sending approval request to: ${endpoint}`);
+    console.log('📤 Request payload:', payload);
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         ...getAuthHeaders(),
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        actualDepositAmount: actualDepositAmount
-      })
+      body: JSON.stringify(payload)
     });
 
+    console.log(`📥 Response status: ${response.status} ${response.statusText}`);
+
     const data = await response.json();
+    console.log('📥 Response data:', data);
 
     if (data.success) {
+      console.log('✅ Order approved successfully!');
+      console.log('📧 PDF receipt should be generated and emailed to customer');
+
       closeDepositModal();
       closeOrderDetail();
       loadOrders();
       alert('✅ Pedido aprobado exitosamente. Se ha generado y enviado el recibo al cliente.');
     } else {
+      console.error('❌ Approval failed:', data.error);
       alert('Error: ' + (data.error || 'No se pudo aprobar el pedido'));
     }
   } catch (error) {
-    console.error('Error approving order:', error);
-    alert('Error al aprobar el pedido');
+    console.error('❌ CRITICAL ERROR approving order:', error);
+    console.error('Error details:', error.message);
+    console.error('Stack trace:', error.stack);
+    alert('Error al aprobar el pedido: ' + error.message);
   }
 }
 
