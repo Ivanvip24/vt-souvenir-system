@@ -14,18 +14,35 @@ const connectionPool = {
 };
 
 function createTransporter() {
-  if (process.env.EMAIL_SERVICE === 'gmail') {
+  if (process.env.EMAIL_SERVICE === 'sendgrid') {
+    // SendGrid (recommended for cloud platforms like Render)
     return nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'apikey',
+        pass: process.env.SENDGRID_API_KEY
+      }
+    });
+  } else if (process.env.EMAIL_SERVICE === 'gmail') {
+    // Gmail - Try port 465 (SSL) for cloud platforms that block port 587
+    return nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // Use SSL
       ...connectionPool,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD
+      },
+      tls: {
+        rejectUnauthorized: false // For cloud platforms
       }
     });
   } else {
     // Generic SMTP
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: parseInt(process.env.EMAIL_PORT || '587'),
       secure: process.env.EMAIL_SECURE === 'true',
@@ -45,11 +62,32 @@ export function initializeEmailSender() {
   try {
     console.log('📋 Email Configuration:');
     console.log(`   Service: ${process.env.EMAIL_SERVICE || 'NOT SET'}`);
+
+    // Check for SendGrid
+    if (process.env.EMAIL_SERVICE === 'sendgrid') {
+      console.log(`   SendGrid API Key: ${process.env.SENDGRID_API_KEY ? 'SET' : 'NOT SET'}`);
+      console.log(`   From Email: ${process.env.EMAIL_USER || 'NOT SET'}`);
+
+      if (!process.env.SENDGRID_API_KEY || !process.env.EMAIL_USER) {
+        console.error('❌ Missing SendGrid configuration!');
+        console.error('   Required: SENDGRID_API_KEY and EMAIL_USER');
+        return false;
+      }
+
+      transporter = createTransporter();
+      console.log('✅ Email sender initialized with SendGrid');
+      return true;
+    }
+
+    // Gmail configuration
     console.log(`   User: ${process.env.EMAIL_USER || 'NOT SET'}`);
     console.log(`   Password Length: ${process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length + ' chars' : 'NOT SET'}`);
+    console.log(`   SMTP: smtp.gmail.com:465 (SSL)`);
 
     if (!process.env.EMAIL_SERVICE || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
       console.error('❌ Missing required email environment variables!');
+      console.error('   💡 TIP: For Render, use SendGrid instead of Gmail (port 587 may be blocked)');
+      console.error('   Set EMAIL_SERVICE=sendgrid and SENDGRID_API_KEY=your_api_key');
       return false;
     }
 
@@ -60,7 +98,7 @@ export function initializeEmailSender() {
     }
 
     transporter = createTransporter();
-    console.log('✅ Email sender initialized');
+    console.log('✅ Email sender initialized (trying port 465/SSL for cloud compatibility)');
     return true;
   } catch (error) {
     console.error('❌ Error initializing email sender:', error.message);
