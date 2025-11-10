@@ -827,6 +827,13 @@ async function handleProofUpload(files, previewEl) {
     return;
   }
 
+  // Disable submit button while uploading
+  const submitBtn = document.getElementById('submit-order');
+  const originalButtonState = submitBtn.disabled;
+  submitBtn.disabled = true;
+  submitBtn.style.opacity = '0.5';
+  submitBtn.style.cursor = 'not-allowed';
+
   // Show preview first
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -868,6 +875,11 @@ async function handleProofUpload(files, previewEl) {
       };
       console.log('✅ Receipt uploaded successfully:', data.url);
 
+      // Re-enable submit button now that upload is complete
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+
       // Update preview with success indicator
       renderFilePreview(previewEl, [state.payment.proofFile], 'proof');
     } else {
@@ -875,6 +887,11 @@ async function handleProofUpload(files, previewEl) {
     }
   } catch (error) {
     console.error('❌ Upload error:', error);
+
+    // Re-enable submit button on error (they'll need to retry upload)
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = '1';
+    submitBtn.style.cursor = 'pointer';
 
     // More detailed error message
     let errorMessage = 'Error al subir el comprobante de pago.\n\n';
@@ -890,6 +907,13 @@ async function handleProofUpload(files, previewEl) {
     }
 
     errorMessage += '\n\n¿Deseas intentar de nuevo?';
+
+    // Mark upload as failed
+    if (state.payment.proofFile) {
+      state.payment.proofFile.uploading = false;
+      state.payment.proofFile.uploaded = false;
+      state.payment.proofFile.error = error.message;
+    }
 
     if (confirm(errorMessage)) {
       // Let them try again - don't clear the file
@@ -909,14 +933,42 @@ function renderFilePreview(container, files, type) {
     const item = document.createElement('div');
     item.className = 'file-preview-item';
 
+    // Add upload status indicator
+    if (fileData.uploading) {
+      item.style.opacity = '0.6';
+      item.style.position = 'relative';
+    }
+
     const img = document.createElement('img');
     img.src = fileData.dataUrl;
     img.alt = 'Preview';
+
+    // Add status overlay
+    if (fileData.uploading) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 600; border-radius: 8px;';
+      overlay.innerHTML = '⏳ Subiendo...';
+      item.appendChild(overlay);
+    } else if (fileData.uploaded) {
+      const checkmark = document.createElement('div');
+      checkmark.style.cssText = 'position: absolute; top: 8px; right: 8px; background: #10b981; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+      checkmark.innerHTML = '✓';
+      item.appendChild(checkmark);
+    } else if (fileData.error) {
+      const errorIcon = document.createElement('div');
+      errorIcon.style.cssText = 'position: absolute; top: 8px; right: 8px; background: #ef4444; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+      errorIcon.innerHTML = '!';
+      item.appendChild(errorIcon);
+    }
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'file-remove';
     removeBtn.innerHTML = '×';
     removeBtn.onclick = () => removeFile(type, index);
+    // Don't allow removal while uploading
+    if (fileData.uploading) {
+      removeBtn.style.display = 'none';
+    }
 
     item.appendChild(img);
     item.appendChild(removeBtn);
@@ -928,6 +980,14 @@ function removeFile(type, index) {
   if (type === 'proof') {
     state.payment.proofFile = null;
     document.getElementById('proof-preview').innerHTML = '';
+
+    // Re-enable submit button if it was disabled
+    const submitBtn = document.getElementById('submit-order');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
   }
 }
 
@@ -1046,8 +1106,15 @@ async function handleOrderSubmit() {
 
   // Validate bank transfer has proof AND it's uploaded to Cloudinary
   if (state.payment.method === 'bank_transfer') {
-    if (!state.payment.proofFile || !state.payment.proofFile.cloudinaryUrl) {
-      alert('Por favor sube el comprobante de pago y espera a que se complete la carga');
+    // Check if file is still uploading
+    if (state.payment.proofFile && state.payment.proofFile.uploading) {
+      alert('⏳ El comprobante de pago aún se está subiendo. Por favor espera a que se complete la carga.');
+      return;
+    }
+
+    // Check if file was uploaded successfully
+    if (!state.payment.proofFile || !state.payment.proofFile.cloudinaryUrl || !state.payment.proofFile.uploaded) {
+      alert('❌ Por favor sube el comprobante de pago y espera a que se complete la carga antes de enviar tu pedido.');
       return;
     }
   }
