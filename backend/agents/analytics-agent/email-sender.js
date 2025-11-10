@@ -43,11 +43,28 @@ function createTransporter() {
  */
 export function initializeEmailSender() {
   try {
+    console.log('📋 Email Configuration:');
+    console.log(`   Service: ${process.env.EMAIL_SERVICE || 'NOT SET'}`);
+    console.log(`   User: ${process.env.EMAIL_USER || 'NOT SET'}`);
+    console.log(`   Password Length: ${process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length + ' chars' : 'NOT SET'}`);
+
+    if (!process.env.EMAIL_SERVICE || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.error('❌ Missing required email environment variables!');
+      return false;
+    }
+
+    if (process.env.EMAIL_SERVICE === 'gmail' && process.env.EMAIL_PASSWORD.length !== 16) {
+      console.error('⚠️  WARNING: Gmail App Password should be EXACTLY 16 characters!');
+      console.error('   Current length:', process.env.EMAIL_PASSWORD.length);
+      console.error('   Get App Password from: https://myaccount.google.com/security');
+    }
+
     transporter = createTransporter();
     console.log('✅ Email sender initialized');
     return true;
   } catch (error) {
-    console.error('❌ Error initializing email sender:', error);
+    console.error('❌ Error initializing email sender:', error.message);
+    console.error('   Stack:', error.stack);
     return false;
   }
 }

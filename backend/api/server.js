@@ -17,7 +17,7 @@ import bomRoutes from './bom-routes.js';
 import webhookRoutes from './webhook-routes.js';
 import uploadRoutes from './upload-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
-import { sendReceiptEmail } from '../agents/analytics-agent/email-sender.js';
+import { sendReceiptEmail, initializeEmailSender } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
 
 config();
@@ -1170,6 +1170,15 @@ async function startServer() {
 
     if (!dbConnected) {
       console.error('⚠️  Warning: Database connection failed. Some features may not work.');
+    }
+
+    // Initialize Email Service
+    console.log('📧 Initializing email service...');
+    const emailInitialized = initializeEmailSender();
+    if (emailInitialized) {
+      console.log('✅ Email service initialized successfully');
+    } else {
+      console.error('⚠️  Warning: Email service initialization failed. Emails will not be sent.');
     }
 
     // Initialize Analytics Agent (includes scheduler)
