@@ -42,7 +42,8 @@ const state = {
   },
   payment: {
     method: 'stripe',
-    proofFile: null
+    proofFile: null,
+    uploadCooldownInterval: null // Track countdown timer
   },
   totals: {
     subtotal: 0,
@@ -875,23 +876,78 @@ async function handleProofUpload(files, previewEl) {
       };
       console.log('✅ Receipt uploaded successfully:', data.url);
 
-      // Re-enable submit button now that upload is complete
-      submitBtn.disabled = false;
-      submitBtn.style.opacity = '1';
-      submitBtn.style.cursor = 'pointer';
-
       // Update preview with success indicator
       renderFilePreview(previewEl, [state.payment.proofFile], 'proof');
+
+      // Start 5-second cooldown before allowing submission
+      let countdown = 5;
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.7';
+      submitBtn.style.cursor = 'not-allowed';
+
+      // Get button text elements
+      const submitText = document.getElementById('submit-text');
+      const originalButtonText = submitText ? submitText.textContent : submitBtn.textContent;
+
+      // Show countdown message
+      const showCountdown = () => {
+        if (submitText) {
+          submitText.textContent = `✅ Recibo subido. Espera ${countdown}s para continuar...`;
+        } else {
+          submitBtn.textContent = `✅ Recibo subido. Espera ${countdown}s...`;
+        }
+      };
+
+      showCountdown();
+
+      // Countdown timer - store in state so it can be cleared if file is removed
+      state.payment.uploadCooldownInterval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+          showCountdown();
+        } else {
+          clearInterval(state.payment.uploadCooldownInterval);
+          state.payment.uploadCooldownInterval = null;
+
+          // Re-enable submit button after cooldown
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          submitBtn.style.cursor = 'pointer';
+
+          // Restore original button text
+          if (submitText) {
+            submitText.textContent = originalButtonText;
+          } else {
+            submitBtn.textContent = originalButtonText;
+          }
+
+          console.log('✅ Cooldown complete - submit button enabled');
+        }
+      }, 1000);
     } else {
       throw new Error(data.error || 'Error al subir el archivo');
     }
   } catch (error) {
     console.error('❌ Upload error:', error);
 
+    // Clear countdown timer if it exists
+    if (state.payment.uploadCooldownInterval) {
+      clearInterval(state.payment.uploadCooldownInterval);
+      state.payment.uploadCooldownInterval = null;
+    }
+
     // Re-enable submit button on error (they'll need to retry upload)
     submitBtn.disabled = false;
     submitBtn.style.opacity = '1';
     submitBtn.style.cursor = 'pointer';
+
+    // Restore button text
+    const submitText = document.getElementById('submit-text');
+    if (submitText) {
+      submitText.textContent = 'Enviar Pedido';
+    } else {
+      submitBtn.textContent = 'Enviar Pedido';
+    }
 
     // More detailed error message
     let errorMessage = 'Error al subir el comprobante de pago.\n\n';
@@ -981,12 +1037,28 @@ function removeFile(type, index) {
     state.payment.proofFile = null;
     document.getElementById('proof-preview').innerHTML = '';
 
-    // Re-enable submit button if it was disabled
+    // Clear countdown timer if it's running
+    if (state.payment.uploadCooldownInterval) {
+      clearInterval(state.payment.uploadCooldownInterval);
+      state.payment.uploadCooldownInterval = null;
+      console.log('⏹️ Cooldown timer cancelled - file removed');
+    }
+
+    // Re-enable submit button and restore text
     const submitBtn = document.getElementById('submit-order');
+    const submitText = document.getElementById('submit-text');
+
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.style.opacity = '1';
       submitBtn.style.cursor = 'pointer';
+
+      // Restore original button text
+      if (submitText) {
+        submitText.textContent = 'Enviar Pedido';
+      } else {
+        submitBtn.textContent = 'Enviar Pedido';
+      }
     }
   }
 }
