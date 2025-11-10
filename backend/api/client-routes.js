@@ -345,6 +345,26 @@ router.post('/orders/submit', async (req, res) => {
       }
     });
 
+    // 6b. Send order confirmation to customer (background - don't block response)
+    setImmediate(async () => {
+      try {
+        await emailSender.sendOrderConfirmation(
+          {
+            orderNumber,
+            orderDate: new Date(),
+            totalPrice: subtotal
+          },
+          {
+            name: clientName,
+            email: clientEmail
+          }
+        );
+        console.log(`✅ Order confirmation sent to customer: ${clientEmail}`);
+      } catch (emailError) {
+        console.error('Failed to send customer confirmation:', emailError);
+      }
+    });
+
     // 7. Response based on payment method
     const response = {
       success: true,
