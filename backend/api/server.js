@@ -592,27 +592,48 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
     );
 
     // Send receipt email to client in background - don't block response
-    setImmediate(() => {
-      console.log('📧 Sending receipt email to client in background...');
-      sendReceiptEmail(
-        {
-          orderNumber: order.order_number,
-          orderDate: order.order_date,
-          totalPrice: parseFloat(order.total_price),
-          actualDepositAmount: parseFloat(actualDepositAmount),
-          remainingBalance: parseFloat(remainingBalance),
-          eventDate: order.event_date
-        },
-        {
-          name: order.client_name,
-          email: order.client_email
-        },
-        pdfPath
-      )
-        .then(() => console.log('✅ Receipt email sent successfully'))
-        .catch(emailError => {
-          console.error('⚠️  Failed to send receipt email:', emailError);
-        });
+    setImmediate(async () => {
+      try {
+        console.log('📧 Attempting to send receipt email to client...');
+        console.log(`   Client: ${order.client_name}`);
+        console.log(`   Email: ${order.client_email}`);
+        console.log(`   Order: ${order.order_number}`);
+        console.log(`   PDF Path: ${pdfPath}`);
+
+        await sendReceiptEmail(
+          {
+            orderNumber: order.order_number,
+            orderDate: order.order_date,
+            totalPrice: parseFloat(order.total_price),
+            actualDepositAmount: parseFloat(actualDepositAmount),
+            remainingBalance: parseFloat(remainingBalance),
+            eventDate: order.event_date
+          },
+          {
+            name: order.client_name,
+            email: order.client_email
+          },
+          pdfPath
+        );
+
+        console.log('✅ Receipt email sent successfully to:', order.client_email);
+
+      } catch (emailError) {
+        console.error('❌ CRITICAL ERROR sending receipt email:');
+        console.error('   Error message:', emailError.message);
+        console.error('   Error stack:', emailError.stack);
+        console.error('   Client email:', order.client_email);
+
+        // Check if it's an authentication error
+        if (emailError.message.includes('authentication') || emailError.message.includes('login')) {
+          console.error('⚠️  EMAIL AUTHENTICATION FAILED - Check EMAIL_USER and EMAIL_PASSWORD on Render!');
+        }
+
+        // Check if transporter exists
+        if (emailError.message.includes('transporter')) {
+          console.error('⚠️  EMAIL TRANSPORTER NOT INITIALIZED - Check email service configuration!');
+        }
+      }
     });
 
     // Sync to Notion if needed
