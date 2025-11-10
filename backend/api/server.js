@@ -179,6 +179,7 @@ app.get('/api/orders', async (req, res) => {
         o.payment_method,
         o.payment_proof_url,
         o.second_payment_proof_url,
+        o.receipt_pdf_url,
         o.approval_status,
         o.status,
         o.department,
@@ -244,6 +245,7 @@ app.get('/api/orders', async (req, res) => {
       paymentMethod: order.payment_method || '',
       paymentProofUrl: order.payment_proof_url || null,
       secondPaymentReceipt: order.second_payment_proof_url || null,
+      receiptPdfUrl: order.receipt_pdf_url || null,
       // Status
       status: order.status || 'new',
       approvalStatus: order.approval_status || 'pending_review',
@@ -313,6 +315,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
         o.payment_method,
         o.payment_proof_url,
         o.second_payment_proof_url,
+        o.receipt_pdf_url,
         o.approval_status,
         o.status,
         o.department,
@@ -386,6 +389,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
       paymentMethod: order.payment_method || '',
       paymentProofUrl: order.payment_proof_url || null,
       secondPaymentReceipt: order.second_payment_proof_url || null,
+      receiptPdfUrl: order.receipt_pdf_url || null,
       // Status
       status: order.status || 'new',
       approvalStatus: order.approval_status || 'pending_review',

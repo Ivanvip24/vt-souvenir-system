@@ -571,6 +571,30 @@ async function showOrderDetail(orderId) {
       </div>
     ` : ''}
 
+    <!-- PDF Receipt Download -->
+    ${order.receiptPdfUrl ? `
+      <div class="detail-section">
+        <h3>📄 Recibo PDF</h3>
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white;">
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+            <div style="font-size: 48px;">📄</div>
+            <div style="flex: 1;">
+              <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">Recibo del Pedido</div>
+              <div style="font-size: 13px; opacity: 0.9;">
+                Generado automáticamente al crear el pedido
+              </div>
+            </div>
+          </div>
+          <a href="${order.receiptPdfUrl}"
+             target="_blank"
+             download
+             style="display: block; background: white; color: #667eea; padding: 14px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+            📥 Descargar Recibo PDF
+          </a>
+        </div>
+      </div>
+    ` : ''}
+
     <!-- Order Notes -->
     ${order.clientNotes ? `
       <div class="detail-section">

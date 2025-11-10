@@ -376,6 +376,14 @@ router.post('/orders/submit', async (req, res) => {
 
         console.log(`✅ PDF receipt generated: ${pdfPath}`);
 
+        // Store PDF path in database for admin download
+        const pdfUrl = getReceiptUrl(pdfPath);
+        await query(
+          `UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2`,
+          [pdfUrl, orderId]
+        );
+        console.log(`💾 PDF URL saved to database: ${pdfUrl}`);
+
         // Send receipt email with PDF attachment
         await emailSender.sendReceiptEmail(
           {
