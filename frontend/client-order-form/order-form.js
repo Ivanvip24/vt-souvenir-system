@@ -139,6 +139,11 @@ function showStep(stepNumber) {
   // Special actions per step
   if (stepNumber === 1.5) {
     populateConfirmationData();
+  } else if (stepNumber === 2) {
+    // Pre-fill client info if we have data (for returning clients or when editing)
+    if (state.client.name || state.client.email) {
+      prefillClientInfo();
+    }
   } else if (stepNumber === 3) {
     loadProducts();
   } else if (stepNumber === 4) {
