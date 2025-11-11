@@ -880,8 +880,8 @@ async function handleProofUpload(files, previewEl) {
       // Update preview with success indicator
       renderFilePreview(previewEl, [state.payment.proofFile], 'proof');
 
-      // Start 5-second cooldown before allowing submission
-      let countdown = 5;
+      // Start 3-second cooldown before allowing submission
+      let countdown = 3;
       submitBtn.disabled = true;
 
       // GRAY button during countdown - very obvious visual feedback
