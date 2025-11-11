@@ -119,17 +119,23 @@ function applyFilter(filter) {
 
   // First apply status filter
   let filtered = state.orders;
-  if (filter === 'active') {
-    // Active = not delivered and not cancelled
+
+  if (filter === 'completed') {
+    // Completed = archived orders (completo or cancelado)
     filtered = filtered.filter(order =>
-      order.status !== 'delivered' && order.status !== 'cancelled'
+      order.archiveStatus === 'completo' || order.archiveStatus === 'cancelado'
     );
-  } else if (filter === 'completed') {
-    // Completed = delivered orders
-    filtered = filtered.filter(order => order.status === 'delivered');
-  } else if (filter !== 'all') {
-    // Original approval status filters
-    filtered = filtered.filter(order => order.approvalStatus === filter);
+  } else if (filter === 'all') {
+    // All = only non-archived orders
+    filtered = filtered.filter(order =>
+      !order.archiveStatus || order.archiveStatus === 'active'
+    );
+  } else {
+    // Other filters (pending_review, approved) - exclude archived orders
+    filtered = filtered.filter(order => {
+      const isArchived = order.archiveStatus && order.archiveStatus !== 'active';
+      return !isArchived && order.approvalStatus === filter;
+    });
   }
 
   // Then apply search filter if there's a search query
@@ -224,10 +230,11 @@ function createOrderCard(order) {
   const card = document.createElement('div');
   card.className = 'order-card';
 
-  // Add special styling for completed orders
-  if (order.status === 'delivered') {
+  // Add special styling for archived orders
+  const isArchived = order.archiveStatus && order.archiveStatus !== 'active';
+  if (isArchived) {
     card.className += ' order-completed';
-    card.style.opacity = '0.85';
+    card.style.opacity = '0.75';
     card.style.background = '#f9fafb';
   }
 
@@ -241,13 +248,22 @@ function createOrderCard(order) {
       <div class="order-title">
         <h3>${order.orderNumber}</h3>
         <span class="status-badge ${statusClass}">${statusText}</span>
-        ${order.secondPaymentStatus === 'uploaded' && order.secondPaymentReceipt ? `
+        ${order.archiveStatus === 'completo' ? `
+          <span style="background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-left: 8px;">
+            ✓ Completo
+          </span>
+        ` : order.archiveStatus === 'cancelado' ? `
+          <span style="background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-left: 8px;">
+            ✕ Cancelado
+          </span>
+        ` : ''}
+        ${order.secondPaymentStatus === 'uploaded' && order.secondPaymentReceipt && !isArchived ? `
           <span style="background: #fb923c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-left: 8px;">
             💳 Pago Final Pendiente
           </span>
         ` : ''}
       </div>
-      ${order.approvalStatus === 'pending_review' ? `
+      ${!isArchived && order.approvalStatus === 'pending_review' ? `
         <div class="quick-actions">
           <button class="quick-action-btn approve-btn" onclick="event.stopPropagation(); approveOrder(${order.id});" title="Aprobar pedido">
             ✓
@@ -256,14 +272,23 @@ function createOrderCard(order) {
             ✕
           </button>
         </div>
-      ` : ''}
-      ${order.approvalStatus === 'approved' && order.receiptPdfUrl ? `
+      ` : !isArchived && order.approvalStatus === 'approved' && order.receiptPdfUrl ? `
         <div class="quick-actions">
           <button class="quick-action-btn receipt-btn" onclick="event.stopPropagation(); downloadReceipt('${order.receiptPdfUrl}', '${order.orderNumber}');" title="Descargar recibo">
             📥
           </button>
           <button class="quick-action-btn receipt-btn" onclick="event.stopPropagation(); shareReceipt('${order.receiptPdfUrl}');" title="Compartir enlace">
             🔗
+          </button>
+        </div>
+      ` : ''}
+      ${!isArchived ? `
+        <div class="quick-actions" style="margin-left: 8px;">
+          <button class="quick-action-btn" style="background: #10b981; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'completo');" title="Marcar como completo">
+            ✓ Completo
+          </button>
+          <button class="quick-action-btn" style="background: #ef4444; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-left: 4px;" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'cancelado');" title="Marcar como cancelado">
+            ✕ Cancelado
           </button>
         </div>
       ` : ''}
@@ -778,13 +803,21 @@ async function rejectOrder(orderId) {
 // ==========================================
 
 function updateStats() {
-  const pendingCount = state.orders.filter(o => o.approvalStatus === 'pending_review').length;
-  const approvedCount = state.orders.filter(o => o.approvalStatus === 'approved').length;
+  const pendingCount = state.orders.filter(o => {
+    const isArchived = o.archiveStatus && o.archiveStatus !== 'active';
+    return !isArchived && o.approvalStatus === 'pending_review';
+  }).length;
 
-  // Count orders with pending second payment receipts
-  const pendingSecondPayments = state.orders.filter(o =>
-    o.secondPaymentStatus === 'uploaded' && o.secondPaymentReceipt
-  ).length;
+  const approvedCount = state.orders.filter(o => {
+    const isArchived = o.archiveStatus && o.archiveStatus !== 'active';
+    return !isArchived && o.approvalStatus === 'approved';
+  }).length;
+
+  // Count orders with pending second payment receipts (only non-archived)
+  const pendingSecondPayments = state.orders.filter(o => {
+    const isArchived = o.archiveStatus && o.archiveStatus !== 'active';
+    return !isArchived && o.secondPaymentStatus === 'uploaded' && o.secondPaymentReceipt;
+  }).length;
 
   // Update header stats
   document.getElementById('pending-count').textContent = pendingCount;
@@ -796,26 +829,25 @@ function updateStats() {
     secondPaymentBadge.style.display = pendingSecondPayments > 0 ? 'inline-flex' : 'none';
   }
 
-  // Calculate today's revenue
+  // Calculate today's revenue (only non-archived orders)
   const today = new Date().toISOString().split('T')[0];
   const todayOrders = state.orders.filter(o => {
-    // Extract date part from timestamp (e.g., "2025-11-04T08:00:00.000Z" -> "2025-11-04")
+    const isArchived = o.archiveStatus && o.archiveStatus !== 'active';
     const orderDatePart = o.orderDate ? o.orderDate.split('T')[0] : '';
-    return orderDatePart === today;
+    return !isArchived && orderDatePart === today;
   });
   const todayRevenue = todayOrders.reduce((sum, o) => sum + o.totalPrice, 0);
   document.getElementById('today-revenue').textContent = formatCurrency(todayRevenue);
 
-  // Calculate additional stats for new filters
-  const activeCount = state.orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length;
-  const completedCount = state.orders.filter(o => o.status === 'delivered').length;
+  // Calculate stats for filters
+  const activeOrdersCount = state.orders.filter(o => !o.archiveStatus || o.archiveStatus === 'active').length;
+  const archivedCount = state.orders.filter(o => o.archiveStatus && o.archiveStatus !== 'active').length;
 
   // Update filter badges
-  document.getElementById('all-count').textContent = state.orders.length;
-  document.getElementById('active-count').textContent = activeCount;
+  document.getElementById('all-count').textContent = activeOrdersCount;
   document.getElementById('pending-count-badge').textContent = pendingCount;
   document.getElementById('approved-count').textContent = approvedCount;
-  document.getElementById('completed-count').textContent = completedCount;
+  document.getElementById('completed-count').textContent = archivedCount;
 }
 
 // ==========================================
@@ -1157,6 +1189,42 @@ async function confirmSecondPayment(orderId) {
   }
 }
 
+// ==========================================
+// ARCHIVE ORDER
+// ==========================================
+
+async function archiveOrder(orderId, archiveStatus) {
+  const statusText = archiveStatus === 'completo' ? 'completado' : 'cancelado';
+  const confirmMessage = archiveStatus === 'completo'
+    ? '¿Marcar este pedido como completado?\n\nEl pedido se moverá a la vista de "Completados".'
+    : '¿Marcar este pedido como cancelado?\n\nEl pedido se moverá a la vista de "Completados".';
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}/archive`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ archiveStatus })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert(`✅ Pedido marcado como ${statusText}.`);
+      closeOrderDetail();
+      loadOrders();
+    } else {
+      alert('Error: ' + (data.error || `No se pudo marcar como ${statusText}`));
+    }
+  } catch (error) {
+    console.error('Error archiving order:', error);
+    alert(`Error al marcar como ${statusText}. Por favor intenta nuevamente.`);
+  }
+}
+
 // Make functions globally accessible for onclick handlers
 window.loadOrders = loadOrders;
 window.closeOrderDetail = closeOrderDetail;
@@ -1172,3 +1240,4 @@ window.confirmApproveWithDeposit = confirmApproveWithDeposit;
 window.downloadReceipt = downloadReceipt;
 window.shareReceipt = shareReceipt;
 window.confirmSecondPayment = confirmSecondPayment;
+window.archiveOrder = archiveOrder;

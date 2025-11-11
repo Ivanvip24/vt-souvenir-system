@@ -191,6 +191,7 @@ app.get('/api/orders', async (req, res) => {
         o.internal_notes,
         o.notion_page_id,
         o.notion_page_url,
+        o.archive_status,
         o.created_at,
         c.name as client_name,
         c.phone as client_phone,
@@ -251,6 +252,7 @@ app.get('/api/orders', async (req, res) => {
       approvalStatus: order.approval_status || 'pending_review',
       department: order.department || 'pending',
       priority: order.priority || 'normal',
+      archiveStatus: order.archive_status || 'active',
       // Items
       items: order.items || [],
       // Notes
@@ -395,6 +397,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
       approvalStatus: order.approval_status || 'pending_review',
       department: order.department || 'pending',
       priority: order.priority || 'normal',
+      archiveStatus: order.archive_status || 'active',
       // Items
       items: order.items || [],
       // Notes
@@ -909,6 +912,41 @@ app.post('/api/orders/:orderId/confirm-second-payment', async (req, res) => {
 
   } catch (error) {
     console.error('Error confirming second payment:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Archive order (mark as completed or cancelled)
+app.post('/api/orders/:orderId/archive', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { archiveStatus } = req.body;
+
+    if (!archiveStatus || !['completo', 'cancelado'].includes(archiveStatus)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid archive status. Must be "completo" or "cancelado"'
+      });
+    }
+
+    // Update archive status in database
+    await query(`
+      UPDATE orders
+      SET archive_status = $1
+      WHERE id = $2
+    `, [archiveStatus, orderId]);
+
+    console.log(`📦 Order ${orderId} archived as ${archiveStatus}`);
+
+    res.json({
+      success: true,
+      message: `Order archived as ${archiveStatus}`
+    });
+  } catch (error) {
+    console.error('Error archiving order:', error);
     res.status(500).json({
       success: false,
       error: error.message
