@@ -968,7 +968,7 @@ app.post('/api/orders/:orderId/process-receipt', async (req, res) => {
         o.id,
         o.order_number,
         o.deposit_amount,
-        o.deposit_receipt_url,
+        o.payment_proof_url,
         o.approval_status,
         c.name as client_name
       FROM orders o
@@ -986,7 +986,7 @@ app.post('/api/orders/:orderId/process-receipt', async (req, res) => {
     const order = orderResult.rows[0];
 
     // Validate that order has a receipt
-    if (!order.deposit_receipt_url) {
+    if (!order.payment_proof_url) {
       return res.status(400).json({
         success: false,
         error: 'No deposit receipt found for this order'
@@ -1003,7 +1003,7 @@ app.post('/api/orders/:orderId/process-receipt', async (req, res) => {
 
     // Process receipt with OCR
     const result = await processReceipt(
-      order.deposit_receipt_url,
+      order.payment_proof_url,
       parseFloat(order.deposit_amount)
     );
 
