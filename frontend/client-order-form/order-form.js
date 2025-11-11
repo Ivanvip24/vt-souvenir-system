@@ -15,6 +15,116 @@ const API_BASE = window.location.hostname === 'localhost'
 const STORAGE_KEY = 'souvenir_client_data';
 
 // ==========================================
+// PRICING TIERS CONFIGURATION
+// ==========================================
+
+// Define pricing tiers for products based on quantity ranges
+// Each product can have multiple tiers: { min: quantity, price: unit_price }
+const PRICING_TIERS = {
+  // Match by product name (case-insensitive partial match)
+  'imanes de mdf chico': [
+    { min: 100, max: 999, price: 8.00 },
+    { min: 1000, max: Infinity, price: 8.00 }
+  ],
+  'imanes de mdf grande': [
+    { min: 100, max: 999, price: 15.00 },
+    { min: 1000, max: Infinity, price: 12.00 }
+  ],
+  'llaveros de mdf': [
+    { min: 100, max: 999, price: 7.00 },
+    { min: 1000, max: Infinity, price: 7.00 }
+  ],
+  'imán 3d mdf': [
+    { min: 1, max: Infinity, price: 15.00 }
+  ],
+  'imán de mdf con foil': [
+    { min: 100, max: 999, price: 13.00 },
+    { min: 1000, max: Infinity, price: 13.00 }
+  ],
+  'destapador de mdf': [
+    { min: 100, max: 499, price: 17.00 },
+    { min: 500, max: Infinity, price: 17.00 }
+  ],
+  'botones metálicos': [
+    { min: 1, max: Infinity, price: 8.00 }
+  ],
+  'portallaves de mdf': [
+    { min: 20, max: Infinity, price: 45.00 }
+  ],
+  'souvenir box': [
+    { min: 1, max: Infinity, price: 2250.00 }
+  ]
+};
+
+/**
+ * Get the appropriate price for a product based on quantity
+ * @param {Object} product - The product object
+ * @param {number} quantity - The quantity ordered
+ * @returns {Object} { price: number, tierInfo: string, savings: number }
+ */
+function getTieredPrice(product, quantity) {
+  // Find matching pricing tier
+  const productNameLower = product.name.toLowerCase();
+  let tiers = null;
+
+  // Find tiers by partial name match
+  for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
+    if (productNameLower.includes(key) || key.includes(productNameLower)) {
+      tiers = tierArray;
+      break;
+    }
+  }
+
+  // If no tiers found, use base price
+  if (!tiers) {
+    return {
+      price: parseFloat(product.base_price),
+      tierInfo: null,
+      savings: 0
+    };
+  }
+
+  // Find the applicable tier for this quantity
+  const applicableTier = tiers.find(tier =>
+    quantity >= tier.min && quantity <= tier.max
+  );
+
+  if (!applicableTier) {
+    // Use base price if quantity doesn't match any tier
+    return {
+      price: parseFloat(product.base_price),
+      tierInfo: `Mínimo ${tiers[0].min} piezas para precio mayorista`,
+      savings: 0
+    };
+  }
+
+  // Calculate savings compared to base price
+  const basePrice = parseFloat(product.base_price);
+  const tierPrice = applicableTier.price;
+  const savings = (basePrice - tierPrice) * quantity;
+
+  // Format tier info
+  let tierInfo = '';
+  if (applicableTier.max === Infinity) {
+    tierInfo = `${applicableTier.min}+ piezas: $${tierPrice.toFixed(2)} c/u`;
+  } else {
+    tierInfo = `${applicableTier.min}-${applicableTier.max} piezas: $${tierPrice.toFixed(2)} c/u`;
+  }
+
+  // Find next tier for incentive message
+  const nextTier = tiers.find(t => t.min > quantity);
+  if (nextTier && nextTier.price < tierPrice) {
+    tierInfo += ` • Siguiente descuento en ${nextTier.min} piezas`;
+  }
+
+  return {
+    price: tierPrice,
+    tierInfo: tierInfo,
+    savings: savings > 0 ? savings : 0
+  };
+}
+
+// ==========================================
 // STATE MANAGEMENT
 // ==========================================
 
@@ -630,7 +740,10 @@ function createProductCard(product) {
   div.dataset.productId = product.id;
 
   const quantity = state.cart[product.id]?.quantity || 0;
-  const price = parseFloat(product.base_price);
+  const basePrice = parseFloat(product.base_price);
+
+  // Get tiered pricing
+  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : 1);
   const subtotal = price * quantity;
 
   div.innerHTML = `
@@ -649,6 +762,16 @@ function createProductCard(product) {
 
     ${product.description ? `<p style="font-size: 14px; color: var(--gray-600); margin-bottom: 12px;">${product.description}</p>` : ''}
 
+    <!-- Tier Information -->
+    <div class="tier-info" id="tier-${product.id}">
+      ${tierInfo ? `
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 16px;">💰</span>
+          <span>${tierInfo}</span>
+        </div>
+      ` : ''}
+    </div>
+
     <div class="product-quantity">
       <label>Cantidad:</label>
       <div class="quantity-controls">
@@ -664,8 +787,15 @@ function createProductCard(product) {
     </div>
 
     <div class="product-subtotal ${quantity > 0 ? '' : 'hidden'}" id="subtotal-${product.id}">
-      <span>Subtotal:</span>
-      <strong>$${subtotal.toFixed(2)}</strong>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Subtotal:</span>
+        <strong>$${subtotal.toFixed(2)}</strong>
+      </div>
+      ${savings > 0 ? `
+        <div style="font-size: 12px; color: #059669; margin-top: 4px;">
+          ✓ Ahorras $${savings.toFixed(2)}
+        </div>
+      ` : ''}
     </div>
   `;
 
@@ -704,15 +834,46 @@ window.handleQuantityChange = function(productId, value) {
     delete state.cart[productId];
   }
 
+  // Get tiered pricing for new quantity
+  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : 1);
+  const subtotal = price * quantity;
+
   // Update UI
   const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
   const subtotalEl = document.getElementById(`subtotal-${productId}`);
-  const subtotal = parseFloat(product.base_price) * quantity;
+  const tierInfoEl = document.getElementById(`tier-${productId}`);
+  const priceEl = card.querySelector('.product-price');
 
+  // Update price display
+  if (priceEl) {
+    priceEl.innerHTML = `$${price.toFixed(2)} <span>por unidad</span>`;
+  }
+
+  // Update tier info
+  if (tierInfoEl) {
+    tierInfoEl.innerHTML = tierInfo ? `
+      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 16px;">💰</span>
+        <span>${tierInfo}</span>
+      </div>
+    ` : '';
+  }
+
+  // Update subtotal
   if (quantity > 0) {
     card.classList.add('selected');
     subtotalEl.classList.remove('hidden');
-    subtotalEl.querySelector('strong').textContent = `$${subtotal.toFixed(2)}`;
+    subtotalEl.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Subtotal:</span>
+        <strong>$${subtotal.toFixed(2)}</strong>
+      </div>
+      ${savings > 0 ? `
+        <div style="font-size: 12px; color: #059669; margin-top: 4px;">
+          ✓ Ahorras $${savings.toFixed(2)}
+        </div>
+      ` : ''}
+    `;
   } else {
     card.classList.remove('selected');
     subtotalEl.classList.add('hidden');
@@ -726,7 +887,9 @@ function updateOrderTotals() {
   let subtotal = 0;
 
   Object.values(state.cart).forEach(({ product, quantity }) => {
-    subtotal += parseFloat(product.base_price) * quantity;
+    // Use tiered pricing for each product
+    const { price } = getTieredPrice(product, quantity);
+    subtotal += price * quantity;
   });
 
   const deposit = subtotal * 0.5; // 50% deposit
@@ -1121,11 +1284,15 @@ async function handleStripePayment() {
   try {
     // Prepare order data
     const orderData = {
-      // Products
-      items: Object.values(state.cart).map(({ product, quantity }) => ({
-        productId: product.id,
-        quantity
-      })),
+      // Products with tiered pricing
+      items: Object.values(state.cart).map(({ product, quantity }) => {
+        const { price } = getTieredPrice(product, quantity);
+        return {
+          productId: product.id,
+          quantity,
+          unitPrice: price // Send the tiered price to backend
+        };
+      }),
 
       // Client notes
       clientNotes: state.order.clientNotes,
@@ -1217,11 +1384,15 @@ async function handleOrderSubmit() {
   try {
     // Prepare order data
     const orderData = {
-      // Products
-      items: Object.values(state.cart).map(({ product, quantity }) => ({
-        productId: product.id,
-        quantity
-      })),
+      // Products with tiered pricing
+      items: Object.values(state.cart).map(({ product, quantity }) => {
+        const { price } = getTieredPrice(product, quantity);
+        return {
+          productId: product.id,
+          quantity,
+          unitPrice: price // Send the tiered price to backend
+        };
+      }),
 
       // Client notes
       clientNotes: state.order.clientNotes,
