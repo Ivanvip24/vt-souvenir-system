@@ -20,33 +20,39 @@ const STORAGE_KEY = 'souvenir_client_data';
 
 // Define pricing tiers for products based on quantity ranges
 // Each product can have multiple tiers: { min: quantity, price: unit_price }
+//
+// PRICING RULES:
+// 1. Most products require a MINIMUM of 100 pieces for wholesale pricing
+// 2. Portallaves de MDF: Lower minimum of only 20 pieces
+// 3. Some products keep the same price across tiers (but still show minimum quantity requirements)
 const PRICING_TIERS = {
   // Match by product name (case-insensitive partial match)
   'imanes de mdf chico': [
-    { min: 100, max: 999, price: 8.00 },
-    { min: 1000, max: Infinity, price: 8.00 }
+    { min: 100, max: 999, price: 11.00 },
+    { min: 1000, max: Infinity, price: 11.00 }
   ],
   'imanes de mdf grande': [
     { min: 100, max: 999, price: 15.00 },
     { min: 1000, max: Infinity, price: 12.00 }
   ],
   'llaveros de mdf': [
-    { min: 100, max: 999, price: 7.00 },
-    { min: 1000, max: Infinity, price: 7.00 }
+    { min: 100, max: 999, price: 10.00 },
+    { min: 1000, max: Infinity, price: 10.00 }
   ],
   'imán 3d mdf': [
-    { min: 1, max: Infinity, price: 15.00 }
+    { min: 100, max: 999, price: 15.00 },
+    { min: 1000, max: Infinity, price: 12.00 }
   ],
   'imán de mdf con foil': [
-    { min: 100, max: 999, price: 13.00 },
-    { min: 1000, max: Infinity, price: 13.00 }
+    { min: 100, max: 999, price: 15.00 },
+    { min: 1000, max: Infinity, price: 15.00 }
   ],
   'destapador de mdf': [
-    { min: 100, max: 499, price: 17.00 },
-    { min: 500, max: Infinity, price: 17.00 }
+    { min: 100, max: 499, price: 20.00 },
+    { min: 500, max: Infinity, price: 20.00 }
   ],
   'botones metálicos': [
-    { min: 1, max: Infinity, price: 8.00 }
+    { min: 100, max: Infinity, price: 8.00 }
   ],
   'portallaves de mdf': [
     { min: 20, max: Infinity, price: 45.00 }
