@@ -228,6 +228,7 @@ app.get('/api/orders', async (req, res) => {
       orderDate: order.order_date,
       eventDate: order.event_date,
       eventType: order.event_type,
+      createdAt: order.created_at, // Add creation timestamp
       // Client info
       clientName: order.client_name || '',
       clientPhone: order.client_phone || '',
@@ -373,6 +374,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
       orderDate: order.order_date,
       eventDate: order.event_date,
       eventType: order.event_type,
+      createdAt: order.created_at, // Add creation timestamp
       // Client info
       clientName: order.client_name || '',
       clientPhone: order.client_phone || '',
