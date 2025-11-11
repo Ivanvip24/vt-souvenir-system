@@ -1,0 +1,360 @@
+{
+  "name": "Receipt OCR Auto-Approval",
+  "flow": [
+    {
+      "id": 1,
+      "module": "builtin:BasicScheduler",
+      "version": 1,
+      "parameters": {
+        "interval": 15,
+        "unit": "minutes"
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0
+        },
+        "restore": {},
+        "parameters": [
+          {
+            "name": "interval",
+            "type": "number",
+            "label": "Interval",
+            "required": true
+          },
+          {
+            "name": "unit",
+            "type": "select",
+            "label": "Unit",
+            "required": true,
+            "validate": {
+              "enum": [
+                "minutes",
+                "hours",
+                "days",
+                "weeks",
+                "months"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://vt-souvenir-backend.onrender.com/api/orders",
+        "method": "get",
+        "qs": [
+          {
+            "name": "status",
+            "value": "pending_review"
+          }
+        ],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "parseResponse": true,
+        "timeout": 300
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0
+        },
+        "restore": {
+          "qs": {
+            "mode": "chose"
+          },
+          "headers": {
+            "mode": "chose"
+          },
+          "method": {
+            "mode": "chose",
+            "label": "GET"
+          }
+        },
+        "parameters": [
+          {
+            "name": "handleErrors",
+            "type": "boolean",
+            "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+            "required": true
+          }
+        ],
+        "expect": [
+          {
+            "name": "url",
+            "type": "url",
+            "label": "URL",
+            "required": true
+          },
+          {
+            "name": "method",
+            "type": "select",
+            "label": "Method",
+            "required": true,
+            "validate": {
+              "enum": [
+                "get",
+                "post",
+                "put",
+                "patch",
+                "delete",
+                "head",
+                "options"
+              ]
+            }
+          },
+          {
+            "name": "headers",
+            "spec": [
+              {
+                "name": "name",
+                "type": "text",
+                "label": "Name",
+                "required": true
+              },
+              {
+                "name": "value",
+                "type": "text",
+                "label": "Value"
+              }
+            ],
+            "type": "array",
+            "label": "Headers"
+          },
+          {
+            "name": "qs",
+            "spec": [
+              {
+                "name": "name",
+                "type": "text",
+                "label": "Name",
+                "required": true
+              },
+              {
+                "name": "value",
+                "type": "text",
+                "label": "Value"
+              }
+            ],
+            "type": "array",
+            "label": "Query String"
+          },
+          {
+            "name": "parseResponse",
+            "type": "boolean",
+            "label": "Parse response",
+            "required": true
+          },
+          {
+            "name": "timeout",
+            "type": "uinteger",
+            "label": "Timeout"
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "mapper": null,
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0
+        }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 4,
+              "module": "builtin:BasicFeeder",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "array": "{{2.data.orders}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 0
+                },
+                "restore": {
+                  "expect": {
+                    "array": {
+                      "mode": "edit"
+                    }
+                  }
+                },
+                "expect": [
+                  {
+                    "name": "array",
+                    "type": "array",
+                    "label": "Array",
+                    "required": true
+                  }
+                ]
+              }
+            },
+            {
+              "id": 5,
+              "module": "builtin:BasicRouter",
+              "version": 1,
+              "mapper": null,
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 0
+                }
+              },
+              "routes": [
+                {
+                  "flow": [
+                    {
+                      "id": 6,
+                      "module": "http:ActionSendData",
+                      "version": 3,
+                      "parameters": {},
+                      "mapper": {
+                        "url": "https://vt-souvenir-backend.onrender.com/api/orders/{{4.id}}/process-receipt",
+                        "method": "post",
+                        "headers": [
+                          {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                          }
+                        ],
+                        "body": "{}",
+                        "parseResponse": true,
+                        "timeout": 300
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 1500,
+                          "y": 0
+                        },
+                        "restore": {
+                          "headers": {
+                            "mode": "chose"
+                          },
+                          "method": {
+                            "mode": "chose",
+                            "label": "POST"
+                          }
+                        },
+                        "expect": [
+                          {
+                            "name": "url",
+                            "type": "url",
+                            "label": "URL",
+                            "required": true
+                          },
+                          {
+                            "name": "method",
+                            "type": "select",
+                            "label": "Method",
+                            "required": true
+                          },
+                          {
+                            "name": "headers",
+                            "spec": [
+                              {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name",
+                                "required": true
+                              },
+                              {
+                                "name": "value",
+                                "type": "text",
+                                "label": "Value"
+                              }
+                            ],
+                            "type": "array",
+                            "label": "Headers"
+                          },
+                          {
+                            "name": "body",
+                            "type": "text",
+                            "label": "Body"
+                          },
+                          {
+                            "name": "parseResponse",
+                            "type": "boolean",
+                            "label": "Parse response",
+                            "required": true
+                          },
+                          {
+                            "name": "timeout",
+                            "type": "uinteger",
+                            "label": "Timeout"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "filter": {
+                    "name": "Has receipt and deposit",
+                    "conditions": [
+                      [
+                        {
+                          "a": "{{4.paymentProofUrl}}",
+                          "o": "text:notequal",
+                          "b": ""
+                        },
+                        {
+                          "a": "{{4.depositAmount}}",
+                          "o": "number:greater",
+                          "b": "0"
+                        }
+                      ]
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "filter": {
+            "name": "Has orders",
+            "conditions": [
+              [
+                {
+                  "a": "{{2.data.count}}",
+                  "o": "number:greater",
+                  "b": "0"
+                }
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": false,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "us1.make.com"
+  }
+}
