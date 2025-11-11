@@ -45,7 +45,9 @@
       "id": 2,
       "module": "http:ActionSendData",
       "version": 3,
-      "parameters": {},
+      "parameters": {
+        "handleErrors": false
+      },
       "mapper": {
         "url": "https://vt-souvenir-backend.onrender.com/api/orders",
         "method": "get",
@@ -225,7 +227,9 @@
                       "id": 6,
                       "module": "http:ActionSendData",
                       "version": 3,
-                      "parameters": {},
+                      "parameters": {
+                        "handleErrors": false
+                      },
                       "mapper": {
                         "url": "https://vt-souvenir-backend.onrender.com/api/orders/{{4.id}}/process-receipt",
                         "method": "post",
