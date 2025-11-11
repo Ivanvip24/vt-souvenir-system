@@ -18,7 +18,16 @@ function initializeVisionClient() {
 
   try {
     // Parse credentials from environment variable (JSON string)
-    const credentials = JSON.parse(process.env.GOOGLE_CLOUD_VISION_CREDENTIALS);
+    const credentialsEnv = process.env.GOOGLE_CLOUD_VISION_CREDENTIALS;
+
+    if (!credentialsEnv) {
+      throw new Error('GOOGLE_CLOUD_VISION_CREDENTIALS environment variable not set');
+    }
+
+    console.log('🔍 Credentials env var length:', credentialsEnv.length);
+    console.log('🔍 First 100 chars:', credentialsEnv.substring(0, 100));
+
+    const credentials = JSON.parse(credentialsEnv);
 
     visionClient = new vision.ImageAnnotatorClient({
       credentials: credentials
@@ -28,6 +37,7 @@ function initializeVisionClient() {
     return visionClient;
   } catch (error) {
     console.error('❌ Failed to initialize Vision client:', error.message);
+    console.error('❌ Error details:', error);
     throw new Error('Vision API credentials not configured properly');
   }
 }
