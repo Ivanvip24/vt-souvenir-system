@@ -283,14 +283,12 @@ function createOrderCard(order) {
         </div>
       ` : ''}
       ${!isArchived ? `
-        <div class="quick-actions" style="display: flex; gap: 8px; margin-left: 8px;">
-          <button class="quick-action-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'completo');" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.3)';" title="Marcar como completo">
-            <span style="font-size: 16px;">✓</span>
-            <span>Completo</span>
+        <div style="display: flex; gap: 6px; margin-left: auto;">
+          <button style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); white-space: nowrap;" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'completo');" onmouseover="this.style.background='#059669'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.15)';" onmouseout="this.style.background='#10b981'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)';" title="Marcar como completo">
+            ✓ Completo
           </button>
-          <button class="quick-action-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'cancelado');" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(239, 68, 68, 0.3)';" title="Marcar como cancelado">
-            <span style="font-size: 16px;">✕</span>
-            <span>Cancelado</span>
+          <button style="background: #ef4444; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); white-space: nowrap;" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'cancelado');" onmouseover="this.style.background='#dc2626'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.15)';" onmouseout="this.style.background='#ef4444'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)';" title="Marcar como cancelado">
+            ✕ Cancelado
           </button>
         </div>
       ` : ''}
