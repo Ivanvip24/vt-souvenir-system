@@ -832,7 +832,8 @@ async function handleProofUpload(files, previewEl) {
   const submitBtn = document.getElementById('submit-order');
   const originalButtonState = submitBtn.disabled;
   submitBtn.disabled = true;
-  submitBtn.style.opacity = '0.5';
+  submitBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)'; // Orange = uploading
+  submitBtn.style.opacity = '0.7';
   submitBtn.style.cursor = 'not-allowed';
 
   // Show preview first
@@ -882,8 +883,12 @@ async function handleProofUpload(files, previewEl) {
       // Start 5-second cooldown before allowing submission
       let countdown = 5;
       submitBtn.disabled = true;
-      submitBtn.style.opacity = '0.7';
+
+      // GRAY button during countdown - very obvious visual feedback
+      submitBtn.style.background = 'linear-gradient(135deg, #9ca3af, #6b7280)';
+      submitBtn.style.opacity = '0.8';
       submitBtn.style.cursor = 'not-allowed';
+      submitBtn.style.transform = 'scale(0.98)';
 
       // Get button text elements
       const submitText = document.getElementById('submit-text');
@@ -892,9 +897,9 @@ async function handleProofUpload(files, previewEl) {
       // Show countdown message
       const showCountdown = () => {
         if (submitText) {
-          submitText.textContent = `✅ Recibo subido. Espera ${countdown}s para continuar...`;
+          submitText.textContent = `⏳ Recibo subido. Espera ${countdown}s para continuar...`;
         } else {
-          submitBtn.textContent = `✅ Recibo subido. Espera ${countdown}s...`;
+          submitBtn.textContent = `⏳ Recibo subido. Espera ${countdown}s...`;
         }
       };
 
@@ -909,10 +914,12 @@ async function handleProofUpload(files, previewEl) {
           clearInterval(state.payment.uploadCooldownInterval);
           state.payment.uploadCooldownInterval = null;
 
-          // Re-enable submit button after cooldown
+          // Re-enable submit button after cooldown - GREEN and ready!
           submitBtn.disabled = false;
+          submitBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
           submitBtn.style.opacity = '1';
           submitBtn.style.cursor = 'pointer';
+          submitBtn.style.transform = 'scale(1)';
 
           // Restore original button text
           if (submitText) {
@@ -938,8 +945,10 @@ async function handleProofUpload(files, previewEl) {
 
     // Re-enable submit button on error (they'll need to retry upload)
     submitBtn.disabled = false;
+    submitBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
     submitBtn.style.opacity = '1';
     submitBtn.style.cursor = 'pointer';
+    submitBtn.style.transform = 'scale(1)';
 
     // Restore button text
     const submitText = document.getElementById('submit-text');
