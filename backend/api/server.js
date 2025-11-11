@@ -19,6 +19,7 @@ import uploadRoutes from './upload-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { sendReceiptEmail, initializeEmailSender } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
+import { processReceipt } from '../services/receipt-ocr.js';
 
 config();
 
@@ -947,6 +948,114 @@ app.post('/api/orders/:orderId/archive', async (req, res) => {
     });
   } catch (error) {
     console.error('Error archiving order:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Process receipt with OCR and auto-approve if amount matches
+app.post('/api/orders/:orderId/process-receipt', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+
+    console.log(`\n🔍 Processing receipt for order ${orderId}...`);
+
+    // Get order details including deposit receipt URL
+    const orderResult = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.deposit_amount,
+        o.deposit_receipt_url,
+        o.approval_status,
+        c.name as client_name
+      FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Validate that order has a receipt
+    if (!order.deposit_receipt_url) {
+      return res.status(400).json({
+        success: false,
+        error: 'No deposit receipt found for this order'
+      });
+    }
+
+    // Validate that deposit amount exists
+    if (!order.deposit_amount || order.deposit_amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Order does not have a valid deposit amount'
+      });
+    }
+
+    // Process receipt with OCR
+    const result = await processReceipt(
+      order.deposit_receipt_url,
+      parseFloat(order.deposit_amount)
+    );
+
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        stage: result.stage,
+        error: result.error,
+        extractedText: result.extractedText
+      });
+    }
+
+    // If amount matches, auto-approve the order
+    if (result.shouldAutoApprove && order.approval_status !== 'approved') {
+      await query(`
+        UPDATE orders
+        SET approval_status = 'approved'
+        WHERE id = $1
+      `, [orderId]);
+
+      console.log(`✅ Order ${orderId} auto-approved! Amount matches: ${result.extractedAmount}`);
+
+      return res.json({
+        success: true,
+        autoApproved: true,
+        message: 'Receipt processed successfully and order auto-approved',
+        ocrResult: {
+          extractedAmount: result.extractedAmount,
+          expectedAmount: result.expectedAmount,
+          validation: result.validation,
+          confidence: result.confidence
+        }
+      });
+    }
+
+    // Amount doesn't match or order already approved
+    return res.json({
+      success: true,
+      autoApproved: false,
+      message: result.shouldAutoApprove
+        ? 'Order was already approved'
+        : 'Amount does not match - manual review required',
+      ocrResult: {
+        extractedAmount: result.extractedAmount,
+        expectedAmount: result.expectedAmount,
+        validation: result.validation,
+        confidence: result.confidence
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error processing receipt:', error);
     res.status(500).json({
       success: false,
       error: error.message
