@@ -1959,3 +1959,53 @@ document.addEventListener('DOMContentLoaded', function() {
     lookupBtn.addEventListener('click', window.openClientLookup);
   }
 });
+
+/**
+ * Copy text to clipboard and show visual feedback
+ * @param {string} text - The text to copy
+ * @param {HTMLElement} button - The button element that was clicked
+ */
+window.copyToClipboard = async function(text, button) {
+  try {
+    // Use the modern Clipboard API
+    await navigator.clipboard.writeText(text);
+
+    // Visual feedback - change button appearance
+    const originalContent = button.innerHTML;
+    button.innerHTML = '✓';
+    button.classList.add('copied');
+
+    // Reset button after 2 seconds
+    setTimeout(() => {
+      button.innerHTML = originalContent;
+      button.classList.remove('copied');
+    }, 2000);
+
+  } catch (error) {
+    console.error('Failed to copy:', error);
+
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    try {
+      document.execCommand('copy');
+      const originalContent = button.innerHTML;
+      button.innerHTML = '✓';
+      button.classList.add('copied');
+
+      setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.classList.remove('copied');
+      }, 2000);
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    }
+
+    document.body.removeChild(textArea);
+  }
+};
