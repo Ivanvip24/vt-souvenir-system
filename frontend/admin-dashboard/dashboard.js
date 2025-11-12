@@ -20,7 +20,8 @@ const state = {
   filteredOrders: [],
   currentFilter: 'all',
   selectedOrder: null,
-  searchQuery: ''
+  searchQuery: '',
+  selectedOrders: new Set() // Track selected order IDs for bulk operations
 };
 
 // ==========================================
@@ -185,6 +186,9 @@ async function loadOrders() {
     applyFilter(state.currentFilter);
     updateStats();
 
+    // Initialize bulk action bar
+    createBulkActionBar();
+
     loading.classList.add('hidden');
     refreshBtn?.classList.remove('refreshing');
 
@@ -245,6 +249,14 @@ function createOrderCard(order) {
 
   card.innerHTML = `
     <div class="order-header">
+      ${!isArchived ? `
+        <label class="order-checkbox" onclick="event.stopPropagation();">
+          <input type="checkbox"
+                 data-order-id="${order.id}"
+                 onchange="toggleOrderSelection(${order.id}, this.checked)"
+                 ${state.selectedOrders.has(order.id) ? 'checked' : ''}>
+        </label>
+      ` : ''}
       <div class="order-title">
         <h3>${order.orderNumber}</h3>
         <span class="status-badge ${statusClass}">${statusText}</span>
@@ -1225,6 +1237,272 @@ async function archiveOrder(orderId, archiveStatus) {
   }
 }
 
+// ==========================================
+// MULTI-SELECT FUNCTIONALITY
+// ==========================================
+
+/**
+ * Toggle selection of an order
+ * @param {number} orderId - ID of the order to toggle
+ * @param {boolean} checked - Whether the checkbox is checked
+ */
+function toggleOrderSelection(orderId, checked) {
+  if (checked) {
+    state.selectedOrders.add(orderId);
+  } else {
+    state.selectedOrders.delete(orderId);
+  }
+
+  updateBulkActionBar();
+}
+
+/**
+ * Select or deselect all visible orders
+ * @param {boolean} selectAll - Whether to select all or deselect all
+ */
+function toggleSelectAll(selectAll) {
+  state.selectedOrders.clear();
+
+  if (selectAll) {
+    // Select only non-archived orders from filtered list
+    state.filteredOrders.forEach(order => {
+      const isArchived = order.archiveStatus && order.archiveStatus !== 'active';
+      if (!isArchived) {
+        state.selectedOrders.add(order.id);
+      }
+    });
+  }
+
+  // Re-render to update checkboxes
+  renderOrders();
+  updateBulkActionBar();
+}
+
+/**
+ * Update the bulk action bar visibility and count
+ */
+function updateBulkActionBar() {
+  const actionBar = document.getElementById('bulk-action-bar');
+  const selectedCount = document.getElementById('bulk-selected-count');
+
+  if (!actionBar) {
+    // Create the bulk action bar if it doesn't exist
+    createBulkActionBar();
+    return;
+  }
+
+  if (state.selectedOrders.size > 0) {
+    actionBar.classList.remove('hidden');
+    selectedCount.textContent = state.selectedOrders.size;
+  } else {
+    actionBar.classList.add('hidden');
+  }
+}
+
+/**
+ * Create the bulk action bar UI
+ */
+function createBulkActionBar() {
+  // Check if it already exists
+  if (document.getElementById('bulk-action-bar')) {
+    updateBulkActionBar();
+    return;
+  }
+
+  const actionBar = document.createElement('div');
+  actionBar.id = 'bulk-action-bar';
+  actionBar.className = 'bulk-action-bar hidden';
+  actionBar.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
+        <span style="font-weight: 600; font-size: 15px;">
+          <span id="bulk-selected-count">0</span> pedido(s) seleccionado(s)
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-left: auto;">
+        <button onclick="bulkApproveOrders()" class="bulk-action-btn btn-approve" title="Aprobar seleccionados">
+          ✓ Aprobar
+        </button>
+        <button onclick="bulkArchiveOrders('completo')" class="bulk-action-btn btn-complete" title="Marcar como completo">
+          ✓ Completo
+        </button>
+        <button onclick="bulkArchiveOrders('cancelado')" class="bulk-action-btn btn-cancel" title="Marcar como cancelado">
+          ✕ Cancelado
+        </button>
+        <button onclick="clearSelection()" class="bulk-action-btn btn-clear" title="Cancelar selección">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Insert at the top of the orders view
+  const ordersView = document.getElementById('orders-view');
+  const ordersHeader = ordersView.querySelector('.view-header');
+  ordersHeader.insertAdjacentElement('afterend', actionBar);
+}
+
+/**
+ * Clear all selections
+ */
+function clearSelection() {
+  state.selectedOrders.clear();
+  const selectAllCheckbox = document.getElementById('select-all-checkbox');
+  if (selectAllCheckbox) {
+    selectAllCheckbox.checked = false;
+  }
+  renderOrders();
+  updateBulkActionBar();
+}
+
+/**
+ * Bulk approve selected orders
+ */
+async function bulkApproveOrders() {
+  const selectedCount = state.selectedOrders.size;
+
+  if (selectedCount === 0) {
+    alert('No hay pedidos seleccionados');
+    return;
+  }
+
+  // Filter out already approved orders
+  const ordersToApprove = Array.from(state.selectedOrders)
+    .map(id => state.orders.find(o => o.id === id))
+    .filter(order => order && order.approvalStatus === 'pending_review');
+
+  if (ordersToApprove.length === 0) {
+    alert('Ninguno de los pedidos seleccionados está pendiente de aprobación');
+    return;
+  }
+
+  if (!confirm(`¿Aprobar ${ordersToApprove.length} pedido(s)?\n\nSe generarán y enviarán recibos a los clientes.`)) {
+    return;
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+
+  // Show progress
+  const progressDiv = document.createElement('div');
+  progressDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000; min-width: 300px; text-align: center;';
+  progressDiv.innerHTML = `
+    <div style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Aprobando pedidos...</div>
+    <div style="font-size: 14px; color: #6b7280;">Procesando <span id="bulk-progress">0</span> de ${ordersToApprove.length}</div>
+  `;
+  document.body.appendChild(progressDiv);
+
+  // Process each order
+  for (let i = 0; i < ordersToApprove.length; i++) {
+    const order = ordersToApprove[i];
+    document.getElementById('bulk-progress').textContent = i + 1;
+
+    try {
+      const depositAmount = order.depositAmount || (order.totalPrice / 2);
+
+      const response = await fetch(`${API_BASE}/orders/${order.id}/approve`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ actualDepositAmount: depositAmount })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        successCount++;
+      } else {
+        failCount++;
+        console.error(`Failed to approve order ${order.orderNumber}:`, data.error);
+      }
+    } catch (error) {
+      failCount++;
+      console.error(`Error approving order ${order.orderNumber}:`, error);
+    }
+  }
+
+  // Remove progress dialog
+  document.body.removeChild(progressDiv);
+
+  // Show results
+  alert(`✅ Completado:\n\n${successCount} pedido(s) aprobado(s)\n${failCount} error(es)`);
+
+  // Refresh and clear selection
+  clearSelection();
+  loadOrders();
+}
+
+/**
+ * Bulk archive selected orders
+ * @param {string} archiveStatus - 'completo' or 'cancelado'
+ */
+async function bulkArchiveOrders(archiveStatus) {
+  const selectedCount = state.selectedOrders.size;
+
+  if (selectedCount === 0) {
+    alert('No hay pedidos seleccionados');
+    return;
+  }
+
+  const statusText = archiveStatus === 'completo' ? 'completados' : 'cancelados';
+  const selectedOrders = Array.from(state.selectedOrders)
+    .map(id => state.orders.find(o => o.id === id))
+    .filter(order => order);
+
+  if (!confirm(`¿Marcar ${selectedOrders.length} pedido(s) como ${statusText}?`)) {
+    return;
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+
+  // Show progress
+  const progressDiv = document.createElement('div');
+  progressDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000; min-width: 300px; text-align: center;';
+  progressDiv.innerHTML = `
+    <div style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Marcando pedidos como ${statusText}...</div>
+    <div style="font-size: 14px; color: #6b7280;">Procesando <span id="bulk-progress">0</span> de ${selectedOrders.length}</div>
+  `;
+  document.body.appendChild(progressDiv);
+
+  // Process each order
+  for (let i = 0; i < selectedOrders.length; i++) {
+    const order = selectedOrders[i];
+    document.getElementById('bulk-progress').textContent = i + 1;
+
+    try {
+      const response = await fetch(`${API_BASE}/orders/${order.id}/archive`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ archiveStatus })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        successCount++;
+      } else {
+        failCount++;
+        console.error(`Failed to archive order ${order.orderNumber}:`, data.error);
+      }
+    } catch (error) {
+      failCount++;
+      console.error(`Error archiving order ${order.orderNumber}:`, error);
+    }
+  }
+
+  // Remove progress dialog
+  document.body.removeChild(progressDiv);
+
+  // Show results
+  alert(`✅ Completado:\n\n${successCount} pedido(s) marcado(s) como ${statusText}\n${failCount} error(es)`);
+
+  // Refresh and clear selection
+  clearSelection();
+  loadOrders();
+}
+
 // Make functions globally accessible for onclick handlers
 window.loadOrders = loadOrders;
 window.closeOrderDetail = closeOrderDetail;
@@ -1241,3 +1519,8 @@ window.downloadReceipt = downloadReceipt;
 window.shareReceipt = shareReceipt;
 window.confirmSecondPayment = confirmSecondPayment;
 window.archiveOrder = archiveOrder;
+window.toggleOrderSelection = toggleOrderSelection;
+window.toggleSelectAll = toggleSelectAll;
+window.clearSelection = clearSelection;
+window.bulkApproveOrders = bulkApproveOrders;
+window.bulkArchiveOrders = bulkArchiveOrders;
