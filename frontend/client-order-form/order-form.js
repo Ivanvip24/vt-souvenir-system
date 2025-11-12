@@ -22,9 +22,10 @@ const STORAGE_KEY = 'souvenir_client_data';
 // Each product can have multiple tiers: { min: quantity, price: unit_price }
 //
 // PRICING RULES:
-// 1. Most products require a MINIMUM of 100 pieces for wholesale pricing
+// 1. Most products require a MINIMUM of 100 pieces (MOQ = Minimum Order Quantity)
 // 2. Portallaves de MDF: Lower minimum of only 20 pieces
-// 3. Some products keep the same price across tiers (but still show minimum quantity requirements)
+// 3. Souvenir Box: No minimum, can order from 1 piece
+// 4. Price changes at 1000+ pieces for bulk discount
 const PRICING_TIERS = {
   // Match by product name (case-insensitive partial match)
   'imanes de mdf chico': [
@@ -48,11 +49,12 @@ const PRICING_TIERS = {
     { min: 1000, max: Infinity, price: 12.00 }
   ],
   'destapador de mdf': [
-    { min: 100, max: 499, price: 20.00 },
-    { min: 500, max: Infinity, price: 17.00 }
+    { min: 100, max: 999, price: 20.00 },
+    { min: 1000, max: Infinity, price: 17.00 }
   ],
   'botones metálicos': [
-    { min: 100, max: Infinity, price: 8.00 }
+    { min: 100, max: 999, price: 8.00 },
+    { min: 1000, max: Infinity, price: 6.00 }
   ],
   'portallaves de mdf': [
     { min: 20, max: Infinity, price: 45.00 }
@@ -844,6 +846,44 @@ window.handleQuantityChange = function(productId, value) {
 
   if (!product) return;
 
+  // Check minimum order quantity (MOQ)
+  const productNameLower = product.name.toLowerCase();
+  let moq = 0; // Default no minimum
+
+  for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
+    if (productNameLower.includes(key) || key.includes(productNameLower)) {
+      moq = tierArray[0].min;
+      break;
+    }
+  }
+
+  // If quantity is between 1 and MOQ-1, show warning and don't add to cart
+  if (quantity > 0 && quantity < moq) {
+    const input = document.getElementById(`qty-${productId}`);
+    const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+    const tierInfoEl = document.getElementById(`tier-${productId}`);
+
+    // Show MOQ warning
+    if (tierInfoEl) {
+      tierInfoEl.innerHTML = `
+        <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 16px;">⚠️</span>
+          <span>Mínimo ${moq} piezas para este producto</span>
+        </div>
+      `;
+    }
+
+    // Don't add to cart
+    delete state.cart[productId];
+    const subtotalEl = document.getElementById(`subtotal-${productId}`);
+    if (subtotalEl) {
+      subtotalEl.classList.add('hidden');
+    }
+    card.classList.remove('selected');
+    updateOrderTotals();
+    return;
+  }
+
   // Update cart
   if (quantity > 0) {
     state.cart[productId] = { product, quantity };
@@ -852,7 +892,7 @@ window.handleQuantityChange = function(productId, value) {
   }
 
   // Get tiered pricing for new quantity
-  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : 1);
+  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : moq || 1);
   const subtotal = price * quantity;
 
   // Update UI
