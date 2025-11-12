@@ -647,7 +647,7 @@ router.post('/orders/lookup', async (req, res) => {
       JOIN clients c ON o.client_id = c.id
       LEFT JOIN order_items oi ON o.id = oi.order_id
       WHERE (${whereClause})
-        AND o.status NOT IN ('delivered', 'cancelled')
+        AND (o.archive_status IS NULL OR o.archive_status = 'active')
         AND o.approval_status != 'rejected'
       GROUP BY o.id, c.name, c.phone, c.email, c.address, c.street, c.street_number, c.colonia, c.city, c.state, c.postal, c.reference_notes
       ORDER BY o.created_at DESC
