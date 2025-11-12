@@ -29,7 +29,7 @@ const PRICING_TIERS = {
   // Match by product name (case-insensitive partial match)
   'imanes de mdf chico': [
     { min: 100, max: 999, price: 11.00 },
-    { min: 1000, max: Infinity, price: 11.00 }
+    { min: 1000, max: Infinity, price: 8.00 }
   ],
   'imanes de mdf grande': [
     { min: 100, max: 999, price: 15.00 },
@@ -37,7 +37,7 @@ const PRICING_TIERS = {
   ],
   'llaveros de mdf': [
     { min: 100, max: 999, price: 10.00 },
-    { min: 1000, max: Infinity, price: 10.00 }
+    { min: 1000, max: Infinity, price: 8.00 }
   ],
   'imán 3d mdf': [
     { min: 100, max: 999, price: 15.00 },
@@ -45,11 +45,11 @@ const PRICING_TIERS = {
   ],
   'imán de mdf con foil': [
     { min: 100, max: 999, price: 15.00 },
-    { min: 1000, max: Infinity, price: 15.00 }
+    { min: 1000, max: Infinity, price: 12.00 }
   ],
   'destapador de mdf': [
     { min: 100, max: 499, price: 20.00 },
-    { min: 500, max: Infinity, price: 20.00 }
+    { min: 500, max: Infinity, price: 17.00 }
   ],
   'botones metálicos': [
     { min: 100, max: Infinity, price: 8.00 }
@@ -748,8 +748,19 @@ function createProductCard(product) {
   const quantity = state.cart[product.id]?.quantity || 0;
   const basePrice = parseFloat(product.base_price);
 
-  // Get tiered pricing
-  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : 1);
+  // Get tiered pricing - show Tier 1 price (minimum quantity) when no items in cart
+  const productNameLower = product.name.toLowerCase();
+  let defaultQuantity = 1;
+
+  // Find the minimum quantity for this product to show the wholesale price
+  for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
+    if (productNameLower.includes(key) || key.includes(productNameLower)) {
+      defaultQuantity = tierArray[0].min; // Use minimum of first tier
+      break;
+    }
+  }
+
+  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : defaultQuantity);
   const subtotal = price * quantity;
 
   div.innerHTML = `

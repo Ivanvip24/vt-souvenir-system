@@ -119,3 +119,4 @@ SYSTEM_ACTIVE.md
 # Before committing, always run: git status
 # And verify no sensitive files are staged!
 # ============================================
+.vercel
