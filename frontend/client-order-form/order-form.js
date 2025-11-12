@@ -970,7 +970,49 @@ function handleProductsSubmit() {
     return;
   }
 
+  // Populate order summary before showing payment step
+  populateOrderSummary();
+
   showStep(4); // Go directly to payment
+}
+
+/**
+ * Populate the order summary in the payment step
+ */
+function populateOrderSummary() {
+  const summaryContainer = document.getElementById('order-items-summary');
+  summaryContainer.innerHTML = '';
+
+  let subtotal = 0;
+
+  // Generate HTML for each item in cart
+  Object.values(state.cart).forEach(({ product, quantity }) => {
+    const { price } = getTieredPrice(product, quantity);
+    const lineTotal = price * quantity;
+    subtotal += lineTotal;
+
+    const itemRow = document.createElement('div');
+    itemRow.className = 'order-item-row';
+    itemRow.innerHTML = `
+      <div class="order-item-info">
+        <div class="order-item-name">${product.name}</div>
+        <div class="order-item-details">
+          ${quantity} unidades × $${price.toFixed(2)}
+        </div>
+      </div>
+      <div class="order-item-price">
+        $${lineTotal.toFixed(2)}
+      </div>
+    `;
+    summaryContainer.appendChild(itemRow);
+  });
+
+  // Update totals
+  const deposit = subtotal * 0.5;
+
+  document.getElementById('summary-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+  document.getElementById('summary-deposit').textContent = `$${deposit.toFixed(2)}`;
+  document.getElementById('summary-total-pay').textContent = `$${deposit.toFixed(2)}`;
 }
 
 // ==========================================

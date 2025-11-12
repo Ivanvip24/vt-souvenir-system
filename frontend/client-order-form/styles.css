@@ -567,6 +567,59 @@ body {
 }
 
 /* ==========================================
+   ORDER SUMMARY CARD
+   ========================================== */
+
+.order-summary-card {
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.order-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.order-item-row:last-child {
+    border-bottom: none;
+}
+
+.order-item-info {
+    flex: 1;
+}
+
+.order-item-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 4px;
+}
+
+.order-item-details {
+    font-size: 13px;
+    color: var(--gray-600);
+}
+
+.order-item-price {
+    text-align: right;
+    font-weight: 600;
+    color: var(--gray-900);
+    font-size: 15px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ==========================================
    FILE UPLOAD
    ========================================== */
 
