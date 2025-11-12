@@ -346,33 +346,9 @@ router.post('/orders/submit', async (req, res) => {
       }
     });
 
-    // 6b. Send confirmation email and generate PDF (background - don't block response)
+    // 6b. Generate PDF receipt (will be emailed only after admin approval)
     setImmediate(async () => {
-      try {
-        // ALWAYS send simple confirmation email first (this was working before)
-        console.log(`📧 Sending order confirmation email to: ${clientEmail}`);
-
-        await emailSender.sendOrderConfirmation(
-          {
-            orderNumber,
-            orderDate: new Date(),
-            totalPrice: subtotal
-          },
-          {
-            name: clientName,
-            email: clientEmail
-          }
-        );
-
-        console.log(`✅ Order confirmation email sent to customer: ${clientEmail}`);
-
-      } catch (emailError) {
-        console.error('❌ Failed to send confirmation email:', emailError);
-        console.error('Email error details:', emailError.message);
-        console.error('Stack:', emailError.stack);
-      }
-
-      // Try to generate PDF receipt (don't let this block email)
+      // Generate PDF receipt for admin to review (don't let this block response)
       try {
         console.log(`📄 Generating PDF receipt for order ${orderNumber}...`);
 
@@ -406,31 +382,10 @@ router.post('/orders/submit', async (req, res) => {
           [pdfUrl, orderId]
         );
         console.log(`💾 PDF URL saved to database: ${pdfUrl}`);
-
-        // Try to send PDF email as a second email (bonus if it works)
-        try {
-          await emailSender.sendReceiptEmail(
-            {
-              orderNumber,
-              orderDate: new Date(),
-              totalPrice: subtotal,
-              actualDepositAmount: depositAmount,
-              remainingBalance: remainingBalance,
-              eventDate: eventDate || null
-            },
-            {
-              name: clientName,
-              email: clientEmail
-            },
-            pdfPath
-          );
-          console.log(`✅ PDF receipt email also sent to customer: ${clientEmail}`);
-        } catch (pdfEmailError) {
-          console.log(`⚠️ Could not send PDF email (confirmation was already sent): ${pdfEmailError.message}`);
-        }
+        console.log(`ℹ️  Receipt PDF generated but will only be emailed after admin approval`);
 
       } catch (pdfError) {
-        console.error('❌ Failed to generate PDF receipt (email was already sent):', pdfError.message);
+        console.error('❌ Failed to generate PDF receipt:', pdfError.message);
       }
     });
 
