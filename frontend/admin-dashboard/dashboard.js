@@ -1338,10 +1338,15 @@ function createBulkActionBar() {
     </div>
   `;
 
-  // Insert at the top of the orders view
+  // Insert after the filters bar in the orders view
   const ordersView = document.getElementById('orders-view');
-  const ordersHeader = ordersView.querySelector('.view-header');
-  ordersHeader.insertAdjacentElement('afterend', actionBar);
+  const filtersBar = ordersView.querySelector('.filters-bar');
+  if (filtersBar) {
+    filtersBar.insertAdjacentElement('afterend', actionBar);
+  } else {
+    // Fallback: prepend to orders view
+    ordersView.prepend(actionBar);
+  }
 }
 
 /**

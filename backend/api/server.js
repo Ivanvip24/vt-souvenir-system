@@ -1277,6 +1277,7 @@ app.get('/api/test/email-config', (req, res) => {
 
 // Serve static frontend files
 const frontendPath = path.join(__dirname, '../../frontend');
+app.use('/assets', express.static(path.join(frontendPath, 'assets')));
 app.use('/order', express.static(path.join(frontendPath, 'client-order-form')));
 app.use('/admin', express.static(path.join(frontendPath, 'admin-dashboard')));
 
