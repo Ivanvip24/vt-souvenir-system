@@ -1,6 +1,7 @@
 /* ==========================================
-   ADMIN DASHBOARD - VT ANUNCIANDO
+   ADMIN DASHBOARD - AXKAN
    Professional admin interface
+   Brand: Mexican-inspired Mayan theme
    ========================================== */
 
 * {
@@ -10,13 +11,25 @@
 }
 
 :root {
-    --primary: #667eea;
-    --primary-dark: #5568d3;
-    --secondary: #764ba2;
-    --success: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --info: #3b82f6;
+    /* AXKAN Brand Colors */
+    --axkan-pink: #E91E63;
+    --axkan-green: #7CB342;
+    --axkan-orange: #FF9800;
+    --axkan-turquoise: #00BCD4;
+    --axkan-red: #F44336;
+
+    /* Primary (using AXKAN pink-orange gradient) */
+    --primary: #E91E63;
+    --primary-dark: #C2185B;
+    --secondary: #FF9800;
+
+    /* Status colors */
+    --success: #7CB342;
+    --danger: #F44336;
+    --warning: #FF9800;
+    --info: #00BCD4;
+
+    /* Neutral palette */
     --gray-50: #f9fafb;
     --gray-100: #f3f4f6;
     --gray-200: #e5e7eb;
@@ -41,10 +54,28 @@ body {
    ========================================== */
 
 .dashboard-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--axkan-pink) 0%, var(--axkan-orange) 100%);
     color: white;
     padding: 20px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+/* Colorful bottom border accent */
+.dashboard-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg,
+        var(--axkan-pink),
+        var(--axkan-green),
+        var(--axkan-orange),
+        var(--axkan-turquoise),
+        var(--axkan-red)
+    );
 }
 
 .header-content {

@@ -1,6 +1,7 @@
 /* ==========================================
-   MOBILE-FIRST SOUVENIR ORDER FORM
+   AXKAN - MOBILE-FIRST SOUVENIR ORDER FORM
    Optimized for phones (320px - 428px)
+   Brand: Mexican-inspired Mayan theme
    ========================================== */
 
 * {
@@ -10,12 +11,28 @@
 }
 
 :root {
-    --primary: #667eea;
-    --primary-dark: #5568d3;
-    --secondary: #764ba2;
-    --success: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
+    /* AXKAN Brand Colors */
+    --axkan-pink: #E91E63;
+    --axkan-green: #7CB342;
+    --axkan-orange: #FF9800;
+    --axkan-turquoise: #00BCD4;
+    --axkan-red: #F44336;
+
+    /* Primary gradient (Pink to Orange) */
+    --primary: #E91E63;
+    --primary-dark: #C2185B;
+    --secondary: #FF9800;
+
+    /* Status colors */
+    --success: #7CB342;
+    --danger: #F44336;
+    --warning: #FF9800;
+
+    /* Neutral palette */
+    --bg-primary: #F8F9FC;
+    --bg-secondary: #FFFFFF;
+    --bg-tertiary: #F1F3F9;
+
     --gray-50: #f9fafb;
     --gray-100: #f3f4f6;
     --gray-200: #e5e7eb;
@@ -23,16 +40,34 @@
     --gray-600: #4b5563;
     --gray-700: #374151;
     --gray-900: #111827;
+
+    /* Borders */
+    --border-light: #E2E8F0;
+    --border-medium: #CBD5E0;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* Radii */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
 }
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f5f5;
+    background: var(--bg-primary);
     min-height: 100vh;
     padding: 0;
     margin: 0;
     color: var(--gray-900);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
 }
 
 .app-container {
@@ -40,7 +75,7 @@ body {
     margin: 0 auto;
     min-height: 100vh;
     background: white;
-    box-shadow: 0 0 20px rgba(0,0,0,0.08);
+    box-shadow: var(--shadow-xl);
 }
 
 /* ==========================================
@@ -62,36 +97,70 @@ body {
 }
 
 /* ==========================================
-   HEADER
+   HEADER - AXKAN BRANDED
    ========================================== */
 
 .header {
-    background: white;
+    background: var(--bg-secondary);
     color: var(--gray-900);
     padding: 32px 40px;
     text-align: center;
-    border-bottom: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--border-light);
+    position: relative;
+}
+
+/* Colorful top border accent */
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg,
+        var(--axkan-pink),
+        var(--axkan-green),
+        var(--axkan-orange),
+        var(--axkan-turquoise),
+        var(--axkan-red)
+    );
 }
 
 .logo {
+    margin-bottom: 16px;
+}
+
+.logo img {
+    height: 80px;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Legacy emoji logo fallback */
+.logo:not(:has(img)) {
     font-size: 42px;
-    margin-bottom: 12px;
 }
 
 .header h1 {
     font-size: 28px;
-    font-weight: 700;
+    font-weight: 800;
     margin-bottom: 8px;
-    color: var(--primary);
+    background: linear-gradient(135deg, var(--axkan-pink), var(--axkan-orange));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
 }
 
 .subtitle {
     font-size: 15px;
     color: var(--gray-600);
+    font-weight: 500;
 }
 
 /* ==========================================
-   PROGRESS BAR
+   PROGRESS BAR - AXKAN GRADIENT
    ========================================== */
 
 .progress-bar {
@@ -104,7 +173,7 @@ body {
 
 .progress {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    background: linear-gradient(90deg, var(--axkan-pink), var(--axkan-orange), var(--axkan-turquoise));
     transition: width 0.3s ease;
 }
 
@@ -121,6 +190,7 @@ body {
 
 .card h2 {
     font-size: 22px;
+    font-weight: 700;
     margin-bottom: 8px;
     color: var(--gray-900);
 }
@@ -129,6 +199,7 @@ body {
     color: var(--gray-600);
     font-size: 14px;
     margin-bottom: 24px;
+    line-height: 1.5;
 }
 
 /* ==========================================
@@ -143,7 +214,7 @@ body {
     display: block;
     font-weight: 600;
     font-size: 14px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     color: var(--gray-700);
 }
 
@@ -152,19 +223,21 @@ body {
 .form-group select {
     width: 100%;
     padding: 14px 16px;
-    border: 2px solid var(--gray-200);
-    border-radius: 12px;
-    font-size: 16px; /* Prevents zoom on iOS */
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 16px;
     font-family: inherit;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    background: var(--bg-secondary);
+    color: var(--gray-900);
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: var(--axkan-pink);
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
 }
 
 .form-group textarea {
@@ -186,17 +259,17 @@ body {
 }
 
 /* ==========================================
-   BUTTONS
+   BUTTONS - AXKAN STYLED
    ========================================== */
 
 .btn {
     border: none;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 16px;
     font-weight: 600;
     padding: 14px 24px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: inherit;
     -webkit-tap-highlight-color: transparent;
 }
@@ -208,8 +281,14 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    background: linear-gradient(135deg, var(--axkan-pink), var(--axkan-orange));
     color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
 }
 
 .btn-primary:active {
@@ -219,12 +298,17 @@ body {
 .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
 }
 
 .btn-secondary {
     background: white;
-    color: var(--primary);
-    border: 2px solid var(--primary);
+    color: var(--axkan-pink);
+    border: 2px solid var(--axkan-pink);
+}
+
+.btn-secondary:hover {
+    background: rgba(233, 30, 99, 0.05);
 }
 
 .btn-back {
@@ -237,6 +321,11 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
+    transition: color 0.2s;
+}
+
+.btn-back:hover {
+    color: var(--axkan-pink);
 }
 
 /* ==========================================
@@ -266,7 +355,7 @@ body {
 }
 
 .order-total-mini strong {
-    color: var(--primary);
+    color: var(--axkan-pink);
     font-size: 16px;
 }
 
@@ -279,16 +368,44 @@ body {
 
 .product-card {
     background: white;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 20px;
-    border: 1px solid var(--gray-200);
-    transition: all 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 2px solid var(--border-light);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Colorful top accent on hover */
+.product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--axkan-pink), var(--axkan-green), var(--axkan-orange), var(--axkan-turquoise));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.product-card:hover::before {
+    opacity: 1;
 }
 
 .product-card.selected {
-    border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    border-color: var(--axkan-pink);
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.2);
+}
+
+.product-card.selected::before {
+    opacity: 1;
 }
 
 .product-header {
@@ -300,7 +417,7 @@ body {
 .product-image {
     width: 100px;
     height: 100px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     object-fit: cover;
     background: var(--gray-100);
     flex-shrink: 0;
@@ -312,19 +429,20 @@ body {
 
 .product-info h3 {
     font-size: 16px;
+    font-weight: 700;
     margin-bottom: 4px;
     color: var(--gray-900);
 }
 
 .product-category {
     display: inline-block;
-    background: var(--gray-100);
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1));
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--gray-600);
+    color: var(--axkan-pink);
     font-weight: 600;
     margin-bottom: 8px;
 }
@@ -332,7 +450,7 @@ body {
 .product-price {
     font-size: 20px;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--axkan-pink);
 }
 
 .product-price span {
@@ -362,7 +480,7 @@ body {
 .quantity-btn {
     width: 48px;
     height: 48px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     border: 2px solid var(--gray-300);
     background: white;
     font-size: 24px;
@@ -372,6 +490,12 @@ body {
     align-items: center;
     justify-content: center;
     -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s;
+}
+
+.quantity-btn:hover {
+    border-color: var(--axkan-pink);
+    color: var(--axkan-pink);
 }
 
 .quantity-btn:active {
@@ -383,8 +507,8 @@ body {
     text-align: center;
     font-size: 22px;
     font-weight: 700;
-    border: 2px solid var(--primary);
-    border-radius: 12px;
+    border: 2px solid var(--axkan-pink);
+    border-radius: var(--radius-md);
     padding: 12px 8px;
     color: var(--gray-900);
     background: var(--gray-50);
@@ -392,9 +516,9 @@ body {
 
 .quantity-input:focus {
     outline: none;
-    border-color: var(--primary);
+    border-color: var(--axkan-pink);
     background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
 }
 
 .product-subtotal {
@@ -440,7 +564,7 @@ body {
 }
 
 .summary-row.deposit {
-    color: var(--primary);
+    color: var(--axkan-pink);
     font-weight: 600;
     padding-top: 8px;
     border-top: 1px solid var(--gray-200);
@@ -451,10 +575,11 @@ body {
    ========================================== */
 
 .payment-summary-box {
-    background: linear-gradient(135deg, #667eea15, #764ba215);
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.08), rgba(255, 152, 0, 0.08));
     padding: 20px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     margin-bottom: 24px;
+    border: 2px solid rgba(233, 30, 99, 0.1);
 }
 
 .payment-summary-box .summary-row {
@@ -463,7 +588,7 @@ body {
 
 .payment-summary-box .highlight {
     font-size: 18px;
-    color: var(--primary);
+    color: var(--axkan-pink);
 }
 
 .payment-methods {
@@ -485,14 +610,14 @@ body {
     align-items: center;
     gap: 16px;
     padding: 16px;
-    border: 2px solid var(--gray-200);
-    border-radius: 12px;
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-lg);
     transition: all 0.2s;
 }
 
 .payment-option input[type="radio"]:checked + .payment-card {
-    border-color: var(--primary);
-    background: rgba(102, 126, 234, 0.05);
+    border-color: var(--axkan-pink);
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.05), rgba(255, 152, 0, 0.05));
 }
 
 .payment-icon {
@@ -512,22 +637,24 @@ body {
 }
 
 .bank-details {
-    background: var(--gray-50);
+    background: var(--bg-tertiary);
     padding: 20px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     margin-bottom: 24px;
 }
 
 .bank-details h3 {
     font-size: 16px;
     margin-bottom: 16px;
+    color: var(--gray-900);
 }
 
 .bank-info {
     background: white;
     padding: 16px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     margin-bottom: 16px;
+    border: 1px solid var(--border-light);
 }
 
 .info-row {
@@ -542,28 +669,27 @@ body {
 }
 
 .highlight-amount {
-    color: var(--primary);
+    color: var(--axkan-pink);
     font-size: 18px;
 }
 
 .copy-btn {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, var(--axkan-green) 0%, #689F38 100%);
     border: none;
     padding: 6px 10px;
     border-radius: 6px;
     font-size: 16px;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 .copy-btn:active {
     transform: scale(0.95);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .copy-btn.copied {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    background: linear-gradient(135deg, #689F38 0%, #558B2F 100%);
 }
 
 /* ==========================================
@@ -571,9 +697,9 @@ body {
    ========================================== */
 
 .order-summary-card {
-    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-    border: 2px solid var(--primary);
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.05) 0%, rgba(255, 152, 0, 0.05) 100%);
+    border: 2px solid var(--axkan-pink);
+    border-radius: var(--radius-lg);
     padding: 20px;
     margin-bottom: 24px;
 }
@@ -583,7 +709,7 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     padding: 12px 0;
-    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    border-bottom: 1px solid rgba(233, 30, 99, 0.1);
 }
 
 .order-item-row:last-child {
@@ -613,23 +739,22 @@ body {
     font-size: 15px;
 }
 
-.summary-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 /* ==========================================
    FILE UPLOAD
    ========================================== */
 
 .file-upload-area {
     border: 2px dashed var(--gray-300);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 24px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
+}
+
+.file-upload-area:hover {
+    border-color: var(--axkan-pink);
+    background: rgba(233, 30, 99, 0.02);
 }
 
 .file-upload-area:active {
@@ -696,10 +821,10 @@ body {
    ========================================== */
 
 .info-box {
-    background: #eff6ff;
-    border-left: 4px solid var(--primary);
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.08), rgba(255, 152, 0, 0.08));
+    border-left: 4px solid var(--axkan-pink);
     padding: 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     margin: 16px 0;
     display: flex;
     gap: 12px;
@@ -713,6 +838,7 @@ body {
 .info-box strong {
     display: block;
     margin-bottom: 4px;
+    color: var(--gray-900);
 }
 
 .info-box p {
@@ -747,20 +873,29 @@ body {
 .success-container h2 {
     font-size: 28px;
     margin-bottom: 24px;
-    color: var(--success);
+    background: linear-gradient(135deg, var(--axkan-green), #689F38);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.success-details {
+    max-width: 400px;
+    margin: 0 auto;
 }
 
 .order-number {
-    background: var(--gray-100);
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.08), rgba(255, 152, 0, 0.08));
     padding: 20px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     margin: 24px 0;
+    border: 2px solid rgba(233, 30, 99, 0.2);
 }
 
 .order-number strong {
     display: block;
     font-size: 24px;
-    color: var(--primary);
+    color: var(--axkan-pink);
     margin-top: 8px;
 }
 
@@ -777,7 +912,7 @@ body {
     width: 40px;
     height: 40px;
     border: 4px solid var(--gray-200);
-    border-top-color: var(--primary);
+    border-top-color: var(--axkan-pink);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin: 0 auto 16px;
@@ -814,6 +949,18 @@ body {
 }
 
 /* ==========================================
+   STRIPE PAYMENT CONTAINER
+   ========================================== */
+
+.stripe-payment-container .btn-primary {
+    background: linear-gradient(135deg, #635bff, #4f46e5);
+}
+
+.stripe-payment-container .btn-primary:hover {
+    background: linear-gradient(135deg, #4f46e5, #4338ca);
+}
+
+/* ==========================================
    RESPONSIVE (Mobile)
    ========================================== */
 
@@ -824,6 +971,14 @@ body {
 
     .header {
         padding: 24px 20px;
+    }
+
+    .logo img {
+        height: 60px;
+    }
+
+    .header h1 {
+        font-size: 22px;
     }
 
     .card {
@@ -839,4 +994,49 @@ body {
         width: 80px;
         height: 80px;
     }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================
+   MODAL STYLING
+   ========================================== */
+
+.modal {
+    backdrop-filter: blur(4px);
+}
+
+.modal .card {
+    box-shadow: var(--shadow-xl);
+    border-radius: var(--radius-xl);
+}
+
+.modal .card h2 {
+    color: var(--gray-900);
+}
+
+/* ==========================================
+   AXKAN DECORATIVE ELEMENTS
+   ========================================== */
+
+/* Mayan-inspired divider */
+.axkan-divider {
+    height: 4px;
+    background: linear-gradient(90deg,
+        var(--axkan-pink),
+        var(--axkan-green),
+        var(--axkan-orange),
+        var(--axkan-turquoise),
+        var(--axkan-red)
+    );
+    margin: 24px 0;
+    border-radius: 2px;
+}
+
+/* Accent border for special sections */
+.axkan-accent {
+    border-left: 4px solid transparent;
+    border-image: linear-gradient(to bottom, var(--axkan-pink), var(--axkan-orange)) 1;
 }
