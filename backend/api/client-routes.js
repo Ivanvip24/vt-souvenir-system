@@ -48,10 +48,11 @@ router.get('/products', async (req, res) => {
         category,
         base_price,
         dimensions,
-        image_url
+        image_url,
+        display_order
       FROM products
       WHERE is_active = true
-      ORDER BY name ASC
+      ORDER BY display_order ASC, name ASC
     `);
 
     // Group by category for better UX
