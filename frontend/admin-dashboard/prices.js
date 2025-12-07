@@ -1087,27 +1087,35 @@ function renderRawMaterialsList(materials) {
     const stockLow = parseFloat(material.current_stock) < parseFloat(material.min_stock_level);
 
     html += `
-      <div style="padding: 12px; border: 2px solid ${stockLow ? '#fca5a5' : '#e5e7eb'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+      <div style="padding: 12px; border: 2px solid ${stockLow ? '#fca5a5' : '#e5e7eb'}; border-radius: 8px; transition: all 0.2s;"
            onmouseover="this.style.borderColor='#3b82f6'"
-           onmouseout="this.style.borderColor='${stockLow ? '#fca5a5' : '#e5e7eb'}'"
-           onclick="editMaterial(${material.id})">
+           onmouseout="this.style.borderColor='${stockLow ? '#fca5a5' : '#e5e7eb'}'">
         <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div style="flex: 1;">
+          <div style="flex: 1; cursor: pointer;" onclick="editMaterial(${material.id})">
             <strong style="display: block; margin-bottom: 4px;">${material.name}</strong>
             <div style="font-size: 12px; color: #6b7280;">
               <span>${material.unit_label || material.unit_type}</span>
               ${material.sku ? ` • SKU: ${material.sku}` : ''}
             </div>
           </div>
-          <div style="text-align: right;">
-            <div style="font-weight: 700; color: #059669; margin-bottom: 4px;">
-              ${formatCurrency(material.cost_per_unit)}/${material.unit_label || 'unidad'}
-            </div>
-            ${stockLow ? `
-              <div style="font-size: 11px; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px; display: inline-block;">
-                ⚠️ Stock bajo
+          <div style="display: flex; align-items: start; gap: 12px;">
+            <div style="text-align: right; cursor: pointer;" onclick="editMaterial(${material.id})">
+              <div style="font-weight: 700; color: #059669; margin-bottom: 4px;">
+                ${formatCurrency(material.cost_per_unit)}/${material.unit_label || 'unidad'}
               </div>
-            ` : ''}
+              ${stockLow ? `
+                <div style="font-size: 11px; background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px; display: inline-block;">
+                  ⚠️ Stock bajo
+                </div>
+              ` : ''}
+            </div>
+            <button onclick="event.stopPropagation(); deleteMaterial(${material.id}, '${material.name.replace(/'/g, "\\'")}')"
+                    style="background: #fee2e2; border: none; border-radius: 6px; padding: 8px 10px; cursor: pointer; color: #dc2626; font-size: 14px; transition: all 0.2s;"
+                    onmouseover="this.style.background='#ef4444'; this.style.color='white';"
+                    onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626';"
+                    title="Eliminar material">
+              🗑️
+            </button>
           </div>
         </div>
       </div>
@@ -1539,6 +1547,37 @@ window.saveMaterial = async function(event) {
 
   } catch (error) {
     console.error('Error saving material:', error);
+    alert(`Error: ${error.message}`);
+  }
+};
+
+/**
+ * Delete a raw material
+ * @param {number} materialId - ID of the material to delete
+ * @param {string} materialName - Name of the material for confirmation
+ */
+window.deleteMaterial = async function(materialId, materialName) {
+  if (!confirm(`¿Eliminar el material "${materialName}"?\n\n⚠️ Esta acción no se puede deshacer.\n\nNota: Si el material está siendo usado por algún producto, no se podrá eliminar.`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/bom/materials/${materialId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al eliminar material');
+    }
+
+    alert('✅ Material eliminado exitosamente');
+    await loadRawMaterials();
+
+  } catch (error) {
+    console.error('Error deleting material:', error);
     alert(`Error: ${error.message}`);
   }
 };
