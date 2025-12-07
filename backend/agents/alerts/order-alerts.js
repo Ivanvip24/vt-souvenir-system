@@ -26,7 +26,7 @@ export async function getOrderAlerts() {
   };
 
   try {
-    // Fetch all active (non-archived) orders with relevant info
+    // Fetch all active (non-archived) orders with relevant info AND their items
     const result = await query(`
       SELECT
         o.id,
@@ -42,10 +42,18 @@ export async function getOrderAlerts() {
         o.created_at,
         o.updated_at,
         c.name as client_name,
-        c.phone as client_phone
+        c.phone as client_phone,
+        json_agg(
+          json_build_object(
+            'productName', oi.product_name,
+            'quantity', oi.quantity
+          ) ORDER BY oi.id
+        ) FILTER (WHERE oi.id IS NOT NULL) as items
       FROM orders o
       LEFT JOIN clients c ON o.client_id = c.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
       WHERE (o.archive_status IS NULL OR o.archive_status = 'active')
+      GROUP BY o.id, c.name, c.phone
       ORDER BY o.event_date ASC NULLS LAST, o.created_at DESC
     `);
 
@@ -83,9 +91,11 @@ export async function getOrderAlerts() {
         status: order.status,
         approvalStatus: order.approval_status,
         eventDate: order.event_date,
+        createdAt: order.created_at,
         daysUntilDelivery,
         daysSinceCreation,
-        daysInStatus
+        daysInStatus,
+        items: order.items || []
       };
 
       // ==========================================
@@ -259,141 +269,184 @@ export async function getAlertsSummary() {
 }
 
 /**
- * Generate HTML email for daily digest
+ * Generate HTML email for daily digest - AXKAN Branded
  */
 export async function generateDailyDigestEmail() {
   const alerts = await getOrderAlerts();
   const today = new Date();
 
+  // Helper to render items list
+  const renderItems = (items) => {
+    if (!items || items.length === 0) return '';
+    return items.map(item =>
+      `<div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #e5e7eb;">
+        <span style="color: #4b5563;">${item.productName || 'Producto'}</span>
+        <span style="font-weight: 700; color: #E91E63;">${item.quantity} pzas</span>
+      </div>`
+    ).join('');
+  };
+
+  // Helper to render a single order card
+  const renderOrderCard = (alert, colorClass) => {
+    const colors = {
+      critical: { bg: '#fef2f2', border: '#E91E63', accent: '#be185d' },
+      warning: { bg: '#fffbeb', border: '#FF9800', accent: '#d97706' },
+      upcoming: { bg: '#eff6ff', border: '#00BCD4', accent: '#0891b2' }
+    };
+    const c = colors[colorClass];
+    const createdDate = new Date(alert.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    return `
+      <div style="background: ${c.bg}; border-radius: 12px; padding: 20px; margin-bottom: 16px; border-left: 5px solid ${c.border};">
+        <!-- Client Name - BIGGEST -->
+        <div style="font-size: 22px; font-weight: 800; color: #111827; margin-bottom: 8px;">
+          ${alert.clientName || 'Sin nombre'}
+        </div>
+
+        <!-- Order Age - BOLD -->
+        <div style="background: ${c.border}; color: white; display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 14px; font-weight: 700; margin-bottom: 12px;">
+          ⏱️ ESTE PEDIDO TIENE ${alert.daysSinceCreation} DÍA${alert.daysSinceCreation !== 1 ? 'S' : ''} • Creado el ${createdDate}
+        </div>
+
+        <!-- Alert Status -->
+        <div style="font-size: 14px; font-weight: 600; color: ${c.accent}; margin-bottom: 12px;">
+          ${alert.alertTitle} — ${alert.alertMessage}
+        </div>
+
+        <!-- Products Section -->
+        <div style="background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+          <div style="font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">
+            📦 Productos del Pedido
+          </div>
+          ${alert.items && alert.items.length > 0 ? renderItems(alert.items) : '<div style="color: #9ca3af; font-style: italic;">Sin productos</div>'}
+        </div>
+
+        <!-- Order Meta -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+          <div>
+            <span style="font-size: 12px; color: #6b7280;">Orden:</span>
+            <span style="font-weight: 700; color: #111827;">${alert.orderNumber}</span>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: #6b7280;">Total:</span>
+            <span style="font-weight: 700; color: #7CB342;">${formatCurrency(alert.totalPrice)}</span>
+          </div>
+          ${alert.eventDate ? `
+          <div>
+            <span style="font-size: 12px; color: #6b7280;">Entrega:</span>
+            <span style="font-weight: 700; color: ${c.accent};">${new Date(alert.eventDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</span>
+          </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  };
+
   const html = `
     <!DOCTYPE html>
     <html>
     <head>
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-        .container { max-width: 700px; margin: 0 auto; }
-        .header { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 30px; text-align: center; }
-        .header h1 { margin: 0; font-size: 24px; }
-        .header p { margin: 10px 0 0 0; opacity: 0.9; }
-        .summary { display: flex; justify-content: space-around; padding: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
-        .summary-item { text-align: center; }
-        .summary-count { font-size: 32px; font-weight: bold; }
-        .summary-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
-        .critical .summary-count { color: #dc2626; }
-        .warning .summary-count { color: #f59e0b; }
-        .upcoming .summary-count { color: #3b82f6; }
-        .section { padding: 20px; }
-        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid; }
-        .critical-title { color: #dc2626; border-color: #dc2626; }
-        .warning-title { color: #f59e0b; border-color: #f59e0b; }
-        .upcoming-title { color: #3b82f6; border-color: #3b82f6; }
-        .alert-card { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid; }
-        .critical-card { border-left-color: #dc2626; background: #fef2f2; }
-        .warning-card { border-left-color: #f59e0b; background: #fffbeb; }
-        .upcoming-card { border-left-color: #3b82f6; background: #eff6ff; }
-        .alert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .alert-type { font-weight: bold; font-size: 14px; }
-        .order-number { font-size: 12px; color: #6b7280; background: #f3f4f6; padding: 2px 8px; border-radius: 4px; }
-        .alert-message { font-size: 14px; color: #4b5563; margin-bottom: 8px; }
-        .alert-meta { font-size: 12px; color: #6b7280; }
-        .no-alerts { text-align: center; padding: 30px; color: #6b7280; }
-        .no-alerts-icon { font-size: 48px; margin-bottom: 10px; }
-        .footer { background: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #64748b; }
-        .footer a { color: #3b82f6; text-decoration: none; }
-      </style>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>📋 Resumen Diario de Pedidos</h1>
-          <p>${today.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5;">
+      <div style="max-width: 650px; margin: 0 auto; background: white;">
+
+        <!-- AXKAN Header with gradient -->
+        <div style="background: linear-gradient(135deg, #E91E63 0%, #FF9800 50%, #7CB342 100%); padding: 30px 20px; text-align: center;">
+          <div style="font-size: 36px; font-weight: 900; color: white; letter-spacing: 3px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+            AXKAN
+          </div>
+          <div style="color: white; font-size: 14px; margin-top: 8px; opacity: 0.95;">
+            Resumen Diario de Pedidos
+          </div>
+          <div style="color: white; font-size: 13px; margin-top: 4px; opacity: 0.85;">
+            ${today.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
         </div>
 
-        <div class="summary">
-          <div class="summary-item critical">
-            <div class="summary-count">${alerts.summary.criticalCount}</div>
-            <div class="summary-label">🔴 Críticos</div>
+        <!-- Colorful Mayan-style divider -->
+        <div style="height: 6px; background: linear-gradient(90deg, #E91E63, #7CB342, #FF9800, #00BCD4, #F44336);"></div>
+
+        <!-- Summary Cards -->
+        <div style="display: flex; background: #fafafa; border-bottom: 1px solid #e5e7eb;">
+          <div style="flex: 1; text-align: center; padding: 20px; border-right: 1px solid #e5e7eb;">
+            <div style="font-size: 36px; font-weight: 900; color: #E91E63;">${alerts.summary.criticalCount}</div>
+            <div style="font-size: 11px; font-weight: 700; color: #be185d; text-transform: uppercase; letter-spacing: 0.5px;">🔴 Urgentes</div>
           </div>
-          <div class="summary-item warning">
-            <div class="summary-count">${alerts.summary.warningCount}</div>
-            <div class="summary-label">🟡 Advertencias</div>
+          <div style="flex: 1; text-align: center; padding: 20px; border-right: 1px solid #e5e7eb;">
+            <div style="font-size: 36px; font-weight: 900; color: #FF9800;">${alerts.summary.warningCount}</div>
+            <div style="font-size: 11px; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.5px;">🟡 Atención</div>
           </div>
-          <div class="summary-item upcoming">
-            <div class="summary-count">${alerts.summary.upcomingCount}</div>
-            <div class="summary-label">🔵 Próximos</div>
+          <div style="flex: 1; text-align: center; padding: 20px;">
+            <div style="font-size: 36px; font-weight: 900; color: #00BCD4;">${alerts.summary.upcomingCount}</div>
+            <div style="font-size: 11px; font-weight: 700; color: #0891b2; text-transform: uppercase; letter-spacing: 0.5px;">🔵 Próximos</div>
           </div>
         </div>
 
         ${alerts.summary.totalAlerts === 0 ? `
-          <div class="no-alerts">
-            <div class="no-alerts-icon">✅</div>
-            <p><strong>¡Todo en orden!</strong></p>
-            <p>No hay alertas pendientes para hoy.</p>
+          <div style="text-align: center; padding: 50px 20px;">
+            <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+            <div style="font-size: 24px; font-weight: 800; color: #7CB342; margin-bottom: 8px;">¡Todo en orden!</div>
+            <div style="color: #6b7280;">No hay alertas pendientes para hoy.</div>
           </div>
         ` : ''}
 
+        <!-- Critical Section -->
         ${alerts.critical.length > 0 ? `
-          <div class="section">
-            <div class="section-title critical-title">🔴 ACCIÓN REQUERIDA HOY (${alerts.critical.length})</div>
-            ${alerts.critical.map(alert => `
-              <div class="alert-card critical-card">
-                <div class="alert-header">
-                  <span class="alert-type">${alert.alertTitle}</span>
-                  <span class="order-number">${alert.orderNumber}</span>
-                </div>
-                <div class="alert-message">${alert.alertMessage}</div>
-                <div class="alert-meta">
-                  <strong>${alert.clientName}</strong> • ${formatCurrency(alert.totalPrice)}
-                  ${alert.eventDate ? ` • Entrega: ${new Date(alert.eventDate).toLocaleDateString('es-MX')}` : ''}
-                </div>
-              </div>
-            `).join('')}
+          <div style="padding: 24px 20px;">
+            <div style="font-size: 16px; font-weight: 800; color: #E91E63; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid #E91E63; display: flex; align-items: center;">
+              <span style="background: #E91E63; color: white; padding: 4px 10px; border-radius: 4px; margin-right: 10px; font-size: 13px;">
+                ${alerts.critical.length}
+              </span>
+              ACCIÓN URGENTE REQUERIDA
+            </div>
+            ${alerts.critical.map(alert => renderOrderCard(alert, 'critical')).join('')}
           </div>
         ` : ''}
 
+        <!-- Warning Section -->
         ${alerts.warning.length > 0 ? `
-          <div class="section">
-            <div class="section-title warning-title">🟡 REQUIERE ATENCIÓN (${alerts.warning.length})</div>
-            ${alerts.warning.map(alert => `
-              <div class="alert-card warning-card">
-                <div class="alert-header">
-                  <span class="alert-type">${alert.alertTitle}</span>
-                  <span class="order-number">${alert.orderNumber}</span>
-                </div>
-                <div class="alert-message">${alert.alertMessage}</div>
-                <div class="alert-meta">
-                  <strong>${alert.clientName}</strong> • ${formatCurrency(alert.totalPrice)}
-                  ${alert.eventDate ? ` • Entrega: ${new Date(alert.eventDate).toLocaleDateString('es-MX')}` : ''}
-                </div>
-              </div>
-            `).join('')}
+          <div style="padding: 24px 20px; background: #fffbeb;">
+            <div style="font-size: 16px; font-weight: 800; color: #FF9800; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid #FF9800; display: flex; align-items: center;">
+              <span style="background: #FF9800; color: white; padding: 4px 10px; border-radius: 4px; margin-right: 10px; font-size: 13px;">
+                ${alerts.warning.length}
+              </span>
+              REQUIERE ATENCIÓN
+            </div>
+            ${alerts.warning.map(alert => renderOrderCard(alert, 'warning')).join('')}
           </div>
         ` : ''}
 
+        <!-- Upcoming Section -->
         ${alerts.upcoming.length > 0 ? `
-          <div class="section">
-            <div class="section-title upcoming-title">🔵 PRÓXIMOS (${alerts.upcoming.length})</div>
-            ${alerts.upcoming.map(alert => `
-              <div class="alert-card upcoming-card">
-                <div class="alert-header">
-                  <span class="alert-type">${alert.alertTitle}</span>
-                  <span class="order-number">${alert.orderNumber}</span>
-                </div>
-                <div class="alert-message">${alert.alertMessage}</div>
-                <div class="alert-meta">
-                  <strong>${alert.clientName}</strong> • ${formatCurrency(alert.totalPrice)}
-                  ${alert.eventDate ? ` • Entrega: ${new Date(alert.eventDate).toLocaleDateString('es-MX')}` : ''}
-                </div>
-              </div>
-            `).join('')}
+          <div style="padding: 24px 20px;">
+            <div style="font-size: 16px; font-weight: 800; color: #00BCD4; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid #00BCD4; display: flex; align-items: center;">
+              <span style="background: #00BCD4; color: white; padding: 4px 10px; border-radius: 4px; margin-right: 10px; font-size: 13px;">
+                ${alerts.upcoming.length}
+              </span>
+              PRÓXIMOS PEDIDOS
+            </div>
+            ${alerts.upcoming.map(alert => renderOrderCard(alert, 'upcoming')).join('')}
           </div>
         ` : ''}
 
-        <div class="footer">
-          <p>Este es un resumen automático de tu sistema de pedidos.</p>
-          <p><a href="${process.env.ADMIN_URL || 'https://vt-souvenir-backend.onrender.com/admin'}">Ver todos los pedidos en el dashboard →</a></p>
-          <p style="margin-top: 15px;">${process.env.COMPANY_NAME || 'VT Anunciando'}</p>
+        <!-- Footer -->
+        <div style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%); padding: 30px 20px; text-align: center;">
+          <div style="font-size: 20px; font-weight: 800; color: white; letter-spacing: 2px; margin-bottom: 12px;">
+            AXKAN
+          </div>
+          <a href="${process.env.ADMIN_URL || 'https://vt-souvenir-backend.onrender.com/admin'}"
+             style="display: inline-block; background: linear-gradient(135deg, #E91E63, #FF9800); color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: 700; font-size: 14px; margin-bottom: 16px;">
+            Ver Dashboard Completo →
+          </a>
+          <div style="color: #9ca3af; font-size: 12px; margin-top: 16px;">
+            Este es un resumen automático de tu sistema de pedidos AXKAN
+          </div>
         </div>
+
+        <!-- Colorful bottom border -->
+        <div style="height: 6px; background: linear-gradient(90deg, #E91E63, #7CB342, #FF9800, #00BCD4, #F44336);"></div>
       </div>
     </body>
     </html>
