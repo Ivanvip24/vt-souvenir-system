@@ -1115,31 +1115,33 @@ app.get('/api/alerts/summary', async (req, res) => {
 /**
  * POST /api/alerts/send-digest
  * Manually trigger the daily digest email
+ * Body: { email: "optional-override@email.com" }
  */
 app.post('/api/alerts/send-digest', async (req, res) => {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+    // Allow email override for testing
+    const targetEmail = req.body.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
 
-    if (!adminEmail) {
+    if (!targetEmail) {
       return res.status(400).json({
         success: false,
-        error: 'ADMIN_EMAIL not configured'
+        error: 'ADMIN_EMAIL not configured and no email provided'
       });
     }
 
     const digest = await orderAlerts.generateDailyDigestEmail();
 
     await sendEmail({
-      to: adminEmail,
+      to: targetEmail,
       subject: `📋 Resumen Diario: ${digest.summary.criticalCount} críticos, ${digest.summary.warningCount} advertencias`,
       html: digest.html
     });
 
-    console.log(`✅ Daily digest sent to ${adminEmail}`);
+    console.log(`✅ Daily digest sent to ${targetEmail}`);
 
     res.json({
       success: true,
-      message: `Daily digest sent to ${adminEmail}`,
+      message: `Daily digest sent to ${targetEmail}`,
       summary: digest.summary
     });
   } catch (error) {
