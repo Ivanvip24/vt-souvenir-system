@@ -254,7 +254,7 @@ function createOrderCard(order) {
           <input type="checkbox"
                  data-order-id="${order.id}"
                  onchange="toggleOrderSelection(${order.id}, this.checked)"
-                 ${state.selectedOrders.has(order.id) ? 'checked' : ''}>
+                 ${state.selectedOrders.has(Number(order.id)) ? 'checked' : ''}>
         </label>
       ` : ''}
       <div class="order-title">
@@ -1247,10 +1247,13 @@ async function archiveOrder(orderId, archiveStatus) {
  * @param {boolean} checked - Whether the checkbox is checked
  */
 function toggleOrderSelection(orderId, checked) {
+  // Ensure orderId is always a number for consistent comparison
+  const id = Number(orderId);
+
   if (checked) {
-    state.selectedOrders.add(orderId);
+    state.selectedOrders.add(id);
   } else {
-    state.selectedOrders.delete(orderId);
+    state.selectedOrders.delete(id);
   }
 
   updateBulkActionBar();
@@ -1268,7 +1271,7 @@ function toggleSelectAll(selectAll) {
     state.filteredOrders.forEach(order => {
       const isArchived = order.archiveStatus && order.archiveStatus !== 'active';
       if (!isArchived) {
-        state.selectedOrders.add(order.id);
+        state.selectedOrders.add(Number(order.id));
       }
     });
   }
@@ -1375,7 +1378,7 @@ async function bulkApproveOrders() {
 
   // Filter out already approved orders
   const ordersToApprove = Array.from(state.selectedOrders)
-    .map(id => state.orders.find(o => o.id === id))
+    .map(id => state.orders.find(o => Number(o.id) === Number(id)))
     .filter(order => order && order.approvalStatus === 'pending_review');
 
   if (ordersToApprove.length === 0) {
@@ -1452,7 +1455,7 @@ async function bulkArchiveOrders(archiveStatus) {
 
   const statusText = archiveStatus === 'completo' ? 'completados' : 'cancelados';
   const selectedOrders = Array.from(state.selectedOrders)
-    .map(id => state.orders.find(o => o.id === id))
+    .map(id => state.orders.find(o => Number(o.id) === Number(id)))
     .filter(order => order);
 
   if (!confirm(`¿Marcar ${selectedOrders.length} pedido(s) como ${statusText}?`)) {
