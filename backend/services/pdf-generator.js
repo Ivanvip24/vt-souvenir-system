@@ -29,8 +29,8 @@ const COLORS = {
   balanceBorder: '#f59e0b'
 };
 
-// Logo path
-const LOGO_PATH = path.join(__dirname, '../../frontend/assets/images/LOGO-03.png');
+// Logo path - use LOGO-01 (white/clean version for pink background)
+const LOGO_PATH = path.join(__dirname, '../../frontend/assets/images/LOGO-01.png');
 
 /**
  * Generate a PDF receipt for an order
@@ -79,34 +79,32 @@ export async function generateReceipt(orderData) {
 
       doc.fillOpacity(1); // Reset opacity
 
-      // Add AXKAN logo if it exists
-      const logoSize = 60;
-      let logoEndX = 50;
+      // Add AXKAN logo on the right side if it exists
+      const logoSize = 70;
+      const logoX = doc.page.width - 50 - logoSize; // Right-aligned with margin
       if (fs.existsSync(LOGO_PATH)) {
         try {
-          doc.image(LOGO_PATH, 50, 15, { height: logoSize });
-          logoEndX = 50 + logoSize + 15;
+          doc.image(LOGO_PATH, logoX, 25, { height: logoSize });
         } catch (err) {
           console.log('⚠️ Could not load logo for PDF:', err.message);
         }
       }
 
-      // Company header (white text on pink)
-      const companyName = process.env.COMPANY_NAME || 'AXKAN';
-      doc.fontSize(28)
+      // Company header - left aligned (ALWAYS use Axkan, ignore env variable)
+      doc.fontSize(32)
          .font('Helvetica-Bold')
          .fillColor('#ffffff')
-         .text(companyName, logoEndX, 25, { width: 512 - logoEndX });
+         .text('Axkan', 50, 25, { width: 400, align: 'left' });
 
-      doc.fontSize(12)
+      doc.fontSize(13)
          .font('Helvetica')
          .fillColor('#FCE4EC')
-         .text('Souvenirs Personalizados', logoEndX, 58, { width: 512 - logoEndX });
+         .text('Souvenirs Personalizados', 50, 62, { width: 400, align: 'left' });
 
       doc.fontSize(16)
          .font('Helvetica-Bold')
          .fillColor('#ffffff')
-         .text('RECIBO DE PAGO', logoEndX, 82, { width: 512 - logoEndX });
+         .text('RECIBO DE PAGO', 50, 85, { width: 400, align: 'left' });
 
       // Reset color to black for content
       doc.fillColor('#000000');
