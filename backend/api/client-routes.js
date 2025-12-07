@@ -581,10 +581,10 @@ router.get('/orders/:orderId/status', async (req, res) => {
 });
 
 /**
- * POST /api/client/orders/lookup
- * Lookup orders by client phone and/or email
+ * POST /api/client/info
+ * Get client info by phone - returns saved address even if no active orders
  */
-router.post('/orders/lookup', async (req, res) => {
+router.post('/info', async (req, res) => {
   try {
     const { phone, email } = req.body;
 
@@ -601,19 +601,142 @@ router.post('/orders/lookup', async (req, res) => {
     let paramIndex = 1;
 
     if (phone) {
-      conditions.push(`c.phone = $${paramIndex++}`);
+      conditions.push(`phone = $${paramIndex++}`);
       params.push(phone);
     }
 
     if (email) {
-      conditions.push(`c.email = $${paramIndex++}`);
+      conditions.push(`email = $${paramIndex++}`);
       params.push(email);
     }
 
     const whereClause = conditions.join(' OR ');
 
-    // Query orders with payment info
+    // Query client directly from clients table (regardless of order status)
     const result = await query(`
+      SELECT
+        id,
+        name,
+        phone,
+        email,
+        address,
+        street,
+        street_number,
+        colonia,
+        city,
+        state,
+        postal,
+        reference_notes
+      FROM clients
+      WHERE ${whereClause}
+      LIMIT 1
+    `, params);
+
+    if (result.rows.length === 0) {
+      return res.json({
+        success: true,
+        found: false,
+        clientInfo: null,
+        message: 'Cliente no encontrado'
+      });
+    }
+
+    const client = result.rows[0];
+
+    res.json({
+      success: true,
+      found: true,
+      clientInfo: {
+        id: client.id,
+        name: client.name,
+        phone: client.phone,
+        email: client.email,
+        address: client.address,
+        street: client.street,
+        streetNumber: client.street_number,
+        colonia: client.colonia,
+        city: client.city,
+        state: client.state,
+        postal: client.postal,
+        references: client.reference_notes
+      }
+    });
+
+  } catch (error) {
+    console.error('Error looking up client:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al buscar cliente'
+    });
+  }
+});
+
+/**
+ * POST /api/client/orders/lookup
+ * Lookup orders by client phone and/or email
+ */
+router.post('/orders/lookup', async (req, res) => {
+  try {
+    const { phone, email } = req.body;
+
+    if (!phone && !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debe proporcionar teléfono o correo electrónico'
+      });
+    }
+
+    // Build query conditions for client lookup
+    const clientConditions = [];
+    const clientParams = [];
+    let paramIndex = 1;
+
+    if (phone) {
+      clientConditions.push(`phone = $${paramIndex++}`);
+      clientParams.push(phone);
+    }
+
+    if (email) {
+      clientConditions.push(`email = $${paramIndex++}`);
+      clientParams.push(email);
+    }
+
+    const clientWhereClause = clientConditions.join(' OR ');
+
+    // FIRST: Get client info directly (always returns if client exists)
+    const clientResult = await query(`
+      SELECT
+        id,
+        name,
+        phone,
+        email,
+        address,
+        street,
+        street_number,
+        colonia,
+        city,
+        state,
+        postal,
+        reference_notes
+      FROM clients
+      WHERE ${clientWhereClause}
+      LIMIT 1
+    `, clientParams);
+
+    // If no client found at all
+    if (clientResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        orders: [],
+        clientInfo: null,
+        message: 'No se encontró información del cliente'
+      });
+    }
+
+    const clientData = clientResult.rows[0];
+
+    // SECOND: Get active orders for this client
+    const ordersResult = await query(`
       SELECT
         o.id,
         o.order_number,
@@ -626,17 +749,6 @@ router.post('/orders/lookup', async (req, res) => {
         o.deposit_amount,
         o.deposit_paid,
         o.payment_method,
-        c.name as client_name,
-        c.phone as client_phone,
-        c.email as client_email,
-        c.address as client_address,
-        c.street as client_street,
-        c.street_number as client_street_number,
-        c.colonia as client_colonia,
-        c.city as client_city,
-        c.state as client_state,
-        c.postal as client_postal,
-        c.reference_notes as client_references,
         json_agg(
           json_build_object(
             'productName', oi.product_name,
@@ -645,25 +757,16 @@ router.post('/orders/lookup', async (req, res) => {
           ) ORDER BY oi.id
         ) FILTER (WHERE oi.id IS NOT NULL) as items
       FROM orders o
-      JOIN clients c ON o.client_id = c.id
       LEFT JOIN order_items oi ON o.id = oi.order_id
-      WHERE (${whereClause})
+      WHERE o.client_id = $1
         AND (o.archive_status IS NULL OR o.archive_status = 'active')
         AND o.approval_status != 'rejected'
-      GROUP BY o.id, c.name, c.phone, c.email, c.address, c.street, c.street_number, c.colonia, c.city, c.state, c.postal, c.reference_notes
+      GROUP BY o.id
       ORDER BY o.created_at DESC
-    `, params);
-
-    if (result.rows.length === 0) {
-      return res.json({
-        success: true,
-        orders: [],
-        message: 'No se encontraron pedidos activos'
-      });
-    }
+    `, [clientData.id]);
 
     // Format orders with payment status
-    const orders = result.rows.map(order => ({
+    const orders = ordersResult.rows.map(order => ({
       id: order.id,
       orderId: order.id,
       orderNumber: order.order_number,
@@ -681,25 +784,27 @@ router.post('/orders/lookup', async (req, res) => {
       depositAmountFormatted: formatCurrency(order.deposit_amount),
       remainingBalanceFormatted: formatCurrency(order.total_price - order.deposit_amount),
       items: order.items || [],
-      clientName: order.client_name
+      clientName: clientData.name
     }));
 
+    // ALWAYS return clientInfo, even if no active orders
     res.json({
       success: true,
       orders,
       clientInfo: {
-        name: result.rows[0].client_name,
-        phone: result.rows[0].client_phone,
-        email: result.rows[0].client_email,
-        address: result.rows[0].client_address,
-        street: result.rows[0].client_street,
-        streetNumber: result.rows[0].client_street_number,
-        colonia: result.rows[0].client_colonia,
-        city: result.rows[0].client_city,
-        state: result.rows[0].client_state,
-        postal: result.rows[0].client_postal,
-        references: result.rows[0].client_references
-      }
+        name: clientData.name,
+        phone: clientData.phone,
+        email: clientData.email,
+        address: clientData.address,
+        street: clientData.street,
+        streetNumber: clientData.street_number,
+        colonia: clientData.colonia,
+        city: clientData.city,
+        state: clientData.state,
+        postal: clientData.postal,
+        references: clientData.reference_notes
+      },
+      message: orders.length === 0 ? 'No hay pedidos activos, pero encontramos tu información guardada' : null
     });
 
   } catch (error) {
