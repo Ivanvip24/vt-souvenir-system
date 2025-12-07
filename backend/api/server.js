@@ -17,9 +17,10 @@ import bomRoutes from './bom-routes.js';
 import webhookRoutes from './webhook-routes.js';
 import uploadRoutes from './upload-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
-import { sendReceiptEmail, initializeEmailSender } from '../agents/analytics-agent/email-sender.js';
+import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
 import { processReceipt } from '../services/receipt-ocr.js';
+import * as orderAlerts from '../agents/alerts/order-alerts.js';
 
 config();
 
@@ -1058,6 +1059,91 @@ app.post('/api/orders/:orderId/process-receipt', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error processing receipt:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ========================================
+// ORDER ALERTS ENDPOINTS
+// ========================================
+
+/**
+ * GET /api/alerts
+ * Get all order alerts categorized by urgency
+ */
+app.get('/api/alerts', async (req, res) => {
+  try {
+    const alerts = await orderAlerts.getOrderAlerts();
+
+    res.json({
+      success: true,
+      data: alerts
+    });
+  } catch (error) {
+    console.error('Error getting order alerts:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/alerts/summary
+ * Get a simple count summary of alerts
+ */
+app.get('/api/alerts/summary', async (req, res) => {
+  try {
+    const summary = await orderAlerts.getAlertsSummary();
+
+    res.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    console.error('Error getting alerts summary:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/alerts/send-digest
+ * Manually trigger the daily digest email
+ */
+app.post('/api/alerts/send-digest', async (req, res) => {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+
+    if (!adminEmail) {
+      return res.status(400).json({
+        success: false,
+        error: 'ADMIN_EMAIL not configured'
+      });
+    }
+
+    const digest = await orderAlerts.generateDailyDigestEmail();
+
+    await sendEmail({
+      to: adminEmail,
+      subject: `📋 Resumen Diario: ${digest.summary.criticalCount} críticos, ${digest.summary.warningCount} advertencias`,
+      html: digest.html
+    });
+
+    console.log(`✅ Daily digest sent to ${adminEmail}`);
+
+    res.json({
+      success: true,
+      message: `Daily digest sent to ${adminEmail}`,
+      summary: digest.summary
+    });
+  } catch (error) {
+    console.error('Error sending daily digest:', error);
     res.status(500).json({
       success: false,
       error: error.message

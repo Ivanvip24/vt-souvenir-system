@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { config } from 'dotenv';
 import * as reportGenerator from './report-generator.js';
 import * as emailSender from './email-sender.js';
+import * as orderAlerts from '../alerts/order-alerts.js';
 
 config();
 
@@ -15,6 +16,11 @@ export function initializeScheduler() {
 
   // Initialize email sender
   emailSender.initializeEmailSender();
+
+  // Daily order alerts digest (always enabled if ADMIN_EMAIL is set)
+  if (process.env.ADMIN_EMAIL || process.env.EMAIL_USER) {
+    scheduleDailyDigest(process.env.DAILY_DIGEST_SCHEDULE || '0 8 * * *');
+  }
 
   // Daily report
   if (process.env.ENABLE_DAILY_REPORTS === 'true') {
@@ -35,6 +41,61 @@ export function initializeScheduler() {
 
   // List all scheduled jobs
   listScheduledJobs();
+}
+
+/**
+ * Schedule daily order alerts digest
+ * @param {string} cronExpression - Cron expression (default: 8:00 AM every day)
+ */
+export function scheduleDailyDigest(cronExpression = '0 8 * * *') {
+  try {
+    const job = cron.schedule(cronExpression, async () => {
+      console.log('📋 Running scheduled daily order alerts digest...');
+
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+
+        if (!adminEmail) {
+          console.log('⚠️  No ADMIN_EMAIL configured, skipping digest');
+          return;
+        }
+
+        const digest = await orderAlerts.generateDailyDigestEmail();
+
+        // Only send if there are alerts (or always send for daily visibility)
+        const alwaysSend = process.env.DIGEST_ALWAYS_SEND !== 'false';
+
+        if (digest.hasAlerts || alwaysSend) {
+          await emailSender.sendEmail({
+            to: adminEmail,
+            subject: `📋 Resumen Diario: ${digest.summary.criticalCount} críticos, ${digest.summary.warningCount} advertencias`,
+            html: digest.html
+          });
+
+          console.log(`✅ Daily digest sent to ${adminEmail}`);
+          console.log(`   Critical: ${digest.summary.criticalCount}, Warning: ${digest.summary.warningCount}, Upcoming: ${digest.summary.upcomingCount}`);
+        } else {
+          console.log('ℹ️  No alerts to report, skipping digest email');
+        }
+
+      } catch (error) {
+        console.error('❌ Error in daily digest job:', error);
+      }
+    });
+
+    scheduledJobs.set('daily-digest', {
+      name: 'Daily Order Alerts Digest',
+      schedule: cronExpression,
+      description: 'Sends daily summary of pending, urgent, and upcoming orders',
+      job
+    });
+
+    console.log(`✓ Daily digest scheduled: ${cronExpression}`);
+    console.log(`  Next run: ${getNextRunTime(cronExpression)}`);
+
+  } catch (error) {
+    console.error('❌ Error scheduling daily digest:', error);
+  }
 }
 
 /**

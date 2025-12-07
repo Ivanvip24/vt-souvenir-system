@@ -64,9 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeNavigation();
   initializeFilters();
   loadOrders();
+  loadOrderAlerts(); // Load alerts widget
 
   // Auto-refresh every 30 seconds
   setInterval(loadOrders, 30000);
+  setInterval(loadOrderAlerts, 60000); // Refresh alerts every minute
 });
 
 // ==========================================
@@ -94,6 +96,149 @@ function switchView(viewName) {
 
   // Show selected view
   document.getElementById(`${viewName}-view`).classList.add('active');
+}
+
+// ==========================================
+// ORDER ALERTS WIDGET
+// ==========================================
+
+let alertsState = {
+  data: null,
+  activeCategory: null, // 'critical', 'warning', 'upcoming'
+  isExpanded: false
+};
+
+async function loadOrderAlerts() {
+  const widget = document.getElementById('order-alerts-widget');
+  if (!widget) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/alerts`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to load alerts');
+    }
+
+    const result = await response.json();
+    if (result.success) {
+      alertsState.data = result.data;
+      renderAlertsWidget();
+    }
+  } catch (error) {
+    console.error('Error loading alerts:', error);
+    widget.innerHTML = ''; // Hide widget on error
+  }
+}
+
+function renderAlertsWidget() {
+  const widget = document.getElementById('order-alerts-widget');
+  const { data, activeCategory, isExpanded } = alertsState;
+
+  if (!data || data.summary.totalAlerts === 0) {
+    widget.innerHTML = `
+      <div class="alerts-empty">
+        <div class="empty-icon">✅</div>
+        <p style="font-weight: 600; margin-bottom: 4px;">¡Todo en orden!</p>
+        <p style="font-size: 13px;">No hay alertas pendientes</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Build the alerts list for the active category
+  let alertsListHtml = '';
+  if (activeCategory && data[activeCategory] && data[activeCategory].length > 0) {
+    alertsListHtml = `
+      <div class="alerts-list ${isExpanded ? '' : 'hidden'}">
+        ${data[activeCategory].map(alert => `
+          <div class="alert-item ${activeCategory}" onclick="viewOrderFromAlert(${alert.id})">
+            <div class="alert-content">
+              <div class="alert-title">${alert.alertTitle}</div>
+              <div class="alert-meta">
+                <strong>${alert.clientName}</strong> • ${formatCurrency(alert.totalPrice)}
+                ${alert.alertMessage ? ` • ${alert.alertMessage}` : ''}
+              </div>
+            </div>
+            <span class="alert-order">${alert.orderNumber}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  widget.innerHTML = `
+    <div class="alerts-summary">
+      <div class="alert-summary-card critical ${activeCategory === 'critical' ? 'active' : ''}"
+           onclick="toggleAlertCategory('critical')">
+        <div class="count">${data.summary.criticalCount}</div>
+        <div class="label">🔴 Críticos</div>
+      </div>
+      <div class="alert-summary-card warning ${activeCategory === 'warning' ? 'active' : ''}"
+           onclick="toggleAlertCategory('warning')">
+        <div class="count">${data.summary.warningCount}</div>
+        <div class="label">🟡 Advertencias</div>
+      </div>
+      <div class="alert-summary-card upcoming ${activeCategory === 'upcoming' ? 'active' : ''}"
+           onclick="toggleAlertCategory('upcoming')">
+        <div class="count">${data.summary.upcomingCount}</div>
+        <div class="label">🔵 Próximos</div>
+      </div>
+    </div>
+    ${alertsListHtml}
+    ${activeCategory && data[activeCategory] && data[activeCategory].length > 0 ? `
+      <button class="alerts-toggle" onclick="toggleAlertsExpand()">
+        ${isExpanded ? '▲ Ocultar detalles' : '▼ Ver ' + data[activeCategory].length + ' alertas'}
+      </button>
+    ` : ''}
+  `;
+}
+
+window.toggleAlertCategory = function(category) {
+  if (alertsState.activeCategory === category) {
+    // Toggle off
+    alertsState.activeCategory = null;
+    alertsState.isExpanded = false;
+  } else {
+    // Switch category
+    alertsState.activeCategory = category;
+    alertsState.isExpanded = true;
+  }
+  renderAlertsWidget();
+};
+
+window.toggleAlertsExpand = function() {
+  alertsState.isExpanded = !alertsState.isExpanded;
+  renderAlertsWidget();
+};
+
+window.viewOrderFromAlert = function(orderId) {
+  // Find the order and show detail
+  const order = state.orders.find(o => Number(o.id) === Number(orderId));
+  if (order) {
+    showOrderDetail(order);
+  } else {
+    // If order not in current state, load it
+    loadOrderDetail(orderId);
+  }
+};
+
+async function loadOrderDetail(orderId) {
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}`, {
+      headers: getAuthHeaders()
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        showOrderDetail(result.data);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading order detail:', error);
+  }
 }
 
 // ==========================================
