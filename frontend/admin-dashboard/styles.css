@@ -54,7 +54,7 @@ body {
    ========================================== */
 
 .dashboard-header {
-    background: linear-gradient(135deg, var(--axkan-pink) 0%, var(--axkan-orange) 100%);
+    background: linear-gradient(135deg, #E91E63 0%, #C2185B 50%, #AD1457 100%);
     color: white;
     padding: 20px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);

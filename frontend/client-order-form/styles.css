@@ -146,7 +146,7 @@ body {
     font-size: 28px;
     font-weight: 800;
     margin-bottom: 8px;
-    background: linear-gradient(135deg, var(--axkan-pink), var(--axkan-orange));
+    background: linear-gradient(135deg, #E91E63, #C2185B);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -173,7 +173,7 @@ body {
 
 .progress {
     height: 100%;
-    background: linear-gradient(90deg, var(--axkan-pink), var(--axkan-orange), var(--axkan-turquoise));
+    background: linear-gradient(90deg, #E91E63, #C2185B, #AD1457);
     transition: width 0.3s ease;
 }
 
@@ -281,7 +281,7 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--axkan-pink), var(--axkan-orange));
+    background: linear-gradient(135deg, #E91E63, #C2185B);
     color: white;
     box-shadow: var(--shadow-md);
 }
@@ -385,7 +385,7 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--axkan-pink), var(--axkan-green), var(--axkan-orange), var(--axkan-turquoise));
+    background: linear-gradient(90deg, #E91E63, #C2185B, #AD1457, #880E4F);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -1038,5 +1038,5 @@ body {
 /* Accent border for special sections */
 .axkan-accent {
     border-left: 4px solid transparent;
-    border-image: linear-gradient(to bottom, var(--axkan-pink), var(--axkan-orange)) 1;
+    border-image: linear-gradient(to bottom, #E91E63, #C2185B) 1;
 }

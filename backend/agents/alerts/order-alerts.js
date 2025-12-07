@@ -352,8 +352,8 @@ export async function generateDailyDigestEmail() {
     <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5;">
       <div style="max-width: 650px; margin: 0 auto; background: white;">
 
-        <!-- AXKAN Header with gradient -->
-        <div style="background: linear-gradient(135deg, #E91E63 0%, #FF9800 50%, #7CB342 100%); padding: 30px 20px; text-align: center;">
+        <!-- AXKAN Header with Mexican pink gradient -->
+        <div style="background: linear-gradient(135deg, #E91E63 0%, #C2185B 50%, #AD1457 100%); padding: 30px 20px; text-align: center;">
           <div style="font-size: 36px; font-weight: 900; color: white; letter-spacing: 3px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
             AXKAN
           </div>
@@ -437,7 +437,7 @@ export async function generateDailyDigestEmail() {
             AXKAN
           </div>
           <a href="${process.env.ADMIN_URL || 'https://vt-souvenir-backend.onrender.com/admin'}"
-             style="display: inline-block; background: linear-gradient(135deg, #E91E63, #FF9800); color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: 700; font-size: 14px; margin-bottom: 16px;">
+             style="display: inline-block; background: linear-gradient(135deg, #E91E63, #C2185B); color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: 700; font-size: 14px; margin-bottom: 16px;">
             Ver Dashboard Completo →
           </a>
           <div style="color: #9ca3af; font-size: 12px; margin-top: 16px;">
