@@ -12,6 +12,26 @@ if (!fs.existsSync(RECEIPTS_DIR)) {
   fs.mkdirSync(RECEIPTS_DIR, { recursive: true });
 }
 
+// AXKAN Brand Colors (Mexican Pink Palette)
+const COLORS = {
+  pinkLight: '#E91E63',
+  pinkMedium: '#C2185B',
+  pinkDark: '#AD1457',
+  pinkDeep: '#880E4F',
+  pinkPale: '#FCE4EC',
+  pinkAccent: '#F8BBD9',
+  textDark: '#1f2937',
+  textGray: '#6b7280',
+  depositGreen: '#059669',
+  depositBg: '#d1fae5',
+  balanceOrange: '#b45309',
+  balanceBg: '#fef3c7',
+  balanceBorder: '#f59e0b'
+};
+
+// Logo path
+const LOGO_PATH = path.join(__dirname, '../../frontend/assets/images/LOGO-03.png');
+
 /**
  * Generate a PDF receipt for an order
  * @param {Object} orderData - Order information
@@ -47,29 +67,46 @@ export async function generateReceipt(orderData) {
       const stream = fs.createWriteStream(filepath);
       doc.pipe(stream);
 
-      // Blue gradient header background
-      const headerHeight = 100;
+      // Mexican pink gradient header background
+      const headerHeight = 120;
       doc.rect(0, 0, doc.page.width, headerHeight)
-         .fillAndStroke('#1e40af', '#1e40af');
+         .fillAndStroke(COLORS.pinkMedium, COLORS.pinkMedium);
 
-      // Add lighter blue gradient overlay effect
+      // Add lighter pink gradient overlay effect
       doc.rect(0, 0, doc.page.width, headerHeight / 2)
          .fillOpacity(0.3)
-         .fill('#3b82f6');
+         .fill(COLORS.pinkLight);
 
       doc.fillOpacity(1); // Reset opacity
 
-      // Company header (white text on blue)
-      const companyName = process.env.COMPANY_NAME || 'VT Anunciando - Souvenirs Personalizados';
-      doc.fontSize(22)
+      // Add AXKAN logo if it exists
+      const logoSize = 60;
+      let logoEndX = 50;
+      if (fs.existsSync(LOGO_PATH)) {
+        try {
+          doc.image(LOGO_PATH, 50, 15, { height: logoSize });
+          logoEndX = 50 + logoSize + 15;
+        } catch (err) {
+          console.log('⚠️ Could not load logo for PDF:', err.message);
+        }
+      }
+
+      // Company header (white text on pink)
+      const companyName = process.env.COMPANY_NAME || 'AXKAN';
+      doc.fontSize(28)
          .font('Helvetica-Bold')
          .fillColor('#ffffff')
-         .text(companyName, 50, 20, { align: 'center', width: 512 });
+         .text(companyName, logoEndX, 25, { width: 512 - logoEndX });
+
+      doc.fontSize(12)
+         .font('Helvetica')
+         .fillColor('#FCE4EC')
+         .text('Souvenirs Personalizados', logoEndX, 58, { width: 512 - logoEndX });
 
       doc.fontSize(16)
-         .font('Helvetica')
-         .fillColor('#e0e7ff')
-         .text('RECIBO DE PAGO', 50, 68, { align: 'center', width: 512 });
+         .font('Helvetica-Bold')
+         .fillColor('#ffffff')
+         .text('RECIBO DE PAGO', logoEndX, 82, { width: 512 - logoEndX });
 
       // Reset color to black for content
       doc.fillColor('#000000');
@@ -77,13 +114,13 @@ export async function generateReceipt(orderData) {
       // Position below header
       doc.y = headerHeight + 30;
 
-      // Receipt details box with light blue background
+      // Receipt details box with light pink background
       const startY = doc.y;
       const boxHeight = 85;
 
-      // Draw light blue rounded rectangle background
+      // Draw light pink rounded rectangle background
       doc.roundedRect(50, startY - 5, 510, boxHeight, 5)
-         .fillAndStroke('#dbeafe', '#93c5fd');
+         .fillAndStroke(COLORS.pinkPale, COLORS.pinkAccent);
 
       doc.fillColor('#000000'); // Reset to black
 
@@ -95,7 +132,7 @@ export async function generateReceipt(orderData) {
       const valueX = 200;
       let lineY = startY + 5;
 
-      doc.fillColor('#1e40af').font('Helvetica');
+      doc.fillColor(COLORS.pinkDark).font('Helvetica');
       doc.text(`Número de Orden:`, labelX, lineY);
       doc.text(`Fecha:`, labelX, lineY + 15);
       doc.text(`Cliente:`, labelX, lineY + 30);
@@ -103,7 +140,7 @@ export async function generateReceipt(orderData) {
       doc.text(`Email:`, labelX, lineY + 60);
 
       // Right column (values)
-      doc.fillColor('#1f2937').font('Helvetica-Bold');
+      doc.fillColor(COLORS.textDark).font('Helvetica-Bold');
       doc.text(orderData.orderNumber, valueX, lineY);
       doc.text(formatDate(orderData.orderDate), valueX, lineY + 15);
       doc.text(orderData.clientName, valueX, lineY + 30);
@@ -123,17 +160,17 @@ export async function generateReceipt(orderData) {
 
       doc.moveDown(0.5);
 
-      // Table header with blue background
+      // Table header with pink background
       const tableTop = doc.y;
 
-      // Draw blue header background
+      // Draw pink header background
       doc.rect(50, tableTop - 3, 510, 20)
-         .fillAndStroke('#dbeafe', '#3b82f6');
+         .fillAndStroke(COLORS.pinkPale, COLORS.pinkLight);
 
-      // Header text in dark blue
+      // Header text in dark pink
       doc.fontSize(9)
          .font('Helvetica-Bold')
-         .fillColor('#1e40af')
+         .fillColor(COLORS.pinkDark)
          .text('Producto', 55, tableTop + 2)
          .text('Cantidad', 305, tableTop + 2)
          .text('Precio Unit.', 385, tableTop + 2)
@@ -173,22 +210,22 @@ export async function generateReceipt(orderData) {
 
       // Deposit received box (highlighted with green)
       doc.roundedRect(280, itemY - 5, 280, 28, 3)
-         .fillAndStroke('#d1fae5', '#059669');
+         .fillAndStroke(COLORS.depositBg, COLORS.depositGreen);
 
       doc.fontSize(11)
-         .fillColor('#059669')
+         .fillColor(COLORS.depositGreen)
          .font('Helvetica-Bold');
       doc.text('ANTICIPO RECIBIDO:', 290, itemY + 5, { width: 150, align: 'left' });
       doc.text(formatCurrency(orderData.actualDepositAmount), 290, itemY + 5, { width: 260, align: 'right' });
 
       itemY += 38;
 
-      // Remaining balance box (highlighted with orange)
+      // Remaining balance box (highlighted with orange/amber)
       doc.roundedRect(280, itemY - 5, 280, 35, 3)
-         .fillAndStroke('#fef3c7', '#f59e0b');
+         .fillAndStroke(COLORS.balanceBg, COLORS.balanceBorder);
 
       doc.fontSize(13)
-         .fillColor('#b45309')
+         .fillColor(COLORS.balanceOrange)
          .font('Helvetica-Bold');
       doc.text('SALDO RESTANTE:', 290, itemY + 5, { width: 150, align: 'left' });
       doc.text(formatCurrency(orderData.remainingBalance), 290, itemY + 5, { width: 260, align: 'right' });
@@ -202,14 +239,21 @@ export async function generateReceipt(orderData) {
       doc.moveDown(2);
       doc.fontSize(10)
          .font('Helvetica')
-         .fillColor('#6b7280')
+         .fillColor(COLORS.textGray)
          .text('El saldo restante deberá ser pagado antes de la entrega del pedido.', 50, itemY, {
            width: 500,
            align: 'center'
          });
 
-      // Footer
+      // Footer with AXKAN branding
       doc.moveDown(3);
+      doc.fontSize(9)
+         .fillColor(COLORS.pinkMedium)
+         .text('¡Gracias por confiar en AXKAN!', {
+           align: 'center'
+         });
+
+      doc.moveDown(0.5);
       doc.fontSize(8)
          .fillColor('#9ca3af')
          .text(`Recibo generado el ${formatDate(new Date())}`, {
