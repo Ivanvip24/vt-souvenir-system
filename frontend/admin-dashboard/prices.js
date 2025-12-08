@@ -64,13 +64,12 @@ window.loadPriceDashboard = async function(period = 30) {
       throw new Error(result.error || 'Error loading price dashboard');
     }
 
-    priceState.dashboardData = result.data;
+    priceState.dashboardData = result.data || {};
 
-    renderSummaryCards(result.data.summary);
-    renderAlerts(result.data.marginAlerts);
-    // renderOverviewCharts(result.data.trends); // Removed - charts not in UI anymore
-    renderTopProductsTable(result.data.topProducts);
-    // renderInsights(result.data.insights); // Removed - Insights tab removed from UI
+    // Defensive checks for all data properties
+    renderSummaryCards(result.data?.summary || {});
+    renderAlerts(result.data?.marginAlerts || []);
+    renderTopProductsTable(result.data?.topProducts || []);
 
     loading.classList.add('hidden');
 
@@ -91,12 +90,17 @@ window.loadPriceDashboard = async function(period = 30) {
 function renderSummaryCards(summary) {
   const container = document.getElementById('price-summary-cards');
 
+  if (!container) return;
+
+  const totalProducts = summary?.total_products || 0;
+  const avgMargin = parseFloat(summary?.avg_profit_margin || 0).toFixed(1);
+
   container.innerHTML = `
     <div class="stat-card-large">
       <div class="stat-icon">📦</div>
       <div>
         <div class="stat-label">Total Productos</div>
-        <div class="stat-value">${summary.total_products || 0}</div>
+        <div class="stat-value">${totalProducts}</div>
       </div>
     </div>
 
@@ -104,7 +108,7 @@ function renderSummaryCards(summary) {
       <div class="stat-icon">💰</div>
       <div>
         <div class="stat-label">Margen Promedio</div>
-        <div class="stat-value">${parseFloat(summary.avg_profit_margin || 0).toFixed(1)}%</div>
+        <div class="stat-value">${avgMargin}%</div>
       </div>
     </div>
   `;
@@ -117,13 +121,15 @@ function renderSummaryCards(summary) {
 function renderAlerts(marginAlerts) {
   const container = document.getElementById('price-alerts');
 
-  if (!marginAlerts || marginAlerts.length === 0) {
+  if (!container) return;
+
+  if (!marginAlerts || !Array.isArray(marginAlerts) || marginAlerts.length === 0) {
     container.innerHTML = '';
     return;
   }
 
-  const criticalProducts = marginAlerts.filter(p => parseFloat(p.margin_pct) < 10);
-  const warningProducts = marginAlerts.filter(p => parseFloat(p.margin_pct) >= 10 && parseFloat(p.margin_pct) < 20);
+  const criticalProducts = marginAlerts.filter(p => p && parseFloat(p.margin_pct || 0) < 10);
+  const warningProducts = marginAlerts.filter(p => p && parseFloat(p.margin_pct || 0) >= 10 && parseFloat(p.margin_pct || 0) < 20);
 
   let html = '<div style="display: flex; gap: 16px; flex-wrap: wrap;">';
 
@@ -244,7 +250,9 @@ function renderMarginTrendChart(trends) {
 function renderTopProductsTable(products) {
   const container = document.getElementById('top-products-table');
 
-  if (!products || products.length === 0) {
+  if (!container) return;
+
+  if (!products || !Array.isArray(products) || products.length === 0) {
     container.innerHTML = '<p style="color: #9ca3af; text-align: center; padding: 20px;">No hay datos disponibles</p>';
     return;
   }

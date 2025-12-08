@@ -121,40 +121,46 @@ router.get('/dashboard', async (req, res) => {
       LIMIT 10
     `, [days]);
 
-    // Get pricing insights
-    const insightsQuery = await query(`
-      SELECT
-        id,
-        insight_type,
-        severity,
-        title,
-        description,
-        current_value,
-        recommended_value,
-        potential_impact,
-        generated_at
-      FROM pricing_insights
-      WHERE status = 'active'
-        AND (valid_until IS NULL OR valid_until >= CURRENT_DATE)
-      ORDER BY
-        CASE severity
-          WHEN 'critical' THEN 1
-          WHEN 'warning' THEN 2
-          ELSE 3
-        END,
-        generated_at DESC
-      LIMIT 20
-    `);
+    // Get pricing insights (table may not exist, so handle gracefully)
+    let insightsRows = [];
+    try {
+      const insightsQuery = await query(`
+        SELECT
+          id,
+          insight_type,
+          severity,
+          title,
+          description,
+          current_value,
+          recommended_value,
+          potential_impact,
+          generated_at
+        FROM pricing_insights
+        WHERE status = 'active'
+          AND (valid_until IS NULL OR valid_until >= CURRENT_DATE)
+        ORDER BY
+          CASE severity
+            WHEN 'critical' THEN 1
+            WHEN 'warning' THEN 2
+            ELSE 3
+          END,
+          generated_at DESC
+        LIMIT 20
+      `);
+      insightsRows = insightsQuery.rows;
+    } catch (insightError) {
+      console.warn('pricing_insights table may not exist:', insightError.message);
+    }
 
     res.json({
       success: true,
       data: {
-        summary: summaryQuery.rows[0],
-        recentChanges: priceChangesQuery.rows[0],
-        trends: trendsQuery.rows,
-        marginAlerts: marginAlertsQuery.rows,
-        topProducts: topProductsQuery.rows,
-        insights: insightsQuery.rows
+        summary: summaryQuery.rows[0] || {},
+        recentChanges: priceChangesQuery.rows[0] || {},
+        trends: trendsQuery.rows || [],
+        marginAlerts: marginAlertsQuery.rows || [],
+        topProducts: topProductsQuery.rows || [],
+        insights: insightsRows
       }
     });
 
