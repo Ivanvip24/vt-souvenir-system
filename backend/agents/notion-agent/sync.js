@@ -276,24 +276,50 @@ export async function createOrderBothSystems(orderData) {
     if (orderData.clientId) {
       clientId = orderData.clientId;
     } else {
-      const clientResult = await query(
-        `INSERT INTO clients (name, phone, address, city, state)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (phone) DO UPDATE SET
-           name = EXCLUDED.name,
-           address = EXCLUDED.address,
-           city = EXCLUDED.city,
-           state = EXCLUDED.state
-         RETURNING id`,
-        [
-          orderData.clientName,
-          orderData.clientPhone,
-          orderData.clientAddress,
-          orderData.clientCity,
-          orderData.clientState
-        ]
+      // First try to find existing client by phone
+      const existingClient = await query(
+        `SELECT id FROM clients WHERE phone = $1 LIMIT 1`,
+        [orderData.clientPhone]
       );
-      clientId = clientResult.rows[0].id;
+
+      if (existingClient.rows.length > 0) {
+        // Update existing client
+        clientId = existingClient.rows[0].id;
+        await query(
+          `UPDATE clients SET
+            name = $1,
+            address = $2,
+            city = $3,
+            state = $4,
+            email = $5,
+            updated_at = CURRENT_TIMESTAMP
+           WHERE id = $6`,
+          [
+            orderData.clientName,
+            orderData.clientAddress,
+            orderData.clientCity,
+            orderData.clientState,
+            orderData.clientEmail,
+            clientId
+          ]
+        );
+      } else {
+        // Create new client
+        const clientResult = await query(
+          `INSERT INTO clients (name, phone, email, address, city, state)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id`,
+          [
+            orderData.clientName,
+            orderData.clientPhone,
+            orderData.clientEmail,
+            orderData.clientAddress,
+            orderData.clientCity,
+            orderData.clientState
+          ]
+        );
+        clientId = clientResult.rows[0].id;
+      }
     }
 
     // 3. Create order in local database
