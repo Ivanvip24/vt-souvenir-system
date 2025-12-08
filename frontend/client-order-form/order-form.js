@@ -249,6 +249,12 @@ function initializeEventListeners() {
   // Step 2: Client Info
   document.getElementById('continue-info').addEventListener('click', handleInfoSubmit);
 
+  // Postal code auto-fill for Mexico
+  const postalInput = document.getElementById('client-postal');
+  if (postalInput) {
+    postalInput.addEventListener('input', debounce(handlePostalCodeLookup, 500));
+  }
+
   // Add character counter for references field (#9: increased to 150)
   const referencesField = document.getElementById('client-references');
   const referencesCounter = document.getElementById('references-counter');
@@ -681,6 +687,95 @@ function prefillClientInfo() {
 // ==========================================
 // STEP 2: CLIENT INFO
 // ==========================================
+
+/**
+ * Auto-fill city, state, and colonia from Mexican postal code
+ * Uses the free Zippopotam.us API (works for Mexico)
+ */
+async function handlePostalCodeLookup() {
+  const postalInput = document.getElementById('client-postal');
+  const postal = postalInput.value.trim();
+
+  // Only lookup when we have exactly 5 digits
+  if (postal.length !== 5 || !/^\d{5}$/.test(postal)) {
+    return;
+  }
+
+  const cityInput = document.getElementById('client-city');
+  const stateInput = document.getElementById('client-state');
+  const coloniaInput = document.getElementById('client-colonia');
+
+  // Show loading state
+  postalInput.style.borderColor = '#f59e0b';
+
+  try {
+    // Use the free Zippopotam.us API for Mexico
+    const response = await fetch(`https://api.zippopotam.us/mx/${postal}`);
+
+    if (!response.ok) {
+      throw new Error('Código postal no encontrado');
+    }
+
+    const data = await response.json();
+
+    if (data && data.places && data.places.length > 0) {
+      const place = data.places[0];
+
+      // Auto-fill state if empty
+      if (place.state && !stateInput.value) {
+        stateInput.value = place.state;
+        stateInput.classList.add('autofilled');
+        highlightField(stateInput);
+      }
+
+      // Auto-fill city (use state abbreviation as city for Mexico since API returns differently)
+      if (place['place name'] && !cityInput.value) {
+        // In Mexico, the 'place name' is often the colonia, state abbreviation is the state
+        // We'll use the state for city since many Mexican addresses work this way
+        cityInput.value = place.state;
+        cityInput.classList.add('autofilled');
+        highlightField(cityInput);
+      }
+
+      // If there's only one place, auto-fill colonia
+      if (data.places.length === 1 && place['place name'] && !coloniaInput.value) {
+        coloniaInput.value = place['place name'];
+        coloniaInput.classList.add('autofilled');
+        highlightField(coloniaInput);
+      } else if (data.places.length > 1 && !coloniaInput.value) {
+        // Multiple colonias - create a dropdown or show hint
+        coloniaInput.placeholder = `Ej: ${data.places[0]['place name']}`;
+
+        // Store colonias for potential dropdown
+        coloniaInput.dataset.colonias = JSON.stringify(data.places.map(p => p['place name']));
+      }
+
+      // Visual feedback - success
+      postalInput.style.borderColor = '#10b981';
+      setTimeout(() => {
+        postalInput.style.borderColor = '';
+      }, 2000);
+
+      console.log('✅ Código postal encontrado:', data);
+    }
+
+  } catch (error) {
+    console.log('Postal code lookup failed, user can fill manually:', error.message);
+    // Silent fail - user can fill manually
+    postalInput.style.borderColor = '';
+  }
+}
+
+/**
+ * Highlight a field briefly to show it was auto-filled
+ */
+function highlightField(input) {
+  input.style.backgroundColor = '#ecfdf5';
+  input.style.transition = 'background-color 0.3s';
+  setTimeout(() => {
+    input.style.backgroundColor = '';
+  }, 2000);
+}
 
 function handleInfoSubmit() {
   const name = document.getElementById('client-name').value.trim();

@@ -1473,6 +1473,25 @@ details[open] .notes-summary {
 }
 
 /* ==========================================
+   AUTOFILLED FIELDS (postal code lookup)
+   ========================================== */
+
+.form-group input.autofilled {
+    border-color: #10b981 !important;
+    background-color: #ecfdf5;
+}
+
+@keyframes autofillPulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.form-group input.autofilled {
+    animation: autofillPulse 0.6s ease;
+}
+
+/* ==========================================
    DARK MODE SUPPORT (#23)
    ========================================== */
 
@@ -1952,5 +1971,11 @@ details[open] .notes-summary {
     /* SVG search icon dark mode */
     .product-search-icon-svg {
         color: #94a3b8;
+    }
+
+    /* Autofilled fields in dark mode */
+    .form-group input.autofilled {
+        border-color: #10b981 !important;
+        background-color: rgba(16, 185, 129, 0.15);
     }
 }
