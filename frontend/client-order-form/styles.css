@@ -1371,6 +1371,108 @@ body {
 }
 
 /* ==========================================
+   TEXT LINK BUTTON
+   ========================================== */
+
+.btn-text-link {
+    background: none;
+    border: none;
+    color: var(--gray-600);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 12px;
+    transition: color 0.2s;
+}
+
+.btn-text-link:hover {
+    color: var(--primary);
+}
+
+/* ==========================================
+   COLLAPSIBLE NOTES
+   ========================================== */
+
+.notes-collapsible {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.notes-summary {
+    padding: 14px 16px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--gray-700);
+    background: var(--gray-50);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notes-summary::-webkit-details-marker {
+    display: none;
+}
+
+.notes-summary::after {
+    content: '+';
+    margin-left: auto;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gray-400);
+}
+
+details[open] .notes-summary::after {
+    content: '−';
+}
+
+details[open] .notes-summary {
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.notes-collapsible .form-group {
+    padding: 0 16px 16px;
+    margin-bottom: 0;
+}
+
+/* ==========================================
+   SVG SEARCH ICON
+   ========================================== */
+
+.product-search-icon-svg {
+    color: var(--gray-500);
+    flex-shrink: 0;
+}
+
+/* ==========================================
+   COPY BUTTON ANIMATION
+   ========================================== */
+
+.copy-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.copy-btn.copied {
+    background: var(--success) !important;
+    border-color: var(--success) !important;
+}
+
+.copy-btn.copied .copy-text {
+    color: white !important;
+}
+
+@keyframes copyPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.copy-btn.copied {
+    animation: copyPulse 0.3s ease;
+}
+
+/* ==========================================
    DARK MODE SUPPORT (#23)
    ========================================== */
 
@@ -1818,5 +1920,37 @@ body {
 
     #client-notes::placeholder {
         color: #64748b;
+    }
+
+    /* Text link button dark mode */
+    .btn-text-link {
+        color: #94a3b8;
+    }
+
+    .btn-text-link:hover {
+        color: var(--axkan-pink);
+    }
+
+    /* Collapsible notes dark mode */
+    .notes-collapsible {
+        border-color: var(--border-medium);
+    }
+
+    .notes-summary {
+        background: var(--bg-tertiary);
+        color: #cbd5e1;
+    }
+
+    details[open] .notes-summary {
+        border-bottom-color: var(--border-medium);
+    }
+
+    .notes-summary::after {
+        color: #64748b;
+    }
+
+    /* SVG search icon dark mode */
+    .product-search-icon-svg {
+        color: #94a3b8;
     }
 }

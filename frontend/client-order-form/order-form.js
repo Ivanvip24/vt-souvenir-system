@@ -312,10 +312,8 @@ function showStep(stepNumber) {
   if (stepNumber === 1.5) {
     populateConfirmationData();
   } else if (stepNumber === 2) {
-    // Pre-fill client info if we have data (for returning clients or when editing)
-    if (state.client.name || state.client.email) {
-      prefillClientInfo();
-    }
+    // Always pre-fill client info (email from step 1 needs to be synced to hidden field)
+    prefillClientInfo();
   } else if (stepNumber === 3) {
     loadProducts();
   } else if (stepNumber === 4) {

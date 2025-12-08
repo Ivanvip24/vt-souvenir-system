@@ -15,6 +15,11 @@
 
         <!-- STEP 1: Login/Account -->
         <section id="step-login" class="step active">
+            <div class="progress-bar">
+                <div class="progress" style="width: 5%"></div>
+            </div>
+            <div class="step-indicator">Paso 1 de 4</div>
+
             <div class="header">
                 <div class="logo">
                     <img src="/assets/images/LOGO-03.png" alt="AXKAN Logo">
@@ -73,12 +78,12 @@
                 </div>
 
                 <button id="continue-phone" class="btn btn-primary btn-large">
-                    Continuar
+                    Ver Productos →
                 </button>
 
-                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                    <button id="btn-lookup-orders" class="btn btn-secondary btn-large" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
-                        📞 Ya tengo una orden de compra
+                <div style="text-align: center; margin-top: 16px;">
+                    <button id="btn-lookup-orders" class="btn-text-link">
+                        📦 ¿Ya hiciste un pedido? <span style="text-decoration: underline;">Rastrear pedido</span>
                     </button>
                 </div>
             </div>
@@ -144,13 +149,8 @@
                     <span class="input-error" id="client-name-error" role="alert"></span>
                 </div>
 
-                <div class="form-group">
-                    <label for="client-email">Correo Electrónico (opcional)</label>
-                    <input type="email"
-                           id="client-email"
-                           placeholder="maria@ejemplo.com"
-                           autocomplete="email">
-                </div>
+                <!-- Email removed - already captured in Step 1 -->
+                <input type="hidden" id="client-email">
 
                 <!-- Delivery Address Warning -->
                 <div class="info-box info-box-warning">
@@ -233,7 +233,7 @@
                 </div>
 
                 <button id="continue-info" class="btn btn-primary btn-large">
-                    Continuar
+                    Elegir Productos →
                 </button>
             </div>
         </section>
@@ -257,7 +257,10 @@
             <!-- #10: Product Search/Filter -->
             <div class="product-search-container">
                 <div class="product-search">
-                    <span class="product-search-icon">🔍</span>
+                    <svg class="product-search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
                     <input type="text"
                            id="product-search-input"
                            placeholder="Buscar productos..."
@@ -301,16 +304,9 @@
             <div class="card">
                 <h2>Método de Pago</h2>
 
-                <div class="form-group">
-                    <label for="client-notes">Notas del pedido (opcional)</label>
-                    <textarea id="client-notes"
-                              rows="3"
-                              placeholder="Cosas que te gustaría que supiéramos de tu pedido (opcional)"></textarea>
-                </div>
-
-                <!-- Order Summary -->
+                <!-- Order Summary - Single unified summary -->
                 <div class="order-summary-card">
-                    <h3 style="font-size: 18px; margin-bottom: 16px; color: var(--gray-900);">📋 Resumen de tu Pedido</h3>
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--gray-900);">📋 Resumen de tu Pedido</h3>
 
                     <div id="order-items-summary"></div>
 
@@ -319,27 +315,17 @@
                             <span style="font-size: 15px;">Subtotal:</span>
                             <strong id="summary-subtotal" style="font-size: 15px;">$0.00</strong>
                         </div>
-                        <div class="summary-row" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--gray-200);">
-                            <span style="font-size: 14px; color: var(--gray-600);">Anticipo (50%):</span>
-                            <strong id="summary-deposit" style="font-size: 14px; color: var(--gray-600);">$0.00</strong>
-                        </div>
-                        <div class="summary-row" style="font-size: 18px;">
-                            <span style="font-weight: 600;">Total a Pagar:</span>
-                            <strong id="summary-total-pay" style="color: var(--primary); font-size: 20px;">$0.00</strong>
+                        <div class="summary-row" style="font-size: 18px; background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1)); padding: 12px; border-radius: 8px; margin-top: 12px;">
+                            <span style="font-weight: 600;">💰 Anticipo a Pagar (50%):</span>
+                            <strong id="summary-deposit" style="color: var(--primary); font-size: 20px;">$0.00</strong>
                         </div>
                     </div>
                 </div>
 
-                <div class="payment-summary-box">
-                    <div class="summary-row">
-                        <span>Total del Pedido:</span>
-                        <strong id="payment-total"></strong>
-                    </div>
-                    <div class="summary-row highlight">
-                        <span>Anticipo a Pagar (50%):</span>
-                        <strong id="payment-deposit"></strong>
-                    </div>
-                </div>
+                <!-- Hidden fields to maintain JS compatibility -->
+                <input type="hidden" id="payment-total">
+                <input type="hidden" id="payment-deposit">
+                <input type="hidden" id="summary-total-pay">
 
                 <div class="payment-methods">
                     <label class="payment-option">
@@ -365,13 +351,25 @@
                     </label>
                 </div>
 
+                <!-- Notes collapsible (moved here) -->
+                <details class="notes-collapsible" style="margin-top: 20px;">
+                    <summary class="notes-summary">
+                        📝 Agregar notas al pedido (opcional)
+                    </summary>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <textarea id="client-notes"
+                                  rows="3"
+                                  placeholder="Ej: Necesito que los llaveros tengan el nombre en color azul..."></textarea>
+                    </div>
+                </details>
+
                 <!-- Stripe Payment Link (shown when card payment selected) -->
                 <div id="stripe-payment-link" class="stripe-payment-container" style="margin-top: 20px;">
                     <button type="button" id="stripe-pay-btn" class="btn btn-primary btn-large" style="background: linear-gradient(135deg, #635bff, #4f46e5);">
-                        💳 Pagar con Tarjeta →
+                        💳 Confirmar y Pagar →
                     </button>
-                    <p style="text-align: center; font-size: 13px; color: var(--gray-600); margin-top: 12px;">
-                        Se abrirá una página segura de Stripe para completar tu pago
+                    <p style="text-align: center; font-size: 12px; color: var(--gray-600); margin-top: 10px;">
+                        🔒 Pago seguro con Stripe
                     </p>
                 </div>
 
@@ -455,9 +453,9 @@
                 </div>
 
                 <button id="submit-order" class="btn btn-primary btn-large" style="display: none;">
-                    <span id="submit-text">Confirmar Pedido</span>
+                    <span id="submit-text">✅ Enviar Pedido</span>
                     <span id="submit-loader" class="hidden">
-                        <span class="spinner-small"></span> Procesando...
+                        <span class="spinner-small"></span> Enviando...
                     </span>
                 </button>
             </div>
