@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/", "destination": "/client-order-form/index.html" },
-    { "source": "/order-form", "destination": "/client-order-form/index.html" },
-    { "source": "/admin/login", "destination": "/admin-dashboard/login.html" },
-    { "source": "/admin", "destination": "/admin-dashboard/index.html" }
+  "routes": [
+    { "src": "^/$", "dest": "/client-order-form/index.html" },
+    { "src": "^/order-form$", "dest": "/client-order-form/index.html" },
+    { "src": "^/admin/login$", "dest": "/admin-dashboard/login.html" },
+    { "src": "^/admin$", "dest": "/admin-dashboard/index.html" },
+    { "src": "^/admin/$", "dest": "/admin-dashboard/index.html" }
   ],
   "headers": [
     {
