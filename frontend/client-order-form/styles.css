@@ -1583,20 +1583,26 @@ body {
 
     /* Product search dark mode fix */
     .product-search {
-        background: var(--bg-tertiary);
+        background: var(--bg-tertiary) !important;
         border-color: var(--border-medium);
     }
 
     .product-search input {
-        color: #f1f5f9;
+        color: #f1f5f9 !important;
+        background: transparent !important;
     }
 
     .product-search input::placeholder {
-        color: #64748b;
+        color: #94a3b8 !important;
     }
 
     .product-search-icon {
         color: #94a3b8;
+    }
+
+    /* Search container background */
+    .product-search-container {
+        background: var(--bg-secondary);
     }
 
     .category-pill {
@@ -1611,12 +1617,12 @@ body {
 
     /* Info boxes - readable text in dark mode */
     .info-box {
-        background: var(--bg-tertiary);
+        background: var(--bg-tertiary) !important;
         border-left-color: var(--axkan-pink);
     }
 
     .info-box strong {
-        color: #f1f5f9;
+        color: #f1f5f9 !important;
     }
 
     .info-box p {
@@ -1625,6 +1631,19 @@ body {
 
     .info-box .icon {
         filter: none;
+    }
+
+    /* Confirm step info box with inline styles override */
+    .card .info-box[style*="background: #eff6ff"],
+    .card .info-box[style*="background: #fef3c7"],
+    .info-box[style*="background:"] {
+        background: var(--bg-tertiary) !important;
+        border-left-color: var(--axkan-pink) !important;
+    }
+
+    .card .info-box[style*="background:"] strong,
+    .card .info-box[style*="background:"] p {
+        color: #cbd5e1 !important;
     }
 
     /* Deposit info banner */
