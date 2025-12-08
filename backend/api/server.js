@@ -958,6 +958,109 @@ app.post('/api/orders/:orderId/archive', async (req, res) => {
   }
 });
 
+// ========================================
+// REGENERATE PDF RECEIPT ON-DEMAND
+// ========================================
+// This endpoint regenerates a PDF receipt for an order
+// Useful when the original file is lost (e.g., after server redeploy on Render)
+app.get('/api/orders/:orderId/receipt/download', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+
+    if (isNaN(orderId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid order ID'
+      });
+    }
+
+    console.log(`📄 Regenerating receipt for order ${orderId}...`);
+
+    // Get order details with client and items
+    const orderResult = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.order_date,
+        o.total_price,
+        o.deposit_amount,
+        o.deposit_paid,
+        c.name as client_name,
+        c.phone as client_phone,
+        c.email as client_email
+      FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Get order items
+    const itemsResult = await query(`
+      SELECT
+        product_name,
+        quantity,
+        unit_price,
+        line_total
+      FROM order_items
+      WHERE order_id = $1
+      ORDER BY id
+    `, [orderId]);
+
+    // Calculate actual deposit (what was paid) and remaining balance
+    const totalPrice = parseFloat(order.total_price) || 0;
+    const depositAmount = parseFloat(order.deposit_amount) || totalPrice * 0.5;
+    const actualDepositAmount = order.deposit_paid ? depositAmount : 0;
+    const remainingBalance = totalPrice - actualDepositAmount;
+
+    // Prepare data for PDF generation
+    const receiptData = {
+      orderNumber: order.order_number,
+      clientName: order.client_name || 'Cliente',
+      clientPhone: order.client_phone || '',
+      clientEmail: order.client_email || '',
+      orderDate: order.order_date,
+      items: itemsResult.rows.map(item => ({
+        productName: item.product_name,
+        quantity: item.quantity,
+        unitPrice: parseFloat(item.unit_price),
+        lineTotal: parseFloat(item.line_total)
+      })),
+      totalPrice: totalPrice,
+      actualDepositAmount: actualDepositAmount,
+      remainingBalance: remainingBalance
+    };
+
+    // Generate PDF
+    const pdfPath = await generateReceipt(receiptData);
+
+    console.log(`✅ Receipt regenerated: ${pdfPath}`);
+
+    // Send file as download
+    res.download(pdfPath, `Recibo-${order.order_number}.pdf`, (err) => {
+      if (err) {
+        console.error('Error sending PDF:', err);
+      }
+      // Optionally delete the temp file after sending
+      // fs.unlinkSync(pdfPath);
+    });
+
+  } catch (error) {
+    console.error('Error regenerating receipt:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Process receipt with OCR and auto-approve if amount matches
 app.post('/api/orders/:orderId/process-receipt', async (req, res) => {
   try {

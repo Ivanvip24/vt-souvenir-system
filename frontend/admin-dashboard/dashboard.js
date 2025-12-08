@@ -431,7 +431,7 @@ function createOrderCard(order) {
         </div>
       ` : !isArchived && order.approvalStatus === 'approved' && order.receiptPdfUrl ? `
         <div class="quick-actions">
-          <button class="quick-action-btn receipt-btn" onclick="event.stopPropagation(); downloadReceipt('${order.receiptPdfUrl}', '${order.orderNumber}');" title="Descargar recibo">
+          <button class="quick-action-btn receipt-btn" onclick="event.stopPropagation(); downloadReceipt('${order.receiptPdfUrl}', '${order.orderNumber}', ${order.id});" title="Descargar recibo">
             📥
           </button>
           <button class="quick-action-btn receipt-btn" onclick="event.stopPropagation(); shareReceipt('${order.receiptPdfUrl}');" title="Compartir enlace">
@@ -546,7 +546,7 @@ async function showOrderDetail(orderId) {
 
       ${order.approvalStatus === 'approved' && order.receiptPdfUrl ? `
         <div class="action-buttons" style="margin-top: 16px;">
-          <button class="btn btn-primary" onclick="downloadReceipt('${order.receiptPdfUrl}', '${order.orderNumber}')" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+          <button class="btn btn-primary" onclick="downloadReceipt('${order.receiptPdfUrl}', '${order.orderNumber}', ${order.id})" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
             <span style="font-size: 20px;">📥</span>
             <span>Descargar Recibo</span>
           </button>
@@ -1235,11 +1235,35 @@ async function lookupClientOrders() {
 // ==========================================
 
 /**
- * Download receipt PDF
- * @param {string} receiptUrl - URL to the receipt PDF
+ * Download receipt PDF - regenerates on-demand from the server
+ * @param {string} receiptUrl - Original URL (used as fallback indicator)
  * @param {string} orderNumber - Order number for filename
+ * @param {number} orderId - Order ID for regeneration endpoint
  */
-function downloadReceipt(receiptUrl, orderNumber) {
+function downloadReceipt(receiptUrl, orderNumber, orderId) {
+  // If we have an orderId, use the regeneration endpoint (more reliable)
+  if (orderId) {
+    try {
+      // Use the regeneration endpoint - this always works even after server redeploy
+      const downloadUrl = `${API_BASE}/orders/${orderId}/receipt/download`;
+
+      console.log(`📥 Regenerating and downloading receipt for order ${orderNumber} (ID: ${orderId})`);
+
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `Recibo-${orderNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      return;
+    } catch (error) {
+      console.error('Error with regeneration endpoint, trying fallback:', error);
+    }
+  }
+
+  // Fallback to original URL if no orderId provided
   if (!receiptUrl) {
     alert('No hay recibo disponible para este pedido');
     return;
@@ -1255,7 +1279,7 @@ function downloadReceipt(receiptUrl, orderNumber) {
     link.click();
     document.body.removeChild(link);
 
-    console.log(`📥 Downloading receipt for order ${orderNumber}`);
+    console.log(`📥 Downloading receipt for order ${orderNumber} (fallback)`);
   } catch (error) {
     console.error('Error downloading receipt:', error);
     alert('Error al descargar el recibo');
