@@ -32,6 +32,9 @@ function getAuthToken() {
   return localStorage.getItem('admin_token');
 }
 
+// Expose globally for other modules (prices.js, inventory.js, etc.)
+window.getAuthToken = getAuthToken;
+
 function getAuthHeaders() {
   const token = getAuthToken();
   return {
@@ -39,6 +42,9 @@ function getAuthHeaders() {
     'Content-Type': 'application/json'
   };
 }
+
+// Expose globally for other modules
+window.getAuthHeaders = getAuthHeaders;
 
 window.logout = function() {
   if (confirm('¿Estás seguro que deseas cerrar sesión?')) {

@@ -58,6 +58,11 @@ window.loadPriceDashboard = async function(period = 30) {
       headers: getAuthHeaders()
     });
 
+    // Handle 401 Unauthorized
+    if (response.status === 401) {
+      throw new Error('Token inválido - sesión expirada');
+    }
+
     const result = await response.json();
 
     if (!result.success) {
@@ -75,6 +80,17 @@ window.loadPriceDashboard = async function(period = 30) {
 
   } catch (error) {
     console.error('Error loading price dashboard:', error);
+
+    // Check if it's an auth error and redirect to login
+    if (error.message.includes('Token') || error.message.includes('401') || error.message.includes('Unauthorized')) {
+      loading.innerHTML = `
+        <p style="color: var(--danger)">
+          ⚠️ Sesión expirada. <a href="/admin/login" style="color: var(--primary);">Iniciar sesión de nuevo</a>
+        </p>
+      `;
+      return;
+    }
+
     loading.innerHTML = `
       <p style="color: var(--danger)">
         ⚠️ Error al cargar el dashboard de precios: ${error.message}
