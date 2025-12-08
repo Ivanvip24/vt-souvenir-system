@@ -161,6 +161,47 @@
                     </div>
                 </div>
 
+                <!-- Postal Code FIRST - auto-fills state, city, colonia -->
+                <div class="form-group">
+                    <label for="client-postal">Código Postal *</label>
+                    <input type="text"
+                           id="client-postal"
+                           placeholder="Ej: 03100"
+                           maxlength="5"
+                           pattern="[0-9]{5}"
+                           autocomplete="postal-code"
+                           inputmode="numeric"
+                           required>
+                    <span class="input-hint">📍 Ingresa 5 dígitos para llenar automáticamente estado, ciudad y colonia</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="client-state">Estado *</label>
+                        <input type="text"
+                               id="client-state"
+                               placeholder="Se llenará automáticamente"
+                               autocomplete="address-level1"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-city">Ciudad/Municipio *</label>
+                        <input type="text"
+                               id="client-city"
+                               placeholder="Se llenará automáticamente"
+                               autocomplete="address-level2"
+                               required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="client-colonia">Colonia *</label>
+                    <input type="text"
+                           id="client-colonia"
+                           placeholder="Se llenará automáticamente"
+                           required>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group" style="flex: 2;">
                         <label for="client-street">Calle *</label>
@@ -182,46 +223,6 @@
                 </div>
                 <!-- Keep hidden client-address for backward compatibility -->
                 <input type="hidden" id="client-address">
-
-                <div class="form-group">
-                    <label for="client-colonia">Colonia *</label>
-                    <input type="text"
-                           id="client-colonia"
-                           placeholder="Ej: Del Valle"
-                           required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="client-city">Ciudad/Municipio *</label>
-                        <input type="text"
-                               id="client-city"
-                               placeholder="Ej: Benito Juárez"
-                               autocomplete="address-level2"
-                               required>
-                    </div>
-                    <div class="form-group">
-                        <label for="client-state">Estado *</label>
-                        <input type="text"
-                               id="client-state"
-                               placeholder="Ej: CDMX"
-                               autocomplete="address-level1"
-                               required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="client-postal">Código Postal *</label>
-                    <input type="text"
-                           id="client-postal"
-                           placeholder="Ej: 03100"
-                           maxlength="5"
-                           pattern="[0-9]{5}"
-                           autocomplete="postal-code"
-                           inputmode="numeric"
-                           required>
-                    <span class="input-hint">5 dígitos - se llenarán automáticamente ciudad y estado</span>
-                </div>
 
                 <div class="form-group">
                     <label for="client-references">Referencias de Ubicación (opcional)</label>
