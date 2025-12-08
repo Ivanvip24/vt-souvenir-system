@@ -1353,3 +1353,194 @@ body {
     border-color: var(--primary);
     color: white;
 }
+
+/* ==========================================
+   DARK MODE SUPPORT (#23)
+   ========================================== */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-tertiary: #334155;
+
+        --gray-50: #1e293b;
+        --gray-100: #334155;
+        --gray-200: #475569;
+        --gray-300: #64748b;
+        --gray-600: #94a3b8;
+        --gray-700: #cbd5e1;
+        --gray-900: #f1f5f9;
+
+        --border-light: #334155;
+        --border-medium: #475569;
+
+        --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+        background: var(--bg-primary);
+        color: var(--gray-900);
+    }
+
+    .app-container {
+        background: var(--bg-secondary);
+    }
+
+    .header {
+        background: var(--bg-secondary);
+        border-bottom-color: var(--border-light);
+    }
+
+    .card {
+        background: var(--bg-secondary);
+        border-bottom-color: var(--border-light);
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        background: var(--bg-tertiary);
+        border-color: var(--border-medium);
+        color: var(--gray-900);
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        background: var(--bg-secondary);
+    }
+
+    .product-card {
+        background: var(--bg-secondary);
+        border-color: var(--border-light);
+    }
+
+    .product-card.selected {
+        border-color: var(--axkan-pink);
+    }
+
+    .quantity-btn {
+        background: var(--bg-tertiary);
+        border-color: var(--gray-300);
+        color: var(--gray-700);
+    }
+
+    .quantity-input {
+        background: var(--bg-tertiary);
+        color: var(--gray-900);
+    }
+
+    .sticky-header,
+    .sticky-footer {
+        background: var(--bg-secondary);
+        border-color: var(--border-light);
+    }
+
+    .payment-card {
+        border-color: var(--border-light);
+    }
+
+    .bank-details {
+        background: var(--bg-tertiary);
+    }
+
+    .bank-info {
+        background: var(--bg-secondary);
+        border-color: var(--border-light);
+    }
+
+    .info-row {
+        border-bottom-color: var(--border-light);
+    }
+
+    .file-upload-area {
+        border-color: var(--gray-300);
+    }
+
+    .file-upload-area:hover {
+        background: rgba(233, 30, 99, 0.1);
+    }
+
+    .modal {
+        background: rgba(0, 0, 0, 0.7);
+    }
+
+    .modal .card {
+        background: var(--bg-secondary);
+    }
+
+    .product-search {
+        background: var(--bg-tertiary);
+        border-color: var(--border-medium);
+    }
+
+    .product-search input {
+        color: var(--gray-900);
+    }
+
+    .category-pill {
+        background: var(--bg-tertiary);
+        border-color: var(--border-medium);
+        color: var(--gray-700);
+    }
+
+    .category-pill:hover {
+        background: var(--gray-200);
+    }
+
+    .deposit-info-banner {
+        background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(194, 24, 91, 0.2));
+        border-color: rgba(233, 30, 99, 0.3);
+    }
+
+    .returning-client-banner {
+        background: linear-gradient(135deg, rgba(124, 179, 66, 0.2), rgba(104, 159, 56, 0.2));
+        border-color: rgba(124, 179, 66, 0.3);
+    }
+
+    .spei-tip {
+        background: rgba(30, 136, 229, 0.15);
+        border-color: rgba(30, 136, 229, 0.3);
+    }
+
+    .copy-btn {
+        background: var(--bg-tertiary);
+        border-color: var(--border-medium);
+    }
+
+    .copy-btn .copy-text {
+        color: var(--gray-700);
+    }
+
+    .order-summary-card {
+        background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1));
+    }
+
+    .payment-summary-box {
+        background: linear-gradient(135deg, rgba(233, 30, 99, 0.15), rgba(255, 152, 0, 0.15));
+    }
+
+    .email-confirmation-notice {
+        background: var(--bg-tertiary);
+        border-color: var(--border-medium);
+    }
+
+    .info-box {
+        background: linear-gradient(135deg, rgba(233, 30, 99, 0.15), rgba(255, 152, 0, 0.15));
+    }
+
+    /* Success screen dark mode */
+    .order-number {
+        background: linear-gradient(135deg, rgba(233, 30, 99, 0.15), rgba(255, 152, 0, 0.15));
+    }
+
+    /* Input errors in dark mode */
+    .form-group input.error,
+    .form-group textarea.error {
+        background-color: rgba(244, 67, 54, 0.15);
+    }
+}

@@ -231,6 +231,12 @@ function initializeEventListeners() {
   document.getElementById('continue-phone').addEventListener('click', handlePhoneSubmit);
   document.getElementById('phone').addEventListener('input', formatPhoneInput);
 
+  // #10: Product search/filter
+  const searchInput = document.getElementById('product-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', debounce(handleProductSearch, 300));
+  }
+
   // Auto-fill feature DISABLED - Only check on Continue button click
   // document.getElementById('phone').addEventListener('input', debounce(handlePhoneAutofill, 500));
 
@@ -807,14 +813,47 @@ function renderProducts(products) {
   const container = document.getElementById('products-container');
 
   if (products.length === 0) {
-    container.innerHTML = '<p class="text-center">No hay productos disponibles</p>';
+    container.innerHTML = '<p class="text-center" style="padding: 40px 20px; color: var(--gray-600);">No hay productos disponibles</p>';
     return;
   }
 
+  container.innerHTML = '';
   products.forEach(product => {
     const card = createProductCard(product);
     container.appendChild(card);
   });
+}
+
+// #10: Product search/filter functionality
+function handleProductSearch(e) {
+  const searchTerm = e.target.value.toLowerCase().trim();
+  const container = document.getElementById('products-container');
+
+  if (!searchTerm) {
+    // Show all products
+    renderProducts(state.products);
+    return;
+  }
+
+  // Filter products by name or category
+  const filteredProducts = state.products.filter(product => {
+    const nameMatch = product.name.toLowerCase().includes(searchTerm);
+    const categoryMatch = product.category && product.category.toLowerCase().includes(searchTerm);
+    return nameMatch || categoryMatch;
+  });
+
+  if (filteredProducts.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px; color: var(--gray-600);">
+        <div style="font-size: 48px; margin-bottom: 12px;">🔍</div>
+        <p style="font-size: 16px; font-weight: 600;">No se encontraron productos</p>
+        <p style="font-size: 14px; margin-top: 8px;">Intenta con otro término de búsqueda</p>
+      </div>
+    `;
+    return;
+  }
+
+  renderProducts(filteredProducts);
 }
 
 function createProductCard(product) {
@@ -1516,14 +1555,9 @@ async function handleStripePayment() {
 
     console.log('Order created:', result);
 
-    // Open Stripe payment link in new tab
-    window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
-
-    // Show success message
-    alert('¡Pedido creado! Se ha abierto la página de pago de Stripe. Por favor completa tu pago y regresa aquí.');
-
-    // Show success screen
-    showSuccessScreen(result.orderNumber);
+    // Redirect to Stripe payment link in same tab (#18)
+    // Order is saved, redirect user to Stripe for payment
+    window.location.href = 'https://buy.stripe.com/00gcPP1GscTObJufYY';
 
   } catch (error) {
     console.error('Error submitting order:', error);
