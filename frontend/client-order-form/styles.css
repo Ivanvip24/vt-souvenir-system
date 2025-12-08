@@ -856,6 +856,22 @@ body {
     margin-bottom: 4px;
 }
 
+/* Info box variants */
+.info-box-blue {
+    background: #eff6ff;
+    border-left-color: var(--primary);
+}
+
+.info-box-warning {
+    background: #fef3c7;
+    border-left-color: #f59e0b;
+    margin: 20px 0;
+}
+
+.info-box-warning p {
+    font-size: 14px;
+}
+
 /* ==========================================
    SUCCESS SCREEN
    ========================================== */
@@ -1633,16 +1649,17 @@ body {
         filter: none;
     }
 
-    /* Confirm step info box with inline styles override */
-    .card .info-box[style*="background: #eff6ff"],
-    .card .info-box[style*="background: #fef3c7"],
-    .info-box[style*="background:"] {
+    /* Info box variants in dark mode */
+    .info-box-blue,
+    .info-box-warning {
         background: var(--bg-tertiary) !important;
         border-left-color: var(--axkan-pink) !important;
     }
 
-    .card .info-box[style*="background:"] strong,
-    .card .info-box[style*="background:"] p {
+    .info-box-blue strong,
+    .info-box-blue p,
+    .info-box-warning strong,
+    .info-box-warning p {
         color: #cbd5e1 !important;
     }
 
