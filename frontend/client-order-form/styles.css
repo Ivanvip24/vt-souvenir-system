@@ -1040,3 +1040,316 @@ body {
     border-left: 4px solid transparent;
     border-image: linear-gradient(to bottom, #E91E63, #C2185B) 1;
 }
+
+/* ==========================================
+   UX/UI IMPROVEMENTS
+   ========================================== */
+
+/* #1: Step indicator */
+.step-indicator {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 12px 0 8px;
+    letter-spacing: 0.5px;
+}
+
+/* #2: Deposit info banner */
+.deposit-info-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #FCE4EC, #F8BBD9);
+    border: 1px solid #F48FB1;
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    margin: 0 20px 20px;
+}
+
+.deposit-info-icon {
+    font-size: 28px;
+}
+
+.deposit-info-text strong {
+    color: var(--primary-dark);
+    font-size: 14px;
+}
+
+.deposit-info-text p {
+    color: var(--gray-700);
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+/* #3: Inline error messages */
+.input-error {
+    display: block;
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 6px;
+    min-height: 18px;
+}
+
+.input-error:empty {
+    display: none;
+}
+
+.form-group input.error,
+.form-group textarea.error {
+    border-color: var(--danger);
+    background-color: #FEF2F2;
+}
+
+.form-group input.error:focus,
+.form-group textarea.error:focus {
+    box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.15);
+}
+
+/* #8: Larger back button tap target */
+.btn-back {
+    min-width: 80px;
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 15px;
+}
+
+/* #11: MOQ badge on product cards */
+.product-moq-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--primary);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    z-index: 1;
+}
+
+/* #12: SPEI tip box */
+.spei-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #E3F2FD;
+    border: 1px solid #90CAF9;
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #1565C0;
+}
+
+.spei-icon {
+    font-size: 20px;
+}
+
+/* #13: Copy button with text */
+.copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: var(--gray-200);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+}
+
+.copy-text {
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+/* #14: Returning client banner */
+.returning-client-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    border: 1px solid #81C784;
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+}
+
+.returning-icon {
+    font-size: 28px;
+}
+
+.returning-text strong {
+    color: #2E7D32;
+    font-size: 15px;
+}
+
+.returning-text p {
+    color: var(--gray-700);
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+/* #16: Success actions */
+.success-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* #17: Email confirmation notice */
+.email-confirmation-notice {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--gray-700);
+    margin: 16px 0;
+}
+
+.email-confirmation-notice strong {
+    color: var(--primary);
+}
+
+/* #19: Better product card hierarchy */
+.product-card .product-category {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.product-card .product-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.product-card .product-price {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+/* #21: Unified pink CTAs */
+.sticky-footer .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+
+/* #22: Order summary spacing */
+.order-summary-card .summary-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.order-summary-card .summary-item:last-child {
+    border-bottom: none;
+}
+
+/* #24: Required field legend */
+.required-legend {
+    font-size: 12px;
+    color: var(--gray-600);
+    margin-bottom: 16px;
+}
+
+/* #27: Better hint contrast */
+.input-hint {
+    color: #4b5563; /* Darker than before for better readability */
+}
+
+/* ==========================================
+   PRODUCT SEARCH/FILTER (#10)
+   ========================================== */
+
+.product-search-container {
+    padding: 0 20px 16px;
+    position: sticky;
+    top: 60px;
+    background: white;
+    z-index: 10;
+}
+
+.product-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    transition: all 0.2s;
+}
+
+.product-search:focus-within {
+    border-color: var(--primary);
+    background: white;
+}
+
+.product-search-icon {
+    font-size: 18px;
+    color: var(--gray-600);
+}
+
+.product-search input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    outline: none;
+}
+
+.product-search input::placeholder {
+    color: var(--gray-600);
+}
+
+/* Category filter pills */
+.category-filters {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px 20px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.category-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.category-pill {
+    flex-shrink: 0;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.category-pill:hover {
+    background: var(--gray-200);
+}
+
+.category-pill.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}

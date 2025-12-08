@@ -133,6 +133,53 @@ function getTieredPrice(product, quantity) {
 }
 
 // ==========================================
+// INLINE ERROR HELPERS (#3)
+// ==========================================
+
+/**
+ * Show inline error message for a field
+ * @param {string} fieldId - The input field ID
+ * @param {string} message - Error message to display
+ */
+function showFieldError(fieldId, message) {
+  const input = document.getElementById(fieldId);
+  const errorEl = document.getElementById(`${fieldId}-error`);
+
+  if (input) {
+    input.classList.add('error');
+  }
+
+  if (errorEl) {
+    errorEl.textContent = message;
+  }
+}
+
+/**
+ * Clear inline error message for a field
+ * @param {string} fieldId - The input field ID
+ */
+function clearFieldError(fieldId) {
+  const input = document.getElementById(fieldId);
+  const errorEl = document.getElementById(`${fieldId}-error`);
+
+  if (input) {
+    input.classList.remove('error');
+  }
+
+  if (errorEl) {
+    errorEl.textContent = '';
+  }
+}
+
+/**
+ * Clear all field errors in a step
+ */
+function clearAllErrors() {
+  document.querySelectorAll('.input-error').forEach(el => el.textContent = '');
+  document.querySelectorAll('input.error, textarea.error').forEach(el => el.classList.remove('error'));
+}
+
+// ==========================================
 // STATE MANAGEMENT
 // ==========================================
 
@@ -196,17 +243,17 @@ function initializeEventListeners() {
   // Step 2: Client Info
   document.getElementById('continue-info').addEventListener('click', handleInfoSubmit);
 
-  // Add character counter for references field
+  // Add character counter for references field (#9: increased to 150)
   const referencesField = document.getElementById('client-references');
   const referencesCounter = document.getElementById('references-counter');
   if (referencesField && referencesCounter) {
     referencesField.addEventListener('input', () => {
       const length = referencesField.value.length;
-      referencesCounter.textContent = `Máximo 35 caracteres (${length}/35)`;
-      if (length >= 35) {
+      referencesCounter.textContent = `${length}/150 caracteres`;
+      if (length >= 140) {
         referencesCounter.style.color = '#dc2626';
       } else {
-        referencesCounter.style.color = '#6b7280';
+        referencesCounter.style.color = '#4b5563';
       }
     });
   }
@@ -438,18 +485,26 @@ async function handlePhoneSubmit() {
   const phone = phoneInput.value.trim();
   const email = emailInput.value.trim();
 
-  // Validation
-  if (phone.length !== 10) {
-    alert('Por favor ingresa un número de teléfono válido de 10 dígitos');
+  // Clear previous errors
+  clearFieldError('phone');
+  clearFieldError('login-email');
+
+  // Validation with inline errors (#3)
+  let hasErrors = false;
+
+  if (phone.length !== 10 || !/^\d{10}$/.test(phone)) {
+    showFieldError('phone', 'Ingresa un número válido de 10 dígitos, sin espacios');
     phoneInput.focus();
-    return;
+    hasErrors = true;
   }
 
   if (!email || !email.includes('@')) {
-    alert('Por favor ingresa un correo electrónico válido');
-    emailInput.focus();
-    return;
+    showFieldError('login-email', 'Ingresa un correo electrónico válido');
+    if (!hasErrors) emailInput.focus();
+    hasErrors = true;
   }
+
+  if (hasErrors) return;
 
   state.client.phone = phone;
   state.client.email = email;
@@ -635,39 +690,59 @@ function handleInfoSubmit() {
   const postal = document.getElementById('client-postal').value.trim();
   const references = document.getElementById('client-references').value.trim();
 
-  // Validation
+  // Clear all errors first
+  clearAllErrors();
+
+  // Validation with inline errors (#3)
+  let hasErrors = false;
+  let firstErrorField = null;
+
   if (!name) {
-    alert('Por favor ingresa tu nombre completo');
-    document.getElementById('client-name').focus();
-    return;
+    showFieldError('client-name', 'Ingresa tu nombre completo');
+    firstErrorField = firstErrorField || 'client-name';
+    hasErrors = true;
   }
 
   if (!street) {
-    alert('Por favor ingresa el nombre de la calle');
-    document.getElementById('client-street').focus();
-    return;
+    showFieldError('client-street', 'Ingresa el nombre de la calle');
+    firstErrorField = firstErrorField || 'client-street';
+    hasErrors = true;
   }
 
   if (!streetNumber) {
-    alert('Por favor ingresa el número de la calle');
-    document.getElementById('client-street-number').focus();
-    return;
+    showFieldError('client-street-number', 'Ingresa el número');
+    firstErrorField = firstErrorField || 'client-street-number';
+    hasErrors = true;
   }
 
   if (!colonia) {
-    alert('Por favor ingresa la colonia');
-    document.getElementById('client-colonia').focus();
-    return;
+    showFieldError('client-colonia', 'Ingresa la colonia');
+    firstErrorField = firstErrorField || 'client-colonia';
+    hasErrors = true;
   }
 
-  if (!city || !stateVal) {
-    alert('Por favor completa ciudad y estado');
-    return;
+  if (!city) {
+    showFieldError('client-city', 'Ingresa la ciudad');
+    firstErrorField = firstErrorField || 'client-city';
+    hasErrors = true;
   }
 
-  if (!postal || postal.length !== 5) {
-    alert('Por favor ingresa un código postal válido de 5 dígitos');
-    document.getElementById('client-postal').focus();
+  if (!stateVal) {
+    showFieldError('client-state', 'Ingresa el estado');
+    firstErrorField = firstErrorField || 'client-state';
+    hasErrors = true;
+  }
+
+  if (!postal || postal.length !== 5 || !/^\d{5}$/.test(postal)) {
+    showFieldError('client-postal', 'Código postal de 5 dígitos');
+    firstErrorField = firstErrorField || 'client-postal';
+    hasErrors = true;
+  }
+
+  if (hasErrors) {
+    if (firstErrorField) {
+      document.getElementById(firstErrorField).focus();
+    }
     return;
   }
 
@@ -746,6 +821,7 @@ function createProductCard(product) {
   const div = document.createElement('div');
   div.className = 'product-card';
   div.dataset.productId = product.id;
+  div.style.position = 'relative'; // For MOQ badge positioning
 
   const quantity = state.cart[product.id]?.quantity || 0;
   const basePrice = parseFloat(product.base_price);
@@ -753,11 +829,13 @@ function createProductCard(product) {
   // Get tiered pricing - show Tier 1 price (minimum quantity) when no items in cart
   const productNameLower = product.name.toLowerCase();
   let defaultQuantity = 1;
+  let moq = 100; // Default MOQ
 
   // Find the minimum quantity for this product to show the wholesale price
   for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
     if (productNameLower.includes(key) || key.includes(productNameLower)) {
       defaultQuantity = tierArray[0].min; // Use minimum of first tier
+      moq = tierArray[0].min;
       break;
     }
   }
@@ -765,14 +843,20 @@ function createProductCard(product) {
   const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : defaultQuantity);
   const subtotal = price * quantity;
 
+  // #11: MOQ badge text
+  const moqBadgeText = moq === 1 ? 'Sin mínimo' : `Mín. ${moq} pzas`;
+
   div.innerHTML = `
+    <!-- #11: MOQ Badge -->
+    <div class="product-moq-badge">${moqBadgeText}</div>
+
     <div class="product-header">
       <img src="${product.image_url || 'https://via.placeholder.com/80'}"
            alt="${product.name}"
            class="product-image">
       <div class="product-info">
         <div class="product-category">${getCategoryLabel(product.category)}</div>
-        <h3>${product.name}</h3>
+        <h3 class="product-name">${product.name}</h3>
         <div class="product-price">
           $${price.toFixed(2)} <span>por unidad</span>
         </div>
@@ -1588,6 +1672,17 @@ async function uploadPaymentProof(orderId) {
 
 function showSuccessScreen(orderNumber) {
   document.getElementById('success-order-number').textContent = orderNumber;
+
+  // #17: Show email confirmation notice
+  const emailNotice = document.getElementById('email-confirmation-notice');
+  const successEmail = document.getElementById('success-email');
+  if (emailNotice && successEmail && state.client.email) {
+    successEmail.textContent = state.client.email;
+    emailNotice.style.display = 'block';
+  } else if (emailNotice) {
+    emailNotice.style.display = 'none';
+  }
+
   showStep(5);
 
   // Clear cart for next order

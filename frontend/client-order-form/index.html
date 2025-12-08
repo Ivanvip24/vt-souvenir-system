@@ -20,23 +20,44 @@
                     <img src="/assets/images/LOGO-03.png" alt="AXKAN Logo">
                 </div>
                 <h1>Souvenirs Personalizados</h1>
-                <p class="subtitle">Haz tu pedido en minutos</p>
+                <p class="subtitle">Imanes, Llaveros, Destapadores, Botones y más</p>
+            </div>
+
+            <!-- #2: Deposit explanation upfront -->
+            <div class="deposit-info-banner">
+                <div class="deposit-info-icon">💰</div>
+                <div class="deposit-info-text">
+                    <strong>¿Cómo funciona?</strong>
+                    <p>Pagas 50% de anticipo ahora y el resto al recibir tu pedido</p>
+                </div>
             </div>
 
             <div class="card">
                 <h2>Bienvenido</h2>
                 <p class="help-text">Ingresa tu teléfono y correo para comenzar</p>
+                <p class="required-legend">* Campo requerido</p>
+
+                <!-- Returning client welcome message (hidden by default, shown via JS) -->
+                <div id="returning-client-banner" class="returning-client-banner" style="display: none;">
+                    <div class="returning-icon">👋</div>
+                    <div class="returning-text">
+                        <strong>¡Bienvenido de nuevo, <span id="returning-client-name"></span>!</strong>
+                        <p>Tu información está guardada</p>
+                    </div>
+                </div>
 
                 <div class="form-group">
                     <label for="phone">Número de Teléfono *</label>
                     <input type="tel"
                            id="phone"
-                           placeholder="55 1234 5678"
+                           placeholder="5512345678"
                            maxlength="10"
                            pattern="[0-9]{10}"
                            autocomplete="tel"
+                           aria-describedby="phone-hint phone-error"
                            required>
-                    <span class="input-hint">10 dígitos, sin espacios</span>
+                    <span class="input-hint" id="phone-hint">10 dígitos, sin espacios</span>
+                    <span class="input-error" id="phone-error" role="alert"></span>
                 </div>
 
                 <div class="form-group">
@@ -45,12 +66,14 @@
                            id="login-email"
                            placeholder="tucorreo@ejemplo.com"
                            autocomplete="email"
+                           aria-describedby="email-hint email-error"
                            required>
-                    <span class="input-hint">Usaremos este correo para confirmar tu pedido</span>
+                    <span class="input-hint" id="email-hint">Usaremos este correo para confirmar tu pedido</span>
+                    <span class="input-error" id="email-error" role="alert"></span>
                 </div>
 
                 <button id="continue-phone" class="btn btn-primary btn-large">
-                    Continuar →
+                    Continuar
                 </button>
 
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -103,12 +126,14 @@
             <div class="progress-bar">
                 <div class="progress" style="width: 25%"></div>
             </div>
+            <div class="step-indicator">Paso 2 de 4</div>
 
-            <button class="btn-back" onclick="goBack()">← Atrás</button>
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
 
             <div class="card">
                 <h2>Tus Datos</h2>
                 <p class="help-text" id="info-help-text">Completa tu información</p>
+                <p class="required-legend">* Campo requerido</p>
 
                 <div class="form-group">
                     <label for="client-name">Nombre Completo *</label>
@@ -116,7 +141,9 @@
                            id="client-name"
                            placeholder="María González"
                            autocomplete="name"
+                           aria-describedby="client-name-error"
                            required>
+                    <span class="input-error" id="client-name-error" role="alert"></span>
                 </div>
 
                 <div class="form-group">
@@ -203,13 +230,14 @@
                     <label for="client-references">Referencias de Ubicación (opcional)</label>
                     <textarea id="client-references"
                               rows="2"
-                              maxlength="35"
-                              placeholder="Ej: Entre calle X y Y, edificio azul"></textarea>
-                    <span class="input-hint" id="references-counter">Máximo 35 caracteres (0/35)</span>
+                              maxlength="150"
+                              aria-describedby="references-counter"
+                              placeholder="Ej: Entre calle X y Y, edificio azul, portón negro"></textarea>
+                    <span class="input-hint" id="references-counter">0/150 caracteres</span>
                 </div>
 
                 <button id="continue-info" class="btn btn-primary btn-large">
-                    Continuar →
+                    Continuar
                 </button>
             </div>
         </section>
@@ -219,8 +247,9 @@
             <div class="progress-bar">
                 <div class="progress" style="width: 50%"></div>
             </div>
+            <div class="step-indicator">Paso 3 de 4</div>
 
-            <button class="btn-back" onclick="goBack()">← Atrás</button>
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
 
             <div class="sticky-header">
                 <h2>Selecciona tus Productos</h2>
@@ -248,7 +277,7 @@
                     </div>
                 </div>
                 <button id="continue-products" class="btn btn-primary btn-large" disabled>
-                    Continuar al Pago →
+                    Ir al Pago
                 </button>
             </div>
         </section>
@@ -258,8 +287,9 @@
             <div class="progress-bar">
                 <div class="progress" style="width: 75%"></div>
             </div>
+            <div class="step-indicator">Paso 4 de 4</div>
 
-            <button class="btn-back" onclick="goBack()">← Atrás</button>
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
 
             <div class="card">
                 <h2>Método de Pago</h2>
@@ -342,18 +372,26 @@
                 <div id="bank-details" class="bank-details hidden">
                     <h3>Datos Bancarios</h3>
 
-                    <p style="font-weight: 600; margin-bottom: 16px;">Opción 1: Transferencia Bancaria</p>
+                    <!-- SPEI Reference tip -->
+                    <div class="spei-tip">
+                        <span class="spei-icon">💡</span>
+                        <div>
+                            <strong>Tip:</strong> En el concepto/referencia de tu transferencia escribe tu número de teléfono para identificar tu pago más rápido.
+                        </div>
+                    </div>
+
+                    <p style="font-weight: 600; margin-bottom: 16px;">Opción 1: Transferencia Bancaria (SPEI)</p>
                     <div class="bank-info">
                         <div class="info-row">
                             <span>Banco:</span>
                             <strong id="bank-name">BBVA</strong>
                         </div>
                         <div class="info-row">
-                            <span>Cuenta:</span>
+                            <span>Cuenta CLABE:</span>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <strong id="bank-account">012 180 01571714055 4</strong>
-                                <button type="button" class="copy-btn" onclick="copyToClipboard('01218001571714055', this)" title="Copiar número de cuenta">
-                                    📋
+                                <button type="button" class="copy-btn" onclick="copyToClipboard('012180015717140554', this)" aria-label="Copiar número de cuenta">
+                                    📋 <span class="copy-text">Copiar</span>
                                 </button>
                             </div>
                         </div>
@@ -362,7 +400,7 @@
                             <strong id="bank-holder">Iván Valencia</strong>
                         </div>
                         <div class="info-row">
-                            <span>Monto:</span>
+                            <span>Monto a depositar:</span>
                             <strong id="bank-amount" class="highlight-amount"></strong>
                         </div>
                     </div>
@@ -377,8 +415,8 @@
                             <span>Tarjeta:</span>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <strong>4152 3138 4049 8567</strong>
-                                <button type="button" class="copy-btn" onclick="copyToClipboard('4152313840498567', this)" title="Copiar número de tarjeta">
-                                    📋
+                                <button type="button" class="copy-btn" onclick="copyToClipboard('4152313840498567', this)" aria-label="Copiar número de tarjeta">
+                                    📋 <span class="copy-text">Copiar</span>
                                 </button>
                             </div>
                         </div>
@@ -387,7 +425,7 @@
                             <strong>Iván Valencia</strong>
                         </div>
                         <div class="info-row">
-                            <span>Monto:</span>
+                            <span>Monto a depositar:</span>
                             <strong id="card-amount" class="highlight-amount"></strong>
                         </div>
                     </div>
@@ -410,7 +448,7 @@
                 </div>
 
                 <button id="submit-order" class="btn btn-primary btn-large" style="display: none;">
-                    <span id="submit-text">✅ Enviar Pedido</span>
+                    <span id="submit-text">Confirmar Pedido</span>
                     <span id="submit-loader" class="hidden">
                         <span class="spinner-small"></span> Procesando...
                     </span>
@@ -433,6 +471,11 @@
                         <strong id="success-order-number"></strong>
                     </p>
 
+                    <!-- #17: Email confirmation preview -->
+                    <p id="email-confirmation-notice" class="email-confirmation-notice">
+                        Recibirás confirmación a: <strong id="success-email"></strong>
+                    </p>
+
                     <div class="info-box">
                         <p><strong>¿Qué sigue?</strong></p>
                         <ul>
@@ -443,9 +486,15 @@
                     </div>
                 </div>
 
-                <button onclick="window.location.reload()" class="btn btn-secondary btn-large">
-                    Hacer Otro Pedido
-                </button>
+                <!-- #16: More action buttons -->
+                <div class="success-actions">
+                    <button onclick="window.location.reload()" class="btn btn-primary btn-large">
+                        Hacer Otro Pedido
+                    </button>
+                    <a href="https://wa.me/525512345678" target="_blank" class="btn btn-secondary btn-large" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
+                        <span>💬</span> Contactar por WhatsApp
+                    </a>
+                </div>
             </div>
         </section>
 
