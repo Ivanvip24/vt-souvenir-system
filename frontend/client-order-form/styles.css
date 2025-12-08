@@ -1400,18 +1400,39 @@ body {
         border-bottom-color: var(--border-light);
     }
 
+    .card h2 {
+        color: #f1f5f9;
+    }
+
+    .help-text {
+        color: #94a3b8;
+    }
+
+    .form-group label {
+        color: #cbd5e1;
+    }
+
     .form-group input,
     .form-group textarea,
     .form-group select {
         background: var(--bg-tertiary);
         border-color: var(--border-medium);
-        color: var(--gray-900);
+        color: #f1f5f9;
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+        color: #64748b;
     }
 
     .form-group input:focus,
     .form-group textarea:focus,
     .form-group select:focus {
         background: var(--bg-secondary);
+    }
+
+    .input-hint {
+        color: #94a3b8;
     }
 
     .product-card {
@@ -1423,29 +1444,98 @@ body {
         border-color: var(--axkan-pink);
     }
 
+    .product-info h3,
+    .product-name {
+        color: #f1f5f9 !important;
+    }
+
+    .product-card p {
+        color: #94a3b8 !important;
+    }
+
+    .product-category {
+        color: var(--axkan-pink) !important;
+        background: rgba(233, 30, 99, 0.2) !important;
+    }
+
     .quantity-btn {
         background: var(--bg-tertiary);
-        border-color: var(--gray-300);
-        color: var(--gray-700);
+        border-color: #64748b;
+        color: #f1f5f9;
+    }
+
+    .quantity-btn:hover {
+        border-color: var(--axkan-pink);
+        color: var(--axkan-pink);
     }
 
     .quantity-input {
-        background: var(--bg-tertiary);
-        color: var(--gray-900);
+        background: #f1f5f9;
+        color: #1e293b;
+        border-color: var(--axkan-pink);
     }
 
-    .sticky-header,
+    .product-quantity label {
+        color: #cbd5e1;
+    }
+
+    .product-subtotal span {
+        color: #94a3b8;
+    }
+
+    .product-subtotal strong {
+        color: #f1f5f9;
+    }
+
+    .sticky-header {
+        background: var(--bg-secondary);
+        border-color: var(--border-light);
+    }
+
+    .sticky-header h2 {
+        color: #f1f5f9;
+    }
+
+    .order-total-mini {
+        color: #94a3b8;
+    }
+
     .sticky-footer {
         background: var(--bg-secondary);
         border-color: var(--border-light);
     }
 
+    .summary-row {
+        color: #cbd5e1;
+    }
+
+    .summary-row strong {
+        color: #f1f5f9;
+    }
+
     .payment-card {
         border-color: var(--border-light);
+        background: var(--bg-secondary);
+    }
+
+    .payment-info strong {
+        color: #f1f5f9;
+    }
+
+    .payment-info p {
+        color: #94a3b8;
     }
 
     .bank-details {
         background: var(--bg-tertiary);
+    }
+
+    .bank-details h3 {
+        color: #f1f5f9;
+    }
+
+    .bank-details p {
+        color: #cbd5e1;
     }
 
     .bank-info {
@@ -1453,16 +1543,34 @@ body {
         border-color: var(--border-light);
     }
 
+    .bank-info .info-row span {
+        color: #94a3b8;
+    }
+
+    .bank-info .info-row strong {
+        color: #f1f5f9;
+    }
+
     .info-row {
         border-bottom-color: var(--border-light);
     }
 
     .file-upload-area {
-        border-color: var(--gray-300);
+        border-color: #64748b;
+        background: var(--bg-tertiary);
     }
 
     .file-upload-area:hover {
-        background: rgba(233, 30, 99, 0.1);
+        background: rgba(233, 30, 99, 0.15);
+        border-color: var(--axkan-pink);
+    }
+
+    .upload-prompt p {
+        color: #cbd5e1;
+    }
+
+    .file-hint {
+        color: #94a3b8;
     }
 
     .modal {
@@ -1473,74 +1581,206 @@ body {
         background: var(--bg-secondary);
     }
 
+    /* Product search dark mode fix */
     .product-search {
         background: var(--bg-tertiary);
         border-color: var(--border-medium);
     }
 
     .product-search input {
-        color: var(--gray-900);
+        color: #f1f5f9;
+    }
+
+    .product-search input::placeholder {
+        color: #64748b;
+    }
+
+    .product-search-icon {
+        color: #94a3b8;
     }
 
     .category-pill {
         background: var(--bg-tertiary);
         border-color: var(--border-medium);
-        color: var(--gray-700);
+        color: #cbd5e1;
     }
 
     .category-pill:hover {
-        background: var(--gray-200);
+        background: #475569;
     }
 
-    .deposit-info-banner {
-        background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(194, 24, 91, 0.2));
-        border-color: rgba(233, 30, 99, 0.3);
-    }
-
-    .returning-client-banner {
-        background: linear-gradient(135deg, rgba(124, 179, 66, 0.2), rgba(104, 159, 56, 0.2));
-        border-color: rgba(124, 179, 66, 0.3);
-    }
-
-    .spei-tip {
-        background: rgba(30, 136, 229, 0.15);
-        border-color: rgba(30, 136, 229, 0.3);
-    }
-
-    .copy-btn {
+    /* Info boxes - readable text in dark mode */
+    .info-box {
         background: var(--bg-tertiary);
-        border-color: var(--border-medium);
+        border-left-color: var(--axkan-pink);
+    }
+
+    .info-box strong {
+        color: #f1f5f9;
+    }
+
+    .info-box p {
+        color: #cbd5e1 !important;
+    }
+
+    .info-box .icon {
+        filter: none;
+    }
+
+    /* Deposit info banner */
+    .deposit-info-banner {
+        background: var(--bg-tertiary);
+        border-color: var(--axkan-pink);
+    }
+
+    .deposit-info-text strong {
+        color: var(--axkan-pink);
+    }
+
+    .deposit-info-text p {
+        color: #cbd5e1;
+    }
+
+    /* Returning client banner */
+    .returning-client-banner {
+        background: var(--bg-tertiary);
+        border-color: var(--axkan-green);
+    }
+
+    .returning-text strong {
+        color: var(--axkan-green);
+    }
+
+    .returning-text p {
+        color: #cbd5e1;
+    }
+
+    /* SPEI tip - fix readability */
+    .spei-tip {
+        background: var(--bg-tertiary);
+        border-color: #42A5F5;
+        color: #90CAF9;
+    }
+
+    .spei-tip strong {
+        color: #64B5F6;
+    }
+
+    /* Copy button */
+    .copy-btn {
+        background: var(--bg-secondary);
+        border-color: #64748b;
     }
 
     .copy-btn .copy-text {
-        color: var(--gray-700);
+        color: #cbd5e1;
     }
 
+    /* Order summary card */
     .order-summary-card {
-        background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1));
+        background: var(--bg-tertiary);
+        border-color: var(--axkan-pink);
     }
 
+    .order-summary-card h3 {
+        color: #f1f5f9 !important;
+    }
+
+    .order-item-name {
+        color: #f1f5f9;
+    }
+
+    .order-item-details {
+        color: #94a3b8;
+    }
+
+    .order-item-price {
+        color: #f1f5f9;
+    }
+
+    /* Payment summary box */
     .payment-summary-box {
-        background: linear-gradient(135deg, rgba(233, 30, 99, 0.15), rgba(255, 152, 0, 0.15));
+        background: var(--bg-tertiary);
+        border-color: var(--axkan-pink);
     }
 
+    .payment-summary-box .summary-row span {
+        color: #cbd5e1;
+    }
+
+    .payment-summary-box .summary-row strong {
+        color: #f1f5f9;
+    }
+
+    /* Email confirmation notice */
     .email-confirmation-notice {
         background: var(--bg-tertiary);
         border-color: var(--border-medium);
-    }
-
-    .info-box {
-        background: linear-gradient(135deg, rgba(233, 30, 99, 0.15), rgba(255, 152, 0, 0.15));
+        color: #cbd5e1;
     }
 
     /* Success screen dark mode */
+    .success-container h2 {
+        -webkit-text-fill-color: var(--axkan-green);
+    }
+
+    .success-details p {
+        color: #cbd5e1;
+    }
+
     .order-number {
-        background: linear-gradient(135deg, rgba(233, 30, 99, 0.15), rgba(255, 152, 0, 0.15));
+        background: var(--bg-tertiary);
+        border-color: var(--axkan-pink);
+    }
+
+    .order-number strong {
+        color: var(--axkan-pink);
+    }
+
+    /* Confirm data display */
+    #confirm-data-display {
+        background: var(--bg-tertiary) !important;
+    }
+
+    #confirm-data-display div[style*="font-size: 12px"] {
+        color: #94a3b8 !important;
+    }
+
+    #confirm-data-display div[style*="font-size: 16px"],
+    #confirm-data-display div[style*="font-size: 14px"] {
+        color: #f1f5f9 !important;
     }
 
     /* Input errors in dark mode */
     .form-group input.error,
     .form-group textarea.error {
-        background-color: rgba(244, 67, 54, 0.15);
+        background-color: rgba(244, 67, 54, 0.2);
+        border-color: #ef4444;
+    }
+
+    /* Tier info boxes on product cards */
+    .tier-info > div {
+        background: linear-gradient(135deg, #059669, #047857) !important;
+    }
+
+    /* MOQ badge */
+    .product-moq-badge {
+        background: var(--axkan-pink);
+        color: white;
+    }
+
+    /* Required legend */
+    .required-legend {
+        color: #94a3b8;
+    }
+
+    /* Client notes textarea */
+    #client-notes {
+        background: var(--bg-tertiary);
+        color: #f1f5f9;
+    }
+
+    #client-notes::placeholder {
+        color: #64748b;
     }
 }
