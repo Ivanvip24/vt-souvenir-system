@@ -269,6 +269,9 @@ function initializeFilters() {
 function applyFilter(filter) {
   state.currentFilter = filter;
 
+  console.log(`🔍 Applying filter: ${filter}`);
+  console.log(`📦 Total orders in state: ${state.orders.length}`);
+
   // First apply status filter
   let filtered = state.orders;
 
@@ -304,6 +307,8 @@ function applyFilter(filter) {
   }
 
   state.filteredOrders = filtered;
+  console.log(`✅ Filtered orders: ${filtered.length}`);
+  filtered.forEach((o, i) => console.log(`  ${i+1}. ${o.orderNumber} - ${o.approvalStatus} - archive: ${o.archiveStatus}`));
   renderOrders();
 }
 
@@ -366,19 +371,24 @@ function renderOrders() {
   const container = document.getElementById('orders-container');
   const emptyState = document.getElementById('empty-state');
 
+  console.log(`🎨 renderOrders called with ${state.filteredOrders.length} orders`);
+
   container.innerHTML = '';
 
   if (state.filteredOrders.length === 0) {
+    console.log('⚠️ No orders to render, showing empty state');
     emptyState.classList.remove('hidden');
     return;
   }
 
+  console.log('📋 Rendering orders...');
   emptyState.classList.add('hidden');
 
   state.filteredOrders.forEach(order => {
     const card = createOrderCard(order);
     container.appendChild(card);
   });
+  console.log(`✅ Rendered ${container.children.length} order cards`);
 }
 
 function createOrderCard(order) {
