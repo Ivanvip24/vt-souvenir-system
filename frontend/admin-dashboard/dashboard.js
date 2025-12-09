@@ -389,8 +389,6 @@ function createOrderCard(order) {
   const isArchived = order.archiveStatus && order.archiveStatus !== 'active';
   if (isArchived) {
     card.className += ' order-completed';
-    card.style.opacity = '0.75';
-    card.style.background = '#f9fafb';
   }
 
   card.onclick = () => showOrderDetail(order.id);
@@ -398,11 +396,9 @@ function createOrderCard(order) {
   const statusClass = `status-${order.approvalStatus}`;
   const statusText = getStatusText(order.approvalStatus);
 
-  // Calculate total quantity
-  const totalQuantity = order.items ? order.items.reduce((sum, item) => sum + (item.quantity || 0), 0) : 0;
-
   card.innerHTML = `
-    <div class="order-header">
+    <!-- ROW 1: Order number, status, actions, date, archive buttons -->
+    <div class="order-row-1">
       ${!isArchived ? `
         <label class="order-checkbox" onclick="event.stopPropagation();">
           <input type="checkbox"
@@ -411,68 +407,43 @@ function createOrderCard(order) {
                  ${state.selectedOrders.has(Number(order.id)) ? 'checked' : ''}>
         </label>
       ` : ''}
-      <div class="order-title">
-        <h3>${order.orderNumber}</h3>
-        <span class="status-badge ${statusClass}">${statusText}</span>
-      </div>
+      <span class="order-number">${order.orderNumber}</span>
+      <span class="status-badge ${statusClass}">${statusText}</span>
       ${!isArchived && order.approvalStatus === 'pending_review' ? `
-        <div class="quick-actions">
-          <button class="quick-action-btn approve-btn" onclick="event.stopPropagation(); approveOrder(${order.id});" title="Aprobar pedido">
-            ✓
-          </button>
-          <button class="quick-action-btn reject-btn" onclick="event.stopPropagation(); rejectOrder(${order.id});" title="Rechazar pedido">
-            ✕
-          </button>
-        </div>
+        <button class="action-btn approve" onclick="event.stopPropagation(); approveOrder(${order.id});">✓</button>
+        <button class="action-btn reject" onclick="event.stopPropagation(); rejectOrder(${order.id});">✕</button>
       ` : ''}
-      <div class="order-date-header">
+      <div class="order-date">
         <span class="date-label">Fecha del pedido</span>
         <span class="date-value">${formatDateFull(order.orderDate)}</span>
       </div>
       ${!isArchived ? `
-        <div class="archive-actions">
-          <button class="archive-btn complete" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'completo');">
-            ✓ Completo
-          </button>
-          <button class="archive-btn cancel" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'cancelado');">
-            ✕ Cancelado
-          </button>
-        </div>
-      ` : `
-        <div class="archive-status-badge ${order.archiveStatus}">
-          ${order.archiveStatus === 'completo' ? '✓ Completo' : '✕ Cancelado'}
-        </div>
-      `}
+        <button class="archive-btn complete" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'completo');">✓ Completo</button>
+        <button class="archive-btn cancel" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'cancelado');">✕ Cancelado</button>
+      ` : ''}
     </div>
 
-    <div class="order-body">
-      <div class="order-left">
-        <div class="client-info">
-          <span class="info-label">CLIENTE</span>
-          <span class="info-value">${order.clientName}</span>
+    <!-- ROW 2: Client, Total, Deadline, Delivery -->
+    <div class="order-row-2">
+      <div class="col-left">
+        <div class="field">
+          <span class="field-label">CLIENTE</span>
+          <span class="field-value">${order.clientName}</span>
         </div>
-        <div class="order-totals">
-          <span class="total-label">TOTAL</span>
-          <span class="total-value">${formatCurrency(order.totalPrice)}</span>
+        <div class="field">
+          <span class="field-label">TOTAL</span>
+          <span class="field-value total">${formatCurrency(order.totalPrice)}</span>
         </div>
       </div>
-
-      <div class="order-right">
-        ${order.productionDeadline ? `
-        <div class="deadline-info">
-          <span class="deadline-icon">🏭</span>
-          <div>
-            <span class="deadline-label">DEADLINE PRODUCCIÓN</span>
-            <span class="deadline-value">${formatDate(order.productionDeadline)}</span>
-          </div>
+      <div class="col-right">
+        <div class="field deadline">
+          <span class="field-label">🏭 DEADLINE PRODUCCIÓN</span>
+          <span class="field-value">${formatDate(order.productionDeadline)}</span>
         </div>
-        ` : ''}
-        ${order.estimatedDeliveryDate ? `
-        <div class="delivery-info">
-          <span class="delivery-label">Entrega estimada</span>
-          <span class="delivery-value">${formatDate(order.estimatedDeliveryDate)}</span>
+        <div class="field">
+          <span class="field-label">Entrega estimada</span>
+          <span class="field-value delivery">${formatDate(order.estimatedDeliveryDate)}</span>
         </div>
-        ` : ''}
       </div>
     </div>
   `;
@@ -485,11 +456,18 @@ function formatDateFull(dateString) {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
   if (isNaN(date)) return 'N/A';
-  return date.toLocaleDateString('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
+
+  const day = date.getDate();
+  const month = date.toLocaleDateString('es-MX', { month: 'short' });
+  const year = date.getFullYear();
+
+  // Get time
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
+  const hour12 = hours % 12 || 12;
+
+  return `${day} ${month} ${year}`;
 }
 
 // ==========================================

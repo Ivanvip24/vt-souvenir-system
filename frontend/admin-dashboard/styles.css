@@ -394,60 +394,62 @@ body {
 }
 
 /* ==========================================
-   ORDER CARD - Clean Minimal Layout
+   ORDER CARD - Exact Layout Match
    ========================================== */
 
 .order-card {
     background: white;
     border: 2px solid var(--gray-200);
     border-radius: 16px;
-    padding: 0;
+    padding: 20px 24px;
     transition: all 0.2s;
     cursor: pointer;
-    overflow: hidden;
+    margin-bottom: 16px;
 }
 
 .order-card:hover {
     border-color: var(--primary);
-    box-shadow: 0 8px 24px rgba(233, 30, 99, 0.12);
-    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(233, 30, 99, 0.15);
 }
 
 .order-card.order-completed {
-    border-color: var(--gray-200);
+    opacity: 0.6;
+    background: var(--gray-50);
 }
 
-/* Order Header */
-.order-header {
+/* ROW 1: Order number, status, actions, date, archive buttons */
+.order-row-1 {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--gray-100);
-    flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
-.order-title {
+.order-checkbox {
     display: flex;
     align-items: center;
-    gap: 10px;
 }
 
-.order-title h3 {
-    font-size: 16px;
-    color: var(--gray-900);
+.order-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.order-number {
+    font-size: 15px;
     font-weight: 700;
-    margin: 0;
+    color: var(--gray-900);
 }
 
 /* Status Badge */
 .status-badge {
-    padding: 5px 12px;
-    border-radius: 20px;
+    padding: 4px 12px;
+    border-radius: 6px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
 }
 
 .status-pending_review {
@@ -470,82 +472,67 @@ body {
     color: #991b1b;
 }
 
-/* Quick Action Buttons */
-.quick-actions {
-    display: flex;
-    gap: 6px;
-}
-
-.quick-action-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+/* Action buttons (approve/reject) */
+.action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     border: 2px solid;
     background: white;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
-    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    transition: all 0.2s;
 }
 
-.approve-btn {
+.action-btn.approve {
     color: #10b981;
     border-color: #10b981;
 }
 
-.approve-btn:hover {
+.action-btn.approve:hover {
     background: #10b981;
     color: white;
-    transform: scale(1.05);
 }
 
-.reject-btn {
+.action-btn.reject {
     color: #ef4444;
     border-color: #ef4444;
 }
 
-.reject-btn:hover {
+.action-btn.reject:hover {
     background: #ef4444;
     color: white;
-    transform: scale(1.05);
 }
 
-/* Date in header */
-.order-date-header {
-    display: flex;
-    flex-direction: column;
+/* Date display */
+.order-date {
     margin-left: auto;
-    text-align: right;
+    text-align: left;
 }
 
-.order-date-header .date-label {
+.order-date .date-label {
+    display: block;
     font-size: 11px;
     color: var(--gray-500);
     font-weight: 500;
-    text-transform: uppercase;
 }
 
-.order-date-header .date-value {
+.order-date .date-value {
+    display: block;
     font-size: 14px;
     color: var(--gray-900);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 /* Archive buttons */
-.archive-actions {
-    display: flex;
-    gap: 6px;
-    margin-left: 12px;
-}
-
 .archive-btn {
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     border: none;
@@ -570,178 +557,92 @@ body {
     background: #dc2626;
 }
 
-/* Archive status badge */
-.archive-status-badge {
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    margin-left: auto;
-}
-
-.archive-status-badge.completo {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.archive-status-badge.cancelado {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-/* Order Body - Two Column Layout */
-.order-body {
+/* ROW 2: Two column layout */
+.order-row-2 {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 20px;
-    gap: 24px;
 }
 
-.order-left {
+.col-left {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
-.order-right {
+.col-right {
     display: flex;
     flex-direction: column;
     gap: 8px;
     text-align: right;
 }
 
-/* Client info */
-.client-info {
+/* Field styling */
+.field {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-.client-info .info-label {
+.field-label {
     font-size: 11px;
     color: var(--gray-500);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
-.client-info .info-value {
+.field-value {
     font-size: 15px;
     color: var(--gray-900);
     font-weight: 600;
 }
 
-/* Order totals */
-.order-totals {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.order-totals .total-label {
-    font-size: 11px;
-    color: var(--gray-500);
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.order-totals .total-value {
-    font-size: 22px;
+.field-value.total {
+    font-size: 18px;
     color: var(--primary);
     font-weight: 800;
 }
 
-/* Deadline info */
-.deadline-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #fef3c7;
-    padding: 8px 12px;
-    border-radius: 8px;
+/* Deadline field */
+.field.deadline .field-label {
+    color: #b45309;
 }
 
-.deadline-info .deadline-icon {
-    font-size: 18px;
-}
-
-.deadline-info .deadline-label {
-    font-size: 10px;
-    color: #92400e;
-    font-weight: 600;
-    text-transform: uppercase;
-    display: block;
-}
-
-.deadline-info .deadline-value {
-    font-size: 14px;
-    color: #92400e;
+.field.deadline .field-value {
+    color: #b45309;
     font-weight: 700;
-    display: block;
 }
 
-/* Delivery info */
-.delivery-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.delivery-info .delivery-label {
-    font-size: 11px;
-    color: var(--gray-500);
-    font-weight: 500;
-}
-
-.delivery-info .delivery-value {
-    font-size: 14px;
+/* Delivery date */
+.field-value.delivery {
     color: #059669;
     font-weight: 700;
 }
 
-/* Checkbox styling */
-.order-checkbox {
-    display: flex;
-    align-items: center;
+/* Legacy styles hidden */
+.order-meta,
+.order-header,
+.order-body,
+.order-title,
+.quick-actions,
+.quick-action-btn,
+.order-date-header,
+.archive-actions,
+.archive-status-badge,
+.order-left,
+.order-right,
+.client-info,
+.order-totals,
+.deadline-info,
+.delivery-info {
+    /* Hidden - using new layout */
 }
 
-.order-checkbox input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: var(--primary);
-}
-
-/* Legacy meta styles (for backwards compatibility) */
-.order-meta {
-    display: none;
-}
-
-.meta-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.meta-label {
-    font-size: 12px;
-    color: var(--gray-600);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-}
-
+.meta-item,
+.meta-label,
 .meta-value {
-    font-size: 15px;
-    color: var(--gray-900);
-    font-weight: 500;
-}
-
-.meta-value.highlight {
-    color: var(--primary);
-    font-size: 18px;
-    font-weight: 700;
+    display: none;
 }
 
 /* ==========================================
