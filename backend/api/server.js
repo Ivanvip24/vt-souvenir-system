@@ -1477,6 +1477,252 @@ app.get('/api/test/email-config', (req, res) => {
 });
 
 // ========================================
+// CLIENTS DATABASE (Admin - Shipping/Envíos)
+// ========================================
+
+/**
+ * GET /api/clients
+ * Get all clients with address information for shipping database
+ */
+app.get('/api/clients', async (req, res) => {
+  try {
+    const { search, city, state, hasAddress, page = 1, limit = 50 } = req.query;
+
+    const conditions = [];
+    const params = [];
+    let paramIndex = 1;
+
+    // Search filter (name, phone, email, address)
+    if (search) {
+      conditions.push(`(
+        c.name ILIKE $${paramIndex} OR
+        c.phone ILIKE $${paramIndex} OR
+        c.email ILIKE $${paramIndex} OR
+        c.address ILIKE $${paramIndex} OR
+        c.city ILIKE $${paramIndex}
+      )`);
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    // City filter
+    if (city) {
+      conditions.push(`c.city = $${paramIndex++}`);
+      params.push(city);
+    }
+
+    // State filter
+    if (state) {
+      conditions.push(`c.state = $${paramIndex++}`);
+      params.push(state);
+    }
+
+    // Has address filter
+    if (hasAddress === 'true') {
+      conditions.push(`(c.address IS NOT NULL AND c.address != '')`);
+    } else if (hasAddress === 'false') {
+      conditions.push(`(c.address IS NULL OR c.address = '')`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Get total count
+    const countResult = await query(`SELECT COUNT(*) as total FROM clients c ${whereClause}`, params);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Get paginated clients
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const result = await query(`
+      SELECT
+        c.id,
+        c.name,
+        c.phone,
+        c.email,
+        c.address,
+        c.street,
+        c.street_number,
+        c.colonia,
+        c.city,
+        c.state,
+        c.postal_code,
+        c.reference_notes,
+        c.created_at,
+        c.updated_at,
+        COUNT(DISTINCT o.id) as order_count,
+        MAX(o.order_date) as last_order_date
+      FROM clients c
+      LEFT JOIN orders o ON c.id = o.client_id
+      ${whereClause}
+      GROUP BY c.id
+      ORDER BY c.name ASC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex}
+    `, [...params, parseInt(limit), offset]);
+
+    // Get unique cities and states for filters
+    const citiesResult = await query(`
+      SELECT DISTINCT city FROM clients WHERE city IS NOT NULL AND city != '' ORDER BY city
+    `);
+    const statesResult = await query(`
+      SELECT DISTINCT state FROM clients WHERE state IS NOT NULL AND state != '' ORDER BY state
+    `);
+
+    // Get stats
+    const statsResult = await query(`
+      SELECT
+        COUNT(*) as total_clients,
+        COUNT(CASE WHEN address IS NOT NULL AND address != '' THEN 1 END) as with_address,
+        COUNT(DISTINCT city) as unique_cities
+      FROM clients
+    `);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit))
+      },
+      filters: {
+        cities: citiesResult.rows.map(r => r.city),
+        states: statesResult.rows.map(r => r.state)
+      },
+      stats: statsResult.rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching clients:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/clients/:id
+ * Get single client by ID
+ */
+app.get('/api/clients/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(`
+      SELECT
+        c.*,
+        json_agg(
+          json_build_object(
+            'id', o.id,
+            'orderNumber', o.order_number,
+            'orderDate', o.order_date,
+            'totalPrice', o.total_price,
+            'status', o.status
+          ) ORDER BY o.order_date DESC
+        ) FILTER (WHERE o.id IS NOT NULL) as orders
+      FROM clients c
+      LEFT JOIN orders o ON c.id = o.client_id
+      WHERE c.id = $1
+      GROUP BY c.id
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Client not found' });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error('Error fetching client:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/clients
+ * Create a new client
+ */
+app.post('/api/clients', async (req, res) => {
+  try {
+    const { name, phone, email, address, city, state, postal_code } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ success: false, error: 'Name is required' });
+    }
+
+    const result = await query(`
+      INSERT INTO clients (name, phone, email, address, city, state, postal_code)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `, [name, phone || null, email || null, address || null, city || null, state || null, postal_code || null]);
+
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error('Error creating client:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * PUT /api/clients/:id
+ * Update a client
+ */
+app.put('/api/clients/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, phone, email, address, city, state, postal_code } = req.body;
+
+    const result = await query(`
+      UPDATE clients
+      SET name = COALESCE($1, name),
+          phone = COALESCE($2, phone),
+          email = COALESCE($3, email),
+          address = COALESCE($4, address),
+          city = COALESCE($5, city),
+          state = COALESCE($6, state),
+          postal_code = COALESCE($7, postal_code),
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $8
+      RETURNING *
+    `, [name, phone, email, address, city, state, postal_code, id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Client not found' });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating client:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/clients/:id
+ * Delete a client (only if no orders)
+ */
+app.delete('/api/clients/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if client has orders
+    const ordersCheck = await query('SELECT COUNT(*) as count FROM orders WHERE client_id = $1', [id]);
+    if (parseInt(ordersCheck.rows[0].count) > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se puede eliminar un cliente con pedidos existentes'
+      });
+    }
+
+    const result = await query('DELETE FROM clients WHERE id = $1 RETURNING *', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Client not found' });
+    }
+
+    res.json({ success: true, message: 'Client deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ========================================
 // FRONTEND ROUTES (Serve HTML pages)
 // ========================================
 
