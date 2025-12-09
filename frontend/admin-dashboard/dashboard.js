@@ -451,7 +451,7 @@ function createOrderCard(order) {
   return card;
 }
 
-// Helper function for full date format
+// Helper function for full date format with time
 function formatDateFull(dateString) {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
@@ -461,13 +461,13 @@ function formatDateFull(dateString) {
   const month = date.toLocaleDateString('es-MX', { month: 'short' });
   const year = date.getFullYear();
 
-  // Get time
+  // Get time in 12-hour format
   const hours = date.getHours();
   const minutes = date.getMinutes().toString().padStart(2, '0');
   const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
   const hour12 = hours % 12 || 12;
 
-  return `${day} ${month} ${year}`;
+  return `${day} ${month} ${year}, ${hour12}:${minutes} ${ampm}`;
 }
 
 // ==========================================
