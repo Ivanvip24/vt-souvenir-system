@@ -11,6 +11,7 @@ import * as notionSync from '../agents/notion-agent/sync.js';
 import * as emailSender from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
+import { calculateDeliveryDates } from '../utils/delivery-calculator.js';
 
 const router = express.Router();
 
@@ -278,6 +279,22 @@ router.post('/orders/submit', async (req, res) => {
     // 3. Create order
     const orderNumber = generateOrderNumber();
 
+    // Calculate delivery dates based on order quantity
+    const totalQuantity = orderItems.reduce((sum, item) => sum + item.quantity, 0);
+    const deliveryDates = calculateDeliveryDates({
+      orderDate: new Date(),
+      totalQuantity,
+      eventDate: eventDate || null,
+      shippingMethod: 'standard'
+    });
+
+    console.log(`📅 Delivery dates calculated for ${totalQuantity} items:`);
+    console.log(`   Production deadline: ${deliveryDates.productionDeadlineFormatted}`);
+    console.log(`   Estimated delivery: ${deliveryDates.estimatedDeliveryFormatted}`);
+    if (deliveryDates.isRushOrder) {
+      console.log(`   ⚠️ RUSH ORDER - Event date is before estimated delivery!`);
+    }
+
     const orderResult = await query(
       `INSERT INTO orders (
         order_number,
@@ -295,8 +312,11 @@ router.post('/orders/submit', async (req, res) => {
         approval_status,
         status,
         department,
-        deposit_paid
-      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false)
+        deposit_paid,
+        production_deadline,
+        estimated_delivery_date,
+        shipping_days
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14)
       RETURNING id`,
       [
         orderNumber,
@@ -309,7 +329,10 @@ router.post('/orders/submit', async (req, res) => {
         orderItems.reduce((sum, item) => sum + (item.unitCost * item.quantity), 0),
         depositAmount,
         paymentMethod,
-        paymentProofUrl || null
+        paymentProofUrl || null,
+        deliveryDates.productionDeadline,
+        deliveryDates.estimatedDeliveryDate,
+        deliveryDates.shippingDays
       ]
     );
 
@@ -820,26 +843,302 @@ router.post('/orders/lookup', async (req, res) => {
 // HELPER FUNCTIONS
 // ========================================
 
-async function sendAdminNotification(orderId, orderNumber, clientName, total, deposit) {
-  const emailBody = `
-    <h2>Nuevo Pedido Recibido</h2>
-    <p><strong>Número de Pedido:</strong> ${orderNumber}</p>
-    <p><strong>Cliente:</strong> ${clientName}</p>
-    <p><strong>Total:</strong> ${formatCurrency(total)}</p>
-    <p><strong>Anticipo:</strong> ${formatCurrency(deposit)}</p>
-    <p><strong>Estado:</strong> Pendiente de revisión</p>
-    <p>
-      <a href="${process.env.ADMIN_DASHBOARD_URL || 'http://localhost:3000'}/admin/orders/${orderId}">
-        Ver Pedido en Dashboard
-      </a>
-    </p>
-  `;
+/**
+ * Trigger Make.com webhook for instant phone notifications
+ * Configure MAKE_WEBHOOK_URL in environment variables
+ */
+async function triggerMakeWebhook(data) {
+  const webhookUrl = process.env.MAKE_WEBHOOK_URL;
 
-  await emailSender.sendEmail({
-    to: process.env.ADMIN_EMAIL || process.env.REPORT_RECIPIENTS,
-    subject: `🆕 Nuevo Pedido: ${orderNumber}`,
-    html: emailBody
-  });
+  if (!webhookUrl) {
+    console.log('ℹ️  Make.com webhook not configured (MAKE_WEBHOOK_URL not set)');
+    return { success: false, reason: 'webhook_not_configured' };
+  }
+
+  try {
+    console.log('📲 Triggering Make.com webhook for instant notification...');
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...data,
+        source: 'axkan_pedidos',
+        environment: process.env.NODE_ENV || 'development'
+      })
+    });
+
+    if (response.ok) {
+      console.log('✅ Make.com webhook triggered successfully');
+      return { success: true };
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Make.com webhook failed:', response.status, errorText);
+      return { success: false, error: errorText };
+    }
+  } catch (error) {
+    console.error('❌ Error triggering Make.com webhook:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+async function sendAdminNotification(orderId, orderNumber, clientName, total, deposit, orderDetails = {}) {
+  try {
+    // Fetch complete order details from database
+    const orderResult = await query(`
+      SELECT
+        o.*,
+        c.name as client_name,
+        c.phone as client_phone,
+        c.email as client_email,
+        c.street as client_street,
+        c.street_number as client_street_number,
+        c.colonia as client_colonia,
+        c.city as client_city,
+        c.state as client_state,
+        c.postal as client_postal,
+        c.reference_notes as client_references,
+        json_agg(
+          json_build_object(
+            'product_name', oi.product_name,
+            'quantity', oi.quantity,
+            'unit_price', oi.unit_price,
+            'line_total', oi.quantity * oi.unit_price
+          )
+        ) FILTER (WHERE oi.id IS NOT NULL) as items
+      FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE o.id = $1
+      GROUP BY o.id, c.name, c.phone, c.email, c.street, c.street_number, c.colonia, c.city, c.state, c.postal, c.reference_notes
+    `, [orderId]);
+
+    const order = orderResult.rows[0];
+    const items = order.items || [];
+
+    // Build items table HTML
+    const itemsTableRows = items.map(item => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.product_name}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.unit_price)}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.line_total)}</td>
+      </tr>
+    `).join('');
+
+    // Calculate remaining balance
+    const remainingBalance = total - deposit;
+
+    // Build full address
+    const fullAddress = [
+      order.client_street,
+      order.client_street_number,
+      order.client_colonia,
+      order.client_city,
+      order.client_state,
+      order.client_postal ? `CP ${order.client_postal}` : ''
+    ].filter(Boolean).join(', ');
+
+    const emailBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 650px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+          .header h1 { margin: 0; font-size: 24px; }
+          .badge { display: inline-block; background: #FEF3C7; color: #92400E; padding: 6px 14px; border-radius: 20px; font-weight: bold; margin-top: 10px; }
+          .content { background: white; padding: 25px; border: 1px solid #E5E7EB; }
+          .section { margin: 20px 0; padding: 15px; background: #F9FAFB; border-radius: 8px; }
+          .section-title { font-size: 14px; text-transform: uppercase; color: #6B7280; font-weight: bold; margin-bottom: 10px; letter-spacing: 0.5px; }
+          .info-row { display: flex; margin: 8px 0; }
+          .info-label { font-weight: bold; color: #374151; min-width: 120px; }
+          .info-value { color: #111827; }
+          .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+          .items-table th { background: #F3F4F6; padding: 12px 10px; text-align: left; font-size: 13px; text-transform: uppercase; color: #6B7280; }
+          .totals { background: #ECFDF5; padding: 15px; border-radius: 8px; margin: 20px 0; }
+          .total-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #D1FAE5; }
+          .total-row:last-child { border-bottom: none; font-size: 18px; font-weight: bold; color: #059669; }
+          .payment-info { background: #FEF3C7; padding: 15px; border-radius: 8px; border-left: 4px solid #F59E0B; }
+          .cta-button { display: inline-block; background: #059669; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; margin-top: 20px; }
+          .footer { background: #F3F4F6; padding: 15px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #6B7280; }
+          .receipt-image { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 2px solid #E5E7EB; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🛒 Nuevo Pedido Recibido</h1>
+            <div class="badge">Pendiente de Revisión</div>
+          </div>
+
+          <div class="content">
+            <!-- Order Info -->
+            <div class="section">
+              <div class="section-title">📋 Información del Pedido</div>
+              <div class="info-row">
+                <span class="info-label">Número:</span>
+                <span class="info-value"><strong>${orderNumber}</strong></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Fecha:</span>
+                <span class="info-value">${new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              </div>
+              ${order.event_type ? `
+              <div class="info-row">
+                <span class="info-label">Tipo de Evento:</span>
+                <span class="info-value">${order.event_type}</span>
+              </div>
+              ` : ''}
+              ${order.event_date ? `
+              <div class="info-row">
+                <span class="info-label">Fecha del Evento:</span>
+                <span class="info-value" style="color: #7C3AED; font-weight: bold;">${new Date(order.event_date).toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            <!-- Client Info -->
+            <div class="section">
+              <div class="section-title">👤 Datos del Cliente</div>
+              <div class="info-row">
+                <span class="info-label">Nombre:</span>
+                <span class="info-value">${order.client_name}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Teléfono:</span>
+                <span class="info-value">${order.client_phone}</span>
+              </div>
+              ${order.client_email ? `
+              <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">${order.client_email}</span>
+              </div>
+              ` : ''}
+              <div class="info-row">
+                <span class="info-label">Dirección:</span>
+                <span class="info-value">${fullAddress || 'No especificada'}</span>
+              </div>
+              ${order.client_references ? `
+              <div class="info-row">
+                <span class="info-label">Referencias:</span>
+                <span class="info-value">${order.client_references}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            <!-- Products -->
+            <div class="section-title" style="margin-top: 25px;">🎁 Productos</div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th style="text-align: center;">Cantidad</th>
+                  <th style="text-align: right;">Precio Unitario</th>
+                  <th style="text-align: right;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsTableRows}
+              </tbody>
+            </table>
+
+            <!-- Totals -->
+            <div class="totals">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>${formatCurrency(total)}</span>
+              </div>
+              <div class="total-row">
+                <span>Anticipo (${order.deposit_amount ? Math.round((deposit / total) * 100) : 50}%):</span>
+                <span>${formatCurrency(deposit)}</span>
+              </div>
+              <div class="total-row">
+                <span>Saldo Restante:</span>
+                <span style="color: #B45309;">${formatCurrency(remainingBalance)}</span>
+              </div>
+              <div class="total-row" style="margin-top: 10px; padding-top: 15px; border-top: 2px solid #059669;">
+                <span>TOTAL:</span>
+                <span>${formatCurrency(total)}</span>
+              </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="payment-info">
+              <div class="section-title" style="color: #92400E;">💳 Método de Pago</div>
+              <p style="margin: 5px 0;">
+                <strong>${order.payment_method === 'stripe' ? '💳 Tarjeta (Stripe)' : '🏦 Transferencia Bancaria'}</strong>
+              </p>
+              ${order.payment_proof_url ? `
+              <p style="margin: 10px 0 5px;">Comprobante adjunto:</p>
+              <img src="${order.payment_proof_url}" alt="Comprobante de pago" class="receipt-image" style="max-height: 300px;">
+              ` : ''}
+            </div>
+
+            ${order.client_notes ? `
+            <div class="section" style="background: #FEF3C7;">
+              <div class="section-title" style="color: #92400E;">📝 Notas del Cliente</div>
+              <p style="margin: 5px 0;">${order.client_notes}</p>
+            </div>
+            ` : ''}
+
+            <div style="text-align: center;">
+              <a href="${process.env.ADMIN_DASHBOARD_URL || 'https://vt-souvenir-backend.onrender.com'}/admin/" class="cta-button">
+                Ver en Dashboard →
+              </a>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Este es un correo automático del sistema AXKAN Pedidos.</p>
+            <p>Recibido el ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'short' })}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Prepare attachments (receipt image if available)
+    const attachments = [];
+
+    // If there's a payment proof URL and it's a downloadable image, we could attach it
+    // For now, the image is embedded in the email via URL
+
+    // Send email to admin
+    const adminEmail = 'valenciaperezivan24@gmail.com';
+
+    await emailSender.sendEmail({
+      to: adminEmail,
+      subject: `🛒 Nuevo Pedido: ${orderNumber} - ${clientName}`,
+      html: emailBody,
+      attachments
+    });
+
+    console.log(`✅ Admin notification email sent to ${adminEmail} for order ${orderNumber}`);
+
+    // Also trigger Make.com webhook for instant phone notifications
+    await triggerMakeWebhook({
+      type: 'new_order',
+      orderNumber,
+      clientName,
+      clientPhone: order.client_phone,
+      total,
+      deposit,
+      paymentMethod: order.payment_method,
+      eventDate: order.event_date,
+      eventType: order.event_type,
+      itemCount: items.length,
+      itemsSummary: items.map(i => `${i.quantity}x ${i.product_name}`).join(', '),
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending admin notification:', error);
+    throw error;
+  }
 }
 
 async function sendPaymentProofNotification(orderId) {

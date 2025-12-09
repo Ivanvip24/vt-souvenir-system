@@ -189,6 +189,9 @@ app.get('/api/orders', async (req, res) => {
         o.shipping_label_generated,
         o.tracking_number,
         o.delivery_date,
+        o.production_deadline,
+        o.estimated_delivery_date,
+        o.shipping_days,
         o.notes,
         o.internal_notes,
         o.notion_page_id,
@@ -266,6 +269,10 @@ app.get('/api/orders', async (req, res) => {
       shippingLabelGenerated: order.shipping_label_generated || false,
       trackingNumber: order.tracking_number || '',
       deliveryDate: order.delivery_date,
+      // Delivery dates (admin only)
+      productionDeadline: order.production_deadline,
+      estimatedDeliveryDate: order.estimated_delivery_date,
+      shippingDays: order.shipping_days || 5,
       // Notion sync
       notionPageId: order.notion_page_id,
       notionPageUrl: order.notion_page_url,
@@ -328,6 +335,9 @@ app.get('/api/orders/:orderId', async (req, res) => {
         o.shipping_label_generated,
         o.tracking_number,
         o.delivery_date,
+        o.production_deadline,
+        o.estimated_delivery_date,
+        o.shipping_days,
         o.notes,
         o.internal_notes,
         o.notion_page_id,
@@ -412,6 +422,10 @@ app.get('/api/orders/:orderId', async (req, res) => {
       shippingLabelGenerated: order.shipping_label_generated || false,
       trackingNumber: order.tracking_number || '',
       deliveryDate: order.delivery_date,
+      // Delivery dates (admin only)
+      productionDeadline: order.production_deadline,
+      estimatedDeliveryDate: order.estimated_delivery_date,
+      shippingDays: order.shipping_days || 5,
       // Notion sync
       notionPageId: order.notion_page_id,
       notionPageUrl: order.notion_page_url,
