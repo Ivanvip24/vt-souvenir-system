@@ -1694,21 +1694,16 @@ app.put('/api/clients/:id', async (req, res) => {
 
 /**
  * DELETE /api/clients/:id
- * Delete a client (only if no orders)
+ * Delete a client (sets client_id to NULL on orders if any exist)
  */
 app.delete('/api/clients/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if client has orders
-    const ordersCheck = await query('SELECT COUNT(*) as count FROM orders WHERE client_id = $1', [id]);
-    if (parseInt(ordersCheck.rows[0].count) > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'No se puede eliminar un cliente con pedidos existentes'
-      });
-    }
+    // First, unlink any orders from this client (set client_id to NULL)
+    await query('UPDATE orders SET client_id = NULL WHERE client_id = $1', [id]);
 
+    // Then delete the client
     const result = await query('DELETE FROM clients WHERE id = $1 RETURNING *', [id]);
 
     if (result.rows.length === 0) {

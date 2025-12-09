@@ -565,14 +565,14 @@ async function viewClientOrders(clientId) {
 }
 
 async function deleteClient(clientId, clientName, orderCount) {
-  // Check if client has orders
+  // Show warning if client has orders, but still allow deletion
+  let confirmMessage = `¿Estás seguro que deseas eliminar a "${clientName}"?\n\nEsta acción no se puede deshacer.`;
+
   if (orderCount > 0) {
-    showNotification(`No se puede eliminar "${clientName}" porque tiene ${orderCount} pedido(s)`, 'warning');
-    return;
+    confirmMessage = `⚠️ ADVERTENCIA: "${clientName}" tiene ${orderCount} pedido(s) asociado(s).\n\nSi eliminas este cliente, los pedidos quedarán sin cliente asignado.\n\n¿Deseas continuar de todos modos?`;
   }
 
-  // Confirm deletion
-  const confirmed = confirm(`¿Estás seguro que deseas eliminar a "${clientName}"?\n\nEsta acción no se puede deshacer.`);
+  const confirmed = confirm(confirmMessage);
 
   if (!confirmed) return;
 
