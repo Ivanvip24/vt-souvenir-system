@@ -329,16 +329,20 @@ async function loadOrders() {
   refreshBtn?.classList.add('refreshing');
 
   try {
+    console.log(`📡 Fetching orders from: ${API_BASE}/orders`);
     const response = await fetch(`${API_BASE}/orders`, {
       headers: getAuthHeaders()
     });
+    console.log(`📡 Response status: ${response.status}`);
     const data = await response.json();
+    console.log(`📡 API response:`, data.success, `- Count: ${data.count || 0}`);
 
     if (!data.success) {
       throw new Error(data.error || 'Error al cargar pedidos');
     }
 
     state.orders = data.data || [];
+    console.log(`📦 Loaded ${state.orders.length} orders into state`);
     applyFilter(state.currentFilter);
     updateStats();
 
