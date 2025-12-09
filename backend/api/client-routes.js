@@ -12,6 +12,7 @@ import * as emailSender from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { calculateDeliveryDates } from '../utils/delivery-calculator.js';
+import { calculateTieredPrice, MOQ } from '../shared/pricing.js';
 
 const router = express.Router();
 
@@ -179,7 +180,7 @@ router.post('/orders/submit', async (req, res) => {
       }
     }
 
-    // 1. Calculate totals and prepare order items
+    // 1. Calculate totals and prepare order items WITH SERVER-SIDE TIERED PRICING
     let subtotal = 0;
     const orderItems = [];
 
@@ -199,16 +200,43 @@ router.post('/orders/submit', async (req, res) => {
       }
 
       const product = productResult.rows[0];
-      const lineTotal = product.base_price * item.quantity;
+
+      // SERVER-SIDE TIERED PRICING - This is the SOURCE OF TRUTH
+      const pricing = calculateTieredPrice(
+        product.name,
+        item.quantity,
+        product.base_price
+      );
+
+      // Validate minimum order quantity
+      if (!pricing.isValid) {
+        await query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: pricing.error
+        });
+      }
+
+      // Log if client sent different price (potential manipulation attempt)
+      if (item.unitPrice && Math.abs(parseFloat(item.unitPrice) - pricing.unitPrice) > 0.01) {
+        console.warn(`⚠️ PRICE MISMATCH DETECTED for ${product.name}:`);
+        console.warn(`   Client sent: $${item.unitPrice}`);
+        console.warn(`   Server calculated: $${pricing.unitPrice}`);
+        console.warn(`   Using server price (secure)`);
+      }
+
+      const unitPrice = pricing.unitPrice; // ALWAYS use server-calculated price
+      const lineTotal = unitPrice * item.quantity;
       subtotal += lineTotal;
 
       orderItems.push({
         productId: product.id,
         productName: product.name,
         quantity: item.quantity,
-        unitPrice: product.base_price,
+        unitPrice: unitPrice,
         unitCost: product.production_cost,
-        lineTotal
+        lineTotal,
+        tierInfo: pricing.tierInfo
       });
     }
 
