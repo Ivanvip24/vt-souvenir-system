@@ -184,6 +184,9 @@ function renderShippingTable() {
         <button class="action-btn view-btn" onclick="viewClientOrders(${client.id})" title="Ver pedidos">
           📦
         </button>
+        <button class="action-btn delete-btn" onclick="deleteClient(${client.id}, '${escapeHtml(client.name).replace(/'/g, "\\'")}', ${client.order_count || 0})" title="Eliminar">
+          🗑️
+        </button>
       </td>
     </tr>
   `).join('');
@@ -558,6 +561,38 @@ async function viewClientOrders(clientId) {
   } catch (error) {
     console.error('Error viewing orders:', error);
     showNotification('Error al cargar pedidos', 'error');
+  }
+}
+
+async function deleteClient(clientId, clientName, orderCount) {
+  // Check if client has orders
+  if (orderCount > 0) {
+    showNotification(`No se puede eliminar "${clientName}" porque tiene ${orderCount} pedido(s)`, 'warning');
+    return;
+  }
+
+  // Confirm deletion
+  const confirmed = confirm(`¿Estás seguro que deseas eliminar a "${clientName}"?\n\nEsta acción no se puede deshacer.`);
+
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/clients/${clientId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to delete client');
+    }
+
+    showNotification(`Cliente "${clientName}" eliminado`, 'success');
+    loadShippingData();
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    showNotification(error.message || 'Error al eliminar cliente', 'error');
   }
 }
 

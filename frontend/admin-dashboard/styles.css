@@ -2001,6 +2001,10 @@ body {
   background: #DBEAFE;
 }
 
+.action-btn.delete-btn:hover {
+  background: #FEE2E2;
+}
+
 /* Pagination */
 .shipping-pagination {
   display: flex;
