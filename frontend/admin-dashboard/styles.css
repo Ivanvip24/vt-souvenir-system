@@ -1484,3 +1484,479 @@ body {
     margin-top: 8px;
   }
 }
+
+/* ==========================================
+   SHIPPING / CLIENTS DATABASE VIEW
+   Notion-like database styling
+   ========================================== */
+
+/* Filters Bar */
+.shipping-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+}
+
+.shipping-search-container {
+  position: relative;
+  flex: 1;
+  min-width: 250px;
+  max-width: 400px;
+}
+
+.shipping-search-container .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--gray-400);
+}
+
+.shipping-search-input {
+  width: 100%;
+  padding: 10px 36px 10px 36px;
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.shipping-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+.shipping-search-container .search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--gray-300);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Filter Chips */
+.filter-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-chip:hover {
+  background: var(--gray-200);
+  border-color: var(--gray-300);
+}
+
+.filter-chip .chip-arrow {
+  font-size: 10px;
+  color: var(--gray-400);
+}
+
+/* Active Filters */
+.active-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.active-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--primary);
+  color: white;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.remove-filter {
+  background: rgba(255,255,255,0.3);
+  border: none;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.remove-filter:hover {
+  background: rgba(255,255,255,0.5);
+}
+
+/* Filter Dropdown */
+.filter-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  padding: 16px;
+  z-index: 100;
+  margin-top: 8px;
+  max-width: 300px;
+}
+
+.filter-dropdown.hidden {
+  display: none;
+}
+
+.filter-header {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--gray-700);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.filter-options {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.filter-option:hover {
+  background: var(--gray-100);
+}
+
+.filter-option input {
+  accent-color: var(--primary);
+}
+
+.filter-clear-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-clear-btn:hover {
+  background: var(--gray-200);
+}
+
+/* Stats Summary */
+.shipping-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.shipping-stats .stat-item {
+  background: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  text-align: center;
+  min-width: 120px;
+}
+
+.shipping-stats .stat-number {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.shipping-stats .stat-label {
+  font-size: 12px;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+/* Table Container */
+.shipping-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* Notion-like Table */
+.shipping-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.shipping-table th {
+  background: var(--gray-50);
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--gray-600);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--gray-200);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.shipping-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.shipping-table th.sortable:hover {
+  background: var(--gray-100);
+}
+
+.shipping-table th .sort-icon {
+  margin-left: 4px;
+  font-size: 10px;
+  color: var(--gray-400);
+}
+
+.shipping-table th .sort-icon.active {
+  color: var(--primary);
+}
+
+.shipping-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+}
+
+.shipping-table tr:hover {
+  background: var(--gray-50);
+}
+
+/* Cell styles */
+.client-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.client-name {
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.order-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.phone-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #25D366;
+  border-radius: 50%;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+
+.whatsapp-btn:hover {
+  transform: scale(1.1);
+}
+
+.email-link {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.email-link:hover {
+  text-decoration: underline;
+}
+
+.address-text {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.city-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, var(--axkan-turquoise), #00ACC1);
+  color: white;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.empty-cell {
+  color: var(--gray-400);
+  font-style: italic;
+}
+
+/* Cell Action buttons */
+.cell-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.cell-action-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: var(--gray-100);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell-action-btn:hover {
+  background: var(--gray-200);
+  transform: scale(1.05);
+}
+
+.cell-action-btn.edit-btn:hover {
+  background: #FEF3C7;
+}
+
+.cell-action-btn.view-btn:hover {
+  background: #DBEAFE;
+}
+
+/* Pagination */
+.shipping-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 0 0 12px 12px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--gray-200);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .shipping-filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .shipping-search-container {
+    max-width: 100%;
+  }
+
+  .filter-chips {
+    flex-wrap: wrap;
+  }
+
+  .shipping-stats {
+    flex-wrap: wrap;
+  }
+
+  .shipping-stats .stat-item {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .shipping-table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .address-text {
+    max-width: 150px;
+  }
+}

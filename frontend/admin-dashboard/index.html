@@ -72,6 +72,10 @@
                     <span class="nav-icon">💰</span>
                     <span>Precios</span>
                 </button>
+                <button class="nav-item" data-view="shipping">
+                    <span class="nav-icon">📦</span>
+                    <span>Envíos</span>
+                </button>
             </nav>
         </aside>
 
@@ -381,6 +385,110 @@
                     <span class="empty-icon">💰</span>
                     <h3>No hay datos de precios</h3>
                     <p>Los datos aparecerán cuando haya productos con historial de precios</p>
+                </div>
+            </section>
+
+            <!-- Shipping/Envíos View -->
+            <section id="shipping-view" class="view">
+                <div class="view-header">
+                    <h2>📦 Base de Datos de Envíos</h2>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-primary" onclick="showAddClientModal()">
+                            ➕ Agregar Cliente
+                        </button>
+                        <button class="btn" onclick="exportClientsCSV()">
+                            📥 Exportar CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search and Filters Bar -->
+                <div class="shipping-filters-bar">
+                    <div class="shipping-search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="shipping-search-input" class="shipping-search-input"
+                            placeholder="Buscar por nombre, teléfono, ciudad..."
+                            oninput="handleShippingSearch(this.value)" />
+                        <button class="search-clear" id="shipping-search-clear" onclick="clearShippingSearch()" style="display: none;">✕</button>
+                    </div>
+
+                    <!-- Filter Chips -->
+                    <div class="filter-chips" id="filter-chips">
+                        <button class="filter-chip" onclick="toggleFilterDropdown('city')">
+                            <span>Ciudad</span>
+                            <span class="chip-arrow">▼</span>
+                        </button>
+                        <button class="filter-chip" onclick="toggleFilterDropdown('state')">
+                            <span>Estado</span>
+                            <span class="chip-arrow">▼</span>
+                        </button>
+                        <button class="filter-chip" onclick="toggleFilterDropdown('hasAddress')">
+                            <span>Con Dirección</span>
+                            <span class="chip-arrow">▼</span>
+                        </button>
+                    </div>
+
+                    <!-- Active Filters Display -->
+                    <div class="active-filters" id="active-filters"></div>
+                </div>
+
+                <!-- Filter Dropdown -->
+                <div id="filter-dropdown" class="filter-dropdown hidden">
+                    <div class="filter-dropdown-content" id="filter-dropdown-content"></div>
+                </div>
+
+                <!-- Stats Summary -->
+                <div class="shipping-stats" id="shipping-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="total-clients">0</span>
+                        <span class="stat-label">Total Clientes</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="clients-with-address">0</span>
+                        <span class="stat-label">Con Dirección</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="unique-cities">0</span>
+                        <span class="stat-label">Ciudades</span>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="shipping-loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Cargando clientes...</p>
+                </div>
+
+                <!-- Clients Table -->
+                <div class="shipping-table-container">
+                    <table class="shipping-table" id="shipping-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortShippingTable('name')">Nombre <span class="sort-icon" data-col="name"></span></th>
+                                <th class="sortable" onclick="sortShippingTable('phone')">Teléfono <span class="sort-icon" data-col="phone"></span></th>
+                                <th class="sortable" onclick="sortShippingTable('email')">Email <span class="sort-icon" data-col="email"></span></th>
+                                <th class="sortable" onclick="sortShippingTable('address')">Dirección <span class="sort-icon" data-col="address"></span></th>
+                                <th class="sortable" onclick="sortShippingTable('city')">Ciudad <span class="sort-icon" data-col="city"></span></th>
+                                <th class="sortable" onclick="sortShippingTable('state')">Estado <span class="sort-icon" data-col="state"></span></th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shipping-table-body"></tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="shipping-empty-state" class="empty-state hidden">
+                    <span class="empty-icon">📦</span>
+                    <h3>No hay clientes</h3>
+                    <p>Los clientes aparecerán aquí cuando envíen pedidos</p>
+                </div>
+
+                <!-- Pagination -->
+                <div class="shipping-pagination" id="shipping-pagination">
+                    <button class="pagination-btn" onclick="goToShippingPage('prev')" id="prev-page-btn">← Anterior</button>
+                    <span class="pagination-info" id="pagination-info">Página 1 de 1</span>
+                    <button class="pagination-btn" onclick="goToShippingPage('next')" id="next-page-btn">Siguiente →</button>
                 </div>
             </section>
         </div>
@@ -709,5 +817,6 @@
     <script src="dashboard.js"></script>
     <script src="inventory.js"></script>
     <script src="prices.js"></script>
+    <script src="shipping.js"></script>
 </body>
 </html>
