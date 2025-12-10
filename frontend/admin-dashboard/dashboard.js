@@ -102,6 +102,11 @@ function switchView(viewName) {
 
   // Show selected view
   document.getElementById(`${viewName}-view`).classList.add('active');
+
+  // Initialize view-specific content
+  if (viewName === 'analytics' && typeof initAnalytics === 'function') {
+    initAnalytics();
+  }
 }
 
 // ==========================================

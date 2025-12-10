@@ -1375,6 +1375,310 @@ app.get('/api/analytics/clients/top', async (req, res) => {
   }
 });
 
+// ========================================
+// ANALYTICS DASHBOARD ENDPOINTS
+// ========================================
+
+/**
+ * GET /api/analytics/dashboard
+ * Get comprehensive dashboard data with custom date range
+ */
+app.get('/api/analytics/dashboard', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    let start, end;
+    if (startDate && endDate) {
+      start = new Date(startDate);
+      end = new Date(endDate);
+    } else {
+      // Default to last 30 days
+      end = new Date();
+      start = new Date();
+      start.setDate(start.getDate() - 30);
+    }
+
+    // Get all analytics data in parallel
+    const [
+      revenueData,
+      dailyRevenue,
+      topProducts,
+      topClients,
+      ordersByStatus,
+      productBreakdown,
+      revenueByCity
+    ] = await Promise.all([
+      // Revenue summary
+      query(`
+        SELECT
+          COUNT(*) as order_count,
+          COALESCE(SUM(total_price), 0) as total_revenue,
+          COALESCE(SUM(total_production_cost), 0) as total_cost,
+          COALESCE(SUM(profit), 0) as total_profit,
+          COALESCE(AVG(profit_margin), 0) as avg_profit_margin,
+          COALESCE(AVG(total_price), 0) as avg_order_value
+        FROM orders
+        WHERE order_date BETWEEN $1 AND $2
+          AND status != 'cancelled'
+          AND archive_status != 'cancelado'
+      `, [start, end]),
+
+      // Daily revenue for chart
+      query(`
+        SELECT
+          order_date::date as date,
+          COUNT(*) as order_count,
+          COALESCE(SUM(total_price), 0) as revenue,
+          COALESCE(SUM(profit), 0) as profit
+        FROM orders
+        WHERE order_date BETWEEN $1 AND $2
+          AND status != 'cancelled'
+          AND archive_status != 'cancelado'
+        GROUP BY order_date::date
+        ORDER BY order_date::date ASC
+      `, [start, end]),
+
+      // Top products with quantity
+      query(`
+        SELECT
+          COALESCE(oi.product_name, 'Producto') as product_name,
+          SUM(oi.quantity) as total_quantity,
+          SUM(oi.line_total) as total_revenue,
+          COUNT(DISTINCT oi.order_id) as order_count
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.order_date BETWEEN $1 AND $2
+          AND o.status != 'cancelled'
+          AND o.archive_status != 'cancelado'
+        GROUP BY oi.product_name
+        ORDER BY total_revenue DESC
+        LIMIT 10
+      `, [start, end]),
+
+      // Top clients
+      query(`
+        SELECT
+          c.name as client_name,
+          c.city as client_city,
+          COUNT(o.id) as order_count,
+          SUM(o.total_price) as total_spent
+        FROM clients c
+        JOIN orders o ON c.id = o.client_id
+        WHERE o.order_date BETWEEN $1 AND $2
+          AND o.status != 'cancelled'
+          AND o.archive_status != 'cancelado'
+        GROUP BY c.id, c.name, c.city
+        ORDER BY total_spent DESC
+        LIMIT 10
+      `, [start, end]),
+
+      // Orders by status for pie chart
+      query(`
+        SELECT
+          CASE
+            WHEN approval_status = 'pending_review' THEN 'Pendientes'
+            WHEN approval_status = 'approved' AND status = 'in_production' THEN 'En Producción'
+            WHEN status = 'delivered' THEN 'Entregados'
+            WHEN status = 'cancelled' OR archive_status = 'cancelado' THEN 'Cancelados'
+            ELSE 'Otros'
+          END as status_label,
+          COUNT(*) as count,
+          COALESCE(SUM(total_price), 0) as revenue
+        FROM orders
+        WHERE order_date BETWEEN $1 AND $2
+        GROUP BY status_label
+        ORDER BY count DESC
+      `, [start, end]),
+
+      // Product breakdown by category/type
+      query(`
+        SELECT
+          CASE
+            WHEN LOWER(oi.product_name) LIKE '%iman%' OR LOWER(oi.product_name) LIKE '%imán%' THEN 'Imanes'
+            WHEN LOWER(oi.product_name) LIKE '%llavero%' THEN 'Llaveros'
+            WHEN LOWER(oi.product_name) LIKE '%destapador%' THEN 'Destapadores'
+            WHEN LOWER(oi.product_name) LIKE '%boton%' OR LOWER(oi.product_name) LIKE '%botón%' THEN 'Botones'
+            WHEN LOWER(oi.product_name) LIKE '%pin%' THEN 'Pines'
+            ELSE 'Otros'
+          END as category,
+          SUM(oi.quantity) as total_quantity,
+          SUM(oi.line_total) as total_revenue
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.order_date BETWEEN $1 AND $2
+          AND o.status != 'cancelled'
+          AND o.archive_status != 'cancelado'
+        GROUP BY category
+        ORDER BY total_revenue DESC
+      `, [start, end]),
+
+      // Revenue by city
+      query(`
+        SELECT
+          COALESCE(c.city, 'Sin Ciudad') as city,
+          COUNT(o.id) as order_count,
+          SUM(o.total_price) as total_revenue
+        FROM orders o
+        LEFT JOIN clients c ON o.client_id = c.id
+        WHERE o.order_date BETWEEN $1 AND $2
+          AND o.status != 'cancelled'
+          AND o.archive_status != 'cancelado'
+        GROUP BY c.city
+        ORDER BY total_revenue DESC
+        LIMIT 10
+      `, [start, end])
+    ]);
+
+    // Calculate comparison with previous period
+    const periodDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const prevStart = new Date(start);
+    prevStart.setDate(prevStart.getDate() - periodDays);
+    const prevEnd = new Date(start);
+    prevEnd.setDate(prevEnd.getDate() - 1);
+
+    const prevRevenueResult = await query(`
+      SELECT
+        COUNT(*) as order_count,
+        COALESCE(SUM(total_price), 0) as total_revenue,
+        COALESCE(SUM(profit), 0) as total_profit
+      FROM orders
+      WHERE order_date BETWEEN $1 AND $2
+        AND status != 'cancelled'
+        AND archive_status != 'cancelado'
+    `, [prevStart, prevEnd]);
+
+    const currentRevenue = parseFloat(revenueData.rows[0].total_revenue) || 0;
+    const prevRevenue = parseFloat(prevRevenueResult.rows[0].total_revenue) || 0;
+    const revenueChange = prevRevenue > 0 ? ((currentRevenue - prevRevenue) / prevRevenue * 100) : 0;
+
+    const currentOrders = parseInt(revenueData.rows[0].order_count) || 0;
+    const prevOrders = parseInt(prevRevenueResult.rows[0].order_count) || 0;
+    const ordersChange = prevOrders > 0 ? ((currentOrders - prevOrders) / prevOrders * 100) : 0;
+
+    res.json({
+      success: true,
+      data: {
+        dateRange: { start, end },
+        summary: {
+          totalRevenue: currentRevenue,
+          totalOrders: currentOrders,
+          totalProfit: parseFloat(revenueData.rows[0].total_profit) || 0,
+          avgOrderValue: parseFloat(revenueData.rows[0].avg_order_value) || 0,
+          avgProfitMargin: parseFloat(revenueData.rows[0].avg_profit_margin) || 0,
+          revenueChange: parseFloat(revenueChange.toFixed(1)),
+          ordersChange: parseFloat(ordersChange.toFixed(1))
+        },
+        dailyRevenue: dailyRevenue.rows.map(r => ({
+          date: r.date,
+          revenue: parseFloat(r.revenue),
+          profit: parseFloat(r.profit),
+          orderCount: parseInt(r.order_count)
+        })),
+        topProducts: topProducts.rows.map(r => ({
+          productName: r.product_name,
+          quantity: parseInt(r.total_quantity),
+          revenue: parseFloat(r.total_revenue),
+          orderCount: parseInt(r.order_count)
+        })),
+        topClients: topClients.rows.map(r => ({
+          clientName: r.client_name,
+          city: r.client_city,
+          orderCount: parseInt(r.order_count),
+          totalSpent: parseFloat(r.total_spent)
+        })),
+        ordersByStatus: ordersByStatus.rows.map(r => ({
+          status: r.status_label,
+          count: parseInt(r.count),
+          revenue: parseFloat(r.revenue)
+        })),
+        productBreakdown: productBreakdown.rows.map(r => ({
+          category: r.category,
+          quantity: parseInt(r.total_quantity),
+          revenue: parseFloat(r.total_revenue)
+        })),
+        revenueByCity: revenueByCity.rows.map(r => ({
+          city: r.city,
+          orderCount: parseInt(r.order_count),
+          revenue: parseFloat(r.total_revenue)
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Error getting dashboard analytics:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/analytics/products/:productName
+ * Get detailed analytics for a specific product
+ */
+app.get('/api/analytics/products/:productName', async (req, res) => {
+  try {
+    const { productName } = req.params;
+    const { startDate, endDate } = req.query;
+
+    let start, end;
+    if (startDate && endDate) {
+      start = new Date(startDate);
+      end = new Date(endDate);
+    } else {
+      end = new Date();
+      start = new Date();
+      start.setDate(start.getDate() - 90);
+    }
+
+    // Get product sales over time
+    const salesOverTime = await query(`
+      SELECT
+        o.order_date::date as date,
+        SUM(oi.quantity) as quantity,
+        SUM(oi.line_total) as revenue
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE oi.product_name ILIKE $1
+        AND o.order_date BETWEEN $2 AND $3
+        AND o.status != 'cancelled'
+      GROUP BY o.order_date::date
+      ORDER BY o.order_date::date ASC
+    `, [`%${productName}%`, start, end]);
+
+    // Get quantity breakdown (how many pieces per order typically)
+    const quantityDistribution = await query(`
+      SELECT
+        CASE
+          WHEN oi.quantity <= 50 THEN '1-50 pzas'
+          WHEN oi.quantity <= 100 THEN '51-100 pzas'
+          WHEN oi.quantity <= 200 THEN '101-200 pzas'
+          WHEN oi.quantity <= 500 THEN '201-500 pzas'
+          ELSE '500+ pzas'
+        END as range,
+        COUNT(*) as order_count,
+        SUM(oi.quantity) as total_quantity
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE oi.product_name ILIKE $1
+        AND o.order_date BETWEEN $2 AND $3
+        AND o.status != 'cancelled'
+      GROUP BY range
+      ORDER BY MIN(oi.quantity)
+    `, [`%${productName}%`, start, end]);
+
+    res.json({
+      success: true,
+      data: {
+        productName,
+        dateRange: { start, end },
+        salesOverTime: salesOverTime.rows,
+        quantityDistribution: quantityDistribution.rows
+      }
+    });
+  } catch (error) {
+    console.error('Error getting product analytics:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Generate and send daily report
 app.post('/api/reports/daily/send', async (req, res) => {
   try {

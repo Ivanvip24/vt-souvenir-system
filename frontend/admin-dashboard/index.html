@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
         // Authentication check - runs before page loads
         (function() {
@@ -252,15 +254,112 @@
                 <div class="modal-backdrop" onclick="closeDepositModal()"></div>
             </div>
 
-            <!-- Analytics View (Placeholder) -->
+            <!-- Analytics View -->
             <section id="analytics-view" class="view">
                 <div class="view-header">
-                    <h2>Analíticas</h2>
+                    <h2>📊 Analíticas</h2>
+                    <div class="analytics-actions">
+                        <button class="btn" onclick="exportAnalyticsCSV()">
+                            📥 Exportar CSV
+                        </button>
+                        <button class="btn btn-primary" onclick="loadAnalyticsData()">
+                            🔄 Actualizar
+                        </button>
+                    </div>
                 </div>
-                <div class="coming-soon">
-                    <span class="coming-soon-icon">📊</span>
-                    <h3>Próximamente</h3>
-                    <p>Reportes de ventas, productos más vendidos, y métricas de rendimiento</p>
+
+                <!-- Date Range Filters -->
+                <div class="analytics-filters">
+                    <div class="quick-ranges">
+                        <button class="quick-range-btn" data-days="7" onclick="setQuickDateRange(7)">7 días</button>
+                        <button class="quick-range-btn active" data-days="30" onclick="setQuickDateRange(30)">30 días</button>
+                        <button class="quick-range-btn" data-days="90" onclick="setQuickDateRange(90)">90 días</button>
+                        <button class="quick-range-btn" data-days="365" onclick="setQuickDateRange(365)">1 año</button>
+                    </div>
+                    <div class="date-range-inputs">
+                        <div class="date-input-group">
+                            <label for="analytics-start-date">Desde</label>
+                            <input type="date" id="analytics-start-date" onchange="handleDateRangeChange()">
+                        </div>
+                        <div class="date-input-group">
+                            <label for="analytics-end-date">Hasta</label>
+                            <input type="date" id="analytics-end-date" onchange="handleDateRangeChange()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="analytics-loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Cargando analíticas...</p>
+                </div>
+
+                <!-- Analytics Content -->
+                <div id="analytics-content" class="analytics-content">
+                    <!-- Summary Cards -->
+                    <div id="analytics-summary-cards" class="analytics-summary-cards">
+                        <!-- Dynamic KPI cards -->
+                    </div>
+
+                    <!-- Charts Row 1: Revenue over time -->
+                    <div class="analytics-section">
+                        <div class="section-header">
+                            <h3>📈 Ingresos y Ganancia</h3>
+                        </div>
+                        <div class="chart-container large">
+                            <canvas id="revenue-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row 2: Pie charts side by side -->
+                    <div class="analytics-row">
+                        <div class="analytics-section half">
+                            <div class="section-header">
+                                <h3>🛍️ Ventas por Categoría</h3>
+                            </div>
+                            <div class="chart-container medium">
+                                <canvas id="products-pie-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="analytics-section half">
+                            <div class="section-header">
+                                <h3>📋 Estado de Pedidos</h3>
+                            </div>
+                            <div class="chart-container medium">
+                                <canvas id="status-pie-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row 3: Top products and clients -->
+                    <div class="analytics-row">
+                        <div class="analytics-section half">
+                            <div class="section-header">
+                                <h3>🏆 Productos Más Vendidos</h3>
+                            </div>
+                            <div id="top-products-list" class="ranking-list">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                        <div class="analytics-section half">
+                            <div class="section-header">
+                                <h3>👥 Mejores Clientes</h3>
+                            </div>
+                            <div id="top-clients-list" class="ranking-list">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row 4: Revenue by city -->
+                    <div class="analytics-section">
+                        <div class="section-header">
+                            <h3>🗺️ Ingresos por Ciudad</h3>
+                        </div>
+                        <div class="chart-container medium">
+                            <canvas id="city-chart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -818,5 +917,6 @@
     <script src="inventory.js"></script>
     <script src="prices.js"></script>
     <script src="shipping.js"></script>
+    <script src="analytics.js"></script>
 </body>
 </html>
