@@ -85,7 +85,7 @@ window.loadPriceDashboard = async function(period = 30) {
     if (error.message.includes('Token') || error.message.includes('401') || error.message.includes('Unauthorized')) {
       loading.innerHTML = `
         <p style="color: var(--danger)">
-          ⚠️ Sesión expirada. <a href="/admin/login" style="color: var(--primary);">Iniciar sesión de nuevo</a>
+          ⚠️ Sesión expirada. <a href="login.html" style="color: var(--primary);">Iniciar sesión de nuevo</a>
         </p>
       `;
       return;

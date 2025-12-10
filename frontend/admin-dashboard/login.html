@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AXKAN - Admin Login</title>
-    <link rel="icon" type="image/png" href="/assets/images/LOGO-01.png">
+    <link rel="icon" type="image/png" href="../assets/images/LOGO-01.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -191,7 +191,7 @@
 <body>
     <div class="login-container">
         <div class="logo-area">
-            <img src="/assets/images/LOGO-03.png" alt="AXKAN Logo" class="logo-image">
+            <img src="../assets/images/LOGO-03.png" alt="AXKAN Logo" class="logo-image">
             <h1>Panel de Admin</h1>
             <p class="subtitle">Acceso Administrativo</p>
         </div>
@@ -248,7 +248,7 @@
 
                 if (response.ok) {
                     // Token is valid, redirect to dashboard
-                    window.location.href = '/admin/';
+                    window.location.href = 'index.html';
                 } else {
                     // Token invalid, remove it
                     localStorage.removeItem('admin_token');
@@ -289,7 +289,7 @@
                     localStorage.setItem('admin_token', data.token);
 
                     // Redirect to dashboard
-                    window.location.href = '/admin/';
+                    window.location.href = 'index.html';
                 } else {
                     showError(data.error || 'Credenciales incorrectas');
                 }

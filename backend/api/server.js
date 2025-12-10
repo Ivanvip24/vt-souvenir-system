@@ -1733,18 +1733,9 @@ app.get('/admin/*', (req, res) => {
   res.redirect(`${FRONTEND_URL}/admin-dashboard/${path}`);
 });
 
-// Redirect order form to frontend service
-app.get('/order', (req, res) => {
-  res.redirect(`${FRONTEND_URL}/client-order-form/`);
-});
-app.get('/order/*', (req, res) => {
-  const path = req.params[0] || '';
-  res.redirect(`${FRONTEND_URL}/client-order-form/${path}`);
-});
-
-// Root redirect to order form on frontend
+// Root redirect to admin dashboard
 app.get('/', (req, res) => {
-  res.redirect(`${FRONTEND_URL}/client-order-form/`);
+  res.redirect(`${FRONTEND_URL}/admin-dashboard/`);
 });
 
 // ========================================

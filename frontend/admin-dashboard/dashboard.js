@@ -49,7 +49,7 @@ window.getAuthHeaders = getAuthHeaders;
 window.logout = function() {
   if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
     localStorage.removeItem('admin_token');
-    window.location.href = '/admin/login';
+    window.location.href = 'login.html';
   }
 };
 
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Verify authentication
   const token = getAuthToken();
   if (!token) {
-    window.location.href = '/admin/login';
+    window.location.href = 'login.html';
     return;
   }
 
