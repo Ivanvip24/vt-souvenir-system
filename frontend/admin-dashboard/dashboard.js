@@ -634,6 +634,10 @@ async function showOrderDetail(orderId) {
           <span class="detail-label">Método de Pago</span>
           <span class="detail-value">${order.paymentMethod === 'bank_transfer' ? 'Transferencia Bancaria' : 'Tarjeta'}</span>
         </div>
+        <div class="detail-item">
+          <span class="detail-label">Pedido Creado</span>
+          <span class="detail-value">${formatDateTime(order.createdAt || order.orderDate)}</span>
+        </div>
       </div>
     </div>
 
@@ -1188,6 +1192,26 @@ function formatTime(dateString) {
     minute: '2-digit',
     hour12: true
   });
+}
+
+function formatDateTime(dateString) {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date)) return 'N/A';
+
+  const dateStr = date.toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+
+  const timeStr = date.toLocaleTimeString('es-MX', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  return `${dateStr} a las ${timeStr}`;
 }
 
 // ==========================================
