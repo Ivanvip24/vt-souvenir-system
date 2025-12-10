@@ -736,7 +736,7 @@ async function showOrderDetail(orderId) {
           </tr>
         </thead>
         <tbody>
-          ${order.items.map(item => `
+          ${(order.items || []).map(item => `
             <tr>
               <td>${item.productName}</td>
               <td>${item.quantity}</td>
@@ -1330,7 +1330,7 @@ async function lookupClientOrders() {
 
         <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
           <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 8px;">Productos:</div>
-          ${order.items.map(item => `
+          ${(order.items || []).map(item => `
             <div style="font-size: 14px; color: #374151; margin-bottom: 4px;">
               • ${item.productName} (${item.quantity} unidades)
             </div>
