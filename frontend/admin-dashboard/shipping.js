@@ -220,7 +220,7 @@ function renderActiveFilters() {
     filters.push(`
       <span class="active-filter-tag">
         Ciudad: ${escapeHtml(shippingState.activeFilters.city)}
-        <button onclick="removeFilter('city')" class="remove-filter">×</button>
+        <button onclick="removeShippingFilter('city')" class="remove-filter">×</button>
       </span>
     `);
   }
@@ -229,7 +229,7 @@ function renderActiveFilters() {
     filters.push(`
       <span class="active-filter-tag">
         Estado: ${escapeHtml(shippingState.activeFilters.state)}
-        <button onclick="removeFilter('state')" class="remove-filter">×</button>
+        <button onclick="removeShippingFilter('state')" class="remove-filter">×</button>
       </span>
     `);
   }
@@ -238,7 +238,7 @@ function renderActiveFilters() {
     filters.push(`
       <span class="active-filter-tag">
         ${shippingState.activeFilters.hasAddress === 'true' ? 'Con dirección' : 'Sin dirección'}
-        <button onclick="removeFilter('hasAddress')" class="remove-filter">×</button>
+        <button onclick="removeShippingFilter('hasAddress')" class="remove-filter">×</button>
       </span>
     `);
   }
@@ -304,13 +304,13 @@ function toggleFilterDropdown(filterType) {
           <label class="filter-option">
             <input type="radio" name="city-filter" value="${escapeHtml(city)}"
               ${shippingState.activeFilters.city === city ? 'checked' : ''}
-              onchange="applyFilter('city', '${escapeHtml(city)}')"
+              onchange="applyShippingFilter('city', '${escapeHtml(city)}')"
             >
             ${escapeHtml(city)}
           </label>
         `).join('')}
       </div>
-      <button class="filter-clear-btn" onclick="removeFilter('city')">Limpiar filtro</button>
+      <button class="filter-clear-btn" onclick="removeShippingFilter('city')">Limpiar filtro</button>
     `;
   } else if (filterType === 'state') {
     html = `
@@ -320,13 +320,13 @@ function toggleFilterDropdown(filterType) {
           <label class="filter-option">
             <input type="radio" name="state-filter" value="${escapeHtml(state)}"
               ${shippingState.activeFilters.state === state ? 'checked' : ''}
-              onchange="applyFilter('state', '${escapeHtml(state)}')"
+              onchange="applyShippingFilter('state', '${escapeHtml(state)}')"
             >
             ${escapeHtml(state)}
           </label>
         `).join('')}
       </div>
-      <button class="filter-clear-btn" onclick="removeFilter('state')">Limpiar filtro</button>
+      <button class="filter-clear-btn" onclick="removeShippingFilter('state')">Limpiar filtro</button>
     `;
   } else if (filterType === 'hasAddress') {
     html = `
@@ -335,26 +335,26 @@ function toggleFilterDropdown(filterType) {
         <label class="filter-option">
           <input type="radio" name="address-filter" value="true"
             ${shippingState.activeFilters.hasAddress === 'true' ? 'checked' : ''}
-            onchange="applyFilter('hasAddress', 'true')"
+            onchange="applyShippingFilter('hasAddress', 'true')"
           >
           Con dirección
         </label>
         <label class="filter-option">
           <input type="radio" name="address-filter" value="false"
             ${shippingState.activeFilters.hasAddress === 'false' ? 'checked' : ''}
-            onchange="applyFilter('hasAddress', 'false')"
+            onchange="applyShippingFilter('hasAddress', 'false')"
           >
           Sin dirección
         </label>
       </div>
-      <button class="filter-clear-btn" onclick="removeFilter('hasAddress')">Limpiar filtro</button>
+      <button class="filter-clear-btn" onclick="removeShippingFilter('hasAddress')">Limpiar filtro</button>
     `;
   }
 
   content.innerHTML = html;
 }
 
-function applyFilter(filterType, value) {
+function applyShippingFilter(filterType, value) {
   shippingState.activeFilters[filterType] = value;
   shippingState.currentPage = 1;
 
@@ -365,7 +365,7 @@ function applyFilter(filterType, value) {
   loadShippingData();
 }
 
-function removeFilter(filterType) {
+function removeShippingFilter(filterType) {
   shippingState.activeFilters[filterType] = null;
   shippingState.currentPage = 1;
 
