@@ -330,12 +330,20 @@ async function loadOrders() {
 
   try {
     console.log(`📡 Fetching orders from: ${API_BASE}/orders`);
-    const response = await fetch(`${API_BASE}/orders`, {
-      headers: getAuthHeaders()
-    });
-    console.log(`📡 Response status: ${response.status}`);
+    const headers = getAuthHeaders();
+    console.log(`📡 Auth header present:`, !!headers.Authorization);
+
+    const response = await fetch(`${API_BASE}/orders`, { headers });
+    console.log(`📡 Response status: ${response.status} ${response.statusText}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ API Error: ${response.status}`, errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
     const data = await response.json();
-    console.log(`📡 API response:`, data.success, `- Count: ${data.count || 0}`);
+    console.log(`📡 API response success: ${data.success}, count: ${data.count || 0}, data length: ${data.data?.length || 0}`);
 
     if (!data.success) {
       throw new Error(data.error || 'Error al cargar pedidos');
@@ -343,6 +351,11 @@ async function loadOrders() {
 
     state.orders = data.data || [];
     console.log(`📦 Loaded ${state.orders.length} orders into state`);
+
+    if (state.orders.length === 0) {
+      console.warn('⚠️ WARNING: API returned 0 orders!');
+    }
+
     applyFilter(state.currentFilter);
     updateStats();
 
@@ -357,10 +370,12 @@ async function loadOrders() {
     }
 
   } catch (error) {
-    console.error('Error loading orders:', error);
+    console.error('❌ Error loading orders:', error);
+    console.error('❌ Error details:', error.message, error.stack);
     loading.innerHTML = `
       <p style="color: var(--danger)">
-        ⚠️ Error al cargar pedidos. Por favor recarga la página.
+        ⚠️ Error al cargar pedidos: ${error.message}<br>
+        Por favor recarga la página.
       </p>
     `;
     refreshBtn?.classList.remove('refreshing');
