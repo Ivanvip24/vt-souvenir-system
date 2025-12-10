@@ -1732,9 +1732,12 @@ async function handleStripePayment() {
 
     console.log('Order created:', result);
 
-    // Redirect to Stripe payment link in same tab (#18)
-    // Order is saved, redirect user to Stripe for payment
-    window.location.href = 'https://buy.stripe.com/00gcPP1GscTObJufYY';
+    // Open Stripe payment link in new tab
+    // Order is saved, open Stripe for payment in new tab
+    window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
+
+    // Show success screen since order is already created
+    showSuccessScreen(result.orderNumber);
 
   } catch (error) {
     console.error('Error submitting order:', error);
