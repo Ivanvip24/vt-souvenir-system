@@ -911,6 +911,74 @@ async function showOrderDetail(orderId) {
       </div>
     ` : ''}
 
+    <!-- Production Sheet Section -->
+    <div class="detail-section">
+      <h3>🖼️ Hoja de Producción</h3>
+      <div id="production-sheet-container-${order.id}" style="background: var(--gray-50); border-radius: 12px; padding: 20px;">
+        ${order.productionSheetUrl ? `
+          <!-- Show existing production sheet -->
+          <div style="margin-bottom: 16px;">
+            ${order.productionSheetUrl.toLowerCase().endsWith('.pdf') ? `
+              <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; color: white; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                  <div style="font-size: 48px;">📋</div>
+                  <div style="flex: 1;">
+                    <div style="font-size: 16px; font-weight: 700;">Hoja de Producción (PDF)</div>
+                    <div style="font-size: 13px; opacity: 0.9;">Archivo subido</div>
+                  </div>
+                </div>
+              </div>
+              <a href="${order.productionSheetUrl}" target="_blank"
+                 style="display: block; background: var(--primary); color: white; padding: 14px; border-radius: 8px; text-align: center; font-weight: 600; text-decoration: none;">
+                📥 Ver/Descargar PDF
+              </a>
+            ` : `
+              <img src="${order.productionSheetUrl}"
+                   alt="Hoja de Producción"
+                   style="width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px; cursor: pointer; border: 2px solid var(--gray-200);"
+                   onclick="window.open('${order.productionSheetUrl}', '_blank')">
+            `}
+          </div>
+          <button onclick="removeProductionSheet(${order.id})"
+                  style="width: 100%; padding: 10px; background: var(--gray-200); color: var(--gray-600); border: none; border-radius: 8px; font-size: 13px; cursor: pointer;">
+            🗑️ Eliminar y subir otra
+          </button>
+        ` : `
+          <!-- Upload area -->
+          <div id="production-sheet-upload-${order.id}"
+               style="border: 2px dashed var(--gray-300); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s;"
+               onclick="document.getElementById('production-sheet-input-${order.id}').click()"
+               ondragover="handleDragOver(event, ${order.id})"
+               ondragleave="handleDragLeave(event, ${order.id})"
+               ondrop="handleProductionSheetDrop(event, ${order.id})">
+            <div style="font-size: 48px; margin-bottom: 12px;">📤</div>
+            <div style="font-size: 15px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">
+              Arrastra o haz clic para subir
+            </div>
+            <div style="font-size: 13px; color: var(--gray-500); margin-bottom: 16px;">
+              Acepta imágenes (JPG, PNG) y PDF
+            </div>
+            <div style="display: inline-block; background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+              Seleccionar archivo
+            </div>
+          </div>
+          <input type="file"
+                 id="production-sheet-input-${order.id}"
+                 accept="image/*,.pdf"
+                 style="display: none;"
+                 onchange="handleProductionSheetUpload(event, ${order.id})">
+
+          <!-- Paste from clipboard -->
+          <div style="margin-top: 12px; text-align: center;">
+            <button onclick="pasteProductionSheet(${order.id})"
+                    style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 10px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; color: var(--gray-600);">
+              📋 Pegar desde portapapeles (Ctrl+V)
+            </button>
+          </div>
+        `}
+      </div>
+    </div>
+
     <!-- Order Notes -->
     ${order.clientNotes ? `
       <div class="detail-section">
@@ -1139,6 +1207,183 @@ function updateStats() {
   document.getElementById('pending-count-badge').textContent = pendingCount;
   document.getElementById('approved-count').textContent = approvedCount;
   document.getElementById('completed-count').textContent = archivedCount;
+}
+
+// ==========================================
+// PRODUCTION SHEET UPLOAD FUNCTIONS
+// ==========================================
+
+function handleDragOver(event, orderId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const uploadArea = document.getElementById(`production-sheet-upload-${orderId}`);
+  if (uploadArea) {
+    uploadArea.style.borderColor = 'var(--primary)';
+    uploadArea.style.background = 'rgba(233, 30, 99, 0.05)';
+  }
+}
+
+function handleDragLeave(event, orderId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const uploadArea = document.getElementById(`production-sheet-upload-${orderId}`);
+  if (uploadArea) {
+    uploadArea.style.borderColor = 'var(--gray-300)';
+    uploadArea.style.background = 'transparent';
+  }
+}
+
+async function handleProductionSheetDrop(event, orderId) {
+  event.preventDefault();
+  event.stopPropagation();
+  handleDragLeave(event, orderId);
+
+  const files = event.dataTransfer.files;
+  if (files.length > 0) {
+    await uploadProductionSheet(files[0], orderId);
+  }
+}
+
+async function handleProductionSheetUpload(event, orderId) {
+  const file = event.target.files[0];
+  if (file) {
+    await uploadProductionSheet(file, orderId);
+  }
+}
+
+async function pasteProductionSheet(orderId) {
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const item of clipboardItems) {
+      // Check for image types
+      const imageType = item.types.find(type => type.startsWith('image/'));
+      if (imageType) {
+        const blob = await item.getType(imageType);
+        const file = new File([blob], `production-sheet-${orderId}.png`, { type: imageType });
+        await uploadProductionSheet(file, orderId);
+        return;
+      }
+    }
+    alert('No se encontró imagen en el portapapeles. Copia una imagen primero.');
+  } catch (error) {
+    console.error('Error reading clipboard:', error);
+    alert('No se pudo acceder al portapapeles. Intenta arrastrando el archivo.');
+  }
+}
+
+async function uploadProductionSheet(file, orderId) {
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+  if (!validTypes.includes(file.type)) {
+    alert('Tipo de archivo no válido. Solo se aceptan imágenes (JPG, PNG, GIF, WebP) y PDF.');
+    return;
+  }
+
+  // Validate file size (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('El archivo es demasiado grande. Máximo 10MB.');
+    return;
+  }
+
+  // Show loading state
+  const container = document.getElementById(`production-sheet-container-${orderId}`);
+  container.innerHTML = `
+    <div style="text-align: center; padding: 40px;">
+      <div class="spinner" style="margin: 0 auto 16px;"></div>
+      <div style="font-size: 14px; color: var(--gray-600);">Subiendo archivo...</div>
+    </div>
+  `;
+
+  try {
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'payment_receipts');
+
+    const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dkpwnkhza/auto/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!cloudinaryResponse.ok) {
+      throw new Error('Error al subir a Cloudinary');
+    }
+
+    const cloudinaryData = await cloudinaryResponse.json();
+    const fileUrl = cloudinaryData.secure_url;
+
+    // Save URL to backend
+    const response = await fetch(`${API_BASE}/orders/${orderId}/production-sheet`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ productionSheetUrl: fileUrl })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al guardar');
+    }
+
+    // Update local state
+    const orderIndex = state.orders.findIndex(o => o.id == orderId);
+    if (orderIndex >= 0) {
+      state.orders[orderIndex].productionSheetUrl = fileUrl;
+    }
+
+    // Refresh order detail view
+    const order = state.orders.find(o => o.id == orderId);
+    if (order) {
+      showOrderDetail(order);
+    }
+
+    console.log('✅ Production sheet uploaded:', fileUrl);
+
+  } catch (error) {
+    console.error('Error uploading production sheet:', error);
+    alert(`Error: ${error.message}`);
+
+    // Restore upload area
+    const order = state.orders.find(o => o.id == orderId);
+    if (order) {
+      showOrderDetail(order);
+    }
+  }
+}
+
+async function removeProductionSheet(orderId) {
+  if (!confirm('¿Eliminar la hoja de producción?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}/production-sheet`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al eliminar');
+    }
+
+    // Update local state
+    const orderIndex = state.orders.findIndex(o => o.id == orderId);
+    if (orderIndex >= 0) {
+      state.orders[orderIndex].productionSheetUrl = null;
+    }
+
+    // Refresh order detail view
+    const order = state.orders.find(o => o.id == orderId);
+    if (order) {
+      showOrderDetail(order);
+    }
+
+  } catch (error) {
+    console.error('Error removing production sheet:', error);
+    alert(`Error: ${error.message}`);
+  }
 }
 
 // ==========================================

@@ -182,6 +182,7 @@ app.get('/api/orders', async (req, res) => {
         o.payment_proof_url,
         o.second_payment_proof_url,
         o.receipt_pdf_url,
+        o.production_sheet_url,
         o.approval_status,
         o.status,
         o.department,
@@ -253,6 +254,7 @@ app.get('/api/orders', async (req, res) => {
       paymentProofUrl: order.payment_proof_url || null,
       secondPaymentReceipt: order.second_payment_proof_url || null,
       receiptPdfUrl: order.receipt_pdf_url || null,
+      productionSheetUrl: order.production_sheet_url || null,
       // Status
       status: order.status || 'new',
       approvalStatus: order.approval_status || 'pending_review',
@@ -328,6 +330,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
         o.payment_proof_url,
         o.second_payment_proof_url,
         o.receipt_pdf_url,
+        o.production_sheet_url,
         o.approval_status,
         o.status,
         o.department,
@@ -406,6 +409,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
       paymentProofUrl: order.payment_proof_url || null,
       secondPaymentReceipt: order.second_payment_proof_url || null,
       receiptPdfUrl: order.receipt_pdf_url || null,
+      productionSheetUrl: order.production_sheet_url || null,
       // Status
       status: order.status || 'new',
       approvalStatus: order.approval_status || 'pending_review',
@@ -965,6 +969,94 @@ app.post('/api/orders/:orderId/archive', async (req, res) => {
     });
   } catch (error) {
     console.error('Error archiving order:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ========================================
+// PRODUCTION SHEET UPLOAD/DELETE
+// ========================================
+
+/**
+ * POST /api/orders/:orderId/production-sheet
+ * Upload/save production sheet URL for an order
+ */
+app.post('/api/orders/:orderId/production-sheet', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { productionSheetUrl } = req.body;
+
+    if (!productionSheetUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Production sheet URL is required'
+      });
+    }
+
+    console.log(`📋 Saving production sheet for order ${orderId}: ${productionSheetUrl}`);
+
+    // Update order with production sheet URL
+    const result = await query(
+      'UPDATE orders SET production_sheet_url = $1 WHERE id = $2 RETURNING id',
+      [productionSheetUrl, orderId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    console.log(`✅ Production sheet saved for order ${orderId}`);
+
+    res.json({
+      success: true,
+      message: 'Production sheet saved successfully',
+      productionSheetUrl
+    });
+  } catch (error) {
+    console.error('Error saving production sheet:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/orders/:orderId/production-sheet
+ * Remove production sheet from an order
+ */
+app.delete('/api/orders/:orderId/production-sheet', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+
+    console.log(`🗑️ Removing production sheet for order ${orderId}`);
+
+    const result = await query(
+      'UPDATE orders SET production_sheet_url = NULL WHERE id = $1 RETURNING id',
+      [orderId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    console.log(`✅ Production sheet removed for order ${orderId}`);
+
+    res.json({
+      success: true,
+      message: 'Production sheet removed successfully'
+    });
+  } catch (error) {
+    console.error('Error removing production sheet:', error);
     res.status(500).json({
       success: false,
       error: error.message
