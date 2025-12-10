@@ -1718,23 +1718,33 @@ app.delete('/api/clients/:id', async (req, res) => {
 });
 
 // ========================================
-// FRONTEND ROUTES (Serve HTML pages)
+// FRONTEND ROUTES (Redirect to Frontend Service)
 // ========================================
 
-// Serve static frontend files
-const frontendPath = path.join(__dirname, '../../frontend');
-app.use('/assets', express.static(path.join(frontendPath, 'assets')));
-app.use('/order', express.static(path.join(frontendPath, 'client-order-form')));
-app.use('/admin', express.static(path.join(frontendPath, 'admin-dashboard')));
+// Frontend service URL (static site on Render)
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://vt-souvenir-frontend.onrender.com';
 
-// Root redirect to order form
-app.get('/', (req, res) => {
-  res.redirect('/order');
+// Redirect admin routes to frontend service
+app.get('/admin', (req, res) => {
+  res.redirect(`${FRONTEND_URL}/admin-dashboard/`);
+});
+app.get('/admin/*', (req, res) => {
+  const path = req.params[0] || '';
+  res.redirect(`${FRONTEND_URL}/admin-dashboard/${path}`);
 });
 
-// Admin login redirect (handle /admin/login without .html extension)
-app.get('/admin/login', (req, res) => {
-  res.redirect('/admin/login.html');
+// Redirect order form to frontend service
+app.get('/order', (req, res) => {
+  res.redirect(`${FRONTEND_URL}/client-order-form/`);
+});
+app.get('/order/*', (req, res) => {
+  const path = req.params[0] || '';
+  res.redirect(`${FRONTEND_URL}/client-order-form/${path}`);
+});
+
+// Root redirect to order form on frontend
+app.get('/', (req, res) => {
+  res.redirect(`${FRONTEND_URL}/client-order-form/`);
 });
 
 // ========================================
