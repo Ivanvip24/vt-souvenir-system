@@ -389,8 +389,6 @@ function createOrderCard(order) {
   const isArchived = order.archiveStatus && order.archiveStatus !== 'active';
   if (isArchived) {
     card.className += ' order-completed';
-    card.style.opacity = '0.75';
-    card.style.background = '#f9fafb';
   }
 
   card.onclick = () => showOrderDetail(order.id);
@@ -415,20 +413,6 @@ function createOrderCard(order) {
       <div class="order-title">
         <h3>${order.orderNumber}</h3>
         <span class="status-badge ${statusClass}">${statusText}</span>
-        ${order.archiveStatus === 'completo' ? `
-          <span style="background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-left: 8px;">
-            ✓ Completo
-          </span>
-        ` : order.archiveStatus === 'cancelado' ? `
-          <span style="background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-left: 8px;">
-            ✕ Cancelado
-          </span>
-        ` : ''}
-        ${order.secondPaymentStatus === 'uploaded' && order.secondPaymentReceipt && !isArchived ? `
-          <span style="background: #fb923c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-left: 8px;">
-            💳 Pago Final Pendiente
-          </span>
-        ` : ''}
       </div>
       ${!isArchived && order.approvalStatus === 'pending_review' ? `
         <div class="quick-actions">
@@ -439,82 +423,81 @@ function createOrderCard(order) {
             ✕
           </button>
         </div>
-      ` : !isArchived && order.approvalStatus === 'approved' && order.receiptPdfUrl ? `
-        <div class="quick-actions">
-          <button class="quick-action-btn receipt-btn" onclick="event.stopPropagation(); downloadReceipt('${order.receiptPdfUrl}', '${order.orderNumber}', ${order.id});" title="Descargar recibo">
-            📥
-          </button>
-          <button class="quick-action-btn receipt-btn" onclick="event.stopPropagation(); shareReceipt('${order.receiptPdfUrl}');" title="Compartir enlace">
-            🔗
-          </button>
-        </div>
       ` : ''}
+      <div class="order-date-header">
+        <span class="date-label">Fecha del pedido</span>
+        <span class="date-value">${formatDateFull(order.orderDate)}</span>
+      </div>
       ${!isArchived ? `
-        <div style="display: flex; gap: 6px; margin-left: auto;">
-          <button style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); white-space: nowrap;" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'completo');" onmouseover="this.style.background='#059669'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.15)';" onmouseout="this.style.background='#10b981'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)';" title="Marcar como completo">
+        <div class="archive-actions">
+          <button class="archive-btn complete" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'completo');">
             ✓ Completo
           </button>
-          <button style="background: #ef4444; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); white-space: nowrap;" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'cancelado');" onmouseover="this.style.background='#dc2626'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.15)';" onmouseout="this.style.background='#ef4444'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)';" title="Marcar como cancelado">
+          <button class="archive-btn cancel" onclick="event.stopPropagation(); archiveOrder(${order.id}, 'cancelado');">
             ✕ Cancelado
           </button>
         </div>
-      ` : ''}
+      ` : `
+        <div class="archive-status-badge ${order.archiveStatus}">
+          ${order.archiveStatus === 'completo' ? '✓ Completo' : '✕ Cancelado'}
+        </div>
+      `}
     </div>
 
-    <div class="order-meta">
-      <div class="meta-item">
-        <span class="meta-label">Cliente</span>
-        <span class="meta-value" style="display: flex; align-items: center; gap: 8px;">
-          ${order.clientName}
-          ${order.clientPhone ? `
-            <a href="https://wa.me/${whatsappNumber}" target="_blank" onclick="event.stopPropagation();" title="Enviar WhatsApp a ${order.clientName}" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #25D366; border-radius: 50%; text-decoration: none;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-              </svg>
-            </a>
-          ` : ''}
-        </span>
+    <div class="order-body">
+      <div class="order-left">
+        <div class="client-info">
+          <span class="info-label">CLIENTE</span>
+          <span class="info-value">
+            ${order.clientName}
+            ${order.clientPhone ? `
+              <a href="https://wa.me/${whatsappNumber}" target="_blank" class="whatsapp-btn-card" onclick="event.stopPropagation();" title="Enviar WhatsApp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                </svg>
+              </a>
+            ` : ''}
+          </span>
+        </div>
+        <div class="order-totals">
+          <span class="total-label">TOTAL</span>
+          <span class="total-value">${formatCurrency(order.totalPrice)}</span>
+        </div>
       </div>
-      <div class="meta-item">
-        <span class="meta-label">Fecha del Pedido</span>
-        <span class="meta-value">${formatDate(order.orderDate)}</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-label">Hora de Creación</span>
-        <span class="meta-value">${formatTime(order.createdAt || order.orderDate)}</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-label">Fecha del Evento</span>
-        <span class="meta-value">${formatDate(order.eventDate)}</span>
-      </div>
-      ${order.productionDeadline ? `
-      <div class="meta-item">
-        <span class="meta-label">🏭 Deadline Producción</span>
-        <span class="meta-value" style="color: #7c3aed; font-weight: 600;">${formatDate(order.productionDeadline)}</span>
-      </div>
-      ` : ''}
-      ${order.estimatedDeliveryDate ? `
-      <div class="meta-item">
-        <span class="meta-label">📦 Entrega Estimada</span>
-        <span class="meta-value" style="color: #059669; font-weight: 600;">${formatDate(order.estimatedDeliveryDate)}</span>
-      </div>
-      ` : ''}
-      <div class="meta-item">
-        <span class="meta-label">Total</span>
-        <span class="meta-value highlight">${formatCurrency(order.totalPrice)}</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-label">Anticipo</span>
-        <span class="meta-value">${formatCurrency(order.depositAmount)} ${order.depositPaid ? '✅' : '⏳'}</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-label">Productos</span>
-        <span class="meta-value">${order.items.length} item(s)</span>
+
+      <div class="order-right">
+        ${order.productionDeadline ? `
+        <div class="deadline-info">
+          <span class="deadline-icon">🏭</span>
+          <div>
+            <span class="deadline-label">DEADLINE PRODUCCIÓN</span>
+            <span class="deadline-value">${formatDate(order.productionDeadline)}</span>
+          </div>
+        </div>
+        ` : ''}
+        ${order.estimatedDeliveryDate ? `
+        <div class="delivery-info">
+          <span class="delivery-label">Entrega estimada</span>
+          <span class="delivery-value">${formatDate(order.estimatedDeliveryDate)}</span>
+        </div>
+        ` : ''}
       </div>
     </div>
   `;
 
   return card;
+}
+
+// Helper function for full date format
+function formatDateFull(dateString) {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date)) return 'N/A';
+  return date.toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
 }
 
 // ==========================================
