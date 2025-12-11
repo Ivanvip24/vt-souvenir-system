@@ -396,12 +396,39 @@ function closeDayDetail() {
 /**
  * Open order detail from calendar
  */
-function openOrderFromCalendar(orderId) {
-  const order = calendarState.orders.find(o => o.id === orderId);
-  if (order) {
-    closeDayDetail();
-    showOrderDetail(order);
+async function openOrderFromCalendar(orderId) {
+  closeDayDetail();
+
+  // First check if order exists in main state (from dashboard.js)
+  if (typeof state !== 'undefined' && state.orders) {
+    const existingOrder = state.orders.find(o => o.id == orderId || o.id === orderId.toString());
+    if (existingOrder) {
+      showOrderDetail(existingOrder);
+      return;
+    }
   }
+
+  // If not found, fetch the full order details from API
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}`, {
+      headers: getAuthHeaders()
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        showOrderDetail(result.data);
+        return;
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching order:', error);
+  }
+
+  // Fallback: switch to orders view and reload
+  alert('Abriendo pedido...');
+  switchView('orders');
+  loadOrders();
 }
 
 /**
