@@ -82,16 +82,35 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 
 function initializeNavigation() {
+  // Main nav items
   const navButtons = document.querySelectorAll('.nav-item');
-
   navButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const view = btn.dataset.view;
       switchView(view);
 
-      // Update active state
+      // Update active state for main items
       navButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+
+      // Remove active from sub-items
+      document.querySelectorAll('.nav-sub-item').forEach(s => s.classList.remove('active'));
+    });
+  });
+
+  // Sub nav items (like Calendar under Pedidos)
+  const subNavButtons = document.querySelectorAll('.nav-sub-item');
+  subNavButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.view;
+      switchView(view);
+
+      // Update active state for sub-items
+      subNavButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Keep parent active but dimmed
+      navButtons.forEach(b => b.classList.remove('active'));
     });
   });
 }
@@ -101,11 +120,19 @@ function switchView(viewName) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
 
   // Show selected view
-  document.getElementById(`${viewName}-view`).classList.add('active');
+  const view = document.getElementById(`${viewName}-view`);
+  if (view) {
+    view.classList.add('active');
+  }
 
   // Initialize view-specific content
   if (viewName === 'analytics' && typeof initAnalytics === 'function') {
     initAnalytics();
+  }
+
+  // Initialize calendar when switching to calendar view
+  if (viewName === 'calendar' && typeof initCalendar === 'function') {
+    initCalendar();
   }
 }
 

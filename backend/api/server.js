@@ -298,6 +298,202 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+// Get orders for calendar view with production deadlines
+app.get('/api/orders/calendar', async (req, res) => {
+  try {
+    const { start, end } = req.query;
+
+    // Default to current month if no dates provided
+    const startDate = start || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+    const endDate = end || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
+
+    console.log(`📅 Fetching calendar orders from ${startDate} to ${endDate}`);
+
+    const result = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.order_date,
+        o.event_date,
+        o.total_price,
+        o.status,
+        o.production_deadline,
+        o.estimated_delivery_date,
+        c.name as client_name,
+        json_agg(
+          json_build_object(
+            'quantity', oi.quantity,
+            'productName', oi.product_name
+          )
+        ) FILTER (WHERE oi.id IS NOT NULL) as items
+      FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE o.production_deadline IS NOT NULL
+        AND o.production_deadline >= $1
+        AND o.production_deadline <= $2
+        AND o.status NOT IN ('cancelled', 'completed')
+        AND (o.archive_status IS NULL OR o.archive_status != 'archived')
+      GROUP BY o.id, c.name
+      ORDER BY o.production_deadline ASC
+    `, [startDate, endDate]);
+
+    const orders = result.rows.map(order => ({
+      id: order.id,
+      orderNumber: order.order_number,
+      order_number: order.order_number,
+      orderDate: order.order_date,
+      eventDate: order.event_date,
+      event_date: order.event_date,
+      totalPrice: parseFloat(order.total_price) || 0,
+      status: order.status,
+      productionDeadline: order.production_deadline,
+      production_deadline: order.production_deadline,
+      estimatedDeliveryDate: order.estimated_delivery_date,
+      clientName: order.client_name,
+      client_name: order.client_name,
+      items: order.items || []
+    }));
+
+    console.log(`📅 Found ${orders.length} orders for calendar`);
+
+    res.json({
+      success: true,
+      data: orders
+    });
+
+  } catch (error) {
+    console.error('❌ Calendar data error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get capacity info for a date range
+app.get('/api/orders/capacity', async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    const dailyCapacity = 2500; // Configurable
+
+    const startDate = start || new Date().toISOString().split('T')[0];
+    const endDate = end || new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0];
+
+    console.log(`📊 Calculating capacity from ${startDate} to ${endDate}`);
+
+    // Get total pieces per day
+    const result = await query(`
+      SELECT
+        o.production_deadline::date as deadline_date,
+        COUNT(DISTINCT o.id) as order_count,
+        COALESCE(SUM(oi.quantity), 0) as total_pieces
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE o.production_deadline IS NOT NULL
+        AND o.production_deadline >= $1
+        AND o.production_deadline <= $2
+        AND o.status NOT IN ('cancelled', 'completed')
+        AND (o.archive_status IS NULL OR o.archive_status != 'archived')
+      GROUP BY o.production_deadline::date
+      ORDER BY deadline_date ASC
+    `, [startDate, endDate]);
+
+    const capacityByDay = {};
+    result.rows.forEach(row => {
+      const dateKey = row.deadline_date.toISOString().split('T')[0];
+      const pieces = parseInt(row.total_pieces) || 0;
+      capacityByDay[dateKey] = {
+        pieces,
+        orderCount: parseInt(row.order_count),
+        capacityPercent: Math.round((pieces / dailyCapacity) * 100),
+        available: Math.max(0, dailyCapacity - pieces)
+      };
+    });
+
+    res.json({
+      success: true,
+      dailyCapacity,
+      data: capacityByDay
+    });
+
+  } catch (error) {
+    console.error('❌ Capacity calculation error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Find next available production date with capacity
+app.get('/api/orders/next-available-date', async (req, res) => {
+  try {
+    const { pieces, startDate } = req.query;
+    const piecesNeeded = parseInt(pieces) || 100;
+    const dailyCapacity = 2500;
+
+    let checkDate = startDate ? new Date(startDate) : new Date();
+    let attempts = 0;
+    const maxAttempts = 60;
+
+    while (attempts < maxAttempts) {
+      // Skip weekends
+      const dayOfWeek = checkDate.getDay();
+      if (dayOfWeek === 0) {
+        checkDate.setDate(checkDate.getDate() + 1);
+        continue;
+      }
+      if (dayOfWeek === 6) {
+        checkDate.setDate(checkDate.getDate() + 2);
+        continue;
+      }
+
+      const dateKey = checkDate.toISOString().split('T')[0];
+
+      // Check existing capacity for this day
+      const result = await query(`
+        SELECT COALESCE(SUM(oi.quantity), 0) as total_pieces
+        FROM orders o
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        WHERE o.production_deadline::date = $1
+          AND o.status NOT IN ('cancelled', 'completed')
+          AND (o.archive_status IS NULL OR o.archive_status != 'archived')
+      `, [dateKey]);
+
+      const usedCapacity = parseInt(result.rows[0]?.total_pieces) || 0;
+      const availableCapacity = dailyCapacity - usedCapacity;
+
+      if (availableCapacity >= piecesNeeded) {
+        return res.json({
+          success: true,
+          date: dateKey,
+          availableCapacity,
+          usedCapacity,
+          dailyCapacity
+        });
+      }
+
+      checkDate.setDate(checkDate.getDate() + 1);
+      attempts++;
+    }
+
+    // Return next business day if no capacity found
+    res.json({
+      success: true,
+      date: checkDate.toISOString().split('T')[0],
+      warning: 'No date with full capacity found within 60 days'
+    });
+
+  } catch (error) {
+    console.error('❌ Next available date error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Get single order by ID
 app.get('/api/orders/:orderId', async (req, res) => {
   try {
