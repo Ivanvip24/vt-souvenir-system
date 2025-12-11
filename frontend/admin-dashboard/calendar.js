@@ -364,7 +364,7 @@ function showDayDetail(dateKey) {
     `;
   } else {
     ordersList.innerHTML = dayData.orders.map(order => `
-      <div class="day-order-item" onclick="openOrderFromCalendar(${order.id})">
+      <div class="day-order-item" data-order-id="${order.id}" style="cursor: pointer;">
         <div class="order-item-header">
           <span class="order-number">${order.orderNumber}</span>
           <span class="order-status status-${order.status}">${getStatusLabel(order.status)}</span>
@@ -380,6 +380,14 @@ function showDayDetail(dateKey) {
         ` : ''}
       </div>
     `).join('');
+
+    // Add click handlers to each order item
+    ordersList.querySelectorAll('.day-order-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const orderId = this.getAttribute('data-order-id');
+        openOrderFromCalendar(orderId);
+      });
+    });
   }
 
   // Show panel
@@ -397,18 +405,27 @@ function closeDayDetail() {
  * Open order detail from calendar
  */
 async function openOrderFromCalendar(orderId) {
+  console.log('Opening order from calendar:', orderId);
+
+  // Close the day panel first
   closeDayDetail();
 
   // First check if order exists in main state (from dashboard.js)
-  if (typeof state !== 'undefined' && state.orders) {
-    const existingOrder = state.orders.find(o => o.id == orderId || o.id === orderId.toString());
+  if (typeof state !== 'undefined' && state.orders && state.orders.length > 0) {
+    const existingOrder = state.orders.find(o =>
+      o.id == orderId ||
+      o.id === orderId.toString() ||
+      String(o.id) === String(orderId)
+    );
     if (existingOrder) {
+      console.log('Found order in state:', existingOrder.orderNumber);
       showOrderDetail(existingOrder);
       return;
     }
   }
 
-  // If not found, fetch the full order details from API
+  // If not found in state, fetch the full order details from API
+  console.log('Fetching order from API...');
   try {
     const response = await fetch(`${API_BASE}/orders/${orderId}`, {
       headers: getAuthHeaders()
@@ -416,19 +433,31 @@ async function openOrderFromCalendar(orderId) {
 
     if (response.ok) {
       const result = await response.json();
+      console.log('API response:', result);
       if (result.success && result.data) {
         showOrderDetail(result.data);
         return;
       }
+    } else {
+      console.error('API response not ok:', response.status);
     }
   } catch (error) {
     console.error('Error fetching order:', error);
   }
 
-  // Fallback: switch to orders view and reload
-  alert('Abriendo pedido...');
+  // Fallback: switch to orders view
+  console.log('Fallback: switching to orders view');
   switchView('orders');
-  loadOrders();
+
+  // Find and highlight the order after orders load
+  setTimeout(() => {
+    if (typeof state !== 'undefined' && state.orders) {
+      const order = state.orders.find(o => String(o.id) === String(orderId));
+      if (order) {
+        showOrderDetail(order);
+      }
+    }
+  }, 1000);
 }
 
 /**
