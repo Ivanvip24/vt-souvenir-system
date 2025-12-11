@@ -279,6 +279,9 @@
 
             <div id="products-container" class="products-grid"></div>
 
+            <!-- Shipping indicator - shows free shipping progress -->
+            <div id="shipping-indicator" class="shipping-indicator"></div>
+
             <div class="sticky-footer">
                 <div class="summary">
                     <div class="summary-row">
@@ -319,7 +322,15 @@
                             <span style="font-size: 15px;">Subtotal:</span>
                             <strong id="summary-subtotal" style="font-size: 15px;">$0.00</strong>
                         </div>
-                        <div class="summary-row" style="font-size: 18px; background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1)); padding: 12px; border-radius: 8px; margin-top: 12px;">
+                        <div class="summary-row" style="margin-bottom: 8px;">
+                            <span style="font-size: 15px;">🚚 Envío:</span>
+                            <strong id="summary-shipping" style="font-size: 15px;">$0.00</strong>
+                        </div>
+                        <div class="summary-row" style="margin-bottom: 12px; padding-top: 8px; border-top: 1px dashed var(--gray-300);">
+                            <span style="font-size: 16px; font-weight: 600;">Total:</span>
+                            <strong id="summary-total" style="font-size: 16px;">$0.00</strong>
+                        </div>
+                        <div class="summary-row" style="font-size: 18px; background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1)); padding: 12px; border-radius: 8px;">
                             <span style="font-weight: 600;">💰 Anticipo a Pagar (50%):</span>
                             <strong id="summary-deposit" style="color: var(--primary); font-size: 20px;">$0.00</strong>
                         </div>

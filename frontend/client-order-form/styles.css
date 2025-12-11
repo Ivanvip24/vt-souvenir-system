@@ -571,6 +571,23 @@ body {
 }
 
 /* ==========================================
+   SHIPPING INDICATOR
+   ========================================== */
+
+.shipping-indicator {
+    text-align: center;
+    padding: 12px 16px;
+    margin: 16px 20px;
+    border-radius: var(--radius-md);
+    background: var(--bg-tertiary);
+    font-size: 14px;
+}
+
+.shipping-indicator:empty {
+    display: none;
+}
+
+/* ==========================================
    PAYMENT OPTIONS
    ========================================== */
 

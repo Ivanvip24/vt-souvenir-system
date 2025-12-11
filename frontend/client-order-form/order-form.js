@@ -212,8 +212,17 @@ const state = {
   },
   totals: {
     subtotal: 0,
-    deposit: 0
+    shipping: 0,
+    total: 0,
+    deposit: 0,
+    totalPieces: 0
   }
+};
+
+// Shipping configuration
+const SHIPPING_CONFIG = {
+  freeShippingThreshold: 300, // Free shipping at 300+ pieces
+  shippingCost: 210 // $210 MXN shipping fee under threshold
 };
 
 // ==========================================
@@ -1241,22 +1250,43 @@ window.handleQuantityChange = function(productId, value) {
 
 function updateOrderTotals() {
   let subtotal = 0;
+  let totalPieces = 0;
 
   Object.values(state.cart).forEach(({ product, quantity }) => {
     // Use tiered pricing for each product
     const { price } = getTieredPrice(product, quantity);
     subtotal += price * quantity;
+    totalPieces += quantity;
   });
 
-  const deposit = subtotal * 0.5; // 50% deposit
+  // Calculate shipping: FREE if >= 300 pieces, otherwise $210
+  const shipping = totalPieces >= SHIPPING_CONFIG.freeShippingThreshold ? 0 : SHIPPING_CONFIG.shippingCost;
+  const total = subtotal + shipping;
+  const deposit = total * 0.5; // 50% deposit of total (including shipping)
 
   state.totals.subtotal = subtotal;
+  state.totals.shipping = shipping;
+  state.totals.total = total;
   state.totals.deposit = deposit;
+  state.totals.totalPieces = totalPieces;
 
   // Update UI
-  document.getElementById('order-total').textContent = `$${subtotal.toFixed(2)}`;
+  document.getElementById('order-total').textContent = `$${total.toFixed(2)}`;
   document.getElementById('deposit-amount').textContent = `$${deposit.toFixed(2)}`;
-  document.getElementById('total-mini').textContent = `$${subtotal.toFixed(2)}`;
+  document.getElementById('total-mini').textContent = `$${total.toFixed(2)}`;
+
+  // Update shipping indicator if it exists
+  const shippingIndicator = document.getElementById('shipping-indicator');
+  if (shippingIndicator) {
+    if (totalPieces === 0) {
+      shippingIndicator.innerHTML = '';
+    } else if (shipping === 0) {
+      shippingIndicator.innerHTML = `<span style="color: #10b981; font-weight: 600;">🚚 ¡Envío GRATIS! (${totalPieces} piezas)</span>`;
+    } else {
+      const piecesNeeded = SHIPPING_CONFIG.freeShippingThreshold - totalPieces;
+      shippingIndicator.innerHTML = `<span style="color: #f59e0b;">📦 Envío: $${shipping.toFixed(2)} <small>(¡Agrega ${piecesNeeded} piezas más para envío gratis!)</small></span>`;
+    }
+  }
 
   // Enable/disable continue button
   const continueBtn = document.getElementById('continue-products');
@@ -1283,12 +1313,14 @@ function populateOrderSummary() {
   summaryContainer.innerHTML = '';
 
   let subtotal = 0;
+  let totalPieces = 0;
 
   // Generate HTML for each item in cart
   Object.values(state.cart).forEach(({ product, quantity }) => {
     const { price } = getTieredPrice(product, quantity);
     const lineTotal = price * quantity;
     subtotal += lineTotal;
+    totalPieces += quantity;
 
     const itemRow = document.createElement('div');
     itemRow.className = 'order-item-row';
@@ -1306,10 +1338,30 @@ function populateOrderSummary() {
     summaryContainer.appendChild(itemRow);
   });
 
-  // Update totals
-  const deposit = subtotal * 0.5;
+  // Calculate shipping
+  const shipping = totalPieces >= SHIPPING_CONFIG.freeShippingThreshold ? 0 : SHIPPING_CONFIG.shippingCost;
+  const total = subtotal + shipping;
+  const deposit = total * 0.5;
 
+  // Update subtotal display
   document.getElementById('summary-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+
+  // Update shipping display
+  const shippingEl = document.getElementById('summary-shipping');
+  if (shippingEl) {
+    if (shipping === 0) {
+      shippingEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">¡GRATIS!</span>`;
+    } else {
+      shippingEl.textContent = `$${shipping.toFixed(2)}`;
+    }
+  }
+
+  // Update total display
+  const totalEl = document.getElementById('summary-total');
+  if (totalEl) {
+    totalEl.textContent = `$${total.toFixed(2)}`;
+  }
+
   document.getElementById('summary-deposit').textContent = `$${deposit.toFixed(2)}`;
   document.getElementById('summary-total-pay').textContent = `$${deposit.toFixed(2)}`;
 }
