@@ -563,6 +563,13 @@ body {
     font-size: 15px;
 }
 
+.summary-row.total-row {
+    font-weight: 600;
+    padding-top: 8px;
+    border-top: 1px dashed var(--gray-300);
+    font-size: 16px;
+}
+
 .summary-row.deposit {
     color: var(--axkan-pink);
     font-weight: 600;

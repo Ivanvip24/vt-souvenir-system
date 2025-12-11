@@ -1270,21 +1270,32 @@ function updateOrderTotals() {
   state.totals.deposit = deposit;
   state.totals.totalPieces = totalPieces;
 
-  // Update UI
+  // Update UI - sticky footer
+  document.getElementById('order-subtotal').textContent = `$${subtotal.toFixed(2)}`;
   document.getElementById('order-total').textContent = `$${total.toFixed(2)}`;
   document.getElementById('deposit-amount').textContent = `$${deposit.toFixed(2)}`;
   document.getElementById('total-mini').textContent = `$${total.toFixed(2)}`;
 
-  // Update shipping indicator if it exists
+  // Update footer shipping display
+  const footerShipping = document.getElementById('footer-shipping');
+  if (footerShipping) {
+    if (shipping === 0) {
+      footerShipping.innerHTML = `<span style="color: #10b981;">¡GRATIS!</span>`;
+    } else {
+      footerShipping.textContent = `$${shipping.toFixed(2)}`;
+    }
+  }
+
+  // Update shipping indicator (progress message)
   const shippingIndicator = document.getElementById('shipping-indicator');
   if (shippingIndicator) {
     if (totalPieces === 0) {
       shippingIndicator.innerHTML = '';
     } else if (shipping === 0) {
-      shippingIndicator.innerHTML = `<span style="color: #10b981; font-weight: 600;">🚚 ¡Envío GRATIS! (${totalPieces} piezas)</span>`;
+      shippingIndicator.innerHTML = `<span style="color: #10b981; font-weight: 600;">🎉 ¡Envío GRATIS incluido!</span>`;
     } else {
       const piecesNeeded = SHIPPING_CONFIG.freeShippingThreshold - totalPieces;
-      shippingIndicator.innerHTML = `<span style="color: #f59e0b;">📦 Envío: $${shipping.toFixed(2)} <small>(¡Agrega ${piecesNeeded} piezas más para envío gratis!)</small></span>`;
+      shippingIndicator.innerHTML = `<span style="color: #f59e0b;">💡 ¡Agrega ${piecesNeeded} piezas más para envío gratis!</span>`;
     }
   }
 
