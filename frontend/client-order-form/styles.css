@@ -2040,3 +2040,147 @@ details[open] .notes-summary {
         color: #f1f5f9;
     }
 }
+
+
+/* ==========================================
+   PROMO CODE SECTION
+   ========================================== */
+
+.promo-code-section {
+    padding: 12px 20px;
+    margin-bottom: 8px;
+}
+
+.promo-code-container {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: 12px;
+}
+
+.promo-code-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.promo-icon {
+    font-size: 20px;
+}
+
+.promo-code-input-group input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-family: monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: var(--bg-secondary);
+}
+
+.promo-code-input-group input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.btn-apply-promo {
+    padding: 10px 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-apply-promo:hover {
+    background: var(--primary-dark);
+}
+
+.btn-apply-promo:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.promo-message {
+    display: block;
+    font-size: 12px;
+    margin-top: 8px;
+    padding-left: 28px;
+}
+
+.promo-message.error {
+    color: var(--danger);
+}
+
+.promo-message.success {
+    color: var(--success);
+}
+
+/* Applied Promo Banner */
+.promo-applied-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+}
+
+.promo-applied-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.promo-check {
+    width: 28px;
+    height: 28px;
+    background: #10b981;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.promo-applied-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.promo-applied-text strong {
+    color: #059669;
+    font-size: 14px;
+}
+
+.promo-applied-text span {
+    color: var(--gray-600);
+    font-size: 12px;
+}
+
+.btn-remove-promo {
+    width: 28px;
+    height: 28px;
+    background: rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--gray-600);
+    transition: all 0.2s;
+}
+
+.btn-remove-promo:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+

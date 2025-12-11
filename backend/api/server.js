@@ -16,6 +16,7 @@ import priceRoutes from './price-routes.js';
 import bomRoutes from './bom-routes.js';
 import webhookRoutes from './webhook-routes.js';
 import uploadRoutes from './upload-routes.js';
+import discountRoutes from './discount-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
@@ -96,6 +97,11 @@ app.use('/api/bom', bomRoutes);
 // MAKE.COM WEBHOOK ROUTES
 // ========================================
 app.use('/api/webhooks', webhookRoutes);
+
+// ========================================
+// DISCOUNTS & SPECIAL CLIENTS ROUTES
+// ========================================
+app.use('/api/discounts', discountRoutes);
 
 // ========================================
 // FILE UPLOAD ROUTES (Cloudinary)

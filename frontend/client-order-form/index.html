@@ -258,6 +258,36 @@
                 </div>
             </div>
 
+            <!-- Promo Code Section -->
+            <div class="promo-code-section">
+                <div class="promo-code-container" id="promo-code-container">
+                    <div class="promo-code-input-group">
+                        <span class="promo-icon">🏷️</span>
+                        <input type="text"
+                               id="promo-code-input"
+                               placeholder="Código promocional"
+                               maxlength="6"
+                               autocomplete="off"
+                               style="text-transform: uppercase;">
+                        <button type="button" id="apply-promo-btn" class="btn-apply-promo" onclick="applyPromoCode()">
+                            Aplicar
+                        </button>
+                    </div>
+                    <span id="promo-code-message" class="promo-message"></span>
+                </div>
+                <!-- Applied promo banner (hidden by default) -->
+                <div id="promo-applied-banner" class="promo-applied-banner" style="display: none;">
+                    <div class="promo-applied-content">
+                        <span class="promo-check">✓</span>
+                        <div class="promo-applied-text">
+                            <strong>Descuento Aplicado</strong>
+                            <span id="promo-client-name"></span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-remove-promo" onclick="removePromoCode()">✕</button>
+                </div>
+            </div>
+
             <!-- #10: Product Search/Filter -->
             <div class="product-search-container">
                 <div class="product-search">

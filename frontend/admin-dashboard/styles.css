@@ -3229,3 +3229,347 @@ body {
     font-size: 11px;
   }
 }
+
+
+/* ==========================================
+   DISCOUNTS / SPECIAL CLIENTS STYLES
+   ========================================== */
+
+.special-clients-container {
+  padding: 20px 0;
+}
+
+.special-clients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.special-client-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.special-client-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  border-color: var(--primary);
+}
+
+.client-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.client-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.client-info {
+  flex: 1;
+}
+
+.client-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.client-company {
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+.client-status {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.client-status.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.client-status.inactive {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+}
+
+.client-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.client-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--gray-700);
+}
+
+.detail-icon {
+  font-size: 16px;
+}
+
+/* Modal Enhancements for Special Clients */
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-section h4 {
+  font-size: 16px;
+  color: var(--gray-900);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--gray-200);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.custom-prices-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.custom-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: 8px;
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.product-name {
+  font-weight: 500;
+  color: var(--gray-900);
+}
+
+.product-normal-price {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.price-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.currency-symbol {
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+.price-input {
+  width: 100px;
+  padding: 8px 12px;
+  border: 2px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: right;
+}
+
+.price-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+/* Client Detail Modal */
+.client-info-section {
+  background: var(--gray-50);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.client-info-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.client-info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: var(--gray-600);
+  min-width: 80px;
+}
+
+/* TOTP Section */
+.totp-section {
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.05), rgba(255, 152, 0, 0.05));
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  text-align: center;
+  border: 2px solid rgba(233, 30, 99, 0.1);
+}
+
+.totp-section h4 {
+  margin: 0 0 8px;
+  color: var(--gray-900);
+}
+
+.totp-section .help-text {
+  font-size: 13px;
+  color: var(--gray-600);
+  margin-bottom: 16px;
+}
+
+.totp-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.totp-code {
+  font-family: monospace;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--primary);
+  background: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 2px solid var(--gray-200);
+}
+
+.totp-timer {
+  width: 100px;
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.totp-timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  transition: width 1s linear;
+}
+
+.totp-countdown {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-600);
+  min-width: 30px;
+}
+
+/* Prices Table */
+.prices-section {
+  margin-top: 24px;
+}
+
+.prices-section h4 {
+  margin: 0 0 16px;
+  color: var(--gray-900);
+}
+
+.prices-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prices-table th,
+.prices-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.prices-table th {
+  background: var(--gray-50);
+  font-weight: 600;
+  color: var(--gray-700);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.prices-table td.special-price {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.prices-table td.discount-badge {
+  color: #059669;
+  font-weight: 600;
+}
+
+.prices-table td.discount-badge::before {
+  content: "-";
+}
+
+.no-prices {
+  text-align: center;
+  color: var(--gray-500);
+  padding: 20px;
+}
+
+/* Modal Large Variant */
+.modal-large {
+  max-width: 700px;
+}
+
+@media (max-width: 768px) {
+  .special-clients-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .totp-display {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .totp-timer {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+

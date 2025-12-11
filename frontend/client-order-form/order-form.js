@@ -66,11 +66,26 @@ const PRICING_TIERS = {
 
 /**
  * Get the appropriate price for a product based on quantity
+ * Checks for promo code custom prices first, then falls back to tiered pricing
  * @param {Object} product - The product object
  * @param {number} quantity - The quantity ordered
- * @returns {Object} { price: number, tierInfo: string, savings: number }
+ * @returns {Object} { price: number, tierInfo: string, savings: number, isPromoPrice: boolean }
  */
 function getTieredPrice(product, quantity) {
+  // Check if promo code is applied and has custom price for this product
+  if (state.promo.applied && state.promo.customPrices[product.id]) {
+    const promoPrice = state.promo.customPrices[product.id].customPrice;
+    const normalPrice = state.promo.customPrices[product.id].normalPrice;
+    const savings = (normalPrice - promoPrice) * quantity;
+
+    return {
+      price: promoPrice,
+      tierInfo: `🏷️ Precio especial: $${promoPrice.toFixed(2)} c/u`,
+      savings: savings > 0 ? savings : 0,
+      isPromoPrice: true
+    };
+  }
+
   // Find matching pricing tier
   const productNameLower = product.name.toLowerCase();
   let tiers = null;
@@ -88,7 +103,8 @@ function getTieredPrice(product, quantity) {
     return {
       price: parseFloat(product.base_price),
       tierInfo: null,
-      savings: 0
+      savings: 0,
+      isPromoPrice: false
     };
   }
 
@@ -102,7 +118,8 @@ function getTieredPrice(product, quantity) {
     return {
       price: parseFloat(product.base_price),
       tierInfo: `Mínimo ${tiers[0].min} piezas para precio mayorista`,
-      savings: 0
+      savings: 0,
+      isPromoPrice: false
     };
   }
 
@@ -128,7 +145,8 @@ function getTieredPrice(product, quantity) {
   return {
     price: tierPrice,
     tierInfo: tierInfo,
-    savings: savings > 0 ? savings : 0
+    savings: savings > 0 ? savings : 0,
+    isPromoPrice: false
   };
 }
 
@@ -209,6 +227,14 @@ const state = {
     method: 'stripe',
     proofFile: null,
     uploadCooldownInterval: null // Track countdown timer
+  },
+  // Promo code state for special clients
+  promo: {
+    applied: false,
+    code: null,
+    clientName: null,
+    specialClientId: null,
+    customPrices: {} // { productId: { normalPrice, customPrice } }
   },
   totals: {
     subtotal: 0,
@@ -2422,3 +2448,107 @@ window.copyToClipboard = async function(text, button) {
     document.body.removeChild(textArea);
   }
 };
+
+
+// ==========================================
+// PROMO CODE FUNCTIONS
+// ==========================================
+
+/**
+ * Apply a promo code and load custom prices
+ */
+async function applyPromoCode() {
+  const codeInput = document.getElementById("promo-code-input");
+  const messageEl = document.getElementById("promo-code-message");
+  const applyBtn = document.getElementById("apply-promo-btn");
+
+  const code = codeInput.value.trim().toUpperCase();
+
+  if (\!code || code.length \!== 6) {
+    messageEl.textContent = "Ingresa un código de 6 caracteres";
+    messageEl.className = "promo-message error";
+    return;
+  }
+
+  // Show loading state
+  applyBtn.disabled = true;
+  applyBtn.textContent = "...";
+  messageEl.textContent = "";
+
+  try {
+    const response = await fetch(`${API_BASE.replace("/client", "")}/discounts/validate-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.valid) {
+      // Apply promo code
+      state.promo.applied = true;
+      state.promo.code = code;
+      state.promo.clientName = data.clientName;
+      state.promo.specialClientId = data.specialClientId;
+      state.promo.customPrices = data.customPrices;
+
+      // Update UI
+      showPromoAppliedBanner(data.clientName);
+
+      // Recalculate prices for items already in cart
+      updateOrderTotals();
+
+      // Re-render products to show new prices
+      renderProducts(state.products);
+
+      messageEl.textContent = "";
+    } else {
+      messageEl.textContent = data.error || "Código no válido o expirado";
+      messageEl.className = "promo-message error";
+    }
+  } catch (error) {
+    console.error("Error validating promo code:", error);
+    messageEl.textContent = "Error validando código";
+    messageEl.className = "promo-message error";
+  } finally {
+    applyBtn.disabled = false;
+    applyBtn.textContent = "Aplicar";
+  }
+}
+
+/**
+ * Remove applied promo code
+ */
+function removePromoCode() {
+  state.promo.applied = false;
+  state.promo.code = null;
+  state.promo.clientName = null;
+  state.promo.specialClientId = null;
+  state.promo.customPrices = {};
+
+  // Reset UI
+  document.getElementById("promo-code-input").value = "";
+  document.getElementById("promo-code-container").style.display = "";
+  document.getElementById("promo-applied-banner").style.display = "none";
+  document.getElementById("promo-code-message").textContent = "";
+
+  // Recalculate prices
+  updateOrderTotals();
+
+  // Re-render products with normal prices
+  renderProducts(state.products);
+}
+
+/**
+ * Show the "promo applied" banner and hide input
+ */
+function showPromoAppliedBanner(clientName) {
+  document.getElementById("promo-code-container").style.display = "none";
+  document.getElementById("promo-applied-banner").style.display = "flex";
+  document.getElementById("promo-client-name").textContent = clientName;
+}
+
+// Make functions globally available
+window.applyPromoCode = applyPromoCode;
+window.removePromoCode = removePromoCode;
+
