@@ -364,7 +364,7 @@ function showDayDetail(dateKey) {
     `;
   } else {
     ordersList.innerHTML = dayData.orders.map(order => `
-      <div class="day-order-item" data-order-id="${order.id}" style="cursor: pointer;">
+      <div class="day-order-item" onclick="window.openOrderFromCalendar('${order.id}')" style="cursor: pointer;">
         <div class="order-item-header">
           <span class="order-number">${order.orderNumber}</span>
           <span class="order-status status-${order.status}">${getStatusLabel(order.status)}</span>
@@ -380,14 +380,6 @@ function showDayDetail(dateKey) {
         ` : ''}
       </div>
     `).join('');
-
-    // Add click handlers to each order item
-    ordersList.querySelectorAll('.day-order-item').forEach(item => {
-      item.addEventListener('click', function() {
-        const orderId = this.getAttribute('data-order-id');
-        openOrderFromCalendar(orderId);
-      });
-    });
   }
 
   // Show panel
@@ -402,9 +394,9 @@ function closeDayDetail() {
 }
 
 /**
- * Open order detail from calendar
+ * Open order detail from calendar (global function for onclick)
  */
-async function openOrderFromCalendar(orderId) {
+window.openOrderFromCalendar = async function(orderId) {
   console.log('Opening order from calendar:', orderId);
 
   // Close the day panel first
