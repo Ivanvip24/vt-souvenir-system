@@ -74,7 +74,7 @@ window.loadPriceDashboard = async function(period = 30) {
     // Defensive checks for all data properties
     renderSummaryCards(result.data?.summary || {});
     renderAlerts(result.data?.marginAlerts || []);
-    renderTopProductsTable(result.data?.topProducts || []);
+    renderPriceTopProductsTable(result.data?.topProducts || []);
 
     loading.classList.add('hidden');
 
@@ -260,10 +260,10 @@ function renderMarginTrendChart(trends) {
 }
 
 // ==========================================
-// RENDER TOP PRODUCTS TABLE
+// RENDER TOP PRODUCTS TABLE (for Prices view)
 // ==========================================
 
-function renderTopProductsTable(products) {
+function renderPriceTopProductsTable(products) {
   const container = document.getElementById('top-products-table');
 
   if (!container) return;
