@@ -411,12 +411,12 @@ window.openOrderFromCalendar = async function(orderId) {
     );
     if (existingOrder) {
       console.log('Found order in state:', existingOrder.orderNumber);
-      showOrderDetail(existingOrder);
+      showOrderDetail(existingOrder.id);  // Pass the ID, not the object
       return;
     }
   }
 
-  // If not found in state, fetch the full order details from API
+  // If not found in state, fetch from API and add to state
   console.log('Fetching order from API...');
   try {
     const response = await fetch(`${API_BASE}/orders/${orderId}`, {
@@ -427,7 +427,15 @@ window.openOrderFromCalendar = async function(orderId) {
       const result = await response.json();
       console.log('API response:', result);
       if (result.success && result.data) {
-        showOrderDetail(result.data);
+        // Add to state.orders so showOrderDetail can find it
+        if (typeof state !== 'undefined' && state.orders) {
+          // Check if already exists, if not add it
+          const exists = state.orders.find(o => String(o.id) === String(result.data.id));
+          if (!exists) {
+            state.orders.push(result.data);
+          }
+        }
+        showOrderDetail(result.data.id);
         return;
       }
     } else {
@@ -437,16 +445,16 @@ window.openOrderFromCalendar = async function(orderId) {
     console.error('Error fetching order:', error);
   }
 
-  // Fallback: switch to orders view
+  // Fallback: switch to orders view and reload
   console.log('Fallback: switching to orders view');
   switchView('orders');
 
-  // Find and highlight the order after orders load
+  // Wait for orders to load, then show the order
   setTimeout(() => {
     if (typeof state !== 'undefined' && state.orders) {
       const order = state.orders.find(o => String(o.id) === String(orderId));
       if (order) {
-        showOrderDetail(order);
+        showOrderDetail(order.id);
       }
     }
   }, 1000);
