@@ -794,98 +794,139 @@ async function showOrderDetail(orderId) {
       </div>
     </div>
 
-    <!-- Payment Proof -->
-    ${order.paymentMethod === 'bank_transfer' && order.paymentProofUrl ? `
-      <div class="detail-section">
-        <h3>Comprobante de Pago (Anticipo)</h3>
-        <div style="background: var(--gray-50); padding: 16px; border-radius: 12px; text-align: center;">
-          <img src="${order.paymentProofUrl}"
-               alt="Comprobante de pago"
-               style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-          <div style="margin-top: 12px;">
-            <a href="${order.paymentProofUrl}"
-               target="_blank"
-               style="color: var(--primary); font-size: 14px; font-weight: 600; text-decoration: none;">
-              📥 Descargar Comprobante
-            </a>
-          </div>
-        </div>
-      </div>
-    ` : order.paymentMethod === 'bank_transfer' ? `
-      <div class="detail-section">
-        <h3>Comprobante de Pago (Anticipo)</h3>
-        <div style="background: #fff3cd; padding: 16px; border-radius: 12px; color: #856404;">
-          ⏳ Pendiente de subir comprobante
-        </div>
-      </div>
-    ` : ''}
-
-    <!-- Second Payment Receipt -->
-    ${order.secondPaymentReceipt ? `
-      <div class="detail-section">
-        <h3>Comprobante de Pago Final</h3>
-        <div style="background: #fef3c7; border: 2px solid #fb923c; padding: 20px; border-radius: 12px;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-            <span style="font-size: 32px;">💳</span>
-            <div>
-              <div style="font-size: 16px; font-weight: 700; color: #92400e;">Pago Final Recibido</div>
-              <div style="font-size: 13px; color: #92400e; margin-top: 4px;">
-                ${order.secondPaymentDate ? `Subido: ${formatDate(order.secondPaymentDate)}` : ''}
-              </div>
-            </div>
-          </div>
-
-          <div style="background: white; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 16px;">
-            <img src="${order.secondPaymentReceipt}"
-                 alt="Comprobante de pago final"
-                 style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
-                 onclick="window.open('${order.secondPaymentReceipt}', '_blank')">
-            <div style="margin-top: 12px;">
-              <a href="${order.secondPaymentReceipt}"
+    <!-- Payment Proof (First Deposit) -->
+    <div class="detail-section">
+      <h3>💳 Comprobante de Anticipo (50%)</h3>
+      <div id="first-payment-container-${order.id}" style="background: var(--gray-50); padding: 16px; border-radius: 12px;">
+        ${order.paymentProofUrl ? `
+          <div style="text-align: center;">
+            <img src="${order.paymentProofUrl}"
+                 alt="Comprobante de pago"
+                 style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer;"
+                 onclick="window.open('${order.paymentProofUrl}', '_blank')">
+            <div style="margin-top: 12px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+              <a href="${order.paymentProofUrl}"
                  target="_blank"
                  style="color: var(--primary); font-size: 14px; font-weight: 600; text-decoration: none;">
-                📥 Descargar Comprobante
+                📥 Descargar
               </a>
+              <button onclick="replacePaymentReceipt(${order.id}, 'first')"
+                      style="background: none; border: none; color: var(--gray-500); font-size: 14px; cursor: pointer;">
+                🔄 Reemplazar
+              </button>
             </div>
           </div>
-
-          ${order.secondPaymentStatus === 'uploaded' ? `
-            <div style="background: #fff; border: 2px solid #059669; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-              <div style="font-size: 14px; font-weight: 600; color: #065f46; margin-bottom: 8px;">
-                ⚠️ Este pago requiere confirmación
-              </div>
-              <div style="font-size: 13px; color: #065f46;">
-                Revisa el comprobante y confirma que el pago se ha completado correctamente.
-              </div>
+        ` : `
+          <div id="first-payment-upload-${order.id}"
+               style="border: 2px dashed var(--gray-300); border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer;"
+               onclick="document.getElementById('first-payment-input-${order.id}').click()"
+               ondragover="handlePaymentDragOver(event, ${order.id}, 'first')"
+               ondragleave="handlePaymentDragLeave(event, ${order.id}, 'first')"
+               ondrop="handlePaymentDrop(event, ${order.id}, 'first')">
+            <div style="font-size: 36px; margin-bottom: 8px;">📤</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px;">
+              Subir comprobante de anticipo
             </div>
-            <button class="btn btn-success" onclick="confirmSecondPayment(${order.id})" style="width: 100%; padding: 14px; font-size: 16px;">
-              ✅ Confirmar Pago y Completar Pedido
+            <div style="font-size: 12px; color: var(--gray-500);">
+              Arrastra o haz clic para seleccionar
+            </div>
+          </div>
+          <input type="file" id="first-payment-input-${order.id}" accept="image/*" style="display: none;"
+                 onchange="handlePaymentUpload(event, ${order.id}, 'first')">
+          <div style="margin-top: 10px; text-align: center;">
+            <button onclick="pastePaymentReceipt(${order.id}, 'first')"
+                    style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-600);">
+              📋 Pegar del portapapeles
             </button>
-          ` : order.secondPaymentStatus === 'confirmed' ? `
-            <div style="background: #d1fae5; border: 2px solid #059669; padding: 16px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 20px; margin-bottom: 8px;">✅</div>
-              <div style="font-size: 15px; font-weight: 700; color: #065f46;">
-                Pago Confirmado
-              </div>
-              <div style="font-size: 13px; color: #065f46; margin-top: 4px;">
-                El cliente ha sido notificado por email
+          </div>
+        `}
+      </div>
+    </div>
+
+    <!-- Second Payment Receipt -->
+    <div class="detail-section">
+      <h3>💰 Comprobante de Pago Final (50%)</h3>
+      <div id="second-payment-container-${order.id}" style="background: var(--gray-50); padding: 16px; border-radius: 12px;">
+        ${order.secondPaymentReceipt ? `
+          <div style="background: #fef3c7; border: 2px solid #fb923c; padding: 16px; border-radius: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <span style="font-size: 28px;">💳</span>
+              <div>
+                <div style="font-size: 15px; font-weight: 700; color: #92400e;">Pago Final Recibido</div>
+                <div style="font-size: 12px; color: #92400e;">
+                  ${order.secondPaymentDate ? `Subido: ${formatDate(order.secondPaymentDate)}` : ''}
+                </div>
               </div>
             </div>
-          ` : ''}
-        </div>
-      </div>
-    ` : order.approvalStatus === 'approved' && parseFloat(order.totalPrice - order.depositAmount) > 0 ? `
-      <div class="detail-section">
-        <h3>Comprobante de Pago Final</h3>
-        <div style="background: #f3f4f6; padding: 16px; border-radius: 12px; text-align: center; color: #6b7280;">
-          <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
-          <div style="font-size: 15px; font-weight: 600;">Esperando comprobante del cliente</div>
-          <div style="font-size: 13px; margin-top: 8px;">
-            Saldo restante: ${formatCurrency(order.totalPrice - order.depositAmount)}
+
+            <div style="background: white; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 12px;">
+              <img src="${order.secondPaymentReceipt}"
+                   alt="Comprobante de pago final"
+                   style="max-width: 100%; max-height: 350px; border-radius: 8px; cursor: pointer;"
+                   onclick="window.open('${order.secondPaymentReceipt}', '_blank')">
+              <div style="margin-top: 10px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="${order.secondPaymentReceipt}"
+                   target="_blank"
+                   style="color: var(--primary); font-size: 13px; font-weight: 600; text-decoration: none;">
+                  📥 Descargar
+                </a>
+                <button onclick="replacePaymentReceipt(${order.id}, 'second')"
+                        style="background: none; border: none; color: var(--gray-500); font-size: 13px; cursor: pointer;">
+                  🔄 Reemplazar
+                </button>
+              </div>
+            </div>
+
+            ${order.secondPaymentStatus === 'uploaded' ? `
+              <div style="background: #fff; border: 2px solid #059669; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                <div style="font-size: 13px; font-weight: 600; color: #065f46; margin-bottom: 4px;">
+                  ⚠️ Este pago requiere confirmación
+                </div>
+                <div style="font-size: 12px; color: #065f46;">
+                  Revisa el comprobante y confirma que el pago se ha completado.
+                </div>
+              </div>
+              <button class="btn btn-success" onclick="confirmSecondPayment(${order.id})" style="width: 100%; padding: 12px; font-size: 14px;">
+                ✅ Confirmar Pago y Completar Pedido
+              </button>
+            ` : order.secondPaymentStatus === 'confirmed' ? `
+              <div style="background: #d1fae5; border: 2px solid #059669; padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 18px; margin-bottom: 4px;">✅</div>
+                <div style="font-size: 14px; font-weight: 700; color: #065f46;">Pago Confirmado</div>
+              </div>
+            ` : ''}
           </div>
-        </div>
+        ` : `
+          <div style="margin-bottom: 12px; padding: 12px; background: #fff7ed; border-radius: 8px; text-align: center;">
+            <div style="font-size: 13px; color: #9a3412;">
+              Saldo restante: <strong>${formatCurrency(order.totalPrice - order.depositAmount)}</strong>
+            </div>
+          </div>
+          <div id="second-payment-upload-${order.id}"
+               style="border: 2px dashed var(--gray-300); border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer;"
+               onclick="document.getElementById('second-payment-input-${order.id}').click()"
+               ondragover="handlePaymentDragOver(event, ${order.id}, 'second')"
+               ondragleave="handlePaymentDragLeave(event, ${order.id}, 'second')"
+               ondrop="handlePaymentDrop(event, ${order.id}, 'second')">
+            <div style="font-size: 36px; margin-bottom: 8px;">📤</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px;">
+              Subir comprobante de pago final
+            </div>
+            <div style="font-size: 12px; color: var(--gray-500);">
+              Arrastra o haz clic para seleccionar
+            </div>
+          </div>
+          <input type="file" id="second-payment-input-${order.id}" accept="image/*" style="display: none;"
+                 onchange="handlePaymentUpload(event, ${order.id}, 'second')">
+          <div style="margin-top: 10px; text-align: center;">
+            <button onclick="pastePaymentReceipt(${order.id}, 'second')"
+                    style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-600);">
+              📋 Pegar del portapapeles
+            </button>
+          </div>
+        `}
       </div>
-    ` : ''}
+    </div>
 
     <!-- PDF Receipt Download -->
     ${order.receiptPdfUrl ? `
@@ -1383,6 +1424,198 @@ async function removeProductionSheet(orderId) {
   } catch (error) {
     console.error('Error removing production sheet:', error);
     alert(`Error: ${error.message}`);
+  }
+}
+
+// ==========================================
+// PAYMENT RECEIPT UPLOAD FUNCTIONS
+// ==========================================
+
+function handlePaymentDragOver(event, orderId, paymentType) {
+  event.preventDefault();
+  event.stopPropagation();
+  const uploadArea = document.getElementById(`${paymentType}-payment-upload-${orderId}`);
+  if (uploadArea) {
+    uploadArea.style.borderColor = 'var(--primary)';
+    uploadArea.style.background = 'rgba(233, 30, 99, 0.05)';
+  }
+}
+
+function handlePaymentDragLeave(event, orderId, paymentType) {
+  event.preventDefault();
+  event.stopPropagation();
+  const uploadArea = document.getElementById(`${paymentType}-payment-upload-${orderId}`);
+  if (uploadArea) {
+    uploadArea.style.borderColor = 'var(--gray-300)';
+    uploadArea.style.background = 'transparent';
+  }
+}
+
+async function handlePaymentDrop(event, orderId, paymentType) {
+  event.preventDefault();
+  event.stopPropagation();
+  handlePaymentDragLeave(event, orderId, paymentType);
+
+  const files = event.dataTransfer.files;
+  if (files.length > 0) {
+    await uploadPaymentReceipt(files[0], orderId, paymentType);
+  }
+}
+
+async function handlePaymentUpload(event, orderId, paymentType) {
+  const file = event.target.files[0];
+  if (file) {
+    await uploadPaymentReceipt(file, orderId, paymentType);
+  }
+}
+
+async function pastePaymentReceipt(orderId, paymentType) {
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const item of clipboardItems) {
+      const imageType = item.types.find(type => type.startsWith('image/'));
+      if (imageType) {
+        const blob = await item.getType(imageType);
+        const file = new File([blob], `payment-${paymentType}-${orderId}.png`, { type: imageType });
+        await uploadPaymentReceipt(file, orderId, paymentType);
+        return;
+      }
+    }
+    alert('No se encontró imagen en el portapapeles. Copia una imagen primero.');
+  } catch (error) {
+    console.error('Error reading clipboard:', error);
+    alert('No se pudo acceder al portapapeles. Intenta arrastrando el archivo.');
+  }
+}
+
+function replacePaymentReceipt(orderId, paymentType) {
+  // Show upload interface
+  const container = document.getElementById(`${paymentType}-payment-container-${orderId}`);
+  if (container) {
+    container.innerHTML = `
+      <div id="${paymentType}-payment-upload-${orderId}"
+           style="border: 2px dashed var(--gray-300); border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer;"
+           onclick="document.getElementById('${paymentType}-payment-input-${orderId}').click()"
+           ondragover="handlePaymentDragOver(event, ${orderId}, '${paymentType}')"
+           ondragleave="handlePaymentDragLeave(event, ${orderId}, '${paymentType}')"
+           ondrop="handlePaymentDrop(event, ${orderId}, '${paymentType}')">
+        <div style="font-size: 36px; margin-bottom: 8px;">📤</div>
+        <div style="font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px;">
+          Subir nuevo comprobante
+        </div>
+        <div style="font-size: 12px; color: var(--gray-500);">
+          Arrastra o haz clic para seleccionar
+        </div>
+      </div>
+      <input type="file" id="${paymentType}-payment-input-${orderId}" accept="image/*" style="display: none;"
+             onchange="handlePaymentUpload(event, ${orderId}, '${paymentType}')">
+      <div style="margin-top: 10px; text-align: center;">
+        <button onclick="pastePaymentReceipt(${orderId}, '${paymentType}')"
+                style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-600);">
+          📋 Pegar del portapapeles
+        </button>
+        <button onclick="cancelReplacePayment(${orderId})"
+                style="background: none; border: 1px solid var(--gray-300); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-500); margin-left: 8px;">
+          ✕ Cancelar
+        </button>
+      </div>
+    `;
+  }
+}
+
+function cancelReplacePayment(orderId) {
+  // Refresh order detail to restore original view
+  const order = state.orders.find(o => o.id == orderId);
+  if (order) {
+    showOrderDetail(order);
+  }
+}
+
+async function uploadPaymentReceipt(file, orderId, paymentType) {
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    alert('Solo se aceptan imágenes (JPG, PNG, etc.)');
+    return;
+  }
+
+  // Validate file size (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('El archivo es demasiado grande. Máximo 10MB.');
+    return;
+  }
+
+  // Show loading state
+  const container = document.getElementById(`${paymentType}-payment-container-${orderId}`);
+  container.innerHTML = `
+    <div style="text-align: center; padding: 40px;">
+      <div class="spinner" style="margin: 0 auto 16px;"></div>
+      <div style="font-size: 14px; color: var(--gray-600);">Subiendo comprobante...</div>
+    </div>
+  `;
+
+  try {
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'payment_receipts');
+
+    const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dkpwnkhza/image/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!cloudinaryResponse.ok) {
+      throw new Error('Error al subir a Cloudinary');
+    }
+
+    const cloudinaryData = await cloudinaryResponse.json();
+    const imageUrl = cloudinaryData.secure_url;
+
+    // Save URL to backend
+    const endpoint = paymentType === 'first'
+      ? `${API_BASE}/orders/${orderId}/payment-proof`
+      : `${API_BASE}/orders/${orderId}/second-payment`;
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ paymentProofUrl: imageUrl })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al guardar');
+    }
+
+    // Update local state
+    const orderIndex = state.orders.findIndex(o => o.id == orderId);
+    if (orderIndex >= 0) {
+      if (paymentType === 'first') {
+        state.orders[orderIndex].paymentProofUrl = imageUrl;
+      } else {
+        state.orders[orderIndex].secondPaymentReceipt = imageUrl;
+        state.orders[orderIndex].secondPaymentStatus = 'uploaded';
+      }
+    }
+
+    // Refresh order detail view
+    const order = state.orders.find(o => o.id == orderId);
+    if (order) {
+      showOrderDetail(order);
+    }
+
+    console.log(`✅ ${paymentType} payment receipt uploaded:`, imageUrl);
+
+  } catch (error) {
+    console.error('Error uploading payment receipt:', error);
+    alert(`Error: ${error.message}`);
+
+    // Restore view
+    const order = state.orders.find(o => o.id == orderId);
+    if (order) {
+      showOrderDetail(order);
+    }
   }
 }
 

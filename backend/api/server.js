@@ -724,6 +724,50 @@ app.post('/api/orders/:orderId/reject', async (req, res) => {
   }
 });
 
+// Upload first payment proof (admin upload)
+app.post('/api/orders/:orderId/payment-proof', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { paymentProofUrl } = req.body;
+
+    if (!paymentProofUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment proof URL is required'
+      });
+    }
+
+    console.log(`💳 Uploading first payment proof for order ${orderId}: ${paymentProofUrl}`);
+
+    // Update order with payment proof URL
+    const result = await query(
+      'UPDATE orders SET payment_proof_url = $1, deposit_paid = true WHERE id = $2 RETURNING id, order_number',
+      [paymentProofUrl, orderId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    console.log(`✅ First payment proof uploaded for order ${result.rows[0].order_number}`);
+
+    res.json({
+      success: true,
+      message: 'Payment proof uploaded successfully',
+      orderNumber: result.rows[0].order_number
+    });
+  } catch (error) {
+    console.error('Error uploading payment proof:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Upload second payment receipt (for clients)
 app.post('/api/orders/:orderId/second-payment', async (req, res) => {
   try {
