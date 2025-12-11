@@ -852,13 +852,12 @@ function resetColoniaToInput() {
 
 /**
  * Highlight a field briefly to show it was auto-filled
+ * Note: The .autofilled CSS class handles styling for both light/dark modes
+ * No inline styles needed - this prevents the bright flash in dark mode
  */
 function highlightField(element) {
-  element.style.backgroundColor = '#ecfdf5';
-  element.style.transition = 'background-color 0.3s';
-  setTimeout(() => {
-    element.style.backgroundColor = '';
-  }, 2000);
+  // The .autofilled class already provides visual feedback
+  // No additional inline styles needed
 }
 
 function handleInfoSubmit() {
