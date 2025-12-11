@@ -1336,22 +1336,22 @@ async function uploadProductionSheet(file, orderId) {
   `;
 
   try {
-    // Upload to Cloudinary
+    // Upload via backend (uses server-side Cloudinary credentials)
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'payment_receipts');
+    formData.append('receipt', file);
 
-    const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dkpwnkhza/auto/upload', {
+    const uploadResponse = await fetch(`${API_BASE.replace('/api', '')}/api/client/upload/payment-receipt`, {
       method: 'POST',
       body: formData
     });
 
-    if (!cloudinaryResponse.ok) {
-      throw new Error('Error al subir a Cloudinary');
+    if (!uploadResponse.ok) {
+      const errorData = await uploadResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error al subir el archivo');
     }
 
-    const cloudinaryData = await cloudinaryResponse.json();
-    const fileUrl = cloudinaryData.secure_url;
+    const uploadData = await uploadResponse.json();
+    const fileUrl = uploadData.url;
 
     // Save URL to backend
     const response = await fetch(`${API_BASE}/orders/${orderId}/production-sheet`, {
@@ -1554,22 +1554,22 @@ async function uploadPaymentReceipt(file, orderId, paymentType) {
   `;
 
   try {
-    // Upload to Cloudinary
+    // Upload via backend (uses server-side Cloudinary credentials)
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'payment_receipts');
+    formData.append('receipt', file);
 
-    const cloudinaryResponse = await fetch('https://api.cloudinary.com/v1_1/dkpwnkhza/image/upload', {
+    const uploadResponse = await fetch(`${API_BASE.replace('/api', '')}/api/client/upload/payment-receipt`, {
       method: 'POST',
       body: formData
     });
 
-    if (!cloudinaryResponse.ok) {
-      throw new Error('Error al subir a Cloudinary');
+    if (!uploadResponse.ok) {
+      const errorData = await uploadResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error al subir el comprobante');
     }
 
-    const cloudinaryData = await cloudinaryResponse.json();
-    const imageUrl = cloudinaryData.secure_url;
+    const uploadData = await uploadResponse.json();
+    const imageUrl = uploadData.url;
 
     // Save URL to backend
     const endpoint = paymentType === 'first'
