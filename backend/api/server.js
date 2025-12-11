@@ -332,7 +332,7 @@ app.get('/api/orders/calendar', async (req, res) => {
       WHERE o.production_deadline IS NOT NULL
         AND o.production_deadline >= $1
         AND o.production_deadline <= $2
-        AND o.status NOT IN ('cancelled', 'completed')
+        AND o.status IN ('approved', 'in_production', 'ready', 'shipped')
         AND (o.archive_status IS NULL OR o.archive_status != 'archived')
       GROUP BY o.id, c.name
       ORDER BY o.production_deadline ASC
@@ -393,7 +393,7 @@ app.get('/api/orders/capacity', async (req, res) => {
       WHERE o.production_deadline IS NOT NULL
         AND o.production_deadline >= $1
         AND o.production_deadline <= $2
-        AND o.status NOT IN ('cancelled', 'completed')
+        AND o.status IN ('approved', 'in_production', 'ready', 'shipped')
         AND (o.archive_status IS NULL OR o.archive_status != 'archived')
       GROUP BY o.production_deadline::date
       ORDER BY deadline_date ASC
@@ -457,7 +457,7 @@ app.get('/api/orders/next-available-date', async (req, res) => {
         FROM orders o
         LEFT JOIN order_items oi ON o.id = oi.order_id
         WHERE o.production_deadline::date = $1
-          AND o.status NOT IN ('cancelled', 'completed')
+          AND o.status IN ('approved', 'in_production', 'ready', 'shipped')
           AND (o.archive_status IS NULL OR o.archive_status != 'archived')
       `, [dateKey]);
 
