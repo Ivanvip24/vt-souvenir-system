@@ -2464,7 +2464,7 @@ async function applyPromoCode() {
 
   const code = codeInput.value.trim().toUpperCase();
 
-  if (\!code || code.length \!== 6) {
+  if (!code || code.length !== 6) {
     messageEl.textContent = "Ingresa un código de 6 caracteres";
     messageEl.className = "promo-message error";
     return;
