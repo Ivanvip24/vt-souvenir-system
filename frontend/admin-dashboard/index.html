@@ -387,6 +387,18 @@
                     </button>
                 </div>
 
+                <!-- Search Bar -->
+                <div class="special-clients-search">
+                    <div class="search-input-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text"
+                               id="special-clients-search"
+                               placeholder="Buscar por nombre, email o empresa..."
+                               oninput="filterSpecialClients(this.value)">
+                        <button class="clear-search-btn hidden" id="clear-special-search" onclick="clearSpecialClientsSearch()">×</button>
+                    </div>
+                </div>
+
                 <!-- Special Clients List -->
                 <div class="special-clients-container">
                     <div id="special-clients-loading" class="loading hidden">

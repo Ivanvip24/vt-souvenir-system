@@ -9,6 +9,8 @@
 
 const discountState = {
   specialClients: [],
+  filteredClients: [],
+  searchQuery: '',
   products: [],
   currentClient: null,
   currentProducts: [],
@@ -36,7 +38,13 @@ async function loadSpecialClients() {
 
     if (data.success) {
       discountState.specialClients = data.clients;
-      renderSpecialClientsList();
+      discountState.filteredClients = data.clients;
+      // Re-apply search filter if there was one
+      if (discountState.searchQuery) {
+        filterSpecialClients(discountState.searchQuery);
+      } else {
+        renderSpecialClientsList();
+      }
     } else {
       console.error('Error loading special clients:', data.error);
     }
@@ -93,21 +101,39 @@ function renderSpecialClientsList() {
 
   if (!list) return;
 
-  if (discountState.specialClients.length === 0) {
+  const clientsToRender = discountState.filteredClients;
+
+  if (clientsToRender.length === 0) {
     list.innerHTML = '';
-    if (empty) empty.classList.remove('hidden');
+    if (empty) {
+      // Show different message if searching vs no clients
+      if (discountState.searchQuery) {
+        empty.innerHTML = `
+          <span class="empty-icon">🔍</span>
+          <h3>Sin resultados</h3>
+          <p>No se encontraron clientes que coincidan con "${escapeHtml(discountState.searchQuery)}"</p>
+        `;
+      } else {
+        empty.innerHTML = `
+          <span class="empty-icon">🏷️</span>
+          <h3>No hay clientes especiales</h3>
+          <p>Agrega clientes con precios personalizados usando el botón de arriba</p>
+        `;
+      }
+      empty.classList.remove('hidden');
+    }
     return;
   }
 
   if (empty) empty.classList.add('hidden');
 
-  list.innerHTML = discountState.specialClients.map(client => `
+  list.innerHTML = clientsToRender.map(client => `
     <div class="special-client-card" onclick="openSpecialClientDetail(${client.id})">
       <div class="client-card-header">
         <div class="client-avatar">${getInitials(client.name)}</div>
         <div class="client-info">
-          <h3 class="client-name">${client.name}</h3>
-          ${client.company ? `<span class="client-company">${client.company}</span>` : ''}
+          <h3 class="client-name">${escapeHtml(client.name)}</h3>
+          ${client.company ? `<span class="client-company">${escapeHtml(client.company)}</span>` : ''}
         </div>
         <span class="client-status ${client.is_active ? 'active' : 'inactive'}">
           ${client.is_active ? 'Activo' : 'Inactivo'}
@@ -116,12 +142,12 @@ function renderSpecialClientsList() {
       <div class="client-card-body">
         <div class="client-detail">
           <span class="detail-icon">📧</span>
-          <span>${client.email}</span>
+          <span>${escapeHtml(client.email)}</span>
         </div>
         ${client.phone ? `
           <div class="client-detail">
             <span class="detail-icon">📱</span>
-            <span>${client.phone}</span>
+            <span>${escapeHtml(client.phone)}</span>
           </div>
         ` : ''}
         <div class="client-detail">
@@ -135,6 +161,41 @@ function renderSpecialClientsList() {
 
 function getInitials(name) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+// ==========================================
+// SPECIAL CLIENTS SEARCH/FILTER
+// ==========================================
+
+function filterSpecialClients(query) {
+  discountState.searchQuery = query.trim();
+  const clearBtn = document.getElementById('clear-special-search');
+
+  if (!discountState.searchQuery) {
+    discountState.filteredClients = discountState.specialClients;
+    if (clearBtn) clearBtn.classList.add('hidden');
+  } else {
+    const searchLower = discountState.searchQuery.toLowerCase();
+    discountState.filteredClients = discountState.specialClients.filter(client => {
+      return (
+        client.name.toLowerCase().includes(searchLower) ||
+        client.email.toLowerCase().includes(searchLower) ||
+        (client.company && client.company.toLowerCase().includes(searchLower)) ||
+        (client.phone && client.phone.includes(searchLower))
+      );
+    });
+    if (clearBtn) clearBtn.classList.remove('hidden');
+  }
+
+  renderSpecialClientsList();
+}
+
+function clearSpecialClientsSearch() {
+  const searchInput = document.getElementById('special-clients-search');
+  if (searchInput) {
+    searchInput.value = '';
+  }
+  filterSpecialClients('');
 }
 
 // ==========================================
@@ -643,3 +704,5 @@ window.editSpecialClient = editSpecialClient;
 window.selectClientSuggestion = selectClientSuggestion;
 window.selectClientSuggestionByIndex = selectClientSuggestionByIndex;
 window.editSinglePrice = editSinglePrice;
+window.filterSpecialClients = filterSpecialClients;
+window.clearSpecialClientsSearch = clearSpecialClientsSearch;
