@@ -13,7 +13,8 @@ const discountState = {
   currentClient: null,
   currentProducts: [],
   totpInterval: null,
-  searchTimeout: null
+  searchTimeout: null,
+  clientSuggestions: []
 };
 
 // ==========================================
@@ -66,8 +67,10 @@ async function searchExistingClients(query) {
   }
 
   try {
+    console.log('Searching clients for:', query);
     const response = await fetch(`${API_BASE}/discounts/search-clients?q=${encodeURIComponent(query)}`);
     const data = await response.json();
+    console.log('Search results:', data);
 
     if (data.success && data.clients.length > 0) {
       showClientSuggestions(data.clients);
@@ -149,17 +152,34 @@ function showClientSuggestions(clients) {
     nameInput.parentElement.appendChild(dropdown);
   }
 
-  dropdown.innerHTML = clients.map(client => `
-    <div class="suggestion-item" onclick="selectClientSuggestion(${JSON.stringify(client).replace(/"/g, '&quot;')})">
-      <div class="suggestion-name">${client.name}</div>
+  // Store clients in state for lookup
+  discountState.clientSuggestions = clients;
+
+  dropdown.innerHTML = clients.map((client, index) => `
+    <div class="suggestion-item" onclick="selectClientSuggestionByIndex(${index})">
+      <div class="suggestion-name">${escapeHtml(client.name)}</div>
       <div class="suggestion-details">
-        ${client.email ? `<span>📧 ${client.email}</span>` : ''}
-        ${client.phone ? `<span>📱 ${client.phone}</span>` : ''}
+        ${client.email ? `<span>📧 ${escapeHtml(client.email)}</span>` : ''}
+        ${client.phone ? `<span>📱 ${escapeHtml(client.phone)}</span>` : ''}
       </div>
     </div>
   `).join('');
 
   dropdown.style.display = 'block';
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function selectClientSuggestionByIndex(index) {
+  const client = discountState.clientSuggestions[index];
+  if (client) {
+    selectClientSuggestion(client);
+  }
 }
 
 function hideClientSuggestions() {
@@ -621,4 +641,5 @@ window.deleteSpecialClient = deleteSpecialClient;
 window.editSpecialClientFromDetail = editSpecialClientFromDetail;
 window.editSpecialClient = editSpecialClient;
 window.selectClientSuggestion = selectClientSuggestion;
+window.selectClientSuggestionByIndex = selectClientSuggestionByIndex;
 window.editSinglePrice = editSinglePrice;

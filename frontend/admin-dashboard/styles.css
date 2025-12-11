@@ -3585,7 +3585,7 @@ body {
   border: 2px solid var(--gray-200);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  z-index: 1000;
+  z-index: 9999;
   max-height: 250px;
   overflow-y: auto;
   display: none;
@@ -3659,7 +3659,7 @@ body {
 }
 
 /* Ensure form-group has relative positioning for dropdown */
-.special-client-modal .form-group {
+#special-client-modal .form-group {
   position: relative;
 }
 
