@@ -11,7 +11,9 @@ const discountState = {
   specialClients: [],
   products: [],
   currentClient: null,
-  totpInterval: null
+  currentProducts: [],
+  totpInterval: null,
+  searchTimeout: null
 };
 
 // ==========================================
@@ -54,6 +56,27 @@ async function loadProductsForPricing() {
     }
   } catch (error) {
     console.error('Error loading products:', error);
+  }
+}
+
+async function searchExistingClients(query) {
+  if (!query || query.length < 2) {
+    hideClientSuggestions();
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/discounts/search-clients?q=${encodeURIComponent(query)}`);
+    const data = await response.json();
+
+    if (data.success && data.clients.length > 0) {
+      showClientSuggestions(data.clients);
+    } else {
+      hideClientSuggestions();
+    }
+  } catch (error) {
+    console.error('Error searching clients:', error);
+    hideClientSuggestions();
   }
 }
 
@@ -112,6 +135,60 @@ function getInitials(name) {
 }
 
 // ==========================================
+// CLIENT SEARCH AUTOCOMPLETE
+// ==========================================
+
+function showClientSuggestions(clients) {
+  let dropdown = document.getElementById('client-suggestions-dropdown');
+
+  if (!dropdown) {
+    dropdown = document.createElement('div');
+    dropdown.id = 'client-suggestions-dropdown';
+    dropdown.className = 'client-suggestions-dropdown';
+    const nameInput = document.getElementById('special-client-name');
+    nameInput.parentElement.appendChild(dropdown);
+  }
+
+  dropdown.innerHTML = clients.map(client => `
+    <div class="suggestion-item" onclick="selectClientSuggestion(${JSON.stringify(client).replace(/"/g, '&quot;')})">
+      <div class="suggestion-name">${client.name}</div>
+      <div class="suggestion-details">
+        ${client.email ? `<span>📧 ${client.email}</span>` : ''}
+        ${client.phone ? `<span>📱 ${client.phone}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  dropdown.style.display = 'block';
+}
+
+function hideClientSuggestions() {
+  const dropdown = document.getElementById('client-suggestions-dropdown');
+  if (dropdown) {
+    dropdown.style.display = 'none';
+  }
+}
+
+function selectClientSuggestion(client) {
+  document.getElementById('special-client-name').value = client.name;
+  document.getElementById('special-client-email').value = client.email || '';
+  document.getElementById('special-client-phone').value = client.phone || '';
+  hideClientSuggestions();
+}
+
+function handleClientNameInput(event) {
+  const query = event.target.value;
+
+  if (discountState.searchTimeout) {
+    clearTimeout(discountState.searchTimeout);
+  }
+
+  discountState.searchTimeout = setTimeout(() => {
+    searchExistingClients(query);
+  }, 300);
+}
+
+// ==========================================
 // MODAL FUNCTIONS - ADD/EDIT CLIENT
 // ==========================================
 
@@ -127,6 +204,11 @@ async function openAddSpecialClientModal() {
   document.getElementById('special-client-email').value = '';
   document.getElementById('special-client-phone').value = '';
   document.getElementById('special-client-company').value = '';
+
+  // Add input listener for autocomplete
+  const nameInput = document.getElementById('special-client-name');
+  nameInput.removeEventListener('input', handleClientNameInput);
+  nameInput.addEventListener('input', handleClientNameInput);
 
   renderCustomPricesInputs({});
 
@@ -150,9 +232,13 @@ async function editSpecialClient(clientId) {
 
     const client = data.client;
     const customPrices = {};
-    data.customPrices.forEach(p => {
-      customPrices[p.product_id] = p.custom_price;
-    });
+    if (data.allProducts) {
+      data.allProducts.forEach(p => {
+        if (p.custom_price) {
+          customPrices[p.product_id] = p.custom_price;
+        }
+      });
+    }
 
     document.getElementById('special-client-modal-title').textContent = 'Editar Cliente Especial';
     document.getElementById('edit-special-client-id').value = client.id;
@@ -199,6 +285,7 @@ function renderCustomPricesInputs(existingPrices = {}) {
 
 function closeSpecialClientModal() {
   document.getElementById('special-client-modal').classList.add('hidden');
+  hideClientSuggestions();
 }
 
 async function saveSpecialClient() {
@@ -279,6 +366,7 @@ async function openSpecialClientDetail(clientId) {
     }
 
     discountState.currentClient = { ...data.client, id: clientId };
+    discountState.currentProducts = data.allProducts || [];
 
     // Populate detail modal
     document.getElementById('detail-client-name').textContent = data.client.name;
@@ -286,20 +374,8 @@ async function openSpecialClientDetail(clientId) {
     document.getElementById('detail-client-phone').textContent = data.client.phone || '-';
     document.getElementById('detail-client-company').textContent = data.client.company || '-';
 
-    // Render prices table
-    const pricesTable = document.getElementById('detail-prices-table');
-    if (data.customPrices.length > 0) {
-      pricesTable.innerHTML = data.customPrices.map(price => `
-        <tr>
-          <td>${price.product_name}</td>
-          <td>$${parseFloat(price.normal_price).toFixed(2)}</td>
-          <td class="special-price">$${parseFloat(price.custom_price).toFixed(2)}</td>
-          <td class="discount-badge">${price.discount_percent}%</td>
-        </tr>
-      `).join('');
-    } else {
-      pricesTable.innerHTML = '<tr><td colspan="4" class="no-prices">No hay precios personalizados</td></tr>';
-    }
+    // Render ALL products table with prices
+    renderDetailPricesTable(data.allProducts || []);
 
     // Start TOTP display
     updateTotpDisplay(data.totp);
@@ -312,25 +388,120 @@ async function openSpecialClientDetail(clientId) {
   }
 }
 
+function renderDetailPricesTable(products) {
+  const pricesTable = document.getElementById('detail-prices-table');
+
+  if (!products || products.length === 0) {
+    pricesTable.innerHTML = '<tr><td colspan="5" class="no-prices">No hay productos disponibles</td></tr>';
+    return;
+  }
+
+  pricesTable.innerHTML = products.map(product => {
+    const hasCustomPrice = product.custom_price !== null;
+    const normalPrice = parseFloat(product.normal_price);
+    const customPrice = hasCustomPrice ? parseFloat(product.custom_price) : null;
+    const discount = hasCustomPrice ? product.discount_percent : null;
+
+    return `
+      <tr class="${hasCustomPrice ? 'has-discount' : ''}">
+        <td>
+          <div class="product-name-cell">${product.product_name}</div>
+          ${product.category ? `<small class="product-category">${product.category}</small>` : ''}
+        </td>
+        <td>$${normalPrice.toFixed(2)}</td>
+        <td class="${hasCustomPrice ? 'special-price' : 'no-special'}">
+          ${hasCustomPrice ? `$${customPrice.toFixed(2)}` : '<span class="price-normal">Normal</span>'}
+        </td>
+        <td class="${hasCustomPrice ? 'discount-badge' : ''}">
+          ${hasCustomPrice ? `${discount}%` : '-'}
+        </td>
+        <td>
+          <button class="btn-edit-price" onclick="editSinglePrice(${product.product_id}, ${normalPrice}, ${customPrice || 'null'})">
+            ✏️
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function editSinglePrice(productId, normalPrice, currentCustomPrice) {
+  const newPrice = prompt(
+    `Precio especial para este producto\nPrecio normal: $${normalPrice.toFixed(2)}\n\nDeja vacío para usar precio normal:`,
+    currentCustomPrice ? currentCustomPrice.toFixed(2) : ''
+  );
+
+  if (newPrice === null) return; // Cancelled
+
+  const customPrice = newPrice.trim() ? parseFloat(newPrice) : null;
+
+  // Update price via API
+  updateSinglePrice(productId, customPrice);
+}
+
+async function updateSinglePrice(productId, customPrice) {
+  if (!discountState.currentClient) return;
+
+  try {
+    // Get current custom prices from state
+    const customPrices = [];
+
+    discountState.currentProducts.forEach(p => {
+      if (p.product_id === productId) {
+        if (customPrice !== null) {
+          customPrices.push({ productId: p.product_id, customPrice: customPrice });
+        }
+      } else if (p.custom_price !== null) {
+        customPrices.push({ productId: p.product_id, customPrice: parseFloat(p.custom_price) });
+      }
+    });
+
+    const response = await fetch(`${API_BASE}/discounts/special-clients/${discountState.currentClient.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customPrices })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Refresh the detail view
+      openSpecialClientDetail(discountState.currentClient.id);
+      loadSpecialClients(); // Refresh list too
+    } else {
+      alert('Error: ' + data.error);
+    }
+  } catch (error) {
+    console.error('Error updating price:', error);
+    alert('Error actualizando precio');
+  }
+}
+
 function closeSpecialClientDetailModal() {
   document.getElementById('special-client-detail-modal').classList.add('hidden');
   stopTotpRefresh();
   discountState.currentClient = null;
+  discountState.currentProducts = [];
 }
 
 function updateTotpDisplay(totp) {
   document.getElementById('totp-code').textContent = totp.code;
-  document.getElementById('totp-countdown').textContent = `${totp.secondsRemaining}s`;
 
-  // Update timer bar
+  // Format time remaining (minutes:seconds for 1 hour codes)
+  const mins = totp.minutesRemaining || Math.floor(totp.secondsRemaining / 60);
+  const secs = totp.secondsRemainder !== undefined ? totp.secondsRemainder : (totp.secondsRemaining % 60);
+  document.getElementById('totp-countdown').textContent = `${mins}m ${secs}s`;
+
+  // Update timer bar (based on 1 hour = 3600 seconds)
   const timerBar = document.getElementById('totp-timer-bar');
-  const percentage = (totp.secondsRemaining / 30) * 100;
+  const timeStep = totp.timeStep || 3600;
+  const percentage = (totp.secondsRemaining / timeStep) * 100;
   timerBar.style.width = `${percentage}%`;
 
-  // Color based on time remaining
-  if (totp.secondsRemaining <= 5) {
+  // Color based on time remaining (adjusted for 1 hour)
+  if (totp.secondsRemaining <= 300) { // 5 minutes
     timerBar.style.background = '#ef4444';
-  } else if (totp.secondsRemaining <= 10) {
+  } else if (totp.secondsRemaining <= 600) { // 10 minutes
     timerBar.style.background = '#f59e0b';
   } else {
     timerBar.style.background = 'linear-gradient(90deg, #E91E63, #FF9800)';
@@ -340,6 +511,7 @@ function updateTotpDisplay(totp) {
 function startTotpRefresh(clientId) {
   stopTotpRefresh(); // Clear any existing interval
 
+  // Refresh every 10 seconds (no need for every second with 1 hour codes)
   discountState.totpInterval = setInterval(async () => {
     try {
       const response = await fetch(`${API_BASE}/discounts/special-clients/${clientId}/totp`);
@@ -351,7 +523,7 @@ function startTotpRefresh(clientId) {
     } catch (error) {
       console.error('Error refreshing TOTP:', error);
     }
-  }, 1000); // Update every second for smooth countdown
+  }, 10000);
 }
 
 function stopTotpRefresh() {
@@ -429,6 +601,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     observer.observe(discountsView, { attributes: true });
   }
+
+  // Close suggestions when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.form-group') || e.target.id !== 'special-client-name') {
+      hideClientSuggestions();
+    }
+  });
 });
 
 // Make functions globally available
@@ -441,3 +620,5 @@ window.copyTotpCode = copyTotpCode;
 window.deleteSpecialClient = deleteSpecialClient;
 window.editSpecialClientFromDetail = editSpecialClientFromDetail;
 window.editSpecialClient = editSpecialClient;
+window.selectClientSuggestion = selectClientSuggestion;
+window.editSinglePrice = editSinglePrice;

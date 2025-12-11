@@ -13,11 +13,14 @@ const router = express.Router();
 // TOTP-STYLE CODE GENERATION
 // ========================================
 
+// Code validity duration: 1 hour (3600 seconds)
+const CODE_DURATION = 3600;
+
 /**
- * Generate a TOTP-style code that changes every 30 seconds
+ * Generate a TOTP-style code that changes every hour
  * Uses HMAC-SHA256 with client's secret key
  */
-function generateTOTP(secretKey, timeStep = 30) {
+function generateTOTP(secretKey, timeStep = CODE_DURATION) {
   const epoch = Math.floor(Date.now() / 1000);
   const counter = Math.floor(epoch / timeStep);
 
@@ -31,13 +34,24 @@ function generateTOTP(secretKey, timeStep = 30) {
   // Calculate seconds remaining until next code
   const secondsRemaining = timeStep - (epoch % timeStep);
 
-  return { code, secondsRemaining, validUntil: epoch + secondsRemaining };
+  // Convert to minutes for display
+  const minutesRemaining = Math.floor(secondsRemaining / 60);
+  const secondsRemainder = secondsRemaining % 60;
+
+  return {
+    code,
+    secondsRemaining,
+    minutesRemaining,
+    secondsRemainder,
+    validUntil: epoch + secondsRemaining,
+    timeStep
+  };
 }
 
 /**
  * Verify a TOTP code (check current and previous window for clock skew)
  */
-function verifyTOTP(secretKey, inputCode, timeStep = 30) {
+function verifyTOTP(secretKey, inputCode, timeStep = CODE_DURATION) {
   const epoch = Math.floor(Date.now() / 1000);
 
   // Check current window and one window back (for clock skew)
@@ -116,6 +130,44 @@ ensureTablesExist();
 // ========================================
 
 /**
+ * GET /api/discounts/search-clients
+ * Search existing clients (from clients table) for autocomplete
+ */
+router.get('/search-clients', async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.json({ success: true, clients: [] });
+    }
+
+    const searchTerm = `%${q}%`;
+
+    const result = await query(`
+      SELECT
+        id,
+        name,
+        email,
+        phone,
+        city,
+        state
+      FROM clients
+      WHERE
+        LOWER(name) LIKE LOWER($1)
+        OR LOWER(email) LIKE LOWER($1)
+        OR phone LIKE $1
+      ORDER BY name
+      LIMIT 10
+    `, [searchTerm]);
+
+    res.json({ success: true, clients: result.rows });
+  } catch (error) {
+    console.error('Error searching clients:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * GET /api/discounts/special-clients
  * List all special clients
  */
@@ -165,19 +217,23 @@ router.get('/special-clients/:id', async (req, res) => {
 
     const client = clientResult.rows[0];
 
-    // Get custom prices with product info
+    // Get ALL products with custom prices if they exist
     const pricesResult = await query(`
       SELECT
-        scp.id,
-        scp.product_id,
+        p.id as product_id,
         p.name as product_name,
         p.base_price as normal_price,
+        p.category,
         scp.custom_price,
-        ROUND(((p.base_price - scp.custom_price) / p.base_price * 100)::numeric, 1) as discount_percent
-      FROM special_client_prices scp
-      JOIN products p ON scp.product_id = p.id
-      WHERE scp.special_client_id = $1
-      ORDER BY p.name
+        CASE
+          WHEN scp.custom_price IS NOT NULL
+          THEN ROUND(((p.base_price - scp.custom_price) / p.base_price * 100)::numeric, 1)
+          ELSE NULL
+        END as discount_percent
+      FROM products p
+      LEFT JOIN special_client_prices scp ON p.id = scp.product_id AND scp.special_client_id = $1
+      WHERE p.is_active = true
+      ORDER BY p.category, p.name
     `, [id]);
 
     // Generate current TOTP code
@@ -189,7 +245,7 @@ router.get('/special-clients/:id', async (req, res) => {
         ...client,
         secret_key: undefined // Don't expose secret key
       },
-      customPrices: pricesResult.rows,
+      allProducts: pricesResult.rows,
       totp
     });
   } catch (error) {
