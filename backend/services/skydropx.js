@@ -336,109 +336,122 @@ export function selectBestRate(rates) {
  * Combines: getQuote -> selectBestRate -> createShipment -> save to database
  */
 export async function generateShippingLabel({ orderId, clientId, destination }) {
-  try {
-    console.log(`📦 Generating shipping label for order ${orderId}...`);
+  // Retry logic for transient failures
+  const MAX_RETRIES = 2;
+  let lastError = null;
 
-    // Step 1: Get quote
-    const destAddress = {
-      name: destination.name,
-      street: destination.street,
-      number: destination.number || 'S/N',
-      neighborhood: destination.neighborhood || '',
-      city: destination.city,
-      state: destination.state,
-      zip: destination.zip,
-      phone: destination.phone || '',
-      email: destination.email || '',
-      reference: destination.reference || ''
-    };
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`📦 Generating shipping label for order ${orderId}... (attempt ${attempt}/${MAX_RETRIES})`);
 
-    console.log('   Getting quote...');
-    const quoteResult = await getQuote(destAddress);
-
-    if (!quoteResult.success || !quoteResult.rates || quoteResult.rates.length === 0) {
-      return {
-        success: false,
-        error: quoteResult.error || 'No shipping rates available'
+      // Step 1: Get quote
+      const destAddress = {
+        name: destination.name,
+        street: destination.street,
+        number: destination.number || 'S/N',
+        neighborhood: destination.neighborhood || '',
+        city: destination.city,
+        state: destination.state,
+        zip: destination.zip,
+        phone: destination.phone || '',
+        email: destination.email || '',
+        reference: destination.reference || ''
       };
-    }
 
-    // Step 2: Select best rate (cheapest)
-    const bestRate = selectBestRate(quoteResult.rates);
-    console.log(`   Selected: ${bestRate.carrier} - ${bestRate.service} ($${bestRate.price})`);
+      console.log('   Getting quote...');
+      const quoteResult = await getQuote(destAddress);
 
-    // Step 3: Create shipment
-    console.log('   Creating shipment...');
-    const shipmentResult = await createShipment(
-      quoteResult.quotationId,
-      bestRate.id,
-      bestRate,
-      destAddress,
-      DEFAULT_PACKAGE
-    );
+      // Check if we got rates (getQuote returns { quotation_id, rates })
+      if (!quoteResult.rates || quoteResult.rates.length === 0) {
+        lastError = 'No shipping rates available';
+        console.log(`   ⚠️ No rates on attempt ${attempt}, retrying...`);
+        // Clear token cache and retry
+        cachedToken = null;
+        tokenExpiry = null;
+        continue;
+      }
 
-    if (!shipmentResult.success) {
+      // Step 2: Select best rate (cheapest)
+      const bestRate = selectBestRate(quoteResult.rates);
+      console.log(`   Selected: ${bestRate.carrier} - ${bestRate.service} ($${bestRate.total_price})`);
+
+      // Step 3: Create shipment (use quotation_id from result)
+      console.log('   Creating shipment...');
+      const shipmentResult = await createShipment(
+        quoteResult.quotation_id,  // Fixed: was quotationId
+        bestRate.rate_id,          // Fixed: use rate_id from parsed rate
+        bestRate,
+        destAddress,
+        DEFAULT_PACKAGE
+      );
+
+      // Step 4: Save to database
+      console.log('   Saving to database...');
+      const insertResult = await query(`
+        INSERT INTO shipping_labels (
+          order_id,
+          client_id,
+          shipment_id,
+          quotation_id,
+          rate_id,
+          tracking_number,
+          tracking_url,
+          label_url,
+          carrier,
+          service,
+          delivery_days,
+          shipping_cost,
+          status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING *
+      `, [
+        orderId,
+        clientId,
+        shipmentResult.shipment_id,
+        quoteResult.quotation_id,
+        bestRate.rate_id,
+        shipmentResult.tracking_number || null,
+        shipmentResult.tracking_url || null,
+        shipmentResult.label_url || null,
+        bestRate.carrier,
+        bestRate.service,
+        bestRate.days,
+        bestRate.total_price,
+        shipmentResult.tracking_number ? 'label_generated' : 'processing'
+      ]);
+
+      console.log(`✅ Shipping label created for order ${orderId}`);
+
       return {
-        success: false,
-        error: shipmentResult.error || 'Failed to create shipment'
+        success: true,
+        label: insertResult.rows[0],
+        trackingNumber: shipmentResult.tracking_number,
+        trackingUrl: shipmentResult.tracking_url,
+        labelUrl: shipmentResult.label_url,
+        carrier: bestRate.carrier,
+        service: bestRate.service,
+        deliveryDays: bestRate.days
       };
+
+    } catch (error) {
+      lastError = error.message;
+      console.error(`❌ Attempt ${attempt} failed for order ${orderId}:`, error.message);
+
+      // Clear token cache and retry
+      if (attempt < MAX_RETRIES) {
+        console.log('   Clearing token cache and retrying...');
+        cachedToken = null;
+        tokenExpiry = null;
+      }
     }
-
-    // Step 4: Save to database
-    console.log('   Saving to database...');
-    const insertResult = await query(`
-      INSERT INTO shipping_labels (
-        order_id,
-        client_id,
-        shipment_id,
-        quotation_id,
-        rate_id,
-        tracking_number,
-        tracking_url,
-        label_url,
-        carrier,
-        service,
-        delivery_days,
-        shipping_cost,
-        status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      RETURNING *
-    `, [
-      orderId,
-      clientId,
-      shipmentResult.shipmentId,
-      quoteResult.quotationId,
-      bestRate.id,
-      shipmentResult.trackingNumber || null,
-      shipmentResult.trackingUrl || null,
-      shipmentResult.labelUrl || null,
-      bestRate.carrier,
-      bestRate.service,
-      bestRate.deliveryDays,
-      bestRate.price,
-      shipmentResult.trackingNumber ? 'label_generated' : 'processing'
-    ]);
-
-    console.log(`✅ Shipping label created for order ${orderId}`);
-
-    return {
-      success: true,
-      label: insertResult.rows[0],
-      trackingNumber: shipmentResult.trackingNumber,
-      trackingUrl: shipmentResult.trackingUrl,
-      labelUrl: shipmentResult.labelUrl,
-      carrier: bestRate.carrier,
-      service: bestRate.service,
-      deliveryDays: bestRate.deliveryDays
-    };
-
-  } catch (error) {
-    console.error(`❌ Error generating shipping label for order ${orderId}:`, error.message);
-    return {
-      success: false,
-      error: error.message
-    };
   }
+
+  // All retries exhausted
+  console.error(`❌ All ${MAX_RETRIES} attempts failed for order ${orderId}`);
+  return {
+    success: false,
+    error: lastError || 'Failed to generate shipping label after multiple attempts'
+  };
 }
 
 export default {
