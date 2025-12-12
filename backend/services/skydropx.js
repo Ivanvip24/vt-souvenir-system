@@ -4,6 +4,7 @@
  */
 
 import { config } from 'dotenv';
+import { query } from '../shared/database.js';
 config();
 
 // Token cache
@@ -330,12 +331,123 @@ export function selectBestRate(rates) {
   return rates[0];
 }
 
+/**
+ * Generate shipping label for an order
+ * Combines: getQuote -> selectBestRate -> createShipment -> save to database
+ */
+export async function generateShippingLabel({ orderId, clientId, destination }) {
+  try {
+    console.log(`📦 Generating shipping label for order ${orderId}...`);
+
+    // Step 1: Get quote
+    const destAddress = {
+      name: destination.name,
+      street: destination.street,
+      number: destination.number || 'S/N',
+      neighborhood: destination.neighborhood || '',
+      city: destination.city,
+      state: destination.state,
+      zip: destination.zip,
+      phone: destination.phone || '',
+      email: destination.email || '',
+      reference: destination.reference || ''
+    };
+
+    console.log('   Getting quote...');
+    const quoteResult = await getQuote(destAddress);
+
+    if (!quoteResult.success || !quoteResult.rates || quoteResult.rates.length === 0) {
+      return {
+        success: false,
+        error: quoteResult.error || 'No shipping rates available'
+      };
+    }
+
+    // Step 2: Select best rate (cheapest)
+    const bestRate = selectBestRate(quoteResult.rates);
+    console.log(`   Selected: ${bestRate.carrier} - ${bestRate.service} ($${bestRate.price})`);
+
+    // Step 3: Create shipment
+    console.log('   Creating shipment...');
+    const shipmentResult = await createShipment(
+      quoteResult.quotationId,
+      bestRate.id,
+      bestRate,
+      destAddress,
+      DEFAULT_PACKAGE
+    );
+
+    if (!shipmentResult.success) {
+      return {
+        success: false,
+        error: shipmentResult.error || 'Failed to create shipment'
+      };
+    }
+
+    // Step 4: Save to database
+    console.log('   Saving to database...');
+    const insertResult = await query(`
+      INSERT INTO shipping_labels (
+        order_id,
+        client_id,
+        shipment_id,
+        quotation_id,
+        rate_id,
+        tracking_number,
+        tracking_url,
+        label_url,
+        carrier,
+        service,
+        delivery_days,
+        shipping_cost,
+        status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      RETURNING *
+    `, [
+      orderId,
+      clientId,
+      shipmentResult.shipmentId,
+      quoteResult.quotationId,
+      bestRate.id,
+      shipmentResult.trackingNumber || null,
+      shipmentResult.trackingUrl || null,
+      shipmentResult.labelUrl || null,
+      bestRate.carrier,
+      bestRate.service,
+      bestRate.deliveryDays,
+      bestRate.price,
+      shipmentResult.trackingNumber ? 'label_generated' : 'processing'
+    ]);
+
+    console.log(`✅ Shipping label created for order ${orderId}`);
+
+    return {
+      success: true,
+      label: insertResult.rows[0],
+      trackingNumber: shipmentResult.trackingNumber,
+      trackingUrl: shipmentResult.trackingUrl,
+      labelUrl: shipmentResult.labelUrl,
+      carrier: bestRate.carrier,
+      service: bestRate.service,
+      deliveryDays: bestRate.deliveryDays
+    };
+
+  } catch (error) {
+    console.error(`❌ Error generating shipping label for order ${orderId}:`, error.message);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
 export default {
   getAccessToken,
   getQuote,
   createShipment,
   getShipment,
   selectBestRate,
+  generateShippingLabel,
   ORIGIN_ADDRESS,
   DEFAULT_PACKAGE
 };
