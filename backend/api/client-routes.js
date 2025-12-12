@@ -786,7 +786,7 @@ router.post('/orders/lookup', async (req, res) => {
 
     const clientData = clientResult.rows[0];
 
-    // SECOND: Get active orders for this client
+    // SECOND: Get active orders for this client (with shipping label info)
     const ordersResult = await query(`
       SELECT
         o.id,
@@ -802,9 +802,8 @@ router.post('/orders/lookup', async (req, res) => {
         o.payment_method,
         o.second_payment_proof_url,
         o.second_payment_received,
-        o.all_labels_generated,
-        o.shipping_labels_count,
-        o.shipping_ready,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as shipping_labels_count,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id AND sl.tracking_number IS NOT NULL) as labels_with_tracking,
         json_agg(
           json_build_object(
             'productName', oi.product_name,
@@ -844,9 +843,9 @@ router.post('/orders/lookup', async (req, res) => {
       // Shipping fields
       secondPaymentReceipt: order.second_payment_proof_url,
       secondPaymentReceived: order.second_payment_received,
-      allLabelsGenerated: order.all_labels_generated,
-      shippingLabelsCount: order.shipping_labels_count,
-      shippingReady: order.shipping_ready
+      shippingLabelsCount: parseInt(order.shipping_labels_count) || 0,
+      labelsWithTracking: parseInt(order.labels_with_tracking) || 0,
+      allLabelsGenerated: parseInt(order.shipping_labels_count) > 0 && parseInt(order.labels_with_tracking) === parseInt(order.shipping_labels_count)
     }));
 
     // ALWAYS return clientInfo, even if no active orders
