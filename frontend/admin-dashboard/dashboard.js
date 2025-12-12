@@ -1183,11 +1183,26 @@ async function confirmApproveWithDeposit() {
     if (data.success) {
       console.log('✅ Order approved successfully!');
       console.log('📧 PDF receipt should be generated and emailed to customer');
+      console.log('📦 Shipping result:', data.shipping);
 
       closeDepositModal();
       closeOrderDetail();
       loadOrders();
-      alert('✅ Pedido aprobado exitosamente. Se ha generado y enviado el recibo al cliente.');
+
+      // Build success message with shipping info
+      let successMsg = '✅ Pedido aprobado exitosamente.\n\n';
+      successMsg += '📧 Recibo generado y enviado al cliente.\n\n';
+
+      if (data.shipping && data.shipping.generated) {
+        successMsg += `📦 GUÍA DE ENVÍO GENERADA:\n`;
+        successMsg += `   • Paquetería: ${data.shipping.carrier}\n`;
+        successMsg += `   • Tracking: ${data.shipping.trackingNumber || 'Pendiente'}\n`;
+        successMsg += `   • Días de entrega: ${data.shipping.deliveryDays || 'N/A'}`;
+      } else if (data.shipping && data.shipping.error) {
+        successMsg += `⚠️ Guía no generada: ${data.shipping.error}`;
+      }
+
+      alert(successMsg);
     } else {
       console.error('❌ Approval failed:', data.error);
       alert('Error: ' + (data.error || 'No se pudo aprobar el pedido'));

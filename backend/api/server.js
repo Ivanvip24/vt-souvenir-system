@@ -877,66 +877,75 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
       console.error('Failed to sync approval to Notion:', notionError);
     }
 
-    // Auto-generate shipping label in background
-    setImmediate(async () => {
-      try {
-        console.log(`📦 Auto-generating shipping label for order ${orderId}...`);
+    // Auto-generate shipping label (synchronous for immediate feedback)
+    let shippingResult = { generated: false, error: null, trackingNumber: null, carrier: null };
 
-        // Get client address
-        const clientResult = await query(
-          `SELECT c.* FROM clients c
-           JOIN orders o ON o.client_id = c.id
-           WHERE o.id = $1`,
-          [orderId]
-        );
+    try {
+      console.log(`📦 Auto-generating shipping label for order ${orderId}...`);
 
-        if (clientResult.rows.length === 0) {
-          console.error('❌ Cannot generate shipping label: client not found');
-          return;
-        }
+      // Get client address
+      const clientResult = await query(
+        `SELECT c.* FROM clients c
+         JOIN orders o ON o.client_id = c.id
+         WHERE o.id = $1`,
+        [orderId]
+      );
 
+      if (clientResult.rows.length === 0) {
+        shippingResult.error = 'Cliente no encontrado';
+        console.error('❌ Cannot generate shipping label: client not found');
+      } else {
         const client = clientResult.rows[0];
 
         // Check if client has complete address
         if (!client.street || !client.postal || !client.city || !client.state) {
+          shippingResult.error = 'Dirección del cliente incompleta';
           console.log('⚠️ Client address incomplete, skipping auto-generation of shipping label');
-          return;
-        }
-
-        // Generate shipping label
-        const labelResult = await skydropxService.generateShippingLabel({
-          orderId: orderId,
-          clientId: client.id,
-          destination: {
-            name: client.name,
-            street: client.street,
-            number: client.street_number || 'S/N',
-            neighborhood: client.colonia || '',
-            city: client.city,
-            state: client.state,
-            zip: client.postal,
-            phone: client.phone || '',
-            email: client.email || '',
-            reference: client.reference_notes || ''
-          }
-        });
-
-        if (labelResult.success) {
-          console.log(`✅ Shipping label generated for order ${orderId}: ${labelResult.trackingNumber || 'pending tracking'}`);
         } else {
-          console.error(`❌ Failed to generate shipping label: ${labelResult.error}`);
+          // Generate shipping label
+          const labelResult = await skydropxService.generateShippingLabel({
+            orderId: orderId,
+            clientId: client.id,
+            destination: {
+              name: client.name,
+              street: client.street,
+              number: client.street_number || 'S/N',
+              neighborhood: client.colonia || '',
+              city: client.city,
+              state: client.state,
+              zip: client.postal,
+              phone: client.phone || '',
+              email: client.email || '',
+              reference: client.reference_notes || ''
+            }
+          });
+
+          if (labelResult.success) {
+            shippingResult.generated = true;
+            shippingResult.trackingNumber = labelResult.trackingNumber;
+            shippingResult.carrier = labelResult.carrier;
+            shippingResult.deliveryDays = labelResult.deliveryDays;
+            console.log(`✅ Shipping label generated for order ${orderId}: ${labelResult.trackingNumber || 'pending tracking'}`);
+          } else {
+            shippingResult.error = labelResult.error;
+            console.error(`❌ Failed to generate shipping label: ${labelResult.error}`);
+          }
         }
-      } catch (shippingError) {
-        console.error('❌ Error auto-generating shipping label:', shippingError.message);
       }
-    });
+    } catch (shippingError) {
+      shippingResult.error = shippingError.message;
+      console.error('❌ Error auto-generating shipping label:', shippingError.message);
+    }
 
     console.log(`✅ Order ${orderId} approved successfully`);
 
     res.json({
       success: true,
-      message: 'Order approved successfully, receipt generated and emailed to client',
-      receiptUrl: receiptUrl
+      message: shippingResult.generated
+        ? `Pedido aprobado. Guía generada: ${shippingResult.carrier} - ${shippingResult.trackingNumber || 'Número pendiente'}`
+        : 'Pedido aprobado. Recibo generado y enviado al cliente.',
+      receiptUrl: receiptUrl,
+      shipping: shippingResult
     });
   } catch (error) {
     console.error('Error approving order:', error);

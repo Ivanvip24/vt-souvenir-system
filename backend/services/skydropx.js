@@ -23,7 +23,7 @@ const DEFAULT_PACKAGE_TYPE = '4G'; // Cardboard boxes
 // Skydropx character limits
 const MAX_NAME_LENGTH = 30;
 const MAX_STREET_LENGTH = 35;
-const MAX_REFERENCE_LENGTH = 50;
+const MAX_REFERENCE_LENGTH = 30;
 
 // Fixed origin address (VT Anunciando office)
 const ORIGIN_ADDRESS = {
@@ -37,7 +37,7 @@ const ORIGIN_ADDRESS = {
   zip: '06800',
   phone: '5538253251',
   email: 'valenciaperezivan24@gmail.com',
-  reference: 'Zaguan blanco al final del pasillo'
+  reference: 'Zaguan blanco final pasillo'
 };
 
 // Default package dimensions
