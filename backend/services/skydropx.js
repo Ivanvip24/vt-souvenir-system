@@ -127,7 +127,7 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE) {
       },
       address_to: {
         country_code: 'MX',
-        postal_code: destAddress.postal || destAddress.postal_code,
+        postal_code: destAddress.zip || destAddress.postal || destAddress.postal_code,
         area_level1: destAddress.state || 'Estado',
         area_level2: destAddress.city || 'Ciudad',
         area_level3: destAddress.colonia || destAddress.neighborhood || 'Colonia'
@@ -212,7 +212,7 @@ export async function createShipment(quotationId, rateId, rate, destAddress, pac
         company: truncate(destAddress.name, MAX_NAME_LENGTH),
         street1: truncate(destStreet, MAX_STREET_LENGTH),
         neighborhood: truncate(destAddress.colonia || destAddress.neighborhood || 'Centro', MAX_NAME_LENGTH),
-        postal_code: destAddress.postal || destAddress.postal_code,
+        postal_code: destAddress.zip || destAddress.postal || destAddress.postal_code,
         area_level1: destAddress.state,
         area_level2: destAddress.city,
         area_level3: truncate(destAddress.colonia || destAddress.neighborhood || 'Centro', MAX_NAME_LENGTH),

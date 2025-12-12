@@ -898,8 +898,11 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
         const client = clientResult.rows[0];
 
         // Check if client has complete address
-        if (!client.street || !client.postal || !client.city || !client.state) {
-          shippingResult.error = 'Dirección del cliente incompleta';
+        // Use postal OR postal_code (database has both columns)
+        const clientPostal = client.postal || client.postal_code;
+
+        if (!client.street || !clientPostal || !client.city || !client.state) {
+          shippingResult.error = `Dirección del cliente incompleta (falta: ${!client.street ? 'calle, ' : ''}${!clientPostal ? 'CP, ' : ''}${!client.city ? 'ciudad, ' : ''}${!client.state ? 'estado' : ''})`;
           console.log('⚠️ Client address incomplete, skipping auto-generation of shipping label');
         } else {
           // Generate shipping label
@@ -913,7 +916,7 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
               neighborhood: client.colonia || '',
               city: client.city,
               state: client.state,
-              zip: client.postal,
+              zip: clientPostal,
               phone: client.phone || '',
               email: client.email || '',
               reference: client.reference_notes || ''
