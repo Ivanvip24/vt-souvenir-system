@@ -801,7 +801,6 @@ router.post('/orders/lookup', async (req, res) => {
         o.deposit_paid,
         o.payment_method,
         o.second_payment_proof_url,
-        o.second_payment_received,
         (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as shipping_labels_count,
         (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id AND sl.tracking_number IS NOT NULL) as labels_with_tracking,
         json_agg(
@@ -842,7 +841,7 @@ router.post('/orders/lookup', async (req, res) => {
       clientName: clientData.name,
       // Shipping fields
       secondPaymentReceipt: order.second_payment_proof_url,
-      secondPaymentReceived: order.second_payment_received,
+      secondPaymentReceived: !!order.second_payment_proof_url, // Derived from having a receipt URL
       shippingLabelsCount: parseInt(order.shipping_labels_count) || 0,
       labelsWithTracking: parseInt(order.labels_with_tracking) || 0,
       allLabelsGenerated: parseInt(order.shipping_labels_count) > 0 && parseInt(order.labels_with_tracking) === parseInt(order.shipping_labels_count)
