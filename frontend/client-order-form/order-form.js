@@ -2154,28 +2154,11 @@ window.lookupClientOrders = async function() {
               </div>
             ` : ''}
 
-          <!-- Shipping Section -->
-          ${order.secondPaymentReceived && !order.allLabelsGenerated ? `
-            <div id="shipping-section-${order.id}" style="margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
-              <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 8px; text-align: center;">
-                📦 Tu pedido está listo para envío
-              </div>
-              <div style="font-size: 12px; color: rgba(255,255,255,0.9); margin-bottom: 12px; text-align: center;">
-                Genera tu guía de envío para recibir tu pedido
-              </div>
-              <button
-                id="generate-shipping-btn-${order.id}"
-                onclick="generateShippingLabel(${order.id})"
-                style="width: 100%; padding: 14px; background: white; color: #667eea; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 15px; transition: all 0.2s;">
-                🚚 Crear Envío
-              </button>
-            </div>
-          ` : ''}
-
-          ${order.allLabelsGenerated ? `
+          <!-- Shipping Section - Only show tracking info after second payment is uploaded -->
+          ${order.secondPaymentReceipt && order.shippingLabelsCount > 0 ? `
             <div id="shipping-info-${order.id}" style="margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 12px;">
               <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 12px; text-align: center;">
-                ✅ Guía de Envío Generada
+                🚚 Información de Envío
               </div>
               <div id="shipping-labels-${order.id}" style="background: white; border-radius: 8px; padding: 12px;">
                 <div style="text-align: center; color: #666; font-size: 12px;">

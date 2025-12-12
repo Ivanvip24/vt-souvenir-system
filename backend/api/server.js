@@ -23,6 +23,7 @@ import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/an
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
 import { processReceipt } from '../services/receipt-ocr.js';
 import * as orderAlerts from '../agents/alerts/order-alerts.js';
+import * as skydropxService from '../services/skydropx.js';
 
 config();
 
@@ -875,6 +876,60 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
     } catch (notionError) {
       console.error('Failed to sync approval to Notion:', notionError);
     }
+
+    // Auto-generate shipping label in background
+    setImmediate(async () => {
+      try {
+        console.log(`📦 Auto-generating shipping label for order ${orderId}...`);
+
+        // Get client address
+        const clientResult = await query(
+          `SELECT c.* FROM clients c
+           JOIN orders o ON o.client_id = c.id
+           WHERE o.id = $1`,
+          [orderId]
+        );
+
+        if (clientResult.rows.length === 0) {
+          console.error('❌ Cannot generate shipping label: client not found');
+          return;
+        }
+
+        const client = clientResult.rows[0];
+
+        // Check if client has complete address
+        if (!client.street || !client.postal || !client.city || !client.state) {
+          console.log('⚠️ Client address incomplete, skipping auto-generation of shipping label');
+          return;
+        }
+
+        // Generate shipping label
+        const labelResult = await skydropxService.generateShippingLabel({
+          orderId: orderId,
+          clientId: client.id,
+          destination: {
+            name: client.name,
+            street: client.street,
+            number: client.street_number || 'S/N',
+            neighborhood: client.colonia || '',
+            city: client.city,
+            state: client.state,
+            zip: client.postal,
+            phone: client.phone || '',
+            email: client.email || '',
+            reference: client.reference_notes || ''
+          }
+        });
+
+        if (labelResult.success) {
+          console.log(`✅ Shipping label generated for order ${orderId}: ${labelResult.trackingNumber || 'pending tracking'}`);
+        } else {
+          console.error(`❌ Failed to generate shipping label: ${labelResult.error}`);
+        }
+      } catch (shippingError) {
+        console.error('❌ Error auto-generating shipping label:', shippingError.message);
+      }
+    });
 
     console.log(`✅ Order ${orderId} approved successfully`);
 
