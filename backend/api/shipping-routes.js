@@ -21,11 +21,11 @@ router.post('/orders/:orderId/generate', async (req, res) => {
     // Get order with client info
     const orderResult = await query(`
       SELECT
-        o.id, o.order_number, o.client_id, o.total_price, o.status,
-        o.second_payment_received, o.all_labels_generated,
+        o.id, o.order_number, o.client_id, o.total_price, o.status, o.approval_status,
         c.name as client_name, c.phone as client_phone, c.email as client_email,
         c.street, c.street_number, c.colonia, c.city, c.state,
-        c.postal, c.postal_code, c.reference_notes
+        c.postal, c.postal_code, c.reference_notes,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as existing_labels
       FROM orders o
       JOIN clients c ON o.client_id = c.id
       WHERE o.id = $1
@@ -37,15 +37,15 @@ router.post('/orders/:orderId/generate', async (req, res) => {
 
     const order = orderResult.rows[0];
 
-    // Check if second payment received
-    if (!order.second_payment_received) {
+    // Check if order is approved (labels are generated on approval)
+    if (order.approval_status !== 'approved') {
       return res.status(400).json({
-        error: 'El segundo pago debe estar confirmado antes de generar guías'
+        error: 'El pedido debe estar aprobado antes de generar guías'
       });
     }
 
     // Check if labels already generated
-    if (order.all_labels_generated) {
+    if (parseInt(order.existing_labels) > 0) {
       return res.status(400).json({
         error: 'Las guías ya fueron generadas para esta orden'
       });
@@ -454,8 +454,9 @@ router.get('/orders/:orderId/can-generate', async (req, res) => {
   try {
     const result = await query(`
       SELECT
-        o.id, o.order_number, o.second_payment_received, o.all_labels_generated,
-        c.postal, c.postal_code, c.city, c.state
+        o.id, o.order_number, o.approval_status,
+        c.postal, c.postal_code, c.city, c.state,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as existing_labels
       FROM orders o
       JOIN clients c ON o.client_id = c.id
       WHERE o.id = $1
@@ -468,13 +469,14 @@ router.get('/orders/:orderId/can-generate', async (req, res) => {
     const order = result.rows[0];
     const postal = order.postal || order.postal_code;
     const hasAddress = !!(postal && order.city && order.state);
+    const labelsExist = parseInt(order.existing_labels) > 0;
 
     res.json({
       success: true,
-      canGenerate: order.second_payment_received && !order.all_labels_generated && hasAddress,
+      canGenerate: order.approval_status === 'approved' && !labelsExist && hasAddress,
       reasons: {
-        secondPaymentReceived: order.second_payment_received,
-        labelsNotGenerated: !order.all_labels_generated,
+        orderApproved: order.approval_status === 'approved',
+        labelsNotGenerated: !labelsExist,
         hasValidAddress: hasAddress
       }
     });
