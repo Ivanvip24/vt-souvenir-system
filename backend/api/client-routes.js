@@ -800,6 +800,11 @@ router.post('/orders/lookup', async (req, res) => {
         o.deposit_amount,
         o.deposit_paid,
         o.payment_method,
+        o.second_payment_proof_url,
+        o.second_payment_received,
+        o.all_labels_generated,
+        o.shipping_labels_count,
+        o.shipping_ready,
         json_agg(
           json_build_object(
             'productName', oi.product_name,
@@ -835,7 +840,13 @@ router.post('/orders/lookup', async (req, res) => {
       depositAmountFormatted: formatCurrency(order.deposit_amount),
       remainingBalanceFormatted: formatCurrency(order.total_price - order.deposit_amount),
       items: order.items || [],
-      clientName: clientData.name
+      clientName: clientData.name,
+      // Shipping fields
+      secondPaymentReceipt: order.second_payment_proof_url,
+      secondPaymentReceived: order.second_payment_received,
+      allLabelsGenerated: order.all_labels_generated,
+      shippingLabelsCount: order.shipping_labels_count,
+      shippingReady: order.shipping_ready
     }));
 
     // ALWAYS return clientInfo, even if no active orders

@@ -134,6 +134,11 @@ function switchView(viewName) {
   if (viewName === 'calendar' && typeof initCalendar === 'function') {
     initCalendar();
   }
+
+  // Initialize guias when switching to guias view
+  if (viewName === 'guias' && typeof initGuiasView === 'function') {
+    initGuiasView();
+  }
 }
 
 // ==========================================

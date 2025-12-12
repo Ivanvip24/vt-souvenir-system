@@ -17,6 +17,7 @@ import bomRoutes from './bom-routes.js';
 import webhookRoutes from './webhook-routes.js';
 import uploadRoutes from './upload-routes.js';
 import discountRoutes from './discount-routes.js';
+import shippingRoutes from './shipping-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
@@ -102,6 +103,11 @@ app.use('/api/webhooks', webhookRoutes);
 // DISCOUNTS & SPECIAL CLIENTS ROUTES
 // ========================================
 app.use('/api/discounts', discountRoutes);
+
+// ========================================
+// SHIPPING / GUÍAS ROUTES
+// ========================================
+app.use('/api/shipping', shippingRoutes);
 
 // ========================================
 // FILE UPLOAD ROUTES (Cloudinary)

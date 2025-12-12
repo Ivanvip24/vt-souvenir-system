@@ -87,10 +87,18 @@
                     <span class="nav-icon">💰</span>
                     <span>Precios</span>
                 </button>
-                <button class="nav-item" data-view="shipping">
-                    <span class="nav-icon">📦</span>
-                    <span>Envíos</span>
-                </button>
+                <div class="nav-group">
+                    <button class="nav-item" data-view="shipping">
+                        <span class="nav-icon">📦</span>
+                        <span>Envíos</span>
+                    </button>
+                    <div class="nav-sub-items">
+                        <button class="nav-sub-item" data-view="guias">
+                            <span class="nav-icon">🏷️</span>
+                            <span>Guías</span>
+                        </button>
+                    </div>
+                </div>
             </nav>
         </aside>
 
@@ -871,6 +879,107 @@
                     <button class="pagination-btn" onclick="goToShippingPage('next')" id="next-page-btn">Siguiente →</button>
                 </div>
             </section>
+
+            <!-- Guías View -->
+            <section id="guias-view" class="view">
+                <div class="view-header">
+                    <h2>🏷️ Gestión de Guías</h2>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn" onclick="refreshGuias()">
+                            🔄 Actualizar
+                        </button>
+                        <button class="btn" onclick="exportGuiasCSV()">
+                            📥 Exportar CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Guias Filters Bar -->
+                <div class="shipping-filters-bar">
+                    <div class="shipping-search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="guias-search-input" class="shipping-search-input"
+                            placeholder="Buscar por tracking, orden, cliente..."
+                            oninput="handleGuiasSearch(this.value)" />
+                        <button class="search-clear" id="guias-search-clear" onclick="clearGuiasSearch()" style="display: none;">✕</button>
+                    </div>
+
+                    <!-- Status Filter Chips -->
+                    <div class="filter-chips">
+                        <button class="filter-chip guias-status-filter active" data-status="all" onclick="filterGuiasByStatus('all')">
+                            Todas
+                        </button>
+                        <button class="filter-chip guias-status-filter" data-status="label_generated" onclick="filterGuiasByStatus('label_generated')">
+                            📄 Generadas
+                        </button>
+                        <button class="filter-chip guias-status-filter" data-status="shipped" onclick="filterGuiasByStatus('shipped')">
+                            🚚 Enviadas
+                        </button>
+                        <button class="filter-chip guias-status-filter" data-status="delivered" onclick="filterGuiasByStatus('delivered')">
+                            ✅ Entregadas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Guias Stats -->
+                <div class="shipping-stats" id="guias-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="guias-total">0</span>
+                        <span class="stat-label">Total Guías</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="guias-generated">0</span>
+                        <span class="stat-label">Generadas</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="guias-shipped">0</span>
+                        <span class="stat-label">Enviadas</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="guias-delivered">0</span>
+                        <span class="stat-label">Entregadas</span>
+                    </div>
+                </div>
+
+                <!-- Guias Table -->
+                <div class="shipping-table-container">
+                    <table class="shipping-table" id="guias-table">
+                        <thead>
+                            <tr>
+                                <th>Orden</th>
+                                <th>Cliente</th>
+                                <th>Tracking</th>
+                                <th>Paquetería</th>
+                                <th>Días</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="guias-table-body">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 40px; color: #6b7280;">
+                                    Cargando guías...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="guias-empty-state" class="empty-state hidden">
+                    <span class="empty-icon">🏷️</span>
+                    <h3>No hay guías</h3>
+                    <p>Las guías aparecerán aquí cuando los clientes generen envíos</p>
+                </div>
+
+                <!-- Guias Pagination -->
+                <div class="shipping-pagination" id="guias-pagination">
+                    <button class="pagination-btn" onclick="goToGuiasPage('prev')" id="guias-prev-page-btn">← Anterior</button>
+                    <span class="pagination-info" id="guias-pagination-info">Página 1 de 1</span>
+                    <button class="pagination-btn" onclick="goToGuiasPage('next')" id="guias-next-page-btn">Siguiente →</button>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -1198,6 +1307,7 @@
     <script src="inventory.js"></script>
     <script src="prices.js"></script>
     <script src="shipping.js"></script>
+    <script src="guias.js"></script>
     <script src="analytics.js"></script>
     <script src="calendar.js"></script>
     <script src="discounts.js"></script>

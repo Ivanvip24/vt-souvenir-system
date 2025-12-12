@@ -2133,9 +2133,15 @@ window.lookupClientOrders = async function() {
                 <div style="font-size: 13px; font-weight: 600; color: #065f46; margin-bottom: 8px; text-align: center;">
                   ✅ Segundo recibo de pago enviado
                 </div>
-                <div style="font-size: 12px; color: #047857; margin-bottom: 8px; text-align: center;">
-                  Estamos verificando tu pago
-                </div>
+                ${order.secondPaymentReceived ? `
+                  <div style="font-size: 12px; color: #047857; margin-bottom: 8px; text-align: center;">
+                    ✓ Pago verificado
+                  </div>
+                ` : `
+                  <div style="font-size: 12px; color: #047857; margin-bottom: 8px; text-align: center;">
+                    Estamos verificando tu pago
+                  </div>
+                `}
                 <div style="background: white; padding: 8px; border-radius: 6px; text-align: center;">
                   <img src="${order.secondPaymentReceipt}"
                        alt="Comprobante de pago final"
@@ -2147,6 +2153,38 @@ window.lookupClientOrders = async function() {
                 </div>
               </div>
             ` : ''}
+
+          <!-- Shipping Section -->
+          ${order.secondPaymentReceived && !order.allLabelsGenerated ? `
+            <div id="shipping-section-${order.id}" style="margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
+              <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 8px; text-align: center;">
+                📦 Tu pedido está listo para envío
+              </div>
+              <div style="font-size: 12px; color: rgba(255,255,255,0.9); margin-bottom: 12px; text-align: center;">
+                Genera tu guía de envío para recibir tu pedido
+              </div>
+              <button
+                id="generate-shipping-btn-${order.id}"
+                onclick="generateShippingLabel(${order.id})"
+                style="width: 100%; padding: 14px; background: white; color: #667eea; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 15px; transition: all 0.2s;">
+                🚚 Crear Envío
+              </button>
+            </div>
+          ` : ''}
+
+          ${order.allLabelsGenerated ? `
+            <div id="shipping-info-${order.id}" style="margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 12px;">
+              <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 12px; text-align: center;">
+                ✅ Guía de Envío Generada
+              </div>
+              <div id="shipping-labels-${order.id}" style="background: white; border-radius: 8px; padding: 12px;">
+                <div style="text-align: center; color: #666; font-size: 12px;">
+                  Cargando información de envío...
+                </div>
+              </div>
+            </div>
+            <script>loadShippingLabels(${order.id})</script>
+          ` : ''}
           </div>
 
           ${order.eventDate ? `
@@ -2551,4 +2589,208 @@ function showPromoAppliedBanner(clientName) {
 // Make functions globally available
 window.applyPromoCode = applyPromoCode;
 window.removePromoCode = removePromoCode;
+
+// ==========================================
+// SHIPPING FUNCTIONS
+// ==========================================
+
+/**
+ * Generate shipping label for an order
+ * Called when user clicks "Crear Envío" button
+ */
+window.generateShippingLabel = async function(orderId) {
+  const btn = document.getElementById(`generate-shipping-btn-${orderId}`);
+  const section = document.getElementById(`shipping-section-${orderId}`);
+
+  // Show loading state
+  btn.disabled = true;
+  btn.innerHTML = `
+    <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #667eea; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></span>
+    Generando guía...
+  `;
+
+  try {
+    // Call API to generate shipping label
+    const apiUrl = window.location.hostname === 'localhost'
+      ? `http://localhost:3000/api/shipping/orders/${orderId}/generate`
+      : `https://vt-souvenir-backend.onrender.com/api/shipping/orders/${orderId}/generate`;
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ labelsCount: 1 })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Error al generar la guía');
+    }
+
+    // Success! Replace the button section with the shipping info
+    section.outerHTML = `
+      <div id="shipping-info-${orderId}" style="margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 12px;">
+        <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 12px; text-align: center;">
+          ✅ ¡Guía de Envío Generada!
+        </div>
+        <div style="background: white; border-radius: 8px; padding: 12px;">
+          ${result.labels.map(label => `
+            <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; color: #6b7280; font-weight: 600;">📦 ${label.carrier}</span>
+                <span style="font-size: 12px; color: #059669; font-weight: 600;">🚚 ${label.delivery_days || '3-5'} días</span>
+              </div>
+              ${label.tracking_number ? `
+                <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">Número de Rastreo:</div>
+                <div style="font-family: monospace; font-size: 16px; font-weight: 700; color: #1f2937; background: #f3f4f6; padding: 8px 12px; border-radius: 6px; text-align: center; letter-spacing: 1px;">
+                  ${label.tracking_number}
+                </div>
+              ` : `
+                <div style="font-size: 12px; color: #f59e0b; font-style: italic; text-align: center;">
+                  ⏳ El número de rastreo se está generando...
+                </div>
+              `}
+              ${label.tracking_url ? `
+                <a href="${label.tracking_url}" target="_blank" rel="noopener noreferrer"
+                   style="display: block; margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; text-align: center; font-weight: 600; font-size: 13px;">
+                  🔍 Rastrear Envío
+                </a>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    // Start polling for tracking number if not available yet
+    if (result.labels.some(l => !l.tracking_number)) {
+      pollForTrackingNumber(orderId);
+    }
+
+  } catch (error) {
+    console.error('Error generating shipping label:', error);
+
+    // Show error state
+    btn.disabled = false;
+    btn.innerHTML = '🚚 Crear Envío';
+
+    // Show error message
+    alert(`Error: ${error.message}\n\nPor favor intenta de nuevo o contacta soporte.`);
+  }
+};
+
+/**
+ * Load existing shipping labels for an order
+ * Called when the order already has labels generated
+ */
+window.loadShippingLabels = async function(orderId) {
+  const container = document.getElementById(`shipping-labels-${orderId}`);
+  if (!container) return;
+
+  try {
+    const apiUrl = window.location.hostname === 'localhost'
+      ? `http://localhost:3000/api/shipping/orders/${orderId}/labels`
+      : `https://vt-souvenir-backend.onrender.com/api/shipping/orders/${orderId}/labels`;
+
+    const response = await fetch(apiUrl);
+    const result = await response.json();
+
+    if (!result.success || !result.labels.length) {
+      container.innerHTML = `
+        <div style="text-align: center; color: #dc2626; font-size: 12px;">
+          No se encontraron guías
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = result.labels.map(label => `
+      <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 12px; color: #6b7280; font-weight: 600;">📦 ${label.carrier || 'Paquetería'}</span>
+          <span style="font-size: 12px; color: #059669; font-weight: 600;">🚚 ${label.delivery_days || '3-5'} días</span>
+        </div>
+        ${label.tracking_number ? `
+          <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">Número de Rastreo:</div>
+          <div style="font-family: monospace; font-size: 16px; font-weight: 700; color: #1f2937; background: #f3f4f6; padding: 8px 12px; border-radius: 6px; text-align: center; letter-spacing: 1px;">
+            ${label.tracking_number}
+          </div>
+        ` : `
+          <div style="font-size: 12px; color: #f59e0b; font-style: italic; text-align: center;">
+            ⏳ Obteniendo número de rastreo...
+          </div>
+        `}
+        ${label.tracking_url ? `
+          <a href="${label.tracking_url}" target="_blank" rel="noopener noreferrer"
+             style="display: block; margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; text-align: center; font-weight: 600; font-size: 13px;">
+            🔍 Rastrear Envío
+          </a>
+        ` : ''}
+        ${label.label_url ? `
+          <a href="${label.label_url}" target="_blank" rel="noopener noreferrer"
+             style="display: block; margin-top: 8px; padding: 10px; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 6px; text-align: center; font-weight: 600; font-size: 13px;">
+            📄 Descargar Guía PDF
+          </a>
+        ` : ''}
+      </div>
+    `).join('');
+
+    // Poll for tracking if any label is missing it
+    if (result.labels.some(l => !l.tracking_number)) {
+      pollForTrackingNumber(orderId);
+    }
+
+  } catch (error) {
+    console.error('Error loading shipping labels:', error);
+    container.innerHTML = `
+      <div style="text-align: center; color: #dc2626; font-size: 12px;">
+        Error al cargar información de envío
+      </div>
+    `;
+  }
+};
+
+/**
+ * Poll for tracking number updates
+ */
+async function pollForTrackingNumber(orderId, attempts = 0) {
+  if (attempts >= 10) return; // Max 10 attempts (30 seconds)
+
+  setTimeout(async () => {
+    try {
+      const apiUrl = window.location.hostname === 'localhost'
+        ? `http://localhost:3000/api/shipping/orders/${orderId}/labels`
+        : `https://vt-souvenir-backend.onrender.com/api/shipping/orders/${orderId}/labels`;
+
+      const response = await fetch(apiUrl);
+      const result = await response.json();
+
+      if (result.success && result.labels.length > 0) {
+        const allHaveTracking = result.labels.every(l => l.tracking_number);
+        if (allHaveTracking) {
+          // Refresh the display
+          loadShippingLabels(orderId);
+          return;
+        }
+      }
+
+      // Keep polling
+      pollForTrackingNumber(orderId, attempts + 1);
+
+    } catch (error) {
+      console.error('Poll error:', error);
+    }
+  }, 3000); // Poll every 3 seconds
+}
+
+// Add CSS animation for spinner
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);
 
