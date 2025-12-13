@@ -445,6 +445,316 @@ router.post('/labels/:labelId/refresh', async (req, res) => {
 });
 
 // ========================================
+// GET SHIPPING QUOTES FOR CLIENT SELECTION
+// GET /api/shipping/orders/:orderId/quotes
+// Returns cheapest options for client to choose
+// ========================================
+router.get('/orders/:orderId/quotes', async (req, res) => {
+  const { orderId } = req.params;
+  const { maxOptions = 5, maxPrice = 500 } = req.query; // Limit expensive options
+
+  try {
+    // Get order with client info
+    const orderResult = await query(`
+      SELECT
+        o.id, o.order_number, o.client_id, o.approval_status,
+        o.selected_carrier, o.selected_service, o.selected_rate_id,
+        c.name as client_name, c.phone as client_phone, c.email as client_email,
+        c.street, c.street_number, c.colonia, c.city, c.state,
+        c.postal, c.postal_code, c.reference_notes,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as existing_labels
+      FROM orders o
+      JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Orden no encontrada' });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Check if order is approved
+    if (order.approval_status !== 'approved') {
+      return res.status(400).json({
+        error: 'El pedido debe estar aprobado para obtener cotizaciones'
+      });
+    }
+
+    // Check if labels already generated
+    if (parseInt(order.existing_labels) > 0) {
+      return res.status(400).json({
+        error: 'Las guías ya fueron generadas para esta orden',
+        alreadyGenerated: true
+      });
+    }
+
+    // Validate client has shipping address
+    const postal = order.postal || order.postal_code;
+    if (!postal || !order.city || !order.state) {
+      return res.status(400).json({
+        error: 'El cliente no tiene dirección de envío completa'
+      });
+    }
+
+    // Build destination address
+    const destAddress = {
+      name: order.client_name,
+      phone: order.client_phone,
+      email: order.client_email,
+      street: order.street,
+      street_number: order.street_number,
+      colonia: order.colonia,
+      city: order.city,
+      state: order.state,
+      zip: postal,
+      reference_notes: order.reference_notes
+    };
+
+    console.log(`📦 Getting shipping quotes for order ${order.order_number}`);
+
+    // Get quote from Skydropx
+    const quote = await skydropx.getQuote(destAddress);
+
+    if (!quote.rates || quote.rates.length === 0) {
+      return res.status(400).json({
+        error: 'No hay tarifas de envío disponibles para esta dirección'
+      });
+    }
+
+    // Filter and sort rates - cheapest first, cap at maxPrice
+    let filteredRates = quote.rates
+      .filter(rate => rate.total_price <= parseFloat(maxPrice))
+      .sort((a, b) => a.total_price - b.total_price)
+      .slice(0, parseInt(maxOptions));
+
+    // Format for client display
+    const formattedRates = filteredRates.map((rate, index) => ({
+      rate_id: rate.rate_id,
+      carrier: rate.carrier,
+      carrier_code: rate.carrier_code,
+      service: rate.service,
+      service_code: rate.service_code,
+      price: rate.total_price,
+      priceFormatted: `$${rate.total_price.toFixed(2)} MXN`,
+      days: rate.days,
+      daysText: rate.days === 1 ? '1 día' : `${rate.days} días`,
+      isCheapest: index === 0,
+      isFastest: rate.days === Math.min(...filteredRates.map(r => r.days))
+    }));
+
+    // Check if client already selected a rate
+    const previousSelection = order.selected_rate_id ? {
+      rate_id: order.selected_rate_id,
+      carrier: order.selected_carrier,
+      service: order.selected_service
+    } : null;
+
+    res.json({
+      success: true,
+      quotation_id: quote.quotation_id,
+      rates: formattedRates,
+      previousSelection,
+      destination: {
+        city: order.city,
+        state: order.state,
+        postal: postal
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting shipping quotes:', error);
+    res.status(500).json({ error: error.message || 'Error obteniendo cotizaciones' });
+  }
+});
+
+// ========================================
+// SAVE CLIENT'S SELECTED SHIPPING RATE
+// POST /api/shipping/orders/:orderId/select-rate
+// ========================================
+router.post('/orders/:orderId/select-rate', async (req, res) => {
+  const { orderId } = req.params;
+  const { quotation_id, rate_id, carrier, service, price, days } = req.body;
+
+  if (!quotation_id || !rate_id) {
+    return res.status(400).json({ error: 'Faltan datos de la tarifa seleccionada' });
+  }
+
+  try {
+    // Verify order exists and is approved
+    const orderResult = await query(`
+      SELECT id, approval_status,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = orders.id) as existing_labels
+      FROM orders WHERE id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Orden no encontrada' });
+    }
+
+    const order = orderResult.rows[0];
+
+    if (order.approval_status !== 'approved') {
+      return res.status(400).json({ error: 'El pedido debe estar aprobado' });
+    }
+
+    if (parseInt(order.existing_labels) > 0) {
+      return res.status(400).json({ error: 'Las guías ya fueron generadas' });
+    }
+
+    // Save selected rate to order
+    await query(`
+      UPDATE orders SET
+        selected_quotation_id = $1,
+        selected_rate_id = $2,
+        selected_carrier = $3,
+        selected_service = $4,
+        selected_shipping_price = $5,
+        selected_delivery_days = $6,
+        shipping_rate_selected_at = CURRENT_TIMESTAMP
+      WHERE id = $7
+    `, [quotation_id, rate_id, carrier, service, price, days, orderId]);
+
+    console.log(`✅ Client selected shipping: ${carrier} - ${service} for order ${orderId}`);
+
+    res.json({
+      success: true,
+      message: 'Método de envío seleccionado exitosamente',
+      selection: { carrier, service, price, days }
+    });
+
+  } catch (error) {
+    console.error('❌ Error saving shipping selection:', error);
+    res.status(500).json({ error: 'Error guardando selección de envío' });
+  }
+});
+
+// ========================================
+// GENERATE LABEL WITH CLIENT'S SELECTED RATE
+// POST /api/shipping/orders/:orderId/generate-selected
+// ========================================
+router.post('/orders/:orderId/generate-selected', async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    // Get order with selected rate and client info
+    const orderResult = await query(`
+      SELECT
+        o.id, o.order_number, o.client_id, o.approval_status,
+        o.selected_quotation_id, o.selected_rate_id, o.selected_carrier,
+        o.selected_service, o.selected_shipping_price, o.selected_delivery_days,
+        c.name as client_name, c.phone as client_phone, c.email as client_email,
+        c.street, c.street_number, c.colonia, c.city, c.state,
+        c.postal, c.postal_code, c.reference_notes,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as existing_labels
+      FROM orders o
+      JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Orden no encontrada' });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Validations
+    if (order.approval_status !== 'approved') {
+      return res.status(400).json({ error: 'El pedido debe estar aprobado' });
+    }
+
+    if (parseInt(order.existing_labels) > 0) {
+      return res.status(400).json({ error: 'Las guías ya fueron generadas' });
+    }
+
+    if (!order.selected_rate_id) {
+      return res.status(400).json({ error: 'No se ha seleccionado un método de envío' });
+    }
+
+    const postal = order.postal || order.postal_code;
+
+    // Build destination address
+    const destAddress = {
+      name: order.client_name,
+      phone: order.client_phone,
+      email: order.client_email,
+      street: order.street,
+      street_number: order.street_number,
+      colonia: order.colonia,
+      city: order.city,
+      state: order.state,
+      zip: postal,
+      reference_notes: order.reference_notes
+    };
+
+    console.log(`📦 Generating label with client-selected rate for order ${order.order_number}`);
+    console.log(`   Selected: ${order.selected_carrier} - ${order.selected_service}`);
+
+    // Create shipment with client's selected rate
+    const selectedRate = {
+      rate_id: order.selected_rate_id,
+      carrier: order.selected_carrier,
+      service: order.selected_service,
+      total_price: order.selected_shipping_price,
+      days: order.selected_delivery_days
+    };
+
+    const shipment = await skydropx.createShipment(
+      order.selected_quotation_id,
+      order.selected_rate_id,
+      selectedRate,
+      destAddress
+    );
+
+    // Save to database
+    const insertResult = await query(`
+      INSERT INTO shipping_labels (
+        order_id, client_id, shipment_id, quotation_id, rate_id,
+        tracking_number, tracking_url, label_url,
+        carrier, service, delivery_days, shipping_cost,
+        package_number, status, label_generated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
+      RETURNING *
+    `, [
+      orderId,
+      order.client_id,
+      shipment.shipment_id,
+      order.selected_quotation_id,
+      order.selected_rate_id,
+      shipment.tracking_number,
+      shipment.tracking_url,
+      shipment.label_url,
+      shipment.carrier,
+      shipment.service,
+      shipment.delivery_days,
+      shipment.shipping_cost,
+      1,
+      shipment.label_url ? 'label_generated' : 'processing'
+    ]);
+
+    console.log(`✅ Label generated for order ${order.order_number}`);
+
+    res.json({
+      success: true,
+      message: 'Guía generada exitosamente',
+      label: {
+        id: insertResult.rows[0].id,
+        tracking_number: shipment.tracking_number,
+        tracking_url: shipment.tracking_url,
+        label_url: shipment.label_url,
+        carrier: shipment.carrier,
+        service: shipment.service,
+        delivery_days: shipment.delivery_days
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error generating label with selected rate:', error);
+    res.status(500).json({ error: error.message || 'Error generando guía' });
+  }
+});
+
+// ========================================
 // CHECK IF ORDER CAN GENERATE SHIPPING
 // GET /api/shipping/orders/:orderId/can-generate
 // ========================================

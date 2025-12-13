@@ -877,78 +877,23 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
       console.error('Failed to sync approval to Notion:', notionError);
     }
 
-    // Auto-generate shipping label (synchronous for immediate feedback)
-    let shippingResult = { generated: false, error: null, trackingNumber: null, carrier: null };
-
-    try {
-      console.log(`📦 Auto-generating shipping label for order ${orderId}...`);
-
-      // Get client address
-      const clientResult = await query(
-        `SELECT c.* FROM clients c
-         JOIN orders o ON o.client_id = c.id
-         WHERE o.id = $1`,
-        [orderId]
-      );
-
-      if (clientResult.rows.length === 0) {
-        shippingResult.error = 'Cliente no encontrado';
-        console.error('❌ Cannot generate shipping label: client not found');
-      } else {
-        const client = clientResult.rows[0];
-
-        // Check if client has complete address
-        // Use postal OR postal_code (database has both columns)
-        const clientPostal = client.postal || client.postal_code;
-
-        if (!client.street || !clientPostal || !client.city || !client.state) {
-          shippingResult.error = `Dirección del cliente incompleta (falta: ${!client.street ? 'calle, ' : ''}${!clientPostal ? 'CP, ' : ''}${!client.city ? 'ciudad, ' : ''}${!client.state ? 'estado' : ''})`;
-          console.log('⚠️ Client address incomplete, skipping auto-generation of shipping label');
-        } else {
-          // Generate shipping label
-          const labelResult = await skydropxService.generateShippingLabel({
-            orderId: orderId,
-            clientId: client.id,
-            destination: {
-              name: client.name,
-              street: client.street,
-              number: client.street_number || 'S/N',
-              neighborhood: client.colonia || '',
-              city: client.city,
-              state: client.state,
-              zip: clientPostal,
-              phone: client.phone || '',
-              email: client.email || '',
-              reference: client.reference_notes || ''
-            }
-          });
-
-          if (labelResult.success) {
-            shippingResult.generated = true;
-            shippingResult.trackingNumber = labelResult.trackingNumber;
-            shippingResult.carrier = labelResult.carrier;
-            shippingResult.deliveryDays = labelResult.deliveryDays;
-            console.log(`✅ Shipping label generated for order ${orderId}: ${labelResult.trackingNumber || 'pending tracking'}`);
-          } else {
-            shippingResult.error = labelResult.error;
-            console.error(`❌ Failed to generate shipping label: ${labelResult.error}`);
-          }
-        }
-      }
-    } catch (shippingError) {
-      shippingResult.error = shippingError.message;
-      console.error('❌ Error auto-generating shipping label:', shippingError.message);
-    }
+    // NOTE: Shipping labels are NO LONGER auto-generated on approval
+    // Instead, the client will:
+    // 1. Select their preferred shipping method when uploading second payment
+    // 2. Upload the second payment receipt
+    // 3. The label is generated with their selected carrier/service
 
     console.log(`✅ Order ${orderId} approved successfully`);
+    console.log(`📦 Shipping label will be generated when client selects shipping and uploads second payment`);
 
     res.json({
       success: true,
-      message: shippingResult.generated
-        ? `Pedido aprobado. Guía generada: ${shippingResult.carrier} - ${shippingResult.trackingNumber || 'Número pendiente'}`
-        : 'Pedido aprobado. Recibo generado y enviado al cliente.',
+      message: 'Pedido aprobado. El cliente podrá seleccionar su método de envío al subir el segundo pago.',
       receiptUrl: receiptUrl,
-      shipping: shippingResult
+      shipping: {
+        generated: false,
+        note: 'Label will be generated after client selects shipping and uploads second payment'
+      }
     });
   } catch (error) {
     console.error('Error approving order:', error);

@@ -1189,18 +1189,10 @@ async function confirmApproveWithDeposit() {
       closeOrderDetail();
       loadOrders();
 
-      // Build success message with shipping info
+      // Build success message
       let successMsg = '✅ Pedido aprobado exitosamente.\n\n';
       successMsg += '📧 Recibo generado y enviado al cliente.\n\n';
-
-      if (data.shipping && data.shipping.generated) {
-        successMsg += `📦 GUÍA DE ENVÍO GENERADA:\n`;
-        successMsg += `   • Paquetería: ${data.shipping.carrier}\n`;
-        successMsg += `   • Tracking: ${data.shipping.trackingNumber || 'Pendiente'}\n`;
-        successMsg += `   • Días de entrega: ${data.shipping.deliveryDays || 'N/A'}`;
-      } else if (data.shipping && data.shipping.error) {
-        successMsg += `⚠️ Guía no generada: ${data.shipping.error}`;
-      }
+      successMsg += '📦 El cliente podrá seleccionar su método de envío al subir el segundo pago.';
 
       alert(successMsg);
     } else {

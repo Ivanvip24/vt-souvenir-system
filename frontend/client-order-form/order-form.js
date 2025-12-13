@@ -2110,9 +2110,24 @@ window.lookupClientOrders = async function() {
             </div>
 
             ${order.approvalStatus === 'approved' && parseFloat(order.remainingBalance) > 0 && !order.secondPaymentReceipt ? `
-              <div style="margin-top: 12px; border-top: 1px solid #fbbf24; padding-top: 12px;" id="second-payment-section-${order.id}">
+              <!-- STEP 1: Select Shipping Method -->
+              <div style="margin-top: 12px; border-top: 1px solid #fbbf24; padding-top: 12px;" id="shipping-selection-section-${order.id}">
                 <div style="font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 8px;">
-                  💳 Sube tu comprobante de pago final
+                  🚚 Paso 1: Selecciona tu método de envío
+                </div>
+                <div id="shipping-options-${order.id}" style="margin-bottom: 12px;">
+                  <button
+                    onclick="loadShippingOptions(${order.id})"
+                    style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                    📦 Ver Opciones de Envío
+                  </button>
+                </div>
+              </div>
+
+              <!-- STEP 2: Upload Payment Receipt (shown after shipping selection) -->
+              <div style="margin-top: 12px; padding-top: 12px; display: none;" id="second-payment-section-${order.id}">
+                <div style="font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 8px;">
+                  💳 Paso 2: Sube tu comprobante de pago final
                 </div>
                 <input type="file"
                        id="second-payment-upload-${order.id}"
@@ -2365,27 +2380,89 @@ window.confirmSecondPaymentUpload = async function(orderId) {
 
     console.log('✅ Second payment proof saved successfully');
 
-    // Show success and update UI to show "Segundo recibo enviado"
-    const sectionDiv = document.getElementById(`second-payment-section-${orderId}`);
-    sectionDiv.innerHTML = `
-      <div style="padding: 12px; background: #d1fae5; border: 1px solid #059669; border-radius: 8px;">
-        <div style="font-size: 13px; font-weight: 600; color: #065f46; margin-bottom: 8px; text-align: center;">
-          ✅ Segundo recibo de pago enviado
-        </div>
-        <div style="font-size: 12px; color: #047857; margin-bottom: 8px; text-align: center;">
-          Estamos verificando tu pago
-        </div>
-        <div style="background: white; padding: 8px; border-radius: 6px; text-align: center;">
-          <img src="${uploadData.url}"
-               alt="Comprobante de pago final"
-               style="max-width: 100%; max-height: 200px; border-radius: 4px; cursor: pointer;"
-               onclick="window.open('${uploadData.url}', '_blank')">
-          <div style="font-size: 11px; color: #059669; margin-top: 4px;">
-            Click para ver en tamaño completo
-          </div>
-        </div>
+    // Now generate the shipping label with client's selected rate
+    buttonsDiv.innerHTML = `
+      <div style="padding: 12px; background: #dbeafe; border-radius: 8px; text-align: center; font-size: 13px; color: #1e40af;">
+        <div style="font-weight: 600; margin-bottom: 4px;">🚚 Generando guía de envío...</div>
+        <div style="font-size: 11px;">Por favor espera</div>
       </div>
     `;
+
+    // Generate shipping label
+    const labelResult = await generateLabelAfterPayment(orderId);
+
+    // Show success and update UI
+    const sectionDiv = document.getElementById(`second-payment-section-${orderId}`);
+
+    if (labelResult.success) {
+      sectionDiv.innerHTML = `
+        <div style="padding: 12px; background: #d1fae5; border: 1px solid #059669; border-radius: 8px; margin-bottom: 12px;">
+          <div style="font-size: 13px; font-weight: 600; color: #065f46; margin-bottom: 8px; text-align: center;">
+            ✅ Pago recibido y guía generada
+          </div>
+          <div style="background: white; padding: 8px; border-radius: 6px; text-align: center;">
+            <img src="${uploadData.url}"
+                 alt="Comprobante de pago final"
+                 style="max-width: 100%; max-height: 150px; border-radius: 4px; cursor: pointer;"
+                 onclick="window.open('${uploadData.url}', '_blank')">
+          </div>
+        </div>
+        <!-- Shipping Info -->
+        <div style="padding: 16px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 12px;">
+          <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 12px; text-align: center;">
+            🚚 Tu Guía de Envío
+          </div>
+          <div style="background: white; border-radius: 8px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 12px; color: #6b7280; font-weight: 600;">📦 ${labelResult.label.carrier}</span>
+              <span style="font-size: 12px; color: #059669; font-weight: 600;">🚚 ${labelResult.label.delivery_days || '3-5'} días</span>
+            </div>
+            ${labelResult.label.tracking_number ? `
+              <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">Número de Rastreo:</div>
+              <div style="font-family: monospace; font-size: 16px; font-weight: 700; color: #1f2937; background: #f3f4f6; padding: 8px 12px; border-radius: 6px; text-align: center; letter-spacing: 1px;">
+                ${labelResult.label.tracking_number}
+              </div>
+            ` : `
+              <div style="font-size: 12px; color: #f59e0b; font-style: italic; text-align: center;">
+                ⏳ El número de rastreo se está generando...
+              </div>
+            `}
+            ${labelResult.label.tracking_url ? `
+              <a href="${labelResult.label.tracking_url}" target="_blank" rel="noopener noreferrer"
+                 style="display: block; margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; text-align: center; font-weight: 600; font-size: 13px;">
+                🔍 Rastrear Envío
+              </a>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      // Poll for tracking number if not available yet
+      if (!labelResult.label.tracking_number) {
+        pollForTrackingNumber(orderId);
+      }
+    } else {
+      // Label generation failed, but payment was received
+      sectionDiv.innerHTML = `
+        <div style="padding: 12px; background: #d1fae5; border: 1px solid #059669; border-radius: 8px;">
+          <div style="font-size: 13px; font-weight: 600; color: #065f46; margin-bottom: 8px; text-align: center;">
+            ✅ Segundo recibo de pago enviado
+          </div>
+          <div style="font-size: 12px; color: #047857; margin-bottom: 8px; text-align: center;">
+            Estamos procesando tu envío
+          </div>
+          <div style="background: white; padding: 8px; border-radius: 6px; text-align: center;">
+            <img src="${uploadData.url}"
+                 alt="Comprobante de pago final"
+                 style="max-width: 100%; max-height: 200px; border-radius: 4px; cursor: pointer;"
+                 onclick="window.open('${uploadData.url}', '_blank')">
+          </div>
+        </div>
+        <div style="margin-top: 8px; padding: 8px; background: #fef3c7; border-radius: 6px; text-align: center; font-size: 12px; color: #92400e;">
+          ⚠️ La guía se generará pronto. Te notificaremos cuando esté lista.
+        </div>
+      `;
+    }
 
     // Clear stored file
     delete selectedSecondPaymentFiles[orderId];
@@ -2776,4 +2853,244 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+// ==========================================
+// SHIPPING SELECTION FUNCTIONS
+// ==========================================
+
+// Store selected shipping rate per order
+let selectedShippingRates = {};
+
+/**
+ * Load shipping options for an order
+ */
+window.loadShippingOptions = async function(orderId) {
+  const container = document.getElementById(`shipping-options-${orderId}`);
+
+  // Show loading state
+  container.innerHTML = `
+    <div style="padding: 16px; background: #f3f4f6; border-radius: 8px; text-align: center;">
+      <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #667eea; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <div style="margin-top: 8px; font-size: 13px; color: #6b7280;">Cargando opciones de envío...</div>
+    </div>
+  `;
+
+  try {
+    const apiUrl = window.location.hostname === 'localhost'
+      ? `http://localhost:3000/api/shipping/orders/${orderId}/quotes`
+      : `https://vt-souvenir-backend.onrender.com/api/shipping/orders/${orderId}/quotes`;
+
+    const response = await fetch(apiUrl);
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error obteniendo cotizaciones');
+    }
+
+    if (!result.rates || result.rates.length === 0) {
+      container.innerHTML = `
+        <div style="padding: 16px; background: #fee2e2; border-radius: 8px; text-align: center; color: #991b1b;">
+          <div style="font-size: 24px; margin-bottom: 8px;">😕</div>
+          <div style="font-weight: 600;">No hay opciones de envío disponibles</div>
+          <div style="font-size: 12px; margin-top: 4px;">Por favor contacta a soporte</div>
+        </div>
+      `;
+      return;
+    }
+
+    // Store quotation_id for later
+    selectedShippingRates[orderId] = { quotation_id: result.quotation_id };
+
+    // Render shipping options
+    container.innerHTML = `
+      <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+        <div style="padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+          <div style="font-weight: 600; font-size: 14px;">📦 Opciones de Envío a ${result.destination.city}, ${result.destination.state}</div>
+          <div style="font-size: 11px; opacity: 0.9; margin-top: 2px;">CP: ${result.destination.postal}</div>
+        </div>
+        <div style="padding: 8px;">
+          ${result.rates.map((rate, index) => `
+            <label
+              style="display: flex; align-items: center; padding: 12px; margin: 4px 0; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+              class="shipping-option"
+              onclick="selectShippingRate(${orderId}, '${rate.rate_id}', '${rate.carrier}', '${rate.service}', ${rate.price}, ${rate.days})"
+              id="shipping-option-${orderId}-${index}">
+              <input type="radio" name="shipping-${orderId}" style="margin-right: 12px; width: 18px; height: 18px;">
+              <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <span style="font-weight: 600; color: #111827;">${rate.carrier}</span>
+                    ${rate.isCheapest ? '<span style="margin-left: 6px; font-size: 10px; padding: 2px 6px; background: #d1fae5; color: #065f46; border-radius: 4px;">💰 MÁS ECONÓMICO</span>' : ''}
+                    ${rate.isFastest && !rate.isCheapest ? '<span style="margin-left: 6px; font-size: 10px; padding: 2px 6px; background: #dbeafe; color: #1e40af; border-radius: 4px;">⚡ MÁS RÁPIDO</span>' : ''}
+                  </div>
+                  <span style="font-weight: 700; color: #059669; font-size: 16px;">${rate.priceFormatted}</span>
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                  ${rate.service} • 📅 ${rate.daysText} estimados
+                </div>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      <div id="shipping-confirm-${orderId}" style="display: none; margin-top: 8px;">
+        <button
+          onclick="confirmShippingSelection(${orderId})"
+          style="width: 100%; padding: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+          ✅ Confirmar Método de Envío
+        </button>
+      </div>
+    `;
+
+  } catch (error) {
+    console.error('Error loading shipping options:', error);
+    container.innerHTML = `
+      <div style="padding: 16px; background: #fee2e2; border-radius: 8px; text-align: center; color: #991b1b;">
+        <div style="font-weight: 600;">Error: ${error.message}</div>
+        <button
+          onclick="loadShippingOptions(${orderId})"
+          style="margin-top: 8px; padding: 8px 16px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer;">
+          Reintentar
+        </button>
+      </div>
+    `;
+  }
+};
+
+/**
+ * Select a shipping rate (visual selection)
+ */
+window.selectShippingRate = function(orderId, rateId, carrier, service, price, days) {
+  // Store selection
+  selectedShippingRates[orderId] = {
+    ...selectedShippingRates[orderId],
+    rate_id: rateId,
+    carrier: carrier,
+    service: service,
+    price: price,
+    days: days
+  };
+
+  // Update visual selection
+  const options = document.querySelectorAll(`label[id^="shipping-option-${orderId}-"]`);
+  options.forEach(opt => {
+    opt.style.borderColor = '#e5e7eb';
+    opt.style.background = 'white';
+  });
+
+  // Find and highlight selected option
+  const selectedOption = Array.from(options).find(opt =>
+    opt.querySelector('input[type="radio"]') &&
+    opt.innerHTML.includes(carrier) &&
+    opt.innerHTML.includes(service)
+  );
+  if (selectedOption) {
+    selectedOption.style.borderColor = '#10b981';
+    selectedOption.style.background = '#ecfdf5';
+    selectedOption.querySelector('input[type="radio"]').checked = true;
+  }
+
+  // Show confirm button
+  document.getElementById(`shipping-confirm-${orderId}`).style.display = 'block';
+};
+
+/**
+ * Confirm shipping selection and save to backend
+ */
+window.confirmShippingSelection = async function(orderId) {
+  const selection = selectedShippingRates[orderId];
+
+  if (!selection || !selection.rate_id) {
+    alert('Por favor selecciona un método de envío');
+    return;
+  }
+
+  const confirmBtn = document.querySelector(`#shipping-confirm-${orderId} button`);
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = '<span style="display: inline-block; width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></span> Guardando...';
+
+  try {
+    const apiUrl = window.location.hostname === 'localhost'
+      ? `http://localhost:3000/api/shipping/orders/${orderId}/select-rate`
+      : `https://vt-souvenir-backend.onrender.com/api/shipping/orders/${orderId}/select-rate`;
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quotation_id: selection.quotation_id,
+        rate_id: selection.rate_id,
+        carrier: selection.carrier,
+        service: selection.service,
+        price: selection.price,
+        days: selection.days
+      })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error guardando selección');
+    }
+
+    // Success! Show confirmation and enable payment upload
+    const shippingSection = document.getElementById(`shipping-selection-section-${orderId}`);
+    shippingSection.innerHTML = `
+      <div style="padding: 12px; background: #d1fae5; border: 1px solid #10b981; border-radius: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">✅</span>
+          <div>
+            <div style="font-weight: 600; color: #065f46;">Envío seleccionado</div>
+            <div style="font-size: 12px; color: #047857;">${selection.carrier} - ${selection.service}</div>
+            <div style="font-size: 12px; color: #047857;">$${selection.price.toFixed(2)} MXN • ${selection.days} días</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Show the payment upload section
+    const paymentSection = document.getElementById(`second-payment-section-${orderId}`);
+    paymentSection.style.display = 'block';
+    paymentSection.style.borderTop = '1px solid #fbbf24';
+
+  } catch (error) {
+    console.error('Error confirming shipping:', error);
+    alert(`Error: ${error.message}`);
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = '✅ Confirmar Método de Envío';
+  }
+};
+
+/**
+ * Generate shipping label after second payment is uploaded
+ * Called after successful second payment upload
+ */
+window.generateLabelAfterPayment = async function(orderId) {
+  try {
+    const apiUrl = window.location.hostname === 'localhost'
+      ? `http://localhost:3000/api/shipping/orders/${orderId}/generate-selected`
+      : `https://vt-souvenir-backend.onrender.com/api/shipping/orders/${orderId}/generate-selected`;
+
+    console.log(`📦 Generating label for order ${orderId} after second payment...`);
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log('✅ Label generated:', result.label);
+    } else {
+      console.error('❌ Label generation failed:', result.error);
+    }
+
+    return result;
+
+  } catch (error) {
+    console.error('Error generating label:', error);
+    return { success: false, error: error.message };
+  }
+};
 
