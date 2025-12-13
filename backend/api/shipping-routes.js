@@ -522,9 +522,18 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
       });
     }
 
-    // Filter and sort rates - cheapest first, cap at maxPrice
+    // Allowed carriers - only show premium/reliable carriers
+    const ALLOWED_CARRIERS = ['Estafeta', 'FedEx', 'Paquetexpress'];
+
+    // Filter and sort rates - only allowed carriers, cheapest first, cap at maxPrice
     let filteredRates = quote.rates
-      .filter(rate => rate.total_price <= parseFloat(maxPrice))
+      .filter(rate => {
+        // Check if carrier is in allowed list (case-insensitive)
+        const isAllowedCarrier = ALLOWED_CARRIERS.some(
+          allowed => rate.carrier.toLowerCase().includes(allowed.toLowerCase())
+        );
+        return isAllowedCarrier && rate.total_price <= parseFloat(maxPrice);
+      })
       .sort((a, b) => a.total_price - b.total_price)
       .slice(0, parseInt(maxOptions));
 

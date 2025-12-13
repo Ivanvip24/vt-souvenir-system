@@ -3036,12 +3036,14 @@ window.confirmShippingSelection = async function(orderId) {
       <div style="padding: 12px; background: #d1fae5; border: 1px solid #10b981; border-radius: 8px;">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 20px;">✅</span>
-          <div>
+          <div style="flex: 1;">
             <div style="font-weight: 600; color: #065f46;">Envío seleccionado</div>
             <div style="font-size: 12px; color: #047857;">${selection.carrier} - ${selection.service}</div>
             <div style="font-size: 12px; color: #047857;">$${selection.price.toFixed(2)} MXN • ${selection.days} días</div>
           </div>
         </div>
+        <!-- Tracking number will appear here after label generation -->
+        <div id="tracking-number-display-${orderId}" style="margin-top: 10px; display: none;"></div>
       </div>
     `;
 
@@ -3079,6 +3081,23 @@ window.generateLabelAfterPayment = async function(orderId) {
 
     if (result.success) {
       console.log('✅ Label generated:', result.label);
+
+      // Update the "Envío seleccionado" section with tracking number
+      const trackingDisplay = document.getElementById(`tracking-number-display-${orderId}`);
+      if (trackingDisplay && result.label && result.label.tracking_number) {
+        trackingDisplay.style.display = 'block';
+        trackingDisplay.innerHTML = `
+          <div style="padding: 10px; background: white; border-radius: 6px; text-align: center;">
+            <div style="font-size: 11px; color: #065f46; margin-bottom: 4px;">Número de Guía:</div>
+            <div style="font-family: monospace; font-size: 16px; font-weight: 700; color: #047857; letter-spacing: 1px;">
+              ${result.label.tracking_number}
+            </div>
+            <div style="font-size: 11px; color: #059669; margin-top: 6px;">
+              📦 ${result.label.delivery_days || '3-5'} días hábiles
+            </div>
+          </div>
+        `;
+      }
     } else {
       console.error('❌ Label generation failed:', result.error);
     }
