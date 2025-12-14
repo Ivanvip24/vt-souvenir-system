@@ -89,19 +89,34 @@ async function runMigration() {
     console.log('✅ Created supplier_receipt_items table');
 
     if (hasRawMaterials) {
-      // Create material_cost_history table if it doesn't exist
-      await query(`
-        CREATE TABLE IF NOT EXISTS material_cost_history (
-          id SERIAL PRIMARY KEY,
-          raw_material_id INTEGER NOT NULL REFERENCES raw_materials(id) ON DELETE CASCADE,
-          old_cost DECIMAL(12, 4),
-          new_cost DECIMAL(12, 4) NOT NULL,
-          source VARCHAR(50),
-          source_reference VARCHAR(255),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+      // Check if material_cost_history table exists and has raw_material_id column
+      const mchExists = await query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns
+          WHERE table_schema = 'public'
+          AND table_name = 'material_cost_history'
+          AND column_name = 'raw_material_id'
+        ) as exists
       `);
-      console.log('✅ Created/verified material_cost_history table');
+
+      if (!mchExists.rows[0].exists) {
+        // Drop and recreate if table exists without the column
+        await query(`DROP TABLE IF EXISTS material_cost_history CASCADE;`);
+        await query(`
+          CREATE TABLE material_cost_history (
+            id SERIAL PRIMARY KEY,
+            raw_material_id INTEGER NOT NULL REFERENCES raw_materials(id) ON DELETE CASCADE,
+            old_cost DECIMAL(12, 4),
+            new_cost DECIMAL(12, 4) NOT NULL,
+            source VARCHAR(50),
+            source_reference VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        `);
+        console.log('✅ Created material_cost_history table');
+      } else {
+        console.log('✅ material_cost_history table already exists');
+      }
 
       // Add index for material_cost_history
       await query(`
