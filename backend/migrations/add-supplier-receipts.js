@@ -62,28 +62,50 @@ async function runMigration() {
     `);
     console.log('✅ Created supplier_receipt_items table');
 
-    // Create material_cost_history table if it doesn't exist
-    await query(`
-      CREATE TABLE IF NOT EXISTS material_cost_history (
-        id SERIAL PRIMARY KEY,
-        raw_material_id INTEGER NOT NULL REFERENCES raw_materials(id) ON DELETE CASCADE,
-        old_cost DECIMAL(12, 4),
-        new_cost DECIMAL(12, 4) NOT NULL,
-        source VARCHAR(50),
-        source_reference VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+    // Check if raw_materials table exists before creating material_cost_history
+    const rawMaterialsExists = await query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'raw_materials'
+      ) as exists
     `);
-    console.log('✅ Created/verified material_cost_history table');
 
-    // Add indexes for performance
+    if (rawMaterialsExists.rows[0].exists) {
+      // Create material_cost_history table if it doesn't exist
+      await query(`
+        CREATE TABLE IF NOT EXISTS material_cost_history (
+          id SERIAL PRIMARY KEY,
+          raw_material_id INTEGER NOT NULL REFERENCES raw_materials(id) ON DELETE CASCADE,
+          old_cost DECIMAL(12, 4),
+          new_cost DECIMAL(12, 4) NOT NULL,
+          source VARCHAR(50),
+          source_reference VARCHAR(255),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      console.log('✅ Created/verified material_cost_history table');
+
+      // Add index for material_cost_history
+      await query(`
+        CREATE INDEX IF NOT EXISTS idx_material_cost_history_material ON material_cost_history(raw_material_id);
+      `);
+    } else {
+      console.log('⚠️ Skipped material_cost_history (raw_materials table not found)');
+    }
+
+    // Add indexes for performance (only for tables we created)
     await query(`
       CREATE INDEX IF NOT EXISTS idx_supplier_receipts_supplier ON supplier_receipts(supplier_id);
       CREATE INDEX IF NOT EXISTS idx_supplier_receipts_date ON supplier_receipts(receipt_date DESC);
       CREATE INDEX IF NOT EXISTS idx_receipt_items_receipt ON supplier_receipt_items(receipt_id);
-      CREATE INDEX IF NOT EXISTS idx_receipt_items_material ON supplier_receipt_items(raw_material_id);
-      CREATE INDEX IF NOT EXISTS idx_material_cost_history_material ON material_cost_history(raw_material_id);
     `);
+
+    // Only add this index if raw_materials exists
+    if (rawMaterialsExists.rows[0].exists) {
+      await query(`
+        CREATE INDEX IF NOT EXISTS idx_receipt_items_material ON supplier_receipt_items(raw_material_id);
+      `);
+    }
     console.log('✅ Created indexes');
 
     // Create view for supplier purchase summary
