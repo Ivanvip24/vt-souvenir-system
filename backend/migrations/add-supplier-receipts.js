@@ -46,31 +46,49 @@ async function runMigration() {
     `);
     console.log('✅ Created supplier_receipts table');
 
-    // Create supplier_receipt_items table
-    await query(`
-      CREATE TABLE IF NOT EXISTS supplier_receipt_items (
-        id SERIAL PRIMARY KEY,
-        receipt_id INTEGER NOT NULL REFERENCES supplier_receipts(id) ON DELETE CASCADE,
-        raw_material_id INTEGER REFERENCES raw_materials(id) ON DELETE SET NULL,
-        quantity DECIMAL(12, 4) NOT NULL,
-        description TEXT,
-        dimensions VARCHAR(100),
-        unit_price DECIMAL(12, 4),
-        total DECIMAL(12, 2),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    console.log('✅ Created supplier_receipt_items table');
-
-    // Check if raw_materials table exists before creating material_cost_history
+    // Check if raw_materials table exists
     const rawMaterialsExists = await query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables
         WHERE table_schema = 'public' AND table_name = 'raw_materials'
       ) as exists
     `);
+    const hasRawMaterials = rawMaterialsExists.rows[0].exists;
+    console.log(`📦 raw_materials table exists: ${hasRawMaterials}`);
 
-    if (rawMaterialsExists.rows[0].exists) {
+    // Create supplier_receipt_items table - with or without FK depending on raw_materials
+    if (hasRawMaterials) {
+      await query(`
+        CREATE TABLE IF NOT EXISTS supplier_receipt_items (
+          id SERIAL PRIMARY KEY,
+          receipt_id INTEGER NOT NULL REFERENCES supplier_receipts(id) ON DELETE CASCADE,
+          raw_material_id INTEGER REFERENCES raw_materials(id) ON DELETE SET NULL,
+          quantity DECIMAL(12, 4) NOT NULL,
+          description TEXT,
+          dimensions VARCHAR(100),
+          unit_price DECIMAL(12, 4),
+          total DECIMAL(12, 2),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+    } else {
+      await query(`
+        CREATE TABLE IF NOT EXISTS supplier_receipt_items (
+          id SERIAL PRIMARY KEY,
+          receipt_id INTEGER NOT NULL REFERENCES supplier_receipts(id) ON DELETE CASCADE,
+          raw_material_id INTEGER,
+          quantity DECIMAL(12, 4) NOT NULL,
+          description TEXT,
+          dimensions VARCHAR(100),
+          unit_price DECIMAL(12, 4),
+          total DECIMAL(12, 2),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+    }
+    console.log('✅ Created supplier_receipt_items table');
+
+    if (hasRawMaterials) {
       // Create material_cost_history table if it doesn't exist
       await query(`
         CREATE TABLE IF NOT EXISTS material_cost_history (
@@ -101,7 +119,7 @@ async function runMigration() {
     `);
 
     // Only add this index if raw_materials exists
-    if (rawMaterialsExists.rows[0].exists) {
+    if (hasRawMaterials) {
       await query(`
         CREATE INDEX IF NOT EXISTS idx_receipt_items_material ON supplier_receipt_items(raw_material_id);
       `);
