@@ -18,6 +18,7 @@ import webhookRoutes from './webhook-routes.js';
 import uploadRoutes from './upload-routes.js';
 import discountRoutes from './discount-routes.js';
 import shippingRoutes from './shipping-routes.js';
+import receiptRoutes from './receipt-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
@@ -114,6 +115,11 @@ app.use('/api/shipping', shippingRoutes);
 // FILE UPLOAD ROUTES (Cloudinary)
 // ========================================
 app.use('/api/client/upload', uploadRoutes);
+
+// ========================================
+// SUPPLIER RECEIPT ROUTES (Claude Vision)
+// ========================================
+app.use('/api/receipts', receiptRoutes);
 
 // ========================================
 // NOTION AGENT ENDPOINTS

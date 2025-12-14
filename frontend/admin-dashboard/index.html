@@ -740,6 +740,9 @@
                     <button class="price-tab-btn" data-tab="bom" onclick="switchPriceTab('bom')">
                         🔧 Componentes (BOM)
                     </button>
+                    <button class="price-tab-btn" data-tab="receipts" onclick="switchPriceTab('receipts')">
+                        🧾 Recibos de Compra
+                    </button>
                 </div>
 
                 <!-- Overview Tab -->
@@ -764,6 +767,48 @@
                             <div id="raw-materials-list">
                                 <!-- Materials will be rendered here -->
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receipts Tab -->
+                <div id="price-tab-receipts" class="price-tab-content">
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div>
+                                <h3 style="margin: 0 0 8px 0;">🧾 Recibos de Proveedores</h3>
+                                <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                                    Sube recibos de compra y Claude los analizara automaticamente
+                                </p>
+                            </div>
+                            <button class="btn btn-primary" onclick="openReceiptUploadModal()" style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">📤</span>
+                                Subir Recibo
+                            </button>
+                        </div>
+
+                        <!-- Recent Receipts -->
+                        <div id="receipts-list-container">
+                            <div id="receipts-loading" class="loading hidden">
+                                <div class="spinner"></div>
+                                <p>Cargando recibos...</p>
+                            </div>
+                            <div id="receipts-list">
+                                <!-- Receipts will be rendered here -->
+                            </div>
+                            <div id="receipts-empty" class="hidden" style="text-align: center; padding: 40px; color: #6b7280;">
+                                <div style="font-size: 48px; margin-bottom: 16px;">🧾</div>
+                                <p style="margin: 0;">No hay recibos registrados aun</p>
+                                <p style="margin: 8px 0 0 0; font-size: 14px;">Sube tu primer recibo para comenzar</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Suppliers Summary -->
+                    <div class="card">
+                        <h3 style="margin: 0 0 16px 0;">🏪 Proveedores</h3>
+                        <div id="suppliers-list">
+                            <!-- Suppliers will be rendered here -->
                         </div>
                     </div>
                 </div>
@@ -1301,6 +1346,59 @@
             </div>
         </div>
         <div class="modal-backdrop" onclick="closeQuickReceiveModal()"></div>
+    </div>
+
+    <!-- Receipt Upload Modal -->
+    <div id="receipt-upload-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>📤 Subir Recibo de Proveedor</h2>
+                <button class="modal-close" onclick="closeReceiptUploadModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <label id="receipt-drop-zone" style="display: block; padding: 40px; border: 3px dashed #d1d5db; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#6366f1'; this.style.background='#f0f9ff'" onmouseout="this.style.borderColor='#d1d5db'; this.style.background=''">
+                        <input type="file" id="receipt-file-input" accept="image/*,.pdf" onchange="handleReceiptFileSelect(event)" style="display: none;">
+                        <div style="font-size: 48px; margin-bottom: 12px;">🧾</div>
+                        <div style="font-weight: 600; margin-bottom: 8px;">Arrastra tu recibo aqui o haz clic para seleccionar</div>
+                        <div style="font-size: 14px; color: #6b7280;">PNG, JPG, PDF hasta 15MB</div>
+                    </label>
+                </div>
+                <div id="receipt-preview" style="margin-bottom: 20px; text-align: center; display: none;">
+                    <img id="receipt-preview-img" src="" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <p id="receipt-file-name" style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280;"></p>
+                </div>
+                <div id="receipt-analysis-status" style="display: none; text-align: center; padding: 20px;">
+                    <div class="spinner" style="margin: 0 auto 12px;"></div>
+                    <p style="margin: 0; font-weight: 600;">Analizando recibo con Claude AI...</p>
+                    <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280;">Esto puede tomar unos segundos</p>
+                </div>
+                <button id="receipt-analyze-btn" onclick="analyzeReceipt()" class="btn btn-primary" style="width: 100%;" disabled>
+                    Analizar Recibo
+                </button>
+            </div>
+        </div>
+        <div class="modal-backdrop" onclick="closeReceiptUploadModal()"></div>
+    </div>
+
+    <!-- Receipt Review Modal -->
+    <div id="receipt-review-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>📋 Revisar Datos del Recibo</h2>
+                <button class="modal-close" onclick="closeReceiptReviewModal()">×</button>
+            </div>
+            <div class="modal-body" id="receipt-review-body">
+                <!-- Dynamic content will be rendered here -->
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <button class="btn" onclick="closeReceiptReviewModal()">Cancelar</button>
+                <button id="receipt-save-btn" class="btn btn-success" onclick="saveReceipt()">
+                    Guardar Recibo
+                </button>
+            </div>
+        </div>
+        <div class="modal-backdrop" onclick="closeReceiptReviewModal()"></div>
     </div>
 
     <script src="dashboard.js"></script>
