@@ -2364,10 +2364,14 @@ window.analyzeReceipt = async function() {
     const formData = new FormData();
     formData.append('receipt', receiptState.selectedFile);
 
-    // Send to API
+    // Send to API - Note: Don't set Content-Type for FormData, browser sets it automatically
+    const token = localStorage.getItem('admin_token');
     const response = await fetch(`${API_BASE}/receipts/analyze`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: {
+        'Authorization': `Bearer ${token}`
+        // Do NOT set Content-Type here - browser will set multipart/form-data with boundary
+      },
       body: formData
     });
 
