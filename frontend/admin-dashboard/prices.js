@@ -2252,3 +2252,522 @@ window.submitAddComponent = async function(event, productId) {
     alert(`Error: ${error.message}`);
   }
 };
+
+// ==========================================
+// SUPPLIER RECEIPTS - CLAUDE VISION ANALYSIS
+// ==========================================
+
+// State for receipt handling
+const receiptState = {
+  selectedFile: null,
+  analyzedData: null,
+  imageUrl: null,
+  imagePublicId: null
+};
+
+/**
+ * Open the receipt upload modal
+ */
+window.openReceiptUploadModal = function() {
+  // Reset state
+  receiptState.selectedFile = null;
+  receiptState.analyzedData = null;
+  receiptState.imageUrl = null;
+
+  // Reset UI
+  document.getElementById('receipt-file-input').value = '';
+  document.getElementById('receipt-preview').style.display = 'none';
+  document.getElementById('receipt-analysis-status').style.display = 'none';
+  document.getElementById('receipt-analyze-btn').disabled = true;
+
+  // Show modal
+  document.getElementById('receipt-upload-modal').classList.remove('hidden');
+};
+
+/**
+ * Close the receipt upload modal
+ */
+window.closeReceiptUploadModal = function() {
+  document.getElementById('receipt-upload-modal').classList.add('hidden');
+  receiptState.selectedFile = null;
+};
+
+/**
+ * Close the receipt review modal
+ */
+window.closeReceiptReviewModal = function() {
+  document.getElementById('receipt-review-modal').classList.add('hidden');
+};
+
+/**
+ * Handle file selection for receipt upload
+ */
+window.handleReceiptFileSelect = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Validate file size (15MB max)
+  if (file.size > 15 * 1024 * 1024) {
+    alert('El archivo es demasiado grande. Maximo 15MB.');
+    return;
+  }
+
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+  if (!validTypes.includes(file.type)) {
+    alert('Tipo de archivo no valido. Use JPG, PNG, GIF, WEBP o PDF.');
+    return;
+  }
+
+  receiptState.selectedFile = file;
+
+  // Show preview for images
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('receipt-preview-img').src = e.target.result;
+      document.getElementById('receipt-file-name').textContent = file.name;
+      document.getElementById('receipt-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // For PDFs, just show the filename
+    document.getElementById('receipt-preview-img').src = '';
+    document.getElementById('receipt-preview-img').style.display = 'none';
+    document.getElementById('receipt-file-name').textContent = `📄 ${file.name}`;
+    document.getElementById('receipt-preview').style.display = 'block';
+  }
+
+  // Enable analyze button
+  document.getElementById('receipt-analyze-btn').disabled = false;
+};
+
+/**
+ * Analyze the uploaded receipt using Claude Vision API
+ */
+window.analyzeReceipt = async function() {
+  if (!receiptState.selectedFile) {
+    alert('Por favor selecciona un archivo primero.');
+    return;
+  }
+
+  const analyzeBtn = document.getElementById('receipt-analyze-btn');
+  const statusDiv = document.getElementById('receipt-analysis-status');
+
+  try {
+    // Show loading state
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analizando...';
+    statusDiv.style.display = 'block';
+
+    // Create form data
+    const formData = new FormData();
+    formData.append('receipt', receiptState.selectedFile);
+
+    // Send to API
+    const response = await fetch(`${API_BASE}/receipts/analyze`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al analizar el recibo');
+    }
+
+    // Store the analyzed data
+    receiptState.analyzedData = result.data;
+    receiptState.imageUrl = result.data.imageUrl;
+    receiptState.imagePublicId = result.data.imagePublicId;
+
+    console.log('📋 Receipt analyzed:', result.data);
+
+    // Close upload modal and show review modal
+    closeReceiptUploadModal();
+    showReceiptReviewModal(result.data);
+
+  } catch (error) {
+    console.error('Error analyzing receipt:', error);
+    alert(`Error: ${error.message}`);
+  } finally {
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = 'Analizar Recibo';
+    statusDiv.style.display = 'none';
+  }
+};
+
+/**
+ * Show the receipt review modal with extracted data
+ */
+function showReceiptReviewModal(data) {
+  const body = document.getElementById('receipt-review-body');
+
+  // Build items table rows
+  const itemsRows = (data.items || []).map((item, index) => {
+    const matchOptions = (item.suggested_matches || []).map(m =>
+      `<option value="${m.material_id}">${m.material_name} (${m.score}% match)</option>`
+    ).join('');
+
+    return `
+      <tr data-index="${index}">
+        <td style="padding: 12px;">${item.quantity}</td>
+        <td style="padding: 12px;">
+          <div>${item.description}</div>
+          ${item.dimensions ? `<small style="color: #6b7280;">Dimensiones: ${item.dimensions}</small>` : ''}
+        </td>
+        <td style="padding: 12px; text-align: right;">$${(item.unit_price || 0).toFixed(2)}</td>
+        <td style="padding: 12px; text-align: right;">$${(item.total || 0).toFixed(2)}</td>
+        <td style="padding: 12px;">
+          <select id="material-match-${index}" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+            <option value="">-- Seleccionar material --</option>
+            ${matchOptions}
+          </select>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  body.innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+      <!-- Left: Receipt Image -->
+      <div>
+        ${receiptState.imageUrl ?
+          `<img src="${receiptState.imageUrl}" alt="Receipt" style="width: 100%; border-radius: 8px; border: 1px solid #e5e7eb;">` :
+          `<div style="background: #f3f4f6; padding: 40px; text-align: center; border-radius: 8px;">
+            <div style="font-size: 48px; margin-bottom: 12px;">🧾</div>
+            <p style="margin: 0; color: #6b7280;">Vista previa no disponible</p>
+          </div>`
+        }
+      </div>
+
+      <!-- Right: Extracted Data -->
+      <div>
+        <!-- Supplier Info -->
+        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+          <h4 style="margin: 0 0 12px 0; color: #166534;">🏪 Proveedor</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Nombre</label>
+              <input type="text" id="review-supplier-name" value="${data.supplier?.name || ''}"
+                style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Folio</label>
+              <input type="text" id="review-folio" value="${data.supplier?.folio || ''}"
+                style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Telefono</label>
+              <input type="text" id="review-supplier-phone" value="${data.supplier?.phone || ''}"
+                style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Fecha</label>
+              <input type="date" id="review-date" value="${data.date || ''}"
+                style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <div style="margin-bottom: 16px;">
+          <h4 style="margin: 0 0 12px 0;">📦 Articulos (${data.items?.length || 0})</h4>
+          <div style="overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead style="background: #f9fafb;">
+                <tr>
+                  <th style="padding: 12px; text-align: left; font-weight: 600;">Cant.</th>
+                  <th style="padding: 12px; text-align: left; font-weight: 600;">Descripcion</th>
+                  <th style="padding: 12px; text-align: right; font-weight: 600;">P. Unit.</th>
+                  <th style="padding: 12px; text-align: right; font-weight: 600;">Total</th>
+                  <th style="padding: 12px; text-align: left; font-weight: 600;">Vincular Material</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsRows || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #6b7280;">No se encontraron articulos</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Totals -->
+        <div style="background: #f9fafb; padding: 16px; border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Subtotal:</span>
+            <span>$${((data.grand_total || 0) - (data.discount || 0)).toFixed(2)}</span>
+          </div>
+          ${data.discount ? `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #dc2626;">
+              <span>Descuento:</span>
+              <span>-$${data.discount.toFixed(2)}</span>
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 18px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+            <span>Total:</span>
+            <span>$${(data.grand_total || 0).toFixed(2)}</span>
+          </div>
+        </div>
+
+        <!-- Confidence Indicator -->
+        <div style="margin-top: 16px; padding: 12px; border-radius: 8px; ${
+          data.confidence === 'high' ? 'background: #dcfce7; color: #166534;' :
+          data.confidence === 'medium' ? 'background: #fef3c7; color: #92400e;' :
+          'background: #fee2e2; color: #991b1b;'
+        }">
+          <strong>Confianza del analisis:</strong>
+          ${data.confidence === 'high' ? '✅ Alta' : data.confidence === 'medium' ? '⚠️ Media' : '❌ Baja'}
+          ${data.notes ? `<p style="margin: 8px 0 0 0; font-size: 14px;">${data.notes}</p>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('receipt-review-modal').classList.remove('hidden');
+}
+
+/**
+ * Save the reviewed receipt to the database
+ */
+window.saveReceipt = async function() {
+  const saveBtn = document.getElementById('receipt-save-btn');
+
+  try {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Guardando...';
+
+    // Collect the data from the form
+    const data = receiptState.analyzedData;
+
+    // Update supplier info from form
+    data.supplier = {
+      name: document.getElementById('review-supplier-name').value,
+      folio: document.getElementById('review-folio').value,
+      phone: document.getElementById('review-supplier-phone').value,
+      address: data.supplier?.address
+    };
+    data.date = document.getElementById('review-date').value;
+
+    // Update material matches from dropdowns
+    data.items = (data.items || []).map((item, index) => {
+      const select = document.getElementById(`material-match-${index}`);
+      if (select && select.value) {
+        item.matched_material_id = parseInt(select.value);
+      }
+      return item;
+    });
+
+    // Add image info
+    data.imageUrl = receiptState.imageUrl;
+    data.imagePublicId = receiptState.imagePublicId;
+
+    // Send to API
+    const response = await fetch(`${API_BASE}/receipts/save`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al guardar el recibo');
+    }
+
+    // Success
+    showNotification('✅ Recibo guardado exitosamente', 'success');
+    closeReceiptReviewModal();
+
+    // Reload receipts list
+    loadReceiptsList();
+
+  } catch (error) {
+    console.error('Error saving receipt:', error);
+    alert(`Error: ${error.message}`);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Guardar Recibo';
+  }
+};
+
+/**
+ * Load the list of saved receipts
+ */
+window.loadReceiptsList = async function() {
+  const listEl = document.getElementById('receipts-list');
+  const loadingEl = document.getElementById('receipts-loading');
+  const emptyEl = document.getElementById('receipts-empty');
+
+  try {
+    loadingEl.classList.remove('hidden');
+    emptyEl.classList.add('hidden');
+    listEl.innerHTML = '';
+
+    const response = await fetch(`${API_BASE}/receipts`, {
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al cargar recibos');
+    }
+
+    loadingEl.classList.add('hidden');
+
+    if (!result.data || result.data.length === 0) {
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+
+    // Render receipts
+    listEl.innerHTML = result.data.map(receipt => `
+      <div class="receipt-card" style="display: flex; align-items: center; gap: 16px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px; cursor: pointer;" onclick="viewReceipt(${receipt.id})">
+        ${receipt.image_url ?
+          `<img src="${receipt.image_url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;">` :
+          `<div style="width: 60px; height: 60px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🧾</div>`
+        }
+        <div style="flex: 1;">
+          <div style="font-weight: 600;">${receipt.supplier_name || 'Proveedor desconocido'}</div>
+          <div style="font-size: 14px; color: #6b7280;">
+            ${receipt.folio ? `Folio: ${receipt.folio} • ` : ''}
+            ${receipt.receipt_date ? new Date(receipt.receipt_date).toLocaleDateString('es-MX') : 'Sin fecha'}
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-weight: 600; font-size: 18px;">$${(receipt.grand_total || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}</div>
+          <div style="font-size: 12px; color: #6b7280;">${receipt.items_count || 0} articulos</div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (error) {
+    console.error('Error loading receipts:', error);
+    loadingEl.classList.add('hidden');
+    listEl.innerHTML = `<p style="color: #dc2626; text-align: center;">Error: ${error.message}</p>`;
+  }
+};
+
+/**
+ * View a specific receipt
+ */
+window.viewReceipt = async function(receiptId) {
+  try {
+    const response = await fetch(`${API_BASE}/receipts/${receiptId}`, {
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al cargar recibo');
+    }
+
+    // Show the receipt in the review modal (read-only mode)
+    const data = result.data;
+
+    // Transform data to match review modal format
+    const viewData = {
+      supplier: {
+        name: data.supplier_name,
+        folio: data.folio,
+        phone: data.supplier_phone,
+        address: data.supplier_address
+      },
+      date: data.receipt_date,
+      items: data.items || [],
+      grand_total: parseFloat(data.grand_total) || 0,
+      discount: parseFloat(data.discount) || 0,
+      notes: data.notes,
+      confidence: 'high' // Already saved, so high confidence
+    };
+
+    receiptState.imageUrl = data.image_url;
+    receiptState.analyzedData = viewData;
+
+    showReceiptReviewModal(viewData);
+
+    // Change button to "Cerrar" since it's already saved
+    document.getElementById('receipt-save-btn').textContent = 'Cerrar';
+    document.getElementById('receipt-save-btn').onclick = closeReceiptReviewModal;
+
+  } catch (error) {
+    console.error('Error viewing receipt:', error);
+    alert(`Error: ${error.message}`);
+  }
+};
+
+/**
+ * Load suppliers list
+ */
+window.loadSuppliersList = async function() {
+  const listEl = document.getElementById('suppliers-list');
+
+  try {
+    const response = await fetch(`${API_BASE}/receipts/suppliers/list`, {
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al cargar proveedores');
+    }
+
+    if (!result.data || result.data.length === 0) {
+      listEl.innerHTML = '<p style="color: #6b7280; text-align: center;">No hay proveedores registrados</p>';
+      return;
+    }
+
+    listEl.innerHTML = result.data.map(supplier => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f3f4f6;">
+        <div>
+          <div style="font-weight: 600;">${supplier.name}</div>
+          <div style="font-size: 14px; color: #6b7280;">
+            ${supplier.phone || 'Sin telefono'} • ${supplier.receipts_count || 0} recibos
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-weight: 600;">$${(supplier.total_purchased || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}</div>
+          <div style="font-size: 12px; color: #6b7280;">Total compras</div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (error) {
+    console.error('Error loading suppliers:', error);
+    listEl.innerHTML = `<p style="color: #dc2626; text-align: center;">Error: ${error.message}</p>`;
+  }
+};
+
+// Extend switchPriceTab to handle receipts tab
+const originalSwitchPriceTab = window.switchPriceTab;
+window.switchPriceTab = function(tabName) {
+  // Call original function if it exists
+  if (typeof originalSwitchPriceTab === 'function') {
+    originalSwitchPriceTab(tabName);
+  }
+
+  // Update state
+  priceState.currentTab = tabName;
+
+  // Update tab buttons
+  document.querySelectorAll('.price-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+
+  // Update tab content
+  document.querySelectorAll('.price-tab-content').forEach(content => {
+    content.classList.toggle('active', content.id === `price-tab-${tabName}`);
+  });
+
+  // Load data for receipts tab
+  if (tabName === 'receipts') {
+    loadReceiptsList();
+    loadSuppliersList();
+  }
+};
