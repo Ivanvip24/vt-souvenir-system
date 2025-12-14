@@ -7,6 +7,9 @@
 let aiSessionId = localStorage.getItem('ai_session_id') || generateSessionId();
 localStorage.setItem('ai_session_id', aiSessionId);
 
+// Track mini chart instances for cleanup
+let miniChartInstances = [];
+
 function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
@@ -66,6 +69,14 @@ function clearAiChat() {
     // Generate new session ID to clear history on backend
     aiSessionId = generateSessionId();
     localStorage.setItem('ai_session_id', aiSessionId);
+
+    // Destroy any existing mini charts
+    miniChartInstances.forEach(chart => {
+        if (chart && typeof chart.destroy === 'function') {
+            chart.destroy();
+        }
+    });
+    miniChartInstances = [];
 
     // Clear chat messages UI
     const messagesContainer = document.getElementById('ai-chat-messages');
@@ -179,33 +190,44 @@ function addMessageToChat(role, content, data = {}) {
 
         let extraContent = '';
 
+        // Add mini chart if chart data available
+        if (data.chartData) {
+            const chartId = 'ai-mini-chart-' + Date.now();
+            extraContent += `
+                <div class="ai-mini-chart-container">
+                    <div class="ai-mini-chart-title">${data.chartData.title || 'Gráfico'}</div>
+                    <canvas id="${chartId}" class="ai-mini-chart"></canvas>
+                </div>
+            `;
+            // Schedule chart rendering after DOM update
+            setTimeout(() => renderMiniChart(chartId, data.chartData), 50);
+        }
+
         // Add quick stats if available
         if (data.quickStats && Object.keys(data.quickStats).length > 0) {
             extraContent += '<div class="ai-quick-stats">';
             for (const [key, value] of Object.entries(data.quickStats)) {
-                const label = formatStatLabel(key);
                 extraContent += `
                     <div class="ai-stat-card">
-                        <span class="ai-stat-value">${formatStatValue(key, value)}</span>
-                        <span class="ai-stat-label">${label}</span>
+                        <span class="ai-stat-value">${value}</span>
+                        <span class="ai-stat-label">${key}</span>
                     </div>
                 `;
             }
             extraContent += '</div>';
         }
 
-        // Add suggested section link if available
-        if (data.suggestedSection && data.suggestedSection !== 'none') {
-            const sectionInfo = getSectionInfo(data.suggestedSection);
-            if (sectionInfo) {
+        // Add detected section navigation buttons (keep modal open)
+        if (data.detectedSections && data.detectedSections.length > 0) {
+            extraContent += '<div class="ai-section-links">';
+            data.detectedSections.forEach(section => {
                 extraContent += `
-                    <div class="ai-section-link">
-                        <button class="ai-section-btn" onclick="navigateToSection('${data.suggestedSection}'); closeAiChatModal();">
-                            ${sectionInfo.icon} Ver ${sectionInfo.name}
-                        </button>
-                    </div>
+                    <button class="ai-section-btn" onclick="navigateToSection('${section.tab}')">
+                        ${section.icon} Ver ${section.name}
+                    </button>
                 `;
-            }
+            });
+            extraContent += '</div>';
         }
 
         messageDiv.innerHTML = `
@@ -253,6 +275,85 @@ function removeTypingIndicator() {
 }
 
 // =====================================================
+// MINI CHART RENDERING
+// =====================================================
+
+function renderMiniChart(canvasId, chartData) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        console.warn('Mini chart canvas not found:', canvasId);
+        return;
+    }
+
+    // Make sure Chart.js is available
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not available for mini chart');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+
+    const chart = new Chart(ctx, {
+        type: chartData.type || 'bar',
+        data: {
+            labels: chartData.labels || [],
+            datasets: [{
+                label: chartData.title || 'Datos',
+                data: chartData.data || [],
+                backgroundColor: chartData.backgroundColor || '#3b82f6',
+                borderColor: chartData.borderColor || '#2563eb',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.parsed.y.toLocaleString('es-MX', { minimumFractionDigits: 0 });
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        font: { size: 10 },
+                        callback: function(value) {
+                            if (value >= 1000) {
+                                return '$' + (value / 1000).toFixed(0) + 'k';
+                            }
+                            return '$' + value;
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 10 }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Track for cleanup
+    miniChartInstances.push(chart);
+}
+
+// =====================================================
 // FORMATTING HELPERS
 // =====================================================
 
@@ -282,40 +383,9 @@ function formatAiResponse(content) {
     return `<p>${formatted}</p>`;
 }
 
-function formatStatLabel(key) {
-    const labels = {
-        totalRevenue: 'Ingresos',
-        totalOrders: 'Pedidos',
-        pendingOrders: 'Pendientes',
-        inProduction: 'En Producción',
-        avgOrderValue: 'Promedio',
-        totalClients: 'Clientes',
-        topProduct: 'Top Producto'
-    };
-    return labels[key] || key;
-}
-
-function formatStatValue(key, value) {
-    if (key.includes('Revenue') || key.includes('Value') || key.includes('total')) {
-        if (typeof value === 'number') {
-            return '$' + value.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-        }
-    }
-    return value;
-}
-
-function getSectionInfo(section) {
-    const sections = {
-        'orders': { name: 'Pedidos', icon: '📋' },
-        'analytics': { name: 'Analíticas', icon: '📊' },
-        'products': { name: 'Productos', icon: '🛍️' },
-        'prices': { name: 'Precios', icon: '💰' },
-        'shipping': { name: 'Envíos', icon: '📦' },
-        'calendar': { name: 'Calendario', icon: '📅' },
-        'discounts': { name: 'Descuentos', icon: '🏷️' }
-    };
-    return sections[section];
-}
+// =====================================================
+// NAVIGATION (keeps modal open)
+// =====================================================
 
 function navigateToSection(section) {
     // Use existing navigation function if available
@@ -328,6 +398,7 @@ function navigateToSection(section) {
             navBtn.click();
         }
     }
+    // Note: Modal stays open - user can see the section changed behind it
 }
 
 // =====================================================

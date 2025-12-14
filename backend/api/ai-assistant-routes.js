@@ -228,19 +228,27 @@ ${context.recentOrders?.slice(0, 5).map(o => `- #${o.order_number}: ${o.client_n
 5. **Usa formato estructurado** con bullets, negritas para números importantes
 6. **Si no tienes la información**, indica dónde podrían encontrarla en el sistema
 
+## REGLAS IMPORTANTES:
+
+1. **NUNCA dibujes gráficos ASCII** - No uses caracteres como |, -, +, = para hacer gráficos de barras o líneas. La interfaz de chat NO puede mostrar estos gráficos correctamente y se verán como texto sin sentido.
+
+2. **Para visualizaciones**: Cuando el usuario pida gráficos o visualizaciones, menciona que pueden ver gráficos interactivos en la sección de **Analíticas**. El sistema automáticamente mostrará un mini-gráfico si es relevante.
+
+3. **Menciona las secciones relevantes**: Cuando hables de pedidos, analíticas, productos, precios o envíos, menciona la sección correspondiente. El sistema automáticamente agregará botones de navegación.
+
 ## FORMATO DE RESPUESTA:
 
 Cuando des información, estructura tu respuesta así:
 - Primero: respuesta directa con los datos solicitados
 - Segundo: contexto adicional si es relevante
-- Tercero: sugerencia de dónde ver más detalles (sección del sistema)
+- Tercero: sugerencia de dónde ver más detalles (mención natural de la sección)
 
 Ejemplo:
 "Los ingresos del último mes fueron **$45,230.00** con un total de 23 pedidos.
 
 El valor promedio por pedido fue de $1,966.52.
 
-📊 Para ver el desglose completo y gráficos, visita la sección de **Analíticas**."`;
+Para ver el desglose completo con gráficos interactivos, visita la sección de **Analíticas**."`;
 }
 
 /**
@@ -305,26 +313,48 @@ router.post('/chat', async (req, res) => {
     conversation.messages.push({ role: 'user', content: message });
     conversation.messages.push({ role: 'assistant', content: assistantMessage });
 
-    // Determine which section is most relevant based on the query
-    let suggestedSection = null;
+    // Detect ALL sections mentioned in message or response
     const lowerMessage = message.toLowerCase();
     const lowerResponse = assistantMessage.toLowerCase();
+    const combinedText = lowerMessage + ' ' + lowerResponse;
 
-    if (lowerMessage.includes('ingreso') || lowerMessage.includes('revenue') || lowerMessage.includes('venta') ||
-        lowerMessage.includes('ganancia') || lowerMessage.includes('analítica') || lowerMessage.includes('reporte') ||
-        lowerResponse.includes('analíticas')) {
-      suggestedSection = { name: 'Analíticas', tab: 'analytics', icon: '📊' };
-    } else if (lowerMessage.includes('pedido') || lowerMessage.includes('orden') || lowerMessage.includes('order') ||
-               lowerMessage.includes('cliente') || lowerMessage.includes('nuevo pedido')) {
-      suggestedSection = { name: 'Pedidos', tab: 'pedidos', icon: '📋' };
-    } else if (lowerMessage.includes('material') || lowerMessage.includes('inventario') || lowerMessage.includes('stock') ||
-               lowerMessage.includes('producto')) {
-      suggestedSection = { name: 'Productos/Inventario', tab: 'productos', icon: '🛍️' };
-    } else if (lowerMessage.includes('precio') || lowerMessage.includes('margen') || lowerMessage.includes('costo') ||
-               lowerMessage.includes('proveedor') || lowerMessage.includes('recibo')) {
-      suggestedSection = { name: 'Precios', tab: 'precios', icon: '💰' };
-    } else if (lowerMessage.includes('envío') || lowerMessage.includes('dirección') || lowerMessage.includes('shipping')) {
-      suggestedSection = { name: 'Envíos', tab: 'envios', icon: '📦' };
+    const detectedSections = [];
+
+    // Check for analytics/revenue mentions
+    if (combinedText.includes('ingreso') || combinedText.includes('revenue') || combinedText.includes('venta') ||
+        combinedText.includes('ganancia') || combinedText.includes('analítica') || combinedText.includes('reporte') ||
+        combinedText.includes('gráfico') || combinedText.includes('estadística')) {
+      detectedSections.push({ name: 'Analíticas', tab: 'analytics', icon: '📊' });
+    }
+
+    // Check for orders mentions
+    if (combinedText.includes('pedido') || combinedText.includes('orden') || combinedText.includes('order') ||
+        combinedText.includes('pendiente') || combinedText.includes('producción') || combinedText.includes('entrega')) {
+      detectedSections.push({ name: 'Pedidos', tab: 'orders', icon: '📋' });
+    }
+
+    // Check for products/inventory mentions
+    if (combinedText.includes('material') || combinedText.includes('inventario') || combinedText.includes('stock') ||
+        combinedText.includes('producto')) {
+      detectedSections.push({ name: 'Productos', tab: 'products', icon: '🛍️' });
+    }
+
+    // Check for prices mentions
+    if (combinedText.includes('precio') || combinedText.includes('margen') || combinedText.includes('costo') ||
+        combinedText.includes('proveedor') || combinedText.includes('recibo') || combinedText.includes('bom')) {
+      detectedSections.push({ name: 'Precios', tab: 'prices', icon: '💰' });
+    }
+
+    // Check for shipping mentions
+    if (combinedText.includes('envío') || combinedText.includes('dirección') || combinedText.includes('shipping') ||
+        combinedText.includes('guía') || combinedText.includes('paquete')) {
+      detectedSections.push({ name: 'Envíos', tab: 'shipping', icon: '📦' });
+    }
+
+    // Check for calendar mentions
+    if (combinedText.includes('calendario') || combinedText.includes('fecha') || combinedText.includes('deadline') ||
+        combinedText.includes('capacidad')) {
+      detectedSections.push({ name: 'Calendario', tab: 'calendar', icon: '📅' });
     }
 
     // Extract quick stats if the query is about numbers
@@ -332,18 +362,39 @@ router.post('/chat', async (req, res) => {
     if (lowerMessage.includes('ingreso') || lowerMessage.includes('revenue') || lowerMessage.includes('cuánto') ||
         lowerMessage.includes('total') || lowerMessage.includes('ventas')) {
       quickStats = {
-        'Hoy': `$${parseFloat(businessContext.orderStats?.revenue_today || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}`,
-        '7 días': `$${parseFloat(businessContext.orderStats?.revenue_last_7_days || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}`,
-        '30 días': `$${parseFloat(businessContext.orderStats?.revenue_last_30_days || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}`
+        'Hoy': `$${parseFloat(businessContext.orderStats?.revenue_today || 0).toLocaleString('es-MX', {minimumFractionDigits: 0})}`,
+        '7 días': `$${parseFloat(businessContext.orderStats?.revenue_last_7_days || 0).toLocaleString('es-MX', {minimumFractionDigits: 0})}`,
+        '30 días': `$${parseFloat(businessContext.orderStats?.revenue_last_30_days || 0).toLocaleString('es-MX', {minimumFractionDigits: 0})}`
       };
+    }
+
+    // Include chart data when relevant (for mini-charts)
+    let chartData = null;
+    if (lowerMessage.includes('ingreso') || lowerMessage.includes('venta') || lowerMessage.includes('revenue') ||
+        lowerMessage.includes('mes') || lowerMessage.includes('gráfico') || lowerMessage.includes('gráfica')) {
+      // Prepare monthly revenue data for chart
+      if (businessContext.monthlyRevenue && businessContext.monthlyRevenue.length > 0) {
+        chartData = {
+          type: 'bar',
+          title: 'Ingresos por Mes',
+          labels: businessContext.monthlyRevenue.map(m => {
+            const [year, month] = m.month.split('-');
+            const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            return monthNames[parseInt(month) - 1] + ' ' + year.slice(2);
+          }).reverse(),
+          data: businessContext.monthlyRevenue.map(m => parseFloat(m.revenue)).reverse(),
+          backgroundColor: '#3b82f6'
+        };
+      }
     }
 
     res.json({
       success: true,
       data: {
         message: assistantMessage,
-        suggestedSection,
+        detectedSections,
         quickStats,
+        chartData,
         timestamp: new Date().toISOString()
       }
     });
