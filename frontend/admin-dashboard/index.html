@@ -33,6 +33,23 @@
                     <p class="subtitle">Panel de Administración</p>
                 </div>
             </div>
+            <!-- AI Assistant Search Bar -->
+            <div class="ai-assistant-bar" id="ai-assistant-bar">
+                <div class="ai-search-container">
+                    <span class="ai-icon">🤖</span>
+                    <input
+                        type="text"
+                        id="ai-assistant-input"
+                        class="ai-search-input"
+                        placeholder="Pregúntame cualquier cosa sobre el negocio..."
+                        onkeydown="if(event.key === 'Enter') openAiChat(this.value)"
+                        onclick="openAiChatModal()"
+                    />
+                    <button class="ai-search-btn" onclick="openAiChat(document.getElementById('ai-assistant-input').value)" title="Enviar pregunta">
+                        <span>↗</span>
+                    </button>
+                </div>
+            </div>
             <div class="header-stats">
                 <div class="stat-card">
                     <span class="stat-label">Pedidos Pendientes</span>
@@ -1401,6 +1418,76 @@
         <div class="modal-backdrop" onclick="closeReceiptReviewModal()"></div>
     </div>
 
+    <!-- AI Assistant Chat Modal -->
+    <div id="ai-chat-modal" class="ai-chat-modal hidden">
+        <div class="ai-chat-container">
+            <div class="ai-chat-header">
+                <div class="ai-chat-title">
+                    <span class="ai-avatar">🤖</span>
+                    <div>
+                        <h3>Asistente AXKAN</h3>
+                        <span class="ai-status">En línea - Conoce todo sobre tu negocio</span>
+                    </div>
+                </div>
+                <div class="ai-chat-actions">
+                    <button class="ai-action-btn" onclick="clearAiChat()" title="Limpiar conversación">
+                        🗑️
+                    </button>
+                    <button class="ai-action-btn" onclick="closeAiChatModal()" title="Cerrar">
+                        ✕
+                    </button>
+                </div>
+            </div>
+            <div class="ai-chat-body" id="ai-chat-messages">
+                <!-- Welcome message -->
+                <div class="ai-message assistant">
+                    <div class="ai-message-avatar">🤖</div>
+                    <div class="ai-message-content">
+                        <p>¡Hola! Soy tu asistente de AXKAN. Puedo ayudarte con:</p>
+                        <div class="ai-suggestions">
+                            <button class="ai-suggestion-btn" onclick="sendAiQuestion('¿Cuántos pedidos tenemos pendientes?')">
+                                📋 Pedidos pendientes
+                            </button>
+                            <button class="ai-suggestion-btn" onclick="sendAiQuestion('¿Cuál fue el ingreso de este mes?')">
+                                💰 Ingresos del mes
+                            </button>
+                            <button class="ai-suggestion-btn" onclick="sendAiQuestion('¿Cuáles son los productos más vendidos?')">
+                                🏆 Productos top
+                            </button>
+                            <button class="ai-suggestion-btn" onclick="sendAiQuestion('¿Qué clientes tienen pedidos en producción?')">
+                                🏭 En producción
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ai-chat-footer">
+                <div class="ai-input-container">
+                    <input
+                        type="text"
+                        id="ai-chat-input"
+                        class="ai-chat-input"
+                        placeholder="Escribe tu pregunta..."
+                        onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendAiMessage(); }"
+                    />
+                    <button class="ai-send-btn" onclick="sendAiMessage()" id="ai-send-btn">
+                        <span>Enviar</span>
+                        <span class="ai-send-icon">↗</span>
+                    </button>
+                </div>
+                <p class="ai-disclaimer">
+                    Consulto datos en tiempo real de tu base de datos
+                </p>
+            </div>
+        </div>
+        <div class="modal-backdrop" onclick="closeAiChatModal()"></div>
+    </div>
+
+    <!-- AI Mobile Button (visible on mobile only) -->
+    <button class="ai-mobile-btn" onclick="openAiChatModal()" title="Asistente AI">
+        🤖
+    </button>
+
     <script src="dashboard.js"></script>
     <script src="inventory.js"></script>
     <script src="prices.js"></script>
@@ -1409,5 +1496,6 @@
     <script src="analytics.js"></script>
     <script src="calendar.js"></script>
     <script src="discounts.js"></script>
+    <script src="ai-assistant.js"></script>
 </body>
 </html>
