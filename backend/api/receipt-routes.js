@@ -41,6 +41,15 @@ router.use(authMiddleware);
  */
 router.post('/analyze', upload.single('receipt'), async (req, res) => {
   try {
+    // Check if Anthropic API key is configured
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error('❌ ANTHROPIC_API_KEY not configured');
+      return res.status(500).json({
+        success: false,
+        error: 'El servicio de análisis de recibos no está configurado. Falta la clave API de Anthropic.'
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
