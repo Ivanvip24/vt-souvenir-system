@@ -58,6 +58,7 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
     }
 
     console.log(`📤 Processing receipt: ${req.file.originalname} (${req.file.size} bytes)`);
+    console.log(`📄 File type: ${req.file.mimetype}`);
 
     // Get existing materials for matching
     const materialsResult = await query(`
@@ -68,17 +69,71 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
     `);
     const existingMaterials = materialsResult.rows;
 
-    // Convert file to base64
-    const base64Data = req.file.buffer.toString('base64');
-
-    // Determine media type
+    let base64Data = req.file.buffer.toString('base64');
     let mediaType = 'image/jpeg';
-    if (req.file.mimetype.includes('png')) {
-      mediaType = 'image/png';
-    } else if (req.file.mimetype.includes('gif')) {
-      mediaType = 'image/gif';
-    } else if (req.file.mimetype.includes('webp')) {
-      mediaType = 'image/webp';
+
+    // Handle PDF files - upload to Cloudinary first and get image version
+    if (req.file.mimetype === 'application/pdf') {
+      console.log('📄 PDF detected - converting to image via Cloudinary...');
+
+      try {
+        // Upload PDF to Cloudinary
+        const dataURI = `data:application/pdf;base64,${base64Data}`;
+        const timestamp = Date.now();
+        const publicId = `receipt_pdf_${timestamp}`;
+
+        // Upload as PDF
+        const cloudinary = (await import('../shared/cloudinary-config.js')).default;
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader.upload(dataURI, {
+            folder: 'supplier-receipts',
+            public_id: publicId,
+            resource_type: 'auto'
+          }, (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          });
+        });
+
+        console.log('✅ PDF uploaded to Cloudinary:', uploadResult.secure_url);
+
+        // Get the image version of the PDF (first page as JPG)
+        const imageUrl = uploadResult.secure_url
+          .replace('/upload/', '/upload/f_jpg,pg_1/')
+          .replace('.pdf', '.jpg');
+
+        console.log('🖼️ Fetching image version:', imageUrl);
+
+        // Fetch the converted image
+        const fetch = (await import('node-fetch')).default;
+        const imageResponse = await fetch(imageUrl);
+
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to fetch converted image: ${imageResponse.status}`);
+        }
+
+        const imageBuffer = await imageResponse.buffer();
+        base64Data = imageBuffer.toString('base64');
+        mediaType = 'image/jpeg';
+
+        console.log('✅ PDF converted to image successfully');
+
+      } catch (pdfError) {
+        console.error('❌ PDF conversion failed:', pdfError.message);
+        return res.status(400).json({
+          success: false,
+          error: 'No se pudo procesar el PDF. Por favor sube una imagen (JPG, PNG) del recibo.'
+        });
+      }
+    } else {
+      // Determine media type for images
+      if (req.file.mimetype.includes('png')) {
+        mediaType = 'image/png';
+      } else if (req.file.mimetype.includes('gif')) {
+        mediaType = 'image/gif';
+      } else if (req.file.mimetype.includes('webp')) {
+        mediaType = 'image/webp';
+      }
     }
 
     // Analyze receipt with Claude
