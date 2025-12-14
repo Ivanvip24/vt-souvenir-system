@@ -388,14 +388,26 @@ function formatAiResponse(content) {
 // =====================================================
 
 function navigateToSection(section) {
-    // Use existing navigation function if available
-    if (typeof showView === 'function') {
-        showView(section);
+    console.log('🔗 Navigating to section:', section);
+
+    // Use the dashboard's switchView function if available
+    if (typeof switchView === 'function') {
+        switchView(section);
+
+        // Also update the nav button active state
+        const navButtons = document.querySelectorAll('.nav-item, .nav-sub-item');
+        navButtons.forEach(btn => btn.classList.remove('active'));
+        const targetBtn = document.querySelector(`[data-view="${section}"]`);
+        if (targetBtn) {
+            targetBtn.classList.add('active');
+        }
     } else {
-        // Fallback: click on nav button
+        // Fallback: click on nav button directly
         const navBtn = document.querySelector(`[data-view="${section}"]`);
         if (navBtn) {
             navBtn.click();
+        } else {
+            console.warn('Could not find navigation for section:', section);
         }
     }
     // Note: Modal stays open - user can see the section changed behind it
