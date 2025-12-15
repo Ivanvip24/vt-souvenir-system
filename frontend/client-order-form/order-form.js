@@ -1856,50 +1856,11 @@ function showStripeInstructionsModal() {
     // Open Stripe in new tab
     window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
 
-    // Close modal
+    // Close modal immediately
     overlay.remove();
 
-    // Switch to bank transfer mode so they can upload receipt
-    state.payment.method = 'bank_transfer';
-
-    // Update radio buttons
-    const bankRadio = document.querySelector('input[name="payment"][value="bank_transfer"]');
-    const stripeRadio = document.querySelector('input[name="payment"][value="stripe"]');
-    if (bankRadio) bankRadio.checked = true;
-    if (stripeRadio) stripeRadio.checked = false;
-
-    // Show bank transfer UI
-    const bankDetails = document.getElementById('bank-details');
-    const stripeLink = document.getElementById('stripe-payment-link');
-    const submitBtn = document.getElementById('submit-order');
-
-    bankDetails.classList.remove('hidden');
-    stripeLink.style.display = 'none';
-    submitBtn.style.display = 'block';
-
-    // Show a toast notification
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, #635bff, #4f46e5);
-      color: white;
-      padding: 16px 24px;
-      border-radius: 12px;
-      font-weight: 600;
-      z-index: 10001;
-      box-shadow: 0 4px 20px rgba(99, 91, 255, 0.4);
-      animation: slideDown 0.3s ease;
-    `;
-    toast.innerHTML = '💳 Completa tu pago en Stripe y luego sube el comprobante aquí';
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-      toast.style.animation = 'fadeOut 0.3s ease';
-      setTimeout(() => toast.remove(), 300);
-    }, 5000);
+    // Transform Stripe button into upload field
+    transformStripeButtonToUpload();
   });
 
   // Close on overlay click
@@ -1910,13 +1871,77 @@ function showStripeInstructionsModal() {
   });
 }
 
+function transformStripeButtonToUpload() {
+  const stripeLink = document.getElementById('stripe-payment-link');
+  const submitBtn = document.getElementById('submit-order');
+
+  // Replace Stripe button with upload field
+  stripeLink.innerHTML = `
+    <div class="stripe-receipt-upload" style="animation: slideUp 0.3s ease;">
+      <div style="background: linear-gradient(135deg, rgba(99, 91, 255, 0.1), rgba(79, 70, 229, 0.1)); border: 2px dashed #635bff; border-radius: 12px; padding: 20px; text-align: center;">
+        <div style="font-size: 14px; color: #635bff; font-weight: 600; margin-bottom: 12px;">
+          💳 Sube tu comprobante de pago de Stripe
+        </div>
+        <div class="file-upload-area" id="stripe-proof-upload-area" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(99, 91, 255, 0.3); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;">
+          <input type="file"
+                 id="stripe-payment-proof"
+                 accept="image/*,application/pdf"
+                 hidden>
+          <div class="upload-prompt">
+            <span class="upload-icon" style="font-size: 32px; display: block; margin-bottom: 8px;">📸</span>
+            <p style="color: #e0e0e0; margin: 0 0 4px 0;">Toca para subir captura de pantalla</p>
+            <span class="file-hint" style="color: #9ca3af; font-size: 12px;">Imagen o PDF del comprobante de Stripe</span>
+          </div>
+          <div id="stripe-proof-preview" class="file-preview"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Setup file upload for Stripe receipt (uses same handler as bank transfer)
+  setupFileUpload('stripe-proof-upload-area', 'stripe-payment-proof', 'stripe-proof-preview', handleProofUpload);
+
+  // Show submit button
+  submitBtn.style.display = 'block';
+
+  // Mark payment method as stripe (so backend knows it's a card payment)
+  state.payment.method = 'stripe';
+
+  // Show toast notification
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #635bff, #4f46e5);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    z-index: 10001;
+    box-shadow: 0 4px 20px rgba(99, 91, 255, 0.4);
+    animation: slideDown 0.3s ease;
+    max-width: 90%;
+    text-align: center;
+  `;
+  toast.innerHTML = '💳 Completa tu pago en Stripe, toma captura y súbela aquí';
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'fadeOut 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 5000);
+}
+
 async function handleOrderSubmit() {
   const submitBtn = document.getElementById('submit-order');
   const submitText = document.getElementById('submit-text');
   const submitLoader = document.getElementById('submit-loader');
 
-  // Validate bank transfer has proof AND it's uploaded to Cloudinary
-  if (state.payment.method === 'bank_transfer') {
+  // Validate payment proof for both bank transfer AND stripe
+  // (Stripe now also requires receipt upload after payment)
+  if (state.payment.method === 'bank_transfer' || state.payment.method === 'stripe') {
     // Check if file is still uploading
     if (state.payment.proofFile && state.payment.proofFile.uploading) {
       alert('⏳ El comprobante de pago aún se está subiendo. Por favor espera a que se complete la carga.');
@@ -1925,7 +1950,8 @@ async function handleOrderSubmit() {
 
     // Check if file was uploaded successfully
     if (!state.payment.proofFile || !state.payment.proofFile.cloudinaryUrl || !state.payment.proofFile.uploaded) {
-      alert('❌ Por favor sube el comprobante de pago y espera a que se complete la carga antes de enviar tu pedido.');
+      const paymentType = state.payment.method === 'stripe' ? 'de Stripe' : 'de pago';
+      alert(`❌ Por favor sube el comprobante ${paymentType} y espera a que se complete la carga antes de enviar tu pedido.`);
       return;
     }
   }
