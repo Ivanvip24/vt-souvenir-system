@@ -2050,17 +2050,7 @@ async function handleOrderSubmit() {
 
     console.log('Order created:', result);
 
-    // Handle payment flow
-    if (result.requiresPayment) {
-      // Stripe payment (TODO: Implement Stripe integration)
-      alert('Integración con Stripe en desarrollo. Por favor usa transferencia bancaria por ahora.');
-      submitBtn.disabled = false;
-      submitText.classList.remove('hidden');
-      submitLoader.classList.add('hidden');
-      return;
-    }
-
-    // Show success (payment proof was already included in order submission)
+    // Show success screen (payment proof was already uploaded for both bank transfer and Stripe)
     showSuccessScreen(result.orderNumber);
 
   } catch (error) {
