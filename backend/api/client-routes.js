@@ -498,39 +498,33 @@ router.post('/orders/submit', async (req, res) => {
           // Calculate remaining balance with the actual deposit amount
           const actualRemainingBalance = subtotal - actualDepositAmount;
 
-          // Re-generate PDF receipt with the correct amount if it changed
+          // ALWAYS regenerate PDF with the AI-detected amount
           let pdfUrl = null;
           try {
-            if (amountChanged) {
-              console.log(`📄 Re-generating PDF receipt with corrected amount...`);
-              const newPdfPath = await generateReceipt({
-                orderNumber,
-                clientName,
-                clientPhone,
-                clientEmail,
-                orderDate: new Date(),
-                items: orderItems.map(item => ({
-                  productName: item.productName,
-                  quantity: item.quantity,
-                  unitPrice: item.unitPrice,
-                  lineTotal: item.lineTotal
-                })),
-                totalPrice: subtotal,
-                actualDepositAmount: actualDepositAmount,
-                remainingBalance: actualRemainingBalance,
-                eventDate: eventDate || null,
-                eventType: eventType || null
-              });
-              pdfUrl = getReceiptUrl(newPdfPath);
-              await query('UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2', [pdfUrl, orderId]);
-              console.log(`✅ PDF receipt updated with correct amount: ${pdfUrl}`);
-            } else {
-              // Use existing PDF
-              const pdfResult = await query('SELECT receipt_pdf_url FROM orders WHERE id = $1', [orderId]);
-              pdfUrl = pdfResult.rows[0]?.receipt_pdf_url;
-            }
+            console.log(`📄 Generating PDF receipt with AI-verified amount: $${actualDepositAmount.toFixed(2)}...`);
+            const newPdfPath = await generateReceipt({
+              orderNumber,
+              clientName,
+              clientPhone,
+              clientEmail,
+              orderDate: new Date(),
+              items: orderItems.map(item => ({
+                productName: item.productName,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                lineTotal: item.lineTotal
+              })),
+              totalPrice: subtotal,
+              actualDepositAmount: actualDepositAmount,
+              remainingBalance: actualRemainingBalance,
+              eventDate: eventDate || null,
+              eventType: eventType || null
+            });
+            pdfUrl = getReceiptUrl(newPdfPath);
+            await query('UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2', [pdfUrl, orderId]);
+            console.log(`✅ PDF receipt generated with deposit: $${actualDepositAmount.toFixed(2)}`);
           } catch (pdfError) {
-            console.error('❌ Failed to generate updated PDF:', pdfError.message);
+            console.error('❌ Failed to generate PDF:', pdfError.message);
             // Try to get existing PDF as fallback
             const pdfResult = await query('SELECT receipt_pdf_url FROM orders WHERE id = $1', [orderId]);
             pdfUrl = pdfResult.rows[0]?.receipt_pdf_url;
