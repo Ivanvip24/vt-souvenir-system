@@ -639,23 +639,49 @@ async function showOrderDetail(orderId) {
             </div>
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="font-size: 20px;">📱</div>
-              <div>
-                <div style="font-size: 11px; color: var(--gray-600); font-weight: 600;">TELÉFONO</div>
-                <a href="tel:${order.clientPhone || ''}" style="font-size: 15px; font-weight: 600; color: var(--primary); text-decoration: none;">
-                  ${order.clientPhone || 'No disponible'}
-                </a>
+            <div style="display: flex; align-items: center; gap: 8px; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="font-size: 20px;">📱</div>
+                <div>
+                  <div style="font-size: 11px; color: var(--gray-600); font-weight: 600;">TELÉFONO</div>
+                  <a href="tel:${order.clientPhone || ''}" style="font-size: 15px; font-weight: 600; color: var(--primary); text-decoration: none;">
+                    ${order.clientPhone || 'No disponible'}
+                  </a>
+                </div>
               </div>
+              ${order.clientPhone ? `
+                <button onclick="copyToClipboard('${order.clientPhone}', 'Teléfono')"
+                  style="background: var(--gray-100); border: none; border-radius: 6px; padding: 6px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                  onmouseover="this.style.background='var(--primary)'; this.querySelector('svg').style.fill='white';"
+                  onmouseout="this.style.background='var(--gray-100)'; this.querySelector('svg').style.fill='var(--gray-600)';"
+                  title="Copiar teléfono">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--gray-600)" style="transition: fill 0.2s;">
+                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                  </svg>
+                </button>
+              ` : ''}
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="font-size: 20px;">📧</div>
-              <div>
-                <div style="font-size: 11px; color: var(--gray-600); font-weight: 600;">EMAIL</div>
-                <a href="mailto:${order.clientEmail || ''}" style="font-size: 15px; font-weight: 600; color: var(--primary); text-decoration: none; overflow: hidden; text-overflow: ellipsis;">
-                  ${order.clientEmail || 'No disponible'}
-                </a>
+            <div style="display: flex; align-items: center; gap: 8px; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                <div style="font-size: 20px;">📧</div>
+                <div style="min-width: 0; flex: 1;">
+                  <div style="font-size: 11px; color: var(--gray-600); font-weight: 600;">EMAIL</div>
+                  <a href="mailto:${order.clientEmail || ''}" style="font-size: 15px; font-weight: 600; color: var(--primary); text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${order.clientEmail || 'No disponible'}
+                  </a>
+                </div>
               </div>
+              ${order.clientEmail ? `
+                <button onclick="copyToClipboard('${order.clientEmail}', 'Email')"
+                  style="background: var(--gray-100); border: none; border-radius: 6px; padding: 6px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;"
+                  onmouseover="this.style.background='var(--primary)'; this.querySelector('svg').style.fill='white';"
+                  onmouseout="this.style.background='var(--gray-100)'; this.querySelector('svg').style.fill='var(--gray-600)';"
+                  title="Copiar email">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--gray-600)" style="transition: fill 0.2s;">
+                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                  </svg>
+                </button>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -2354,6 +2380,41 @@ async function bulkArchiveOrders(archiveStatus) {
   loadOrders();
 }
 
+/**
+ * Copy text to clipboard and show feedback
+ */
+function copyToClipboard(text, label = 'Texto') {
+  if (!text) return;
+
+  navigator.clipboard.writeText(text).then(() => {
+    // Show brief feedback
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #10B981;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideUp 0.3s ease;
+    `;
+    notification.textContent = `${label} copiado`;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.style.animation = 'fadeOut 0.3s ease';
+      setTimeout(() => notification.remove(), 300);
+    }, 1500);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+  });
+}
+
 // Make functions globally accessible for onclick handlers
 window.loadOrders = loadOrders;
 window.closeOrderDetail = closeOrderDetail;
@@ -2375,3 +2436,4 @@ window.toggleSelectAll = toggleSelectAll;
 window.clearSelection = clearSelection;
 window.bulkApproveOrders = bulkApproveOrders;
 window.bulkArchiveOrders = bulkArchiveOrders;
+window.copyToClipboard = copyToClipboard;
