@@ -480,9 +480,13 @@ router.post('/orders/submit', async (req, res) => {
 
           // Determine the actual deposit amount from the receipt
           // Use detected amount if available, otherwise use original deposit amount
-          const detectedAmount = verificationResult.analysis?.amount_detected;
-          const actualDepositAmount = (detectedAmount && detectedAmount > 0) ? detectedAmount : depositAmount;
-          const amountChanged = actualDepositAmount !== depositAmount;
+          const rawDetectedAmount = verificationResult.analysis?.amount_detected;
+          // Ensure it's a number (Claude might return string)
+          const detectedAmount = parseFloat(rawDetectedAmount) || 0;
+          const actualDepositAmount = (detectedAmount > 0) ? detectedAmount : depositAmount;
+          const amountChanged = Math.abs(actualDepositAmount - depositAmount) > 0.01;
+
+          console.log(`💰 Deposit calculation: raw=${rawDetectedAmount}, parsed=${detectedAmount}, final=${actualDepositAmount}, expected=${depositAmount}`);
 
           if (amountChanged) {
             console.log(`💰 Amount adjustment: Expected $${depositAmount.toFixed(2)} → Detected $${actualDepositAmount.toFixed(2)}`);
@@ -505,7 +509,14 @@ router.post('/orders/submit', async (req, res) => {
           // ALWAYS regenerate PDF with the AI-detected amount
           let pdfUrl = null;
           try {
-            console.log(`📄 Generating PDF receipt with AI-verified amount: $${actualDepositAmount.toFixed(2)}...`);
+            // Ensure numeric values for PDF generation
+            const pdfDepositAmount = parseFloat(actualDepositAmount) || 0;
+            const pdfRemainingBalance = parseFloat(actualRemainingBalance) || (parseFloat(subtotal) - pdfDepositAmount);
+            const pdfTotalPrice = parseFloat(subtotal) || 0;
+
+            console.log(`📄 Generating PDF receipt with AI-verified amount: $${pdfDepositAmount.toFixed(2)}...`);
+            console.log(`   PDF values: total=${pdfTotalPrice}, deposit=${pdfDepositAmount}, remaining=${pdfRemainingBalance}`);
+
             const newPdfPath = await generateReceipt({
               orderNumber,
               clientName,
@@ -515,20 +526,20 @@ router.post('/orders/submit', async (req, res) => {
               items: orderItems.map(item => ({
                 productName: item.productName,
                 quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                lineTotal: item.lineTotal
+                unitPrice: parseFloat(item.unitPrice) || 0,
+                lineTotal: parseFloat(item.lineTotal) || 0
               })),
-              totalPrice: subtotal,
-              actualDepositAmount: actualDepositAmount,
-              remainingBalance: actualRemainingBalance,
+              totalPrice: pdfTotalPrice,
+              actualDepositAmount: pdfDepositAmount,
+              remainingBalance: pdfRemainingBalance,
               eventDate: eventDate || null,
               eventType: eventType || null
             });
             pdfUrl = getReceiptUrl(newPdfPath);
             await query('UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2', [pdfUrl, orderId]);
-            console.log(`✅ PDF receipt generated with deposit: $${actualDepositAmount.toFixed(2)}`);
+            console.log(`✅ PDF receipt generated with deposit: $${pdfDepositAmount.toFixed(2)}`);
           } catch (pdfError) {
-            console.error('❌ Failed to generate PDF:', pdfError.message);
+            console.error('❌ Failed to generate PDF:', pdfError.message, pdfError.stack);
             // Try to get existing PDF as fallback
             const pdfResult = await query('SELECT receipt_pdf_url FROM orders WHERE id = $1', [orderId]);
             pdfUrl = pdfResult.rows[0]?.receipt_pdf_url;
