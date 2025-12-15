@@ -468,74 +468,114 @@ router.post('/orders/submit', async (req, res) => {
 
           if (!verificationResult.success) {
             console.log(`⚠️ AI verification failed for order ${orderNumber}: ${verificationResult.error}`);
-            return;
+            // Still approve even if AI failed - admin can review later
           }
 
           console.log(`📊 AI Analysis result: ${verificationResult.recommendation}`);
+          console.log(`✅ AUTO-APPROVING order ${orderNumber} - Processing receipt`);
 
-          // AUTO-APPROVE if verification passed
-          if (verificationResult.verified && verificationResult.recommendation === 'AUTO_APPROVE') {
-            console.log(`✅ AUTO-APPROVING order ${orderNumber} - Receipt verified by AI`);
+          // Determine the actual deposit amount from the receipt
+          // Use detected amount if available, otherwise use original deposit amount
+          const detectedAmount = verificationResult.analysis?.amount_detected;
+          const actualDepositAmount = (detectedAmount && detectedAmount > 0) ? detectedAmount : depositAmount;
+          const amountChanged = actualDepositAmount !== depositAmount;
 
-            // Update order to approved status
-            await query(
-              `UPDATE orders SET
-                approval_status = 'approved',
-                status = 'new',
-                department = 'design'
-               WHERE id = $1`,
-              [orderId]
-            );
+          if (amountChanged) {
+            console.log(`💰 Amount adjustment: Expected $${depositAmount.toFixed(2)} → Detected $${actualDepositAmount.toFixed(2)}`);
+          }
 
-            // Send confirmation email to client
-            try {
-              // Get the generated PDF URL
-              const pdfResult = await query(
-                'SELECT receipt_pdf_url FROM orders WHERE id = $1',
-                [orderId]
+          // Update order to approved status with the actual deposit amount from receipt
+          await query(
+            `UPDATE orders SET
+              approval_status = 'approved',
+              status = 'new',
+              department = 'design',
+              deposit_amount = $2
+             WHERE id = $1`,
+            [orderId, actualDepositAmount]
+          );
+
+          // Calculate remaining balance with the actual deposit amount
+          const actualRemainingBalance = subtotal - actualDepositAmount;
+
+          // Re-generate PDF receipt with the correct amount if it changed
+          let pdfUrl = null;
+          try {
+            if (amountChanged) {
+              console.log(`📄 Re-generating PDF receipt with corrected amount...`);
+              const newPdfPath = await generateReceipt({
+                orderNumber,
+                clientName,
+                clientPhone,
+                clientEmail,
+                orderDate: new Date(),
+                items: orderItems.map(item => ({
+                  productName: item.productName,
+                  quantity: item.quantity,
+                  unitPrice: item.unitPrice,
+                  lineTotal: item.lineTotal
+                })),
+                totalPrice: subtotal,
+                actualDepositAmount: actualDepositAmount,
+                remainingBalance: actualRemainingBalance,
+                eventDate: eventDate || null,
+                eventType: eventType || null
+              });
+              pdfUrl = getReceiptUrl(newPdfPath);
+              await query('UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2', [pdfUrl, orderId]);
+              console.log(`✅ PDF receipt updated with correct amount: ${pdfUrl}`);
+            } else {
+              // Use existing PDF
+              const pdfResult = await query('SELECT receipt_pdf_url FROM orders WHERE id = $1', [orderId]);
+              pdfUrl = pdfResult.rows[0]?.receipt_pdf_url;
+            }
+          } catch (pdfError) {
+            console.error('❌ Failed to generate updated PDF:', pdfError.message);
+            // Try to get existing PDF as fallback
+            const pdfResult = await query('SELECT receipt_pdf_url FROM orders WHERE id = $1', [orderId]);
+            pdfUrl = pdfResult.rows[0]?.receipt_pdf_url;
+          }
+
+          // Send confirmation email to client with correct amounts
+          try {
+            if (clientEmail && pdfUrl) {
+              await emailSender.sendClientReceiptEmail(
+                clientEmail,
+                clientName,
+                orderNumber,
+                pdfUrl,
+                {
+                  totalPrice: subtotal,
+                  depositAmount: actualDepositAmount,
+                  remainingBalance: actualRemainingBalance,
+                  items: orderItems.map(item => ({
+                    productName: item.productName,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    lineTotal: item.lineTotal
+                  })),
+                  eventDate,
+                  eventType
+                }
               );
-              const pdfUrl = pdfResult.rows[0]?.receipt_pdf_url;
-
-              if (clientEmail && pdfUrl) {
-                const remainingBalance = subtotal - depositAmount;
-                await emailSender.sendClientReceiptEmail(
-                  clientEmail,
-                  clientName,
-                  orderNumber,
-                  pdfUrl,
-                  {
-                    totalPrice: subtotal,
-                    depositAmount,
-                    remainingBalance,
-                    items: orderItems.map(item => ({
-                      productName: item.productName,
-                      quantity: item.quantity,
-                      unitPrice: item.unitPrice,
-                      lineTotal: item.lineTotal
-                    })),
-                    eventDate,
-                    eventType
-                  }
-                );
-                console.log(`📧 Confirmation email sent to ${clientEmail}`);
-              }
-            } catch (emailError) {
-              console.error('❌ Failed to send confirmation email:', emailError.message);
+              console.log(`📧 Confirmation email sent to ${clientEmail}`);
             }
+          } catch (emailError) {
+            console.error('❌ Failed to send confirmation email:', emailError.message);
+          }
 
-            console.log(`🎉 Order ${orderNumber} automatically approved and client notified!`);
+          console.log(`🎉 Order ${orderNumber} automatically approved!`);
+          console.log(`   Deposit amount: $${actualDepositAmount.toFixed(2)}`);
+          console.log(`   Remaining balance: $${actualRemainingBalance.toFixed(2)}`);
 
-            // Log the AI analysis details
-            if (verificationResult.analysis) {
-              console.log(`   Amount detected: $${verificationResult.analysis.amount_detected || 'N/A'}`);
-              console.log(`   Confidence: ${verificationResult.analysis.confidence_level}`);
-              console.log(`   Bank: ${verificationResult.analysis.source_bank || 'N/A'}`);
+          // Log the AI analysis details
+          if (verificationResult.analysis) {
+            console.log(`   AI detected: $${verificationResult.analysis.amount_detected || 'N/A'}`);
+            console.log(`   Confidence: ${verificationResult.analysis.confidence_level || 'N/A'}`);
+            console.log(`   Bank: ${verificationResult.analysis.source_bank || 'N/A'}`);
+            if (verificationResult.analysis.suspicious_indicators?.length > 0) {
+              console.log(`   ⚠️ Notes: ${verificationResult.analysis.suspicious_indicators.join(', ')}`);
             }
-
-          } else {
-            // Log why it wasn't auto-approved
-            console.log(`⏳ Order ${orderNumber} requires manual review`);
-            console.log(`   Reason: ${verificationResult.recommendation_reason}`);
           }
 
         } catch (aiError) {
