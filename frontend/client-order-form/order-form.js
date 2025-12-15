@@ -224,7 +224,7 @@ const state = {
     clientNotes: ''
   },
   payment: {
-    method: 'stripe',
+    method: 'bank_transfer',
     proofFile: null,
     uploadCooldownInterval: null // Track countdown timer
   },
@@ -1736,6 +1736,15 @@ function populatePaymentSummary() {
   document.getElementById('payment-deposit').textContent = `$${state.totals.deposit.toFixed(2)}`;
   document.getElementById('bank-amount').textContent = `$${state.totals.deposit.toFixed(2)}`;
   document.getElementById('card-amount').textContent = `$${state.totals.deposit.toFixed(2)}`;
+
+  // Initialize payment UI with bank_transfer as default
+  const bankDetails = document.getElementById('bank-details');
+  const stripeLink = document.getElementById('stripe-payment-link');
+  const submitBtn = document.getElementById('submit-order');
+
+  bankDetails.classList.remove('hidden');
+  stripeLink.style.display = 'none';
+  submitBtn.style.display = 'block';
 }
 
 function handlePaymentMethodChange(e) {
@@ -1757,84 +1766,148 @@ function handlePaymentMethodChange(e) {
 }
 
 async function handleStripePayment() {
-  // Get notes from payment step
-  const clientNotes = document.getElementById('client-notes').value.trim();
-  state.order.clientNotes = clientNotes;
+  // Show instruction popup before opening Stripe
+  showStripeInstructionsModal();
+}
 
-  // First, submit the order to our backend
-  const submitBtn = document.getElementById('stripe-pay-btn');
-  const originalText = submitBtn.innerHTML;
+function showStripeInstructionsModal() {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'stripe-instructions-modal';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  `;
 
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span class="spinner-small"></span> Creando pedido...';
+  // Create modal content
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(233, 30, 99, 0.3);
+    animation: slideUp 0.3s ease;
+  `;
 
-  try {
-    // Prepare order data
-    const orderData = {
-      // Products with tiered pricing
-      items: Object.values(state.cart).map(({ product, quantity }) => {
-        const { price } = getTieredPrice(product, quantity);
-        return {
-          productId: product.id,
-          quantity,
-          unitPrice: price // Send the tiered price to backend
-        };
-      }),
+  modal.innerHTML = `
+    <div style="font-size: 48px; margin-bottom: 16px;">💳</div>
+    <h2 style="color: #ffffff; margin-bottom: 16px; font-size: 22px;">Instrucciones de Pago con Tarjeta</h2>
+    <div style="background: rgba(233, 30, 99, 0.1); border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: left;">
+      <ol style="color: #e0e0e0; margin: 0; padding-left: 20px; line-height: 1.8;">
+        <li style="margin-bottom: 8px;">Serás redirigido a la página de pago de Stripe</li>
+        <li style="margin-bottom: 8px;">Completa tu pago con tarjeta</li>
+        <li style="margin-bottom: 8px;"><strong style="color: var(--primary);">Toma una captura de pantalla</strong> del comprobante de pago</li>
+        <li style="margin-bottom: 8px;">Regresa a esta pestaña</li>
+        <li><strong style="color: var(--primary);">Sube el comprobante</strong> y crea tu pedido</li>
+      </ol>
+    </div>
+    <p style="color: #9ca3af; font-size: 13px; margin-bottom: 24px;">
+      Tu pedido no será creado hasta que subas el comprobante de pago.
+    </p>
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button id="cancel-stripe-btn" style="
+        padding: 14px 28px;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: transparent;
+        color: #ffffff;
+        border-radius: 10px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+      ">Cancelar</button>
+      <button id="continue-stripe-btn" style="
+        padding: 14px 28px;
+        border: none;
+        background: linear-gradient(135deg, #635bff, #4f46e5);
+        color: white;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 15px rgba(99, 91, 255, 0.4);
+      ">Ir a Pagar →</button>
+    </div>
+  `;
 
-      // Client notes
-      clientNotes: state.order.clientNotes,
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
 
-      // Client info
-      clientName: state.client.name,
-      clientPhone: state.client.phone,
-      clientEmail: state.client.email,
-      clientAddress: state.client.address, // Legacy field
-      clientStreet: state.client.street,
-      clientStreetNumber: state.client.streetNumber,
-      clientColonia: state.client.colonia,
-      clientCity: state.client.city,
-      clientState: state.client.state,
-      clientPostal: state.client.postal,
-      clientReferences: state.client.references,
+  // Handle cancel button
+  document.getElementById('cancel-stripe-btn').addEventListener('click', () => {
+    overlay.remove();
+  });
 
-      // Payment
-      paymentMethod: 'stripe'
-    };
-
-    console.log('Submitting order:', orderData);
-
-    // Submit order
-    const response = await fetch(`${API_BASE}/orders/submit`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(orderData)
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || 'Error al procesar el pedido');
-    }
-
-    console.log('Order created:', result);
-
-    // Open Stripe payment link in new tab
-    // Order is saved, open Stripe for payment in new tab
+  // Handle continue button
+  document.getElementById('continue-stripe-btn').addEventListener('click', () => {
+    // Open Stripe in new tab
     window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
 
-    // Show success screen since order is already created
-    showSuccessScreen(result.orderNumber);
+    // Close modal
+    overlay.remove();
 
-  } catch (error) {
-    console.error('Error submitting order:', error);
-    alert(`Error: ${error.message}`);
+    // Switch to bank transfer mode so they can upload receipt
+    state.payment.method = 'bank_transfer';
 
-    // Re-enable button
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = originalText;
-  }
+    // Update radio buttons
+    const bankRadio = document.querySelector('input[name="payment"][value="bank_transfer"]');
+    const stripeRadio = document.querySelector('input[name="payment"][value="stripe"]');
+    if (bankRadio) bankRadio.checked = true;
+    if (stripeRadio) stripeRadio.checked = false;
+
+    // Show bank transfer UI
+    const bankDetails = document.getElementById('bank-details');
+    const stripeLink = document.getElementById('stripe-payment-link');
+    const submitBtn = document.getElementById('submit-order');
+
+    bankDetails.classList.remove('hidden');
+    stripeLink.style.display = 'none';
+    submitBtn.style.display = 'block';
+
+    // Show a toast notification
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #635bff, #4f46e5);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      z-index: 10001;
+      box-shadow: 0 4px 20px rgba(99, 91, 255, 0.4);
+      animation: slideDown 0.3s ease;
+    `;
+    toast.innerHTML = '💳 Completa tu pago en Stripe y luego sube el comprobante aquí';
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'fadeOut 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 5000);
+  });
+
+  // Close on overlay click
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+    }
+  });
 }
 
 async function handleOrderSubmit() {
