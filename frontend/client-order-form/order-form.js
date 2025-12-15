@@ -1649,6 +1649,15 @@ async function handleProofUpload(files, previewEl) {
 function renderFilePreview(container, files, type) {
   container.innerHTML = '';
 
+  // Hide upload prompt when file is present
+  const uploadArea = container.closest('.file-upload-area');
+  if (uploadArea) {
+    const uploadPrompt = uploadArea.querySelector('.upload-prompt');
+    if (uploadPrompt) {
+      uploadPrompt.style.display = files.length > 0 ? 'none' : 'block';
+    }
+  }
+
   files.forEach((fileData, index) => {
     const item = document.createElement('div');
     item.className = 'file-preview-item';
@@ -1699,7 +1708,30 @@ function renderFilePreview(container, files, type) {
 function removeFile(type, index) {
   if (type === 'proof') {
     state.payment.proofFile = null;
-    document.getElementById('proof-preview').innerHTML = '';
+
+    // Clear both possible preview containers
+    const proofPreview = document.getElementById('proof-preview');
+    const stripeProofPreview = document.getElementById('stripe-proof-preview');
+
+    if (proofPreview) {
+      proofPreview.innerHTML = '';
+      // Show upload prompt again
+      const uploadArea = proofPreview.closest('.file-upload-area');
+      if (uploadArea) {
+        const uploadPrompt = uploadArea.querySelector('.upload-prompt');
+        if (uploadPrompt) uploadPrompt.style.display = 'block';
+      }
+    }
+
+    if (stripeProofPreview) {
+      stripeProofPreview.innerHTML = '';
+      // Show upload prompt again
+      const uploadArea = stripeProofPreview.closest('.file-upload-area');
+      if (uploadArea) {
+        const uploadPrompt = uploadArea.querySelector('.upload-prompt');
+        if (uploadPrompt) uploadPrompt.style.display = 'block';
+      }
+    }
 
     // Clear countdown timer if it's running
     if (state.payment.uploadCooldownInterval) {
