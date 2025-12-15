@@ -524,28 +524,39 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
 
     // Allowed carriers - only show premium/reliable carriers
     const ALLOWED_CARRIERS = ['Estafeta', 'FedEx', 'Paquetexpress'];
+    const MAX_PRICE_THRESHOLD = 250; // Only show options under $250
 
-    // Filter and sort rates - only allowed carriers, cheapest first, cap at maxPrice
-    let filteredRates = quote.rates
+    // Filter to allowed carriers and sort by price
+    let allowedRates = quote.rates
       .filter(rate => {
-        // Check if carrier is in allowed list (case-insensitive)
         const isAllowedCarrier = ALLOWED_CARRIERS.some(
           allowed => rate.carrier.toLowerCase().includes(allowed.toLowerCase())
         );
-        return isAllowedCarrier && rate.total_price <= parseFloat(maxPrice);
+        return isAllowedCarrier;
       })
-      .sort((a, b) => a.total_price - b.total_price)
-      .slice(0, parseInt(maxOptions));
+      .sort((a, b) => a.total_price - b.total_price);
 
-    // Format for client display
+    // Filter to options under $250
+    let filteredRates = allowedRates.filter(rate => rate.total_price <= MAX_PRICE_THRESHOLD);
+
+    // If ALL options are over $250, only show the cheapest one
+    if (filteredRates.length === 0 && allowedRates.length > 0) {
+      filteredRates = [allowedRates[0]]; // Only the cheapest
+      console.log(`⚠️ All rates over $${MAX_PRICE_THRESHOLD}, showing only cheapest: ${allowedRates[0].carrier} $${allowedRates[0].total_price}`);
+    }
+
+    // Limit to maxOptions
+    filteredRates = filteredRates.slice(0, parseInt(maxOptions));
+
+    // Format for client display - NO PRICES SHOWN TO CLIENT
     const formattedRates = filteredRates.map((rate, index) => ({
       rate_id: rate.rate_id,
       carrier: rate.carrier,
       carrier_code: rate.carrier_code,
       service: rate.service,
       service_code: rate.service_code,
+      // Price stored internally but not displayed to client
       price: rate.total_price,
-      priceFormatted: `$${rate.total_price.toFixed(2)} MXN`,
       days: rate.days,
       daysText: rate.days === 1 ? '1 día' : `${rate.days} días`,
       isCheapest: index === 0,

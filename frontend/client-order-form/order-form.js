@@ -2898,12 +2898,12 @@ window.loadShippingOptions = async function(orderId) {
     // Store quotation_id for later
     selectedShippingRates[orderId] = { quotation_id: result.quotation_id };
 
-    // Render shipping options
+    // Render shipping options - NO PRICES SHOWN TO CLIENT
     container.innerHTML = `
       <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
         <div style="padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-          <div style="font-weight: 600; font-size: 14px;">📦 Opciones de Envío a ${result.destination.city}, ${result.destination.state}</div>
-          <div style="font-size: 11px; opacity: 0.9; margin-top: 2px;">CP: ${result.destination.postal}</div>
+          <div style="font-weight: 600; font-size: 14px;">📦 Selecciona tu Paquetería</div>
+          <div style="font-size: 11px; opacity: 0.9; margin-top: 2px;">Envío a ${result.destination.city}, ${result.destination.state}</div>
         </div>
         <div style="padding: 8px;">
           ${result.rates.map((rate, index) => `
@@ -2916,11 +2916,9 @@ window.loadShippingOptions = async function(orderId) {
               <div style="flex: 1;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div>
-                    <span style="font-weight: 600; color: #111827;">${rate.carrier}</span>
-                    ${rate.isCheapest ? '<span style="margin-left: 6px; font-size: 10px; padding: 2px 6px; background: #d1fae5; color: #065f46; border-radius: 4px;">💰 MÁS ECONÓMICO</span>' : ''}
-                    ${rate.isFastest && !rate.isCheapest ? '<span style="margin-left: 6px; font-size: 10px; padding: 2px 6px; background: #dbeafe; color: #1e40af; border-radius: 4px;">⚡ MÁS RÁPIDO</span>' : ''}
+                    <span style="font-weight: 600; color: #111827; font-size: 15px;">${rate.carrier}</span>
+                    ${rate.isFastest ? '<span style="margin-left: 6px; font-size: 10px; padding: 2px 6px; background: #dbeafe; color: #1e40af; border-radius: 4px;">⚡ MÁS RÁPIDO</span>' : ''}
                   </div>
-                  <span style="font-weight: 700; color: #059669; font-size: 16px;">${rate.priceFormatted}</span>
                 </div>
                 <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
                   ${rate.service} • 📅 ${rate.daysText} estimados
@@ -2934,7 +2932,7 @@ window.loadShippingOptions = async function(orderId) {
         <button
           onclick="confirmShippingSelection(${orderId})"
           style="width: 100%; padding: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
-          ✅ Confirmar Método de Envío
+          ✅ Confirmar Paquetería
         </button>
       </div>
     `;
@@ -3030,16 +3028,16 @@ window.confirmShippingSelection = async function(orderId) {
       throw new Error(result.error || 'Error guardando selección');
     }
 
-    // Success! Show confirmation and enable payment upload
+    // Success! Show confirmation and enable payment upload - NO PRICE SHOWN
     const shippingSection = document.getElementById(`shipping-selection-section-${orderId}`);
     shippingSection.innerHTML = `
       <div style="padding: 12px; background: #d1fae5; border: 1px solid #10b981; border-radius: 8px;">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 20px;">✅</span>
           <div style="flex: 1;">
-            <div style="font-weight: 600; color: #065f46;">Envío seleccionado</div>
-            <div style="font-size: 12px; color: #047857;">${selection.carrier} - ${selection.service}</div>
-            <div style="font-size: 12px; color: #047857;">$${selection.price.toFixed(2)} MXN • ${selection.days} días</div>
+            <div style="font-weight: 600; color: #065f46;">Paquetería seleccionada</div>
+            <div style="font-size: 13px; color: #047857; font-weight: 500;">${selection.carrier}</div>
+            <div style="font-size: 12px; color: #047857;">${selection.service} • ${selection.days} días estimados</div>
           </div>
         </div>
         <!-- Tracking number will appear here after label generation -->
@@ -3056,7 +3054,7 @@ window.confirmShippingSelection = async function(orderId) {
     console.error('Error confirming shipping:', error);
     alert(`Error: ${error.message}`);
     confirmBtn.disabled = false;
-    confirmBtn.innerHTML = '✅ Confirmar Método de Envío';
+    confirmBtn.innerHTML = '✅ Confirmar Paquetería';
   }
 };
 
