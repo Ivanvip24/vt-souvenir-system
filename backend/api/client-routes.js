@@ -399,53 +399,56 @@ router.post('/orders/submit', async (req, res) => {
       }
     });
 
-    // 6b. Generate PDF receipt (will be emailed only after admin approval)
-    setImmediate(async () => {
-      // Generate PDF receipt for admin to review (don't let this block response)
-      try {
-        console.log(`📄 Generating initial PDF receipt for order ${orderNumber}...`);
-        console.log(`   Subtotal: $${subtotal}, DepositAmount: $${depositAmount}`);
+    // 6b. Generate PDF receipt - ONLY if no payment proof (AI will generate PDF if there's a receipt)
+    const willRunAIVerification = paymentProofUrl && paymentMethod === 'bank_transfer';
 
-        const remainingBalance = subtotal - depositAmount;
+    if (!willRunAIVerification) {
+      // No AI verification, generate PDF now with default 50% deposit
+      setImmediate(async () => {
+        try {
+          console.log(`📄 Generating PDF receipt for order ${orderNumber} (no AI verification)...`);
+          console.log(`   Subtotal: $${subtotal}, DepositAmount: $${depositAmount}`);
 
-        const pdfPath = await generateReceipt({
-          orderNumber,
-          clientName,
-          clientPhone,
-          clientEmail,
-          orderDate: new Date(),
-          items: orderItems.map(item => ({
-            productName: item.productName,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            lineTotal: item.lineTotal
-          })),
-          totalPrice: subtotal,
-          actualDepositAmount: depositAmount,
-          remainingBalance: remainingBalance,
-          eventDate: eventDate || null,
-          eventType: eventType || null
-        });
+          const remainingBalance = subtotal - depositAmount;
 
-        console.log(`✅ PDF receipt generated: ${pdfPath}`);
+          const pdfPath = await generateReceipt({
+            orderNumber,
+            clientName,
+            clientPhone,
+            clientEmail,
+            orderDate: new Date(),
+            items: orderItems.map(item => ({
+              productName: item.productName,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              lineTotal: item.lineTotal
+            })),
+            totalPrice: subtotal,
+            actualDepositAmount: depositAmount,
+            remainingBalance: remainingBalance,
+            eventDate: eventDate || null,
+            eventType: eventType || null
+          });
 
-        // Store PDF path in database for admin download
-        const pdfUrl = getReceiptUrl(pdfPath);
-        await query(
-          `UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2`,
-          [pdfUrl, orderId]
-        );
-        console.log(`💾 PDF URL saved to database: ${pdfUrl}`);
-        console.log(`ℹ️  Receipt PDF generated but will only be emailed after admin approval`);
+          console.log(`✅ PDF receipt generated: ${pdfPath}`);
 
-      } catch (pdfError) {
-        console.error('❌ Failed to generate PDF receipt:', pdfError.message);
-      }
-    });
+          const pdfUrl = getReceiptUrl(pdfPath);
+          await query(
+            `UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2`,
+            [pdfUrl, orderId]
+          );
+          console.log(`💾 PDF URL saved to database: ${pdfUrl}`);
+
+        } catch (pdfError) {
+          console.error('❌ Failed to generate PDF receipt:', pdfError.message);
+        }
+      });
+    }
 
     // 6c. AUTOMATIC AI VERIFICATION (background - don't block response)
     // If customer uploaded a payment receipt, verify it automatically with Claude Vision
-    if (paymentProofUrl && paymentMethod === 'bank_transfer') {
+    // This will also generate the PDF with the AI-detected deposit amount
+    if (willRunAIVerification) {
       setImmediate(async () => {
         try {
           // Wait a bit for the receipt image to be fully uploaded to Cloudinary
