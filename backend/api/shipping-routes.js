@@ -806,4 +806,165 @@ router.get('/orders/:orderId/can-generate', async (req, res) => {
   }
 });
 
+// ========================================
+// REFRESH TRACKING NUMBER FOR A LABEL
+// POST /api/shipping/labels/:labelId/refresh-tracking
+// ========================================
+router.post('/labels/:labelId/refresh-tracking', async (req, res) => {
+  const { labelId } = req.params;
+
+  try {
+    // Get the label with shipment_id
+    const labelResult = await query(`
+      SELECT id, order_id, shipment_id, tracking_number, carrier
+      FROM shipping_labels
+      WHERE id = $1
+    `, [labelId]);
+
+    if (labelResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Etiqueta no encontrada' });
+    }
+
+    const label = labelResult.rows[0];
+
+    // If already has tracking number, return it
+    if (label.tracking_number) {
+      return res.json({
+        success: true,
+        tracking_number: label.tracking_number,
+        message: 'Número de rastreo ya disponible'
+      });
+    }
+
+    if (!label.shipment_id) {
+      return res.status(400).json({ error: 'No hay ID de envío para consultar' });
+    }
+
+    // Fetch from Skydropx
+    console.log(`🔄 Refreshing tracking for label ${labelId}, shipment ${label.shipment_id}`);
+    const shipmentDetails = await skydropx.getShipment(label.shipment_id);
+
+    if (shipmentDetails.tracking_number) {
+      // Update the database
+      await query(`
+        UPDATE shipping_labels
+        SET tracking_number = $1, tracking_url = $2, label_url = $3
+        WHERE id = $4
+      `, [
+        shipmentDetails.tracking_number,
+        shipmentDetails.tracking_url,
+        shipmentDetails.label_url,
+        labelId
+      ]);
+
+      console.log(`✅ Updated tracking number for label ${labelId}: ${shipmentDetails.tracking_number}`);
+
+      return res.json({
+        success: true,
+        tracking_number: shipmentDetails.tracking_number,
+        tracking_url: shipmentDetails.tracking_url,
+        label_url: shipmentDetails.label_url,
+        message: 'Número de rastreo actualizado'
+      });
+    }
+
+    res.json({
+      success: false,
+      message: 'Número de rastreo aún no disponible. Intente nuevamente en unos minutos.'
+    });
+
+  } catch (error) {
+    console.error('❌ Error refreshing tracking:', error);
+    res.status(500).json({ error: error.message || 'Error actualizando rastreo' });
+  }
+});
+
+// ========================================
+// REFRESH ALL PENDING TRACKING NUMBERS
+// POST /api/shipping/refresh-pending-tracking
+// ========================================
+router.post('/refresh-pending-tracking', async (req, res) => {
+  try {
+    // Get all labels without tracking numbers
+    const labelsResult = await query(`
+      SELECT id, order_id, shipment_id, carrier
+      FROM shipping_labels
+      WHERE tracking_number IS NULL AND shipment_id IS NOT NULL
+      ORDER BY label_generated_at DESC
+      LIMIT 20
+    `);
+
+    if (labelsResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No hay etiquetas pendientes de número de rastreo',
+        updated: 0
+      });
+    }
+
+    console.log(`🔄 Refreshing tracking for ${labelsResult.rows.length} pending labels...`);
+
+    let updated = 0;
+    const results = [];
+
+    for (const label of labelsResult.rows) {
+      try {
+        const shipmentDetails = await skydropx.getShipment(label.shipment_id);
+
+        if (shipmentDetails.tracking_number) {
+          await query(`
+            UPDATE shipping_labels
+            SET tracking_number = $1, tracking_url = $2, label_url = $3
+            WHERE id = $4
+          `, [
+            shipmentDetails.tracking_number,
+            shipmentDetails.tracking_url,
+            shipmentDetails.label_url,
+            label.id
+          ]);
+
+          updated++;
+          results.push({
+            labelId: label.id,
+            orderId: label.order_id,
+            tracking_number: shipmentDetails.tracking_number,
+            status: 'updated'
+          });
+        } else {
+          results.push({
+            labelId: label.id,
+            orderId: label.order_id,
+            status: 'still_pending'
+          });
+        }
+
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+      } catch (labelError) {
+        results.push({
+          labelId: label.id,
+          orderId: label.order_id,
+          status: 'error',
+          error: labelError.message
+        });
+      }
+    }
+
+    console.log(`✅ Updated ${updated} of ${labelsResult.rows.length} labels`);
+
+    res.json({
+      success: true,
+      message: `Actualizados ${updated} de ${labelsResult.rows.length} etiquetas`,
+      updated,
+      total: labelsResult.rows.length,
+      results
+    });
+
+  } catch (error) {
+    console.error('❌ Error refreshing pending tracking:', error);
+    res.status(500).json({ error: 'Error actualizando rastreos pendientes' });
+  }
+});
+
 export default router;

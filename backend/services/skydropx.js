@@ -272,13 +272,55 @@ export async function createShipment(quotationId, rateId, rate, destAddress, pac
 
   // Extract data from response
   const shipmentData = result.data?.attributes || result.data || result;
-  const packageData = result.included?.find(i => i.type === 'package')?.attributes || {};
+  let packageData = result.included?.find(i => i.type === 'package')?.attributes || {};
+  const shipmentId = result.data?.id || shipmentData.id;
+
+  // Check if tracking number is available immediately
+  let trackingNumber = packageData.tracking_number || shipmentData.master_tracking_number;
+  let trackingUrl = packageData.tracking_url_provider;
+  let labelUrl = packageData.label_url;
+
+  // If no tracking number, poll Skydropx to wait for it (max 15 seconds)
+  if (!trackingNumber && shipmentId) {
+    console.log('⏳ Tracking number not immediately available, polling...');
+    const MAX_POLLS = 5;
+    const POLL_DELAY_MS = 3000; // 3 seconds
+
+    for (let i = 0; i < MAX_POLLS; i++) {
+      await new Promise(resolve => setTimeout(resolve, POLL_DELAY_MS));
+
+      try {
+        const pollResponse = await skydropxFetch(`/shipments/${shipmentId}`);
+        if (pollResponse.ok) {
+          const pollResult = await pollResponse.json();
+          const pollShipmentData = pollResult.data?.attributes || pollResult.data || pollResult;
+          const pollPackageData = pollResult.included?.find(item => item.type === 'package')?.attributes || {};
+
+          trackingNumber = pollPackageData.tracking_number || pollShipmentData.master_tracking_number;
+          trackingUrl = pollPackageData.tracking_url_provider || trackingUrl;
+          labelUrl = pollPackageData.label_url || labelUrl;
+
+          if (trackingNumber) {
+            console.log(`✅ Tracking number retrieved after ${i + 1} poll(s): ${trackingNumber}`);
+            break;
+          }
+          console.log(`   Poll ${i + 1}/${MAX_POLLS}: Still waiting for tracking number...`);
+        }
+      } catch (pollError) {
+        console.log(`   Poll ${i + 1}/${MAX_POLLS} failed:`, pollError.message);
+      }
+    }
+
+    if (!trackingNumber) {
+      console.log('⚠️ Tracking number not available after polling. Will be fetched later.');
+    }
+  }
 
   return {
-    shipment_id: result.data?.id || shipmentData.id,
-    tracking_number: packageData.tracking_number || shipmentData.master_tracking_number,
-    tracking_url: packageData.tracking_url_provider,
-    label_url: packageData.label_url,
+    shipment_id: shipmentId,
+    tracking_number: trackingNumber,
+    tracking_url: trackingUrl,
+    label_url: labelUrl,
     carrier: rate.carrier,
     service: rate.service,
     delivery_days: rate.days,
