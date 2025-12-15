@@ -586,18 +586,15 @@ async function showOrderDetail(orderId) {
 
       ${order.approvalStatus === 'pending_review' ? `
         <div class="action-buttons" style="flex-wrap: wrap; gap: 8px;">
-          <button class="btn" style="background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); color: white; flex: 1; min-width: 200px;" onclick="verifyWithAI(${order.id})" ${!order.paymentProofUrl ? 'disabled title="No hay comprobante de pago"' : ''}>
-            🤖 Verificar con IA
-          </button>
           <button class="btn btn-success" style="flex: 1; min-width: 140px;" onclick="approveOrder(${order.id})">
-            ✅ Aprobar Manual
+            ✅ Aprobar
           </button>
           <button class="btn btn-danger" style="flex: 1; min-width: 140px;" onclick="rejectOrder(${order.id})">
             ❌ Rechazar
           </button>
         </div>
         <p style="font-size: 11px; color: #6b7280; margin-top: 8px; text-align: center;">
-          💡 "Verificar con IA" analiza el comprobante y aprueba automáticamente si el monto es correcto
+          🤖 La verificación de comprobantes es automática. Este pedido requiere revisión manual.
         </p>
       ` : ''}
 
@@ -1083,72 +1080,6 @@ function closeOrderDetail() {
 
 // Global variable to track the order being approved
 let orderToApprove = null;
-
-/**
- * Verify payment receipt with Claude AI and auto-approve if valid
- */
-async function verifyWithAI(orderId) {
-  // Show loading state
-  const btn = event.target;
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '<span class="spinner"></span> Analizando...';
-  btn.disabled = true;
-
-  try {
-    console.log(`🤖 Verifying order ${orderId} with Claude AI...`);
-
-    const response = await fetch(`${API_BASE}/orders/${orderId}/verify-payment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
-      }
-    });
-
-    const result = await response.json();
-
-    if (result.autoApproved) {
-      // Order was auto-approved!
-      showNotification('success', `✅ ¡Orden aprobada automáticamente por IA! Monto detectado: $${result.detectedAmount?.toFixed(2) || '?'}`);
-
-      // Close the modal and refresh
-      closeOrderDetail();
-      await loadOrders();
-    } else if (result.success) {
-      // Analysis complete but needs manual review
-      const analysis = result.analysis || {};
-      let message = `🤖 Análisis de IA:\n\n`;
-      message += `📋 Comprobante válido: ${analysis.is_valid_receipt ? 'Sí' : 'No'}\n`;
-      message += `💰 Monto detectado: $${analysis.amount_detected?.toFixed(2) || 'No detectado'}\n`;
-      message += `📊 Monto esperado: $${analysis.expected_amount?.toFixed(2) || '?'}\n`;
-      message += `🎯 Coincidencia: ${analysis.amount_matches ? 'Sí' : 'No'}\n`;
-      message += `📅 Fecha: ${analysis.date_detected || 'No detectada'}\n`;
-      message += `🔢 Folio: ${analysis.folio_number || 'No detectado'}\n`;
-      message += `📈 Confianza: ${analysis.confidence_level || '?'}\n\n`;
-      message += `📝 Razón: ${result.message}\n\n`;
-
-      if (analysis.suspicious_indicators && analysis.suspicious_indicators.length > 0) {
-        message += `⚠️ Indicadores sospechosos:\n${analysis.suspicious_indicators.map(i => `  - ${i}`).join('\n')}\n\n`;
-      }
-
-      message += `¿Deseas aprobar manualmente esta orden?`;
-
-      if (confirm(message)) {
-        approveOrder(orderId);
-      }
-    } else {
-      // Error
-      showNotification('error', `Error: ${result.error || 'No se pudo verificar el comprobante'}`);
-    }
-
-  } catch (error) {
-    console.error('Error verifying with AI:', error);
-    showNotification('error', `Error al verificar: ${error.message}`);
-  } finally {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-  }
-}
 
 async function approveOrder(orderId) {
   // Find the order in state - check both filteredOrders and orders
@@ -2427,7 +2358,6 @@ async function bulkArchiveOrders(archiveStatus) {
 window.loadOrders = loadOrders;
 window.closeOrderDetail = closeOrderDetail;
 window.approveOrder = approveOrder;
-window.verifyWithAI = verifyWithAI;
 window.rejectOrder = rejectOrder;
 window.handleSearch = handleSearch;
 window.clearSearch = clearSearch;

@@ -13,6 +13,7 @@ import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-dr
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { calculateDeliveryDates } from '../utils/delivery-calculator.js';
 import { calculateTieredPrice, MOQ } from '../shared/pricing.js';
+import { verifyPaymentReceipt, isConfigured as isAIConfigured } from '../services/payment-receipt-verifier.js';
 
 const router = express.Router();
 
@@ -440,6 +441,109 @@ router.post('/orders/submit', async (req, res) => {
         console.error('❌ Failed to generate PDF receipt:', pdfError.message);
       }
     });
+
+    // 6c. AUTOMATIC AI VERIFICATION (background - don't block response)
+    // If customer uploaded a payment receipt, verify it automatically with Claude Vision
+    if (paymentProofUrl && paymentMethod === 'bank_transfer') {
+      setImmediate(async () => {
+        try {
+          // Wait a bit for the receipt image to be fully uploaded to Cloudinary
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          if (!isAIConfigured()) {
+            console.log('⚠️ AI verification skipped - Anthropic API not configured');
+            return;
+          }
+
+          console.log(`\n🤖 Starting automatic AI verification for order ${orderNumber}...`);
+          console.log(`   Receipt URL: ${paymentProofUrl}`);
+          console.log(`   Expected amount: $${depositAmount.toFixed(2)}`);
+
+          // Verify receipt with Claude Vision
+          const verificationResult = await verifyPaymentReceipt(
+            paymentProofUrl,
+            depositAmount,
+            orderNumber
+          );
+
+          if (!verificationResult.success) {
+            console.log(`⚠️ AI verification failed for order ${orderNumber}: ${verificationResult.error}`);
+            return;
+          }
+
+          console.log(`📊 AI Analysis result: ${verificationResult.recommendation}`);
+
+          // AUTO-APPROVE if verification passed
+          if (verificationResult.verified && verificationResult.recommendation === 'AUTO_APPROVE') {
+            console.log(`✅ AUTO-APPROVING order ${orderNumber} - Receipt verified by AI`);
+
+            // Update order to approved status
+            await query(
+              `UPDATE orders SET
+                approval_status = 'approved',
+                status = 'new',
+                department = 'design'
+               WHERE id = $1`,
+              [orderId]
+            );
+
+            // Send confirmation email to client
+            try {
+              // Get the generated PDF URL
+              const pdfResult = await query(
+                'SELECT receipt_pdf_url FROM orders WHERE id = $1',
+                [orderId]
+              );
+              const pdfUrl = pdfResult.rows[0]?.receipt_pdf_url;
+
+              if (clientEmail && pdfUrl) {
+                const remainingBalance = subtotal - depositAmount;
+                await emailSender.sendClientReceiptEmail(
+                  clientEmail,
+                  clientName,
+                  orderNumber,
+                  pdfUrl,
+                  {
+                    totalPrice: subtotal,
+                    depositAmount,
+                    remainingBalance,
+                    items: orderItems.map(item => ({
+                      productName: item.productName,
+                      quantity: item.quantity,
+                      unitPrice: item.unitPrice,
+                      lineTotal: item.lineTotal
+                    })),
+                    eventDate,
+                    eventType
+                  }
+                );
+                console.log(`📧 Confirmation email sent to ${clientEmail}`);
+              }
+            } catch (emailError) {
+              console.error('❌ Failed to send confirmation email:', emailError.message);
+            }
+
+            console.log(`🎉 Order ${orderNumber} automatically approved and client notified!`);
+
+            // Log the AI analysis details
+            if (verificationResult.analysis) {
+              console.log(`   Amount detected: $${verificationResult.analysis.amount_detected || 'N/A'}`);
+              console.log(`   Confidence: ${verificationResult.analysis.confidence_level}`);
+              console.log(`   Bank: ${verificationResult.analysis.source_bank || 'N/A'}`);
+            }
+
+          } else {
+            // Log why it wasn't auto-approved
+            console.log(`⏳ Order ${orderNumber} requires manual review`);
+            console.log(`   Reason: ${verificationResult.recommendation_reason}`);
+          }
+
+        } catch (aiError) {
+          console.error('❌ AI verification error:', aiError.message);
+          // Order remains in pending_review status - admin can review manually
+        }
+      });
+    }
 
     // 7. Response based on payment method
     const response = {
