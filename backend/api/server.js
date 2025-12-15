@@ -24,6 +24,7 @@ import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
 import { processReceipt } from '../services/receipt-ocr.js';
+import { verifyPaymentReceipt, isConfigured as isClaudeConfigured } from '../services/payment-receipt-verifier.js';
 import * as orderAlerts from '../agents/alerts/order-alerts.js';
 import * as skydropxService from '../services/skydropx.js';
 
@@ -1544,6 +1545,212 @@ app.post('/api/orders/:orderId/process-receipt', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error processing receipt:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ========================================
+// CLAUDE AI PAYMENT VERIFICATION (Smarter than OCR)
+// POST /api/orders/:orderId/verify-payment
+// Uses Claude Vision to analyze payment receipts
+// ========================================
+app.post('/api/orders/:orderId/verify-payment', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+
+    console.log(`\n🤖 Claude AI verifying payment for order ${orderId}...`);
+
+    // Check if Claude is configured
+    if (!isClaudeConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: 'Claude AI no está configurado. Falta ANTHROPIC_API_KEY.',
+        fallback: 'manual'
+      });
+    }
+
+    // Get order details
+    const orderResult = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.deposit_amount,
+        o.total_price,
+        o.payment_proof_url,
+        o.approval_status,
+        c.name as client_name,
+        c.email as client_email,
+        c.phone as client_phone
+      FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Orden no encontrada'
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Check if order has a receipt
+    if (!order.payment_proof_url) {
+      return res.status(400).json({
+        success: false,
+        error: 'No hay comprobante de pago para esta orden'
+      });
+    }
+
+    // Check if already approved
+    if (order.approval_status === 'approved') {
+      return res.json({
+        success: true,
+        verified: true,
+        autoApproved: false,
+        message: 'La orden ya está aprobada'
+      });
+    }
+
+    // Calculate expected deposit (use deposit_amount if set, otherwise 50% of total)
+    const expectedAmount = order.deposit_amount
+      ? parseFloat(order.deposit_amount)
+      : parseFloat(order.total_price) * 0.5;
+
+    console.log(`   Order: ${order.order_number}`);
+    console.log(`   Client: ${order.client_name}`);
+    console.log(`   Expected deposit: $${expectedAmount.toFixed(2)}`);
+    console.log(`   Receipt URL: ${order.payment_proof_url}`);
+
+    // Verify with Claude Vision
+    const verificationResult = await verifyPaymentReceipt(
+      order.payment_proof_url,
+      expectedAmount,
+      order.order_number
+    );
+
+    if (!verificationResult.success) {
+      return res.status(500).json({
+        success: false,
+        error: verificationResult.error || 'Error al verificar el comprobante',
+        recommendation: verificationResult.recommendation
+      });
+    }
+
+    // If Claude recommends auto-approve, do it
+    if (verificationResult.recommendation === 'AUTO_APPROVE' && order.approval_status !== 'approved') {
+      // Update deposit amount with the detected amount if available
+      const detectedAmount = verificationResult.analysis.amount_detected || expectedAmount;
+
+      // Get order items for receipt
+      const itemsResult = await query(`
+        SELECT
+          oi.*,
+          p.name as product_name
+        FROM order_items oi
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = $1
+      `, [orderId]);
+
+      const items = itemsResult.rows.map(item => ({
+        productName: item.product_name || item.product_name_override || 'Producto',
+        quantity: item.quantity,
+        unitPrice: parseFloat(item.unit_price),
+        lineTotal: parseFloat(item.line_total)
+      }));
+
+      const remainingBalance = parseFloat(order.total_price) - detectedAmount;
+
+      // Generate PDF receipt
+      console.log('📄 Generating PDF receipt for auto-approved order...');
+      const pdfPath = await generateReceipt({
+        orderNumber: order.order_number,
+        clientName: order.client_name,
+        clientEmail: order.client_email,
+        clientPhone: order.client_phone,
+        orderDate: order.order_date,
+        items: items,
+        totalPrice: parseFloat(order.total_price),
+        actualDepositAmount: detectedAmount,
+        remainingBalance: remainingBalance,
+        eventDate: order.event_date
+      });
+
+      const receiptUrl = getReceiptUrl(pdfPath);
+
+      // Update order status
+      await query(`
+        UPDATE orders
+        SET approval_status = 'approved',
+            status = 'in_production',
+            deposit_amount = $1,
+            deposit_paid = true,
+            receipt_pdf_url = $2
+        WHERE id = $3
+      `, [detectedAmount, receiptUrl, orderId]);
+
+      console.log(`✅ Order ${orderId} AUTO-APPROVED by Claude AI!`);
+      console.log(`   Detected amount: $${detectedAmount}`);
+      console.log(`   Receipt URL: ${receiptUrl}`);
+
+      // Send receipt email to client in background
+      setImmediate(async () => {
+        try {
+          await sendReceiptEmail(
+            {
+              orderNumber: order.order_number,
+              orderDate: order.order_date,
+              totalPrice: parseFloat(order.total_price),
+              actualDepositAmount: detectedAmount,
+              remainingBalance: remainingBalance,
+              eventDate: order.event_date
+            },
+            {
+              name: order.client_name,
+              email: order.client_email
+            },
+            pdfPath
+          );
+          console.log('✅ Receipt email sent to:', order.client_email);
+        } catch (emailError) {
+          console.error('❌ Failed to send receipt email:', emailError.message);
+        }
+      });
+
+      // Sync to Notion
+      try {
+        await notionSync.syncOrderToNotion(orderId);
+      } catch (notionError) {
+        console.error('Failed to sync to Notion:', notionError);
+      }
+
+      return res.json({
+        success: true,
+        verified: true,
+        autoApproved: true,
+        message: '✅ Comprobante verificado y orden aprobada automáticamente por IA',
+        analysis: verificationResult.analysis,
+        receiptUrl: receiptUrl,
+        detectedAmount: detectedAmount
+      });
+    }
+
+    // If not auto-approved, return the analysis for manual review
+    return res.json({
+      success: true,
+      verified: verificationResult.verified,
+      autoApproved: false,
+      message: verificationResult.recommendation_reason,
+      recommendation: verificationResult.recommendation,
+      analysis: verificationResult.analysis
+    });
+
+  } catch (error) {
+    console.error('❌ Error in Claude AI verification:', error);
     res.status(500).json({
       success: false,
       error: error.message

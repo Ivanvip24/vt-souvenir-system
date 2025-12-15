@@ -1,0 +1,285 @@
+/**
+ * Payment Receipt Verifier Service
+ * Uses Claude's Vision API to verify customer payment receipts and auto-approve orders
+ */
+
+import Anthropic from '@anthropic-ai/sdk';
+import fetch from 'node-fetch';
+
+let anthropicClient = null;
+
+/**
+ * Initialize the Anthropic client
+ */
+function initializeClient() {
+  if (anthropicClient) {
+    return anthropicClient;
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable not set');
+  }
+
+  anthropicClient = new Anthropic({
+    apiKey: apiKey
+  });
+
+  console.log('✅ Payment Receipt Verifier initialized');
+  return anthropicClient;
+}
+
+/**
+ * Download image from URL and convert to base64
+ */
+async function downloadImageAsBase64(imageUrl) {
+  try {
+    const response = await fetch(imageUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.status}`);
+    }
+
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+
+    let mediaType = 'image/jpeg';
+    if (contentType.includes('png')) mediaType = 'image/png';
+    else if (contentType.includes('gif')) mediaType = 'image/gif';
+    else if (contentType.includes('webp')) mediaType = 'image/webp';
+
+    return { base64, mediaType };
+  } catch (error) {
+    console.error('❌ Error downloading image:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Verify a payment receipt using Claude Vision
+ * @param {string} receiptImageUrl - URL of the payment receipt image
+ * @param {number} expectedAmount - Expected deposit amount
+ * @param {string} orderNumber - Order number for context
+ * @returns {Promise<Object>} - Verification result
+ */
+export async function verifyPaymentReceipt(receiptImageUrl, expectedAmount, orderNumber) {
+  try {
+    console.log(`🔍 Verifying payment receipt for order ${orderNumber}`);
+    console.log(`   Expected amount: $${expectedAmount}`);
+    console.log(`   Receipt URL: ${receiptImageUrl}`);
+
+    const client = initializeClient();
+
+    // Download and convert image to base64
+    const { base64, mediaType } = await downloadImageAsBase64(receiptImageUrl);
+
+    const systemPrompt = `Eres un experto verificador de comprobantes de pago bancarios mexicanos.
+Tu trabajo es analizar imágenes de comprobantes de transferencia/pago y extraer información clave.
+
+TIPOS DE COMPROBANTES QUE PUEDES ENCONTRAR:
+- Transferencias SPEI
+- Transferencias interbancarias
+- Depósitos en efectivo
+- Pagos con tarjeta
+- Comprobantes de apps bancarias (BBVA, Santander, Banamex, Banorte, etc.)
+- Comprobantes de apps de pago (Mercado Pago, PayPal, etc.)
+
+DEBES EXTRAER:
+1. El MONTO de la transferencia/pago (número exacto)
+2. La FECHA de la operación
+3. El FOLIO o número de operación (si existe)
+4. Si el comprobante parece LEGÍTIMO o sospechoso
+5. El nombre del DESTINATARIO (si aparece)
+6. El BANCO origen y destino (si aparece)
+
+RESPONDE SIEMPRE EN FORMATO JSON con esta estructura exacta:
+{
+  "is_valid_receipt": true/false,
+  "amount_detected": number or null,
+  "currency": "MXN" or other,
+  "date_detected": "YYYY-MM-DD" or null,
+  "folio_number": "string" or null,
+  "recipient_name": "string" or null,
+  "source_bank": "string" or null,
+  "destination_bank": "string" or null,
+  "confidence_level": "high" / "medium" / "low",
+  "suspicious_indicators": [],
+  "notes": "string with any relevant observations"
+}
+
+INDICADORES DE SOSPECHA (agregar a suspicious_indicators si detectas):
+- "edited_image" - Si la imagen parece manipulada o editada
+- "screenshot_of_screenshot" - Si es foto de pantalla borrosa
+- "mismatched_fonts" - Si las fuentes no son consistentes
+- "incomplete_info" - Si falta información importante
+- "unusual_format" - Si el formato no parece de un banco real
+- "amount_unclear" - Si el monto no es claramente legible
+
+Si NO puedes leer el monto o la imagen no es un comprobante de pago, marca is_valid_receipt como false.`;
+
+    const userPrompt = `Analiza este comprobante de pago.
+
+INFORMACIÓN DEL PEDIDO:
+- Número de pedido: ${orderNumber}
+- Monto esperado del anticipo: $${expectedAmount.toFixed(2)} MXN
+
+Verifica si:
+1. Es un comprobante de pago real y legítimo
+2. El monto coincide o es cercano al esperado ($${expectedAmount.toFixed(2)})
+3. No hay señales de manipulación
+
+Responde SOLO con el JSON estructurado.`;
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType,
+                data: base64
+              }
+            },
+            {
+              type: 'text',
+              text: userPrompt
+            }
+          ]
+        }
+      ],
+      system: systemPrompt
+    });
+
+    // Extract the response text
+    const responseText = response.content[0].text;
+    console.log('📝 Claude response:', responseText);
+
+    // Parse JSON from response
+    let analysisResult;
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        analysisResult = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.error('❌ Failed to parse Claude response:', parseError);
+      return {
+        success: false,
+        verified: false,
+        error: 'Error al procesar la respuesta del análisis',
+        raw_response: responseText
+      };
+    }
+
+    // Calculate amount match
+    const amountDetected = analysisResult.amount_detected;
+    let amountMatches = false;
+    let amountDifference = null;
+    let amountMatchPercentage = null;
+
+    if (amountDetected !== null && amountDetected !== undefined) {
+      amountDifference = Math.abs(amountDetected - expectedAmount);
+      amountMatchPercentage = (1 - (amountDifference / expectedAmount)) * 100;
+      // Allow 5% tolerance or $10 difference max
+      amountMatches = amountDifference <= 10 || amountMatchPercentage >= 95;
+    }
+
+    // Determine if we should auto-approve
+    const shouldAutoApprove =
+      analysisResult.is_valid_receipt === true &&
+      amountMatches &&
+      analysisResult.confidence_level !== 'low' &&
+      (!analysisResult.suspicious_indicators || analysisResult.suspicious_indicators.length === 0);
+
+    const result = {
+      success: true,
+      verified: shouldAutoApprove,
+      analysis: {
+        is_valid_receipt: analysisResult.is_valid_receipt,
+        amount_detected: amountDetected,
+        expected_amount: expectedAmount,
+        amount_matches: amountMatches,
+        amount_difference: amountDifference,
+        amount_match_percentage: amountMatchPercentage ? amountMatchPercentage.toFixed(1) : null,
+        date_detected: analysisResult.date_detected,
+        folio_number: analysisResult.folio_number,
+        recipient_name: analysisResult.recipient_name,
+        source_bank: analysisResult.source_bank,
+        destination_bank: analysisResult.destination_bank,
+        confidence_level: analysisResult.confidence_level,
+        suspicious_indicators: analysisResult.suspicious_indicators || [],
+        notes: analysisResult.notes
+      },
+      recommendation: shouldAutoApprove ? 'AUTO_APPROVE' : 'MANUAL_REVIEW',
+      recommendation_reason: getRecommendationReason(analysisResult, amountMatches, amountDifference)
+    };
+
+    console.log(`✅ Receipt verification complete: ${result.recommendation}`);
+    return result;
+
+  } catch (error) {
+    console.error('❌ Error verifying payment receipt:', error);
+    return {
+      success: false,
+      verified: false,
+      error: error.message,
+      recommendation: 'MANUAL_REVIEW',
+      recommendation_reason: `Error en análisis: ${error.message}`
+    };
+  }
+}
+
+/**
+ * Generate human-readable recommendation reason
+ */
+function getRecommendationReason(analysis, amountMatches, amountDifference) {
+  const reasons = [];
+
+  if (!analysis.is_valid_receipt) {
+    reasons.push('El comprobante no parece ser válido o no es legible');
+  }
+
+  if (!amountMatches) {
+    if (analysis.amount_detected === null) {
+      reasons.push('No se pudo detectar el monto en el comprobante');
+    } else {
+      reasons.push(`Diferencia de monto: $${amountDifference?.toFixed(2) || '?'}`);
+    }
+  }
+
+  if (analysis.confidence_level === 'low') {
+    reasons.push('Baja confianza en la lectura del comprobante');
+  }
+
+  if (analysis.suspicious_indicators && analysis.suspicious_indicators.length > 0) {
+    reasons.push(`Indicadores sospechosos: ${analysis.suspicious_indicators.join(', ')}`);
+  }
+
+  if (reasons.length === 0) {
+    return 'Comprobante válido, monto correcto, sin indicadores sospechosos';
+  }
+
+  return reasons.join('. ');
+}
+
+/**
+ * Check if Anthropic API is configured
+ */
+export function isConfigured() {
+  return !!process.env.ANTHROPIC_API_KEY;
+}
+
+export default {
+  verifyPaymentReceipt,
+  isConfigured
+};
