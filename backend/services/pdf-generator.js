@@ -49,6 +49,19 @@ const LOGO_PATH = path.join(__dirname, '../../frontend/assets/images/LOGO-01.png
 export async function generateReceipt(orderData) {
   return new Promise((resolve, reject) => {
     try {
+      // Ensure deposit amount is a valid number
+      const depositAmount = parseFloat(orderData.actualDepositAmount) || 0;
+      const totalPrice = parseFloat(orderData.totalPrice) || 0;
+      const remainingBalance = parseFloat(orderData.remainingBalance) || (totalPrice - depositAmount);
+
+      console.log(`📄 PDF Generator - Order: ${orderData.orderNumber}`);
+      console.log(`   Total: $${totalPrice}, Deposit: $${depositAmount}, Remaining: $${remainingBalance}`);
+
+      // Override with validated values
+      orderData.actualDepositAmount = depositAmount;
+      orderData.totalPrice = totalPrice;
+      orderData.remainingBalance = remainingBalance;
+
       const filename = `receipt-${orderData.orderNumber}-${Date.now()}.pdf`;
       const filepath = path.join(RECEIPTS_DIR, filename);
 

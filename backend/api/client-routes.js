@@ -403,7 +403,8 @@ router.post('/orders/submit', async (req, res) => {
     setImmediate(async () => {
       // Generate PDF receipt for admin to review (don't let this block response)
       try {
-        console.log(`📄 Generating PDF receipt for order ${orderNumber}...`);
+        console.log(`📄 Generating initial PDF receipt for order ${orderNumber}...`);
+        console.log(`   Subtotal: $${subtotal}, DepositAmount: $${depositAmount}`);
 
         const remainingBalance = subtotal - depositAmount;
 
