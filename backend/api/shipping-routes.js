@@ -524,9 +524,10 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
 
     // Allowed carriers - only show premium/reliable carriers
     const ALLOWED_CARRIERS = ['Estafeta', 'FedEx', 'Paquetexpress'];
-    const MAX_PRICE_THRESHOLD = 250; // Only show options under $250
+    const MAX_PRICE_THRESHOLD = 200; // Only show options under $200
+    const MAX_OPTIONS_TO_SHOW = 3;   // Show max 3 options
 
-    // Filter to allowed carriers and sort by price
+    // Filter to allowed carriers and sort by price (cheapest first)
     let allowedRates = quote.rates
       .filter(rate => {
         const isAllowedCarrier = ALLOWED_CARRIERS.some(
@@ -536,17 +537,17 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
       })
       .sort((a, b) => a.total_price - b.total_price);
 
-    // Filter to options under $250
-    let filteredRates = allowedRates.filter(rate => rate.total_price <= MAX_PRICE_THRESHOLD);
+    // Filter to options under $200
+    let filteredRates = allowedRates.filter(rate => rate.total_price < MAX_PRICE_THRESHOLD);
 
-    // If ALL options are over $250, only show the cheapest one
+    // If ALL options are $200 or more, only show the cheapest one
     if (filteredRates.length === 0 && allowedRates.length > 0) {
       filteredRates = [allowedRates[0]]; // Only the cheapest
-      console.log(`⚠️ All rates over $${MAX_PRICE_THRESHOLD}, showing only cheapest: ${allowedRates[0].carrier} $${allowedRates[0].total_price}`);
+      console.log(`⚠️ All rates >= $${MAX_PRICE_THRESHOLD}, showing only cheapest: ${allowedRates[0].carrier} $${allowedRates[0].total_price}`);
     }
 
-    // Limit to maxOptions
-    filteredRates = filteredRates.slice(0, parseInt(maxOptions));
+    // Limit to 3 cheapest options max
+    filteredRates = filteredRates.slice(0, MAX_OPTIONS_TO_SHOW);
 
     // Format for client display - NO PRICES SHOWN TO CLIENT
     const formattedRates = filteredRates.map((rate, index) => ({
