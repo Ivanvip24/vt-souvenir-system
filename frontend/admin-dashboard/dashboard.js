@@ -551,7 +551,10 @@ async function showOrderDetail(orderId) {
   const modalBody = document.getElementById('modal-body');
   const modalTitle = document.getElementById('modal-title');
 
-  modalTitle.textContent = order.orderNumber;
+  // Set modal title with PDF download button if available
+  modalTitle.innerHTML = order.receiptPdfUrl
+    ? `${order.orderNumber} <a href="${order.receiptPdfUrl}" target="_blank" download style="margin-left: 12px; padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📄 PDF</a>`
+    : order.orderNumber;
 
   // Calculate profit
   const profit = order.totalPrice - order.totalProductionCost;
@@ -963,30 +966,6 @@ async function showOrderDetail(orderId) {
         `}
       </div>
     </div>
-
-    <!-- PDF Receipt Download -->
-    ${order.receiptPdfUrl ? `
-      <div class="detail-section">
-        <h3>📄 Recibo PDF</h3>
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white;">
-          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-            <div style="font-size: 48px;">📄</div>
-            <div style="flex: 1;">
-              <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">Recibo del Pedido</div>
-              <div style="font-size: 13px; opacity: 0.9;">
-                Generado automáticamente al crear el pedido
-              </div>
-            </div>
-          </div>
-          <a href="${order.receiptPdfUrl}"
-             target="_blank"
-             download
-             style="display: block; background: white; color: #667eea; padding: 14px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-            📥 Descargar Recibo PDF
-          </a>
-        </div>
-      </div>
-    ` : ''}
 
     <!-- Order Items / Products Section -->
     <div class="detail-section">
