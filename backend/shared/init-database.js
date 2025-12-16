@@ -135,6 +135,10 @@ CREATE TABLE IF NOT EXISTS order_items (
   quantity_verified INTEGER DEFAULT 0,
   quantity_shipped INTEGER DEFAULT 0,
 
+  -- Item-level notes and attachments (JSON array of URLs)
+  notes TEXT,
+  attachments TEXT, -- JSON array of {url, filename, type}
+
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

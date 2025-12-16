@@ -801,27 +801,129 @@ async function showOrderDetail(orderId) {
 
     <!-- Order Items -->
     <div class="detail-section">
-      <h3>Productos</h3>
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Cantidad</th>
-            <th>Precio Unit.</th>
-            <th>Total</th>
+      <h3>📦 Productos del Pedido</h3>
+      <div id="order-items-container-${order.id}" style="display: flex; flex-direction: column; gap: 16px;">
+        ${order.items.map((item, index) => {
+          const attachments = item.attachments ? (typeof item.attachments === 'string' ? JSON.parse(item.attachments) : item.attachments) : [];
+          return `
+          <div class="product-item-card" style="background: white; border: 2px solid var(--gray-200); border-radius: 12px; overflow: hidden;">
+            <!-- Product Header -->
+            <div style="background: linear-gradient(135deg, var(--primary) 0%, #9c27b0 100%); padding: 16px; color: white;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 18px; font-weight: 700;">${item.productName}</div>
+                  <div style="font-size: 14px; opacity: 0.9;">Cantidad: ${item.quantity} pzas</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 14px; opacity: 0.8;">Total</div>
+                  <div style="font-size: 20px; font-weight: 700;">${formatCurrency(item.lineTotal)}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product Details -->
+            <div style="padding: 16px;">
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+                <div style="background: var(--gray-50); padding: 10px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase;">Precio Unit.</div>
+                  <div style="font-size: 15px; font-weight: 600; color: var(--gray-800);">${formatCurrency(item.unitPrice)}</div>
+                </div>
+                <div style="background: var(--gray-50); padding: 10px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase;">Costo Unit.</div>
+                  <div style="font-size: 15px; font-weight: 600; color: var(--gray-800);">${formatCurrency(item.unitCost || 0)}</div>
+                </div>
+                <div style="background: #d1fae5; padding: 10px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 11px; color: #065f46; text-transform: uppercase;">Ganancia</div>
+                  <div style="font-size: 15px; font-weight: 600; color: #059669;">${formatCurrency(item.lineProfit || 0)}</div>
+                </div>
+              </div>
+
+              <!-- Notes Section -->
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
+                  📝 Notas del producto
+                </label>
+                <textarea
+                  id="item-notes-${order.id}-${item.id}"
+                  placeholder="Agregar notas, instrucciones especiales, detalles de diseño..."
+                  style="width: 100%; min-height: 80px; padding: 12px; border: 2px solid var(--gray-200); border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit;"
+                  onchange="updateItemNotes(${order.id}, ${item.id}, this.value)"
+                >${item.notes || ''}</textarea>
+              </div>
+
+              <!-- Attachments Section -->
+              <div>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
+                  📎 Archivos adjuntos
+                </label>
+
+                <!-- Existing Attachments -->
+                <div id="item-attachments-${order.id}-${item.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                  ${attachments.length > 0 ? attachments.map(att => `
+                    <div style="position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 2px solid var(--gray-200);">
+                      <img src="${att.url}" alt="${att.filename || 'Adjunto'}"
+                           style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                           onclick="window.open('${att.url}', '_blank')">
+                      <button onclick="removeItemAttachment(${order.id}, ${item.id}, '${att.url}')"
+                              style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgba(239, 68, 68, 0.9); color: white; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">
+                        ×
+                      </button>
+                    </div>
+                  `).join('') : '<span style="font-size: 13px; color: var(--gray-400);">Sin archivos adjuntos</span>'}
+                </div>
+
+                <!-- Upload Area -->
+                <div id="item-upload-${order.id}-${item.id}"
+                     style="border: 2px dashed var(--gray-300); border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s;"
+                     onclick="document.getElementById('item-file-input-${order.id}-${item.id}').click()"
+                     ondragover="handleItemDragOver(event, ${order.id}, ${item.id})"
+                     ondragleave="handleItemDragLeave(event, ${order.id}, ${item.id})"
+                     ondrop="handleItemDrop(event, ${order.id}, ${item.id})">
+                  <div style="font-size: 24px; margin-bottom: 4px;">📤</div>
+                  <div style="font-size: 13px; color: var(--gray-600);">Arrastra o haz clic para subir</div>
+                  <div style="font-size: 11px; color: var(--gray-400);">JPG, PNG, PDF (máx 10MB)</div>
+                </div>
+                <input type="file"
+                       id="item-file-input-${order.id}-${item.id}"
+                       accept="image/*,.pdf"
+                       style="display: none;"
+                       onchange="handleItemFileUpload(event, ${order.id}, ${item.id})">
+
+                <!-- Paste button -->
+                <div style="margin-top: 8px; text-align: center;">
+                  <button onclick="pasteItemAttachment(${order.id}, ${item.id})"
+                          style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-600);">
+                    📋 Pegar del portapapeles
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        }).join('')}
+      </div>
+
+      <!-- Summary Table -->
+      <div style="margin-top: 16px; background: var(--gray-50); padding: 12px; border-radius: 8px;">
+        <table style="width: 100%; font-size: 14px;">
+          <tr style="border-bottom: 1px solid var(--gray-200);">
+            <th style="text-align: left; padding: 8px 0; color: var(--gray-600);">Producto</th>
+            <th style="text-align: center; padding: 8px 0; color: var(--gray-600);">Cantidad</th>
+            <th style="text-align: right; padding: 8px 0; color: var(--gray-600);">Subtotal</th>
           </tr>
-        </thead>
-        <tbody>
           ${order.items.map(item => `
             <tr>
-              <td>${item.productName}</td>
-              <td>${item.quantity}</td>
-              <td>${formatCurrency(item.unitPrice)}</td>
-              <td><strong>${formatCurrency(item.lineTotal)}</strong></td>
+              <td style="padding: 6px 0;">${item.productName}</td>
+              <td style="text-align: center; padding: 6px 0;">${item.quantity}</td>
+              <td style="text-align: right; padding: 6px 0; font-weight: 600;">${formatCurrency(item.lineTotal)}</td>
             </tr>
           `).join('')}
-        </tbody>
-      </table>
+          <tr style="border-top: 2px solid var(--gray-300);">
+            <td colspan="2" style="padding: 8px 0; font-weight: 700;">Total</td>
+            <td style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(order.totalPrice)}</td>
+          </tr>
+        </table>
+      </div>
     </div>
 
     <!-- Financial Summary -->
@@ -1491,6 +1593,242 @@ async function removeProductionSheet(orderId) {
 
   } catch (error) {
     console.error('Error removing production sheet:', error);
+    alert(`Error: ${error.message}`);
+  }
+}
+
+// ==========================================
+// ORDER ITEM NOTES & ATTACHMENTS FUNCTIONS
+// ==========================================
+
+// Debounce timer for auto-saving notes
+let notesSaveTimers = {};
+
+async function updateItemNotes(orderId, itemId, notes) {
+  // Clear existing timer for this item
+  const timerKey = `${orderId}-${itemId}`;
+  if (notesSaveTimers[timerKey]) {
+    clearTimeout(notesSaveTimers[timerKey]);
+  }
+
+  // Debounce: save after 1 second of no typing
+  notesSaveTimers[timerKey] = setTimeout(async () => {
+    try {
+      console.log(`📝 Saving notes for item ${itemId}...`);
+
+      const response = await fetch(`${API_BASE}/orders/${orderId}/items/${itemId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ notes })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error al guardar notas');
+      }
+
+      // Update local state
+      const order = state.orders.find(o => o.id == orderId);
+      if (order) {
+        const item = order.items.find(i => i.id == itemId);
+        if (item) {
+          item.notes = notes;
+        }
+      }
+
+      console.log('✅ Notes saved successfully');
+
+      // Show brief success feedback
+      const textarea = document.getElementById(`item-notes-${orderId}-${itemId}`);
+      if (textarea) {
+        textarea.style.borderColor = '#10b981';
+        setTimeout(() => {
+          textarea.style.borderColor = 'var(--gray-200)';
+        }, 1500);
+      }
+
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      // Show error feedback
+      const textarea = document.getElementById(`item-notes-${orderId}-${itemId}`);
+      if (textarea) {
+        textarea.style.borderColor = '#ef4444';
+      }
+    }
+  }, 1000);
+}
+
+function handleItemDragOver(event, orderId, itemId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const uploadArea = document.getElementById(`item-upload-${orderId}-${itemId}`);
+  if (uploadArea) {
+    uploadArea.style.borderColor = 'var(--primary)';
+    uploadArea.style.background = 'rgba(233, 30, 99, 0.05)';
+  }
+}
+
+function handleItemDragLeave(event, orderId, itemId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const uploadArea = document.getElementById(`item-upload-${orderId}-${itemId}`);
+  if (uploadArea) {
+    uploadArea.style.borderColor = 'var(--gray-300)';
+    uploadArea.style.background = 'transparent';
+  }
+}
+
+async function handleItemDrop(event, orderId, itemId) {
+  event.preventDefault();
+  event.stopPropagation();
+  handleItemDragLeave(event, orderId, itemId);
+
+  const files = event.dataTransfer.files;
+  if (files.length > 0) {
+    await uploadItemAttachment(files[0], orderId, itemId);
+  }
+}
+
+async function handleItemFileUpload(event, orderId, itemId) {
+  const file = event.target.files[0];
+  if (file) {
+    await uploadItemAttachment(file, orderId, itemId);
+  }
+}
+
+async function pasteItemAttachment(orderId, itemId) {
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const item of clipboardItems) {
+      const imageType = item.types.find(type => type.startsWith('image/'));
+      if (imageType) {
+        const blob = await item.getType(imageType);
+        const file = new File([blob], `item-${itemId}-attachment.png`, { type: imageType });
+        await uploadItemAttachment(file, orderId, itemId);
+        return;
+      }
+    }
+    alert('No se encontró imagen en el portapapeles. Copia una imagen primero.');
+  } catch (error) {
+    console.error('Error reading clipboard:', error);
+    alert('No se pudo acceder al portapapeles. Intenta arrastrando el archivo.');
+  }
+}
+
+async function uploadItemAttachment(file, orderId, itemId) {
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+  if (!validTypes.includes(file.type)) {
+    alert('Tipo de archivo no válido. Solo se aceptan imágenes (JPG, PNG, GIF, WebP) y PDF.');
+    return;
+  }
+
+  // Validate file size (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('El archivo es demasiado grande. Máximo 10MB.');
+    return;
+  }
+
+  // Show loading state in upload area
+  const uploadArea = document.getElementById(`item-upload-${orderId}-${itemId}`);
+  const originalContent = uploadArea.innerHTML;
+  uploadArea.innerHTML = `
+    <div class="spinner" style="margin: 0 auto;"></div>
+    <div style="font-size: 13px; color: var(--gray-600); margin-top: 8px;">Subiendo...</div>
+  `;
+
+  try {
+    // Upload file to Cloudinary via backend
+    const formData = new FormData();
+    formData.append('receipt', file);
+
+    const uploadResponse = await fetch(`${API_BASE.replace('/api', '')}/api/client/upload/payment-receipt`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!uploadResponse.ok) {
+      const errorData = await uploadResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error al subir el archivo');
+    }
+
+    const uploadData = await uploadResponse.json();
+    const fileUrl = uploadData.url;
+
+    // Save attachment to backend
+    const response = await fetch(`${API_BASE}/orders/${orderId}/items/${itemId}/attachment`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        url: fileUrl,
+        filename: file.name,
+        type: file.type.startsWith('image/') ? 'image' : 'pdf'
+      })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al guardar el archivo');
+    }
+
+    // Update local state
+    const order = state.orders.find(o => o.id == orderId);
+    if (order) {
+      const item = order.items.find(i => i.id == itemId);
+      if (item) {
+        item.attachments = JSON.stringify(result.attachments);
+      }
+    }
+
+    // Refresh the order detail view
+    showOrderDetail(orderId);
+
+    console.log('✅ Attachment uploaded:', fileUrl);
+
+  } catch (error) {
+    console.error('Error uploading attachment:', error);
+    alert(`Error: ${error.message}`);
+    // Restore original upload area
+    uploadArea.innerHTML = originalContent;
+  }
+}
+
+async function removeItemAttachment(orderId, itemId, url) {
+  if (!confirm('¿Eliminar este archivo adjunto?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}/items/${itemId}/attachment`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ url })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al eliminar');
+    }
+
+    // Update local state
+    const order = state.orders.find(o => o.id == orderId);
+    if (order) {
+      const item = order.items.find(i => i.id == itemId);
+      if (item) {
+        item.attachments = result.attachments.length > 0 ? JSON.stringify(result.attachments) : null;
+      }
+    }
+
+    // Refresh the order detail view
+    showOrderDetail(orderId);
+
+    console.log('✅ Attachment removed');
+
+  } catch (error) {
+    console.error('Error removing attachment:', error);
     alert(`Error: ${error.message}`);
   }
 }

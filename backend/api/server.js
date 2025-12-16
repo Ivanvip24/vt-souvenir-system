@@ -241,7 +241,9 @@ app.get('/api/orders', async (req, res) => {
             'unitCost', oi.unit_cost,
             'lineTotal', oi.line_total,
             'lineCost', oi.line_cost,
-            'lineProfit', oi.line_profit
+            'lineProfit', oi.line_profit,
+            'notes', oi.notes,
+            'attachments', oi.attachments
           ) ORDER BY oi.id
         ) FILTER (WHERE oi.id IS NOT NULL) as items
       FROM orders o
@@ -1334,6 +1336,202 @@ app.delete('/api/orders/:orderId/production-sheet', async (req, res) => {
     });
   } catch (error) {
     console.error('Error removing production sheet:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ========================================
+// ORDER ITEM NOTES AND ATTACHMENTS
+// ========================================
+
+/**
+ * PUT /api/orders/:orderId/items/:itemId
+ * Update notes and attachments for a specific order item
+ */
+app.put('/api/orders/:orderId/items/:itemId', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const itemId = parseInt(req.params.itemId);
+    const { notes, attachments } = req.body;
+
+    console.log(`📝 Updating item ${itemId} for order ${orderId}:`, { notes, attachments });
+
+    // Verify the item belongs to the order
+    const itemCheck = await query(
+      'SELECT id FROM order_items WHERE id = $1 AND order_id = $2',
+      [itemId, orderId]
+    );
+
+    if (itemCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Item not found in this order'
+      });
+    }
+
+    // Update the item
+    const updateResult = await query(`
+      UPDATE order_items
+      SET notes = $1, attachments = $2
+      WHERE id = $3
+      RETURNING id, notes, attachments
+    `, [notes || null, attachments ? JSON.stringify(attachments) : null, itemId]);
+
+    console.log('✅ Item updated successfully');
+
+    res.json({
+      success: true,
+      item: updateResult.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error updating order item:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/orders/:orderId/items/:itemId/attachment
+ * Add an attachment to an order item
+ */
+app.post('/api/orders/:orderId/items/:itemId/attachment', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const itemId = parseInt(req.params.itemId);
+    const { url, filename, type } = req.body;
+
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL is required'
+      });
+    }
+
+    console.log(`📎 Adding attachment to item ${itemId}:`, { url, filename, type });
+
+    // Get current attachments
+    const itemResult = await query(
+      'SELECT attachments FROM order_items WHERE id = $1 AND order_id = $2',
+      [itemId, orderId]
+    );
+
+    if (itemResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Item not found in this order'
+      });
+    }
+
+    // Parse existing attachments or create empty array
+    let attachments = [];
+    if (itemResult.rows[0].attachments) {
+      try {
+        attachments = JSON.parse(itemResult.rows[0].attachments);
+      } catch (e) {
+        attachments = [];
+      }
+    }
+
+    // Add new attachment
+    attachments.push({
+      url,
+      filename: filename || 'attachment',
+      type: type || 'image',
+      addedAt: new Date().toISOString()
+    });
+
+    // Save updated attachments
+    const updateResult = await query(`
+      UPDATE order_items
+      SET attachments = $1
+      WHERE id = $2
+      RETURNING id, attachments
+    `, [JSON.stringify(attachments), itemId]);
+
+    console.log('✅ Attachment added successfully');
+
+    res.json({
+      success: true,
+      attachments: JSON.parse(updateResult.rows[0].attachments)
+    });
+
+  } catch (error) {
+    console.error('Error adding attachment:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/orders/:orderId/items/:itemId/attachment
+ * Remove an attachment from an order item
+ */
+app.delete('/api/orders/:orderId/items/:itemId/attachment', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const itemId = parseInt(req.params.itemId);
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL is required'
+      });
+    }
+
+    console.log(`🗑️ Removing attachment from item ${itemId}:`, url);
+
+    // Get current attachments
+    const itemResult = await query(
+      'SELECT attachments FROM order_items WHERE id = $1 AND order_id = $2',
+      [itemId, orderId]
+    );
+
+    if (itemResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Item not found in this order'
+      });
+    }
+
+    // Parse existing attachments
+    let attachments = [];
+    if (itemResult.rows[0].attachments) {
+      try {
+        attachments = JSON.parse(itemResult.rows[0].attachments);
+      } catch (e) {
+        attachments = [];
+      }
+    }
+
+    // Remove the attachment
+    attachments = attachments.filter(a => a.url !== url);
+
+    // Save updated attachments
+    const updateResult = await query(`
+      UPDATE order_items
+      SET attachments = $1
+      WHERE id = $2
+      RETURNING id, attachments
+    `, [attachments.length > 0 ? JSON.stringify(attachments) : null, itemId]);
+
+    console.log('✅ Attachment removed successfully');
+
+    res.json({
+      success: true,
+      attachments: updateResult.rows[0].attachments ? JSON.parse(updateResult.rows[0].attachments) : []
+    });
+
+  } catch (error) {
+    console.error('Error removing attachment:', error);
     res.status(500).json({
       success: false,
       error: error.message
