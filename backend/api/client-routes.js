@@ -907,7 +907,7 @@ router.post('/orders/lookup', async (req, res) => {
 
     const clientWhereClause = clientConditions.join(' OR ');
 
-    // FIRST: Get client info directly (always returns if client exists)
+    // FIRST: Get ALL matching clients (may have multiple with same email/phone)
     const clientResult = await query(`
       SELECT
         id,
@@ -924,7 +924,7 @@ router.post('/orders/lookup', async (req, res) => {
         reference_notes
       FROM clients
       WHERE ${clientWhereClause}
-      LIMIT 1
+      ORDER BY id DESC
     `, clientParams);
 
     // If no client found at all
@@ -937,9 +937,13 @@ router.post('/orders/lookup', async (req, res) => {
       });
     }
 
+    // Use the most recent client for clientInfo
     const clientData = clientResult.rows[0];
 
-    // SECOND: Get active orders for this client (with shipping label info)
+    // Get all client IDs to search for orders across all matching clients
+    const clientIds = clientResult.rows.map(c => c.id);
+
+    // SECOND: Get active orders for ALL matching clients (with shipping label info)
     const ordersResult = await query(`
       SELECT
         o.id,
@@ -954,6 +958,7 @@ router.post('/orders/lookup', async (req, res) => {
         o.deposit_paid,
         o.payment_method,
         o.second_payment_proof_url,
+        c.name as client_name,
         (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as shipping_labels_count,
         (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id AND sl.tracking_number IS NOT NULL) as labels_with_tracking,
         json_agg(
@@ -965,12 +970,13 @@ router.post('/orders/lookup', async (req, res) => {
         ) FILTER (WHERE oi.id IS NOT NULL) as items
       FROM orders o
       LEFT JOIN order_items oi ON o.id = oi.order_id
-      WHERE o.client_id = $1
+      LEFT JOIN clients c ON o.client_id = c.id
+      WHERE o.client_id = ANY($1)
         AND (o.archive_status IS NULL OR o.archive_status = 'active')
         AND o.approval_status != 'rejected'
-      GROUP BY o.id
+      GROUP BY o.id, c.name
       ORDER BY o.created_at DESC
-    `, [clientData.id]);
+    `, [clientIds]);
 
     // Format orders with payment status
     const orders = ordersResult.rows.map(order => ({
@@ -991,7 +997,7 @@ router.post('/orders/lookup', async (req, res) => {
       depositAmountFormatted: formatCurrency(order.deposit_amount),
       remainingBalanceFormatted: formatCurrency(order.total_price - order.deposit_amount),
       items: order.items || [],
-      clientName: clientData.name,
+      clientName: order.client_name || clientData.name,
       // Shipping fields
       secondPaymentReceipt: order.second_payment_proof_url,
       secondPaymentReceived: !!order.second_payment_proof_url, // Derived from having a receipt URL
