@@ -833,137 +833,91 @@ async function showOrderDetail(orderId) {
       </div>
     </div>
 
-    <!-- Payment Proof (First Deposit) -->
+    <!-- Payment Proofs - Two Column Layout -->
     <div class="detail-section">
-      <h3>💳 Comprobante de Anticipo (50%)</h3>
-      <div id="first-payment-container-${order.id}" style="background: var(--gray-50); padding: 16px; border-radius: 12px;">
-        ${order.paymentProofUrl ? `
-          <div style="text-align: center;">
-            <img src="${order.paymentProofUrl}"
-                 alt="Comprobante de pago"
-                 style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer;"
-                 onclick="window.open('${order.paymentProofUrl}', '_blank')">
-            <div style="margin-top: 12px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-              <a href="${order.paymentProofUrl}"
-                 target="_blank"
-                 style="color: var(--primary); font-size: 14px; font-weight: 600; text-decoration: none;">
-                📥 Descargar
-              </a>
-              <button onclick="replacePaymentReceipt(${order.id}, 'first')"
-                      style="background: none; border: none; color: var(--gray-500); font-size: 14px; cursor: pointer;">
-                🔄 Reemplazar
-              </button>
-            </div>
+      <h3>💳 Comprobantes de Pago</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <!-- First Payment (Anticipo 50%) -->
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--gray-600); margin-bottom: 8px; text-transform: uppercase;">
+            Anticipo (50%)
           </div>
-        ` : `
-          <div id="first-payment-upload-${order.id}"
-               style="border: 2px dashed var(--gray-300); border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer;"
-               onclick="document.getElementById('first-payment-input-${order.id}').click()"
-               ondragover="handlePaymentDragOver(event, ${order.id}, 'first')"
-               ondragleave="handlePaymentDragLeave(event, ${order.id}, 'first')"
-               ondrop="handlePaymentDrop(event, ${order.id}, 'first')">
-            <div style="font-size: 36px; margin-bottom: 8px;">📤</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px;">
-              Subir comprobante de anticipo
-            </div>
-            <div style="font-size: 12px; color: var(--gray-500);">
-              Arrastra o haz clic para seleccionar
-            </div>
-          </div>
-          <input type="file" id="first-payment-input-${order.id}" accept="image/*" style="display: none;"
-                 onchange="handlePaymentUpload(event, ${order.id}, 'first')">
-          <div style="margin-top: 10px; text-align: center;">
-            <button onclick="pastePaymentReceipt(${order.id}, 'first')"
-                    style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-600);">
-              📋 Pegar del portapapeles
-            </button>
-          </div>
-        `}
-      </div>
-    </div>
-
-    <!-- Second Payment Receipt -->
-    <div class="detail-section">
-      <h3>💰 Comprobante de Pago Final (50%)</h3>
-      <div id="second-payment-container-${order.id}" style="background: var(--gray-50); padding: 16px; border-radius: 12px;">
-        ${order.secondPaymentReceipt ? `
-          <div style="background: #fef3c7; border: 2px solid #fb923c; padding: 16px; border-radius: 12px;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-              <span style="font-size: 28px;">💳</span>
-              <div>
-                <div style="font-size: 15px; font-weight: 700; color: #92400e;">Pago Final Recibido</div>
-                <div style="font-size: 12px; color: #92400e;">
-                  ${order.secondPaymentDate ? `Subido: ${formatDate(order.secondPaymentDate)}` : ''}
+          <div id="first-payment-container-${order.id}" style="background: var(--gray-50); padding: 12px; border-radius: 10px; min-height: 180px;">
+            ${order.paymentProofUrl ? `
+              <div style="text-align: center;">
+                <img src="${order.paymentProofUrl}"
+                     alt="Comprobante de anticipo"
+                     style="max-width: 100%; max-height: 200px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); cursor: pointer;"
+                     onclick="window.open('${order.paymentProofUrl}', '_blank')">
+                <div style="margin-top: 8px; display: flex; gap: 8px; justify-content: center;">
+                  <a href="${order.paymentProofUrl}" target="_blank" style="color: var(--primary); font-size: 12px; font-weight: 600; text-decoration: none;">📥</a>
+                  <button onclick="replacePaymentReceipt(${order.id}, 'first')" style="background: none; border: none; color: var(--gray-500); font-size: 12px; cursor: pointer;">🔄</button>
                 </div>
               </div>
-            </div>
+            ` : `
+              <div id="first-payment-upload-${order.id}"
+                   style="border: 2px dashed var(--gray-300); border-radius: 8px; padding: 20px 12px; text-align: center; cursor: pointer; min-height: 120px; display: flex; flex-direction: column; justify-content: center;"
+                   onclick="document.getElementById('first-payment-input-${order.id}').click()"
+                   ondragover="handlePaymentDragOver(event, ${order.id}, 'first')"
+                   ondragleave="handlePaymentDragLeave(event, ${order.id}, 'first')"
+                   ondrop="handlePaymentDrop(event, ${order.id}, 'first')">
+                <div style="font-size: 28px; margin-bottom: 4px;">📤</div>
+                <div style="font-size: 12px; font-weight: 600; color: var(--gray-700);">Subir anticipo</div>
+                <div style="font-size: 11px; color: var(--gray-500);">Arrastra o clic</div>
+              </div>
+              <input type="file" id="first-payment-input-${order.id}" accept="image/*" style="display: none;" onchange="handlePaymentUpload(event, ${order.id}, 'first')">
+              <div style="margin-top: 6px; text-align: center;">
+                <button onclick="pastePaymentReceipt(${order.id}, 'first')" style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; color: var(--gray-600);">📋 Pegar</button>
+              </div>
+            `}
+          </div>
+        </div>
 
-            <div style="background: white; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 12px;">
-              <img src="${order.secondPaymentReceipt}"
-                   alt="Comprobante de pago final"
-                   style="max-width: 100%; max-height: 350px; border-radius: 8px; cursor: pointer;"
-                   onclick="window.open('${order.secondPaymentReceipt}', '_blank')">
-              <div style="margin-top: 10px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                <a href="${order.secondPaymentReceipt}"
-                   target="_blank"
-                   style="color: var(--primary); font-size: 13px; font-weight: 600; text-decoration: none;">
-                  📥 Descargar
-                </a>
-                <button onclick="replacePaymentReceipt(${order.id}, 'second')"
-                        style="background: none; border: none; color: var(--gray-500); font-size: 13px; cursor: pointer;">
-                  🔄 Reemplazar
-                </button>
-              </div>
-            </div>
-
-            ${order.secondPaymentStatus === 'uploaded' ? `
-              <div style="background: #fff; border: 2px solid #059669; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                <div style="font-size: 13px; font-weight: 600; color: #065f46; margin-bottom: 4px;">
-                  ⚠️ Este pago requiere confirmación
+        <!-- Second Payment (Pago Final 50%) -->
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--gray-600); margin-bottom: 8px; text-transform: uppercase;">
+            Pago Final (50%)
+          </div>
+          <div id="second-payment-container-${order.id}" style="background: var(--gray-50); padding: 12px; border-radius: 10px; min-height: 180px;">
+            ${order.secondPaymentReceipt ? `
+              <div style="background: ${order.secondPaymentStatus === 'confirmed' ? '#d1fae5' : '#fef3c7'}; border: 2px solid ${order.secondPaymentStatus === 'confirmed' ? '#059669' : '#fb923c'}; padding: 10px; border-radius: 8px;">
+                <div style="text-align: center; margin-bottom: 8px;">
+                  <img src="${order.secondPaymentReceipt}"
+                       alt="Comprobante final"
+                       style="max-width: 100%; max-height: 150px; border-radius: 6px; cursor: pointer;"
+                       onclick="window.open('${order.secondPaymentReceipt}', '_blank')">
+                  <div style="margin-top: 6px; display: flex; gap: 8px; justify-content: center;">
+                    <a href="${order.secondPaymentReceipt}" target="_blank" style="color: var(--primary); font-size: 12px; font-weight: 600; text-decoration: none;">📥</a>
+                    <button onclick="replacePaymentReceipt(${order.id}, 'second')" style="background: none; border: none; color: var(--gray-500); font-size: 12px; cursor: pointer;">🔄</button>
+                  </div>
                 </div>
-                <div style="font-size: 12px; color: #065f46;">
-                  Revisa el comprobante y confirma que el pago se ha completado.
-                </div>
+                ${order.secondPaymentStatus === 'uploaded' ? `
+                  <button class="btn btn-success" onclick="confirmSecondPayment(${order.id})" style="width: 100%; padding: 8px; font-size: 12px;">✅ Confirmar Pago</button>
+                ` : order.secondPaymentStatus === 'confirmed' ? `
+                  <div style="text-align: center; font-size: 12px; font-weight: 700; color: #065f46;">✅ Confirmado</div>
+                ` : ''}
               </div>
-              <button class="btn btn-success" onclick="confirmSecondPayment(${order.id})" style="width: 100%; padding: 12px; font-size: 14px;">
-                ✅ Confirmar Pago y Completar Pedido
-              </button>
-            ` : order.secondPaymentStatus === 'confirmed' ? `
-              <div style="background: #d1fae5; border: 2px solid #059669; padding: 12px; border-radius: 8px; text-align: center;">
-                <div style="font-size: 18px; margin-bottom: 4px;">✅</div>
-                <div style="font-size: 14px; font-weight: 700; color: #065f46;">Pago Confirmado</div>
+            ` : `
+              <div style="margin-bottom: 8px; padding: 8px; background: #fff7ed; border-radius: 6px; text-align: center;">
+                <div style="font-size: 11px; color: #9a3412;">Restante: <strong>${formatCurrency(order.totalPrice - order.depositAmount)}</strong></div>
               </div>
-            ` : ''}
+              <div id="second-payment-upload-${order.id}"
+                   style="border: 2px dashed var(--gray-300); border-radius: 8px; padding: 20px 12px; text-align: center; cursor: pointer; min-height: 100px; display: flex; flex-direction: column; justify-content: center;"
+                   onclick="document.getElementById('second-payment-input-${order.id}').click()"
+                   ondragover="handlePaymentDragOver(event, ${order.id}, 'second')"
+                   ondragleave="handlePaymentDragLeave(event, ${order.id}, 'second')"
+                   ondrop="handlePaymentDrop(event, ${order.id}, 'second')">
+                <div style="font-size: 28px; margin-bottom: 4px;">📤</div>
+                <div style="font-size: 12px; font-weight: 600; color: var(--gray-700);">Subir pago final</div>
+                <div style="font-size: 11px; color: var(--gray-500);">Arrastra o clic</div>
+              </div>
+              <input type="file" id="second-payment-input-${order.id}" accept="image/*" style="display: none;" onchange="handlePaymentUpload(event, ${order.id}, 'second')">
+              <div style="margin-top: 6px; text-align: center;">
+                <button onclick="pastePaymentReceipt(${order.id}, 'second')" style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; color: var(--gray-600);">📋 Pegar</button>
+              </div>
+            `}
           </div>
-        ` : `
-          <div style="margin-bottom: 12px; padding: 12px; background: #fff7ed; border-radius: 8px; text-align: center;">
-            <div style="font-size: 13px; color: #9a3412;">
-              Saldo restante: <strong>${formatCurrency(order.totalPrice - order.depositAmount)}</strong>
-            </div>
-          </div>
-          <div id="second-payment-upload-${order.id}"
-               style="border: 2px dashed var(--gray-300); border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer;"
-               onclick="document.getElementById('second-payment-input-${order.id}').click()"
-               ondragover="handlePaymentDragOver(event, ${order.id}, 'second')"
-               ondragleave="handlePaymentDragLeave(event, ${order.id}, 'second')"
-               ondrop="handlePaymentDrop(event, ${order.id}, 'second')">
-            <div style="font-size: 36px; margin-bottom: 8px;">📤</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px;">
-              Subir comprobante de pago final
-            </div>
-            <div style="font-size: 12px; color: var(--gray-500);">
-              Arrastra o haz clic para seleccionar
-            </div>
-          </div>
-          <input type="file" id="second-payment-input-${order.id}" accept="image/*" style="display: none;"
-                 onchange="handlePaymentUpload(event, ${order.id}, 'second')">
-          <div style="margin-top: 10px; text-align: center;">
-            <button onclick="pastePaymentReceipt(${order.id}, 'second')"
-                    style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-600);">
-              📋 Pegar del portapapeles
-            </button>
-          </div>
-        `}
+        </div>
       </div>
     </div>
 
