@@ -799,133 +799,6 @@ async function showOrderDetail(orderId) {
     </div>
     ` : ''}
 
-    <!-- Order Items -->
-    <div class="detail-section">
-      <h3>📦 Productos del Pedido</h3>
-      <div id="order-items-container-${order.id}" style="display: flex; flex-direction: column; gap: 16px;">
-        ${order.items.map((item, index) => {
-          const attachments = item.attachments ? (typeof item.attachments === 'string' ? JSON.parse(item.attachments) : item.attachments) : [];
-          return `
-          <div class="product-item-card" style="background: white; border: 2px solid var(--gray-200); border-radius: 12px; overflow: hidden;">
-            <!-- Product Header -->
-            <div style="background: linear-gradient(135deg, var(--primary) 0%, #9c27b0 100%); padding: 16px; color: white;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <div style="font-size: 18px; font-weight: 700;">${item.productName}</div>
-                  <div style="font-size: 14px; opacity: 0.9;">Cantidad: ${item.quantity} pzas</div>
-                </div>
-                <div style="text-align: right;">
-                  <div style="font-size: 14px; opacity: 0.8;">Total</div>
-                  <div style="font-size: 20px; font-weight: 700;">${formatCurrency(item.lineTotal)}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Product Details -->
-            <div style="padding: 16px;">
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
-                <div style="background: var(--gray-50); padding: 10px; border-radius: 8px; text-align: center;">
-                  <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase;">Precio Unit.</div>
-                  <div style="font-size: 15px; font-weight: 600; color: var(--gray-800);">${formatCurrency(item.unitPrice)}</div>
-                </div>
-                <div style="background: var(--gray-50); padding: 10px; border-radius: 8px; text-align: center;">
-                  <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase;">Costo Unit.</div>
-                  <div style="font-size: 15px; font-weight: 600; color: var(--gray-800);">${formatCurrency(item.unitCost || 0)}</div>
-                </div>
-                <div style="background: #d1fae5; padding: 10px; border-radius: 8px; text-align: center;">
-                  <div style="font-size: 11px; color: #065f46; text-transform: uppercase;">Ganancia</div>
-                  <div style="font-size: 15px; font-weight: 600; color: #059669;">${formatCurrency(item.lineProfit || 0)}</div>
-                </div>
-              </div>
-
-              <!-- Notes Section -->
-              <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
-                  📝 Notas del producto
-                </label>
-                <textarea
-                  id="item-notes-${order.id}-${item.id}"
-                  placeholder="Agregar notas, instrucciones especiales, detalles de diseño..."
-                  style="width: 100%; min-height: 80px; padding: 12px; border: 2px solid var(--gray-200); border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit;"
-                  onchange="updateItemNotes(${order.id}, ${item.id}, this.value)"
-                >${item.notes || ''}</textarea>
-              </div>
-
-              <!-- Attachments Section -->
-              <div>
-                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
-                  📎 Archivos adjuntos
-                </label>
-
-                <!-- Existing Attachments -->
-                <div id="item-attachments-${order.id}-${item.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-                  ${attachments.length > 0 ? attachments.map(att => `
-                    <div style="position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 2px solid var(--gray-200);">
-                      <img src="${att.url}" alt="${att.filename || 'Adjunto'}"
-                           style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
-                           onclick="window.open('${att.url}', '_blank')">
-                      <button onclick="removeItemAttachment(${order.id}, ${item.id}, '${att.url}')"
-                              style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgba(239, 68, 68, 0.9); color: white; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">
-                        ×
-                      </button>
-                    </div>
-                  `).join('') : '<span style="font-size: 13px; color: var(--gray-400);">Sin archivos adjuntos</span>'}
-                </div>
-
-                <!-- Upload Area -->
-                <div id="item-upload-${order.id}-${item.id}"
-                     style="border: 2px dashed var(--gray-300); border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s;"
-                     onclick="document.getElementById('item-file-input-${order.id}-${item.id}').click()"
-                     ondragover="handleItemDragOver(event, ${order.id}, ${item.id})"
-                     ondragleave="handleItemDragLeave(event, ${order.id}, ${item.id})"
-                     ondrop="handleItemDrop(event, ${order.id}, ${item.id})">
-                  <div style="font-size: 24px; margin-bottom: 4px;">📤</div>
-                  <div style="font-size: 13px; color: var(--gray-600);">Arrastra o haz clic para subir</div>
-                  <div style="font-size: 11px; color: var(--gray-400);">JPG, PNG, PDF (máx 10MB)</div>
-                </div>
-                <input type="file"
-                       id="item-file-input-${order.id}-${item.id}"
-                       accept="image/*,.pdf"
-                       style="display: none;"
-                       onchange="handleItemFileUpload(event, ${order.id}, ${item.id})">
-
-                <!-- Paste button -->
-                <div style="margin-top: 8px; text-align: center;">
-                  <button onclick="pasteItemAttachment(${order.id}, ${item.id})"
-                          style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-600);">
-                    📋 Pegar del portapapeles
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-        }).join('')}
-      </div>
-
-      <!-- Summary Table -->
-      <div style="margin-top: 16px; background: var(--gray-50); padding: 12px; border-radius: 8px;">
-        <table style="width: 100%; font-size: 14px;">
-          <tr style="border-bottom: 1px solid var(--gray-200);">
-            <th style="text-align: left; padding: 8px 0; color: var(--gray-600);">Producto</th>
-            <th style="text-align: center; padding: 8px 0; color: var(--gray-600);">Cantidad</th>
-            <th style="text-align: right; padding: 8px 0; color: var(--gray-600);">Subtotal</th>
-          </tr>
-          ${order.items.map(item => `
-            <tr>
-              <td style="padding: 6px 0;">${item.productName}</td>
-              <td style="text-align: center; padding: 6px 0;">${item.quantity}</td>
-              <td style="text-align: right; padding: 6px 0; font-weight: 600;">${formatCurrency(item.lineTotal)}</td>
-            </tr>
-          `).join('')}
-          <tr style="border-top: 2px solid var(--gray-300);">
-            <td colspan="2" style="padding: 8px 0; font-weight: 700;">Total</td>
-            <td style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(order.totalPrice)}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
     <!-- Financial Summary -->
     <div class="detail-section">
       <h3>Resumen Financiero</h3>
@@ -1115,71 +988,130 @@ async function showOrderDetail(orderId) {
       </div>
     ` : ''}
 
-    <!-- Production Sheet Section -->
+    <!-- Order Items / Products Section -->
     <div class="detail-section">
-      <h3>🖼️ Hoja de Producción</h3>
-      <div id="production-sheet-container-${order.id}" style="background: var(--gray-50); border-radius: 12px; padding: 20px;">
-        ${order.productionSheetUrl ? `
-          <!-- Show existing production sheet -->
-          <div style="margin-bottom: 16px;">
-            ${order.productionSheetUrl.toLowerCase().endsWith('.pdf') ? `
-              <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; color: white; margin-bottom: 12px;">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                  <div style="font-size: 48px;">📋</div>
-                  <div style="flex: 1;">
-                    <div style="font-size: 16px; font-weight: 700;">Hoja de Producción (PDF)</div>
-                    <div style="font-size: 13px; opacity: 0.9;">Archivo subido</div>
-                  </div>
+      <h3>📦 Productos del Pedido</h3>
+      <div id="order-items-container-${order.id}" style="display: flex; flex-direction: column; gap: 16px;">
+        ${order.items.map((item, index) => {
+          const attachments = item.attachments ? (typeof item.attachments === 'string' ? JSON.parse(item.attachments) : item.attachments) : [];
+          return `
+          <div class="product-item-card" style="background: white; border: 2px solid var(--gray-200); border-radius: 12px; overflow: hidden;">
+            <!-- Product Header -->
+            <div style="background: linear-gradient(135deg, var(--primary) 0%, #9c27b0 100%); padding: 16px; color: white;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 18px; font-weight: 700;">${item.productName}</div>
+                  <div style="font-size: 14px; opacity: 0.9;">Cantidad: ${item.quantity} pzas</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 14px; opacity: 0.8;">Total</div>
+                  <div style="font-size: 20px; font-weight: 700;">${formatCurrency(item.lineTotal)}</div>
                 </div>
               </div>
-              <a href="${order.productionSheetUrl}" target="_blank"
-                 style="display: block; background: var(--primary); color: white; padding: 14px; border-radius: 8px; text-align: center; font-weight: 600; text-decoration: none;">
-                📥 Ver/Descargar PDF
-              </a>
-            ` : `
-              <img src="${order.productionSheetUrl}"
-                   alt="Hoja de Producción"
-                   style="width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px; cursor: pointer; border: 2px solid var(--gray-200);"
-                   onclick="window.open('${order.productionSheetUrl}', '_blank')">
-            `}
-          </div>
-          <button onclick="removeProductionSheet(${order.id})"
-                  style="width: 100%; padding: 10px; background: var(--gray-200); color: var(--gray-600); border: none; border-radius: 8px; font-size: 13px; cursor: pointer;">
-            🗑️ Eliminar y subir otra
-          </button>
-        ` : `
-          <!-- Upload area -->
-          <div id="production-sheet-upload-${order.id}"
-               style="border: 2px dashed var(--gray-300); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s;"
-               onclick="document.getElementById('production-sheet-input-${order.id}').click()"
-               ondragover="handleDragOver(event, ${order.id})"
-               ondragleave="handleDragLeave(event, ${order.id})"
-               ondrop="handleProductionSheetDrop(event, ${order.id})">
-            <div style="font-size: 48px; margin-bottom: 12px;">📤</div>
-            <div style="font-size: 15px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">
-              Arrastra o haz clic para subir
             </div>
-            <div style="font-size: 13px; color: var(--gray-500); margin-bottom: 16px;">
-              Acepta imágenes (JPG, PNG) y PDF
-            </div>
-            <div style="display: inline-block; background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
-              Seleccionar archivo
-            </div>
-          </div>
-          <input type="file"
-                 id="production-sheet-input-${order.id}"
-                 accept="image/*,.pdf"
-                 style="display: none;"
-                 onchange="handleProductionSheetUpload(event, ${order.id})">
 
-          <!-- Paste from clipboard -->
-          <div style="margin-top: 12px; text-align: center;">
-            <button onclick="pasteProductionSheet(${order.id})"
-                    style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 10px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; color: var(--gray-600);">
-              📋 Pegar desde portapapeles (Ctrl+V)
-            </button>
+            <!-- Product Details -->
+            <div style="padding: 16px;">
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+                <div style="background: var(--gray-50); padding: 10px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase;">Precio Unit.</div>
+                  <div style="font-size: 15px; font-weight: 600; color: var(--gray-800);">${formatCurrency(item.unitPrice)}</div>
+                </div>
+                <div style="background: var(--gray-50); padding: 10px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase;">Costo Unit.</div>
+                  <div style="font-size: 15px; font-weight: 600; color: var(--gray-800);">${formatCurrency(item.unitCost || 0)}</div>
+                </div>
+                <div style="background: #d1fae5; padding: 10px; border-radius: 8px; text-align: center;">
+                  <div style="font-size: 11px; color: #065f46; text-transform: uppercase;">Ganancia</div>
+                  <div style="font-size: 15px; font-weight: 600; color: #059669;">${formatCurrency(item.lineProfit || 0)}</div>
+                </div>
+              </div>
+
+              <!-- Notes Section -->
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
+                  📝 Notas del producto
+                </label>
+                <textarea
+                  id="item-notes-${order.id}-${item.id}"
+                  placeholder="Agregar notas, instrucciones especiales, detalles de diseño..."
+                  style="width: 100%; min-height: 80px; padding: 12px; border: 2px solid var(--gray-200); border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit;"
+                  onchange="updateItemNotes(${order.id}, ${item.id}, this.value)"
+                >${item.notes || ''}</textarea>
+              </div>
+
+              <!-- Attachments Section -->
+              <div>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
+                  📎 Archivos adjuntos
+                </label>
+
+                <!-- Existing Attachments -->
+                <div id="item-attachments-${order.id}-${item.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                  ${attachments.length > 0 ? attachments.map(att => `
+                    <div style="position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 2px solid var(--gray-200);">
+                      <img src="${att.url}" alt="${att.filename || 'Adjunto'}"
+                           style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                           onclick="window.open('${att.url}', '_blank')">
+                      <button onclick="removeItemAttachment(${order.id}, ${item.id}, '${att.url}')"
+                              style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgba(239, 68, 68, 0.9); color: white; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">
+                        ×
+                      </button>
+                    </div>
+                  `).join('') : '<span style="font-size: 13px; color: var(--gray-400);">Sin archivos adjuntos</span>'}
+                </div>
+
+                <!-- Upload Area -->
+                <div id="item-upload-${order.id}-${item.id}"
+                     style="border: 2px dashed var(--gray-300); border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s;"
+                     onclick="document.getElementById('item-file-input-${order.id}-${item.id}').click()"
+                     ondragover="handleItemDragOver(event, ${order.id}, ${item.id})"
+                     ondragleave="handleItemDragLeave(event, ${order.id}, ${item.id})"
+                     ondrop="handleItemDrop(event, ${order.id}, ${item.id})">
+                  <div style="font-size: 24px; margin-bottom: 4px;">📤</div>
+                  <div style="font-size: 13px; color: var(--gray-600);">Arrastra o haz clic para subir</div>
+                  <div style="font-size: 11px; color: var(--gray-400);">JPG, PNG, PDF (máx 10MB)</div>
+                </div>
+                <input type="file"
+                       id="item-file-input-${order.id}-${item.id}"
+                       accept="image/*,.pdf"
+                       style="display: none;"
+                       onchange="handleItemFileUpload(event, ${order.id}, ${item.id})">
+
+                <!-- Paste button -->
+                <div style="margin-top: 8px; text-align: center;">
+                  <button onclick="pasteItemAttachment(${order.id}, ${item.id})"
+                          style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-600);">
+                    📋 Pegar del portapapeles
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        `}
+        `;
+        }).join('')}
+      </div>
+
+      <!-- Summary Table -->
+      <div style="margin-top: 16px; background: var(--gray-50); padding: 12px; border-radius: 8px;">
+        <table style="width: 100%; font-size: 14px;">
+          <tr style="border-bottom: 1px solid var(--gray-200);">
+            <th style="text-align: left; padding: 8px 0; color: var(--gray-600);">Producto</th>
+            <th style="text-align: center; padding: 8px 0; color: var(--gray-600);">Cantidad</th>
+            <th style="text-align: right; padding: 8px 0; color: var(--gray-600);">Subtotal</th>
+          </tr>
+          ${order.items.map(item => `
+            <tr>
+              <td style="padding: 6px 0;">${item.productName}</td>
+              <td style="text-align: center; padding: 6px 0;">${item.quantity}</td>
+              <td style="text-align: right; padding: 6px 0; font-weight: 600;">${formatCurrency(item.lineTotal)}</td>
+            </tr>
+          `).join('')}
+          <tr style="border-top: 2px solid var(--gray-300);">
+            <td colspan="2" style="padding: 8px 0; font-weight: 700;">Total</td>
+            <td style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(order.totalPrice)}</td>
+          </tr>
+        </table>
       </div>
     </div>
 
