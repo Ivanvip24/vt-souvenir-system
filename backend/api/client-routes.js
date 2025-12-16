@@ -905,7 +905,11 @@ router.post('/orders/lookup', async (req, res) => {
       clientParams.push(email);
     }
 
-    const clientWhereClause = clientConditions.join(' OR ');
+    // If both phone and email provided, require BOTH to match (no partial matches)
+    // If only one is provided, match on that one
+    const clientWhereClause = clientConditions.length === 2
+      ? clientConditions.join(' AND ')  // Both must match
+      : clientConditions.join(' OR ');  // Single field match
 
     // FIRST: Get ALL matching clients (may have multiple with same email/phone)
     const clientResult = await query(`
