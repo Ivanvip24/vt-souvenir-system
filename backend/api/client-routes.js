@@ -877,39 +877,23 @@ router.post('/info', async (req, res) => {
 
 /**
  * POST /api/client/orders/lookup
- * Lookup orders by client phone and/or email
+ * Lookup orders by client phone AND email (both required)
  */
 router.post('/orders/lookup', async (req, res) => {
   try {
     const { phone, email } = req.body;
 
-    if (!phone && !email) {
+    // Both phone and email are required
+    if (!phone || !email) {
       return res.status(400).json({
         success: false,
-        error: 'Debe proporcionar teléfono o correo electrónico'
+        error: 'Debe proporcionar tanto teléfono como correo electrónico'
       });
     }
 
-    // Build query conditions for client lookup
-    const clientConditions = [];
-    const clientParams = [];
-    let paramIndex = 1;
-
-    if (phone) {
-      clientConditions.push(`phone = $${paramIndex++}`);
-      clientParams.push(phone);
-    }
-
-    if (email) {
-      clientConditions.push(`email = $${paramIndex++}`);
-      clientParams.push(email);
-    }
-
-    // If both phone and email provided, require BOTH to match (no partial matches)
-    // If only one is provided, match on that one
-    const clientWhereClause = clientConditions.length === 2
-      ? clientConditions.join(' AND ')  // Both must match
-      : clientConditions.join(' OR ');  // Single field match
+    // Both fields must match - no partial coincidences allowed
+    const clientWhereClause = 'phone = $1 AND email = $2';
+    const clientParams = [phone, email];
 
     // FIRST: Get ALL matching clients (may have multiple with same email/phone)
     const clientResult = await query(`

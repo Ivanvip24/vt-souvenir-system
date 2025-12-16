@@ -568,16 +568,16 @@
                 <button onclick="closeClientLookup()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 32px; cursor: pointer; color: #6b7280; line-height: 1;">×</button>
 
                 <h2 style="margin-bottom: 8px;">📞 Buscar Mis Pedidos</h2>
-                <p class="help-text" style="margin-bottom: 24px;">Ingresa tu teléfono o correo para ver tus pedidos activos</p>
+                <p class="help-text" style="margin-bottom: 24px;">Ingresa tu teléfono y correo para ver tus pedidos activos</p>
 
                 <div class="form-group">
-                    <label for="lookup-phone">Teléfono</label>
-                    <input type="tel" id="lookup-phone" placeholder="5512345678" maxlength="10">
+                    <label for="lookup-phone">Teléfono <span style="color: var(--primary);">*</span></label>
+                    <input type="tel" id="lookup-phone" placeholder="5512345678" maxlength="10" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="lookup-email">Correo Electrónico (opcional)</label>
-                    <input type="email" id="lookup-email" placeholder="cliente@ejemplo.com">
+                    <label for="lookup-email">Correo Electrónico <span style="color: var(--primary);">*</span></label>
+                    <input type="email" id="lookup-email" placeholder="cliente@ejemplo.com" required>
                 </div>
 
                 <button onclick="lookupClientOrders()" class="btn btn-primary btn-large">

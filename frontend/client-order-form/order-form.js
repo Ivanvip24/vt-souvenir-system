@@ -2146,8 +2146,9 @@ window.lookupClientOrders = async function() {
   const phone = document.getElementById('lookup-phone').value.trim();
   const email = document.getElementById('lookup-email').value.trim();
 
-  if (!phone && !email) {
-    alert('Por favor ingrese al menos un teléfono o email');
+  // Both fields are required
+  if (!phone || !email) {
+    alert('Por favor ingrese ambos campos: teléfono y correo electrónico');
     return;
   }
 
