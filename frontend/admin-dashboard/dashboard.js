@@ -561,10 +561,20 @@ async function showOrderDetail(orderId) {
   const modalBody = document.getElementById('modal-body');
   const modalTitle = document.getElementById('modal-title');
 
-  // Set modal title with PDF download button if available
-  modalTitle.innerHTML = order.receiptPdfUrl
-    ? `${order.orderNumber} <a href="${order.receiptPdfUrl}" target="_blank" download style="margin-left: 12px; padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📄 PDF</a>`
-    : order.orderNumber;
+  // Set modal title with PDF download button and status badge
+  const statusColors = {
+    'pending_review': { bg: '#fef3c7', color: '#92400e', border: '#f59e0b' },
+    'approved': { bg: '#d1fae5', color: '#065f46', border: '#10b981' },
+    'needs_changes': { bg: '#fee2e2', color: '#991b1b', border: '#ef4444' },
+    'rejected': { bg: '#fee2e2', color: '#991b1b', border: '#ef4444' }
+  };
+  const statusStyle = statusColors[order.approvalStatus] || statusColors['pending_review'];
+
+  modalTitle.innerHTML = `
+    ${order.orderNumber}
+    ${order.receiptPdfUrl ? `<a href="${order.receiptPdfUrl}" target="_blank" download style="margin-left: 12px; padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📄 PDF</a>` : ''}
+    <span style="margin-left: 12px; padding: 6px 14px; background: ${statusStyle.bg}; color: ${statusStyle.color}; border: 1px solid ${statusStyle.border}; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase;">${getStatusText(order.approvalStatus)}</span>
+  `;
 
   // Calculate profit
   const profit = order.totalPrice - order.totalProductionCost;
