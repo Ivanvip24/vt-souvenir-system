@@ -571,13 +571,13 @@ async function handlePhoneSubmit() {
   continueBtn.innerHTML = '<span class="spinner"></span> Verificando...';
 
   try {
-    // Check database for existing client
+    // Check database for existing client (requires both phone AND email)
     const response = await fetch(`${API_BASE}/orders/lookup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ phone })
+      body: JSON.stringify({ phone, email })
     });
 
     const data = await response.json();
