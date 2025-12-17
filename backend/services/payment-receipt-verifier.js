@@ -185,13 +185,12 @@ Responde SOLO con el JSON estructurado.`;
     const amountDetected = analysisResult.amount_detected;
     let amountMatches = false;
     let amountDifference = null;
-    let amountMatchPercentage = null;
 
     if (amountDetected !== null && amountDetected !== undefined) {
-      amountDifference = Math.abs(amountDetected - expectedAmount);
-      amountMatchPercentage = (1 - (amountDifference / expectedAmount)) * 100;
-      // Allow 5% tolerance or $10 difference max
-      amountMatches = amountDifference <= 10 || amountMatchPercentage >= 95;
+      amountDifference = amountDetected - expectedAmount;
+      // Accept if amount is equal to or GREATER than expected (overpayment is OK)
+      // Reject only if amount is LESS than expected
+      amountMatches = amountDetected >= expectedAmount;
     }
 
     // Determine if we should auto-approve
@@ -210,7 +209,6 @@ Responde SOLO con el JSON estructurado.`;
         expected_amount: expectedAmount,
         amount_matches: amountMatches,
         amount_difference: amountDifference,
-        amount_match_percentage: amountMatchPercentage ? amountMatchPercentage.toFixed(1) : null,
         date_detected: analysisResult.date_detected,
         folio_number: analysisResult.folio_number,
         recipient_name: analysisResult.recipient_name,
@@ -221,7 +219,7 @@ Responde SOLO con el JSON estructurado.`;
         notes: analysisResult.notes
       },
       recommendation: shouldAutoApprove ? 'AUTO_APPROVE' : 'MANUAL_REVIEW',
-      recommendation_reason: getRecommendationReason(analysisResult, amountMatches, amountDifference)
+      recommendation_reason: getRecommendationReason(analysisResult, amountMatches, amountDetected, expectedAmount)
     };
 
     console.log(`✅ Receipt verification complete: ${result.recommendation}`);
@@ -242,7 +240,7 @@ Responde SOLO con el JSON estructurado.`;
 /**
  * Generate human-readable recommendation reason
  */
-function getRecommendationReason(analysis, amountMatches, amountDifference) {
+function getRecommendationReason(analysis, amountMatches, amountDetected, expectedAmount) {
   const reasons = [];
 
   if (!analysis.is_valid_receipt) {
@@ -250,10 +248,10 @@ function getRecommendationReason(analysis, amountMatches, amountDifference) {
   }
 
   if (!amountMatches) {
-    if (analysis.amount_detected === null) {
+    if (amountDetected === null || amountDetected === undefined) {
       reasons.push('No se pudo detectar el monto en el comprobante');
     } else {
-      reasons.push(`Diferencia de monto: $${amountDifference?.toFixed(2) || '?'}`);
+      reasons.push(`Monto insuficiente: se detectó $${amountDetected.toFixed(2)}, se esperaba mínimo $${expectedAmount.toFixed(2)}`);
     }
   }
 
