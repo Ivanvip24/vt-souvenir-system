@@ -507,8 +507,8 @@ function createOrderCard(order) {
             <span class="payment-check ${order.approvalStatus === 'approved' || order.depositPaid ? 'checked' : ''}" title="Anticipo 50%">
               ${order.approvalStatus === 'approved' || order.depositPaid ? '☑' : '☐'} 1
             </span>
-            <span class="payment-check ${order.secondPaymentStatus === 'uploaded' ? 'pending' : ''} ${order.secondPaymentStatus === 'confirmed' ? 'checked' : ''}" title="Pago final 50%">
-              ${order.secondPaymentStatus === 'confirmed' ? '☑' : order.secondPaymentStatus === 'uploaded' ? '⏳' : '☐'} 2
+            <span class="payment-check ${order.secondPaymentReceipt ? 'pending' : ''}" title="Pago final 50%${order.secondPaymentReceipt ? ' - Comprobante subido, pendiente de revisión' : ''}">
+              ${order.secondPaymentReceipt ? '⏳' : '☐'} 2
             </span>
           </div>
         </div>
