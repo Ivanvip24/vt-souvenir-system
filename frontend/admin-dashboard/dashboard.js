@@ -450,7 +450,10 @@ function createOrderCard(order) {
       <div class="order-title">
         <h3>${order.orderNumber}</h3>
         <span class="status-badge ${statusClass}">${statusText}</span>
-        ${order.salesRep ? `<span class="sales-rep-badge">${order.salesRep}</span>` : ''}
+        ${order.salesRep ? (() => {
+          const repColor = getSalesRepColor(order.salesRep);
+          return `<span class="sales-rep-badge" style="background: ${repColor.bg}; color: ${repColor.color}; border-color: ${repColor.border};">${order.salesRep}</span>`;
+        })() : ''}
       </div>
       ${!isArchived && order.approvalStatus === 'pending_review' ? `
         <div class="quick-actions">
@@ -532,6 +535,35 @@ function createOrderCard(order) {
   `;
 
   return card;
+}
+
+// Helper function to generate consistent color from name
+function getSalesRepColor(name) {
+  if (!name) return { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' };
+
+  // Color palette - pastel colors that look good as badges
+  const colors = [
+    { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' }, // Blue
+    { bg: '#f3e8ff', color: '#6b21a8', border: '#c4b5fd' }, // Purple
+    { bg: '#fce7f3', color: '#9d174d', border: '#f9a8d4' }, // Pink
+    { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' }, // Green
+    { bg: '#ffedd5', color: '#9a3412', border: '#fdba74' }, // Orange
+    { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' }, // Yellow
+    { bg: '#e0e7ff', color: '#3730a3', border: '#a5b4fc' }, // Indigo
+    { bg: '#ccfbf1', color: '#115e59', border: '#5eead4' }, // Teal
+    { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' }, // Red
+    { bg: '#f5f5f4', color: '#44403c', border: '#a8a29e' }, // Stone
+  ];
+
+  // Generate hash from name to get consistent color
+  let hash = 0;
+  const normalizedName = name.toLowerCase().trim();
+  for (let i = 0; i < normalizedName.length; i++) {
+    hash = normalizedName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
 }
 
 // Helper function for full date format with time
