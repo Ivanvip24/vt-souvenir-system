@@ -507,8 +507,8 @@ function createOrderCard(order) {
             <span class="payment-check ${order.approvalStatus === 'approved' || order.depositPaid ? 'checked' : ''}" title="Anticipo 50%">
               ${order.approvalStatus === 'approved' || order.depositPaid ? '☑' : '☐'} 1
             </span>
-            <span class="payment-check ${order.secondPaymentReceipt ? 'pending' : ''}" title="Pago final 50%${order.secondPaymentReceipt ? ' - Comprobante subido, pendiente de revisión' : ''}">
-              ${order.secondPaymentReceipt ? '⏳' : '☐'} 2
+            <span class="payment-check ${order.secondPaymentReceipt && order.status === 'delivered' ? 'checked' : order.secondPaymentReceipt ? 'pending' : ''}" title="Pago final 50%${order.secondPaymentReceipt ? (order.status === 'delivered' ? ' - Confirmado' : ' - Pendiente de revisión') : ''}">
+              ${order.secondPaymentReceipt && order.status === 'delivered' ? '☑' : order.secondPaymentReceipt ? '⏳' : '☐'} 2
             </span>
           </div>
         </div>
@@ -762,7 +762,7 @@ async function showOrderDetail(orderId) {
           </div>
           <div id="second-payment-container-${order.id}" style="background: var(--gray-50); padding: 12px; border-radius: 10px; min-height: 180px;">
             ${order.secondPaymentReceipt ? `
-              <div style="background: ${order.secondPaymentStatus === 'confirmed' ? '#d1fae5' : '#fef3c7'}; border: 2px solid ${order.secondPaymentStatus === 'confirmed' ? '#059669' : '#fb923c'}; padding: 10px; border-radius: 8px;">
+              <div style="background: ${order.status === 'delivered' ? '#d1fae5' : '#fef3c7'}; border: 2px solid ${order.status === 'delivered' ? '#059669' : '#fb923c'}; padding: 10px; border-radius: 8px;">
                 <div style="text-align: center; margin-bottom: 8px;">
                   <img src="${order.secondPaymentReceipt}"
                        alt="Comprobante final"
@@ -773,11 +773,11 @@ async function showOrderDetail(orderId) {
                     <button onclick="replacePaymentReceipt(${order.id}, 'second')" style="background: none; border: none; color: var(--gray-500); font-size: 12px; cursor: pointer;">🔄</button>
                   </div>
                 </div>
-                ${order.secondPaymentStatus === 'uploaded' ? `
+                ${order.status !== 'delivered' ? `
                   <button class="btn btn-success" onclick="confirmSecondPayment(${order.id})" style="width: 100%; padding: 8px; font-size: 12px;">✅ Confirmar Pago</button>
-                ` : order.secondPaymentStatus === 'confirmed' ? `
+                ` : `
                   <div style="text-align: center; font-size: 12px; font-weight: 700; color: #065f46;">✅ Confirmado</div>
-                ` : ''}
+                `}
               </div>
             ` : `
               <div style="margin-bottom: 8px; padding: 8px; background: #fff7ed; border-radius: 6px; text-align: center;">
