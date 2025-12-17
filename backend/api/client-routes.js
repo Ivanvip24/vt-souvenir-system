@@ -472,11 +472,32 @@ router.post('/orders/submit', async (req, res) => {
 
           if (!verificationResult.success) {
             console.log(`⚠️ AI verification failed for order ${orderNumber}: ${verificationResult.error}`);
-            // Still approve even if AI failed - admin can review later
+            console.log(`📋 Order ${orderNumber} stays pending - requires manual review`);
+            return; // Don't auto-approve if AI verification failed
           }
 
           console.log(`📊 AI Analysis result: ${verificationResult.recommendation}`);
-          console.log(`✅ AUTO-APPROVING order ${orderNumber} - Processing receipt`);
+          console.log(`📊 Is valid receipt: ${verificationResult.analysis?.is_valid_receipt}`);
+          console.log(`📊 Confidence level: ${verificationResult.analysis?.confidence_level}`);
+          console.log(`📊 Suspicious indicators: ${JSON.stringify(verificationResult.analysis?.suspicious_indicators || [])}`);
+
+          // Only auto-approve if AI confirms it's a valid bank receipt
+          if (verificationResult.recommendation !== 'AUTO_APPROVE') {
+            console.log(`⚠️ AI recommends MANUAL_REVIEW for order ${orderNumber}`);
+            console.log(`   Reason: ${verificationResult.recommendation_reason}`);
+            console.log(`📋 Order stays pending - admin must review manually`);
+
+            // Update internal notes with AI analysis for admin review
+            await query(
+              `UPDATE orders SET
+                internal_notes = COALESCE(internal_notes || E'\n\n', '') || $2
+               WHERE id = $1`,
+              [orderId, `🤖 AI Analysis (${new Date().toLocaleString('es-MX')}):\n${verificationResult.recommendation_reason}`]
+            );
+            return; // Don't auto-approve
+          }
+
+          console.log(`✅ AI verified - AUTO-APPROVING order ${orderNumber}`);
 
           // Determine the actual deposit amount from the receipt
           // Use detected amount if available, otherwise use original deposit amount
@@ -498,9 +519,10 @@ router.post('/orders/submit', async (req, res) => {
               approval_status = 'approved',
               status = 'new',
               department = 'design',
-              deposit_amount = $2
+              deposit_amount = $2,
+              internal_notes = COALESCE(internal_notes || E'\n\n', '') || $3
              WHERE id = $1`,
-            [orderId, actualDepositAmount]
+            [orderId, actualDepositAmount, `✅ Auto-aprobado por AI (${new Date().toLocaleString('es-MX')})\nMonto detectado: $${actualDepositAmount.toFixed(2)}`]
           );
 
           // Calculate remaining balance with the actual deposit amount
