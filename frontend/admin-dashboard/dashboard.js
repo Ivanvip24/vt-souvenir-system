@@ -502,6 +502,23 @@ function createOrderCard(order) {
         </div>
       </div>
 
+      <div class="order-right">
+        ${order.productionDeadline ? `
+        <div class="deadline-info">
+          <span class="deadline-icon">🏭</span>
+          <div>
+            <span class="deadline-label">DEADLINE PRODUCCIÓN</span>
+            <span class="deadline-value">${formatDate(order.productionDeadline)}</span>
+          </div>
+        </div>
+        ` : ''}
+        ${order.estimatedDeliveryDate ? `
+        <div class="delivery-info">
+          <span class="delivery-label">Entrega estimada</span>
+          <span class="delivery-value">${formatDate(order.estimatedDeliveryDate)}</span>
+        </div>
+        ` : ''}
+      </div>
     </div>
   `;
 
