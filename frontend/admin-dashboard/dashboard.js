@@ -450,6 +450,7 @@ function createOrderCard(order) {
       <div class="order-title">
         <h3>${order.orderNumber}</h3>
         <span class="status-badge ${statusClass}">${statusText}</span>
+        ${order.salesRep ? `<span class="sales-rep-badge">${order.salesRep}</span>` : ''}
       </div>
       ${!isArchived && order.approvalStatus === 'pending_review' ? `
         <div class="quick-actions">

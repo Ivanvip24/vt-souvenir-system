@@ -468,6 +468,19 @@ body {
     color: #991b1b;
 }
 
+/* Sales Rep Badge */
+.sales-rep-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: capitalize;
+    letter-spacing: 0.3px;
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
 /* Quick Action Buttons */
 .quick-actions {
     display: flex;

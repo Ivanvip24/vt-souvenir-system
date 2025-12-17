@@ -221,7 +221,8 @@ const state = {
   products: [],
   cart: {}, // { productId: { product, quantity } }
   order: {
-    clientNotes: ''
+    clientNotes: '',
+    salesRep: null // Sales rep from referral link (e.g., ?ref=alejandra)
   },
   payment: {
     method: 'bank_transfer',
@@ -257,6 +258,15 @@ const SHIPPING_CONFIG = {
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🎨 Souvenir Order Form Initialized');
+
+  // Capture sales rep from referral link (e.g., ?ref=alejandra)
+  const urlParams = new URLSearchParams(window.location.search);
+  const salesRep = urlParams.get('ref');
+  if (salesRep) {
+    state.order.salesRep = salesRep.trim();
+    console.log(`👤 Sales rep detected: ${state.order.salesRep}`);
+  }
+
   initializeEventListeners();
   showStep(1);
 });
@@ -2028,7 +2038,10 @@ async function handleOrderSubmit() {
 
       // Payment
       paymentMethod: state.payment.method,
-      paymentProofUrl: state.payment.proofFile?.cloudinaryUrl || null
+      paymentProofUrl: state.payment.proofFile?.cloudinaryUrl || null,
+
+      // Sales rep from referral link
+      salesRep: state.order.salesRep || null
     };
 
     console.log('Submitting order:', orderData);

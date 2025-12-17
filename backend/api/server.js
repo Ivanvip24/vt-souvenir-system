@@ -225,6 +225,7 @@ app.get('/api/orders', async (req, res) => {
         o.notion_page_id,
         o.notion_page_url,
         o.archive_status,
+        o.sales_rep,
         o.created_at,
         c.name as client_name,
         c.phone as client_phone,
@@ -290,6 +291,8 @@ app.get('/api/orders', async (req, res) => {
       department: order.department || 'pending',
       priority: order.priority || 'normal',
       archiveStatus: order.archive_status || 'active',
+      // Sales rep from referral link
+      salesRep: order.sales_rep || null,
       // Items
       items: order.items || [],
       // Notes and attachments
@@ -643,6 +646,8 @@ app.get('/api/orders/:orderId', async (req, res) => {
       department: order.department || 'pending',
       priority: order.priority || 'normal',
       archiveStatus: order.archive_status || 'active',
+      // Sales rep from referral link
+      salesRep: order.sales_rep || null,
       // Items
       items: order.items || [],
       // Notes and attachments

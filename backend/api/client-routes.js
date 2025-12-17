@@ -154,6 +154,9 @@ router.post('/orders/submit', async (req, res) => {
       // Payment method
       paymentMethod, // 'stripe' or 'bank_transfer'
       paymentProofUrl, // Cloudinary URL for payment receipt
+
+      // Sales rep from referral link
+      salesRep, // e.g., 'alejandra'
     } = req.body;
 
     // Validation
@@ -344,8 +347,9 @@ router.post('/orders/submit', async (req, res) => {
         deposit_paid,
         production_deadline,
         estimated_delivery_date,
-        shipping_days
-      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14)
+        shipping_days,
+        sales_rep
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15)
       RETURNING id`,
       [
         orderNumber,
@@ -361,7 +365,8 @@ router.post('/orders/submit', async (req, res) => {
         paymentProofUrl || null,
         deliveryDates.productionDeadline,
         deliveryDates.estimatedDeliveryDate,
-        deliveryDates.shippingDays
+        deliveryDates.shippingDays,
+        salesRep || null
       ]
     );
 
