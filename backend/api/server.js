@@ -221,6 +221,7 @@ app.get('/api/orders', async (req, res) => {
         o.shipping_days,
         o.notes,
         o.internal_notes,
+        o.order_attachments,
         o.notion_page_id,
         o.notion_page_url,
         o.archive_status,
@@ -291,10 +292,11 @@ app.get('/api/orders', async (req, res) => {
       archiveStatus: order.archive_status || 'active',
       // Items
       items: order.items || [],
-      // Notes
+      // Notes and attachments
       notes: order.notes || order.client_notes || '',
       clientNotes: order.client_notes || '',
       internalNotes: order.internal_notes || '',
+      orderAttachments: order.order_attachments ? JSON.parse(order.order_attachments) : [],
       // Shipping
       shippingLabelGenerated: order.shipping_label_generated || false,
       trackingNumber: order.tracking_number || '',
@@ -567,6 +569,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
         o.shipping_days,
         o.notes,
         o.internal_notes,
+        o.order_attachments,
         o.notion_page_id,
         o.notion_page_url,
         o.created_at,
@@ -642,10 +645,11 @@ app.get('/api/orders/:orderId', async (req, res) => {
       archiveStatus: order.archive_status || 'active',
       // Items
       items: order.items || [],
-      // Notes
+      // Notes and attachments
       notes: order.notes || order.client_notes || '',
       clientNotes: order.client_notes || '',
       internalNotes: order.internal_notes || '',
+      orderAttachments: order.order_attachments ? JSON.parse(order.order_attachments) : [],
       // Shipping
       shippingLabelGenerated: order.shipping_label_generated || false,
       trackingNumber: order.tracking_number || '',
@@ -1528,6 +1532,192 @@ app.delete('/api/orders/:orderId/items/:itemId/attachment', async (req, res) => 
     res.json({
       success: true,
       attachments: updateResult.rows[0].attachments ? JSON.parse(updateResult.rows[0].attachments) : []
+    });
+
+  } catch (error) {
+    console.error('Error removing attachment:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ========================================
+// ORDER-LEVEL NOTES AND ATTACHMENTS
+// ========================================
+
+/**
+ * PUT /api/orders/:orderId/notes
+ * Update internal notes for an order
+ */
+app.put('/api/orders/:orderId/notes', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { internalNotes } = req.body;
+
+    console.log(`📝 Updating internal notes for order ${orderId}`);
+
+    const updateResult = await query(`
+      UPDATE orders
+      SET internal_notes = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, internal_notes
+    `, [internalNotes || null, orderId]);
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    console.log('✅ Order notes updated successfully');
+
+    res.json({
+      success: true,
+      internalNotes: updateResult.rows[0].internal_notes
+    });
+
+  } catch (error) {
+    console.error('Error updating order notes:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/orders/:orderId/attachment
+ * Add an attachment to an order
+ */
+app.post('/api/orders/:orderId/attachment', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { url, filename, type } = req.body;
+
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL is required'
+      });
+    }
+
+    console.log(`📎 Adding attachment to order ${orderId}:`, { url, filename, type });
+
+    // Get current attachments
+    const orderResult = await query(
+      'SELECT order_attachments FROM orders WHERE id = $1',
+      [orderId]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Parse existing attachments or create empty array
+    let attachments = [];
+    if (orderResult.rows[0].order_attachments) {
+      try {
+        attachments = JSON.parse(orderResult.rows[0].order_attachments);
+      } catch (e) {
+        attachments = [];
+      }
+    }
+
+    // Add new attachment
+    attachments.push({
+      url,
+      filename: filename || 'attachment',
+      type: type || 'image',
+      addedAt: new Date().toISOString()
+    });
+
+    // Save updated attachments
+    const updateResult = await query(`
+      UPDATE orders
+      SET order_attachments = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, order_attachments
+    `, [JSON.stringify(attachments), orderId]);
+
+    console.log('✅ Attachment added successfully');
+
+    res.json({
+      success: true,
+      attachments: JSON.parse(updateResult.rows[0].order_attachments)
+    });
+
+  } catch (error) {
+    console.error('Error adding attachment:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/orders/:orderId/attachment
+ * Remove an attachment from an order
+ */
+app.delete('/api/orders/:orderId/attachment', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'URL is required'
+      });
+    }
+
+    console.log(`🗑️ Removing attachment from order ${orderId}:`, url);
+
+    // Get current attachments
+    const orderResult = await query(
+      'SELECT order_attachments FROM orders WHERE id = $1',
+      [orderId]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    // Parse existing attachments
+    let attachments = [];
+    if (orderResult.rows[0].order_attachments) {
+      try {
+        attachments = JSON.parse(orderResult.rows[0].order_attachments);
+      } catch (e) {
+        attachments = [];
+      }
+    }
+
+    // Remove the attachment
+    attachments = attachments.filter(a => a.url !== url);
+
+    // Save updated attachments
+    const updateResult = await query(`
+      UPDATE orders
+      SET order_attachments = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, order_attachments
+    `, [attachments.length > 0 ? JSON.stringify(attachments) : null, orderId]);
+
+    console.log('✅ Attachment removed successfully');
+
+    res.json({
+      success: true,
+      attachments: updateResult.rows[0].order_attachments ? JSON.parse(updateResult.rows[0].order_attachments) : []
     });
 
   } catch (error) {

@@ -924,134 +924,105 @@ async function showOrderDetail(orderId) {
     <!-- Order Items / Products Section -->
     <div class="detail-section">
       <h3>📦 Productos del Pedido</h3>
-      <div id="order-items-container-${order.id}" style="display: flex; flex-direction: column; gap: 16px;">
-        ${order.items.map((item, index) => {
-          const attachments = item.attachments ? (typeof item.attachments === 'string' ? JSON.parse(item.attachments) : item.attachments) : [];
-          return `
-          <div class="product-item-card" style="background: white; border: 2px solid var(--gray-200); border-radius: 12px; overflow: hidden;">
-            <!-- Product Header -->
-            <div style="background: linear-gradient(135deg, var(--primary) 0%, #9c27b0 100%); padding: 16px; color: white;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <div style="font-size: 18px; font-weight: 700;">${item.productName}</div>
-                  <div style="font-size: 14px; opacity: 0.9;">Cantidad: ${item.quantity} pzas</div>
-                </div>
-                <div style="text-align: right;">
-                  <div style="font-size: 14px; opacity: 0.8;">Total</div>
-                  <div style="font-size: 20px; font-weight: 700;">${formatCurrency(item.lineTotal)}</div>
-                </div>
-              </div>
-            </div>
 
-            <!-- Product Details -->
-            <div style="padding: 16px;">
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
-                <div style="background: var(--gray-50); padding: 10px; border-radius: 8px; text-align: center;">
-                  <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase;">Precio Unit.</div>
-                  <div style="font-size: 15px; font-weight: 600; color: var(--gray-800);">${formatCurrency(item.unitPrice)}</div>
-                </div>
-                <div style="background: var(--gray-50); padding: 10px; border-radius: 8px; text-align: center;">
-                  <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase;">Costo Unit.</div>
-                  <div style="font-size: 15px; font-weight: 600; color: var(--gray-800);">${formatCurrency(item.unitCost || 0)}</div>
-                </div>
-                <div style="background: #d1fae5; padding: 10px; border-radius: 8px; text-align: center;">
-                  <div style="font-size: 11px; color: #065f46; text-transform: uppercase;">Ganancia</div>
-                  <div style="font-size: 15px; font-weight: 600; color: #059669;">${formatCurrency(item.lineProfit || 0)}</div>
-                </div>
-              </div>
-
-              <!-- Notes Section -->
-              <div style="margin-bottom: 16px;">
-                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
-                  📝 Notas del producto
-                </label>
-                <textarea
-                  id="item-notes-${order.id}-${item.id}"
-                  placeholder="Agregar notas, instrucciones especiales, detalles de diseño..."
-                  style="width: 100%; min-height: 80px; padding: 12px; border: 2px solid var(--gray-200); border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit;"
-                  onchange="updateItemNotes(${order.id}, ${item.id}, this.value)"
-                >${item.notes || ''}</textarea>
-              </div>
-
-              <!-- Attachments Section -->
-              <div>
-                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
-                  📎 Archivos adjuntos
-                </label>
-
-                <!-- Existing Attachments -->
-                <div id="item-attachments-${order.id}-${item.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-                  ${attachments.length > 0 ? attachments.map(att => `
-                    <div style="position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 2px solid var(--gray-200);">
-                      <img src="${att.url}" alt="${att.filename || 'Adjunto'}"
-                           style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
-                           onclick="window.open('${att.url}', '_blank')">
-                      <button onclick="removeItemAttachment(${order.id}, ${item.id}, '${att.url}')"
-                              style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgba(239, 68, 68, 0.9); color: white; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">
-                        ×
-                      </button>
-                    </div>
-                  `).join('') : '<span style="font-size: 13px; color: var(--gray-400);">Sin archivos adjuntos</span>'}
-                </div>
-
-                <!-- Upload Area -->
-                <div id="item-upload-${order.id}-${item.id}"
-                     style="border: 2px dashed var(--gray-300); border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s;"
-                     onclick="document.getElementById('item-file-input-${order.id}-${item.id}').click()"
-                     ondragover="handleItemDragOver(event, ${order.id}, ${item.id})"
-                     ondragleave="handleItemDragLeave(event, ${order.id}, ${item.id})"
-                     ondrop="handleItemDrop(event, ${order.id}, ${item.id})">
-                  <div style="font-size: 24px; margin-bottom: 4px;">📤</div>
-                  <div style="font-size: 13px; color: var(--gray-600);">Arrastra o haz clic para subir</div>
-                  <div style="font-size: 11px; color: var(--gray-400);">JPG, PNG, PDF (máx 10MB)</div>
-                </div>
-                <input type="file"
-                       id="item-file-input-${order.id}-${item.id}"
-                       accept="image/*,.pdf"
-                       style="display: none;"
-                       onchange="handleItemFileUpload(event, ${order.id}, ${item.id})">
-
-                <!-- Paste button -->
-                <div style="margin-top: 8px; text-align: center;">
-                  <button onclick="pasteItemAttachment(${order.id}, ${item.id})"
-                          style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gray-600);">
-                    📋 Pegar del portapapeles
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-        }).join('')}
-      </div>
-
-      <!-- Summary Table -->
-      <div style="margin-top: 16px; background: var(--gray-50); padding: 12px; border-radius: 8px;">
+      <!-- Products Summary Table -->
+      <div style="background: var(--gray-50); padding: 12px; border-radius: 8px;">
         <table style="width: 100%; font-size: 14px;">
           <tr style="border-bottom: 1px solid var(--gray-200);">
             <th style="text-align: left; padding: 8px 0; color: var(--gray-600);">Producto</th>
             <th style="text-align: center; padding: 8px 0; color: var(--gray-600);">Cantidad</th>
+            <th style="text-align: right; padding: 8px 0; color: var(--gray-600);">P. Unit.</th>
             <th style="text-align: right; padding: 8px 0; color: var(--gray-600);">Subtotal</th>
           </tr>
           ${order.items.map(item => `
             <tr>
               <td style="padding: 6px 0;">${item.productName}</td>
-              <td style="text-align: center; padding: 6px 0;">${item.quantity}</td>
+              <td style="text-align: center; padding: 6px 0;">${item.quantity} pzas</td>
+              <td style="text-align: right; padding: 6px 0;">${formatCurrency(item.unitPrice)}</td>
               <td style="text-align: right; padding: 6px 0; font-weight: 600;">${formatCurrency(item.lineTotal)}</td>
             </tr>
           `).join('')}
           <tr style="border-top: 2px solid var(--gray-300);">
-            <td colspan="2" style="padding: 8px 0; font-weight: 700;">Total</td>
+            <td colspan="3" style="padding: 8px 0; font-weight: 700;">Total</td>
             <td style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(order.totalPrice)}</td>
           </tr>
         </table>
       </div>
     </div>
 
-    <!-- Order Notes -->
+    <!-- Order Notes & Attachments Section (Single section for entire order) -->
+    <div class="detail-section">
+      <h3>📝 Notas y Archivos del Pedido</h3>
+
+      <!-- Internal Notes -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
+          Notas internas (solo visible para admin)
+        </label>
+        <textarea
+          id="order-notes-${order.id}"
+          placeholder="Agregar notas internas, instrucciones especiales, detalles de diseño..."
+          style="width: 100%; min-height: 100px; padding: 12px; border: 2px solid var(--gray-200); border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit;"
+          onchange="updateOrderNotes(${order.id}, this.value)"
+        >${order.internalNotes || ''}</textarea>
+      </div>
+
+      <!-- Attachments Section -->
+      <div>
+        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
+          📎 Archivos adjuntos del pedido
+        </label>
+
+        <!-- Existing Attachments -->
+        <div id="order-attachments-${order.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+          ${(() => {
+            const attachments = order.orderAttachments || [];
+            return attachments.length > 0 ? attachments.map(att => `
+              <div style="position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; border: 2px solid var(--gray-200);">
+                <img src="${att.url}" alt="${att.filename || 'Adjunto'}"
+                     style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                     onclick="window.open('${att.url}', '_blank')">
+                <button onclick="removeOrderAttachment(${order.id}, '${att.url}')"
+                        style="position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; background: rgba(239, 68, 68, 0.9); color: white; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;">
+                  ×
+                </button>
+              </div>
+            `).join('') : '<span style="font-size: 13px; color: var(--gray-400);">Sin archivos adjuntos</span>';
+          })()}
+        </div>
+
+        <!-- Upload Area -->
+        <div id="order-upload-${order.id}"
+             style="border: 2px dashed var(--gray-300); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s;"
+             onclick="document.getElementById('order-file-input-${order.id}').click()"
+             ondragover="handleOrderDragOver(event, ${order.id})"
+             ondragleave="handleOrderDragLeave(event, ${order.id})"
+             ondrop="handleOrderDrop(event, ${order.id})">
+          <div style="font-size: 28px; margin-bottom: 4px;">📤</div>
+          <div style="font-size: 14px; color: var(--gray-600);">Arrastra o haz clic para subir archivos</div>
+          <div style="font-size: 12px; color: var(--gray-400);">JPG, PNG, PDF (máx 10MB)</div>
+        </div>
+        <input type="file"
+               id="order-file-input-${order.id}"
+               accept="image/*,.pdf"
+               multiple
+               style="display: none;"
+               onchange="handleOrderFileUpload(event, ${order.id})">
+
+        <!-- Paste button -->
+        <div style="margin-top: 10px; text-align: center;">
+          <button onclick="pasteOrderAttachment(${order.id})"
+                  style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; color: var(--gray-600);">
+            📋 Pegar imagen del portapapeles
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client Notes (if any) -->
     ${order.clientNotes ? `
       <div class="detail-section">
-        <h3>Notas del Cliente</h3>
+        <h3>💬 Notas del Cliente</h3>
         <p style="background: var(--gray-50); padding: 16px; border-radius: 10px; line-height: 1.6;">
           ${order.clientNotes}
         </p>
@@ -1694,6 +1665,226 @@ async function removeItemAttachment(orderId, itemId, url) {
 
   } catch (error) {
     console.error('Error removing attachment:', error);
+    alert(`Error: ${error.message}`);
+  }
+}
+
+// ==========================================
+// ORDER-LEVEL NOTES & ATTACHMENTS FUNCTIONS
+// ==========================================
+
+// Debounce timer for order notes
+let orderNotesSaveTimer = null;
+
+async function updateOrderNotes(orderId, notes) {
+  // Clear existing timer
+  if (orderNotesSaveTimer) {
+    clearTimeout(orderNotesSaveTimer);
+  }
+
+  // Debounce: save after 1 second of no typing
+  orderNotesSaveTimer = setTimeout(async () => {
+    try {
+      console.log(`📝 Saving order notes for order ${orderId}...`);
+
+      const response = await fetch(`${API_BASE}/orders/${orderId}/notes`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ internalNotes: notes })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error al guardar notas');
+      }
+
+      // Update local state
+      const order = state.orders.find(o => o.id == orderId);
+      if (order) {
+        order.internalNotes = notes;
+      }
+
+      console.log('✅ Order notes saved successfully');
+
+      // Show brief success feedback
+      const textarea = document.getElementById(`order-notes-${orderId}`);
+      if (textarea) {
+        textarea.style.borderColor = '#10b981';
+        setTimeout(() => {
+          textarea.style.borderColor = 'var(--gray-200)';
+        }, 1500);
+      }
+
+    } catch (error) {
+      console.error('Error saving order notes:', error);
+      // Show error feedback
+      const textarea = document.getElementById(`order-notes-${orderId}`);
+      if (textarea) {
+        textarea.style.borderColor = '#ef4444';
+      }
+    }
+  }, 1000);
+}
+
+function handleOrderDragOver(event, orderId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const uploadArea = document.getElementById(`order-upload-${orderId}`);
+  if (uploadArea) {
+    uploadArea.style.borderColor = 'var(--primary)';
+    uploadArea.style.background = 'rgba(233, 30, 99, 0.05)';
+  }
+}
+
+function handleOrderDragLeave(event, orderId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const uploadArea = document.getElementById(`order-upload-${orderId}`);
+  if (uploadArea) {
+    uploadArea.style.borderColor = 'var(--gray-300)';
+    uploadArea.style.background = 'transparent';
+  }
+}
+
+async function handleOrderDrop(event, orderId) {
+  event.preventDefault();
+  event.stopPropagation();
+  handleOrderDragLeave(event, orderId);
+
+  const files = event.dataTransfer.files;
+  for (const file of files) {
+    await uploadOrderAttachment(file, orderId);
+  }
+}
+
+async function handleOrderFileUpload(event, orderId) {
+  const files = event.target.files;
+  for (const file of files) {
+    await uploadOrderAttachment(file, orderId);
+  }
+}
+
+async function pasteOrderAttachment(orderId) {
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const item of clipboardItems) {
+      const imageType = item.types.find(type => type.startsWith('image/'));
+      if (imageType) {
+        const blob = await item.getType(imageType);
+        const file = new File([blob], `order-attachment-${orderId}-${Date.now()}.png`, { type: imageType });
+        await uploadOrderAttachment(file, orderId);
+        return;
+      }
+    }
+    alert('No se encontró imagen en el portapapeles. Copia una imagen primero.');
+  } catch (error) {
+    console.error('Error reading clipboard:', error);
+    alert('No se pudo acceder al portapapeles. Intenta arrastrando el archivo.');
+  }
+}
+
+async function uploadOrderAttachment(file, orderId) {
+  const uploadArea = document.getElementById(`order-upload-${orderId}`);
+  const originalContent = uploadArea.innerHTML;
+
+  try {
+    // Show uploading state
+    uploadArea.innerHTML = `
+      <div style="padding: 20px; text-align: center;">
+        <div style="font-size: 24px; animation: spin 1s linear infinite;">⏳</div>
+        <div style="font-size: 13px; color: var(--gray-600); margin-top: 8px;">Subiendo ${file.name}...</div>
+      </div>
+    `;
+
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', `orders/${orderId}/attachments`);
+
+    const uploadResponse = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${state.authToken}`
+      },
+      body: formData
+    });
+
+    const uploadResult = await uploadResponse.json();
+
+    if (!uploadResult.success) {
+      throw new Error(uploadResult.error || 'Error al subir archivo');
+    }
+
+    const fileUrl = uploadResult.url;
+
+    // Save attachment to order
+    const response = await fetch(`${API_BASE}/orders/${orderId}/attachment`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        url: fileUrl,
+        filename: file.name,
+        type: file.type.startsWith('image/') ? 'image' : 'pdf'
+      })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al guardar el archivo');
+    }
+
+    // Update local state
+    const order = state.orders.find(o => o.id == orderId);
+    if (order) {
+      order.orderAttachments = result.attachments;
+    }
+
+    // Refresh the order detail view
+    showOrderDetail(orderId);
+
+    console.log('✅ Order attachment uploaded:', fileUrl);
+
+  } catch (error) {
+    console.error('Error uploading order attachment:', error);
+    alert(`Error: ${error.message}`);
+    // Restore original upload area
+    uploadArea.innerHTML = originalContent;
+  }
+}
+
+async function removeOrderAttachment(orderId, url) {
+  if (!confirm('¿Eliminar este archivo adjunto?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}/attachment`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ url })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al eliminar');
+    }
+
+    // Update local state
+    const order = state.orders.find(o => o.id == orderId);
+    if (order) {
+      order.orderAttachments = result.attachments;
+    }
+
+    // Refresh the order detail view
+    showOrderDetail(orderId);
+
+    console.log('✅ Order attachment removed');
+
+  } catch (error) {
+    console.error('Error removing order attachment:', error);
     alert(`Error: ${error.message}`);
   }
 }
