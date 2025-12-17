@@ -671,6 +671,49 @@ body {
     font-weight: 800;
 }
 
+/* Payment status checkboxes */
+.payment-checkboxes {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.payment-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--gray-100);
+    color: var(--gray-400);
+    border: 2px solid var(--gray-200);
+    transition: all 0.2s;
+}
+
+.payment-check.checked {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #10b981;
+}
+
+.payment-check.pending {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #f59e0b;
+    animation: pulse-attention 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-attention {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+    }
+}
+
 /* Deadline info */
 .deadline-info {
     display: flex;

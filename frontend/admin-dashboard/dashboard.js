@@ -499,6 +499,14 @@ function createOrderCard(order) {
         <div class="order-totals">
           <span class="total-label">TOTAL</span>
           <span class="total-value">${formatCurrency(order.totalPrice)}</span>
+          <div class="payment-checkboxes" title="Estado de pagos">
+            <span class="payment-check ${order.approvalStatus === 'approved' || order.depositPaid ? 'checked' : ''}" title="Anticipo 50%">
+              ${order.approvalStatus === 'approved' || order.depositPaid ? '☑' : '☐'} 1
+            </span>
+            <span class="payment-check ${order.secondPaymentStatus === 'uploaded' ? 'pending' : ''} ${order.secondPaymentStatus === 'confirmed' ? 'checked' : ''}" title="Pago final 50%">
+              ${order.secondPaymentStatus === 'confirmed' ? '☑' : order.secondPaymentStatus === 'uploaded' ? '⏳' : '☐'} 2
+            </span>
+          </div>
         </div>
       </div>
 
