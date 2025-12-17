@@ -462,8 +462,8 @@ function createOrderCard(order) {
         </div>
       ` : ''}
       <div class="order-date-header">
-        <span class="date-label">Fecha del pedido</span>
-        <span class="date-value">${formatDateFull(order.orderDate)}</span>
+        <span class="date-label">FECHA DEL PEDIDO</span>
+        <span class="date-value">${formatDateFull(order.createdAt || order.orderDate)}</span>
       </div>
       ${!isArchived ? `
         <div class="archive-actions">
@@ -502,39 +502,32 @@ function createOrderCard(order) {
         </div>
       </div>
 
-      <div class="order-right">
-        ${order.productionDeadline ? `
-        <div class="deadline-info">
-          <span class="deadline-icon">🏭</span>
-          <div>
-            <span class="deadline-label">DEADLINE PRODUCCIÓN</span>
-            <span class="deadline-value">${formatDate(order.productionDeadline)}</span>
-          </div>
-        </div>
-        ` : ''}
-        ${order.estimatedDeliveryDate ? `
-        <div class="delivery-info">
-          <span class="delivery-label">Entrega estimada</span>
-          <span class="delivery-value">${formatDate(order.estimatedDeliveryDate)}</span>
-        </div>
-        ` : ''}
-      </div>
     </div>
   `;
 
   return card;
 }
 
-// Helper function for full date format
+// Helper function for full date format with time
 function formatDateFull(dateString) {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
   if (isNaN(date)) return 'N/A';
-  return date.toLocaleDateString('es-MX', {
+
+  const dateFormatted = date.toLocaleDateString('es-MX', {
     day: 'numeric',
     month: 'short',
     year: 'numeric'
   });
+
+  const timeFormatted = date.toLocaleTimeString('es-MX', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+
+  return `${dateFormatted} ${timeFormatted}`;
 }
 
 // ==========================================
@@ -801,37 +794,6 @@ async function showOrderDetail(orderId) {
       </div>
     </div>
     ` : ''}
-
-    <!-- Financial Summary -->
-    <div class="detail-section">
-      <h3>Resumen Financiero</h3>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span class="detail-label">Total del Pedido</span>
-          <span class="detail-value highlight">${formatCurrency(order.totalPrice)}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Costo de Producción</span>
-          <span class="detail-value">${formatCurrency(order.totalProductionCost)}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Ganancia</span>
-          <span class="detail-value" style="color: var(--success)">${formatCurrency(profit)}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Margen de Ganancia</span>
-          <span class="detail-value" style="color: var(--success)">${profitMargin}%</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Anticipo (50%)</span>
-          <span class="detail-value">${formatCurrency(order.depositAmount)}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Restante</span>
-          <span class="detail-value">${formatCurrency(order.totalPrice - order.depositAmount)}</span>
-        </div>
-      </div>
-    </div>
 
     <!-- Payment Proofs - Two Column Layout -->
     <div class="detail-section">
