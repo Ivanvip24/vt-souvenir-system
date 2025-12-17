@@ -581,59 +581,22 @@ async function showOrderDetail(orderId) {
   const profitMargin = ((profit / order.totalPrice) * 100).toFixed(1);
 
   modalBody.innerHTML = `
-    <!-- Status & Approval Actions -->
+    <!-- Approval Actions (only show if pending) -->
+    ${order.approvalStatus === 'pending_review' ? `
     <div class="detail-section">
-      <h3>Estado del Pedido</h3>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span class="detail-label">Estado de Aprobación</span>
-          <span class="detail-value">
-            <span class="status-badge status-${order.approvalStatus}">
-              ${getStatusText(order.approvalStatus)}
-            </span>
-          </span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Estado de Producción</span>
-          <span class="detail-value">${getProductionStatusText(order.status)}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Departamento</span>
-          <span class="detail-value">${order.department}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Anticipo Pagado</span>
-          <span class="detail-value">${order.depositPaid ? '✅ Sí' : '⏳ Pendiente'}</span>
-        </div>
+      <div class="action-buttons" style="flex-wrap: wrap; gap: 8px;">
+        <button class="btn btn-success" style="flex: 1; min-width: 140px;" onclick="approveOrder(${order.id})">
+          ✅ Aprobar Pedido
+        </button>
+        <button class="btn btn-danger" style="flex: 1; min-width: 140px;" onclick="rejectOrder(${order.id})">
+          ❌ Rechazar Pedido
+        </button>
       </div>
-
-      ${order.approvalStatus === 'pending_review' ? `
-        <div class="action-buttons" style="flex-wrap: wrap; gap: 8px;">
-          <button class="btn btn-success" style="flex: 1; min-width: 140px;" onclick="approveOrder(${order.id})">
-            ✅ Aprobar
-          </button>
-          <button class="btn btn-danger" style="flex: 1; min-width: 140px;" onclick="rejectOrder(${order.id})">
-            ❌ Rechazar
-          </button>
-        </div>
-        <p style="font-size: 11px; color: #6b7280; margin-top: 8px; text-align: center;">
-          🤖 La verificación de comprobantes es automática. Este pedido requiere revisión manual.
-        </p>
-      ` : ''}
-
-      ${order.approvalStatus === 'approved' && order.receiptPdfUrl ? `
-        <div class="action-buttons" style="margin-top: 16px;">
-          <button class="btn btn-primary" onclick="downloadReceipt('${order.receiptPdfUrl}', '${order.orderNumber}', ${order.id})" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
-            <span style="font-size: 20px;">📥</span>
-            <span>Descargar Recibo</span>
-          </button>
-          <button class="btn btn-secondary" onclick="shareReceipt('${order.receiptPdfUrl}')" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
-            <span style="font-size: 20px;">🔗</span>
-            <span>Compartir Enlace</span>
-          </button>
-        </div>
-      ` : ''}
+      <p style="font-size: 11px; color: #6b7280; margin-top: 8px; text-align: center;">
+        🤖 La verificación de comprobantes es automática. Este pedido requiere revisión manual.
+      </p>
     </div>
+    ` : ''}
 
     <!-- Client Information -->
     <div class="detail-section">
