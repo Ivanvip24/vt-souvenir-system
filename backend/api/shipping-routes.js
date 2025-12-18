@@ -1036,11 +1036,75 @@ router.get('/pickups/status', async (req, res) => {
 // POST /api/shipping/pickups/request
 // ========================================
 router.post('/pickups/request', async (req, res) => {
-  const { pickupDate, timeFrom, timeTo } = req.body;
+  const { pickupDate, timeFrom, timeTo, triggerAll } = req.body;
 
   try {
     console.log('📦 Manual pickup request triggered from API');
 
+    // If triggerAll is true, request pickups for all pending labels grouped by carrier
+    if (triggerAll) {
+      const pendingLabels = await query(`
+        SELECT carrier, array_agg(shipment_id) as shipment_ids
+        FROM shipping_labels
+        WHERE pickup_status = 'pending'
+          AND shipment_id IS NOT NULL
+          AND carrier IS NOT NULL
+        GROUP BY carrier
+      `);
+
+      if (pendingLabels.rows.length === 0) {
+        return res.json({
+          success: true,
+          message: 'No hay guías pendientes de recolección',
+          results: []
+        });
+      }
+
+      const results = [];
+      for (const row of pendingLabels.rows) {
+        try {
+          const pickupResult = await skydropx.requestPickupIfNeeded(
+            row.shipment_ids[0],
+            row.carrier
+          );
+
+          // Link remaining shipments to this pickup
+          if (pickupResult.success && row.shipment_ids.length > 1 && !pickupResult.alreadyScheduled) {
+            for (let i = 1; i < row.shipment_ids.length; i++) {
+              await query(`
+                UPDATE shipping_labels
+                SET pickup_id = $1, pickup_status = 'requested', pickup_date = $2
+                WHERE shipment_id = $3
+              `, [pickupResult.pickup_id, pickupResult.pickup_date, row.shipment_ids[i]]);
+            }
+          }
+
+          results.push({
+            carrier: row.carrier,
+            success: pickupResult.success,
+            pickup_id: pickupResult.pickup_id,
+            pickup_date: pickupResult.pickup_date,
+            shipment_count: row.shipment_ids.length,
+            message: pickupResult.message
+          });
+        } catch (error) {
+          results.push({
+            carrier: row.carrier,
+            success: false,
+            error: error.message,
+            shipment_count: row.shipment_ids.length
+          });
+        }
+      }
+
+      return res.json({
+        success: true,
+        message: `Procesadas ${results.length} paqueterías`,
+        results
+      });
+    }
+
+    // Single pickup request (original behavior)
     const result = await pickupScheduler.triggerManualPickup({
       pickupDate,
       timeFrom,
@@ -1081,16 +1145,16 @@ router.get('/pickups/pending', async (req, res) => {
     res.json({
       success: true,
       count: pending.length,
-      shipments: pending.map(s => ({
+      pending: pending.map(s => ({
         id: s.id,
-        orderId: s.order_id,
-        orderNumber: s.order_number,
-        clientName: s.client_name,
-        shipmentId: s.shipment_id,
-        trackingNumber: s.tracking_number,
+        order_id: s.order_id,
+        order_number: s.order_number,
+        client_name: s.client_name,
+        shipment_id: s.shipment_id,
+        tracking_number: s.tracking_number,
         carrier: s.carrier,
         service: s.service,
-        createdAt: s.created_at
+        created_at: s.created_at
       }))
     });
 
@@ -1122,14 +1186,17 @@ router.get('/pickups/history', async (req, res) => {
       success: true,
       pickups: result.rows.map(p => ({
         id: p.id,
-        pickupId: p.pickup_id,
-        pickupDate: p.pickup_date,
-        timeFrom: p.pickup_time_from,
-        timeTo: p.pickup_time_to,
-        shipmentCount: p.shipment_count,
+        pickup_id: p.pickup_id,
+        pickup_date: p.pickup_date,
+        pickup_time_from: p.pickup_time_from,
+        pickup_time_to: p.pickup_time_to,
+        shipment_count: p.shipment_count,
+        shipment_ids: p.shipment_ids,
+        carrier: p.carrier,
         status: p.status,
-        createdAt: p.created_at,
-        requestedAt: p.requested_at
+        created_at: p.created_at,
+        requested_at: p.requested_at,
+        response_data: p.response_data
       })),
       pagination: {
         page: parseInt(page),

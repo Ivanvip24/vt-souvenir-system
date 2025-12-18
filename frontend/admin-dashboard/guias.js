@@ -392,6 +392,343 @@ styleSheet.textContent = `
 `;
 document.head.appendChild(styleSheet);
 
+// ==========================================
+// PICKUPS MODAL FUNCTIONALITY
+// ==========================================
+
+let pickupsCurrentDate = new Date().toISOString().split('T')[0];
+
+/**
+ * Open pickups modal
+ */
+function openPickupsModal() {
+  const modal = document.getElementById('pickups-modal');
+  modal.classList.remove('hidden');
+
+  // Set today's date
+  const dateInput = document.getElementById('pickups-date-input');
+  dateInput.value = pickupsCurrentDate;
+
+  // Load pickups data
+  loadPickupsForDate(pickupsCurrentDate);
+}
+
+/**
+ * Close pickups modal
+ */
+function closePickupsModal() {
+  const modal = document.getElementById('pickups-modal');
+  modal.classList.add('hidden');
+}
+
+/**
+ * Change pickup date by days
+ */
+function changePickupDate(days) {
+  const dateInput = document.getElementById('pickups-date-input');
+  const currentDate = new Date(dateInput.value);
+  currentDate.setDate(currentDate.getDate() + days);
+  dateInput.value = currentDate.toISOString().split('T')[0];
+  pickupsCurrentDate = dateInput.value;
+  loadPickupsForDate(dateInput.value);
+}
+
+/**
+ * Load pickups for specific date
+ */
+async function loadPickupsForDate(date) {
+  const loadingEl = document.getElementById('pickups-loading');
+  const listEl = document.getElementById('pickups-list');
+  const emptyEl = document.getElementById('pickups-empty');
+
+  loadingEl.classList.remove('hidden');
+  listEl.innerHTML = '';
+  emptyEl.classList.add('hidden');
+
+  try {
+    // Fetch pickups and pending labels
+    const [pickupsResponse, pendingResponse] = await Promise.all([
+      fetch(`${GUIAS_API_URL}/pickups/history?date=${date}`),
+      fetch(`${GUIAS_API_URL}/pickups/pending`)
+    ]);
+
+    const pickupsResult = await pickupsResponse.json();
+    const pendingResult = await pendingResponse.json();
+
+    loadingEl.classList.add('hidden');
+
+    // Calculate stats
+    const pickups = pickupsResult.success ? pickupsResult.pickups : [];
+    const pendingLabels = pendingResult.success ? pendingResult.pending : [];
+
+    // Filter pickups for the selected date
+    const datePickups = pickups.filter(p => {
+      const pickupDate = new Date(p.pickup_date).toISOString().split('T')[0];
+      return pickupDate === date;
+    });
+
+    // Update stats
+    document.getElementById('pickups-total-count').textContent = datePickups.length;
+    document.getElementById('pickups-pending-count').textContent = pendingLabels.length;
+    document.getElementById('pickups-requested-count').textContent =
+      datePickups.filter(p => p.status === 'requested' || p.status === 'confirmed').length;
+    document.getElementById('pickups-shipments-count').textContent =
+      datePickups.reduce((sum, p) => sum + (p.shipment_count || 0), 0);
+
+    // If no pickups and no pending
+    if (datePickups.length === 0 && pendingLabels.length === 0) {
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+
+    // Render pickups
+    let html = '';
+
+    // Group pickups by carrier
+    const pickupsByCarrier = {};
+    datePickups.forEach(p => {
+      const carrier = p.carrier || 'Sin Asignar';
+      if (!pickupsByCarrier[carrier]) {
+        pickupsByCarrier[carrier] = [];
+      }
+      pickupsByCarrier[carrier].push(p);
+    });
+
+    // Render scheduled pickups
+    if (Object.keys(pickupsByCarrier).length > 0) {
+      html += `<h3 style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">📅 Recolecciones Programadas</h3>`;
+
+      for (const [carrier, carrierPickups] of Object.entries(pickupsByCarrier)) {
+        html += renderCarrierPickupCard(carrier, carrierPickups);
+      }
+    }
+
+    // Render pending labels (grouped by carrier)
+    if (pendingLabels.length > 0) {
+      html += `
+        <div style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
+          <h3 style="margin: 0 0 16px 0; font-size: 16px; color: #f59e0b;">⏳ Guías Sin Recolección (${pendingLabels.length})</h3>
+          <div style="background: #fef3c7; padding: 16px; border-radius: 12px;">
+            <p style="margin: 0 0 12px 0; font-size: 14px; color: #92400e;">
+              Estas guías aún no tienen recolección programada. Usa el botón "Solicitar Pendientes" para programarlas.
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              ${pendingLabels.map(label => `
+                <div style="background: white; padding: 8px 12px; border-radius: 8px; font-size: 13px;">
+                  <strong>${label.carrier || 'N/A'}</strong>: ${label.order_number || label.order_id}
+                  <span style="color: #6b7280;">(${label.tracking_number || 'Sin tracking'})</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    listEl.innerHTML = html;
+
+  } catch (error) {
+    console.error('Error loading pickups:', error);
+    loadingEl.classList.add('hidden');
+    listEl.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #dc2626;">
+        Error al cargar recolecciones: ${error.message}
+      </div>
+    `;
+  }
+}
+
+/**
+ * Render carrier pickup card
+ */
+function renderCarrierPickupCard(carrier, pickups) {
+  const carrierColors = {
+    'Estafeta': { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
+    'FedEx': { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
+    'Paquetexpress': { bg: '#d1fae5', border: '#10b981', text: '#065f46' },
+    'DHL': { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
+    'UPS': { bg: '#fef3c7', border: '#d97706', text: '#92400e' },
+    'Redpack': { bg: '#ede9fe', border: '#8b5cf6', text: '#5b21b6' }
+  };
+
+  const colors = carrierColors[carrier] || { bg: '#f3f4f6', border: '#9ca3af', text: '#374151' };
+
+  return pickups.map(pickup => `
+    <div style="background: ${colors.bg}; border: 2px solid ${colors.border}; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+        <div>
+          <div style="font-size: 20px; font-weight: 700; color: ${colors.text}; margin-bottom: 4px;">
+            ${getCarrierIcon(carrier)} ${carrier}
+          </div>
+          <div style="font-size: 13px; color: #6b7280;">
+            Pickup ID: <strong style="font-family: monospace;">${pickup.pickup_id || 'N/A'}</strong>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          ${getPickupStatusBadge(pickup.status)}
+          <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
+            ${pickup.shipment_count || 0} envío(s)
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; background: rgba(255,255,255,0.6); padding: 12px; border-radius: 8px;">
+        <div>
+          <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Fecha</div>
+          <div style="font-weight: 600;">${formatPickupDate(pickup.pickup_date)}</div>
+        </div>
+        <div>
+          <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Horario</div>
+          <div style="font-weight: 600;">${pickup.pickup_time_from || '09:00'} - ${pickup.pickup_time_to || '18:00'}</div>
+        </div>
+        <div>
+          <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Solicitado</div>
+          <div style="font-weight: 600;">${formatPickupDateTime(pickup.requested_at)}</div>
+        </div>
+      </div>
+
+      ${pickup.shipment_ids && pickup.shipment_ids.length > 0 ? `
+        <div style="margin-top: 12px;">
+          <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">Shipment IDs:</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+            ${pickup.shipment_ids.slice(0, 5).map(id => `
+              <span style="background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: monospace;">
+                ${id.substring(0, 8)}...
+              </span>
+            `).join('')}
+            ${pickup.shipment_ids.length > 5 ? `
+              <span style="background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 11px;">
+                +${pickup.shipment_ids.length - 5} más
+              </span>
+            ` : ''}
+          </div>
+        </div>
+      ` : ''}
+
+      <div style="margin-top: 16px; display: flex; gap: 8px;">
+        <button onclick="cancelPickup('${pickup.pickup_id}')"
+                style="padding: 8px 16px; background: #fee2e2; color: #991b1b; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"
+                ${pickup.status === 'cancelled' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+          ❌ Cancelar
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/**
+ * Get carrier icon
+ */
+function getCarrierIcon(carrier) {
+  const icons = {
+    'Estafeta': '📦',
+    'FedEx': '✈️',
+    'Paquetexpress': '🚛',
+    'DHL': '🟡',
+    'UPS': '📬',
+    'Redpack': '📮'
+  };
+  return icons[carrier] || '📦';
+}
+
+/**
+ * Get pickup status badge
+ */
+function getPickupStatusBadge(status) {
+  const badges = {
+    'pending': { bg: '#fef3c7', color: '#92400e', text: '⏳ Pendiente' },
+    'requested': { bg: '#dbeafe', color: '#1e40af', text: '📤 Solicitado' },
+    'confirmed': { bg: '#d1fae5', color: '#065f46', text: '✅ Confirmado' },
+    'completed': { bg: '#bbf7d0', color: '#166534', text: '🎉 Completado' },
+    'cancelled': { bg: '#fee2e2', color: '#991b1b', text: '❌ Cancelado' }
+  };
+
+  const badge = badges[status] || { bg: '#f3f4f6', color: '#374151', text: status };
+
+  return `<span style="display: inline-block; padding: 6px 12px; background: ${badge.bg}; color: ${badge.color}; font-size: 12px; font-weight: 600; border-radius: 20px;">${badge.text}</span>`;
+}
+
+/**
+ * Format pickup date
+ */
+function formatPickupDate(dateStr) {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('es-MX', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short'
+  });
+}
+
+/**
+ * Format pickup datetime
+ */
+function formatPickupDateTime(dateStr) {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  return date.toLocaleString('es-MX', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+/**
+ * Trigger pickups for all pending labels
+ */
+async function triggerPendingPickups() {
+  if (!confirm('¿Solicitar recolección para todas las guías pendientes?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${GUIAS_API_URL}/pickups/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ triggerAll: true })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert(`✅ Recolecciones solicitadas exitosamente!\n\nResultados:\n${JSON.stringify(result.results, null, 2)}`);
+      loadPickupsForDate(document.getElementById('pickups-date-input').value);
+    } else {
+      alert('Error: ' + (result.error || 'Error desconocido'));
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+}
+
+/**
+ * Cancel a pickup
+ */
+async function cancelPickup(pickupId) {
+  if (!pickupId || !confirm('¿Cancelar esta recolección?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${GUIAS_API_URL}/pickups/${pickupId}`, {
+      method: 'DELETE'
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert('Recolección cancelada exitosamente');
+      loadPickupsForDate(document.getElementById('pickups-date-input').value);
+    } else {
+      alert('Error: ' + (result.error || 'Error desconocido'));
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+}
+
 // Export functions
 window.initGuiasView = initGuiasView;
 window.loadGuias = loadGuias;
@@ -403,3 +740,11 @@ window.refreshGuias = refreshGuias;
 window.updateGuiaStatus = updateGuiaStatus;
 window.refreshGuiaTracking = refreshGuiaTracking;
 window.exportGuiasCSV = exportGuiasCSV;
+
+// Pickups exports
+window.openPickupsModal = openPickupsModal;
+window.closePickupsModal = closePickupsModal;
+window.changePickupDate = changePickupDate;
+window.loadPickupsForDate = loadPickupsForDate;
+window.triggerPendingPickups = triggerPendingPickups;
+window.cancelPickup = cancelPickup;
