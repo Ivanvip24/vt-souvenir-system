@@ -27,6 +27,7 @@ import { processReceipt } from '../services/receipt-ocr.js';
 import { verifyPaymentReceipt, isConfigured as isClaudeConfigured } from '../services/payment-receipt-verifier.js';
 import * as orderAlerts from '../agents/alerts/order-alerts.js';
 import * as skydropxService from '../services/skydropx.js';
+import * as pickupScheduler from '../services/pickup-scheduler.js';
 
 config();
 
@@ -3195,6 +3196,9 @@ async function startServer() {
 
     // Initialize Analytics Agent (includes scheduler)
     await analyticsAgent.initialize();
+
+    // Initialize Pickup Scheduler (daily pickup requests)
+    pickupScheduler.initializePickupScheduler();
 
     // Start server
     app.listen(PORT, () => {

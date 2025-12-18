@@ -496,6 +496,295 @@ export async function generateShippingLabel({ orderId, clientId, destination }) 
   };
 }
 
+/**
+ * Request pickup for multiple shipments
+ * @param {string[]} shipmentIds - Array of Skydropx shipment IDs
+ * @param {Object} options - Pickup options
+ * @param {string} options.pickupDate - Date for pickup (YYYY-MM-DD)
+ * @param {string} options.timeFrom - Start time window (HH:MM)
+ * @param {string} options.timeTo - End time window (HH:MM)
+ */
+export async function requestPickup(shipmentIds, options = {}) {
+  if (!shipmentIds || shipmentIds.length === 0) {
+    throw new Error('No shipment IDs provided for pickup');
+  }
+
+  // Default to tomorrow if no date specified
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const pickupDate = options.pickupDate || tomorrow.toISOString().split('T')[0];
+
+  // Default time window: 9 AM to 6 PM
+  const timeFrom = options.timeFrom || '09:00';
+  const timeTo = options.timeTo || '18:00';
+
+  console.log(`📦 Requesting pickup for ${shipmentIds.length} shipment(s)...`);
+  console.log(`   Date: ${pickupDate}`);
+  console.log(`   Time: ${timeFrom} - ${timeTo}`);
+  console.log(`   Shipment IDs: ${shipmentIds.join(', ')}`);
+
+  const pickupPayload = {
+    pickup: {
+      shipment_ids: shipmentIds,
+      date: pickupDate,
+      time_from: timeFrom,
+      time_to: timeTo,
+      address: {
+        name: truncate(ORIGIN_ADDRESS.name, MAX_NAME_LENGTH),
+        company: truncate(ORIGIN_ADDRESS.company, MAX_NAME_LENGTH),
+        street1: truncate(`${ORIGIN_ADDRESS.street} ${ORIGIN_ADDRESS.number}`, MAX_STREET_LENGTH),
+        neighborhood: truncate(ORIGIN_ADDRESS.neighborhood, MAX_NAME_LENGTH),
+        postal_code: ORIGIN_ADDRESS.zip,
+        area_level1: ORIGIN_ADDRESS.state,
+        area_level2: ORIGIN_ADDRESS.city,
+        area_level3: truncate(ORIGIN_ADDRESS.neighborhood, MAX_NAME_LENGTH),
+        country_code: 'MX',
+        phone: ORIGIN_ADDRESS.phone,
+        email: ORIGIN_ADDRESS.email,
+        reference: truncate(ORIGIN_ADDRESS.reference, MAX_REFERENCE_LENGTH)
+      }
+    }
+  };
+
+  console.log('📬 Skydropx Pickup Request:', JSON.stringify(pickupPayload, null, 2));
+
+  const response = await skydropxFetch('/pickups', {
+    method: 'POST',
+    body: JSON.stringify(pickupPayload)
+  });
+
+  const responseText = await response.text();
+  console.log('📬 Skydropx Pickup Response Status:', response.status);
+
+  if (!response.ok) {
+    let errorMessage = 'Error requesting pickup from Skydropx';
+    try {
+      const errorData = JSON.parse(responseText);
+      if (errorData.errors) {
+        if (typeof errorData.errors === 'string') {
+          errorMessage = errorData.errors;
+        } else if (Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.join(', ');
+        } else {
+          const messages = [];
+          for (const [field, msgs] of Object.entries(errorData.errors)) {
+            if (Array.isArray(msgs)) {
+              messages.push(`${field}: ${msgs.join(', ')}`);
+            }
+          }
+          errorMessage = messages.join('; ') || errorMessage;
+        }
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch (e) {
+      errorMessage = responseText || errorMessage;
+    }
+    console.error('❌ Pickup request failed:', errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  const result = JSON.parse(responseText);
+  console.log('✅ Pickup requested successfully');
+
+  // Extract pickup data from response
+  const pickupData = result.data?.attributes || result.data || result;
+  const pickupId = result.data?.id || pickupData.id;
+
+  return {
+    success: true,
+    pickup_id: pickupId,
+    status: pickupData.status || 'requested',
+    pickup_date: pickupDate,
+    time_from: timeFrom,
+    time_to: timeTo,
+    shipment_count: shipmentIds.length,
+    response: result
+  };
+}
+
+/**
+ * Get pickup status
+ */
+export async function getPickup(pickupId) {
+  const response = await skydropxFetch(`/pickups/${pickupId}`);
+
+  if (!response.ok) {
+    throw new Error('Pickup not found');
+  }
+
+  const result = await response.json();
+  const pickupData = result.data?.attributes || result.data || result;
+
+  return {
+    pickup_id: result.data?.id || pickupId,
+    status: pickupData.status,
+    pickup_date: pickupData.date,
+    time_from: pickupData.time_from,
+    time_to: pickupData.time_to
+  };
+}
+
+/**
+ * Cancel a pickup request
+ */
+export async function cancelPickup(pickupId) {
+  console.log(`❌ Cancelling pickup ${pickupId}...`);
+
+  const response = await skydropxFetch(`/pickups/${pickupId}`, {
+    method: 'DELETE'
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to cancel pickup: ${errorText}`);
+  }
+
+  console.log('✅ Pickup cancelled');
+  return { success: true, pickup_id: pickupId };
+}
+
+/**
+ * Get pending shipments that need pickup (labels generated today without pickup)
+ */
+export async function getPendingShipmentsForPickup() {
+  const result = await query(`
+    SELECT
+      sl.id,
+      sl.order_id,
+      sl.shipment_id,
+      sl.tracking_number,
+      sl.carrier,
+      sl.service,
+      sl.status as label_status,
+      sl.pickup_status,
+      sl.created_at,
+      o.order_number,
+      c.name as client_name
+    FROM shipping_labels sl
+    JOIN orders o ON sl.order_id = o.id
+    JOIN clients c ON o.client_id = c.id
+    WHERE sl.shipment_id IS NOT NULL
+      AND sl.status = 'label_generated'
+      AND (sl.pickup_status = 'pending' OR sl.pickup_status IS NULL)
+      AND sl.created_at >= CURRENT_DATE
+    ORDER BY sl.created_at ASC
+  `);
+
+  return result.rows;
+}
+
+/**
+ * Request daily pickup for all pending shipments
+ * This should be called by a scheduler (e.g., every day at 5 PM)
+ */
+export async function requestDailyPickup(options = {}) {
+  console.log('📦 Starting daily pickup request...');
+
+  // Get all pending shipments
+  const pendingShipments = await getPendingShipmentsForPickup();
+
+  if (pendingShipments.length === 0) {
+    console.log('ℹ️  No pending shipments for pickup today');
+    return {
+      success: true,
+      message: 'No pending shipments',
+      shipment_count: 0
+    };
+  }
+
+  console.log(`📋 Found ${pendingShipments.length} shipment(s) pending pickup:`);
+  pendingShipments.forEach(s => {
+    console.log(`   - ${s.order_number}: ${s.tracking_number} (${s.carrier})`);
+  });
+
+  // Extract shipment IDs
+  const shipmentIds = pendingShipments.map(s => s.shipment_id);
+
+  // Request pickup for tomorrow by default
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const pickupDate = options.pickupDate || tomorrow.toISOString().split('T')[0];
+
+  try {
+    // Request pickup from Skydropx
+    const pickupResult = await requestPickup(shipmentIds, {
+      pickupDate,
+      timeFrom: options.timeFrom || '09:00',
+      timeTo: options.timeTo || '18:00'
+    });
+
+    // Save pickup to database
+    await query(`
+      INSERT INTO pickups (
+        pickup_id,
+        pickup_date,
+        pickup_time_from,
+        pickup_time_to,
+        shipment_ids,
+        shipment_count,
+        status,
+        response_data,
+        requested_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+    `, [
+      pickupResult.pickup_id,
+      pickupDate,
+      pickupResult.time_from,
+      pickupResult.time_to,
+      shipmentIds,
+      shipmentIds.length,
+      'requested',
+      JSON.stringify(pickupResult.response)
+    ]);
+
+    // Update all shipping labels with pickup info
+    await query(`
+      UPDATE shipping_labels
+      SET pickup_id = $1,
+          pickup_status = 'requested',
+          pickup_date = $2,
+          pickup_time_from = $3,
+          pickup_time_to = $4,
+          pickup_requested_at = NOW()
+      WHERE shipment_id = ANY($5)
+    `, [
+      pickupResult.pickup_id,
+      pickupDate,
+      pickupResult.time_from,
+      pickupResult.time_to,
+      shipmentIds
+    ]);
+
+    console.log(`✅ Daily pickup scheduled for ${pickupDate}`);
+    console.log(`   Pickup ID: ${pickupResult.pickup_id}`);
+    console.log(`   Shipments: ${shipmentIds.length}`);
+
+    return {
+      success: true,
+      pickup_id: pickupResult.pickup_id,
+      pickup_date: pickupDate,
+      shipment_count: shipmentIds.length,
+      shipments: pendingShipments.map(s => ({
+        order_number: s.order_number,
+        tracking_number: s.tracking_number,
+        carrier: s.carrier
+      }))
+    };
+
+  } catch (error) {
+    console.error('❌ Failed to request daily pickup:', error.message);
+
+    // Log failure but don't crash
+    return {
+      success: false,
+      error: error.message,
+      shipment_count: shipmentIds.length,
+      shipment_ids: shipmentIds
+    };
+  }
+}
+
 export default {
   getAccessToken,
   getQuote,
@@ -503,6 +792,11 @@ export default {
   getShipment,
   selectBestRate,
   generateShippingLabel,
+  requestPickup,
+  getPickup,
+  cancelPickup,
+  getPendingShipmentsForPickup,
+  requestDailyPickup,
   ORIGIN_ADDRESS,
   DEFAULT_PACKAGE
 };

@@ -6,6 +6,7 @@
 import express from 'express';
 import { query } from '../shared/database.js';
 import * as skydropx from '../services/skydropx.js';
+import * as pickupScheduler from '../services/pickup-scheduler.js';
 
 const router = express.Router();
 
@@ -976,6 +977,243 @@ router.post('/refresh-pending-tracking', async (req, res) => {
   } catch (error) {
     console.error('❌ Error refreshing pending tracking:', error);
     res.status(500).json({ error: 'Error actualizando rastreos pendientes' });
+  }
+});
+
+// ========================================
+// PICKUP ENDPOINTS
+// ========================================
+
+// ========================================
+// GET PICKUP SCHEDULER STATUS
+// GET /api/shipping/pickups/status
+// ========================================
+router.get('/pickups/status', async (req, res) => {
+  try {
+    const status = await pickupScheduler.getSchedulerStatus();
+    res.json({
+      success: true,
+      ...status
+    });
+  } catch (error) {
+    console.error('❌ Error getting pickup status:', error);
+    res.status(500).json({ error: 'Error obteniendo estado de recolecciones' });
+  }
+});
+
+// ========================================
+// REQUEST PICKUP MANUALLY
+// POST /api/shipping/pickups/request
+// ========================================
+router.post('/pickups/request', async (req, res) => {
+  const { pickupDate, timeFrom, timeTo } = req.body;
+
+  try {
+    console.log('📦 Manual pickup request triggered from API');
+
+    const result = await pickupScheduler.triggerManualPickup({
+      pickupDate,
+      timeFrom,
+      timeTo
+    });
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: `Recolección solicitada para ${result.pickup_date}`,
+        pickup_id: result.pickup_id,
+        pickup_date: result.pickup_date,
+        shipment_count: result.shipment_count,
+        shipments: result.shipments
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error || result.message,
+        shipment_count: result.shipment_count
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Error requesting pickup:', error);
+    res.status(500).json({ error: error.message || 'Error solicitando recolección' });
+  }
+});
+
+// ========================================
+// GET PENDING SHIPMENTS FOR PICKUP
+// GET /api/shipping/pickups/pending
+// ========================================
+router.get('/pickups/pending', async (req, res) => {
+  try {
+    const pending = await skydropx.getPendingShipmentsForPickup();
+
+    res.json({
+      success: true,
+      count: pending.length,
+      shipments: pending.map(s => ({
+        id: s.id,
+        orderId: s.order_id,
+        orderNumber: s.order_number,
+        clientName: s.client_name,
+        shipmentId: s.shipment_id,
+        trackingNumber: s.tracking_number,
+        carrier: s.carrier,
+        service: s.service,
+        createdAt: s.created_at
+      }))
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting pending pickups:', error);
+    res.status(500).json({ error: 'Error obteniendo envíos pendientes' });
+  }
+});
+
+// ========================================
+// GET PICKUP HISTORY
+// GET /api/shipping/pickups/history
+// ========================================
+router.get('/pickups/history', async (req, res) => {
+  const { limit = 20, page = 1 } = req.query;
+  const offset = (page - 1) * limit;
+
+  try {
+    const result = await query(`
+      SELECT *
+      FROM pickups
+      ORDER BY created_at DESC
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+
+    const countResult = await query('SELECT COUNT(*) FROM pickups');
+
+    res.json({
+      success: true,
+      pickups: result.rows.map(p => ({
+        id: p.id,
+        pickupId: p.pickup_id,
+        pickupDate: p.pickup_date,
+        timeFrom: p.pickup_time_from,
+        timeTo: p.pickup_time_to,
+        shipmentCount: p.shipment_count,
+        status: p.status,
+        createdAt: p.created_at,
+        requestedAt: p.requested_at
+      })),
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: parseInt(countResult.rows[0].count)
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting pickup history:', error);
+    res.status(500).json({ error: 'Error obteniendo historial de recolecciones' });
+  }
+});
+
+// ========================================
+// GET SINGLE PICKUP DETAILS
+// GET /api/shipping/pickups/:pickupId
+// ========================================
+router.get('/pickups/:pickupId', async (req, res) => {
+  const { pickupId } = req.params;
+
+  try {
+    // Get pickup from database
+    const pickupResult = await query(`
+      SELECT * FROM pickups WHERE pickup_id = $1 OR id::text = $1
+    `, [pickupId]);
+
+    if (pickupResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Recolección no encontrada' });
+    }
+
+    const pickup = pickupResult.rows[0];
+
+    // Get associated shipping labels
+    const labelsResult = await query(`
+      SELECT
+        sl.*,
+        o.order_number,
+        c.name as client_name
+      FROM shipping_labels sl
+      JOIN orders o ON sl.order_id = o.id
+      JOIN clients c ON o.client_id = c.id
+      WHERE sl.pickup_id = $1
+    `, [pickup.pickup_id]);
+
+    res.json({
+      success: true,
+      pickup: {
+        id: pickup.id,
+        pickupId: pickup.pickup_id,
+        pickupDate: pickup.pickup_date,
+        timeFrom: pickup.pickup_time_from,
+        timeTo: pickup.pickup_time_to,
+        shipmentCount: pickup.shipment_count,
+        status: pickup.status,
+        createdAt: pickup.created_at,
+        requestedAt: pickup.requested_at
+      },
+      shipments: labelsResult.rows.map(l => ({
+        id: l.id,
+        orderNumber: l.order_number,
+        clientName: l.client_name,
+        trackingNumber: l.tracking_number,
+        carrier: l.carrier,
+        service: l.service
+      }))
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting pickup details:', error);
+    res.status(500).json({ error: 'Error obteniendo detalles de recolección' });
+  }
+});
+
+// ========================================
+// CANCEL A PICKUP
+// DELETE /api/shipping/pickups/:pickupId
+// ========================================
+router.delete('/pickups/:pickupId', async (req, res) => {
+  const { pickupId } = req.params;
+
+  try {
+    // Get pickup from database
+    const pickupResult = await query(`
+      SELECT * FROM pickups WHERE pickup_id = $1
+    `, [pickupId]);
+
+    if (pickupResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Recolección no encontrada' });
+    }
+
+    // Cancel in Skydropx
+    await skydropx.cancelPickup(pickupId);
+
+    // Update database
+    await query(`
+      UPDATE pickups SET status = 'cancelled' WHERE pickup_id = $1
+    `, [pickupId]);
+
+    // Update shipping labels
+    await query(`
+      UPDATE shipping_labels
+      SET pickup_status = 'pending', pickup_id = NULL
+      WHERE pickup_id = $1
+    `, [pickupId]);
+
+    res.json({
+      success: true,
+      message: 'Recolección cancelada exitosamente'
+    });
+
+  } catch (error) {
+    console.error('❌ Error cancelling pickup:', error);
+    res.status(500).json({ error: error.message || 'Error cancelando recolección' });
   }
 });
 
