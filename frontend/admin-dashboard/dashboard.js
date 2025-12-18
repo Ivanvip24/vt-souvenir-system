@@ -139,6 +139,11 @@ function switchView(viewName) {
   if (viewName === 'guias' && typeof initGuiasView === 'function') {
     initGuiasView();
   }
+
+  // Initialize pickups when switching to pickups view
+  if (viewName === 'pickups' && typeof initPickupsView === 'function') {
+    initPickupsView();
+  }
 }
 
 // ==========================================

@@ -397,28 +397,27 @@ document.head.appendChild(styleSheet);
 // ==========================================
 
 let pickupsCurrentDate = new Date().toISOString().split('T')[0];
+let pickupsInitialized = false;
 
 /**
- * Open pickups modal
+ * Initialize pickups view
  */
-function openPickupsModal() {
-  const modal = document.getElementById('pickups-modal');
-  modal.classList.remove('hidden');
+function initPickupsView() {
+  if (pickupsInitialized) {
+    // Just refresh data
+    loadPickupsForDate(pickupsCurrentDate);
+    return;
+  }
 
   // Set today's date
   const dateInput = document.getElementById('pickups-date-input');
-  dateInput.value = pickupsCurrentDate;
+  if (dateInput) {
+    dateInput.value = pickupsCurrentDate;
+  }
 
   // Load pickups data
   loadPickupsForDate(pickupsCurrentDate);
-}
-
-/**
- * Close pickups modal
- */
-function closePickupsModal() {
-  const modal = document.getElementById('pickups-modal');
-  modal.classList.add('hidden');
+  pickupsInitialized = true;
 }
 
 /**
@@ -742,8 +741,7 @@ window.refreshGuiaTracking = refreshGuiaTracking;
 window.exportGuiasCSV = exportGuiasCSV;
 
 // Pickups exports
-window.openPickupsModal = openPickupsModal;
-window.closePickupsModal = closePickupsModal;
+window.initPickupsView = initPickupsView;
 window.changePickupDate = changePickupDate;
 window.loadPickupsForDate = loadPickupsForDate;
 window.triggerPendingPickups = triggerPendingPickups;
