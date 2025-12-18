@@ -1107,11 +1107,154 @@ app.post('/api/orders/:orderId/second-payment', async (req, res) => {
 
     console.log(`✅ Second payment receipt uploaded and saved to database for order ${orderId}`);
 
+    // AI Verification for second payment
+    let verificationResult = null;
+    let autoConfirmed = false;
+    const expectedAmount = remainingBalance;
+
+    if (isClaudeConfigured()) {
+      console.log(`🤖 Starting AI verification for second payment...`);
+      console.log(`   Expected amount: $${expectedAmount.toFixed(2)}`);
+
+      try {
+        verificationResult = await verifyPaymentReceipt(
+          imageUrl,
+          expectedAmount,
+          order.order_number
+        );
+
+        console.log(`📊 AI Verification Result: ${verificationResult.recommendation}`);
+
+        // Build verification summary for notes
+        const now = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+        let verificationNote = `\n\n--- PAGO FINAL (${now}) ---\n`;
+        verificationNote += `Verificación AI: ${verificationResult.recommendation}\n`;
+
+        if (verificationResult.analysis) {
+          const analysis = verificationResult.analysis;
+          verificationNote += `Monto detectado: $${analysis.amount_detected?.toFixed(2) || 'N/A'}\n`;
+          verificationNote += `Monto esperado: $${expectedAmount.toFixed(2)}\n`;
+          verificationNote += `Coincide: ${analysis.amount_matches ? 'Sí' : 'No'}\n`;
+          verificationNote += `Confianza: ${analysis.confidence_level || 'N/A'}\n`;
+          if (analysis.folio_number) verificationNote += `Folio: ${analysis.folio_number}\n`;
+          if (analysis.source_bank) verificationNote += `Banco origen: ${analysis.source_bank}\n`;
+          if (analysis.date_detected) verificationNote += `Fecha: ${analysis.date_detected}\n`;
+          if (analysis.suspicious_indicators && analysis.suspicious_indicators.length > 0) {
+            verificationNote += `⚠️ Indicadores: ${analysis.suspicious_indicators.join(', ')}\n`;
+          }
+          verificationNote += `Notas: ${analysis.notes || 'Ninguna'}\n`;
+        }
+
+        // Update internal notes with verification summary
+        await query(
+          `UPDATE orders SET internal_notes = COALESCE(internal_notes, '') || $1 WHERE id = $2`,
+          [verificationNote, orderId]
+        );
+
+        // Auto-confirm if AI recommends it
+        if (verificationResult.recommendation === 'AUTO_APPROVE') {
+          console.log(`✅ AI recommends AUTO_APPROVE for second payment - confirming automatically...`);
+
+          // Update order status to delivered
+          await query(`
+            UPDATE orders
+            SET status = 'delivered'
+            WHERE id = $1
+          `, [orderId]);
+
+          autoConfirmed = true;
+          console.log(`✅ Order ${orderId} second payment AUTO-CONFIRMED by Claude AI!`);
+
+          // Send completion email to client in background
+          setImmediate(async () => {
+            try {
+              // Get full order details for email
+              const fullOrderResult = await query(`
+                SELECT o.*, c.name as client_name, c.email as client_email
+                FROM orders o
+                JOIN clients c ON o.client_id = c.id
+                WHERE o.id = $1
+              `, [orderId]);
+
+              if (fullOrderResult.rows.length > 0) {
+                const fullOrder = fullOrderResult.rows[0];
+
+                const emailBody = `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center;">
+                      <h1 style="color: white; margin: 0;">¡Pago Confirmado!</h1>
+                    </div>
+
+                    <div style="padding: 30px; background: #f9fafb;">
+                      <p style="font-size: 16px; color: #374151;">Hola <strong>${fullOrder.client_name}</strong>,</p>
+
+                      <p style="font-size: 16px; color: #374151;">
+                        ¡Excelentes noticias! Hemos confirmado tu pago final para el pedido <strong>${fullOrder.order_number}</strong>.
+                      </p>
+
+                      <div style="background: #d1fae5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
+                        <p style="margin: 0; color: #065f46; font-weight: 600;">
+                          ✅ Tu pedido está completo y listo para entrega
+                        </p>
+                      </div>
+
+                      <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #059669; margin-top: 0;">Detalles del Pedido:</h3>
+                        <p><strong>Número de Pedido:</strong> ${fullOrder.order_number}</p>
+                        <p><strong>Total Pagado:</strong> $${parseFloat(fullOrder.total_price).toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                        <p><strong>Estado:</strong> ✅ Completo y Listo</p>
+                      </div>
+
+                      <p style="font-size: 16px; color: #374151;">
+                        Nos pondremos en contacto contigo pronto para coordinar la entrega de tu pedido.
+                      </p>
+
+                      <p style="font-size: 16px; color: #374151;">
+                        ¡Gracias por confiar en nosotros!
+                      </p>
+
+                      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                          ${process.env.COMPANY_NAME || 'VT Anunciando - Souvenirs Personalizados'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                `;
+
+                await emailService.sendEmail({
+                  to: fullOrder.client_email,
+                  subject: `¡Pago Final Confirmado! - Pedido ${fullOrder.order_number}`,
+                  html: emailBody
+                });
+
+                console.log(`📧 Auto-confirmation email sent to ${fullOrder.client_email}`);
+              }
+            } catch (emailError) {
+              console.error('Failed to send auto-confirmation email:', emailError);
+            }
+          });
+        }
+      } catch (aiError) {
+        console.error('AI verification error (non-fatal):', aiError);
+        // Continue without AI verification - manual review will be needed
+      }
+    }
+
     res.json({
       success: true,
-      message: 'Payment receipt uploaded successfully. We will verify it shortly.',
+      message: autoConfirmed
+        ? '¡Pago verificado y confirmado automáticamente!'
+        : 'Comprobante subido exitosamente. Lo revisaremos pronto.',
       filename: filename,
-      imageUrl: imageUrl
+      imageUrl: imageUrl,
+      autoConfirmed: autoConfirmed,
+      verification: verificationResult ? {
+        recommendation: verificationResult.recommendation,
+        amountDetected: verificationResult.analysis?.amount_detected,
+        expectedAmount: expectedAmount,
+        confidence: verificationResult.analysis?.confidence_level
+      } : null
     });
   } catch (error) {
     console.error('Error uploading second payment receipt:', error);
