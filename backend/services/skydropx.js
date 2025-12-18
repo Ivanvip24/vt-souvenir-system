@@ -660,7 +660,31 @@ export async function cancelPickup(pickupId) {
 }
 
 /**
- * Get pending shipments that need pickup (labels generated today without pickup)
+ * Verify shipment status with Skydropx API
+ * Returns status like: LABEL CREATED, IN_TRANSIT, DELIVERED, CANCELED, etc.
+ */
+export async function verifyShipmentStatus(shipmentId) {
+  try {
+    const shipment = await getShipment(shipmentId);
+    return {
+      success: true,
+      status: shipment.status,
+      tracking_number: shipment.tracking_number,
+      isActive: !['CANCELED', 'CANCELLED', 'VOIDED', 'REFUNDED', 'EXPIRED'].includes((shipment.status || '').toUpperCase())
+    };
+  } catch (error) {
+    console.error(`Error verifying shipment ${shipmentId}:`, error.message);
+    return {
+      success: false,
+      error: error.message,
+      isActive: false // Assume inactive if we can't verify
+    };
+  }
+}
+
+/**
+ * Get pending shipments that need pickup (labels generated without pickup)
+ * Optionally verifies with Skydropx to filter cancelled labels
  */
 export async function getPendingShipmentsForPickup(options = {}) {
   // By default, get ALL pending labels (for manual requests)
@@ -689,6 +713,35 @@ export async function getPendingShipmentsForPickup(options = {}) {
       ${dateFilter}
     ORDER BY sl.created_at ASC
   `);
+
+  // If verifyWithSkydropx option is set, check each label's status
+  if (options.verifyWithSkydropx && result.rows.length > 0) {
+    console.log(`🔍 Verifying ${result.rows.length} shipments with Skydropx...`);
+
+    const verifiedShipments = [];
+
+    for (const shipment of result.rows) {
+      const verification = await verifyShipmentStatus(shipment.shipment_id);
+
+      if (verification.isActive) {
+        verifiedShipments.push({
+          ...shipment,
+          skydropx_status: verification.status
+        });
+      } else {
+        // Mark cancelled shipments in our database
+        console.log(`   ❌ Shipment ${shipment.order_number} is ${verification.status || 'inactive'} - skipping`);
+        await query(`
+          UPDATE shipping_labels
+          SET status = 'cancelled', pickup_status = 'cancelled'
+          WHERE shipment_id = $1
+        `, [shipment.shipment_id]);
+      }
+    }
+
+    console.log(`✅ ${verifiedShipments.length} active shipments ready for pickup`);
+    return verifiedShipments;
+  }
 
   return result.rows;
 }
@@ -973,6 +1026,7 @@ export default {
   getPickup,
   cancelPickup,
   getPendingShipmentsForPickup,
+  verifyShipmentStatus,
   requestDailyPickup,
   ORIGIN_ADDRESS,
   DEFAULT_PACKAGE

@@ -1043,56 +1043,62 @@ router.post('/pickups/request', async (req, res) => {
 
     // If triggerAll is true, request pickups for all pending labels grouped by carrier
     if (triggerAll) {
-      const pendingLabels = await query(`
-        SELECT carrier, array_agg(shipment_id) as shipment_ids
-        FROM shipping_labels
-        WHERE pickup_status = 'pending'
-          AND shipment_id IS NOT NULL
-          AND carrier IS NOT NULL
-        GROUP BY carrier
-      `);
+      // First, get pending labels and verify with Skydropx
+      console.log('🔍 Verifying shipment statuses with Skydropx...');
+      const verifiedLabels = await skydropx.getPendingShipmentsForPickup({ verifyWithSkydropx: true });
 
-      if (pendingLabels.rows.length === 0) {
+      if (verifiedLabels.length === 0) {
         return res.json({
           success: true,
-          message: 'No hay guías pendientes de recolección',
+          message: 'No hay guías activas pendientes de recolección',
           results: []
         });
       }
 
+      // Group by carrier
+      const byCarrier = {};
+      for (const label of verifiedLabels) {
+        if (!byCarrier[label.carrier]) {
+          byCarrier[label.carrier] = [];
+        }
+        byCarrier[label.carrier].push(label);
+      }
+
       const results = [];
-      for (const row of pendingLabels.rows) {
+      for (const [carrier, labels] of Object.entries(byCarrier)) {
         try {
+          const shipmentIds = labels.map(l => l.shipment_id);
           const pickupResult = await skydropx.requestPickupIfNeeded(
-            row.shipment_ids[0],
-            row.carrier
+            shipmentIds[0],
+            carrier
           );
 
           // Link remaining shipments to this pickup
-          if (pickupResult.success && row.shipment_ids.length > 1 && !pickupResult.alreadyScheduled) {
-            for (let i = 1; i < row.shipment_ids.length; i++) {
+          if (pickupResult.success && shipmentIds.length > 1 && !pickupResult.alreadyScheduled) {
+            for (let i = 1; i < shipmentIds.length; i++) {
               await query(`
                 UPDATE shipping_labels
                 SET pickup_id = $1, pickup_status = 'requested', pickup_date = $2
                 WHERE shipment_id = $3
-              `, [pickupResult.pickup_id, pickupResult.pickup_date, row.shipment_ids[i]]);
+              `, [pickupResult.pickup_id, pickupResult.pickup_date, shipmentIds[i]]);
             }
           }
 
           results.push({
-            carrier: row.carrier,
+            carrier: carrier,
             success: pickupResult.success,
             pickup_id: pickupResult.pickup_id,
             pickup_date: pickupResult.pickup_date,
-            shipment_count: row.shipment_ids.length,
-            message: pickupResult.message
+            shipment_count: shipmentIds.length,
+            message: pickupResult.message,
+            error: pickupResult.error
           });
         } catch (error) {
           results.push({
-            carrier: row.carrier,
+            carrier: carrier,
             success: false,
             error: error.message,
-            shipment_count: row.shipment_ids.length
+            shipment_count: labels.length
           });
         }
       }
