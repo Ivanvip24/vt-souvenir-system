@@ -662,7 +662,11 @@ export async function cancelPickup(pickupId) {
 /**
  * Get pending shipments that need pickup (labels generated today without pickup)
  */
-export async function getPendingShipmentsForPickup() {
+export async function getPendingShipmentsForPickup(options = {}) {
+  // By default, get ALL pending labels (for manual requests)
+  // Use todayOnly: true for the daily scheduler
+  const dateFilter = options.todayOnly ? 'AND sl.created_at >= CURRENT_DATE' : '';
+
   const result = await query(`
     SELECT
       sl.id,
@@ -682,7 +686,7 @@ export async function getPendingShipmentsForPickup() {
     WHERE sl.shipment_id IS NOT NULL
       AND sl.status = 'label_generated'
       AND (sl.pickup_status = 'pending' OR sl.pickup_status IS NULL)
-      AND sl.created_at >= CURRENT_DATE
+      ${dateFilter}
     ORDER BY sl.created_at ASC
   `);
 
@@ -852,8 +856,8 @@ export async function requestPickupIfNeeded(shipmentId, carrier, options = {}) {
 export async function requestDailyPickup(options = {}) {
   console.log('📦 Starting daily pickup request...');
 
-  // Get all pending shipments
-  const pendingShipments = await getPendingShipmentsForPickup();
+  // Get pending shipments - todayOnly for scheduled cron runs
+  const pendingShipments = await getPendingShipmentsForPickup({ todayOnly: options.todayOnly });
 
   if (pendingShipments.length === 0) {
     console.log('ℹ️  No pending shipments for pickup today');

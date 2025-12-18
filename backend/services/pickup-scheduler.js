@@ -28,7 +28,8 @@ export function initializePickupScheduler() {
     console.log(`   Time: ${new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })}`);
 
     try {
-      const result = await requestDailyPickup();
+      // For scheduled runs, only pick up today's labels
+      const result = await requestDailyPickup({ todayOnly: true });
 
       if (result.success && result.shipment_count > 0) {
         console.log(`✅ Pickup scheduled successfully!`);
