@@ -126,6 +126,21 @@ router.post('/orders/:orderId/generate', async (req, res) => {
       ]);
 
       generatedLabels.push(insertResult.rows[0]);
+
+      // Auto-request pickup for this carrier (if not already scheduled)
+      if (shipment.shipment_id && shipment.carrier) {
+        setImmediate(async () => {
+          try {
+            const pickupResult = await skydropx.requestPickupIfNeeded(
+              shipment.shipment_id,
+              shipment.carrier
+            );
+            console.log(`📦 Pickup for label: ${pickupResult.message}`);
+          } catch (pickupError) {
+            console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+          }
+        });
+      }
     }
 
     // Update order
@@ -755,6 +770,21 @@ router.post('/orders/:orderId/generate-selected', async (req, res) => {
     ]);
 
     console.log(`✅ Label generated for order ${order.order_number}`);
+
+    // Auto-request pickup for this carrier (if not already scheduled)
+    if (shipment.shipment_id && shipment.carrier) {
+      setImmediate(async () => {
+        try {
+          const pickupResult = await skydropx.requestPickupIfNeeded(
+            shipment.shipment_id,
+            shipment.carrier
+          );
+          console.log(`📦 Pickup for label: ${pickupResult.message}`);
+        } catch (pickupError) {
+          console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+        }
+      });
+    }
 
     res.json({
       success: true,

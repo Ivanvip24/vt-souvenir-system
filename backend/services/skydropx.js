@@ -464,6 +464,21 @@ export async function generateShippingLabel({ orderId, clientId, destination }) 
 
       console.log(`✅ Shipping label created for order ${orderId}`);
 
+      // Auto-request pickup for this carrier (if not already scheduled)
+      if (shipmentResult.shipment_id && bestRate.carrier) {
+        setImmediate(async () => {
+          try {
+            const pickupResult = await requestPickupIfNeeded(
+              shipmentResult.shipment_id,
+              bestRate.carrier
+            );
+            console.log(`📦 Pickup for label: ${pickupResult.message}`);
+          } catch (pickupError) {
+            console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+          }
+        });
+      }
+
       return {
         success: true,
         label: insertResult.rows[0],
@@ -675,6 +690,162 @@ export async function getPendingShipmentsForPickup() {
 }
 
 /**
+ * Check if a pickup already exists for a carrier today
+ */
+export async function hasPickupForCarrierToday(carrier) {
+  const normalizedCarrier = normalizeCarrierName(carrier);
+
+  const result = await query(`
+    SELECT id, pickup_id, pickup_date, status
+    FROM pickups
+    WHERE carrier = $1
+      AND pickup_date >= CURRENT_DATE
+      AND status NOT IN ('cancelled')
+    LIMIT 1
+  `, [normalizedCarrier]);
+
+  return result.rows.length > 0 ? result.rows[0] : null;
+}
+
+/**
+ * Normalize carrier names for consistent matching
+ */
+function normalizeCarrierName(carrier) {
+  if (!carrier) return 'unknown';
+  const name = carrier.toLowerCase().trim();
+
+  if (name.includes('estafeta')) return 'Estafeta';
+  if (name.includes('fedex')) return 'FedEx';
+  if (name.includes('paquete') || name.includes('paquetexpress')) return 'Paquetexpress';
+  if (name.includes('dhl')) return 'DHL';
+  if (name.includes('ups')) return 'UPS';
+  if (name.includes('redpack')) return 'Redpack';
+
+  // Return original with first letter capitalized
+  return carrier.charAt(0).toUpperCase() + carrier.slice(1).toLowerCase();
+}
+
+/**
+ * Request pickup for a specific shipment, but only if no pickup exists for that carrier today
+ * Call this immediately after generating a label
+ */
+export async function requestPickupIfNeeded(shipmentId, carrier, options = {}) {
+  const normalizedCarrier = normalizeCarrierName(carrier);
+
+  console.log(`🔍 Checking if pickup needed for ${normalizedCarrier}...`);
+
+  // Check if pickup already exists for this carrier today
+  const existingPickup = await hasPickupForCarrierToday(normalizedCarrier);
+
+  if (existingPickup) {
+    console.log(`✅ Pickup already scheduled for ${normalizedCarrier} (ID: ${existingPickup.pickup_id})`);
+
+    // Update this shipment to be included in the existing pickup
+    await query(`
+      UPDATE shipping_labels
+      SET pickup_id = $1,
+          pickup_status = 'requested',
+          pickup_date = $2
+      WHERE shipment_id = $3
+    `, [existingPickup.pickup_id, existingPickup.pickup_date, shipmentId]);
+
+    return {
+      success: true,
+      alreadyScheduled: true,
+      pickup_id: existingPickup.pickup_id,
+      pickup_date: existingPickup.pickup_date,
+      carrier: normalizedCarrier,
+      message: `Pickup already scheduled for ${normalizedCarrier}`
+    };
+  }
+
+  // No existing pickup - request a new one
+  console.log(`📦 No existing pickup for ${normalizedCarrier}, requesting new one...`);
+
+  // Default to tomorrow for pickup
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  // Skip Sunday - move to Monday
+  if (tomorrow.getDay() === 0) {
+    tomorrow.setDate(tomorrow.getDate() + 1);
+  }
+  const pickupDate = options.pickupDate || tomorrow.toISOString().split('T')[0];
+
+  try {
+    // Request pickup from Skydropx
+    const pickupResult = await requestPickup([shipmentId], {
+      pickupDate,
+      timeFrom: options.timeFrom || '09:00',
+      timeTo: options.timeTo || '18:00'
+    });
+
+    // Save pickup to database with carrier
+    await query(`
+      INSERT INTO pickups (
+        pickup_id,
+        pickup_date,
+        pickup_time_from,
+        pickup_time_to,
+        shipment_ids,
+        shipment_count,
+        carrier,
+        status,
+        response_data,
+        requested_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+    `, [
+      pickupResult.pickup_id,
+      pickupDate,
+      pickupResult.time_from,
+      pickupResult.time_to,
+      [shipmentId],
+      1,
+      normalizedCarrier,
+      'requested',
+      JSON.stringify(pickupResult.response)
+    ]);
+
+    // Update shipping label with pickup info
+    await query(`
+      UPDATE shipping_labels
+      SET pickup_id = $1,
+          pickup_status = 'requested',
+          pickup_date = $2,
+          pickup_time_from = $3,
+          pickup_time_to = $4,
+          pickup_requested_at = NOW()
+      WHERE shipment_id = $5
+    `, [
+      pickupResult.pickup_id,
+      pickupDate,
+      pickupResult.time_from,
+      pickupResult.time_to,
+      shipmentId
+    ]);
+
+    console.log(`✅ Pickup scheduled for ${normalizedCarrier} on ${pickupDate}`);
+    console.log(`   Pickup ID: ${pickupResult.pickup_id}`);
+
+    return {
+      success: true,
+      alreadyScheduled: false,
+      pickup_id: pickupResult.pickup_id,
+      pickup_date: pickupDate,
+      carrier: normalizedCarrier,
+      message: `New pickup scheduled for ${normalizedCarrier}`
+    };
+
+  } catch (error) {
+    console.error(`❌ Failed to request pickup for ${normalizedCarrier}:`, error.message);
+    return {
+      success: false,
+      error: error.message,
+      carrier: normalizedCarrier
+    };
+  }
+}
+
+/**
  * Request daily pickup for all pending shipments
  * This should be called by a scheduler (e.g., every day at 5 PM)
  */
@@ -793,6 +964,8 @@ export default {
   selectBestRate,
   generateShippingLabel,
   requestPickup,
+  requestPickupIfNeeded,
+  hasPickupForCarrierToday,
   getPickup,
   cancelPickup,
   getPendingShipmentsForPickup,
