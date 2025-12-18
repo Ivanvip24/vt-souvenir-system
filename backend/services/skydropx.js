@@ -708,7 +708,7 @@ export async function getPendingShipmentsForPickup(options = {}) {
     JOIN orders o ON sl.order_id = o.id
     JOIN clients c ON o.client_id = c.id
     WHERE sl.shipment_id IS NOT NULL
-      AND sl.status = 'label_generated'
+      AND sl.status IN ('label_generated', 'processing')
       AND (sl.pickup_status = 'pending' OR sl.pickup_status IS NULL)
       ${dateFilter}
     ORDER BY sl.created_at ASC
