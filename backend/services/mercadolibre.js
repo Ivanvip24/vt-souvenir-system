@@ -414,8 +414,14 @@ export async function createListing(productData, siteId = 'MLM') {
 
     if (!res.ok) {
       const errorData = await res.json();
-      console.error('❌ ML API Error:', errorData);
-      throw new Error(errorData.message || errorData.error || JSON.stringify(errorData.cause));
+      console.error('❌ ML API Error:', JSON.stringify(errorData, null, 2));
+      console.error('❌ Full error cause:', JSON.stringify(errorData.cause, null, 2));
+      // Extract more specific error info
+      let errorMsg = errorData.message || errorData.error;
+      if (errorData.cause && Array.isArray(errorData.cause)) {
+        errorMsg = errorData.cause.map(c => `${c.code}: ${c.message}`).join('; ');
+      }
+      throw new Error(errorMsg || JSON.stringify(errorData));
     }
 
     return res;
