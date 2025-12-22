@@ -3,6 +3,40 @@
  * Frontend logic for ML Global Selling integration
  */
 
+// Toast notification helper
+function showToast(message, type = 'info') {
+  // Remove existing toast
+  const existingToast = document.getElementById('ml-toast');
+  if (existingToast) existingToast.remove();
+
+  const colors = {
+    success: '#22c55e',
+    error: '#ef4444',
+    warning: '#f59e0b',
+    info: '#6366f1'
+  };
+
+  const toast = document.createElement('div');
+  toast.id = 'ml-toast';
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 16px 24px;
+    background: ${colors[type] || colors.info};
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 4000);
+}
+
 const mlState = {
   isConnected: false,
   products: [],
