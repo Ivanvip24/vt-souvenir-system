@@ -724,6 +724,21 @@ export async function bulkPublish(products, siteIds, options = {}) {
         // Calculate USD price
         const priceUsd = options.priceUsd || calculateUsdPrice(product.base_price);
 
+        // Ensure required attributes are set
+        // BRAND and MODEL are required for most categories
+        const requiredAttrs = [
+          { id: 'BRAND', value_name: options.brand || 'AXKAN' },
+          { id: 'MODEL', value_name: options.model || product.name.substring(0, 60) }
+        ];
+
+        // Merge with predicted attributes, avoiding duplicates
+        const existingIds = new Set(attributes.map(a => a.id));
+        for (const attr of requiredAttrs) {
+          if (!existingIds.has(attr.id)) {
+            attributes.push(attr);
+          }
+        }
+
         const listingData = {
           productId: product.id,
           title: options.title || product.name,
