@@ -20,6 +20,7 @@ import discountRoutes from './discount-routes.js';
 import shippingRoutes from './shipping-routes.js';
 import receiptRoutes from './receipt-routes.js';
 import aiAssistantRoutes from './ai-assistant-routes.js';
+import mercadolibreRoutes from './mercadolibre-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
@@ -128,6 +129,11 @@ app.use('/api/receipts', receiptRoutes);
 // AI ASSISTANT ROUTES (Claude Chat)
 // ========================================
 app.use('/api/ai-assistant', aiAssistantRoutes);
+
+// ========================================
+// MERCADO LIBRE INTEGRATION ROUTES
+// ========================================
+app.use('/api/mercadolibre', mercadolibreRoutes);
 
 // ========================================
 // NOTION AGENT ENDPOINTS

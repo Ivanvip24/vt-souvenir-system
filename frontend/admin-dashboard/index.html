@@ -120,6 +120,10 @@
                         </button>
                     </div>
                 </div>
+                <button class="nav-item" data-view="marketplace">
+                    <span class="nav-icon">🌎</span>
+                    <span>Marketplace</span>
+                </button>
             </nav>
         </aside>
 
@@ -1104,6 +1108,98 @@
                     <p>No hay recolecciones programadas para esta fecha</p>
                 </div>
             </section>
+
+            <!-- Marketplace View -->
+            <section id="marketplace-view" class="view">
+                <div class="view-header">
+                    <h2>🌎 Mercado Libre Global Selling</h2>
+                    <div id="ml-connection-badge">
+                        <!-- Dynamic: Connected/Disconnected badge -->
+                    </div>
+                </div>
+
+                <!-- Connection Panel (shown when disconnected) -->
+                <div id="ml-connect-panel" class="hidden" style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px; margin-bottom: 24px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">🔗</div>
+                    <h3 style="font-size: 24px; margin: 0 0 12px 0;">Conectar con Mercado Libre</h3>
+                    <p style="color: #6b7280; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                        Vincula tu cuenta de vendedor para publicar productos en Mexico, Brasil, Chile y Colombia.
+                    </p>
+                    <button onclick="connectMercadoLibre()" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px;">
+                        🚀 Conectar Cuenta ML
+                    </button>
+                </div>
+
+                <!-- Marketplace Dashboard (shown when connected) -->
+                <div id="ml-dashboard" class="hidden">
+                    <!-- Stats Summary -->
+                    <div id="ml-stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                        <!-- Dynamic stats cards -->
+                    </div>
+
+                    <!-- Site Tabs -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <button class="site-tab active" data-site="all" onclick="filterBySite('all')" style="padding: 10px 20px; border-radius: 20px; border: 2px solid #e5e7eb; background: white; font-weight: 600; cursor: pointer;">
+                            Todos
+                        </button>
+                        <button class="site-tab" data-site="MLM" onclick="filterBySite('MLM')" style="padding: 10px 20px; border-radius: 20px; border: 2px solid #e5e7eb; background: white; font-weight: 600; cursor: pointer;">
+                            🇲🇽 Mexico
+                        </button>
+                        <button class="site-tab" data-site="MLB" onclick="filterBySite('MLB')" style="padding: 10px 20px; border-radius: 20px; border: 2px solid #e5e7eb; background: white; font-weight: 600; cursor: pointer;">
+                            🇧🇷 Brasil
+                        </button>
+                        <button class="site-tab" data-site="MLC" onclick="filterBySite('MLC')" style="padding: 10px 20px; border-radius: 20px; border: 2px solid #e5e7eb; background: white; font-weight: 600; cursor: pointer;">
+                            🇨🇱 Chile
+                        </button>
+                        <button class="site-tab" data-site="MCO" onclick="filterBySite('MCO')" style="padding: 10px 20px; border-radius: 20px; border: 2px solid #e5e7eb; background: white; font-weight: 600; cursor: pointer;">
+                            🇨🇴 Colombia
+                        </button>
+                        <div style="flex: 1;"></div>
+                        <button onclick="disconnectMercadoLibre()" class="btn" style="color: #ef4444;">
+                            Desconectar
+                        </button>
+                    </div>
+
+                    <!-- Loading state -->
+                    <div id="ml-loading" class="loading hidden">
+                        <div class="spinner"></div>
+                        <p>Cargando productos...</p>
+                    </div>
+
+                    <!-- Products Table -->
+                    <div style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                                    <th style="padding: 16px; text-align: left; width: 40px;">
+                                        <input type="checkbox" id="ml-select-all" onchange="toggleSelectAll()">
+                                    </th>
+                                    <th style="padding: 16px; text-align: left;">Producto</th>
+                                    <th style="padding: 16px; text-align: left;">Precio Local</th>
+                                    <th style="padding: 16px; text-align: left;">Precio USD</th>
+                                    <th style="padding: 16px; text-align: left;">Estado ML</th>
+                                    <th style="padding: 16px; text-align: center;">Stock</th>
+                                    <th style="padding: 16px; text-align: left;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ml-products-body">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Bulk Actions Bar -->
+                    <div id="ml-bulk-actions" class="hidden" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 16px 24px; border-radius: 12px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                        <span id="ml-selected-count" style="font-weight: 600;">0 seleccionados</span>
+                        <button onclick="bulkPublishSelected()" class="btn btn-primary">
+                            🚀 Publicar Seleccionados
+                        </button>
+                        <button onclick="bulkSyncInventory()" class="btn" style="background: #374151; color: white;">
+                            🔄 Sincronizar Stock
+                        </button>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -1559,5 +1655,6 @@
     <script src="calendar.js"></script>
     <script src="discounts.js"></script>
     <script src="ai-assistant.js"></script>
+    <script src="marketplace.js"></script>
 </body>
 </html>
