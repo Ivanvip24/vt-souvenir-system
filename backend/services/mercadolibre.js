@@ -693,15 +693,27 @@ export async function bulkPublish(products, siteIds, options = {}) {
   for (const product of products) {
     for (const siteId of siteIds) {
       try {
-        // Get or predict category
+        // Get or predict category and attributes
         let categoryId = options.categoryId;
+        let attributes = options.attributes || [];
+
         if (!categoryId) {
           const mapping = await getCategoryMapping(product.category, siteId);
           if (mapping) {
             categoryId = mapping.ml_category_id;
           } else {
+            // Predict category and get required attributes
             const prediction = await predictCategory(product.name, siteId);
-            categoryId = prediction?.category_id;
+            if (prediction) {
+              categoryId = prediction.category_id;
+              // Include predicted attributes
+              if (prediction.attributes && prediction.attributes.length > 0) {
+                attributes = prediction.attributes.map(attr => ({
+                  id: attr.id,
+                  value_id: attr.value_id
+                }));
+              }
+            }
           }
         }
 
@@ -721,7 +733,8 @@ export async function bulkPublish(products, siteIds, options = {}) {
           quantity: options.quantity || 100,
           condition: options.condition || 'new',
           listingType: options.listingType || 'gold_special',
-          pictures: product.image_url ? [product.image_url] : []
+          pictures: product.image_url ? [product.image_url] : [],
+          attributes
         };
 
         const result = await createListing(listingData, siteId);
