@@ -752,13 +752,9 @@ export async function bulkPublish(products, siteIds, options = {}) {
             const prediction = await predictCategory(product.name, siteId);
             if (prediction) {
               categoryId = prediction.category_id;
-              // Include predicted attributes
-              if (prediction.attributes && prediction.attributes.length > 0) {
-                attributes = prediction.attributes.map(attr => ({
-                  id: attr.id,
-                  value_id: attr.value_id
-                }));
-              }
+              // Note: Don't include predicted attributes - they often include
+              // "fixed" values that ML auto-sets based on category
+              // We'll only send BRAND and MODEL which are always required
             }
           }
         }
@@ -767,65 +763,24 @@ export async function bulkPublish(products, siteIds, options = {}) {
           throw new Error('Could not determine category');
         }
 
-        // Fetch required attributes for the category
-        let categoryAttrs = [];
-        try {
-          categoryAttrs = await getCategoryAttributes(categoryId);
-          console.log(`📋 Category ${categoryId} has ${categoryAttrs.length} attributes`);
-        } catch (e) {
-          console.warn('⚠️ Could not fetch category attributes:', e.message);
-        }
-
         // Use local price in MXN for Mexico
         const price = options.price || parseFloat(product.base_price) || 300;
 
-        // Default values for common required attributes
-        const defaultAttrValues = {
-          'BRAND': options.brand || 'AXKAN',
-          'MODEL': options.model || product.name.substring(0, 60),
-          'MAGNET_TYPE': '19844780', // Decorativo - required for magnet category
-          'ALPHANUMERIC_MODEL': product.name.substring(0, 20).replace(/[^a-zA-Z0-9]/g, ''),
-          'GTIN': null, // Optional - no barcode
-          'SELLER_SKU': `AXKAN-${product.id}`,
-          'PACKAGE_LENGTH': '10 cm',
-          'PACKAGE_WIDTH': '10 cm',
-          'PACKAGE_HEIGHT': '1 cm',
-          'PACKAGE_WEIGHT': '50 g',
-          'UNITS_PER_PACKAGE': '5',
-          'SALE_FORMAT': 'Unidad'
-        };
-
-        // Build attributes array from required category attrs
+        // Build attributes array - only BRAND and MODEL are needed
+        // Other attributes (MAGNET_TYPE, etc.) are "fixed" and auto-set by ML
         const existingIds = new Set(attributes.map(a => a.id));
 
-        // Add required attributes from category
-        for (const catAttr of categoryAttrs) {
-          if (catAttr.tags?.required && !existingIds.has(catAttr.id)) {
-            const defaultValue = defaultAttrValues[catAttr.id];
-            if (defaultValue !== undefined && defaultValue !== null) {
-              attributes.push({ id: catAttr.id, value_name: defaultValue });
-              existingIds.add(catAttr.id);
-            } else if (catAttr.values && catAttr.values.length > 0) {
-              // Use first allowed value if no default
-              attributes.push({ id: catAttr.id, value_id: catAttr.values[0].id });
-              existingIds.add(catAttr.id);
-            }
-          }
+        // Ensure BRAND is set
+        if (!existingIds.has('BRAND')) {
+          attributes.push({ id: 'BRAND', value_name: options.brand || 'AXKAN' });
+          existingIds.add('BRAND');
         }
 
-        // Always ensure core attributes are present
-        const coreAttrs = ['BRAND', 'MODEL'];
-        for (const attrId of coreAttrs) {
-          if (!existingIds.has(attrId) && defaultAttrValues[attrId]) {
-            attributes.push({ id: attrId, value_name: defaultAttrValues[attrId] });
-            existingIds.add(attrId);
-          }
-        }
-
-        // Add MAGNET_TYPE with value_id (required for magnet category)
-        if (!existingIds.has('MAGNET_TYPE')) {
-          attributes.push({ id: 'MAGNET_TYPE', value_id: defaultAttrValues['MAGNET_TYPE'] });
-          existingIds.add('MAGNET_TYPE');
+        // Ensure MODEL is set (use product name)
+        if (!existingIds.has('MODEL')) {
+          const modelName = sanitizeMLTitle(product.name).substring(0, 60);
+          attributes.push({ id: 'MODEL', value_name: modelName });
+          existingIds.add('MODEL');
         }
 
         // Use the product name as family_name (this becomes the listing title in ML)
