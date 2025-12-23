@@ -400,23 +400,29 @@ export async function createListing(productData, siteId = 'MLM') {
   // For Global Selling, use the global endpoint
   const endpoint = '/items';
 
-  // Sanitize title for ML requirements
-  const sanitizedTitle = sanitizeMLTitle(productData.title);
+  // ML now uses family_name as the product identifier (not title!)
+  // The sanitized product name becomes the family_name
+  const familyName = sanitizeMLTitle(productData.familyName || productData.title);
+
+  // Ensure price is in the correct currency for the site
+  // For Mexico (MLM), use MXN; for Global Selling, use USD
+  const currencyId = productData.currencyId || (siteId === 'MLM' ? 'MXN' : 'USD');
+  const price = productData.priceUsd || productData.price;
 
   const listingPayload = {
-    title: sanitizedTitle,
+    // NOTE: Do NOT include 'title' - ML now uses family_name for catalog items
     category_id: productData.categoryId,
-    price: productData.priceUsd,
-    currency_id: 'USD',
-    available_quantity: productData.quantity || 1,
+    price: price,
+    currency_id: currencyId,
+    available_quantity: productData.quantity || 10,
     buying_mode: 'buy_it_now',
     condition: productData.condition || 'new',
     listing_type_id: productData.listingType || 'gold_special',
     description: productData.description ? { plain_text: productData.description } : undefined,
     pictures: productData.pictures?.map(url => ({ source: url })) || [],
     attributes: productData.attributes || [],
-    // Required top-level properties for certain categories
-    family_name: productData.familyName || 'Imanes Decorativos Souvenir',
+    // ML requires family_name as the main product identifier
+    family_name: familyName,
     shipping: {
       mode: 'me2',
       free_shipping: false
@@ -429,31 +435,16 @@ export async function createListing(productData, siteId = 'MLM') {
   }
 
   console.log('📤 Listing payload:');
-  console.log('  - title:', listingPayload.title);
+  console.log('  - family_name:', listingPayload.family_name);
   console.log('  - category_id:', listingPayload.category_id);
   console.log('  - price:', listingPayload.price, listingPayload.currency_id);
   console.log('  - site_id:', listingPayload.site_id);
-  console.log('  - family_name:', listingPayload.family_name);
   console.log('  - attributes count:', listingPayload.attributes?.length || 0);
+  console.log('  - pictures count:', listingPayload.pictures?.length || 0);
 
-  // First, validate the item to get detailed errors
-  console.log('🔍 Validating listing first...');
-  const validateRes = await mlFetch('/items/validate', {
-    method: 'POST',
-    body: listingPayload
-  });
-
-  if (!validateRes.ok) {
-    const validateError = await validateRes.json();
-    console.error('❌ Validation failed:', JSON.stringify(validateError, null, 2));
-    // If validation fails, throw with detailed error
-    let errorMsg = validateError.message || validateError.error || 'Validation failed';
-    if (validateError.cause && Array.isArray(validateError.cause)) {
-      errorMsg = validateError.cause.map(c => `${c.code}: ${c.message}`).join('; ');
-    }
-    throw new Error(errorMsg);
-  }
-  console.log('✅ Validation passed, creating listing...');
+  // Skip validation step - directly create the listing
+  // ML validation API doesn't always work correctly for catalog items
+  console.log('📝 Creating listing...');
 
   const response = await retry(async () => {
     const res = await mlFetch(endpoint, {
@@ -785,14 +776,14 @@ export async function bulkPublish(products, siteIds, options = {}) {
           console.warn('⚠️ Could not fetch category attributes:', e.message);
         }
 
-        // Calculate USD price
-        const priceUsd = options.priceUsd || calculateUsdPrice(product.base_price);
+        // Use local price in MXN for Mexico
+        const price = options.price || parseFloat(product.base_price) || 300;
 
         // Default values for common required attributes
         const defaultAttrValues = {
           'BRAND': options.brand || 'AXKAN',
           'MODEL': options.model || product.name.substring(0, 60),
-          'FAMILY_NAME': options.familyName || 'Imanes Decorativos Souvenir',
+          'MAGNET_TYPE': '19844780', // Decorativo - required for magnet category
           'ALPHANUMERIC_MODEL': product.name.substring(0, 20).replace(/[^a-zA-Z0-9]/g, ''),
           'GTIN': null, // Optional - no barcode
           'SELLER_SKU': `AXKAN-${product.id}`,
@@ -823,7 +814,7 @@ export async function bulkPublish(products, siteIds, options = {}) {
         }
 
         // Always ensure core attributes are present
-        const coreAttrs = ['BRAND', 'MODEL', 'FAMILY_NAME'];
+        const coreAttrs = ['BRAND', 'MODEL'];
         for (const attrId of coreAttrs) {
           if (!existingIds.has(attrId) && defaultAttrValues[attrId]) {
             attributes.push({ id: attrId, value_name: defaultAttrValues[attrId] });
@@ -831,18 +822,28 @@ export async function bulkPublish(products, siteIds, options = {}) {
           }
         }
 
+        // Add MAGNET_TYPE with value_id (required for magnet category)
+        if (!existingIds.has('MAGNET_TYPE')) {
+          attributes.push({ id: 'MAGNET_TYPE', value_id: defaultAttrValues['MAGNET_TYPE'] });
+          existingIds.add('MAGNET_TYPE');
+        }
+
+        // Use the product name as family_name (this becomes the listing title in ML)
+        const familyName = options.familyName || options.title || product.name;
+
         const listingData = {
           productId: product.id,
-          title: options.title || product.name,
+          // Use family_name as the product name (ML's new catalog format)
+          familyName: familyName,
           description: options.description || product.description,
-          priceUsd,
+          price: price,
+          currencyId: siteId === 'MLM' ? 'MXN' : 'USD',
           categoryId,
-          quantity: options.quantity || 100,
+          quantity: options.quantity || 10,
           condition: options.condition || 'new',
           listingType: options.listingType || 'gold_special',
           pictures: product.image_url ? [product.image_url] : [],
-          attributes,
-          familyName: options.familyName || 'Imanes Decorativos Souvenir'
+          attributes
         };
 
         const result = await createListing(listingData, siteId);
