@@ -727,21 +727,58 @@ export async function bulkPublish(products, siteIds, options = {}) {
           throw new Error('Could not determine category');
         }
 
+        // Fetch required attributes for the category
+        let categoryAttrs = [];
+        try {
+          categoryAttrs = await getCategoryAttributes(categoryId);
+          console.log(`📋 Category ${categoryId} has ${categoryAttrs.length} attributes`);
+        } catch (e) {
+          console.warn('⚠️ Could not fetch category attributes:', e.message);
+        }
+
         // Calculate USD price
         const priceUsd = options.priceUsd || calculateUsdPrice(product.base_price);
 
-        // Ensure required attributes are set
-        // BRAND and MODEL are required for most categories
-        const requiredAttrs = [
-          { id: 'BRAND', value_name: options.brand || 'AXKAN' },
-          { id: 'MODEL', value_name: options.model || product.name.substring(0, 60) }
-        ];
+        // Default values for common required attributes
+        const defaultAttrValues = {
+          'BRAND': options.brand || 'AXKAN',
+          'MODEL': options.model || product.name.substring(0, 60),
+          'FAMILY_NAME': options.familyName || 'Imanes Decorativos Souvenir',
+          'ALPHANUMERIC_MODEL': product.name.substring(0, 20).replace(/[^a-zA-Z0-9]/g, ''),
+          'GTIN': null, // Optional - no barcode
+          'SELLER_SKU': `AXKAN-${product.id}`,
+          'PACKAGE_LENGTH': '10 cm',
+          'PACKAGE_WIDTH': '10 cm',
+          'PACKAGE_HEIGHT': '1 cm',
+          'PACKAGE_WEIGHT': '50 g',
+          'UNITS_PER_PACKAGE': '5',
+          'SALE_FORMAT': 'Unidad'
+        };
 
-        // Merge with predicted attributes, avoiding duplicates
+        // Build attributes array from required category attrs
         const existingIds = new Set(attributes.map(a => a.id));
-        for (const attr of requiredAttrs) {
-          if (!existingIds.has(attr.id)) {
-            attributes.push(attr);
+
+        // Add required attributes from category
+        for (const catAttr of categoryAttrs) {
+          if (catAttr.tags?.required && !existingIds.has(catAttr.id)) {
+            const defaultValue = defaultAttrValues[catAttr.id];
+            if (defaultValue !== undefined && defaultValue !== null) {
+              attributes.push({ id: catAttr.id, value_name: defaultValue });
+              existingIds.add(catAttr.id);
+            } else if (catAttr.values && catAttr.values.length > 0) {
+              // Use first allowed value if no default
+              attributes.push({ id: catAttr.id, value_id: catAttr.values[0].id });
+              existingIds.add(catAttr.id);
+            }
+          }
+        }
+
+        // Always ensure core attributes are present
+        const coreAttrs = ['BRAND', 'MODEL', 'FAMILY_NAME'];
+        for (const attrId of coreAttrs) {
+          if (!existingIds.has(attrId) && defaultAttrValues[attrId]) {
+            attributes.push({ id: attrId, value_name: defaultAttrValues[attrId] });
+            existingIds.add(attrId);
           }
         }
 
