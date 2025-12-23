@@ -377,16 +377,21 @@ export async function getCategoryMapping(localCategory, siteId) {
  */
 function sanitizeMLTitle(title) {
   if (!title) return 'Producto AXKAN';
-  // Remove characters that ML doesn't allow
+  // Remove/replace characters that ML doesn't allow
   let sanitized = title
     .replace(/#/g, 'No.')  // Replace # with No.
-    .replace(/[^\w\sáéíóúñÁÉÍÓÚÑ.,()-]/g, '') // Keep only allowed chars
+    .replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i')  // Remove accents
+    .replace(/ó/g, 'o').replace(/ú/g, 'u').replace(/ñ/g, 'n')
+    .replace(/Á/g, 'A').replace(/É/g, 'E').replace(/Í/g, 'I')
+    .replace(/Ó/g, 'O').replace(/Ú/g, 'U').replace(/Ñ/g, 'N')
+    .replace(/[^\w\s.,()-]/g, '') // Keep only ASCII alphanumeric and basic punctuation
+    .replace(/\s+/g, ' ')  // Collapse multiple spaces
     .trim();
   // Truncate to 60 characters
   if (sanitized.length > 60) {
     sanitized = sanitized.substring(0, 57) + '...';
   }
-  return sanitized;
+  return sanitized || 'Producto AXKAN';
 }
 
 export async function createListing(productData, siteId = 'MLM') {
@@ -423,7 +428,32 @@ export async function createListing(productData, siteId = 'MLM') {
     listingPayload.site_id = siteId;
   }
 
-  console.log('📤 Listing payload:', JSON.stringify(listingPayload, null, 2));
+  console.log('📤 Listing payload:');
+  console.log('  - title:', listingPayload.title);
+  console.log('  - category_id:', listingPayload.category_id);
+  console.log('  - price:', listingPayload.price, listingPayload.currency_id);
+  console.log('  - site_id:', listingPayload.site_id);
+  console.log('  - family_name:', listingPayload.family_name);
+  console.log('  - attributes count:', listingPayload.attributes?.length || 0);
+
+  // First, validate the item to get detailed errors
+  console.log('🔍 Validating listing first...');
+  const validateRes = await mlFetch('/items/validate', {
+    method: 'POST',
+    body: listingPayload
+  });
+
+  if (!validateRes.ok) {
+    const validateError = await validateRes.json();
+    console.error('❌ Validation failed:', JSON.stringify(validateError, null, 2));
+    // If validation fails, throw with detailed error
+    let errorMsg = validateError.message || validateError.error || 'Validation failed';
+    if (validateError.cause && Array.isArray(validateError.cause)) {
+      errorMsg = validateError.cause.map(c => `${c.code}: ${c.message}`).join('; ');
+    }
+    throw new Error(errorMsg);
+  }
+  console.log('✅ Validation passed, creating listing...');
 
   const response = await retry(async () => {
     const res = await mlFetch(endpoint, {
