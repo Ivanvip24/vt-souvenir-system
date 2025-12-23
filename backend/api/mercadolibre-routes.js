@@ -507,6 +507,55 @@ router.get('/category-mappings', async (req, res) => {
 });
 
 // =====================================================
+// DIAGNOSTIC ROUTES
+// =====================================================
+
+/**
+ * GET /api/mercadolibre/me
+ * Get current ML user info (for debugging)
+ */
+router.get('/me', async (req, res) => {
+  try {
+    const response = await mercadolibre.mlFetch('/users/me');
+    if (!response.ok) {
+      const error = await response.json();
+      return res.status(response.status).json({ error });
+    }
+    const user = await response.json();
+    res.json({ user });
+  } catch (error) {
+    console.error('Error getting ML user:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/mercadolibre/test-publish
+ * Test publish with raw payload (for debugging)
+ */
+router.post('/test-publish', async (req, res) => {
+  try {
+    const payload = req.body;
+    console.log('🧪 Test publish payload:', JSON.stringify(payload, null, 2));
+
+    const response = await mercadolibre.mlFetch('/items', {
+      method: 'POST',
+      body: payload
+    });
+
+    const result = await response.json();
+    res.json({
+      status: response.status,
+      ok: response.ok,
+      result
+    });
+  } catch (error) {
+    console.error('Error in test publish:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
 // STATS & SYNC HISTORY
 // =====================================================
 
