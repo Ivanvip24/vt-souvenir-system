@@ -485,14 +485,14 @@ export async function createListing(productData, siteId = 'MLM') {
     productData.productId,
     result.id,
     siteId,
-    productData.title,
+    productData.familyName || productData.title || result.title, // Use family_name as title
     productData.description,
-    productData.priceUsd,
+    productData.price || productData.priceUsd,
     productData.listingType || 'gold_special',
     productData.condition || 'new',
     productData.categoryId,
     result.status,
-    productData.quantity || 1,
+    productData.quantity || 10,
     result.permalink,
     result.thumbnail
   ]);
