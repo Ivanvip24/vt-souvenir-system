@@ -740,9 +740,200 @@ window.updateGuiaStatus = updateGuiaStatus;
 window.refreshGuiaTracking = refreshGuiaTracking;
 window.exportGuiasCSV = exportGuiasCSV;
 
+// ==========================================
+// CARRIER-SPECIFIC PICKUP MODAL
+// ==========================================
+
+const carrierConfig = {
+  'Estafeta': { icon: '📦', color: '#f59e0b' },
+  'Paquetexpress': { icon: '🚛', color: '#10b981' },
+  'FedEx': { icon: '✈️', color: '#3b82f6' },
+  'DHL': { icon: '🟡', color: '#ef4444' },
+  'UPS': { icon: '📬', color: '#d97706' },
+  'Redpack': { icon: '📮', color: '#8b5cf6' }
+};
+
+let pendingLabelsCache = [];
+
+/**
+ * Open pickup modal for specific carrier
+ */
+async function openPickupModal(carrier) {
+  const modal = document.getElementById('pickup-request-modal');
+  const config = carrierConfig[carrier] || { icon: '📦', color: '#667eea' };
+
+  // Set carrier info
+  document.getElementById('pickup-carrier').value = carrier;
+  document.getElementById('pickup-modal-carrier-icon').textContent = config.icon;
+  document.getElementById('pickup-modal-carrier-name').textContent = carrier;
+  document.getElementById('pickup-modal-title').textContent = `Solicitar Recolección - ${carrier}`;
+
+  // Set default date (next business day)
+  const tomorrow = getNextBusinessDay();
+  document.getElementById('pickup-date').value = tomorrow;
+  document.getElementById('pickup-date').min = new Date().toISOString().split('T')[0];
+
+  // Reset time fields
+  document.getElementById('pickup-time-from').value = '09:00';
+  document.getElementById('pickup-time-to').value = '18:00';
+
+  // Show modal first
+  modal.classList.remove('hidden');
+
+  // Load pending labels for this carrier
+  await loadPendingLabelsForCarrier(carrier);
+}
+
+/**
+ * Get next business day (skip weekends)
+ */
+function getNextBusinessDay() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+
+  // Skip Saturday (6) and Sunday (0)
+  while (date.getDay() === 0 || date.getDay() === 6) {
+    date.setDate(date.getDate() + 1);
+  }
+
+  return date.toISOString().split('T')[0];
+}
+
+/**
+ * Load pending labels for specific carrier
+ */
+async function loadPendingLabelsForCarrier(carrier) {
+  const countEl = document.getElementById('pickup-pending-count');
+  const listEl = document.getElementById('pickup-pending-list');
+  const submitBtn = document.getElementById('pickup-submit-btn');
+
+  countEl.textContent = '...';
+  listEl.innerHTML = '<span style="color: #6b7280;">Cargando...</span>';
+
+  try {
+    const response = await fetch(`${GUIAS_API_URL}/pickups/pending`);
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error loading pending labels');
+    }
+
+    // Filter by carrier
+    const carrierLabels = result.pending.filter(label =>
+      label.carrier && label.carrier.toLowerCase() === carrier.toLowerCase()
+    );
+
+    pendingLabelsCache = carrierLabels;
+
+    // Update count
+    countEl.textContent = carrierLabels.length;
+
+    // Update list
+    if (carrierLabels.length === 0) {
+      listEl.innerHTML = '<span style="color: #059669;">✓ No hay guías pendientes para esta paquetería</span>';
+      submitBtn.textContent = '🚀 Solicitar Recolección (sin guías)';
+    } else {
+      const labelsList = carrierLabels.slice(0, 5).map(l =>
+        `<div style="padding: 4px 0;">• ${l.order_number || l.order_id} - ${l.tracking_number || 'Sin tracking'}</div>`
+      ).join('');
+
+      const moreCount = carrierLabels.length > 5 ? `<div style="padding: 4px 0; font-weight: 600;">+ ${carrierLabels.length - 5} más</div>` : '';
+
+      listEl.innerHTML = labelsList + moreCount;
+      submitBtn.textContent = `🚀 Solicitar Recolección (${carrierLabels.length} guías)`;
+    }
+
+  } catch (error) {
+    console.error('Error loading pending labels:', error);
+    countEl.textContent = '?';
+    listEl.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
+  }
+}
+
+/**
+ * Close pickup modal
+ */
+function closePickupModal() {
+  const modal = document.getElementById('pickup-request-modal');
+  modal.classList.add('hidden');
+  pendingLabelsCache = [];
+}
+
+/**
+ * Submit pickup request
+ */
+async function submitPickupRequest(event) {
+  event.preventDefault();
+
+  const carrier = document.getElementById('pickup-carrier').value;
+  const pickupDate = document.getElementById('pickup-date').value;
+  const timeFrom = document.getElementById('pickup-time-from').value;
+  const timeTo = document.getElementById('pickup-time-to').value;
+
+  const submitBtn = document.getElementById('pickup-submit-btn');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = '⏳ Solicitando...';
+  submitBtn.disabled = true;
+
+  try {
+    // Build request body
+    const requestBody = {
+      carrier: carrier,
+      pickupDate: pickupDate,
+      timeFrom: timeFrom,
+      timeTo: timeTo
+    };
+
+    // If there are pending labels for this carrier, include them
+    if (pendingLabelsCache.length > 0) {
+      requestBody.shipmentIds = pendingLabelsCache.map(l => l.shipment_id);
+    }
+
+    const response = await fetch(`${GUIAS_API_URL}/pickups/request/carrier`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Show success message
+      const pendingCount = pendingLabelsCache.length;
+      alert(
+        `✅ ¡Recolección solicitada exitosamente!\n\n` +
+        `📦 Paquetería: ${carrier}\n` +
+        `📅 Fecha: ${pickupDate}\n` +
+        `🕐 Horario: ${timeFrom} - ${timeTo}\n` +
+        `📋 Guías incluidas: ${pendingCount}\n` +
+        `🎫 Pickup ID: ${result.pickup_id || 'N/A'}`
+      );
+
+      closePickupModal();
+
+      // Refresh pickups view
+      loadPickupsForDate(document.getElementById('pickups-date-input').value);
+    } else {
+      alert(`❌ Error: ${result.error || 'Error desconocido'}`);
+    }
+
+  } catch (error) {
+    console.error('Error requesting pickup:', error);
+    alert(`❌ Error: ${error.message}`);
+  } finally {
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  }
+}
+
 // Pickups exports
 window.initPickupsView = initPickupsView;
 window.changePickupDate = changePickupDate;
 window.loadPickupsForDate = loadPickupsForDate;
 window.triggerPendingPickups = triggerPendingPickups;
 window.cancelPickup = cancelPickup;
+
+// Carrier pickup modal exports
+window.openPickupModal = openPickupModal;
+window.closePickupModal = closePickupModal;
+window.submitPickupRequest = submitPickupRequest;

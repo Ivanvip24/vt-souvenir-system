@@ -1141,6 +1141,112 @@ router.post('/pickups/request', async (req, res) => {
 });
 
 // ========================================
+// REQUEST PICKUP FOR SPECIFIC CARRIER
+// POST /api/shipping/pickups/request/carrier
+// ========================================
+router.post('/pickups/request/carrier', async (req, res) => {
+  const { carrier, pickupDate, timeFrom, timeTo, shipmentIds } = req.body;
+
+  if (!carrier) {
+    return res.status(400).json({ success: false, error: 'Carrier is required' });
+  }
+
+  try {
+    console.log(`📦 Carrier-specific pickup request for: ${carrier}`);
+    console.log(`   Date: ${pickupDate}, Time: ${timeFrom} - ${timeTo}`);
+    console.log(`   Shipment IDs provided: ${shipmentIds?.length || 0}`);
+
+    // Get pending labels for this carrier if no shipmentIds provided
+    let labelsToPickup = [];
+
+    if (shipmentIds && shipmentIds.length > 0) {
+      // Use provided shipment IDs
+      labelsToPickup = shipmentIds;
+    } else {
+      // Get pending labels for this carrier
+      const pendingLabels = await skydropx.getPendingShipmentsForPickup({ verifyWithSkydropx: true });
+      labelsToPickup = pendingLabels
+        .filter(l => l.carrier && l.carrier.toLowerCase() === carrier.toLowerCase())
+        .map(l => l.shipment_id);
+    }
+
+    console.log(`   Labels to pickup: ${labelsToPickup.length}`);
+
+    if (labelsToPickup.length === 0) {
+      // Request pickup anyway (empty pickup for future labels)
+      console.log('   No pending labels, creating pickup request anyway...');
+    }
+
+    // Request pickup from Skydropx
+    const pickupResult = await skydropx.requestPickup(labelsToPickup, {
+      pickupDate: pickupDate,
+      timeFrom: timeFrom || '09:00',
+      timeTo: timeTo || '18:00'
+    });
+
+    if (pickupResult.success) {
+      // Update all labels with pickup info
+      if (labelsToPickup.length > 0) {
+        for (const shipmentId of labelsToPickup) {
+          await query(`
+            UPDATE shipping_labels
+            SET pickup_id = $1,
+                pickup_status = 'requested',
+                pickup_date = $2,
+                pickup_time_from = $3,
+                pickup_time_to = $4,
+                pickup_requested_at = NOW()
+            WHERE shipment_id = $5
+          `, [pickupResult.pickup_id, pickupDate, timeFrom, timeTo, shipmentId]);
+        }
+      }
+
+      // Save pickup record
+      await query(`
+        INSERT INTO pickups (pickup_id, pickup_date, pickup_time_from, pickup_time_to,
+                            shipment_ids, shipment_count, status, response_data, requested_at)
+        VALUES ($1, $2, $3, $4, $5, $6, 'requested', $7, NOW())
+        ON CONFLICT (pickup_id) DO UPDATE SET
+          shipment_ids = ARRAY(SELECT DISTINCT unnest(pickups.shipment_ids || EXCLUDED.shipment_ids)),
+          shipment_count = pickups.shipment_count + EXCLUDED.shipment_count,
+          response_data = EXCLUDED.response_data
+      `, [
+        pickupResult.pickup_id,
+        pickupDate,
+        timeFrom || '09:00',
+        timeTo || '18:00',
+        labelsToPickup,
+        labelsToPickup.length,
+        JSON.stringify(pickupResult)
+      ]);
+
+      res.json({
+        success: true,
+        message: `Recolección de ${carrier} solicitada exitosamente`,
+        pickup_id: pickupResult.pickup_id,
+        pickup_date: pickupDate,
+        carrier: carrier,
+        shipment_count: labelsToPickup.length,
+        time_window: `${timeFrom || '09:00'} - ${timeTo || '18:00'}`
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: pickupResult.error || 'Error al solicitar recolección',
+        details: pickupResult
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Error requesting carrier pickup:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error solicitando recolección'
+    });
+  }
+});
+
+// ========================================
 // GET PENDING SHIPMENTS FOR PICKUP
 // GET /api/shipping/pickups/pending
 // ========================================

@@ -1090,6 +1090,42 @@
                     </div>
                 </div>
 
+                <!-- Quick Pickup Buttons by Carrier -->
+                <div style="background: white; padding: 24px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <h3 style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">
+                        🚀 Solicitar Recolección por Paquetería
+                    </h3>
+                    <p style="margin: 0 0 20px 0; font-size: 14px; color: #6b7280;">
+                        Haz clic en una paquetería para programar una recolección. Se abrirá un formulario para configurar fecha y horario.
+                    </p>
+                    <div id="carrier-pickup-buttons" style="display: flex; flex-wrap: wrap; gap: 12px;">
+                        <button onclick="openPickupModal('Estafeta')" class="carrier-pickup-btn" style="display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 12px; font-size: 15px; font-weight: 700; color: #92400e; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 24px;">📦</span>
+                            <span>Estafeta</span>
+                        </button>
+                        <button onclick="openPickupModal('Paquetexpress')" class="carrier-pickup-btn" style="display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border: 2px solid #10b981; border-radius: 12px; font-size: 15px; font-weight: 700; color: #065f46; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 24px;">🚛</span>
+                            <span>Paquetexpress</span>
+                        </button>
+                        <button onclick="openPickupModal('FedEx')" class="carrier-pickup-btn" style="display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: linear-gradient(135deg, #dbeafe, #bfdbfe); border: 2px solid #3b82f6; border-radius: 12px; font-size: 15px; font-weight: 700; color: #1e40af; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 24px;">✈️</span>
+                            <span>FedEx</span>
+                        </button>
+                        <button onclick="openPickupModal('DHL')" class="carrier-pickup-btn" style="display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: linear-gradient(135deg, #fee2e2, #fecaca); border: 2px solid #ef4444; border-radius: 12px; font-size: 15px; font-weight: 700; color: #991b1b; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 24px;">🟡</span>
+                            <span>DHL</span>
+                        </button>
+                        <button onclick="openPickupModal('UPS')" class="carrier-pickup-btn" style="display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: linear-gradient(135deg, #fef3c7, #fcd34d); border: 2px solid #d97706; border-radius: 12px; font-size: 15px; font-weight: 700; color: #92400e; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 24px;">📬</span>
+                            <span>UPS</span>
+                        </button>
+                        <button onclick="openPickupModal('Redpack')" class="carrier-pickup-btn" style="display: flex; align-items: center; gap: 10px; padding: 14px 24px; background: linear-gradient(135deg, #ede9fe, #ddd6fe); border: 2px solid #8b5cf6; border-radius: 12px; font-size: 15px; font-weight: 700; color: #5b21b6; cursor: pointer; transition: all 0.2s;">
+                            <span style="font-size: 24px;">📮</span>
+                            <span>Redpack</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Loading state -->
                 <div id="pickups-loading" class="loading hidden">
                     <div class="spinner"></div>
@@ -1574,6 +1610,78 @@
             </div>
         </div>
         <div class="modal-backdrop" onclick="closeReceiptReviewModal()"></div>
+    </div>
+
+    <!-- Pickup Request Modal -->
+    <div id="pickup-request-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="pickup-modal-title">Solicitar Recolección</h3>
+                <button class="modal-close" onclick="closePickupModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div id="pickup-modal-carrier-icon" style="font-size: 48px; margin-bottom: 8px;">📦</div>
+                    <div id="pickup-modal-carrier-name" style="font-size: 24px; font-weight: 700; color: #374151;">Estafeta</div>
+                </div>
+
+                <form id="pickup-request-form" onsubmit="submitPickupRequest(event)">
+                    <input type="hidden" id="pickup-carrier" value="">
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">
+                            📅 Fecha de Recolección
+                        </label>
+                        <input type="date" id="pickup-date" required
+                            style="width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 16px;">
+                        <p style="margin: 6px 0 0 0; font-size: 13px; color: #6b7280;">
+                            Por defecto: siguiente día hábil
+                        </p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">
+                                🕘 Desde
+                            </label>
+                            <input type="time" id="pickup-time-from" value="09:00" required
+                                style="width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 16px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #374151;">
+                                🕕 Hasta
+                            </label>
+                            <input type="time" id="pickup-time-to" value="18:00" required
+                                style="width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 16px;">
+                        </div>
+                    </div>
+
+                    <div id="pickup-pending-info" style="background: #fef3c7; padding: 16px; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="font-weight: 600; color: #92400e; margin-bottom: 8px;">
+                            ⏳ Guías pendientes para esta paquetería:
+                        </div>
+                        <div id="pickup-pending-count" style="font-size: 32px; font-weight: 700; color: #f59e0b;">
+                            0
+                        </div>
+                        <div id="pickup-pending-list" style="margin-top: 8px; font-size: 13px; color: #6b7280;">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button type="button" onclick="closePickupModal()"
+                            style="flex: 1; padding: 14px 24px; background: #f3f4f6; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; color: #374151; cursor: pointer;">
+                            Cancelar
+                        </button>
+                        <button type="submit" id="pickup-submit-btn"
+                            style="flex: 2; padding: 14px 24px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 10px; font-size: 15px; font-weight: 600; color: white; cursor: pointer;">
+                            🚀 Solicitar Recolección
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal-backdrop" onclick="closePickupModal()"></div>
     </div>
 
     <!-- AI Assistant Chat Modal -->
