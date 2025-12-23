@@ -393,6 +393,8 @@ export async function createListing(productData, siteId = 'MLM') {
     description: productData.description ? { plain_text: productData.description } : undefined,
     pictures: productData.pictures?.map(url => ({ source: url })) || [],
     attributes: productData.attributes || [],
+    // Required top-level properties for certain categories
+    family_name: productData.familyName || 'Imanes Decorativos Souvenir',
     shipping: {
       mode: 'me2',
       free_shipping: false
@@ -792,7 +794,8 @@ export async function bulkPublish(products, siteIds, options = {}) {
           condition: options.condition || 'new',
           listingType: options.listingType || 'gold_special',
           pictures: product.image_url ? [product.image_url] : [],
-          attributes
+          attributes,
+          familyName: options.familyName || 'Imanes Decorativos Souvenir'
         };
 
         const result = await createListing(listingData, siteId);
