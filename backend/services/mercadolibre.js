@@ -373,16 +373,33 @@ export async function getCategoryMapping(localCategory, siteId) {
 // =====================================================
 
 /**
- * Create a new listing on Mercado Libre
+ * Sanitize title for ML listing (max 60 chars, no special chars)
  */
+function sanitizeMLTitle(title) {
+  if (!title) return 'Producto AXKAN';
+  // Remove characters that ML doesn't allow
+  let sanitized = title
+    .replace(/#/g, 'No.')  // Replace # with No.
+    .replace(/[^\w\sáéíóúñÁÉÍÓÚÑ.,()-]/g, '') // Keep only allowed chars
+    .trim();
+  // Truncate to 60 characters
+  if (sanitized.length > 60) {
+    sanitized = sanitized.substring(0, 57) + '...';
+  }
+  return sanitized;
+}
+
 export async function createListing(productData, siteId = 'MLM') {
   console.log(`📦 Creating listing on ${siteId}...`);
 
   // For Global Selling, use the global endpoint
   const endpoint = '/items';
 
+  // Sanitize title for ML requirements
+  const sanitizedTitle = sanitizeMLTitle(productData.title);
+
   const listingPayload = {
-    title: productData.title,
+    title: sanitizedTitle,
     category_id: productData.categoryId,
     price: productData.priceUsd,
     currency_id: 'USD',
