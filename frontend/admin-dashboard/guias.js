@@ -777,6 +777,13 @@ async function openPickupModal(carrier) {
   document.getElementById('pickup-time-from').value = '09:00';
   document.getElementById('pickup-time-to').value = '18:00';
 
+  // Reset submit button state
+  const submitBtn = document.getElementById('pickup-submit-btn');
+  submitBtn.disabled = false;
+  submitBtn.style.opacity = '1';
+  submitBtn.style.cursor = 'pointer';
+  submitBtn.textContent = '🚀 Solicitar Recolección';
+
   // Show modal first
   modal.classList.remove('hidden');
 
@@ -830,8 +837,11 @@ async function loadPendingLabelsForCarrier(carrier) {
 
     // Update list
     if (carrierLabels.length === 0) {
-      listEl.innerHTML = '<span style="color: #059669;">✓ No hay guías pendientes para esta paquetería</span>';
-      submitBtn.textContent = '🚀 Solicitar Recolección (sin guías)';
+      listEl.innerHTML = '<span style="color: #f59e0b;">⚠️ No hay guías pendientes para esta paquetería.<br>Genera guías primero antes de solicitar recolección.</span>';
+      submitBtn.textContent = '⚠️ Sin guías pendientes';
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.5';
+      submitBtn.style.cursor = 'not-allowed';
     } else {
       const labelsList = carrierLabels.slice(0, 5).map(l =>
         `<div style="padding: 4px 0;">• ${l.order_number || l.order_id} - ${l.tracking_number || 'Sin tracking'}</div>`

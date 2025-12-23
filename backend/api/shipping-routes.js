@@ -1173,8 +1173,12 @@ router.post('/pickups/request/carrier', async (req, res) => {
     console.log(`   Labels to pickup: ${labelsToPickup.length}`);
 
     if (labelsToPickup.length === 0) {
-      // Request pickup anyway (empty pickup for future labels)
-      console.log('   No pending labels, creating pickup request anyway...');
+      return res.status(400).json({
+        success: false,
+        error: `No hay guías pendientes de recolección para ${carrier}`,
+        message: 'Primero genera guías de envío para esta paquetería antes de solicitar recolección',
+        carrier: carrier
+      });
     }
 
     // Request pickup from Skydropx
