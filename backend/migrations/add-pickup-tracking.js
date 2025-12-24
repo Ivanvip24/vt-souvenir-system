@@ -23,6 +23,7 @@ async function runMigration() {
       CREATE TABLE IF NOT EXISTS pickups (
         id SERIAL PRIMARY KEY,
         pickup_id VARCHAR(100) UNIQUE,
+        carrier VARCHAR(50),
         pickup_date DATE NOT NULL,
         pickup_time_from TIME DEFAULT '09:00',
         pickup_time_to TIME DEFAULT '18:00',
@@ -33,7 +34,7 @@ async function runMigration() {
 
         -- Status
         status VARCHAR(50) DEFAULT 'pending',
-        -- pending, requested, confirmed, completed, cancelled
+        -- pending, requested, confirmed, completed, cancelled, scheduled
 
         -- Response from Skydropx
         response_data JSONB,
@@ -43,6 +44,11 @@ async function runMigration() {
         requested_at TIMESTAMP,
         confirmed_at TIMESTAMP
       );
+    `);
+
+    // Add carrier column if it doesn't exist (for existing tables)
+    await query(`
+      ALTER TABLE pickups ADD COLUMN IF NOT EXISTS carrier VARCHAR(50);
     `);
 
     console.log('✅ Created pickups table');

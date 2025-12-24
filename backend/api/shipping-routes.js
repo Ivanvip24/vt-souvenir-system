@@ -1172,21 +1172,61 @@ router.post('/pickups/request/carrier', async (req, res) => {
 
     console.log(`   Labels to pickup: ${labelsToPickup.length}`);
 
-    if (labelsToPickup.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: `No hay guías pendientes de recolección para ${carrier}`,
-        message: 'Primero genera guías de envío para esta paquetería antes de solicitar recolección',
-        carrier: carrier
+    const hasLabels = labelsToPickup.length > 0;
+
+    // Try to request pickup from Skydropx (with or without labels)
+    let pickupResult;
+    let skydropxSuccess = false;
+    let localPickupId = null;
+
+    try {
+      pickupResult = await skydropx.requestPickup(labelsToPickup, {
+        pickupDate: pickupDate,
+        timeFrom: timeFrom || '09:00',
+        timeTo: timeTo || '18:00',
+        allowEmptyPickup: true
       });
+      skydropxSuccess = pickupResult.success;
+    } catch (skydropxError) {
+      console.log(`⚠️ Skydropx pickup request failed: ${skydropxError.message}`);
+      // If Skydropx fails (especially for empty pickups), save locally
+      pickupResult = { success: false, error: skydropxError.message };
     }
 
-    // Request pickup from Skydropx
-    const pickupResult = await skydropx.requestPickup(labelsToPickup, {
-      pickupDate: pickupDate,
-      timeFrom: timeFrom || '09:00',
-      timeTo: timeTo || '18:00'
-    });
+    // If Skydropx didn't work (or we have no labels), save pickup locally
+    if (!skydropxSuccess) {
+      console.log('📝 Saving pickup request locally...');
+      localPickupId = `local-${carrier.toLowerCase()}-${Date.now()}`;
+
+      await query(`
+        INSERT INTO pickups (pickup_id, carrier, pickup_date, pickup_time_from, pickup_time_to,
+                            shipment_ids, shipment_count, status, response_data, requested_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'scheduled', $8, NOW())
+      `, [
+        localPickupId,
+        carrier,
+        pickupDate,
+        timeFrom || '09:00',
+        timeTo || '18:00',
+        labelsToPickup,
+        labelsToPickup.length,
+        JSON.stringify({ carrier, local: true, note: 'Pickup scheduled without Skydropx confirmation' })
+      ]);
+
+      return res.json({
+        success: true,
+        message: hasLabels
+          ? `Recolección de ${carrier} programada localmente (${labelsToPickup.length} guías)`
+          : `Recolección de ${carrier} programada. Añade guías antes del ${pickupDate}.`,
+        pickup_id: localPickupId,
+        pickup_date: pickupDate,
+        carrier: carrier,
+        shipment_count: labelsToPickup.length,
+        time_window: `${timeFrom || '09:00'} - ${timeTo || '18:00'}`,
+        local: true,
+        note: hasLabels ? null : 'Recuerda generar guías antes de la fecha de recolección'
+      });
+    }
 
     if (pickupResult.success) {
       // Update all labels with pickup info
@@ -1207,15 +1247,17 @@ router.post('/pickups/request/carrier', async (req, res) => {
 
       // Save pickup record
       await query(`
-        INSERT INTO pickups (pickup_id, pickup_date, pickup_time_from, pickup_time_to,
+        INSERT INTO pickups (pickup_id, carrier, pickup_date, pickup_time_from, pickup_time_to,
                             shipment_ids, shipment_count, status, response_data, requested_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'requested', $7, NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'requested', $8, NOW())
         ON CONFLICT (pickup_id) DO UPDATE SET
+          carrier = COALESCE(pickups.carrier, EXCLUDED.carrier),
           shipment_ids = ARRAY(SELECT DISTINCT unnest(pickups.shipment_ids || EXCLUDED.shipment_ids)),
           shipment_count = pickups.shipment_count + EXCLUDED.shipment_count,
           response_data = EXCLUDED.response_data
       `, [
         pickupResult.pickup_id,
+        carrier,
         pickupDate,
         timeFrom || '09:00',
         timeTo || '18:00',

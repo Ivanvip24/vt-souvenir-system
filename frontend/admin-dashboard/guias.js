@@ -837,11 +837,11 @@ async function loadPendingLabelsForCarrier(carrier) {
 
     // Update list
     if (carrierLabels.length === 0) {
-      listEl.innerHTML = '<span style="color: #f59e0b;">⚠️ No hay guías pendientes para esta paquetería.<br>Genera guías primero antes de solicitar recolección.</span>';
-      submitBtn.textContent = '⚠️ Sin guías pendientes';
-      submitBtn.disabled = true;
-      submitBtn.style.opacity = '0.5';
-      submitBtn.style.cursor = 'not-allowed';
+      listEl.innerHTML = '<span style="color: #6b7280;">📭 No hay guías pendientes para esta paquetería.<br><strong>Puedes programar la recolección de todas formas</strong> y añadir guías después.</span>';
+      submitBtn.textContent = '📅 Programar Recolección (sin guías)';
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
     } else {
       const labelsList = carrierLabels.slice(0, 5).map(l =>
         `<div style="padding: 4px 0;">• ${l.order_number || l.order_id} - ${l.tracking_number || 'Sin tracking'}</div>`
@@ -910,14 +910,24 @@ async function submitPickupRequest(event) {
     if (result.success) {
       // Show success message
       const pendingCount = pendingLabelsCache.length;
-      alert(
-        `✅ ¡Recolección solicitada exitosamente!\n\n` +
+      const isLocal = result.local;
+      const note = result.note;
+
+      let message = `✅ ¡Recolección ${isLocal ? 'programada' : 'solicitada'} exitosamente!\n\n` +
         `📦 Paquetería: ${carrier}\n` +
         `📅 Fecha: ${pickupDate}\n` +
         `🕐 Horario: ${timeFrom} - ${timeTo}\n` +
         `📋 Guías incluidas: ${pendingCount}\n` +
-        `🎫 Pickup ID: ${result.pickup_id || 'N/A'}`
-      );
+        `🎫 Pickup ID: ${result.pickup_id || 'N/A'}`;
+
+      if (isLocal) {
+        message += `\n\n📝 Guardado localmente`;
+      }
+      if (note) {
+        message += `\n\n⚠️ ${note}`;
+      }
+
+      alert(message);
 
       closePickupModal();
 

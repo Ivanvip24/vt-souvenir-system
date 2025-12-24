@@ -520,8 +520,14 @@ export async function generateShippingLabel({ orderId, clientId, destination }) 
  * @param {string} options.timeTo - End time window (HH:MM)
  */
 export async function requestPickup(shipmentIds, options = {}) {
+  const allowEmpty = options.allowEmptyPickup || false;
+
   if (!shipmentIds || shipmentIds.length === 0) {
-    throw new Error('No shipment IDs provided for pickup');
+    if (!allowEmpty) {
+      throw new Error('No shipment IDs provided for pickup');
+    }
+    // Allow empty pickup - will try to create without shipments
+    shipmentIds = [];
   }
 
   // Default to tomorrow if no date specified
@@ -540,7 +546,6 @@ export async function requestPickup(shipmentIds, options = {}) {
 
   const pickupPayload = {
     pickup: {
-      shipment_ids: shipmentIds,
       date: pickupDate,
       time_from: timeFrom,
       time_to: timeTo,
@@ -560,6 +565,11 @@ export async function requestPickup(shipmentIds, options = {}) {
       }
     }
   };
+
+  // Only include shipment_ids if there are shipments
+  if (shipmentIds.length > 0) {
+    pickupPayload.pickup.shipment_ids = shipmentIds;
+  }
 
   console.log('📬 Skydropx Pickup Request:', JSON.stringify(pickupPayload, null, 2));
 
