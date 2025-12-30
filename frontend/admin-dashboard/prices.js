@@ -2421,8 +2421,8 @@ function showReceiptReviewModal(data) {
           <div>${item.description}</div>
           ${item.dimensions ? `<small style="color: #6b7280;">Dimensiones: ${item.dimensions}</small>` : ''}
         </td>
-        <td style="padding: 12px; text-align: right;">$${(item.unit_price || 0).toFixed(2)}</td>
-        <td style="padding: 12px; text-align: right;">$${(item.total || 0).toFixed(2)}</td>
+        <td style="padding: 12px; text-align: right;">$${(parseFloat(item.unit_price) || 0).toFixed(2)}</td>
+        <td style="padding: 12px; text-align: right;">$${(parseFloat(item.total) || 0).toFixed(2)}</td>
         <td style="padding: 12px;">
           <select id="material-match-${index}" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
             <option value="">-- Seleccionar material --</option>
@@ -2500,17 +2500,17 @@ function showReceiptReviewModal(data) {
         <div style="background: #f9fafb; padding: 16px; border-radius: 8px;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
             <span>Subtotal:</span>
-            <span>$${((data.grand_total || 0) - (data.discount || 0)).toFixed(2)}</span>
+            <span>$${((parseFloat(data.grand_total) || 0) - (parseFloat(data.discount) || 0)).toFixed(2)}</span>
           </div>
           ${data.discount ? `
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #dc2626;">
               <span>Descuento:</span>
-              <span>-$${data.discount.toFixed(2)}</span>
+              <span>-$${(parseFloat(data.discount) || 0).toFixed(2)}</span>
             </div>
           ` : ''}
           <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 18px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
             <span>Total:</span>
-            <span>$${(data.grand_total || 0).toFixed(2)}</span>
+            <span>$${(parseFloat(data.grand_total) || 0).toFixed(2)}</span>
           </div>
         </div>
 
@@ -2675,6 +2675,14 @@ window.viewReceipt = async function(receiptId) {
     const data = result.data;
 
     // Transform data to match review modal format
+    // Parse numeric values in items to ensure they're numbers
+    const parsedItems = (data.items || []).map(item => ({
+      ...item,
+      quantity: parseFloat(item.quantity) || 0,
+      unit_price: parseFloat(item.unit_price) || 0,
+      total: parseFloat(item.total) || 0
+    }));
+
     const viewData = {
       supplier: {
         name: data.supplier_name,
@@ -2683,7 +2691,7 @@ window.viewReceipt = async function(receiptId) {
         address: data.supplier_address
       },
       date: data.receipt_date,
-      items: data.items || [],
+      items: parsedItems,
       grand_total: parseFloat(data.grand_total) || 0,
       discount: parseFloat(data.discount) || 0,
       notes: data.notes,
