@@ -416,10 +416,176 @@ document.getElementById('close-design-list')?.addEventListener('click', () => {
 document.getElementById('clear-design-list')?.addEventListener('click', clearDesignList);
 document.getElementById('download-all-designs')?.addEventListener('click', downloadAllDesigns);
 
-// Upload button (for design role)
-document.getElementById('upload-design-btn')?.addEventListener('click', () => {
-    showToast('Funcionalidad de subida próximamente', 'info');
+// ========================================
+// UPLOAD FUNCTIONALITY
+// ========================================
+
+let selectedFile = null;
+
+function openUploadModal() {
+    // Reset form
+    document.getElementById('upload-design-form').reset();
+    selectedFile = null;
+
+    // Reset preview
+    const preview = document.getElementById('upload-preview');
+    const content = document.querySelector('.dropzone-content');
+    preview.classList.add('hidden');
+    content.classList.remove('hidden');
+
+    // Disable submit button
+    document.getElementById('submit-design-btn').disabled = true;
+
+    // Populate categories
+    const categorySelect = document.getElementById('design-category');
+    categorySelect.innerHTML = '<option value="">Sin categoría</option>';
+    galleryState.categories.forEach(cat => {
+        categorySelect.innerHTML += `<option value="${cat.id}">${cat.icon || ''} ${cat.name}</option>`;
+    });
+
+    // Show modal
+    document.getElementById('upload-design-modal').classList.remove('hidden');
+}
+
+function handleFileSelect(file) {
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        showToast('Solo se permiten imágenes (JPG, PNG, GIF, WEBP)', 'error');
+        return;
+    }
+
+    // Validate file size (15MB)
+    if (file.size > 15 * 1024 * 1024) {
+        showToast('La imagen es muy grande. Máximo 15MB', 'error');
+        return;
+    }
+
+    selectedFile = file;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('preview-image').src = e.target.result;
+        document.getElementById('upload-preview').classList.remove('hidden');
+        document.querySelector('.dropzone-content').classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+
+    // Enable submit button
+    updateSubmitButton();
+}
+
+function updateSubmitButton() {
+    const nameInput = document.getElementById('design-name');
+    const submitBtn = document.getElementById('submit-design-btn');
+    submitBtn.disabled = !selectedFile || !nameInput.value.trim();
+}
+
+async function submitDesign() {
+    if (!selectedFile) {
+        showToast('Selecciona una imagen', 'error');
+        return;
+    }
+
+    const name = document.getElementById('design-name').value.trim();
+    if (!name) {
+        showToast('Ingresa un nombre para el diseño', 'error');
+        return;
+    }
+
+    const submitBtn = document.getElementById('submit-design-btn');
+    const btnText = document.getElementById('upload-btn-text');
+    const btnLoading = document.getElementById('upload-btn-loading');
+
+    // Show loading state
+    submitBtn.disabled = true;
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+
+    try {
+        const formData = new FormData();
+        formData.append('design', selectedFile);
+        formData.append('name', name);
+        formData.append('category_id', document.getElementById('design-category').value);
+        formData.append('tags', document.getElementById('design-tags').value);
+        formData.append('description', document.getElementById('design-description').value);
+
+        const response = await fetch(`${API_BASE}/gallery/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${state.token}`
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Diseño subido correctamente', 'success');
+            closeModal('upload-design-modal');
+            loadGallery(); // Refresh gallery
+        } else {
+            showToast(data.error || 'Error al subir el diseño', 'error');
+        }
+
+    } catch (error) {
+        console.error('Upload error:', error);
+        showToast('Error al subir el diseño', 'error');
+    } finally {
+        // Reset loading state
+        submitBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        btnLoading.classList.add('hidden');
+    }
+}
+
+// Upload button opens modal
+document.getElementById('upload-design-btn')?.addEventListener('click', openUploadModal);
+
+// Dropzone click
+document.getElementById('upload-dropzone')?.addEventListener('click', () => {
+    document.getElementById('design-file').click();
 });
+
+// File input change
+document.getElementById('design-file')?.addEventListener('change', (e) => {
+    handleFileSelect(e.target.files[0]);
+});
+
+// Change image button
+document.getElementById('change-image-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('design-file').click();
+});
+
+// Drag and drop
+const dropzone = document.getElementById('upload-dropzone');
+if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        handleFileSelect(file);
+    });
+}
+
+// Name input for submit button validation
+document.getElementById('design-name')?.addEventListener('input', updateSubmitButton);
+
+// Submit button
+document.getElementById('submit-design-btn')?.addEventListener('click', submitDesign);
 
 // Make functions globally available
 window.loadGallery = loadGallery;

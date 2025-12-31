@@ -4,7 +4,9 @@
  */
 
 import express from 'express';
+import multer from 'multer';
 import { query } from '../shared/database.js';
+import { uploadImage } from '../shared/cloudinary-config.js';
 import {
   employeeAuth,
   requireManager,
@@ -13,6 +15,22 @@ import {
 } from './middleware/employee-auth.js';
 
 const router = express.Router();
+
+// Configure multer for memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 15 * 1024 * 1024, // 15MB max
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten imágenes (JPG, PNG, GIF, WEBP)'), false);
+    }
+  }
+});
 
 // ========================================
 // GALLERY ITEMS
@@ -629,6 +647,98 @@ router.get('/stats/summary', employeeAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error al obtener estadísticas'
+    });
+  }
+});
+
+// ========================================
+// UPLOAD DESIGN
+// ========================================
+
+/**
+ * POST /api/gallery/upload
+ * Upload a new design to the gallery
+ */
+router.post('/upload', employeeAuth, upload.single('design'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se recibió ningún archivo'
+      });
+    }
+
+    const { name, description, category_id, tags } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        error: 'El nombre es requerido'
+      });
+    }
+
+    console.log(`📤 Uploading design: ${name} (${req.file.size} bytes)`);
+
+    // Convert buffer to base64 data URI for Cloudinary
+    const b64 = Buffer.from(req.file.buffer).toString('base64');
+    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+    // Generate custom public ID
+    const timestamp = Date.now();
+    const safeName = name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+    const publicId = `design_${safeName}_${timestamp}`;
+
+    // Upload to Cloudinary
+    const uploadResult = await uploadImage(dataURI, 'design-gallery', publicId);
+
+    // Parse tags if provided as string
+    let parsedTags = [];
+    if (tags) {
+      try {
+        parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
+      } catch (e) {
+        parsedTags = tags.split(',').map(t => t.trim()).filter(t => t);
+      }
+    }
+
+    // Save to database
+    const result = await query(
+      `INSERT INTO design_gallery (
+        name, description, file_url, thumbnail_url, storage_type,
+        external_id, category_id, tags, file_type, file_size,
+        dimensions, uploaded_by
+      ) VALUES ($1, $2, $3, $4, 'cloudinary', $5, $6, $7, $8, $9, $10, $11)
+      RETURNING *`,
+      [
+        name,
+        description || null,
+        uploadResult.url,
+        uploadResult.url, // Use same URL for thumbnail
+        uploadResult.publicId,
+        category_id ? parseInt(category_id) : null,
+        parsedTags,
+        uploadResult.format,
+        uploadResult.bytes || req.file.size,
+        uploadResult.width && uploadResult.height ? `${uploadResult.width}x${uploadResult.height}` : null,
+        req.employee.id
+      ]
+    );
+
+    await logActivity(req.employee.id, 'design_uploaded', 'design_gallery', result.rows[0].id, { name });
+
+    console.log(`✅ Design uploaded successfully: ${name}`);
+
+    res.status(201).json({
+      success: true,
+      design: result.rows[0],
+      message: 'Diseño subido correctamente'
+    });
+
+  } catch (error) {
+    console.error('Upload design error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error al subir el diseño'
     });
   }
 });

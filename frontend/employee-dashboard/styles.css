@@ -863,6 +863,57 @@ select:focus, input:focus, textarea:focus {
     border-color: var(--primary);
 }
 
+/* Upload Dropzone */
+.upload-dropzone {
+    border: 2px dashed var(--gray-300);
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--gray-50);
+}
+
+.upload-dropzone:hover {
+    border-color: var(--primary);
+    background: rgba(124, 179, 66, 0.05);
+}
+
+.upload-dropzone.dragover {
+    border-color: var(--primary);
+    background: rgba(124, 179, 66, 0.1);
+    transform: scale(1.02);
+}
+
+.dropzone-content p {
+    margin: 12px 0 8px;
+    color: var(--gray-700);
+}
+
+.dropzone-content small {
+    color: var(--gray-500);
+}
+
+.dropzone-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.dropzone-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    object-fit: contain;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.dropzone-preview.hidden,
+.dropzone-content.hidden {
+    display: none;
+}
+
 /* Notes Layout */
 .notes-layout {
     display: grid;
