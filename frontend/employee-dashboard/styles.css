@@ -342,9 +342,10 @@ body.role-manager .manager-only.nav-section-title {
 .content-area {
     padding: 30px;
     margin-left: var(--sidebar-width);
-    width: calc(100% - var(--sidebar-width));
-    max-width: 100%;
+    width: calc(100% - var(--sidebar-width)) !important;
+    max-width: none !important;
     box-sizing: border-box;
+    display: block !important;
 }
 
 .view {
@@ -356,8 +357,13 @@ body.role-manager .manager-only.nav-section-title {
 .view.active {
     display: block !important;
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: none !important;
     animation: fadeIn 0.4s ease;
+}
+
+/* Ensure view children don't inherit column flex */
+.view.active > * {
+    width: 100% !important;
 }
 
 #profile-view,
@@ -370,6 +376,23 @@ body.role-manager .manager-only.nav-section-title {
 #knowledge-view {
     width: 100% !important;
     max-width: 100% !important;
+}
+
+/* Force ALL children to not constrain width */
+.content-area * {
+    max-width: 100%;
+}
+
+#my-tasks-view .task-filters,
+#all-tasks-view .task-filters {
+    display: flex !important;
+    flex-flow: row wrap !important;
+    width: 100% !important;
+}
+
+#my-tasks-view .task-filters .filter-btn,
+#all-tasks-view .task-filters .filter-btn {
+    flex: 0 0 auto !important;
 }
 
 @keyframes fadeIn {
