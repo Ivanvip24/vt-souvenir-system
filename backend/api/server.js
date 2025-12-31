@@ -21,7 +21,12 @@ import shippingRoutes from './shipping-routes.js';
 import receiptRoutes from './receipt-routes.js';
 import aiAssistantRoutes from './ai-assistant-routes.js';
 import mercadolibreRoutes from './mercadolibre-routes.js';
+import employeeRoutes from './employee-routes.js';
+import taskRoutes from './task-routes.js';
+import galleryRoutes from './gallery-routes.js';
+import notesRoutes from './notes-routes.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
+import { onOrderStatusChange } from '../services/task-generator.js';
 import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
 import { processReceipt } from '../services/receipt-ocr.js';
@@ -134,6 +139,14 @@ app.use('/api/ai-assistant', aiAssistantRoutes);
 // MERCADO LIBRE INTEGRATION ROUTES
 // ========================================
 app.use('/api/mercadolibre', mercadolibreRoutes);
+
+// ========================================
+// EMPLOYEE DASHBOARD ROUTES
+// ========================================
+app.use('/api/employees', employeeRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/gallery', galleryRoutes);
+app.use('/api/notes', notesRoutes);
 
 // ========================================
 // NOTION AGENT ENDPOINTS
@@ -696,6 +709,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
 app.patch('/api/orders/:orderId/status', async (req, res) => {
   try {
     const { status } = req.body;
+    const orderId = parseInt(req.params.orderId);
 
     if (!status) {
       return res.status(400).json({
@@ -704,15 +718,28 @@ app.patch('/api/orders/:orderId/status', async (req, res) => {
       });
     }
 
-    const result = await notionSync.syncStatusToNotion(
-      parseInt(req.params.orderId),
-      status
-    );
+    // Get current status before updating
+    const currentOrder = await query('SELECT status FROM orders WHERE id = $1', [orderId]);
+    const oldStatus = currentOrder.rows.length > 0 ? currentOrder.rows[0].status : null;
+
+    const result = await notionSync.syncStatusToNotion(orderId, status);
+
+    // Generate tasks for the new status (if status actually changed)
+    let taskResult = null;
+    if (oldStatus && oldStatus !== status) {
+      try {
+        taskResult = await onOrderStatusChange(orderId, oldStatus, status);
+        console.log(`📋 Task generation for order ${orderId}: ${taskResult.newTasks.length} new tasks created`);
+      } catch (taskError) {
+        console.error('Task generation failed (non-blocking):', taskError);
+      }
+    }
 
     res.json({
       success: true,
       message: 'Status updated successfully',
-      data: result
+      data: result,
+      tasks: taskResult
     });
   } catch (error) {
     console.error('Error updating status:', error);

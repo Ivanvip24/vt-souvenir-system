@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXKAN - Portal de Empleados</title>
+    <link rel="icon" type="image/png" href="../assets/images/LOGO-01.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <img src="../assets/images/LOGO-03.png" alt="AXKAN" class="top-logo">
+            <span class="top-title">Portal de Empleados</span>
+        </div>
+        <div class="top-bar-right">
+            <div class="employee-info">
+                <span id="employee-name">Cargando...</span>
+                <span id="employee-role" class="role-badge">-</span>
+            </div>
+            <button class="btn-icon" id="logout-btn" title="Cerrar Sesión">
+                <span>🚪</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="dashboard-main">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="my-tasks">
+                    <span class="nav-icon">📋</span>
+                    <span>Mis Tareas</span>
+                    <span class="badge" id="my-task-count">0</span>
+                </button>
+
+                <button class="nav-item" data-view="department-queue">
+                    <span class="nav-icon">📥</span>
+                    <span>Cola del Depto.</span>
+                </button>
+
+                <button class="nav-item design-only" data-view="gallery">
+                    <span class="nav-icon">🎨</span>
+                    <span>Galería</span>
+                </button>
+
+                <button class="nav-item" data-view="notes">
+                    <span class="nav-icon">📝</span>
+                    <span>Documentos</span>
+                </button>
+
+                <div class="nav-divider"></div>
+
+                <!-- Manager Only Section -->
+                <div class="manager-only">
+                    <span class="nav-section-title">Administración</span>
+
+                    <button class="nav-item" data-view="employees">
+                        <span class="nav-icon">👥</span>
+                        <span>Empleados</span>
+                    </button>
+
+                    <button class="nav-item" data-view="all-tasks">
+                        <span class="nav-icon">📊</span>
+                        <span>Todas las Tareas</span>
+                    </button>
+                </div>
+
+                <div class="nav-divider"></div>
+
+                <button class="nav-item" data-view="profile">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Mi Perfil</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <!-- My Tasks View -->
+            <section id="my-tasks-view" class="view active">
+                <div class="view-header">
+                    <h2>Mis Tareas</h2>
+                    <button class="btn btn-primary" id="new-task-btn">
+                        <span>+</span> Nueva Tarea
+                    </button>
+                </div>
+
+                <div class="task-filters">
+                    <button class="filter-btn active" data-status="all">Todas</button>
+                    <button class="filter-btn" data-status="pending">Pendientes</button>
+                    <button class="filter-btn" data-status="in_progress">En Progreso</button>
+                    <button class="filter-btn" data-status="completed">Completadas</button>
+                </div>
+
+                <div id="my-tasks-loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Cargando tareas...</p>
+                </div>
+
+                <div id="my-tasks-empty" class="empty-state hidden">
+                    <span class="empty-icon">✅</span>
+                    <h3>¡Todo listo!</h3>
+                    <p>No tienes tareas pendientes</p>
+                </div>
+
+                <div id="my-tasks-list" class="task-list"></div>
+            </section>
+
+            <!-- Department Queue View -->
+            <section id="department-queue-view" class="view">
+                <div class="view-header">
+                    <h2>Cola del Departamento: <span id="dept-name">-</span></h2>
+                </div>
+
+                <div id="dept-tasks-loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Cargando cola...</p>
+                </div>
+
+                <div id="dept-tasks-empty" class="empty-state hidden">
+                    <span class="empty-icon">📭</span>
+                    <h3>Cola vacía</h3>
+                    <p>No hay tareas pendientes en el departamento</p>
+                </div>
+
+                <div id="dept-tasks-list" class="task-list"></div>
+            </section>
+
+            <!-- Gallery View -->
+            <section id="gallery-view" class="view">
+                <div class="view-header">
+                    <h2>Galería de Diseños</h2>
+                    <button class="btn btn-primary design-only" id="upload-design-btn">
+                        <span>+</span> Subir Diseño
+                    </button>
+                </div>
+
+                <div class="gallery-filters">
+                    <select id="category-filter">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                    <input type="text" id="gallery-search" placeholder="Buscar diseños...">
+                </div>
+
+                <div id="gallery-loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Cargando galería...</p>
+                </div>
+
+                <div id="gallery-empty" class="empty-state hidden">
+                    <span class="empty-icon">🎨</span>
+                    <h3>Sin diseños</h3>
+                    <p>No hay diseños en esta categoría</p>
+                </div>
+
+                <div id="gallery-grid" class="gallery-grid"></div>
+            </section>
+
+            <!-- Notes View -->
+            <section id="notes-view" class="view">
+                <div class="view-header">
+                    <h2>Documentos</h2>
+                    <button class="btn btn-primary" id="new-note-btn">
+                        <span>+</span> Nuevo Documento
+                    </button>
+                </div>
+
+                <div class="notes-layout">
+                    <div class="workspaces-sidebar">
+                        <h4>Espacios de Trabajo</h4>
+                        <div id="workspaces-list"></div>
+                        <button class="btn btn-secondary btn-small" id="new-workspace-btn">
+                            + Nuevo Espacio
+                        </button>
+                    </div>
+
+                    <div class="notes-content">
+                        <div id="notes-loading" class="loading-state">
+                            <div class="spinner"></div>
+                            <p>Cargando documentos...</p>
+                        </div>
+
+                        <div id="notes-empty" class="empty-state hidden">
+                            <span class="empty-icon">📝</span>
+                            <h3>Sin documentos</h3>
+                            <p>Crea tu primer documento</p>
+                        </div>
+
+                        <div id="notes-list" class="notes-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Employees View (Manager Only) -->
+            <section id="employees-view" class="view">
+                <div class="view-header">
+                    <h2>Gestión de Empleados</h2>
+                    <button class="btn btn-primary" id="new-employee-btn">
+                        <span>+</span> Nuevo Empleado
+                    </button>
+                </div>
+
+                <div class="employee-filters">
+                    <select id="dept-filter">
+                        <option value="">Todos los departamentos</option>
+                        <option value="design">Diseño</option>
+                        <option value="production">Producción</option>
+                        <option value="shipping">Envíos</option>
+                    </select>
+                    <select id="role-filter">
+                        <option value="">Todos los roles</option>
+                        <option value="design">Diseño</option>
+                        <option value="production">Producción</option>
+                        <option value="shipping">Envíos</option>
+                        <option value="manager">Gerente</option>
+                    </select>
+                </div>
+
+                <div id="employees-loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Cargando empleados...</p>
+                </div>
+
+                <div id="employees-list" class="employees-list"></div>
+            </section>
+
+            <!-- All Tasks View (Manager Only) -->
+            <section id="all-tasks-view" class="view">
+                <div class="view-header">
+                    <h2>Todas las Tareas</h2>
+                </div>
+
+                <div class="task-filters">
+                    <select id="all-tasks-dept-filter">
+                        <option value="">Todos los departamentos</option>
+                        <option value="design">Diseño</option>
+                        <option value="production">Producción</option>
+                        <option value="shipping">Envíos</option>
+                    </select>
+                    <select id="all-tasks-status-filter">
+                        <option value="">Todos los estados</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="in_progress">En Progreso</option>
+                        <option value="completed">Completada</option>
+                    </select>
+                </div>
+
+                <div id="all-tasks-loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Cargando tareas...</p>
+                </div>
+
+                <div id="all-tasks-list" class="task-list"></div>
+            </section>
+
+            <!-- Profile View -->
+            <section id="profile-view" class="view">
+                <div class="view-header">
+                    <h2>Mi Perfil</h2>
+                </div>
+
+                <div class="profile-card">
+                    <div class="profile-avatar" id="profile-avatar">
+                        <span>?</span>
+                    </div>
+                    <div class="profile-info">
+                        <h3 id="profile-name">-</h3>
+                        <p id="profile-email">-</p>
+                        <span class="role-badge" id="profile-role">-</span>
+                        <span class="dept-badge" id="profile-dept">-</span>
+                    </div>
+                </div>
+
+                <div class="profile-form">
+                    <h4>Actualizar Información</h4>
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label for="profile-name-input">Nombre</label>
+                            <input type="text" id="profile-name-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-phone-input">Teléfono</label>
+                            <input type="tel" id="profile-phone-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </form>
+
+                    <h4>Cambiar Contraseña</h4>
+                    <form id="password-form">
+                        <div class="form-group">
+                            <label for="current-password">Contraseña Actual</label>
+                            <input type="password" id="current-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">Nueva Contraseña</label>
+                            <input type="password" id="new-password" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Confirmar Nueva Contraseña</label>
+                            <input type="password" id="confirm-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Cambiar Contraseña</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div id="task-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="task-modal-title">Detalle de Tarea</h3>
+                <button class="btn-close" onclick="closeModal('task-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="task-modal-body">
+                <!-- Filled by JS -->
+            </div>
+            <div class="modal-footer" id="task-modal-footer">
+                <!-- Action buttons -->
+            </div>
+        </div>
+    </div>
+
+    <!-- New Task Modal -->
+    <div id="new-task-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nueva Tarea</h3>
+                <button class="btn-close" onclick="closeModal('new-task-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="new-task-form">
+                    <div class="form-group">
+                        <label for="task-title">Título *</label>
+                        <input type="text" id="task-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-description">Descripción</label>
+                        <textarea id="task-description" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="task-priority">Prioridad</label>
+                            <select id="task-priority">
+                                <option value="normal">Normal</option>
+                                <option value="low">Baja</option>
+                                <option value="high">Alta</option>
+                                <option value="urgent">Urgente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-due-date">Fecha Límite</label>
+                            <input type="date" id="task-due-date">
+                        </div>
+                    </div>
+                    <div class="form-group manager-only">
+                        <label for="task-assign-to">Asignar a</label>
+                        <select id="task-assign-to">
+                            <option value="">Sin asignar</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('new-task-modal')">Cancelar</button>
+                <button class="btn btn-primary" id="create-task-btn">Crear Tarea</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Employee Modal -->
+    <div id="new-employee-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nuevo Empleado</h3>
+                <button class="btn-close" onclick="closeModal('new-employee-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="new-employee-form">
+                    <div class="form-group">
+                        <label for="emp-name">Nombre *</label>
+                        <input type="text" id="emp-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emp-email">Email *</label>
+                        <input type="email" id="emp-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emp-password">Contraseña *</label>
+                        <input type="password" id="emp-password" required minlength="6">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emp-role">Rol *</label>
+                            <select id="emp-role" required>
+                                <option value="design">Diseño</option>
+                                <option value="production">Producción</option>
+                                <option value="shipping">Envíos</option>
+                                <option value="manager">Gerente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="emp-department">Departamento *</label>
+                            <select id="emp-department" required>
+                                <option value="design">Diseño</option>
+                                <option value="production">Producción</option>
+                                <option value="shipping">Envíos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="emp-phone">Teléfono</label>
+                        <input type="tel" id="emp-phone">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('new-employee-modal')">Cancelar</button>
+                <button class="btn btn-primary" id="create-employee-btn">Crear Empleado</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Editor Modal -->
+    <div id="note-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <input type="text" id="note-title-input" class="note-title-input" placeholder="Título del documento">
+                <button class="btn-close" onclick="closeModal('note-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="note-content" class="note-editor" placeholder="Escribe tu documento aquí... (Soporta Markdown)"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('note-modal')">Cancelar</button>
+                <button class="btn btn-primary" id="save-note-btn">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="dashboard.js"></script>
+    <script src="tasks.js"></script>
+    <script src="gallery.js"></script>
+    <script src="notes.js"></script>
+</body>
+</html>

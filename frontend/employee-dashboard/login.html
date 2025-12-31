@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXKAN - Portal de Empleados</title>
+    <link rel="icon" type="image/png" href="../assets/images/LOGO-01.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --axkan-pink: #E91E63;
+            --axkan-green: #7CB342;
+            --axkan-green-dark: #558B2F;
+            --axkan-orange: #FF9800;
+            --axkan-turquoise: #00BCD4;
+            --axkan-red: #F44336;
+
+            --primary: #7CB342;
+            --primary-dark: #558B2F;
+            --danger: #F44336;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #7CB342 0%, #558B2F 50%, #33691E 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg,
+                var(--axkan-pink),
+                var(--axkan-green),
+                var(--axkan-orange),
+                var(--axkan-turquoise),
+                var(--axkan-red)
+            );
+            z-index: 1000;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 48px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-image {
+            height: 80px;
+            width: auto;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7CB342, #558B2F);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--gray-700);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-100);
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--axkan-green);
+            box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #7CB342, #558B2F);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 179, 66, 0.4);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #fee;
+            color: var(--danger);
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .security-note {
+            margin-top: 24px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(124, 179, 66, 0.08), rgba(85, 139, 47, 0.05));
+            border-radius: 10px;
+            font-size: 13px;
+            color: var(--gray-700);
+            text-align: center;
+        }
+
+        .admin-link {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+        }
+
+        .admin-link a {
+            color: var(--gray-700);
+            text-decoration: none;
+        }
+
+        .admin-link a:hover {
+            color: var(--axkan-pink);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo-area">
+            <img src="../assets/images/LOGO-03.png" alt="AXKAN Logo" class="logo-image">
+            <h1>Portal de Empleados</h1>
+            <p class="subtitle">Acceso al Sistema de Trabajo</p>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Correo Electrónico</label>
+                <input type="email" id="email" autocomplete="email" required autofocus placeholder="tu@email.com">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" autocomplete="current-password" required>
+            </div>
+
+            <button type="submit" class="btn-login" id="login-btn">
+                <span id="btn-text">Iniciar Sesión</span>
+                <span id="btn-loader" style="display: none;" class="loading"></span>
+            </button>
+        </form>
+
+        <div class="security-note">
+            👷 Portal exclusivo para empleados de AXKAN
+        </div>
+
+        <div class="admin-link">
+            <a href="../admin-dashboard/login.html">¿Eres administrador? Ir al panel de admin</a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.hostname === 'localhost'
+            ? 'http://localhost:3000/api'
+            : 'https://vt-souvenir-backend.onrender.com/api';
+
+        const loginForm = document.getElementById('login-form');
+        const errorMessage = document.getElementById('error-message');
+        const loginBtn = document.getElementById('login-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnLoader = document.getElementById('btn-loader');
+
+        // Check if already logged in
+        const token = localStorage.getItem('employee_token');
+        if (token) {
+            verifyToken(token);
+        }
+
+        async function verifyToken(token) {
+            try {
+                const response = await fetch(`${API_BASE}/employees/verify`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    window.location.href = 'index.html';
+                } else {
+                    localStorage.removeItem('employee_token');
+                    localStorage.removeItem('employee_data');
+                }
+            } catch (error) {
+                console.error('Error verifying token:', error);
+                localStorage.removeItem('employee_token');
+                localStorage.removeItem('employee_data');
+            }
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            errorMessage.classList.remove('show');
+
+            loginBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'inline-block';
+
+            try {
+                const response = await fetch(`${API_BASE}/employees/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.token) {
+                    localStorage.setItem('employee_token', data.token);
+                    localStorage.setItem('employee_data', JSON.stringify(data.employee));
+
+                    window.location.href = 'index.html';
+                } else {
+                    showError(data.error || 'Credenciales incorrectas');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Error de conexión. Por favor intenta de nuevo.');
+            } finally {
+                loginBtn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
+            }
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+    </script>
+</body>
+</html>
