@@ -147,6 +147,9 @@ function switchView(viewName) {
         case 'notes':
             if (typeof loadWorkspaces === 'function') loadWorkspaces();
             break;
+        case 'knowledge':
+            if (typeof loadKnowledge === 'function') loadKnowledge();
+            break;
         case 'employees':
             loadEmployeesView();
             break;
