@@ -1,11 +1,13 @@
 /**
  * Knowledge Base Routes
  * Endpoints for searching and browsing Axkan brand content
+ * Includes AI-powered Q&A and chat using Claude API
  */
 
 import express from 'express';
 import { employeeAuth } from './middleware/employee-auth.js';
 import * as knowledgeIndex from '../services/knowledge-index.js';
+import * as knowledgeAI from '../services/knowledge-ai.js';
 
 const router = express.Router();
 
@@ -157,6 +159,186 @@ router.post('/reindex', employeeAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error al re-indexar'
+    });
+  }
+});
+
+// ========================================
+// AI-POWERED ENDPOINTS
+// ========================================
+
+/**
+ * POST /api/knowledge/ask
+ * Single question/answer (no conversation history)
+ */
+router.post('/ask', async (req, res) => {
+  try {
+    const { question } = req.body;
+
+    if (!question || question.trim().length < 3) {
+      return res.status(400).json({
+        success: false,
+        error: 'La pregunta debe tener al menos 3 caracteres'
+      });
+    }
+
+    const result = await knowledgeAI.askQuestion(question);
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Ask question error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al procesar la pregunta'
+    });
+  }
+});
+
+/**
+ * POST /api/knowledge/chat
+ * Chat with conversation history
+ */
+router.post('/chat', async (req, res) => {
+  try {
+    const { conversationId, message } = req.body;
+
+    if (!message || message.trim().length < 1) {
+      return res.status(400).json({
+        success: false,
+        error: 'El mensaje no puede estar vacío'
+      });
+    }
+
+    const result = await knowledgeAI.chat(conversationId, message);
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Chat error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error en el chat'
+    });
+  }
+});
+
+/**
+ * POST /api/knowledge/chat/new
+ * Start a new conversation
+ */
+router.post('/chat/new', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const conversationId = knowledgeAI.startConversation(userId);
+
+    res.json({
+      success: true,
+      conversationId
+    });
+
+  } catch (error) {
+    console.error('New conversation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al iniciar conversación'
+    });
+  }
+});
+
+/**
+ * GET /api/knowledge/chat/:conversationId
+ * Get conversation history
+ */
+router.get('/chat/:conversationId', async (req, res) => {
+  try {
+    const conversation = knowledgeAI.getConversation(req.params.conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        error: 'Conversación no encontrada'
+      });
+    }
+
+    res.json({
+      success: true,
+      conversation
+    });
+
+  } catch (error) {
+    console.error('Get conversation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener conversación'
+    });
+  }
+});
+
+/**
+ * DELETE /api/knowledge/chat/:conversationId
+ * Clear/delete a conversation
+ */
+router.delete('/chat/:conversationId', async (req, res) => {
+  try {
+    const deleted = knowledgeAI.clearConversation(req.params.conversationId);
+
+    res.json({
+      success: true,
+      deleted
+    });
+
+  } catch (error) {
+    console.error('Delete conversation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al eliminar conversación'
+    });
+  }
+});
+
+/**
+ * GET /api/knowledge/ai/stats
+ * Get AI service stats
+ */
+router.get('/ai/stats', async (req, res) => {
+  try {
+    const stats = knowledgeAI.getStats();
+
+    res.json({
+      success: true,
+      stats
+    });
+
+  } catch (error) {
+    console.error('AI stats error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener estadísticas'
+    });
+  }
+});
+
+/**
+ * POST /api/knowledge/ai/reload
+ * Reload brand content
+ */
+router.post('/ai/reload', employeeAuth, async (req, res) => {
+  try {
+    await knowledgeAI.reload();
+    const stats = knowledgeAI.getStats();
+
+    res.json({
+      success: true,
+      message: 'Contenido recargado correctamente',
+      stats
+    });
+
+  } catch (error) {
+    console.error('Reload error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al recargar contenido'
     });
   }
 });

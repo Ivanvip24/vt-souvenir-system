@@ -316,61 +316,47 @@
                 <div id="all-tasks-list" class="task-list"></div>
             </section>
 
-            <!-- Knowledge Base View -->
+            <!-- Knowledge Base View - AI Chat -->
             <section id="knowledge-view" class="view">
                 <div class="view-header">
-                    <h2>📚 Base de Conocimiento AXKAN</h2>
+                    <h2>🤖 Asistente AXKAN</h2>
                     <div id="knowledge-stats" class="knowledge-stats"></div>
                 </div>
 
                 <!-- View Toggle -->
                 <div class="knowledge-view-toggle">
-                    <button class="knowledge-view-btn active" data-view="search">
-                        <span>🔍</span> Buscar
+                    <button class="knowledge-view-btn active" data-view="chat">
+                        <span>💬</span> Chat
                     </button>
                     <button class="knowledge-view-btn" data-view="images">
                         <span>🖼️</span> Imágenes
                     </button>
                 </div>
 
-                <!-- Search Section -->
-                <div id="knowledge-search-section">
-                    <div class="knowledge-search-container">
-                        <div class="knowledge-search-wrapper">
-                            <span class="knowledge-search-icon">🔍</span>
-                            <input type="text" id="knowledge-search" class="knowledge-search-input"
-                                   placeholder="Buscar colores, tipografía, precios, ventas...">
+                <!-- Chat Section -->
+                <div id="knowledge-chat-section" class="knowledge-chat-section">
+                    <!-- Messages Container -->
+                    <div id="knowledge-messages" class="knowledge-messages">
+                        <!-- Welcome message will be inserted here -->
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="knowledge-input-area">
+                        <button id="knowledge-new-chat" class="btn-icon" title="Nueva conversación">
+                            🔄
+                        </button>
+                        <div class="knowledge-input-wrapper">
+                            <input type="text" id="knowledge-input" class="knowledge-input"
+                                   placeholder="Pregunta sobre colores, tipografía, precios, ventas...">
+                            <button id="knowledge-send-btn" class="btn-send">
+                                ➤
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Category Filters -->
-                    <div class="knowledge-categories">
-                        <button class="knowledge-category-btn active" data-category="">Todos</button>
-                        <button class="knowledge-category-btn" data-category="brand-identity">🎨 Identidad</button>
-                        <button class="knowledge-category-btn" data-category="sales">💰 Ventas</button>
-                        <button class="knowledge-category-btn" data-category="visual-assets">🖼️ Visual</button>
-                    </div>
-
-                    <div id="knowledge-result-count" class="knowledge-result-count hidden"></div>
-
-                    <div id="knowledge-loading" class="loading-state hidden">
-                        <div class="spinner"></div>
-                        <p>Buscando...</p>
-                    </div>
-
-                    <!-- Search Results -->
-                    <div id="knowledge-results" class="knowledge-results"></div>
-
-                    <!-- Image Results from Search -->
-                    <div id="knowledge-images-results" class="knowledge-images-results"></div>
                 </div>
 
                 <!-- Images Browser Section -->
                 <div id="knowledge-images-section" class="hidden">
-                    <div id="knowledge-images-loading" class="loading-state hidden">
-                        <div class="spinner"></div>
-                        <p>Cargando imágenes...</p>
-                    </div>
                     <div id="knowledge-images-browser" class="knowledge-images-browser"></div>
                 </div>
             </section>

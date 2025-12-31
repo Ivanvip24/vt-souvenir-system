@@ -27,6 +27,7 @@ import galleryRoutes from './gallery-routes.js';
 import notesRoutes from './notes-routes.js';
 import knowledgeRoutes from './knowledge-routes.js';
 import * as knowledgeIndex from '../services/knowledge-index.js';
+import * as knowledgeAI from '../services/knowledge-ai.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { onOrderStatusChange } from '../services/task-generator.js';
 import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
@@ -3248,6 +3249,15 @@ async function startServer() {
       console.log('✅ Knowledge base indexed successfully');
     } catch (kbError) {
       console.warn('⚠️  Warning: Knowledge base indexing failed:', kbError.message);
+    }
+
+    // Load AI Knowledge Content
+    console.log('🤖 Loading AI knowledge content...');
+    try {
+      await knowledgeAI.loadBrandContent();
+      console.log('✅ AI knowledge content loaded successfully');
+    } catch (aiError) {
+      console.warn('⚠️  Warning: AI knowledge loading failed:', aiError.message);
     }
 
     // Start server

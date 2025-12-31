@@ -360,6 +360,18 @@ body.role-manager .manager-only.nav-section-title {
     animation: fadeIn 0.4s ease;
 }
 
+#profile-view,
+#my-tasks-view,
+#department-queue-view,
+#gallery-view,
+#notes-view,
+#employees-view,
+#all-tasks-view,
+#knowledge-view {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -1343,8 +1355,9 @@ select:focus, input:focus, textarea:focus {
 }
 
 .profile-info {
-    flex: 1;
+    flex: 1 1 auto !important;
     min-width: 0;
+    width: auto !important;
 }
 
 .profile-info h3 {
@@ -1371,9 +1384,14 @@ select:focus, input:focus, textarea:focus {
     border-radius: 24px;
     padding: 30px;
     box-shadow: var(--shadow-sm);
-    max-width: 100%;
-    width: 100%;
+    max-width: 100% !important;
+    width: 100% !important;
     box-sizing: border-box;
+}
+
+.profile-form form {
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 .profile-form h4 {
@@ -1391,6 +1409,7 @@ select:focus, input:focus, textarea:focus {
 
 .form-group {
     margin-bottom: 20px;
+    width: 100% !important;
 }
 
 .form-group label {
@@ -1402,8 +1421,9 @@ select:focus, input:focus, textarea:focus {
 }
 
 .form-group input, .form-group select, .form-group textarea {
-    width: 100%;
-    max-width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
 }
 
 .form-row {

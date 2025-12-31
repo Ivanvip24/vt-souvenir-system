@@ -1,295 +1,178 @@
 /**
- * Knowledge Base Module
- * Search and browse Axkan brand content
+ * AI-Powered Knowledge Base Module
+ * Chat with Axkan brand knowledge using Claude API
  */
 
 const knowledgeState = {
-  results: [],
-  images: [],
-  currentCategory: null,
-  currentView: 'search', // 'search' or 'images'
-  selectedDocument: null,
-  searchQuery: ''
-};
-
-// Categories with display names
-const KNOWLEDGE_CATEGORIES = {
-  'brand-identity': { name: 'Identidad de Marca', icon: '🎨' },
-  'sales': { name: 'Ventas', icon: '💰' },
-  'visual-assets': { name: 'Recursos Visuales', icon: '🖼️' },
-  'overview': { name: 'General', icon: '📋' },
-  'general': { name: 'General', icon: '📄' }
+  conversationId: null,
+  messages: [],
+  isLoading: false,
+  currentView: 'chat' // 'chat' or 'images'
 };
 
 // ========================================
-// SEARCH
+// CHAT INTERFACE
 // ========================================
 
-let knowledgeSearchTimeout;
+async function sendKnowledgeMessage() {
+  const input = document.getElementById('knowledge-input');
+  const message = input.value.trim();
 
-async function searchKnowledge(query) {
-  console.log('searchKnowledge called with:', query);
+  if (!message || knowledgeState.isLoading) return;
 
-  if (!query || query.length < 2) {
-    clearKnowledgeResults();
-    return;
-  }
+  // Clear input
+  input.value = '';
 
-  const loading = document.getElementById('knowledge-loading');
-  const resultsContainer = document.getElementById('knowledge-results');
+  // Add user message to UI
+  addMessageToUI('user', message);
 
-  if (loading) loading.classList.remove('hidden');
-  if (resultsContainer) resultsContainer.innerHTML = '';
+  // Show loading indicator
+  knowledgeState.isLoading = true;
+  showTypingIndicator();
 
   try {
-    let url = `/knowledge/search?q=${encodeURIComponent(query)}&limit=20`;
-    if (knowledgeState.currentCategory) {
-      url += `&category=${knowledgeState.currentCategory}`;
-    }
+    const response = await fetch(`${API_BASE}/knowledge/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        conversationId: knowledgeState.conversationId,
+        message: message
+      })
+    });
 
-    console.log('Fetching:', url);
-    const data = await apiGet(url);
-    console.log('Search response:', data);
+    const data = await response.json();
+    hideTypingIndicator();
+    knowledgeState.isLoading = false;
 
-    if (loading) loading.classList.add('hidden');
-
-    if (!data.success) {
-      console.error('Search failed:', data.error);
-      if (typeof showToast === 'function') {
-        showToast(data.error || 'Error en búsqueda', 'error');
+    if (data.success) {
+      // Update conversation ID if new
+      if (data.conversationId) {
+        knowledgeState.conversationId = data.conversationId;
       }
-      return;
-    }
 
-    knowledgeState.results = data.results || [];
-    knowledgeState.images = data.images || [];
-    knowledgeState.searchQuery = query;
+      // Add AI response to UI
+      addMessageToUI('assistant', data.answer);
 
-    console.log('Results:', knowledgeState.results.length, 'Images:', knowledgeState.images.length);
-
-    renderKnowledgeResults();
-    renderKnowledgeImageResults();
-
-    // Show result count
-    const countEl = document.getElementById('knowledge-result-count');
-    if (countEl) {
-      countEl.textContent = `${data.totalResults || 0} resultados${data.totalImages ? `, ${data.totalImages} imágenes` : ''}`;
-      countEl.classList.remove('hidden');
+      // Save to state
+      knowledgeState.messages.push(
+        { role: 'user', content: message },
+        { role: 'assistant', content: data.answer }
+      );
+    } else {
+      addMessageToUI('error', data.error || 'Error al procesar el mensaje');
     }
 
   } catch (error) {
-    console.error('Knowledge search error:', error);
-    if (loading) loading.classList.add('hidden');
-    if (typeof showToast === 'function') {
-      showToast('Error de conexión', 'error');
-    }
+    console.error('Chat error:', error);
+    hideTypingIndicator();
+    knowledgeState.isLoading = false;
+    addMessageToUI('error', 'Error de conexión. Intenta de nuevo.');
   }
 }
 
-function clearKnowledgeResults() {
-  knowledgeState.results = [];
-  knowledgeState.images = [];
-  knowledgeState.searchQuery = '';
-  document.getElementById('knowledge-results').innerHTML = '';
-  document.getElementById('knowledge-images-results').innerHTML = '';
-  document.getElementById('knowledge-result-count').classList.add('hidden');
+async function askQuickQuestion(question) {
+  // For quick questions without conversation context
+  const input = document.getElementById('knowledge-input');
+  input.value = question;
+  sendKnowledgeMessage();
 }
 
-function escapeHtmlKnowledge(text) {
+function addMessageToUI(role, content) {
+  const messagesContainer = document.getElementById('knowledge-messages');
+
+  const messageEl = document.createElement('div');
+  messageEl.className = `knowledge-message knowledge-message-${role}`;
+
+  if (role === 'user') {
+    messageEl.innerHTML = `
+      <div class="message-avatar">👤</div>
+      <div class="message-content">
+        <div class="message-text">${escapeHtml(content)}</div>
+      </div>
+    `;
+  } else if (role === 'assistant') {
+    messageEl.innerHTML = `
+      <div class="message-avatar">🤖</div>
+      <div class="message-content">
+        <div class="message-text">${formatAIResponse(content)}</div>
+      </div>
+    `;
+  } else if (role === 'error') {
+    messageEl.innerHTML = `
+      <div class="message-avatar">⚠️</div>
+      <div class="message-content message-error">
+        <div class="message-text">${escapeHtml(content)}</div>
+      </div>
+    `;
+  }
+
+  messagesContainer.appendChild(messageEl);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function showTypingIndicator() {
+  const messagesContainer = document.getElementById('knowledge-messages');
+  const indicator = document.createElement('div');
+  indicator.className = 'knowledge-message knowledge-message-assistant typing-indicator';
+  indicator.id = 'typing-indicator';
+  indicator.innerHTML = `
+    <div class="message-avatar">🤖</div>
+    <div class="message-content">
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  `;
+  messagesContainer.appendChild(indicator);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function hideTypingIndicator() {
+  const indicator = document.getElementById('typing-indicator');
+  if (indicator) indicator.remove();
+}
+
+function formatAIResponse(text) {
+  // Format markdown-like content
+  let html = escapeHtml(text)
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Code blocks
+    .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // HEX colors - add color preview
+    .replace(/(#[0-9A-Fa-f]{6})/g, '<span class="color-preview" style="background-color:$1"></span><code>$1</code>')
+    // Line breaks
+    .replace(/\n/g, '<br>');
+
+  return html;
+}
+
+function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-function renderKnowledgeResults() {
-  const container = document.getElementById('knowledge-results');
+function clearKnowledgeConversation() {
+  knowledgeState.conversationId = null;
+  knowledgeState.messages = [];
 
-  if (knowledgeState.results.length === 0) {
-    container.innerHTML = `
-      <div class="knowledge-empty">
-        <span class="empty-icon">🔍</span>
-        <p>No se encontraron resultados</p>
-      </div>
-    `;
-    return;
-  }
-
-  // Group results by document
-  const grouped = {};
-  knowledgeState.results.forEach(result => {
-    if (!grouped[result.documentId]) {
-      grouped[result.documentId] = {
-        id: result.documentId,
-        title: result.documentTitle,
-        category: result.category,
-        filename: result.filename,
-        sections: []
-      };
-    }
-    grouped[result.documentId].sections.push(result);
-  });
-
-  container.innerHTML = Object.values(grouped).map(doc => `
-    <div class="knowledge-document">
-      <div class="knowledge-doc-header" onclick="toggleKnowledgeDocSections('${doc.id}')">
-        <div class="knowledge-doc-info">
-          <span class="knowledge-doc-category">${KNOWLEDGE_CATEGORIES[doc.category]?.icon || '📄'} ${KNOWLEDGE_CATEGORIES[doc.category]?.name || doc.category}</span>
-          <h4>${escapeHtmlKnowledge(doc.title)}</h4>
-        </div>
-        <span class="knowledge-doc-toggle" id="toggle-${doc.id}">▼</span>
-      </div>
-      <div class="knowledge-doc-sections" id="sections-${doc.id}">
-        ${doc.sections.map(section => `
-          <div class="knowledge-result" onclick="viewKnowledgeSection('${doc.id}', ${section.startLine})">
-            <div class="knowledge-result-heading">
-              ${'#'.repeat(section.sectionLevel)} ${escapeHtmlKnowledge(section.sectionHeading)}
-            </div>
-            <div class="knowledge-result-snippet">${highlightKnowledgeQuery(escapeHtmlKnowledge(section.snippet), knowledgeState.searchQuery)}</div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderKnowledgeImageResults() {
-  const container = document.getElementById('knowledge-images-results');
-
-  if (knowledgeState.images.length === 0) {
-    container.innerHTML = '';
-    return;
-  }
-
-  container.innerHTML = `
-    <div class="knowledge-images-header">
-      <h4>🖼️ Imágenes relacionadas</h4>
-    </div>
-    <div class="knowledge-images-grid">
-      ${knowledgeState.images.map(img => `
-        <div class="knowledge-image-item" onclick="openKnowledgeImageModal('${img.path}', '${escapeHtmlKnowledge(img.description)}')">
-          <img src="/axkan-assets/${img.path}" alt="${escapeHtmlKnowledge(img.description)}" loading="lazy">
-          <div class="knowledge-image-info">
-            <span class="knowledge-image-name">${escapeHtmlKnowledge(img.filename)}</span>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function highlightKnowledgeQuery(text, query) {
-  if (!query) return text;
-  const words = query.split(/\s+/).filter(w => w.length > 1);
-  let result = text;
-  words.forEach(word => {
-    const regex = new RegExp(`(${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    result = result.replace(regex, '<mark>$1</mark>');
-  });
-  return result;
-}
-
-function toggleKnowledgeDocSections(docId) {
-  const sections = document.getElementById(`sections-${docId}`);
-  const toggle = document.getElementById(`toggle-${docId}`);
-  sections.classList.toggle('expanded');
-  toggle.textContent = sections.classList.contains('expanded') ? '▲' : '▼';
-}
-
-// ========================================
-// DOCUMENT VIEWER
-// ========================================
-
-async function viewKnowledgeSection(documentId, startLine) {
-  try {
-    const data = await apiGet(`/knowledge/document/${documentId}`);
-
-    if (!data.success) {
-      showToast(data.error || 'Error al cargar documento', 'error');
-      return;
-    }
-
-    openKnowledgeDocumentModal(data.document, startLine);
-
-  } catch (error) {
-    console.error('Load document error:', error);
-    showToast('Error de conexión', 'error');
-  }
-}
-
-function openKnowledgeDocumentModal(doc, scrollToLine = null) {
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.id = 'knowledge-doc-modal';
-  modal.innerHTML = `
-    <div class="modal-backdrop" onclick="closeKnowledgeDocModal()"></div>
-    <div class="modal-content modal-large">
-      <div class="modal-header">
-        <div>
-          <span class="knowledge-doc-category">${KNOWLEDGE_CATEGORIES[doc.category]?.icon || '📄'} ${KNOWLEDGE_CATEGORIES[doc.category]?.name || doc.category}</span>
-          <h3>${escapeHtmlKnowledge(doc.title)}</h3>
-        </div>
-        <button class="btn-close" onclick="closeKnowledgeDocModal()">&times;</button>
-      </div>
-      <div class="modal-body knowledge-document-content" id="doc-content-view">
-        ${renderKnowledgeMarkdown(doc.fullContent)}
+  const messagesContainer = document.getElementById('knowledge-messages');
+  messagesContainer.innerHTML = `
+    <div class="knowledge-welcome">
+      <div class="welcome-icon">🎨</div>
+      <h3>Asistente de Marca AXKAN</h3>
+      <p>Pregúntame sobre colores, tipografía, productos, precios o cualquier aspecto de la marca.</p>
+      <div class="quick-questions">
+        <button onclick="askQuickQuestion('¿Cuáles son los colores principales de la marca?')">🎨 Colores de marca</button>
+        <button onclick="askQuickQuestion('¿Cuál es la tipografía de AXKAN?')">✏️ Tipografía</button>
+        <button onclick="askQuickQuestion('¿Cuáles son los precios de los imanes?')">💰 Precios</button>
+        <button onclick="askQuickQuestion('Dame un guion de venta para Facebook')">💬 Guión de ventas</button>
       </div>
     </div>
   `;
-  document.body.appendChild(modal);
-
-  // Scroll to relevant section if specified
-  if (scrollToLine) {
-    setTimeout(() => {
-      const content = document.getElementById('doc-content-view');
-      if (content) {
-        const scrollPos = Math.max(0, (scrollToLine - 5) * 24);
-        content.scrollTop = scrollPos;
-      }
-    }, 100);
-  }
-}
-
-function closeKnowledgeDocModal() {
-  const modal = document.getElementById('knowledge-doc-modal');
-  if (modal) modal.remove();
-}
-
-function renderKnowledgeMarkdown(content) {
-  // Simple markdown rendering
-  let html = content
-    // Code blocks (before other processing)
-    .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-    // Headers
-    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    // Bold
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Inline code
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    // Links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    // Horizontal rules
-    .replace(/^---$/gm, '<hr>')
-    // Lists (basic)
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
-
-  // Wrap consecutive li elements in ul
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-
-  // Paragraphs (simple approach)
-  html = html.split('\n\n').map(block => {
-    if (block.startsWith('<h') || block.startsWith('<ul') || block.startsWith('<pre') || block.startsWith('<hr')) {
-      return block;
-    }
-    return `<p>${block}</p>`;
-  }).join('\n');
-
-  return html;
 }
 
 // ========================================
@@ -298,17 +181,16 @@ function renderKnowledgeMarkdown(content) {
 
 async function loadKnowledgeImages() {
   const container = document.getElementById('knowledge-images-browser');
-  const loading = document.getElementById('knowledge-images-loading');
 
-  loading.classList.remove('hidden');
-  container.innerHTML = '';
+  container.innerHTML = '<div class="knowledge-loading"><span class="spinner"></span> Cargando imágenes...</div>';
 
   try {
-    const data = await apiGet('/knowledge/images');
+    const response = await fetch(`${API_BASE}/knowledge/images`, {
+      headers: getAuthHeaders()
+    });
+    const data = await response.json();
 
-    loading.classList.add('hidden');
-
-    if (!data.success || data.images.length === 0) {
+    if (!data.success || !data.images || data.images.length === 0) {
       container.innerHTML = `
         <div class="knowledge-empty">
           <span class="empty-icon">🖼️</span>
@@ -331,11 +213,10 @@ async function loadKnowledgeImages() {
         <h4>${cat === 'brand-manual' ? '📋 Manual de Marca' : '🎬 Frames de Video'}</h4>
         <div class="knowledge-images-grid">
           ${images.map(img => `
-            <div class="knowledge-image-item" onclick="openKnowledgeImageModal('${img.path}', '${escapeHtmlKnowledge(img.description)}')">
-              <img src="/axkan-assets/${img.path}" alt="${escapeHtmlKnowledge(img.description)}" loading="lazy">
+            <div class="knowledge-image-item" onclick="openKnowledgeImageModal('${img.path}', '${escapeHtml(img.description)}')">
+              <img src="${API_BASE.replace('/api', '')}/axkan-assets/${img.path}" alt="${escapeHtml(img.description)}" loading="lazy">
               <div class="knowledge-image-info">
-                <span class="knowledge-image-name">${escapeHtmlKnowledge(img.filename)}</span>
-                <span class="knowledge-image-desc">${escapeHtmlKnowledge(img.description)}</span>
+                <span class="knowledge-image-name">${escapeHtml(img.filename)}</span>
               </div>
             </div>
           `).join('')}
@@ -345,12 +226,17 @@ async function loadKnowledgeImages() {
 
   } catch (error) {
     console.error('Load images error:', error);
-    loading.classList.add('hidden');
-    showToast('Error al cargar imágenes', 'error');
+    container.innerHTML = `
+      <div class="knowledge-empty">
+        <span class="empty-icon">⚠️</span>
+        <p>Error al cargar imágenes</p>
+      </div>
+    `;
   }
 }
 
 function openKnowledgeImageModal(imagePath, description) {
+  const baseUrl = API_BASE.replace('/api', '');
   const modal = document.createElement('div');
   modal.className = 'modal';
   modal.id = 'knowledge-image-modal';
@@ -358,15 +244,15 @@ function openKnowledgeImageModal(imagePath, description) {
     <div class="modal-backdrop" onclick="closeKnowledgeImageModal()"></div>
     <div class="modal-content modal-large">
       <div class="modal-header">
-        <h3>${escapeHtmlKnowledge(description)}</h3>
+        <h3>${escapeHtml(description)}</h3>
         <button class="btn-close" onclick="closeKnowledgeImageModal()">&times;</button>
       </div>
-      <div class="modal-body" style="text-align: center; padding: 0; background: #f5f5f5;">
-        <img src="/axkan-assets/${imagePath}" alt="${escapeHtmlKnowledge(description)}"
-             style="max-width: 100%; max-height: 70vh; border-radius: 0;">
+      <div class="modal-body" style="text-align: center; padding: 0; background: #1a1a2e;">
+        <img src="${baseUrl}/axkan-assets/${imagePath}" alt="${escapeHtml(description)}"
+             style="max-width: 100%; max-height: 70vh;">
       </div>
       <div class="modal-footer">
-        <a href="/axkan-assets/${imagePath}" download class="btn btn-primary">
+        <a href="${baseUrl}/axkan-assets/${imagePath}" download class="btn btn-primary">
           ⬇️ Descargar
         </a>
         <button class="btn btn-secondary" onclick="closeKnowledgeImageModal()">Cerrar</button>
@@ -392,7 +278,7 @@ function switchKnowledgeView(view) {
     btn.classList.toggle('active', btn.dataset.view === view);
   });
 
-  document.getElementById('knowledge-search-section').classList.toggle('hidden', view !== 'search');
+  document.getElementById('knowledge-chat-section').classList.toggle('hidden', view !== 'chat');
   document.getElementById('knowledge-images-section').classList.toggle('hidden', view !== 'images');
 
   if (view === 'images') {
@@ -409,23 +295,27 @@ let knowledgeInitialized = false;
 function initKnowledgeEventListeners() {
   if (knowledgeInitialized) return;
 
-  // Search input with debounce
-  const searchInput = document.getElementById('knowledge-search');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      clearTimeout(knowledgeSearchTimeout);
-      knowledgeSearchTimeout = setTimeout(() => {
-        searchKnowledge(e.target.value.trim());
-      }, 300);
-    });
-
-    // Also handle Enter key
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        clearTimeout(knowledgeSearchTimeout);
-        searchKnowledge(e.target.value.trim());
+  // Chat input - send on Enter
+  const input = document.getElementById('knowledge-input');
+  if (input) {
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendKnowledgeMessage();
       }
     });
+  }
+
+  // Send button
+  const sendBtn = document.getElementById('knowledge-send-btn');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', sendKnowledgeMessage);
+  }
+
+  // New chat button
+  const newChatBtn = document.getElementById('knowledge-new-chat');
+  if (newChatBtn) {
+    newChatBtn.addEventListener('click', clearKnowledgeConversation);
   }
 
   // View toggle buttons
@@ -433,74 +323,67 @@ function initKnowledgeEventListeners() {
     btn.addEventListener('click', () => switchKnowledgeView(btn.dataset.view));
   });
 
-  // Category filter buttons
-  document.querySelectorAll('#knowledge-view .knowledge-category-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      knowledgeState.currentCategory = btn.dataset.category || null;
-      document.querySelectorAll('#knowledge-view .knowledge-category-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      // Re-search if there's a query
-      const searchInput = document.getElementById('knowledge-search');
-      if (searchInput && searchInput.value.trim()) {
-        searchKnowledge(searchInput.value.trim());
-      }
-    });
-  });
-
   knowledgeInitialized = true;
-  console.log('Knowledge event listeners initialized');
+  console.log('Knowledge AI event listeners initialized');
 }
 
 async function loadKnowledge() {
-  console.log('Loading knowledge view...');
+  console.log('Loading AI knowledge view...');
 
   // Initialize event listeners
   initKnowledgeEventListeners();
 
-  // Reset to search view
-  switchKnowledgeView('search');
+  // Reset to chat view
+  switchKnowledgeView('chat');
 
-  // Clear previous search
-  const searchInput = document.getElementById('knowledge-search');
-  if (searchInput) {
-    searchInput.value = '';
-  }
-  clearKnowledgeResults();
+  // Show welcome screen
+  clearKnowledgeConversation();
 
-  // Load stats
+  // Check AI status
   try {
-    const data = await apiGet('/knowledge/stats');
-    console.log('Knowledge stats:', data);
-    if (data.success) {
+    const response = await fetch(`${API_BASE}/knowledge/ai/stats`);
+    const data = await response.json();
+    console.log('AI Knowledge stats:', data);
+
+    if (data.success && data.stats) {
       const statsEl = document.getElementById('knowledge-stats');
       if (statsEl) {
         statsEl.innerHTML = `
-          <span>${data.stats.documentCount} documentos</span>
-          <span>${data.stats.imageCount} imágenes</span>
-          <span>${data.stats.totalSections} secciones</span>
+          <span>${data.stats.documentsLoaded} docs</span>
+          <span>${Math.round(data.stats.totalChars / 1000)}K chars</span>
+          <span class="${data.stats.apiConfigured ? 'status-ok' : 'status-error'}">
+            ${data.stats.apiConfigured ? '✅ API' : '❌ API'}
+          </span>
         `;
       }
     }
   } catch (e) {
-    console.warn('Could not load knowledge stats:', e);
+    console.warn('Could not load AI knowledge stats:', e);
   }
+}
+
+// Helper to get auth headers (if employee is logged in)
+function getAuthHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = localStorage.getItem('employeeToken');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
 }
 
 // Initialize when DOM is ready (backup)
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initKnowledgeEventListeners);
 } else {
-  // DOM already loaded
   initKnowledgeEventListeners();
 }
 
-// Make functions globally available for onclick handlers
+// Make functions globally available
 window.loadKnowledge = loadKnowledge;
-window.searchKnowledge = searchKnowledge;
-window.viewKnowledgeSection = viewKnowledgeSection;
-window.toggleKnowledgeDocSections = toggleKnowledgeDocSections;
+window.sendKnowledgeMessage = sendKnowledgeMessage;
+window.askQuickQuestion = askQuickQuestion;
+window.clearKnowledgeConversation = clearKnowledgeConversation;
+window.switchKnowledgeView = switchKnowledgeView;
 window.openKnowledgeImageModal = openKnowledgeImageModal;
 window.closeKnowledgeImageModal = closeKnowledgeImageModal;
-window.closeKnowledgeDocModal = closeKnowledgeDocModal;
-window.switchKnowledgeView = switchKnowledgeView;
