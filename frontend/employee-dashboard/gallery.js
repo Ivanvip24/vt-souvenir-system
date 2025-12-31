@@ -1,17 +1,26 @@
 /**
- * Gallery Module - Design file management
+ * Gallery Module - Design file management with download/archive functionality
  */
 
 const galleryState = {
     designs: [],
+    archivedDesigns: [],
     categories: [],
-    currentCategory: null
+    currentCategory: null,
+    currentTab: 'active', // 'active' or 'archived'
+    designList: [], // Designs added to the list for batch download
+    searchQuery: ''
 };
+
+// ========================================
+// GALLERY LOADING
+// ========================================
 
 async function loadGallery() {
     const loading = document.getElementById('gallery-loading');
     const empty = document.getElementById('gallery-empty');
     const grid = document.getElementById('gallery-grid');
+    const archivedSection = document.getElementById('archived-section');
 
     loading.classList.remove('hidden');
     empty.classList.add('hidden');
@@ -21,28 +30,84 @@ async function loadGallery() {
         // Load categories first
         await loadCategories();
 
-        // Load designs
-        let url = '/gallery';
-        if (galleryState.currentCategory) {
-            url += `?category_id=${galleryState.currentCategory}`;
-        }
+        // Load stats for counts
+        await loadGalleryStats();
 
-        const data = await apiGet(url);
+        if (galleryState.currentTab === 'active') {
+            // Load active designs
+            await loadActiveDesigns();
+            archivedSection.classList.add('hidden');
+            grid.style.display = '';
+        } else {
+            // Load archived designs
+            await loadArchivedDesigns();
+            grid.style.display = 'none';
+            archivedSection.classList.remove('hidden');
+        }
 
         loading.classList.add('hidden');
-
-        if (!data.success || data.designs.length === 0) {
-            empty.classList.remove('hidden');
-            return;
-        }
-
-        galleryState.designs = data.designs;
-        renderGalleryGrid();
 
     } catch (error) {
         console.error('Error loading gallery:', error);
         loading.classList.add('hidden');
         showToast('Error al cargar galería', 'error');
+    }
+}
+
+async function loadActiveDesigns() {
+    const empty = document.getElementById('gallery-empty');
+    const grid = document.getElementById('gallery-grid');
+
+    let url = '/gallery';
+    const params = new URLSearchParams();
+
+    if (galleryState.currentCategory) {
+        params.append('category_id', galleryState.currentCategory);
+    }
+    if (galleryState.searchQuery) {
+        params.append('search', galleryState.searchQuery);
+    }
+
+    if (params.toString()) {
+        url += '?' + params.toString();
+    }
+
+    const data = await apiGet(url);
+
+    if (!data.success || data.designs.length === 0) {
+        empty.classList.remove('hidden');
+        grid.innerHTML = '';
+        return;
+    }
+
+    empty.classList.add('hidden');
+    galleryState.designs = data.designs;
+    renderGalleryGrid(grid, galleryState.designs, false);
+}
+
+async function loadArchivedDesigns() {
+    const archivedGrid = document.getElementById('archived-grid');
+
+    const data = await apiGet('/gallery/archived');
+
+    if (!data.success || data.designs.length === 0) {
+        archivedGrid.innerHTML = '<div class="empty-state"><span class="empty-icon">📦</span><h3>Sin archivos</h3><p>No hay diseños archivados</p></div>';
+        return;
+    }
+
+    galleryState.archivedDesigns = data.designs;
+    renderGalleryGrid(archivedGrid, galleryState.archivedDesigns, true);
+}
+
+async function loadGalleryStats() {
+    try {
+        const data = await apiGet('/gallery/stats/summary');
+        if (data.success) {
+            document.getElementById('active-count').textContent = data.stats.active_count || 0;
+            document.getElementById('archived-count').textContent = data.stats.archived_count || 0;
+        }
+    } catch (error) {
+        console.error('Error loading gallery stats:', error);
     }
 }
 
@@ -68,29 +133,204 @@ function populateCategoryFilter() {
     });
 }
 
-function renderGalleryGrid() {
-    const grid = document.getElementById('gallery-grid');
-    grid.innerHTML = '';
+// ========================================
+// GALLERY RENDERING
+// ========================================
 
-    galleryState.designs.forEach(design => {
+function renderGalleryGrid(container, designs, isArchived = false) {
+    container.innerHTML = '';
+
+    designs.forEach(design => {
+        const isInList = galleryState.designList.some(d => d.id === design.id);
+
         const item = document.createElement('div');
-        item.className = 'gallery-item';
-        item.onclick = () => openDesignModal(design);
+        item.className = `gallery-item${design.is_archived ? ' archived' : ''}`;
+        item.dataset.id = design.id;
 
         item.innerHTML = `
             <img class="gallery-thumb" src="${design.thumbnail_url || design.file_url}" alt="${escapeHtml(design.name)}" loading="lazy">
+            ${!design.is_archived ? `
+            <div class="gallery-item-actions">
+                <button class="gallery-action-btn download" onclick="event.stopPropagation(); downloadDesign(${design.id})" title="Descargar">
+                    ⬇️ Descargar
+                </button>
+                <button class="gallery-action-btn add-to-list${isInList ? ' added' : ''}" onclick="event.stopPropagation(); toggleDesignList(${design.id})" title="${isInList ? 'Quitar de lista' : 'Agregar a lista'}">
+                    ${isInList ? '✓' : '+'} Lista
+                </button>
+            </div>
+            ` : ''}
             <div class="gallery-info">
                 <div class="gallery-name">${escapeHtml(design.name)}</div>
                 <div class="gallery-category">${design.category_name || 'Sin categoría'}</div>
             </div>
         `;
 
-        grid.appendChild(item);
+        item.addEventListener('click', () => openDesignModal(design));
+        container.appendChild(item);
     });
 }
 
+// ========================================
+// DESIGN ACTIONS
+// ========================================
+
+async function downloadDesign(designId) {
+    const design = galleryState.designs.find(d => d.id === designId);
+    if (!design) return;
+
+    try {
+        // First, trigger the actual download
+        const link = document.createElement('a');
+        link.href = design.file_url;
+        link.download = design.name || 'design';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Mark as downloaded in backend (archives it)
+        const data = await apiPost(`/gallery/${designId}/download`, {});
+
+        if (data.success) {
+            showToast('Diseño descargado y archivado', 'success');
+
+            // Remove from active designs and add to archived
+            galleryState.designs = galleryState.designs.filter(d => d.id !== designId);
+
+            // Re-render and update counts
+            const grid = document.getElementById('gallery-grid');
+            renderGalleryGrid(grid, galleryState.designs, false);
+            await loadGalleryStats();
+
+            // Also remove from design list if it was there
+            removeFromDesignList(designId);
+        }
+    } catch (error) {
+        console.error('Error downloading design:', error);
+        showToast('Error al descargar diseño', 'error');
+    }
+}
+
+async function restoreDesign(designId) {
+    try {
+        const data = await apiPost(`/gallery/${designId}/restore`, {});
+
+        if (data.success) {
+            showToast('Diseño restaurado', 'success');
+            loadGallery();
+        } else {
+            showToast(data.error || 'Error al restaurar', 'error');
+        }
+    } catch (error) {
+        console.error('Error restoring design:', error);
+        showToast('Error al restaurar diseño', 'error');
+    }
+}
+
+// ========================================
+// DESIGN LIST (Batch functionality)
+// ========================================
+
+function toggleDesignList(designId) {
+    const design = galleryState.designs.find(d => d.id === designId);
+    if (!design) return;
+
+    const existingIndex = galleryState.designList.findIndex(d => d.id === designId);
+
+    if (existingIndex >= 0) {
+        galleryState.designList.splice(existingIndex, 1);
+        showToast('Removido de la lista');
+    } else {
+        galleryState.designList.push(design);
+        showToast('Agregado a la lista', 'success');
+    }
+
+    updateDesignListUI();
+
+    // Re-render to update button states
+    const grid = document.getElementById('gallery-grid');
+    renderGalleryGrid(grid, galleryState.designs, false);
+}
+
+function removeFromDesignList(designId) {
+    galleryState.designList = galleryState.designList.filter(d => d.id !== designId);
+    updateDesignListUI();
+}
+
+function updateDesignListUI() {
+    const panel = document.getElementById('design-list-panel');
+    const content = document.getElementById('design-list-content');
+    const toggle = document.getElementById('design-list-toggle');
+    const badge = document.getElementById('design-list-badge');
+    const count = galleryState.designList.length;
+
+    badge.textContent = count;
+    toggle.style.display = count > 0 ? 'flex' : 'none';
+
+    if (count === 0) {
+        content.innerHTML = `
+            <div class="design-list-empty">
+                <span style="font-size: 48px;">📋</span>
+                <p>Agrega diseños a tu lista</p>
+            </div>
+        `;
+        return;
+    }
+
+    content.innerHTML = galleryState.designList.map(design => `
+        <div class="design-list-item" data-id="${design.id}">
+            <img src="${design.thumbnail_url || design.file_url}" alt="${escapeHtml(design.name)}">
+            <div class="design-list-item-info">
+                <div class="design-list-item-name">${escapeHtml(design.name)}</div>
+                <div class="design-list-item-category">${design.category_name || 'Sin categoría'}</div>
+            </div>
+            <button class="design-list-item-remove" onclick="removeFromDesignList(${design.id})">✕</button>
+        </div>
+    `).join('');
+}
+
+function clearDesignList() {
+    galleryState.designList = [];
+    updateDesignListUI();
+
+    // Re-render to update button states
+    const grid = document.getElementById('gallery-grid');
+    renderGalleryGrid(grid, galleryState.designs, false);
+
+    // Close panel
+    document.getElementById('design-list-panel').classList.remove('open');
+}
+
+async function downloadAllDesigns() {
+    if (galleryState.designList.length === 0) {
+        showToast('La lista está vacía', 'error');
+        return;
+    }
+
+    showToast(`Descargando ${galleryState.designList.length} diseños...`);
+
+    // Download each design with a small delay
+    for (const design of [...galleryState.designList]) {
+        await downloadDesign(design.id);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between downloads
+    }
+
+    clearDesignList();
+    showToast('Todos los diseños descargados', 'success');
+}
+
+function toggleDesignListPanel() {
+    const panel = document.getElementById('design-list-panel');
+    panel.classList.toggle('open');
+}
+
+// ========================================
+// DESIGN MODAL
+// ========================================
+
 function openDesignModal(design) {
-    // Simple image viewer
+    const isArchived = design.is_archived;
+
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.innerHTML = `
@@ -101,19 +341,50 @@ function openDesignModal(design) {
                 <button class="btn-close" onclick="this.closest('.modal').remove()">&times;</button>
             </div>
             <div class="modal-body" style="text-align: center;">
-                <img src="${design.file_url}" alt="${escapeHtml(design.name)}" style="max-width: 100%; max-height: 60vh;">
+                <img src="${design.file_url}" alt="${escapeHtml(design.name)}" style="max-width: 100%; max-height: 50vh; border-radius: 8px;">
                 <div style="margin-top: 16px; text-align: left;">
                     <p><strong>Categoría:</strong> ${design.category_name || 'Sin categoría'}</p>
                     ${design.description ? `<p><strong>Descripción:</strong> ${escapeHtml(design.description)}</p>` : ''}
                     ${design.tags?.length ? `<p><strong>Etiquetas:</strong> ${design.tags.join(', ')}</p>` : ''}
                     <p><strong>Subido por:</strong> ${design.uploaded_by_name || 'Desconocido'}</p>
                     <p><strong>Fecha:</strong> ${formatDate(design.created_at)}</p>
+                    ${isArchived ? `<p><strong>Archivado:</strong> ${formatDate(design.archived_at)} por ${design.archived_by_name || 'Desconocido'}</p>` : ''}
+                    ${design.download_count ? `<p><strong>Descargas:</strong> ${design.download_count}</p>` : ''}
                 </div>
+            </div>
+            <div class="modal-footer">
+                ${isArchived ? `
+                    <button class="btn btn-secondary" onclick="restoreDesign(${design.id}); this.closest('.modal').remove();">
+                        🔄 Restaurar
+                    </button>
+                ` : `
+                    <button class="btn btn-secondary" onclick="toggleDesignList(${design.id}); this.closest('.modal').remove();">
+                        📋 ${galleryState.designList.some(d => d.id === design.id) ? 'Quitar de Lista' : 'Agregar a Lista'}
+                    </button>
+                    <button class="btn btn-primary" onclick="downloadDesign(${design.id}); this.closest('.modal').remove();">
+                        ⬇️ Descargar
+                    </button>
+                `}
             </div>
         </div>
     `;
     document.body.appendChild(modal);
 }
+
+// ========================================
+// EVENT LISTENERS
+// ========================================
+
+// Tab switching
+document.querySelectorAll('.gallery-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.gallery-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        galleryState.currentTab = tab.dataset.tab;
+        loadGallery();
+    });
+});
 
 // Category filter
 document.getElementById('category-filter')?.addEventListener('change', (e) => {
@@ -121,26 +392,40 @@ document.getElementById('category-filter')?.addEventListener('change', (e) => {
     loadGallery();
 });
 
-// Search
+// Search with debounce
 let searchTimeout;
 document.getElementById('gallery-search')?.addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        const query = e.target.value.toLowerCase();
-        const items = document.querySelectorAll('.gallery-item');
+        galleryState.searchQuery = e.target.value.trim();
 
-        items.forEach(item => {
-            const name = item.querySelector('.gallery-name').textContent.toLowerCase();
-            item.style.display = name.includes(query) ? '' : 'none';
-        });
+        // Only search if we're on the active tab
+        if (galleryState.currentTab === 'active') {
+            loadGallery();
+        }
     }, 300);
 });
 
+// Design list panel toggle
+document.getElementById('design-list-toggle')?.addEventListener('click', toggleDesignListPanel);
+document.getElementById('close-design-list')?.addEventListener('click', () => {
+    document.getElementById('design-list-panel').classList.remove('open');
+});
+
+// Design list actions
+document.getElementById('clear-design-list')?.addEventListener('click', clearDesignList);
+document.getElementById('download-all-designs')?.addEventListener('click', downloadAllDesigns);
+
 // Upload button (for design role)
 document.getElementById('upload-design-btn')?.addEventListener('click', () => {
-    // For now, show a simple alert - full upload would need Cloudinary integration
     showToast('Funcionalidad de subida próximamente', 'info');
 });
 
-// Make loadGallery available globally
+// Make functions globally available
 window.loadGallery = loadGallery;
+window.downloadDesign = downloadDesign;
+window.restoreDesign = restoreDesign;
+window.toggleDesignList = toggleDesignList;
+window.removeFromDesignList = removeFromDesignList;
+window.clearDesignList = clearDesignList;
+window.downloadAllDesigns = downloadAllDesigns;

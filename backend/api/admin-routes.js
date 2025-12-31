@@ -421,4 +421,61 @@ router.post('/create-manager', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/admin/run-gallery-archive-migration
+ * Add archive functionality to design_gallery table
+ */
+router.post('/run-gallery-archive-migration', authMiddleware, async (req, res) => {
+  try {
+    console.log('🔄 Running Gallery Archive migration via API...');
+
+    // Add is_archived column
+    await query(`
+      ALTER TABLE design_gallery
+      ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
+    `);
+    console.log('✅ Added is_archived column');
+
+    // Add archived_at timestamp
+    await query(`
+      ALTER TABLE design_gallery
+      ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP;
+    `);
+    console.log('✅ Added archived_at column');
+
+    // Add archived_by reference
+    await query(`
+      ALTER TABLE design_gallery
+      ADD COLUMN IF NOT EXISTS archived_by INTEGER REFERENCES employees(id) ON DELETE SET NULL;
+    `);
+    console.log('✅ Added archived_by column');
+
+    // Add download_count
+    await query(`
+      ALTER TABLE design_gallery
+      ADD COLUMN IF NOT EXISTS download_count INTEGER DEFAULT 0;
+    `);
+    console.log('✅ Added download_count column');
+
+    // Add index for archived status
+    await query(`
+      CREATE INDEX IF NOT EXISTS idx_design_gallery_archived ON design_gallery(is_archived);
+    `);
+    console.log('✅ Created index on is_archived');
+
+    res.json({
+      success: true,
+      message: 'Gallery archive migration completed successfully!',
+      columns_added: ['is_archived', 'archived_at', 'archived_by', 'download_count']
+    });
+
+  } catch (error) {
+    console.error('Gallery archive migration error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 export default router;

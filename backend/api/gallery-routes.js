@@ -20,24 +20,31 @@ const router = express.Router();
 
 /**
  * GET /api/gallery
- * List designs with filters
+ * List designs with filters (excludes archived by default)
  */
 router.get('/', employeeAuth, async (req, res) => {
   try {
-    const { category_id, storage_type, tags, search, limit = 50, offset = 0 } = req.query;
+    const { category_id, storage_type, tags, search, include_archived, limit = 50, offset = 0 } = req.query;
 
     let sql = `
       SELECT g.*,
              c.name as category_name,
              c.color as category_color,
-             e.name as uploaded_by_name
+             e.name as uploaded_by_name,
+             ae.name as archived_by_name
       FROM design_gallery g
       LEFT JOIN design_categories c ON g.category_id = c.id
       LEFT JOIN employees e ON g.uploaded_by = e.id
+      LEFT JOIN employees ae ON g.archived_by = ae.id
       WHERE 1=1
     `;
     const values = [];
     let paramIndex = 1;
+
+    // By default exclude archived designs
+    if (include_archived !== 'true') {
+      sql += ` AND (g.is_archived = false OR g.is_archived IS NULL)`;
+    }
 
     if (category_id) {
       sql += ` AND g.category_id = $${paramIndex++}`;
@@ -67,6 +74,10 @@ router.get('/', employeeAuth, async (req, res) => {
     let countSql = 'SELECT COUNT(*) FROM design_gallery g WHERE 1=1';
     const countValues = [];
     let countIndex = 1;
+
+    if (include_archived !== 'true') {
+      countSql += ` AND (g.is_archived = false OR g.is_archived IS NULL)`;
+    }
 
     if (category_id) {
       countSql += ` AND g.category_id = $${countIndex++}`;
@@ -100,6 +111,51 @@ router.get('/', employeeAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error al listar diseños'
+    });
+  }
+});
+
+/**
+ * GET /api/gallery/archived
+ * List only archived designs
+ */
+router.get('/archived', employeeAuth, async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query;
+
+    const result = await query(
+      `SELECT g.*,
+              c.name as category_name,
+              c.color as category_color,
+              e.name as uploaded_by_name,
+              ae.name as archived_by_name
+       FROM design_gallery g
+       LEFT JOIN design_categories c ON g.category_id = c.id
+       LEFT JOIN employees e ON g.uploaded_by = e.id
+       LEFT JOIN employees ae ON g.archived_by = ae.id
+       WHERE g.is_archived = true
+       ORDER BY g.archived_at DESC
+       LIMIT $1 OFFSET $2`,
+      [parseInt(limit), parseInt(offset)]
+    );
+
+    const countResult = await query(
+      'SELECT COUNT(*) FROM design_gallery WHERE is_archived = true'
+    );
+
+    res.json({
+      success: true,
+      designs: result.rows,
+      total: parseInt(countResult.rows[0].count),
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+
+  } catch (error) {
+    console.error('List archived gallery error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al listar diseños archivados'
     });
   }
 });
@@ -407,6 +463,172 @@ router.post('/:id/use', employeeAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error al registrar uso'
+    });
+  }
+});
+
+/**
+ * POST /api/gallery/:id/download
+ * Track download and archive the design
+ */
+router.post('/:id/download', employeeAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get current design
+    const current = await query('SELECT * FROM design_gallery WHERE id = $1', [id]);
+    if (current.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Diseño no encontrado'
+      });
+    }
+
+    // Update download count and archive the design
+    const result = await query(
+      `UPDATE design_gallery
+       SET download_count = COALESCE(download_count, 0) + 1,
+           is_archived = true,
+           archived_at = CURRENT_TIMESTAMP,
+           archived_by = $2
+       WHERE id = $1
+       RETURNING *`,
+      [id, req.employee.id]
+    );
+
+    await logActivity(req.employee.id, 'design_downloaded', 'design_gallery', parseInt(id), {
+      name: current.rows[0].name,
+      file_url: current.rows[0].file_url
+    });
+
+    res.json({
+      success: true,
+      design: result.rows[0],
+      message: 'Diseño descargado y archivado'
+    });
+
+  } catch (error) {
+    console.error('Download design error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al descargar diseño'
+    });
+  }
+});
+
+/**
+ * POST /api/gallery/:id/archive
+ * Archive a design (without download)
+ */
+router.post('/:id/archive', employeeAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      `UPDATE design_gallery
+       SET is_archived = true,
+           archived_at = CURRENT_TIMESTAMP,
+           archived_by = $2
+       WHERE id = $1
+       RETURNING *`,
+      [id, req.employee.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Diseño no encontrado'
+      });
+    }
+
+    await logActivity(req.employee.id, 'design_archived', 'design_gallery', parseInt(id), {
+      name: result.rows[0].name
+    });
+
+    res.json({
+      success: true,
+      design: result.rows[0],
+      message: 'Diseño archivado'
+    });
+
+  } catch (error) {
+    console.error('Archive design error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al archivar diseño'
+    });
+  }
+});
+
+/**
+ * POST /api/gallery/:id/restore
+ * Restore an archived design
+ */
+router.post('/:id/restore', employeeAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      `UPDATE design_gallery
+       SET is_archived = false,
+           archived_at = NULL,
+           archived_by = NULL
+       WHERE id = $1
+       RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Diseño no encontrado'
+      });
+    }
+
+    await logActivity(req.employee.id, 'design_restored', 'design_gallery', parseInt(id), {
+      name: result.rows[0].name
+    });
+
+    res.json({
+      success: true,
+      design: result.rows[0],
+      message: 'Diseño restaurado'
+    });
+
+  } catch (error) {
+    console.error('Restore design error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al restaurar diseño'
+    });
+  }
+});
+
+/**
+ * GET /api/gallery/stats
+ * Get gallery statistics
+ */
+router.get('/stats/summary', employeeAuth, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT
+        COUNT(*) FILTER (WHERE is_archived = false OR is_archived IS NULL) as active_count,
+        COUNT(*) FILTER (WHERE is_archived = true) as archived_count,
+        COUNT(*) as total_count,
+        COALESCE(SUM(download_count), 0) as total_downloads
+      FROM design_gallery
+    `);
+
+    res.json({
+      success: true,
+      stats: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Gallery stats error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener estadísticas'
     });
   }
 });

@@ -141,11 +141,31 @@
                     </button>
                 </div>
 
+                <!-- Search Bar -->
+                <div class="gallery-search-container">
+                    <div class="gallery-search-wrapper">
+                        <span class="gallery-search-icon">🔍</span>
+                        <input type="text" id="gallery-search" class="gallery-search-input" placeholder="Buscar destino o diseño...">
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="gallery-tabs">
+                    <button class="gallery-tab active" data-tab="active">
+                        <span>🎨</span> Disponibles
+                        <span class="tab-count" id="active-count">0</span>
+                    </button>
+                    <button class="gallery-tab" data-tab="archived">
+                        <span>📦</span> Archivados
+                        <span class="tab-count" id="archived-count">0</span>
+                    </button>
+                </div>
+
+                <!-- Filters -->
                 <div class="gallery-filters">
                     <select id="category-filter">
                         <option value="">Todas las categorías</option>
                     </select>
-                    <input type="text" id="gallery-search" placeholder="Buscar diseños...">
                 </div>
 
                 <div id="gallery-loading" class="loading-state">
@@ -156,11 +176,43 @@
                 <div id="gallery-empty" class="empty-state hidden">
                     <span class="empty-icon">🎨</span>
                     <h3>Sin diseños</h3>
-                    <p>No hay diseños en esta categoría</p>
+                    <p>No hay diseños disponibles</p>
                 </div>
 
                 <div id="gallery-grid" class="gallery-grid"></div>
+
+                <!-- Archived Section (shown when on archived tab) -->
+                <div id="archived-section" class="archived-section hidden">
+                    <div class="archived-section-header">
+                        <h3><span>📦</span> Diseños Archivados</h3>
+                    </div>
+                    <div id="archived-grid" class="gallery-grid"></div>
+                </div>
             </section>
+
+            <!-- Design List Panel -->
+            <div id="design-list-panel" class="design-list-panel">
+                <div class="design-list-header">
+                    <h3><span>📋</span> Lista de Diseños</h3>
+                    <button class="btn-close" id="close-design-list">&times;</button>
+                </div>
+                <div class="design-list-content" id="design-list-content">
+                    <div class="design-list-empty">
+                        <span style="font-size: 48px;">📋</span>
+                        <p>Agrega diseños a tu lista</p>
+                    </div>
+                </div>
+                <div class="design-list-footer">
+                    <button class="btn btn-secondary" id="clear-design-list">Limpiar</button>
+                    <button class="btn btn-primary" id="download-all-designs">Descargar Todos</button>
+                </div>
+            </div>
+
+            <!-- Design List Toggle Button -->
+            <button id="design-list-toggle" class="design-list-toggle" style="display: none;">
+                <span>📋</span>
+                <span class="badge" id="design-list-badge">0</span>
+            </button>
 
             <!-- Notes View -->
             <section id="notes-view" class="view">
