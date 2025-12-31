@@ -6,9 +6,12 @@
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
+import { fileURLToPath } from 'url';
 
-// Configuration
-const AXKAN_PATH = process.env.AXKAN_REPO_PATH || '/Users/ivanvalencia/Desktop/CLAUDE/OVEN/AXKAN';
+// Configuration - Use submodule path relative to this file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const AXKAN_PATH = process.env.AXKAN_REPO_PATH || path.resolve(__dirname, '../assets/axkan');
 
 const MARKDOWN_FILES = [
   'CLAUDE.md',

@@ -67,8 +67,8 @@ const paymentReceiptsPath = path.join(__dirname, '../payment-receipts');
 app.use('/payment-receipts', express.static(paymentReceiptsPath));
 console.log(`📁 Serving payment receipts from: ${paymentReceiptsPath}`);
 
-// Axkan brand assets (knowledge base images)
-const axkanPath = process.env.AXKAN_REPO_PATH || '/Users/ivanvalencia/Desktop/CLAUDE/OVEN/AXKAN';
+// Axkan brand assets (knowledge base images) - uses submodule
+const axkanPath = process.env.AXKAN_REPO_PATH || path.join(__dirname, '../assets/axkan');
 app.use('/axkan-assets', express.static(axkanPath));
 console.log(`📁 Serving Axkan assets from: ${axkanPath}`);
 

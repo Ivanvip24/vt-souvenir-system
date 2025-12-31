@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: vt-souvenir-backend
+    env: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: git submodule update --init --recursive && cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20

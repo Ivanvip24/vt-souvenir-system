@@ -1,0 +1,3 @@
+[submodule "backend/assets/axkan"]
+	path = backend/assets/axkan
+	url = https://github.com/Ivanvip24/Axkan.git
