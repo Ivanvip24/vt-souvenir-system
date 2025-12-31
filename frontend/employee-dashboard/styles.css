@@ -2043,6 +2043,367 @@ section#knowledge-view .knowledge-category-btn,
     margin: 28px 0;
 }
 
+/* ========================================
+   KNOWLEDGE BASE - AI CHAT
+   ======================================== */
+
+.knowledge-chat-section {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 280px);
+    min-height: 400px;
+    background: var(--white);
+    border-radius: 24px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.knowledge-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: linear-gradient(135deg, var(--gray-50), var(--cream));
+}
+
+.knowledge-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    height: 100%;
+}
+
+.knowledge-welcome .welcome-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.knowledge-welcome h3 {
+    font-size: 24px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+}
+
+.knowledge-welcome p {
+    color: var(--gray-500);
+    font-size: 15px;
+    max-width: 400px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.knowledge-welcome .quick-questions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    max-width: 500px;
+}
+
+.knowledge-welcome .quick-questions button {
+    padding: 10px 18px;
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.knowledge-welcome .quick-questions button:hover {
+    border-color: var(--pink);
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-colorful);
+}
+
+/* Messages */
+.knowledge-message {
+    display: flex;
+    gap: 12px;
+    max-width: 85%;
+    animation: messageSlide 0.3s ease;
+}
+
+@keyframes messageSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.knowledge-message-user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.knowledge-message-assistant {
+    align-self: flex-start;
+}
+
+.knowledge-message-error {
+    align-self: center;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    background: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.knowledge-message-user .message-avatar {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+}
+
+.knowledge-message-assistant .message-avatar {
+    background: linear-gradient(135deg, var(--blue), var(--teal));
+}
+
+.message-content {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 18px;
+    box-shadow: var(--shadow-sm);
+    line-height: 1.6;
+}
+
+.knowledge-message-user .message-content {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.knowledge-message-assistant .message-content {
+    background: white;
+    border-bottom-left-radius: 4px;
+}
+
+.message-error {
+    background: rgba(255, 107, 107, 0.1) !important;
+    border: 1px solid var(--coral);
+    color: var(--coral-dark);
+}
+
+.message-text {
+    font-size: 14px;
+}
+
+.message-text code {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', monospace;
+    font-size: 13px;
+}
+
+.knowledge-message-user .message-text code {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.message-text pre {
+    background: var(--gray-900);
+    color: var(--yellow);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.message-text pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+.color-preview {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-right: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Typing indicator */
+.typing-indicator .message-content {
+    padding: 18px 24px;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    background: var(--gray-400);
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+}
+
+/* Input area */
+.knowledge-input-area {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px;
+    background: white;
+    border-top: 1px solid var(--gray-100);
+    align-items: center;
+}
+
+.btn-icon {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: var(--gray-100);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-icon:hover {
+    background: var(--gray-200);
+    transform: rotate(180deg);
+}
+
+.knowledge-input-wrapper {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 6px 6px 6px 16px;
+    transition: all 0.3s ease;
+}
+
+.knowledge-input-wrapper:focus-within {
+    border-color: var(--pink);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(232, 74, 138, 0.1);
+}
+
+.knowledge-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    padding: 10px 0;
+    outline: none;
+    font-family: inherit;
+}
+
+.btn-send {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-send:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-colorful);
+}
+
+.knowledge-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px;
+    color: var(--gray-500);
+}
+
+.knowledge-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.knowledge-empty .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+/* Status indicator */
+.status-ok {
+    color: var(--teal);
+}
+
+.status-error {
+    color: var(--coral);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .knowledge-chat-section {
+        height: calc(100vh - 200px);
+    }
+
+    .knowledge-message {
+        max-width: 95%;
+    }
+
+    .knowledge-welcome .quick-questions button {
+        font-size: 12px;
+        padding: 8px 14px;
+    }
+}
+
 .knowledge-document-content p {
     margin: 14px 0;
 }
