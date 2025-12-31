@@ -1290,7 +1290,7 @@ select:focus, input:focus, textarea:focus {
     gap: 24px;
     margin-bottom: 28px;
     box-shadow: var(--shadow-md);
-    max-width: 800px;
+    max-width: 100%;
     position: relative;
     overflow: hidden;
 }
@@ -1358,7 +1358,7 @@ select:focus, input:focus, textarea:focus {
     border-radius: 24px;
     padding: 30px;
     box-shadow: var(--shadow-sm);
-    max-width: 800px;
+    max-width: 100%;
     width: 100%;
     box-sizing: border-box;
 }
@@ -1651,7 +1651,7 @@ select:focus, input:focus, textarea:focus {
     margin-bottom: 24px;
     box-shadow: var(--shadow-sm);
     width: 100%;
-    max-width: 650px;
+    max-width: 100%;
     box-sizing: border-box;
 }
 
