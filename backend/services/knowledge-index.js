@@ -240,6 +240,11 @@ export async function buildIndex() {
   };
 
   console.log(`📚 Knowledge index complete: ${documents.length} documents, ${images.length} images`);
+  console.log('Index object updated:', {
+    docCount: index.documents.length,
+    imgCount: index.images.length,
+    firstDoc: index.documents[0]?.title
+  });
 
   return index;
 }
@@ -413,6 +418,11 @@ export function getImages(category = null) {
  * Get index statistics
  */
 export function getStats() {
+  console.log('getStats called - index state:', {
+    hasDocuments: index.documents.length,
+    hasImages: index.images.length,
+    lastIndexed: index.lastIndexed
+  });
   return {
     documentCount: index.documents.length,
     imageCount: index.images.length,

@@ -28,6 +28,8 @@ const KNOWLEDGE_CATEGORIES = {
 let knowledgeSearchTimeout;
 
 async function searchKnowledge(query) {
+  console.log('searchKnowledge called with:', query);
+
   if (!query || query.length < 2) {
     clearKnowledgeResults();
     return;
@@ -36,8 +38,8 @@ async function searchKnowledge(query) {
   const loading = document.getElementById('knowledge-loading');
   const resultsContainer = document.getElementById('knowledge-results');
 
-  loading.classList.remove('hidden');
-  resultsContainer.innerHTML = '';
+  if (loading) loading.classList.remove('hidden');
+  if (resultsContainer) resultsContainer.innerHTML = '';
 
   try {
     let url = `/knowledge/search?q=${encodeURIComponent(query)}&limit=20`;
@@ -45,31 +47,42 @@ async function searchKnowledge(query) {
       url += `&category=${knowledgeState.currentCategory}`;
     }
 
+    console.log('Fetching:', url);
     const data = await apiGet(url);
+    console.log('Search response:', data);
 
-    loading.classList.add('hidden');
+    if (loading) loading.classList.add('hidden');
 
     if (!data.success) {
-      showToast(data.error || 'Error en búsqueda', 'error');
+      console.error('Search failed:', data.error);
+      if (typeof showToast === 'function') {
+        showToast(data.error || 'Error en búsqueda', 'error');
+      }
       return;
     }
 
-    knowledgeState.results = data.results;
-    knowledgeState.images = data.images;
+    knowledgeState.results = data.results || [];
+    knowledgeState.images = data.images || [];
     knowledgeState.searchQuery = query;
+
+    console.log('Results:', knowledgeState.results.length, 'Images:', knowledgeState.images.length);
 
     renderKnowledgeResults();
     renderKnowledgeImageResults();
 
     // Show result count
     const countEl = document.getElementById('knowledge-result-count');
-    countEl.textContent = `${data.totalResults} resultados${data.totalImages ? `, ${data.totalImages} imágenes` : ''}`;
-    countEl.classList.remove('hidden');
+    if (countEl) {
+      countEl.textContent = `${data.totalResults || 0} resultados${data.totalImages ? `, ${data.totalImages} imágenes` : ''}`;
+      countEl.classList.remove('hidden');
+    }
 
   } catch (error) {
     console.error('Knowledge search error:', error);
-    loading.classList.add('hidden');
-    showToast('Error de conexión', 'error');
+    if (loading) loading.classList.add('hidden');
+    if (typeof showToast === 'function') {
+      showToast('Error de conexión', 'error');
+    }
   }
 }
 
@@ -391,40 +404,11 @@ function switchKnowledgeView(view) {
 // INITIALIZATION
 // ========================================
 
-async function loadKnowledge() {
-  // Reset to search view
-  switchKnowledgeView('search');
+let knowledgeInitialized = false;
 
-  // Clear previous search
-  const searchInput = document.getElementById('knowledge-search');
-  if (searchInput) {
-    searchInput.value = '';
-  }
-  clearKnowledgeResults();
+function initKnowledgeEventListeners() {
+  if (knowledgeInitialized) return;
 
-  // Load stats
-  try {
-    const data = await apiGet('/knowledge/stats');
-    if (data.success) {
-      const statsEl = document.getElementById('knowledge-stats');
-      if (statsEl) {
-        statsEl.innerHTML = `
-          <span>${data.stats.documentCount} documentos</span>
-          <span>${data.stats.imageCount} imágenes</span>
-          <span>${data.stats.totalSections} secciones</span>
-        `;
-      }
-    }
-  } catch (e) {
-    console.warn('Could not load knowledge stats');
-  }
-}
-
-// ========================================
-// EVENT LISTENERS
-// ========================================
-
-document.addEventListener('DOMContentLoaded', () => {
   // Search input with debounce
   const searchInput = document.getElementById('knowledge-search');
   if (searchInput) {
@@ -445,24 +429,71 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // View toggle buttons
-  document.querySelectorAll('.knowledge-view-btn').forEach(btn => {
+  document.querySelectorAll('#knowledge-view .knowledge-view-btn').forEach(btn => {
     btn.addEventListener('click', () => switchKnowledgeView(btn.dataset.view));
   });
 
   // Category filter buttons
-  document.querySelectorAll('.knowledge-category-btn').forEach(btn => {
+  document.querySelectorAll('#knowledge-view .knowledge-category-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       knowledgeState.currentCategory = btn.dataset.category || null;
-      document.querySelectorAll('.knowledge-category-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#knowledge-view .knowledge-category-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
       // Re-search if there's a query
-      if (knowledgeState.searchQuery) {
-        searchKnowledge(knowledgeState.searchQuery);
+      const searchInput = document.getElementById('knowledge-search');
+      if (searchInput && searchInput.value.trim()) {
+        searchKnowledge(searchInput.value.trim());
       }
     });
   });
-});
+
+  knowledgeInitialized = true;
+  console.log('Knowledge event listeners initialized');
+}
+
+async function loadKnowledge() {
+  console.log('Loading knowledge view...');
+
+  // Initialize event listeners
+  initKnowledgeEventListeners();
+
+  // Reset to search view
+  switchKnowledgeView('search');
+
+  // Clear previous search
+  const searchInput = document.getElementById('knowledge-search');
+  if (searchInput) {
+    searchInput.value = '';
+  }
+  clearKnowledgeResults();
+
+  // Load stats
+  try {
+    const data = await apiGet('/knowledge/stats');
+    console.log('Knowledge stats:', data);
+    if (data.success) {
+      const statsEl = document.getElementById('knowledge-stats');
+      if (statsEl) {
+        statsEl.innerHTML = `
+          <span>${data.stats.documentCount} documentos</span>
+          <span>${data.stats.imageCount} imágenes</span>
+          <span>${data.stats.totalSections} secciones</span>
+        `;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not load knowledge stats:', e);
+  }
+}
+
+// Initialize when DOM is ready (backup)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initKnowledgeEventListeners);
+} else {
+  // DOM already loaded
+  initKnowledgeEventListeners();
+}
 
 // Make functions globally available for onclick handlers
 window.loadKnowledge = loadKnowledge;
