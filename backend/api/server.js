@@ -25,6 +25,8 @@ import employeeRoutes from './employee-routes.js';
 import taskRoutes from './task-routes.js';
 import galleryRoutes from './gallery-routes.js';
 import notesRoutes from './notes-routes.js';
+import knowledgeRoutes from './knowledge-routes.js';
+import * as knowledgeIndex from '../services/knowledge-index.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { onOrderStatusChange } from '../services/task-generator.js';
 import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
@@ -64,6 +66,11 @@ console.log(`📁 Serving receipts from: ${receiptsPath}`);
 const paymentReceiptsPath = path.join(__dirname, '../payment-receipts');
 app.use('/payment-receipts', express.static(paymentReceiptsPath));
 console.log(`📁 Serving payment receipts from: ${paymentReceiptsPath}`);
+
+// Axkan brand assets (knowledge base images)
+const axkanPath = process.env.AXKAN_REPO_PATH || '/Users/ivanvalencia/Desktop/CLAUDE/OVEN/AXKAN';
+app.use('/axkan-assets', express.static(axkanPath));
+console.log(`📁 Serving Axkan assets from: ${axkanPath}`);
 
 // ========================================
 // HEALTH CHECK
@@ -147,6 +154,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/notes', notesRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
 
 // ========================================
 // NOTION AGENT ENDPOINTS
@@ -3232,6 +3240,15 @@ async function startServer() {
 
     // Initialize Pickup Scheduler (daily pickup requests)
     pickupScheduler.initializePickupScheduler();
+
+    // Build Knowledge Base Index
+    console.log('📚 Building knowledge base index...');
+    try {
+      await knowledgeIndex.buildIndex();
+      console.log('✅ Knowledge base indexed successfully');
+    } catch (kbError) {
+      console.warn('⚠️  Warning: Knowledge base indexing failed:', kbError.message);
+    }
 
     // Start server
     app.listen(PORT, () => {

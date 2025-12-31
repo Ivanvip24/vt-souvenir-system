@@ -54,6 +54,11 @@
                     <span>Documentos</span>
                 </button>
 
+                <button class="nav-item" data-view="knowledge">
+                    <span class="nav-icon">📚</span>
+                    <span>Axkan Info</span>
+                </button>
+
                 <div class="nav-divider"></div>
 
                 <!-- Manager Only Section -->
@@ -311,6 +316,65 @@
                 <div id="all-tasks-list" class="task-list"></div>
             </section>
 
+            <!-- Knowledge Base View -->
+            <section id="knowledge-view" class="view">
+                <div class="view-header">
+                    <h2>📚 Base de Conocimiento AXKAN</h2>
+                    <div id="knowledge-stats" class="knowledge-stats"></div>
+                </div>
+
+                <!-- View Toggle -->
+                <div class="knowledge-view-toggle">
+                    <button class="knowledge-view-btn active" data-view="search">
+                        <span>🔍</span> Buscar
+                    </button>
+                    <button class="knowledge-view-btn" data-view="images">
+                        <span>🖼️</span> Imágenes
+                    </button>
+                </div>
+
+                <!-- Search Section -->
+                <div id="knowledge-search-section">
+                    <div class="knowledge-search-container">
+                        <div class="knowledge-search-wrapper">
+                            <span class="knowledge-search-icon">🔍</span>
+                            <input type="text" id="knowledge-search" class="knowledge-search-input"
+                                   placeholder="Buscar colores, tipografía, precios, ventas...">
+                        </div>
+                    </div>
+
+                    <!-- Category Filters -->
+                    <div class="knowledge-categories">
+                        <button class="knowledge-category-btn active" data-category="">Todos</button>
+                        <button class="knowledge-category-btn" data-category="brand-identity">🎨 Identidad</button>
+                        <button class="knowledge-category-btn" data-category="sales">💰 Ventas</button>
+                        <button class="knowledge-category-btn" data-category="visual-assets">🖼️ Visual</button>
+                    </div>
+
+                    <div id="knowledge-result-count" class="knowledge-result-count hidden"></div>
+
+                    <div id="knowledge-loading" class="loading-state hidden">
+                        <div class="spinner"></div>
+                        <p>Buscando...</p>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div id="knowledge-results" class="knowledge-results"></div>
+
+                    <!-- Image Results from Search -->
+                    <div id="knowledge-images-results" class="knowledge-images-results"></div>
+                </div>
+
+                <!-- Images Browser Section -->
+                <div id="knowledge-images-section" class="hidden">
+                    <div id="knowledge-images-loading" class="loading-state hidden">
+                        <div class="spinner"></div>
+                        <p>Cargando imágenes...</p>
+                    </div>
+                    <div id="knowledge-images-browser" class="knowledge-images-browser"></div>
+                </div>
+            </section>
+
             <!-- Profile View -->
             <section id="profile-view" class="view">
                 <div class="view-header">
@@ -564,5 +628,6 @@
     <script src="tasks.js"></script>
     <script src="gallery.js"></script>
     <script src="notes.js"></script>
+    <script src="knowledge.js"></script>
 </body>
 </html>

@@ -230,6 +230,9 @@ body.role-manager .manager-only.nav-section-title {
 .content-area {
     padding: 24px;
     margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .view {
@@ -302,10 +305,11 @@ body.role-manager .manager-only.nav-section-title {
 .task-filters, .gallery-filters, .employee-filters {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    width: 100%;
 }
 
 .filter-btn {
@@ -1080,12 +1084,15 @@ select:focus, input:focus, textarea:focus {
 .profile-info h3 {
     font-size: 22px;
     margin-bottom: 4px;
-    word-wrap: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .profile-info p {
     color: var(--gray-500);
     margin-bottom: 12px;
+    white-space: nowrap;
 }
 
 .profile-form {
@@ -1345,6 +1352,12 @@ select:focus, input:focus, textarea:focus {
 
     .profile-info h3 {
         font-size: 18px;
+        white-space: normal;
+        word-wrap: break-word;
+    }
+
+    .profile-info p {
+        white-space: normal;
     }
 
     .view-header {
@@ -1360,8 +1373,9 @@ select:focus, input:focus, textarea:focus {
     .task-filters, .gallery-filters {
         width: 100%;
         justify-content: flex-start;
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
     }
 
     .filter-btn {
