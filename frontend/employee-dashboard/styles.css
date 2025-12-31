@@ -349,12 +349,14 @@ body.role-manager .manager-only.nav-section-title {
 
 .view {
     display: none;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 .view.active {
-    display: block;
-    width: 100%;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
     animation: fadeIn 0.4s ease;
 }
 
@@ -369,7 +371,8 @@ body.role-manager .manager-only.nav-section-title {
     justify-content: space-between;
     margin-bottom: 28px;
     gap: 16px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    width: 100%;
 }
 
 .view-header h2 {
@@ -398,6 +401,8 @@ body.role-manager .manager-only.nav-section-title {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .btn-primary {
@@ -438,10 +443,10 @@ body.role-manager .manager-only.nav-section-title {
    FILTERS
    ======================================== */
 .task-filters, .gallery-filters, .employee-filters {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
     gap: 10px;
     margin-bottom: 24px;
     width: 100%;
@@ -456,8 +461,11 @@ body.role-manager .manager-only.nav-section-title {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    white-space: nowrap;
+    white-space: nowrap !important;
     box-shadow: var(--shadow-sm);
+    display: inline-block !important;
+    width: auto !important;
+    flex-shrink: 0;
 }
 
 .filter-btn:hover {
@@ -531,7 +539,8 @@ select:focus, input:focus, textarea:focus {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 .task-card {
@@ -541,10 +550,12 @@ select:focus, input:focus, textarea:focus {
     padding: 20px 24px;
     cursor: pointer;
     transition: all 0.3s ease;
-    display: flex;
+    display: flex !important;
+    flex-direction: row !important;
     align-items: center;
     gap: 20px;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box;
     box-shadow: var(--shadow-sm);
     position: relative;
@@ -1142,9 +1153,10 @@ select:focus, input:focus, textarea:focus {
    NOTES LAYOUT
    ======================================== */
 .notes-layout {
-    display: grid;
-    grid-template-columns: 220px 1fr;
+    display: grid !important;
+    grid-template-columns: 220px 1fr !important;
     gap: 28px;
+    width: 100% !important;
 }
 
 .workspaces-sidebar {
@@ -1283,14 +1295,15 @@ select:focus, input:focus, textarea:focus {
     background: var(--white);
     border-radius: 24px;
     padding: 30px;
-    display: flex;
+    display: flex !important;
+    flex-direction: row !important;
     align-items: center;
-    width: 100%;
+    width: 100% !important;
     box-sizing: border-box;
     gap: 24px;
     margin-bottom: 28px;
     box-shadow: var(--shadow-md);
-    max-width: 100%;
+    max-width: 100% !important;
     position: relative;
     overflow: hidden;
 }
