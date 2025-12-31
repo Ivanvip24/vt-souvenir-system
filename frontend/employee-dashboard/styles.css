@@ -459,9 +459,22 @@ body.role-manager .manager-only.nav-section-title {
     flex-direction: row !important;
     flex-wrap: wrap !important;
     align-items: center !important;
-    gap: 10px;
+    gap: 10px !important;
     margin-bottom: 24px;
-    width: 100%;
+    width: 100% !important;
+}
+
+.task-filters button,
+.gallery-filters button,
+.employee-filters button,
+.task-filters select,
+.gallery-filters select,
+.employee-filters select {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    width: auto !important;
+    min-width: auto !important;
+    max-width: none !important;
 }
 
 .filter-btn {
@@ -517,6 +530,14 @@ select:focus, input:focus, textarea:focus {
     text-align: center;
     padding: 80px 20px;
     color: var(--gray-500);
+    width: 100% !important;
+}
+
+.empty-state h3,
+.empty-state p {
+    white-space: normal !important;
+    word-wrap: break-word;
+    max-width: 100%;
 }
 
 .loading-state.hidden, .empty-state.hidden {
