@@ -159,7 +159,41 @@ function clearKnowledgeConversation() {
   knowledgeState.conversationId = null;
   knowledgeState.messages = [];
 
-  const messagesContainer = document.getElementById('knowledge-messages');
+  let messagesContainer = document.getElementById('knowledge-messages');
+
+  // Fallback: create chat section if it doesn't exist (for old HTML)
+  if (!messagesContainer) {
+    console.log('Creating chat section dynamically...');
+    const chatSection = document.getElementById('knowledge-chat-section') ||
+                        document.getElementById('knowledge-search-section');
+
+    if (chatSection) {
+      chatSection.id = 'knowledge-chat-section';
+      chatSection.className = 'knowledge-chat-section';
+      chatSection.innerHTML = `
+        <div id="knowledge-messages" class="knowledge-messages"></div>
+        <div class="knowledge-input-area">
+          <button id="knowledge-new-chat" class="btn-icon" title="Nueva conversación">🔄</button>
+          <div class="knowledge-input-wrapper">
+            <input type="text" id="knowledge-input" class="knowledge-input"
+                   placeholder="Pregunta sobre colores, tipografía, precios, ventas...">
+            <button id="knowledge-send-btn" class="btn-send">➤</button>
+          </div>
+        </div>
+      `;
+      messagesContainer = document.getElementById('knowledge-messages');
+      // Re-init event listeners for new elements
+      initKnowledgeEventListeners();
+      knowledgeInitialized = false;
+      initKnowledgeEventListeners();
+    }
+  }
+
+  if (!messagesContainer) {
+    console.error('Could not find or create knowledge-messages container');
+    return;
+  }
+
   messagesContainer.innerHTML = `
     <div class="knowledge-welcome">
       <div class="welcome-icon">🎨</div>
@@ -173,6 +207,7 @@ function clearKnowledgeConversation() {
       </div>
     </div>
   `;
+  console.log('Welcome message rendered');
 }
 
 // ========================================
