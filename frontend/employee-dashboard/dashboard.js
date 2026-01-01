@@ -185,12 +185,18 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    // Always read from localStorage first (most reliable source of truth)
-    // state.token might not be set yet if scripts load before DOMContentLoaded
-    const token = localStorage.getItem('employee_token') || state.token;
+    // Check both sources for the token
+    const localToken = localStorage.getItem('employee_token');
+    const stateToken = state?.token;
+
+    // Debug: log what we find
+    console.log('getAuthHeaders - localStorage token:', localToken ? `${localToken.length} chars` : 'NULL');
+    console.log('getAuthHeaders - state.token:', stateToken ? `${stateToken.length} chars` : 'NULL');
+
+    const token = localToken || stateToken;
 
     if (!token) {
-        console.error('getAuthHeaders - NO TOKEN AVAILABLE');
+        console.error('getAuthHeaders - NO TOKEN AVAILABLE!');
         return {
             'Content-Type': 'application/json'
         };
