@@ -65,10 +65,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function verifyAuth() {
     try {
-        console.log('verifyAuth - Making request with token:', state.token ? state.token.substring(0, 20) + '...' : 'NO TOKEN');
+        const token = state.token || localStorage.getItem('employee_token');
+        console.log('verifyAuth - Token from state:', !!state.token);
+        console.log('verifyAuth - Token from localStorage:', !!localStorage.getItem('employee_token'));
+        console.log('verifyAuth - Using token:', token ? token.substring(0, 30) + '...' : 'NO TOKEN');
+
+        const headers = getAuthHeaders();
+        console.log('verifyAuth - Headers being sent:', JSON.stringify(headers));
 
         const response = await fetch(`${API_BASE}/employees/verify`, {
-            headers: getAuthHeaders()
+            method: 'GET',
+            headers: headers,
+            credentials: 'include' // Important for cross-origin cookies/auth
         });
 
         console.log('verifyAuth - Response status:', response.status);
