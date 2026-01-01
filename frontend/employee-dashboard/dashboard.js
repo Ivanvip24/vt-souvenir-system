@@ -203,13 +203,33 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    // Read token directly from localStorage as fallback
-    const token = state.token || localStorage.getItem('employee_token');
-    console.log('getAuthHeaders - token exists:', !!token, 'length:', token ? token.length : 0);
-    return {
-        'Authorization': `Bearer ${token}`,
+    // Read token directly from localStorage
+    const token = localStorage.getItem('employee_token');
+
+    if (!token) {
+        console.error('getAuthHeaders - NO TOKEN IN LOCALSTORAGE!');
+        // Try to get from state as fallback
+        if (state.token) {
+            console.log('getAuthHeaders - Using state.token as fallback');
+            return {
+                'Authorization': `Bearer ${state.token}`,
+                'Content-Type': 'application/json'
+            };
+        }
+        console.error('getAuthHeaders - NO TOKEN ANYWHERE!');
+    }
+
+    console.log('getAuthHeaders - token length:', token ? token.length : 0);
+    console.log('getAuthHeaders - token preview:', token ? token.substring(0, 50) + '...' : 'NONE');
+
+    const headers = {
+        'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json'
     };
+
+    console.log('getAuthHeaders - Authorization header:', headers['Authorization'].substring(0, 50) + '...');
+
+    return headers;
 }
 
 async function apiGet(endpoint) {
