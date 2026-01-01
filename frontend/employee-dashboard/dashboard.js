@@ -211,14 +211,12 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    // Use window.state to ensure we get the global state object
-    // AND always read from localStorage as primary source
+    // v2: Read token directly from localStorage
     const localToken = localStorage.getItem('employee_token');
-
-    console.log('getAuthHeaders called - localStorage token:', localToken ? localToken.substring(0, 20) + '...' : 'NULL');
+    console.log('[AUTH v2] Token from localStorage:', localToken ? `${localToken.length} chars` : 'MISSING');
 
     if (!localToken) {
-        console.error('!!! NO TOKEN IN LOCALSTORAGE !!!');
+        console.error('[AUTH v2] NO TOKEN - redirecting');
         window.location.href = 'login.html';
         return { 'Content-Type': 'application/json' };
     }
