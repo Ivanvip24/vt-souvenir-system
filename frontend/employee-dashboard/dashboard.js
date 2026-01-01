@@ -76,7 +76,7 @@ async function verifyAuth() {
         const response = await fetch(`${API_BASE}/employees/verify`, {
             method: 'GET',
             headers: headers,
-            credentials: 'include' // Important for cross-origin cookies/auth
+            mode: 'cors' // Explicit CORS mode
         });
 
         console.log('verifyAuth - Response status:', response.status);
