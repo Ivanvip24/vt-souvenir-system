@@ -24,19 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('employee_token');
     const employeeData = localStorage.getItem('employee_data');
 
-    console.log('Dashboard init - Token exists:', !!token);
-    console.log('Dashboard init - Token length:', token ? token.length : 0);
-    console.log('Dashboard init - Employee data exists:', !!employeeData);
-
     if (!token || !employeeData) {
-        console.log('No token or employee data - redirecting to login');
         window.location.href = 'login.html';
         return;
     }
 
     state.token = token;
     state.employee = JSON.parse(employeeData);
-    console.log('Dashboard init - State token set, employee:', state.employee.name);
 
     // Verify token is still valid
     verifyAuth();
@@ -65,94 +59,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function verifyAuth() {
     try {
-        // Get and sanitize token
-        let token = state.token || localStorage.getItem('employee_token');
-        if (token) {
-            token = token.trim(); // Remove any whitespace
-        }
-
-        console.log('=== VERIFY AUTH START ===');
-        console.log('Token exists:', !!token);
-        console.log('Token length:', token ? token.length : 0);
-        console.log('Token first 50 chars:', token ? token.substring(0, 50) : 'NONE');
-        console.log('Token last 10 chars:', token ? token.substring(token.length - 10) : 'NONE');
+        const token = state.token || localStorage.getItem('employee_token');
 
         if (!token) {
-            console.error('NO TOKEN - redirecting to login');
             forceLogout();
             return;
         }
 
-        // First, test the debug endpoint to see if headers are being received
-        console.log('=== TESTING DEBUG ENDPOINT ===');
-        const authHeader = `Bearer ${token}`;
-        console.log('Authorization header being sent:', authHeader.substring(0, 60) + '...');
-        console.log('Authorization header length:', authHeader.length);
-
-        try {
-            const debugResponse = await fetch(`${API_BASE}/debug/headers`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': authHeader
-                }
-            });
-            const debugData = await debugResponse.json();
-            console.log('DEBUG ENDPOINT - Status:', debugResponse.status);
-            console.log('DEBUG ENDPOINT - Authorization received:', debugData.authorizationPresent);
-            console.log('DEBUG ENDPOINT - Authorization value:', debugData.authorizationValue);
-
-            if (!debugData.authorizationPresent) {
-                console.error('!!! AUTHORIZATION HEADER NOT RECEIVED BY SERVER !!!');
-                alert('Debug: El header Authorization no llega al servidor. Revisa la consola.');
-                // Don't logout - let user see the debug info
-                return;
-            }
-        } catch (debugErr) {
-            console.error('Debug endpoint error:', debugErr);
-        }
-        console.log('=== END DEBUG TEST ===');
-
-        // Now try the actual verify endpoint
-        console.log('=== CALLING VERIFY ENDPOINT ===');
         const response = await fetch(`${API_BASE}/employees/verify`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': authHeader
+                'Authorization': `Bearer ${token}`
             }
         });
 
-        console.log('verifyAuth - Response status:', response.status);
-        const responseText = await response.text();
-        console.log('verifyAuth - Raw response:', responseText);
-
         if (!response.ok) {
-            let errorData = {};
-            try {
-                errorData = JSON.parse(responseText);
-            } catch (e) {
-                errorData = { error: responseText };
-            }
-            console.error('verifyAuth - Failed:', response.status, errorData);
-
-            // For debugging - show what happened but DON'T immediately logout
-            alert('Error de verificacion: ' + (errorData.error || 'Unknown error') +
-                  '\n\nRevisa la consola para mas detalles.\n\nHaz clic en OK para ir al login.');
             forceLogout();
             return;
         }
 
-        const data = JSON.parse(responseText);
-        console.log('verifyAuth - Success, employee:', data.employee?.name);
+        const data = await response.json();
         state.employee = data.employee;
         localStorage.setItem('employee_data', JSON.stringify(data.employee));
         updateEmployeeInfo();
-        console.log('=== VERIFY AUTH SUCCESS ===');
 
     } catch (error) {
         console.error('Auth verification failed:', error);
-        alert('Error de conexion: ' + error.message);
         forceLogout();
     }
 }
@@ -252,33 +185,21 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    // Read token directly from localStorage
-    const token = localStorage.getItem('employee_token');
+    // Try state.token first (most reliable), then localStorage
+    const token = state.token || localStorage.getItem('employee_token');
 
     if (!token) {
-        console.error('getAuthHeaders - NO TOKEN IN LOCALSTORAGE!');
-        // Try to get from state as fallback
-        if (state.token) {
-            console.log('getAuthHeaders - Using state.token as fallback');
-            return {
-                'Authorization': `Bearer ${state.token}`,
-                'Content-Type': 'application/json'
-            };
-        }
-        console.error('getAuthHeaders - NO TOKEN ANYWHERE!');
+        console.error('getAuthHeaders - NO TOKEN AVAILABLE');
+        // Return headers without auth - request will fail but won't crash
+        return {
+            'Content-Type': 'application/json'
+        };
     }
 
-    console.log('getAuthHeaders - token length:', token ? token.length : 0);
-    console.log('getAuthHeaders - token preview:', token ? token.substring(0, 50) + '...' : 'NONE');
-
-    const headers = {
-        'Authorization': 'Bearer ' + token,
+    return {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
     };
-
-    console.log('getAuthHeaders - Authorization header:', headers['Authorization'].substring(0, 50) + '...');
-
-    return headers;
 }
 
 async function apiGet(endpoint) {

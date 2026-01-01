@@ -300,18 +300,8 @@
                 const data = await response.json();
 
                 if (data.success && data.token) {
-                    console.log('Login successful!');
-                    console.log('Token received:', data.token.substring(0, 30) + '...');
-                    console.log('Token length:', data.token.length);
-
                     localStorage.setItem('employee_token', data.token);
                     localStorage.setItem('employee_data', JSON.stringify(data.employee));
-
-                    // Verify storage
-                    const storedToken = localStorage.getItem('employee_token');
-                    console.log('Token stored successfully:', !!storedToken);
-                    console.log('Stored token length:', storedToken ? storedToken.length : 0);
-
                     window.location.href = 'index.html';
                 } else {
                     showError(data.error || 'Credenciales incorrectas');

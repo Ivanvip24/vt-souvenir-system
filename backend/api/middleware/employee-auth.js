@@ -16,12 +16,7 @@ export async function employeeAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
 
-    // Debug logging
-    console.log('employeeAuth - Headers received:', JSON.stringify(req.headers));
-    console.log('employeeAuth - Auth header:', authHeader ? authHeader.substring(0, 30) + '...' : 'NONE');
-
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('employeeAuth - REJECTED: No valid auth header');
       return res.status(401).json({
         success: false,
         error: 'No autorizado - Token no proporcionado'
