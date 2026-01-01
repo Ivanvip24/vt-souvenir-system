@@ -375,16 +375,28 @@ function openDesignModal(design) {
 // EVENT LISTENERS
 // ========================================
 
-// Tab switching
-document.querySelectorAll('.gallery-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.gallery-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
+// Tab switching - use event delegation for dynamic elements
+function initGalleryTabs() {
+    const tabContainer = document.querySelector('#gallery-view .tabs-row');
+    if (tabContainer) {
+        tabContainer.addEventListener('click', (e) => {
+            const tab = e.target.closest('.tab-btn');
+            if (tab && tab.dataset.tab) {
+                tabContainer.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                galleryState.currentTab = tab.dataset.tab;
+                loadGallery();
+            }
+        });
+    }
+}
 
-        galleryState.currentTab = tab.dataset.tab;
-        loadGallery();
-    });
-});
+// Initialize tabs on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGalleryTabs);
+} else {
+    initGalleryTabs();
+}
 
 // Category filter
 document.getElementById('category-filter')?.addEventListener('change', (e) => {
