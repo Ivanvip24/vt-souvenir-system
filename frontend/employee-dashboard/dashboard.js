@@ -206,11 +206,21 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    // Try state.token first (set during init), then localStorage as fallback
+    // Try both sources for the token
     const token = state.token || localStorage.getItem('employee_token');
 
     if (!token) {
-        console.error('getAuthHeaders - NO TOKEN! state.token:', state.token, 'localStorage:', localStorage.getItem('employee_token'));
+        // CRITICAL: No token available - redirect to login immediately
+        console.error('CRITICAL: No auth token found! Redirecting to login...');
+        console.error('state.token:', state.token);
+        console.error('localStorage employee_token:', localStorage.getItem('employee_token'));
+
+        // Clear any stale data and redirect
+        localStorage.removeItem('employee_token');
+        localStorage.removeItem('employee_data');
+        window.location.href = 'login.html';
+
+        // Return empty headers (request will fail anyway)
         return { 'Content-Type': 'application/json' };
     }
 
