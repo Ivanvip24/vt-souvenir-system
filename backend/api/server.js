@@ -161,6 +161,19 @@ app.use('/api/ai-assistant', aiAssistantRoutes);
 app.use('/api/mercadolibre', mercadolibreRoutes);
 
 // ========================================
+// DEBUG: Echo headers endpoint (temporary for debugging)
+// ========================================
+app.get('/api/debug/headers', (req, res) => {
+  console.log('DEBUG - All headers received:', JSON.stringify(req.headers, null, 2));
+  res.json({
+    success: true,
+    headers: req.headers,
+    authorizationPresent: !!req.headers.authorization,
+    authorizationValue: req.headers.authorization ? req.headers.authorization.substring(0, 50) + '...' : 'NOT PRESENT'
+  });
+});
+
+// ========================================
 // EMPLOYEE DASHBOARD ROUTES
 // ========================================
 app.use('/api/employees', employeeRoutes);

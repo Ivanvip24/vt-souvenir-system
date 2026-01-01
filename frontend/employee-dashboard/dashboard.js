@@ -70,13 +70,31 @@ async function verifyAuth() {
         console.log('verifyAuth - Token from localStorage:', !!localStorage.getItem('employee_token'));
         console.log('verifyAuth - Using token:', token ? token.substring(0, 30) + '...' : 'NO TOKEN');
 
-        const headers = getAuthHeaders();
-        console.log('verifyAuth - Headers being sent:', JSON.stringify(headers));
+        // First, test the debug endpoint to see if headers are being received
+        console.log('=== TESTING DEBUG ENDPOINT ===');
+        try {
+            const debugResponse = await fetch(`${API_BASE}/debug/headers`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const debugData = await debugResponse.json();
+            console.log('DEBUG ENDPOINT RESPONSE:', JSON.stringify(debugData, null, 2));
+            console.log('Authorization header received by server:', debugData.authorizationPresent);
+        } catch (debugErr) {
+            console.error('Debug endpoint error:', debugErr);
+        }
+        console.log('=== END DEBUG TEST ===');
 
+        // Now try the actual verify endpoint
         const response = await fetch(`${API_BASE}/employees/verify`, {
             method: 'GET',
-            headers: headers,
-            mode: 'cors' // Explicit CORS mode
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
         });
 
         console.log('verifyAuth - Response status:', response.status);
