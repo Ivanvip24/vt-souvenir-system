@@ -64,7 +64,8 @@ async function verifyAuth() {
         });
 
         if (!response.ok) {
-            logout();
+            // Token invalid/expired - force logout without confirmation
+            forceLogout();
             return;
         }
 
@@ -75,8 +76,15 @@ async function verifyAuth() {
 
     } catch (error) {
         console.error('Auth verification failed:', error);
-        logout();
+        forceLogout();
     }
+}
+
+// Force logout without confirmation (for auth failures)
+function forceLogout() {
+    localStorage.removeItem('employee_token');
+    localStorage.removeItem('employee_data');
+    window.location.href = 'login.html';
 }
 
 function setupRoleUI() {
