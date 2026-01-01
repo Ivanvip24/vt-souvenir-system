@@ -185,12 +185,12 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    // Try state.token first (most reliable), then localStorage
-    const token = state.token || localStorage.getItem('employee_token');
+    // Always read from localStorage first (most reliable source of truth)
+    // state.token might not be set yet if scripts load before DOMContentLoaded
+    const token = localStorage.getItem('employee_token') || state.token;
 
     if (!token) {
         console.error('getAuthHeaders - NO TOKEN AVAILABLE');
-        // Return headers without auth - request will fail but won't crash
         return {
             'Content-Type': 'application/json'
         };
@@ -203,9 +203,17 @@ function getAuthHeaders() {
 }
 
 async function apiGet(endpoint) {
+    const headers = getAuthHeaders();
+    console.log('apiGet:', endpoint, 'Auth:', headers.Authorization ? 'present' : 'MISSING');
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
-        headers: getAuthHeaders()
+        headers: headers
     });
+
+    if (!response.ok) {
+        console.error('apiGet failed:', endpoint, response.status);
+    }
+
     return response.json();
 }
 
