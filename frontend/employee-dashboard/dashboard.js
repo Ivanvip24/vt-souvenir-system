@@ -211,25 +211,20 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    const stateToken = state.token;
+    // Use window.state to ensure we get the global state object
+    // AND always read from localStorage as primary source
     const localToken = localStorage.getItem('employee_token');
 
-    console.log('getAuthHeaders: state.token =', stateToken, '| type =', typeof stateToken);
-    console.log('getAuthHeaders: localStorage =', localToken, '| type =', typeof localToken);
+    console.log('getAuthHeaders called - localStorage token:', localToken ? localToken.substring(0, 20) + '...' : 'NULL');
 
-    const token = stateToken || localToken;
-
-    if (!token) {
-        console.error('!!! CRITICAL: No token found anywhere !!!');
-        localStorage.removeItem('employee_token');
-        localStorage.removeItem('employee_data');
+    if (!localToken) {
+        console.error('!!! NO TOKEN IN LOCALSTORAGE !!!');
         window.location.href = 'login.html';
         return { 'Content-Type': 'application/json' };
     }
 
-    console.log('getAuthHeaders: Using token with length', token.length);
     return {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${localToken}`,
         'Content-Type': 'application/json'
     };
 }
