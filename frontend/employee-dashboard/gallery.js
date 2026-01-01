@@ -439,11 +439,11 @@ function openUploadModal() {
     document.getElementById('upload-design-form').reset();
     selectedFile = null;
 
-    // Reset preview
+    // Reset preview - use correct element IDs from new HTML
     const preview = document.getElementById('upload-preview');
-    const content = document.querySelector('.dropzone-content');
-    preview.classList.add('hidden');
-    content.classList.remove('hidden');
+    const placeholder = document.getElementById('upload-placeholder');
+    if (preview) preview.classList.add('hidden');
+    if (placeholder) placeholder.classList.remove('hidden');
 
     // Disable submit button
     document.getElementById('submit-design-btn').disabled = true;
@@ -482,7 +482,7 @@ function handleFileSelect(file) {
     reader.onload = (e) => {
         document.getElementById('preview-image').src = e.target.result;
         document.getElementById('upload-preview').classList.remove('hidden');
-        document.querySelector('.dropzone-content').classList.add('hidden');
+        document.getElementById('upload-placeholder').classList.add('hidden');
     };
     reader.readAsDataURL(file);
 
