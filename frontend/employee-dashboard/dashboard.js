@@ -20,15 +20,19 @@ const state = {
 // ========================================
 
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('========== DASHBOARD INIT START ==========');
+
     // Check authentication
     const token = localStorage.getItem('employee_token');
     const employeeData = localStorage.getItem('employee_data');
 
-    console.log('Init - Token in localStorage:', token ? `${token.length} chars` : 'NONE');
-    console.log('Init - Employee data:', employeeData ? 'present' : 'NONE');
+    console.log('INIT: localStorage employee_token =', token);
+    console.log('INIT: localStorage employee_token type =', typeof token);
+    console.log('INIT: localStorage employee_token length =', token ? token.length : 'N/A');
+    console.log('INIT: employeeData exists =', !!employeeData);
 
     if (!token || !employeeData) {
-        console.log('Init - Missing auth data, redirecting to login');
+        console.log('INIT: Missing auth data, redirecting to login');
         window.location.href = 'login.html';
         return;
     }
@@ -37,7 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.token = token;
     state.employee = JSON.parse(employeeData);
 
-    console.log('Init - State token set:', state.token ? `${state.token.length} chars` : 'NONE');
+    console.log('INIT: state.token after assignment =', state.token);
+    console.log('INIT: state.token length =', state.token ? state.token.length : 'N/A');
 
     // Verify token is still valid - WAIT for this before proceeding
     const authValid = await verifyAuth();
@@ -206,24 +211,23 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    // Try both sources for the token
-    const token = state.token || localStorage.getItem('employee_token');
+    const stateToken = state.token;
+    const localToken = localStorage.getItem('employee_token');
+
+    console.log('getAuthHeaders: state.token =', stateToken, '| type =', typeof stateToken);
+    console.log('getAuthHeaders: localStorage =', localToken, '| type =', typeof localToken);
+
+    const token = stateToken || localToken;
 
     if (!token) {
-        // CRITICAL: No token available - redirect to login immediately
-        console.error('CRITICAL: No auth token found! Redirecting to login...');
-        console.error('state.token:', state.token);
-        console.error('localStorage employee_token:', localStorage.getItem('employee_token'));
-
-        // Clear any stale data and redirect
+        console.error('!!! CRITICAL: No token found anywhere !!!');
         localStorage.removeItem('employee_token');
         localStorage.removeItem('employee_data');
         window.location.href = 'login.html';
-
-        // Return empty headers (request will fail anyway)
         return { 'Content-Type': 'application/json' };
     }
 
+    console.log('getAuthHeaders: Using token with length', token.length);
     return {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
