@@ -195,8 +195,11 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
+    // Read token directly from localStorage as fallback
+    const token = state.token || localStorage.getItem('employee_token');
+    console.log('getAuthHeaders - token exists:', !!token, 'length:', token ? token.length : 0);
     return {
-        'Authorization': `Bearer ${state.token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
     };
 }
