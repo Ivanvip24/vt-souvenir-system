@@ -11,92 +11,131 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Top Bar -->
-    <header class="top-bar">
-        <div class="top-bar-left">
-            <img src="../assets/images/LOGO-03.png" alt="AXKAN" class="top-logo">
-            <span class="top-title">Portal de Empleados</span>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <img src="../assets/images/LOGO-03.png" alt="AXKAN" class="topbar-logo">
+            <h1 class="topbar-title">Portal de Empleados</h1>
         </div>
-        <div class="top-bar-right">
-            <div class="employee-info">
-                <span id="employee-name">Cargando...</span>
-                <span id="employee-role" class="role-badge">-</span>
+        <div class="topbar-user">
+            <div class="user-details">
+                <span class="user-name" id="employee-name">Cargando...</span>
+                <span class="user-role" id="employee-role">-</span>
             </div>
-            <button class="btn-icon" id="logout-btn" title="Cerrar Sesión">
-                <span>🚪</span>
+            <button class="btn-logout" id="logout-btn" title="Cerrar Sesion">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
             </button>
         </div>
     </header>
 
-    <!-- Main Layout -->
-    <div class="dashboard-main">
+    <!-- Main Application Layout -->
+    <div class="app-layout">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <nav class="sidebar-nav">
-                <button class="nav-item active" data-view="my-tasks">
-                    <span class="nav-icon">📋</span>
+        <nav class="sidebar">
+            <ul class="nav-menu">
+                <li class="nav-item active" data-view="my-tasks">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                    </svg>
                     <span>Mis Tareas</span>
-                    <span class="badge" id="my-task-count">0</span>
-                </button>
-
-                <button class="nav-item" data-view="department-queue">
-                    <span class="nav-icon">📥</span>
+                    <span class="nav-badge" id="my-task-count">0</span>
+                </li>
+                <li class="nav-item" data-view="department-queue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="M9 21V9"/>
+                    </svg>
                     <span>Cola del Depto.</span>
-                </button>
-
-                <button class="nav-item design-only" data-view="gallery">
-                    <span class="nav-icon">🎨</span>
-                    <span>Galería</span>
-                </button>
-
-                <button class="nav-item" data-view="notes">
-                    <span class="nav-icon">📝</span>
+                </li>
+                <li class="nav-item design-only" data-view="gallery">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <path d="M21 15l-5-5L5 21"/>
+                    </svg>
+                    <span>Galeria</span>
+                </li>
+                <li class="nav-item" data-view="notes">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <path d="M14 2v6h6"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
                     <span>Documentos</span>
-                </button>
-
-                <button class="nav-item" data-view="knowledge">
-                    <span class="nav-icon">📚</span>
+                </li>
+                <li class="nav-item" data-view="knowledge">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
                     <span>Axkan Info</span>
-                </button>
+                </li>
+            </ul>
 
-                <div class="nav-divider"></div>
+            <div class="nav-divider"></div>
 
-                <!-- Manager Only Section -->
-                <div class="manager-only">
-                    <span class="nav-section-title">Administración</span>
-
-                    <button class="nav-item" data-view="employees">
-                        <span class="nav-icon">👥</span>
+            <!-- Manager Section -->
+            <div class="manager-only">
+                <span class="nav-section-label">Administracion</span>
+                <ul class="nav-menu">
+                    <li class="nav-item" data-view="employees">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
                         <span>Empleados</span>
-                    </button>
-
-                    <button class="nav-item" data-view="all-tasks">
-                        <span class="nav-icon">📊</span>
+                    </li>
+                    <li class="nav-item" data-view="all-tasks">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3v18h18"/>
+                            <path d="M18 17V9"/>
+                            <path d="M13 17V5"/>
+                            <path d="M8 17v-3"/>
+                        </svg>
                         <span>Todas las Tareas</span>
-                    </button>
-                </div>
+                    </li>
+                </ul>
+            </div>
 
-                <div class="nav-divider"></div>
+            <div class="nav-divider"></div>
 
-                <button class="nav-item" data-view="profile">
-                    <span class="nav-icon">⚙️</span>
+            <ul class="nav-menu">
+                <li class="nav-item" data-view="profile">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
                     <span>Mi Perfil</span>
-                </button>
-            </nav>
-        </aside>
+                </li>
+            </ul>
+        </nav>
 
         <!-- Main Content Area -->
-        <main class="content-area">
+        <main class="main-content">
             <!-- My Tasks View -->
             <section id="my-tasks-view" class="view active">
-                <div class="view-header">
+                <header class="view-header">
                     <h2>Mis Tareas</h2>
                     <button class="btn btn-primary" id="new-task-btn">
-                        <span>+</span> Nueva Tarea
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Nueva Tarea
                     </button>
-                </div>
+                </header>
 
-                <div class="task-filters">
+                <div class="filters-row">
                     <button class="filter-btn active" data-status="all">Todas</button>
                     <button class="filter-btn" data-status="pending">Pendientes</button>
                     <button class="filter-btn" data-status="in_progress">En Progreso</button>
@@ -109,19 +148,22 @@
                 </div>
 
                 <div id="my-tasks-empty" class="empty-state hidden">
-                    <span class="empty-icon">✅</span>
-                    <h3>¡Todo listo!</h3>
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                    </svg>
+                    <h3>Todo listo</h3>
                     <p>No tienes tareas pendientes</p>
                 </div>
 
-                <div id="my-tasks-list" class="task-list"></div>
+                <div id="my-tasks-list" class="tasks-container"></div>
             </section>
 
             <!-- Department Queue View -->
             <section id="department-queue-view" class="view">
-                <div class="view-header">
+                <header class="view-header">
                     <h2>Cola del Departamento: <span id="dept-name">-</span></h2>
-                </div>
+                </header>
 
                 <div id="dept-tasks-loading" class="loading-state">
                     <div class="spinner"></div>
@@ -129,113 +171,149 @@
                 </div>
 
                 <div id="dept-tasks-empty" class="empty-state hidden">
-                    <span class="empty-icon">📭</span>
-                    <h3>Cola vacía</h3>
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18"/>
+                    </svg>
+                    <h3>Cola vacia</h3>
                     <p>No hay tareas pendientes en el departamento</p>
                 </div>
 
-                <div id="dept-tasks-list" class="task-list"></div>
+                <div id="dept-tasks-list" class="tasks-container"></div>
             </section>
 
             <!-- Gallery View -->
             <section id="gallery-view" class="view">
-                <div class="view-header">
-                    <h2>Galería de Diseños</h2>
+                <header class="view-header">
+                    <h2>Galeria de Disenos</h2>
                     <button class="btn btn-primary design-only" id="upload-design-btn">
-                        <span>+</span> Subir Diseño
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        Subir Diseno
                     </button>
+                </header>
+
+                <!-- Gallery Search -->
+                <div class="search-box">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="gallery-search" placeholder="Buscar destino o diseno...">
                 </div>
 
-                <!-- Search Bar -->
-                <div class="gallery-search-container">
-                    <div class="gallery-search-wrapper">
-                        <span class="gallery-search-icon">🔍</span>
-                        <input type="text" id="gallery-search" class="gallery-search-input" placeholder="Buscar destino o diseño...">
-                    </div>
-                </div>
-
-                <!-- Tabs -->
-                <div class="gallery-tabs">
-                    <button class="gallery-tab active" data-tab="active">
-                        <span>🎨</span> Disponibles
+                <!-- Gallery Tabs -->
+                <div class="tabs-row">
+                    <button class="tab-btn active" data-tab="active">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21"/>
+                        </svg>
+                        Disponibles
                         <span class="tab-count" id="active-count">0</span>
                     </button>
-                    <button class="gallery-tab" data-tab="archived">
-                        <span>📦</span> Archivados
+                    <button class="tab-btn" data-tab="archived">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="21 8 21 21 3 21 3 8"/>
+                            <rect x="1" y="3" width="22" height="5"/>
+                            <line x1="10" y1="12" x2="14" y2="12"/>
+                        </svg>
+                        Archivados
                         <span class="tab-count" id="archived-count">0</span>
                     </button>
                 </div>
 
-                <!-- Filters -->
-                <div class="gallery-filters">
-                    <select id="category-filter">
-                        <option value="">Todas las categorías</option>
+                <!-- Category Filter -->
+                <div class="filters-row">
+                    <select id="category-filter" class="select-input">
+                        <option value="">Todas las categorias</option>
                     </select>
                 </div>
 
                 <div id="gallery-loading" class="loading-state">
                     <div class="spinner"></div>
-                    <p>Cargando galería...</p>
+                    <p>Cargando galeria...</p>
                 </div>
 
                 <div id="gallery-empty" class="empty-state hidden">
-                    <span class="empty-icon">🎨</span>
-                    <h3>Sin diseños</h3>
-                    <p>No hay diseños disponibles</p>
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <path d="M21 15l-5-5L5 21"/>
+                    </svg>
+                    <h3>Sin disenos</h3>
+                    <p>No hay disenos disponibles</p>
                 </div>
 
                 <div id="gallery-grid" class="gallery-grid"></div>
 
-                <!-- Archived Section (shown when on archived tab) -->
+                <!-- Archived Section -->
                 <div id="archived-section" class="archived-section hidden">
-                    <div class="archived-section-header">
-                        <h3><span>📦</span> Diseños Archivados</h3>
+                    <div class="section-header">
+                        <h3>Disenos Archivados</h3>
                     </div>
                     <div id="archived-grid" class="gallery-grid"></div>
                 </div>
             </section>
 
             <!-- Design List Panel -->
-            <div id="design-list-panel" class="design-list-panel">
-                <div class="design-list-header">
-                    <h3><span>📋</span> Lista de Diseños</h3>
-                    <button class="btn-close" id="close-design-list">&times;</button>
-                </div>
-                <div class="design-list-content" id="design-list-content">
-                    <div class="design-list-empty">
-                        <span style="font-size: 48px;">📋</span>
-                        <p>Agrega diseños a tu lista</p>
+            <aside id="design-list-panel" class="side-panel">
+                <header class="panel-header">
+                    <h3>Lista de Disenos</h3>
+                    <button class="btn-close" id="close-design-list">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </header>
+                <div class="panel-content" id="design-list-content">
+                    <div class="empty-panel">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <path d="M14 2v6h6"/>
+                        </svg>
+                        <p>Agrega disenos a tu lista</p>
                     </div>
                 </div>
-                <div class="design-list-footer">
+                <footer class="panel-footer">
                     <button class="btn btn-secondary" id="clear-design-list">Limpiar</button>
                     <button class="btn btn-primary" id="download-all-designs">Descargar Todos</button>
-                </div>
-            </div>
+                </footer>
+            </aside>
 
-            <!-- Design List Toggle Button -->
-            <button id="design-list-toggle" class="design-list-toggle" style="display: none;">
-                <span>📋</span>
-                <span class="badge" id="design-list-badge">0</span>
+            <!-- Design List Toggle -->
+            <button id="design-list-toggle" class="fab-button hidden">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
+                </svg>
+                <span class="fab-badge" id="design-list-badge">0</span>
             </button>
 
             <!-- Notes View -->
             <section id="notes-view" class="view">
-                <div class="view-header">
+                <header class="view-header">
                     <h2>Documentos</h2>
                     <button class="btn btn-primary" id="new-note-btn">
-                        <span>+</span> Nuevo Documento
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Nuevo Documento
                     </button>
-                </div>
+                </header>
 
                 <div class="notes-layout">
-                    <div class="workspaces-sidebar">
+                    <aside class="workspaces-panel">
                         <h4>Espacios de Trabajo</h4>
                         <div id="workspaces-list"></div>
-                        <button class="btn btn-secondary btn-small" id="new-workspace-btn">
-                            + Nuevo Espacio
-                        </button>
-                    </div>
+                        <button class="btn btn-secondary btn-sm" id="new-workspace-btn">+ Nuevo Espacio</button>
+                    </aside>
 
                     <div class="notes-content">
                         <div id="notes-loading" class="loading-state">
@@ -244,37 +322,44 @@
                         </div>
 
                         <div id="notes-empty" class="empty-state hidden">
-                            <span class="empty-icon">📝</span>
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <path d="M14 2v6h6"/>
+                            </svg>
                             <h3>Sin documentos</h3>
                             <p>Crea tu primer documento</p>
                         </div>
 
-                        <div id="notes-list" class="notes-list"></div>
+                        <div id="notes-list" class="notes-grid"></div>
                     </div>
                 </div>
             </section>
 
             <!-- Employees View (Manager Only) -->
             <section id="employees-view" class="view">
-                <div class="view-header">
-                    <h2>Gestión de Empleados</h2>
+                <header class="view-header">
+                    <h2>Gestion de Empleados</h2>
                     <button class="btn btn-primary" id="new-employee-btn">
-                        <span>+</span> Nuevo Empleado
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Nuevo Empleado
                     </button>
-                </div>
+                </header>
 
-                <div class="employee-filters">
-                    <select id="dept-filter">
+                <div class="filters-row">
+                    <select id="dept-filter" class="select-input">
                         <option value="">Todos los departamentos</option>
-                        <option value="design">Diseño</option>
-                        <option value="production">Producción</option>
-                        <option value="shipping">Envíos</option>
+                        <option value="design">Diseno</option>
+                        <option value="production">Produccion</option>
+                        <option value="shipping">Envios</option>
                     </select>
-                    <select id="role-filter">
+                    <select id="role-filter" class="select-input">
                         <option value="">Todos los roles</option>
-                        <option value="design">Diseño</option>
-                        <option value="production">Producción</option>
-                        <option value="shipping">Envíos</option>
+                        <option value="design">Diseno</option>
+                        <option value="production">Produccion</option>
+                        <option value="shipping">Envios</option>
                         <option value="manager">Gerente</option>
                     </select>
                 </div>
@@ -284,23 +369,23 @@
                     <p>Cargando empleados...</p>
                 </div>
 
-                <div id="employees-list" class="employees-list"></div>
+                <div id="employees-list" class="employees-grid"></div>
             </section>
 
             <!-- All Tasks View (Manager Only) -->
             <section id="all-tasks-view" class="view">
-                <div class="view-header">
+                <header class="view-header">
                     <h2>Todas las Tareas</h2>
-                </div>
+                </header>
 
-                <div class="task-filters">
-                    <select id="all-tasks-dept-filter">
+                <div class="filters-row">
+                    <select id="all-tasks-dept-filter" class="select-input">
                         <option value="">Todos los departamentos</option>
-                        <option value="design">Diseño</option>
-                        <option value="production">Producción</option>
-                        <option value="shipping">Envíos</option>
+                        <option value="design">Diseno</option>
+                        <option value="production">Produccion</option>
+                        <option value="shipping">Envios</option>
                     </select>
-                    <select id="all-tasks-status-filter">
+                    <select id="all-tasks-status-filter" class="select-input">
                         <option value="">Todos los estados</option>
                         <option value="pending">Pendiente</option>
                         <option value="in_progress">En Progreso</option>
@@ -313,43 +398,53 @@
                     <p>Cargando tareas...</p>
                 </div>
 
-                <div id="all-tasks-list" class="task-list"></div>
+                <div id="all-tasks-list" class="tasks-container"></div>
             </section>
 
             <!-- Knowledge Base View - AI Chat -->
             <section id="knowledge-view" class="view">
-                <div class="view-header">
-                    <h2>🤖 Asistente AXKAN</h2>
-                    <div id="knowledge-stats" class="knowledge-stats"></div>
-                </div>
+                <header class="view-header">
+                    <h2>Asistente AXKAN</h2>
+                    <div id="knowledge-stats" class="stats-row"></div>
+                </header>
 
                 <!-- View Toggle -->
-                <div class="knowledge-view-toggle">
-                    <button class="knowledge-view-btn active" data-view="chat">
-                        <span>💬</span> Chat
+                <div class="tabs-row">
+                    <button class="tab-btn active" data-view="chat">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        Chat
                     </button>
-                    <button class="knowledge-view-btn" data-view="images">
-                        <span>🖼️</span> Imágenes
+                    <button class="tab-btn" data-view="images">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21"/>
+                        </svg>
+                        Imagenes
                     </button>
                 </div>
 
                 <!-- Chat Section -->
-                <div id="knowledge-chat-section" class="knowledge-chat-section">
-                    <!-- Messages Container -->
-                    <div id="knowledge-messages" class="knowledge-messages">
-                        <!-- Welcome message will be inserted here -->
-                    </div>
+                <div id="knowledge-chat-section" class="chat-container">
+                    <div id="knowledge-messages" class="chat-messages"></div>
 
-                    <!-- Input Area -->
-                    <div class="knowledge-input-area">
-                        <button id="knowledge-new-chat" class="btn-icon" title="Nueva conversación">
-                            🔄
+                    <div class="chat-input-area">
+                        <button id="knowledge-new-chat" class="btn-icon" title="Nueva conversacion">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 4v6h-6"/>
+                                <path d="M1 20v-6h6"/>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                            </svg>
                         </button>
-                        <div class="knowledge-input-wrapper">
-                            <input type="text" id="knowledge-input" class="knowledge-input"
-                                   placeholder="Pregunta sobre colores, tipografía, precios, ventas...">
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="knowledge-input" placeholder="Pregunta sobre colores, tipografia, precios, ventas...">
                             <button id="knowledge-send-btn" class="btn-send">
-                                ➤
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -357,15 +452,15 @@
 
                 <!-- Images Browser Section -->
                 <div id="knowledge-images-section" class="hidden">
-                    <div id="knowledge-images-browser" class="knowledge-images-browser"></div>
+                    <div id="knowledge-images-browser" class="images-browser"></div>
                 </div>
             </section>
 
             <!-- Profile View -->
             <section id="profile-view" class="view">
-                <div class="view-header">
+                <header class="view-header">
                     <h2>Mi Perfil</h2>
-                </div>
+                </header>
 
                 <div class="profile-card">
                     <div class="profile-avatar" id="profile-avatar">
@@ -374,40 +469,42 @@
                     <div class="profile-info">
                         <h3 id="profile-name">-</h3>
                         <p id="profile-email">-</p>
-                        <span class="role-badge" id="profile-role">-</span>
-                        <span class="dept-badge" id="profile-dept">-</span>
+                        <div class="profile-badges">
+                            <span class="badge badge-role" id="profile-role">-</span>
+                            <span class="badge badge-dept" id="profile-dept">-</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="profile-form">
-                    <h4>Actualizar Información</h4>
+                <div class="form-card">
+                    <h4>Actualizar Informacion</h4>
                     <form id="profile-form">
                         <div class="form-group">
                             <label for="profile-name-input">Nombre</label>
                             <input type="text" id="profile-name-input" required>
                         </div>
                         <div class="form-group">
-                            <label for="profile-phone-input">Teléfono</label>
+                            <label for="profile-phone-input">Telefono</label>
                             <input type="tel" id="profile-phone-input">
                         </div>
                         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                     </form>
 
-                    <h4>Cambiar Contraseña</h4>
+                    <h4>Cambiar Contrasena</h4>
                     <form id="password-form">
                         <div class="form-group">
-                            <label for="current-password">Contraseña Actual</label>
+                            <label for="current-password">Contrasena Actual</label>
                             <input type="password" id="current-password" required>
                         </div>
                         <div class="form-group">
-                            <label for="new-password">Nueva Contraseña</label>
+                            <label for="new-password">Nueva Contrasena</label>
                             <input type="password" id="new-password" required minlength="6">
                         </div>
                         <div class="form-group">
-                            <label for="confirm-password">Confirmar Nueva Contraseña</label>
+                            <label for="confirm-password">Confirmar Nueva Contrasena</label>
                             <input type="password" id="confirm-password" required>
                         </div>
-                        <button type="submit" class="btn btn-secondary">Cambiar Contraseña</button>
+                        <button type="submit" class="btn btn-secondary">Cambiar Contrasena</button>
                     </form>
                 </div>
             </section>
@@ -417,42 +514,48 @@
     <!-- Task Detail Modal -->
     <div id="task-modal" class="modal hidden">
         <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-dialog">
+            <header class="modal-header">
                 <h3 id="task-modal-title">Detalle de Tarea</h3>
-                <button class="btn-close" onclick="closeModal('task-modal')">&times;</button>
-            </div>
-            <div class="modal-body" id="task-modal-body">
-                <!-- Filled by JS -->
-            </div>
-            <div class="modal-footer" id="task-modal-footer">
-                <!-- Action buttons -->
-            </div>
+                <button class="btn-close" onclick="closeModal('task-modal')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </header>
+            <div class="modal-body" id="task-modal-body"></div>
+            <footer class="modal-footer" id="task-modal-footer"></footer>
         </div>
     </div>
 
     <!-- New Task Modal -->
     <div id="new-task-modal" class="modal hidden">
         <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-dialog">
+            <header class="modal-header">
                 <h3>Nueva Tarea</h3>
-                <button class="btn-close" onclick="closeModal('new-task-modal')">&times;</button>
-            </div>
+                <button class="btn-close" onclick="closeModal('new-task-modal')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </header>
             <div class="modal-body">
                 <form id="new-task-form">
                     <div class="form-group">
-                        <label for="task-title">Título *</label>
+                        <label for="task-title">Titulo *</label>
                         <input type="text" id="task-title" required>
                     </div>
                     <div class="form-group">
-                        <label for="task-description">Descripción</label>
+                        <label for="task-description">Descripcion</label>
                         <textarea id="task-description" rows="3"></textarea>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="task-priority">Prioridad</label>
-                            <select id="task-priority">
+                            <select id="task-priority" class="select-input">
                                 <option value="normal">Normal</option>
                                 <option value="low">Baja</option>
                                 <option value="high">Alta</option>
@@ -460,33 +563,38 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="task-due-date">Fecha Límite</label>
+                            <label for="task-due-date">Fecha Limite</label>
                             <input type="date" id="task-due-date">
                         </div>
                     </div>
                     <div class="form-group manager-only">
                         <label for="task-assign-to">Asignar a</label>
-                        <select id="task-assign-to">
+                        <select id="task-assign-to" class="select-input">
                             <option value="">Sin asignar</option>
                         </select>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
+            <footer class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('new-task-modal')">Cancelar</button>
                 <button class="btn btn-primary" id="create-task-btn">Crear Tarea</button>
-            </div>
+            </footer>
         </div>
     </div>
 
     <!-- New Employee Modal -->
     <div id="new-employee-modal" class="modal hidden">
         <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-dialog">
+            <header class="modal-header">
                 <h3>Nuevo Empleado</h3>
-                <button class="btn-close" onclick="closeModal('new-employee-modal')">&times;</button>
-            </div>
+                <button class="btn-close" onclick="closeModal('new-employee-modal')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </header>
             <div class="modal-body">
                 <form id="new-employee-form">
                     <div class="form-group">
@@ -498,92 +606,106 @@
                         <input type="email" id="emp-email" required>
                     </div>
                     <div class="form-group">
-                        <label for="emp-password">Contraseña *</label>
+                        <label for="emp-password">Contrasena *</label>
                         <input type="password" id="emp-password" required minlength="6">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="emp-role">Rol *</label>
-                            <select id="emp-role" required>
-                                <option value="design">Diseño</option>
-                                <option value="production">Producción</option>
-                                <option value="shipping">Envíos</option>
+                            <select id="emp-role" class="select-input" required>
+                                <option value="design">Diseno</option>
+                                <option value="production">Produccion</option>
+                                <option value="shipping">Envios</option>
                                 <option value="manager">Gerente</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="emp-department">Departamento *</label>
-                            <select id="emp-department" required>
-                                <option value="design">Diseño</option>
-                                <option value="production">Producción</option>
-                                <option value="shipping">Envíos</option>
+                            <select id="emp-department" class="select-input" required>
+                                <option value="design">Diseno</option>
+                                <option value="production">Produccion</option>
+                                <option value="shipping">Envios</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="emp-phone">Teléfono</label>
+                        <label for="emp-phone">Telefono</label>
                         <input type="tel" id="emp-phone">
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
+            <footer class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('new-employee-modal')">Cancelar</button>
                 <button class="btn btn-primary" id="create-employee-btn">Crear Empleado</button>
-            </div>
+            </footer>
         </div>
     </div>
 
     <!-- Note Editor Modal -->
     <div id="note-modal" class="modal hidden">
         <div class="modal-backdrop"></div>
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <input type="text" id="note-title-input" class="note-title-input" placeholder="Título del documento">
-                <button class="btn-close" onclick="closeModal('note-modal')">&times;</button>
-            </div>
+        <div class="modal-dialog modal-lg">
+            <header class="modal-header">
+                <input type="text" id="note-title-input" class="input-title" placeholder="Titulo del documento">
+                <button class="btn-close" onclick="closeModal('note-modal')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </header>
             <div class="modal-body">
-                <textarea id="note-content" class="note-editor" placeholder="Escribe tu documento aquí... (Soporta Markdown)"></textarea>
+                <textarea id="note-content" class="textarea-editor" placeholder="Escribe tu documento aqui... (Soporta Markdown)"></textarea>
             </div>
-            <div class="modal-footer">
+            <footer class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('note-modal')">Cancelar</button>
                 <button class="btn btn-primary" id="save-note-btn">Guardar</button>
-            </div>
+            </footer>
         </div>
     </div>
 
     <!-- Upload Design Modal -->
     <div id="upload-design-modal" class="modal hidden">
         <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Subir Diseño</h3>
-                <button class="btn-close" onclick="closeModal('upload-design-modal')">&times;</button>
-            </div>
+        <div class="modal-dialog">
+            <header class="modal-header">
+                <h3>Subir Diseno</h3>
+                <button class="btn-close" onclick="closeModal('upload-design-modal')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </header>
             <div class="modal-body">
                 <form id="upload-design-form">
                     <div class="form-group">
-                        <label for="design-file">Imagen *</label>
-                        <div class="upload-dropzone" id="upload-dropzone">
+                        <label>Imagen *</label>
+                        <div class="upload-zone" id="upload-dropzone">
                             <input type="file" id="design-file" accept="image/*" hidden>
-                            <div class="dropzone-content">
-                                <span style="font-size: 48px;">📁</span>
-                                <p>Arrastra una imagen aquí o <strong>haz clic</strong> para seleccionar</p>
-                                <small>JPG, PNG, GIF, WEBP (máx. 15MB)</small>
+                            <div class="upload-placeholder" id="upload-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <p>Arrastra una imagen aqui o <strong>haz clic</strong> para seleccionar</p>
+                                <small>JPG, PNG, GIF, WEBP (max. 15MB)</small>
                             </div>
-                            <div class="dropzone-preview hidden" id="upload-preview">
+                            <div class="upload-preview hidden" id="upload-preview">
                                 <img id="preview-image" src="" alt="Preview">
-                                <button type="button" class="btn btn-small btn-secondary" id="change-image-btn">Cambiar</button>
+                                <button type="button" class="btn btn-sm btn-secondary" id="change-image-btn">Cambiar</button>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="design-name">Nombre del diseño *</label>
-                        <input type="text" id="design-name" placeholder="Ej: Cancún Playa" required>
+                        <label for="design-name">Nombre del diseno *</label>
+                        <input type="text" id="design-name" placeholder="Ej: Cancun Playa" required>
                     </div>
                     <div class="form-group">
-                        <label for="design-category">Categoría</label>
-                        <select id="design-category">
-                            <option value="">Sin categoría</option>
+                        <label for="design-category">Categoria</label>
+                        <select id="design-category" class="select-input">
+                            <option value="">Sin categoria</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -591,18 +713,18 @@
                         <input type="text" id="design-tags" placeholder="Ej: playa, caribe, vacaciones">
                     </div>
                     <div class="form-group">
-                        <label for="design-description">Descripción</label>
-                        <textarea id="design-description" rows="2" placeholder="Descripción opcional..."></textarea>
+                        <label for="design-description">Descripcion</label>
+                        <textarea id="design-description" rows="2" placeholder="Descripcion opcional..."></textarea>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
+            <footer class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('upload-design-modal')">Cancelar</button>
                 <button class="btn btn-primary" id="submit-design-btn" disabled>
-                    <span id="upload-btn-text">Subir Diseño</span>
+                    <span id="upload-btn-text">Subir Diseno</span>
                     <span id="upload-btn-loading" class="hidden">Subiendo...</span>
                 </button>
-            </div>
+            </footer>
         </div>
     </div>
 
