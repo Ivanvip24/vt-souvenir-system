@@ -66,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
 async function verifyAuth() {
     try {
         console.log('verifyAuth - Making request with token:', state.token ? state.token.substring(0, 20) + '...' : 'NO TOKEN');
-        console.log('verifyAuth - Headers:', JSON.stringify(getAuthHeaders()));
 
         const response = await fetch(`${API_BASE}/employees/verify`, {
             headers: getAuthHeaders()
@@ -77,6 +76,12 @@ async function verifyAuth() {
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error('verifyAuth - Failed:', response.status, errorData);
+
+            // Show error to user before logout
+            if (errorData.error) {
+                alert('Sesion expirada: ' + errorData.error + '\n\nSeras redirigido al login.');
+            }
+
             // Token invalid/expired - force logout without confirmation
             forceLogout();
             return;
@@ -90,6 +95,7 @@ async function verifyAuth() {
 
     } catch (error) {
         console.error('Auth verification failed:', error);
+        alert('Error de conexion al verificar sesion. Intenta de nuevo.');
         forceLogout();
     }
 }
