@@ -19,21 +19,34 @@ const state = {
 // INITIALIZATION
 // ========================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Check authentication
     const token = localStorage.getItem('employee_token');
     const employeeData = localStorage.getItem('employee_data');
 
+    console.log('Init - Token in localStorage:', token ? `${token.length} chars` : 'NONE');
+    console.log('Init - Employee data:', employeeData ? 'present' : 'NONE');
+
     if (!token || !employeeData) {
+        console.log('Init - Missing auth data, redirecting to login');
         window.location.href = 'login.html';
         return;
     }
 
+    // Store token in state FIRST
     state.token = token;
     state.employee = JSON.parse(employeeData);
 
-    // Verify token is still valid
-    verifyAuth();
+    console.log('Init - State token set:', state.token ? `${state.token.length} chars` : 'NONE');
+
+    // Verify token is still valid - WAIT for this before proceeding
+    const authValid = await verifyAuth();
+    if (!authValid) {
+        console.log('Init - Auth verification failed, stopping initialization');
+        return; // verifyAuth already handles the redirect
+    }
+
+    console.log('Init - Auth verified, proceeding with setup');
 
     // Setup UI based on role
     setupRoleUI();
@@ -60,10 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
 async function verifyAuth() {
     try {
         const token = state.token || localStorage.getItem('employee_token');
+        console.log('verifyAuth - Using token:', token ? `${token.length} chars` : 'NONE');
 
         if (!token) {
+            console.error('verifyAuth - No token available');
             forceLogout();
-            return;
+            return false;
         }
 
         const response = await fetch(`${API_BASE}/employees/verify`, {
@@ -74,19 +89,25 @@ async function verifyAuth() {
             }
         });
 
+        console.log('verifyAuth - Response status:', response.status);
+
         if (!response.ok) {
+            console.error('verifyAuth - Token invalid, status:', response.status);
             forceLogout();
-            return;
+            return false;
         }
 
         const data = await response.json();
         state.employee = data.employee;
         localStorage.setItem('employee_data', JSON.stringify(data.employee));
         updateEmployeeInfo();
+        console.log('verifyAuth - Success, employee:', data.employee?.name);
+        return true;
 
     } catch (error) {
-        console.error('Auth verification failed:', error);
+        console.error('verifyAuth - Error:', error);
         forceLogout();
+        return false;
     }
 }
 
@@ -185,21 +206,12 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    // Check both sources for the token
-    const localToken = localStorage.getItem('employee_token');
-    const stateToken = state?.token;
-
-    // Debug: log what we find
-    console.log('getAuthHeaders - localStorage token:', localToken ? `${localToken.length} chars` : 'NULL');
-    console.log('getAuthHeaders - state.token:', stateToken ? `${stateToken.length} chars` : 'NULL');
-
-    const token = localToken || stateToken;
+    // Try state.token first (set during init), then localStorage as fallback
+    const token = state.token || localStorage.getItem('employee_token');
 
     if (!token) {
-        console.error('getAuthHeaders - NO TOKEN AVAILABLE!');
-        return {
-            'Content-Type': 'application/json'
-        };
+        console.error('getAuthHeaders - NO TOKEN! state.token:', state.token, 'localStorage:', localStorage.getItem('employee_token'));
+        return { 'Content-Type': 'application/json' };
     }
 
     return {
