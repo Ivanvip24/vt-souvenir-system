@@ -24,13 +24,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('employee_token');
     const employeeData = localStorage.getItem('employee_data');
 
+    console.log('Dashboard init - Token exists:', !!token);
+    console.log('Dashboard init - Token length:', token ? token.length : 0);
+    console.log('Dashboard init - Employee data exists:', !!employeeData);
+
     if (!token || !employeeData) {
+        console.log('No token or employee data - redirecting to login');
         window.location.href = 'login.html';
         return;
     }
 
     state.token = token;
     state.employee = JSON.parse(employeeData);
+    console.log('Dashboard init - State token set, employee:', state.employee.name);
 
     // Verify token is still valid
     verifyAuth();
@@ -59,17 +65,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function verifyAuth() {
     try {
+        console.log('verifyAuth - Making request with token:', state.token ? state.token.substring(0, 20) + '...' : 'NO TOKEN');
+        console.log('verifyAuth - Headers:', JSON.stringify(getAuthHeaders()));
+
         const response = await fetch(`${API_BASE}/employees/verify`, {
             headers: getAuthHeaders()
         });
 
+        console.log('verifyAuth - Response status:', response.status);
+
         if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('verifyAuth - Failed:', response.status, errorData);
             // Token invalid/expired - force logout without confirmation
             forceLogout();
             return;
         }
 
         const data = await response.json();
+        console.log('verifyAuth - Success, employee:', data.employee?.name);
         state.employee = data.employee;
         localStorage.setItem('employee_data', JSON.stringify(data.employee));
         updateEmployeeInfo();
