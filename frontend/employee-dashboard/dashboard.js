@@ -167,8 +167,13 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
+    const token = state.token || localStorage.getItem('employee_token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return { 'Content-Type': 'application/json' };
+    }
     return {
-        'Authorization': `Bearer ${state.token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
     };
 }
