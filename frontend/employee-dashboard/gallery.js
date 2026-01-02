@@ -179,14 +179,27 @@ async function downloadDesign(designId) {
     if (!design) return;
 
     try {
-        // First, trigger the actual download
+        showToast('Descargando...', 'info');
+
+        // Fetch the image as a blob to force download (works with cross-origin URLs)
+        const response = await fetch(design.file_url);
+        const blob = await response.blob();
+
+        // Create a blob URL and trigger download
+        const blobUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = design.file_url;
-        link.download = design.name || 'design';
-        link.target = '_blank';
+        link.href = blobUrl;
+
+        // Get file extension from URL or default to jpg
+        const extension = design.file_url.split('.').pop().split('?')[0] || 'jpg';
+        link.download = `${design.name || 'design'}.${extension}`;
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        // Clean up the blob URL
+        window.URL.revokeObjectURL(blobUrl);
 
         // Mark as downloaded in backend (archives it)
         const data = await apiPost(`/gallery/${designId}/download`, {});
@@ -389,46 +402,107 @@ function openDesignModal(design) {
 // EVENT LISTENERS
 // ========================================
 
-// Tab switching
-document.querySelectorAll('.gallery-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.gallery-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
+let galleryInitialized = false;
 
-        galleryState.currentTab = tab.dataset.tab;
+function initGalleryEventListeners() {
+    if (galleryInitialized) return;
+
+    // Tab switching - use selector that matches the HTML structure
+    document.querySelectorAll('#gallery-view .tab-btn[data-tab]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('#gallery-view .tab-btn[data-tab]').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            galleryState.currentTab = tab.dataset.tab;
+            loadGallery();
+        });
+    });
+
+    // Category filter
+    document.getElementById('category-filter')?.addEventListener('change', (e) => {
+        galleryState.currentCategory = e.target.value || null;
         loadGallery();
     });
-});
 
-// Category filter
-document.getElementById('category-filter')?.addEventListener('change', (e) => {
-    galleryState.currentCategory = e.target.value || null;
-    loadGallery();
-});
+    // Search with debounce
+    let searchTimeout;
+    document.getElementById('gallery-search')?.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            galleryState.searchQuery = e.target.value.trim();
 
-// Search with debounce
-let searchTimeout;
-document.getElementById('gallery-search')?.addEventListener('input', (e) => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        galleryState.searchQuery = e.target.value.trim();
+            // Only search if we're on the active tab
+            if (galleryState.currentTab === 'active') {
+                loadGallery();
+            }
+        }, 300);
+    });
 
-        // Only search if we're on the active tab
-        if (galleryState.currentTab === 'active') {
-            loadGallery();
-        }
-    }, 300);
-});
+    // Design list panel toggle
+    document.getElementById('design-list-toggle')?.addEventListener('click', toggleDesignListPanel);
+    document.getElementById('close-design-list')?.addEventListener('click', () => {
+        document.getElementById('design-list-panel').classList.remove('open');
+    });
 
-// Design list panel toggle
-document.getElementById('design-list-toggle')?.addEventListener('click', toggleDesignListPanel);
-document.getElementById('close-design-list')?.addEventListener('click', () => {
-    document.getElementById('design-list-panel').classList.remove('open');
-});
+    // Design list actions
+    document.getElementById('clear-design-list')?.addEventListener('click', clearDesignList);
+    document.getElementById('download-all-designs')?.addEventListener('click', downloadAllDesigns);
 
-// Design list actions
-document.getElementById('clear-design-list')?.addEventListener('click', clearDesignList);
-document.getElementById('download-all-designs')?.addEventListener('click', downloadAllDesigns);
+    // Upload button opens modal
+    document.getElementById('upload-design-btn')?.addEventListener('click', openUploadModal);
+
+    // Dropzone click
+    document.getElementById('upload-dropzone')?.addEventListener('click', () => {
+        document.getElementById('design-file').click();
+    });
+
+    // File input change
+    document.getElementById('design-file')?.addEventListener('change', (e) => {
+        handleFileSelect(e.target.files[0]);
+    });
+
+    // Change image button
+    document.getElementById('change-image-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('design-file').click();
+    });
+
+    // Drag and drop
+    const dropzone = document.getElementById('upload-dropzone');
+    if (dropzone) {
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            handleFileSelect(file);
+        });
+    }
+
+    // Name input for submit button validation
+    document.getElementById('design-name')?.addEventListener('input', updateSubmitButton);
+
+    // Submit button
+    document.getElementById('submit-design-btn')?.addEventListener('click', submitDesign);
+
+    galleryInitialized = true;
+    console.log('Gallery event listeners initialized');
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGalleryEventListeners);
+} else {
+    initGalleryEventListeners();
+}
 
 // ========================================
 // UPLOAD FUNCTIONALITY
@@ -556,50 +630,7 @@ async function submitDesign() {
     }
 }
 
-// Upload button opens modal
-document.getElementById('upload-design-btn')?.addEventListener('click', openUploadModal);
-
-// Dropzone click
-document.getElementById('upload-dropzone')?.addEventListener('click', () => {
-    document.getElementById('design-file').click();
-});
-
-// File input change
-document.getElementById('design-file')?.addEventListener('change', (e) => {
-    handleFileSelect(e.target.files[0]);
-});
-
-// Change image button
-document.getElementById('change-image-btn')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('design-file').click();
-});
-
-// Drag and drop
-const dropzone = document.getElementById('upload-dropzone');
-if (dropzone) {
-    dropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropzone.classList.add('dragover');
-    });
-
-    dropzone.addEventListener('dragleave', () => {
-        dropzone.classList.remove('dragover');
-    });
-
-    dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropzone.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        handleFileSelect(file);
-    });
-}
-
-// Name input for submit button validation
-document.getElementById('design-name')?.addEventListener('input', updateSubmitButton);
-
-// Submit button
-document.getElementById('submit-design-btn')?.addEventListener('click', submitDesign);
+// Event listeners are initialized in initGalleryEventListeners()
 
 // Make functions globally available
 window.loadGallery = loadGallery;
