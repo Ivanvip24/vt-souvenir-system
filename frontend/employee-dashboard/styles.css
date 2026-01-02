@@ -1787,6 +1787,204 @@ textarea {
 }
 
 /* ============================================
+   DESIGN DETAIL MODAL
+   ============================================ */
+
+.modal-xl {
+    max-width: 900px;
+    width: 95vw;
+}
+
+.modal-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-icon:hover {
+    background: var(--gray-100);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-edit.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.design-detail-body {
+    padding: 0 !important;
+}
+
+.design-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    min-height: 400px;
+}
+
+.design-image-container {
+    background: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border-right: 1px solid var(--gray-200);
+}
+
+.design-full-image {
+    max-width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+}
+
+.design-info-panel {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 60vh;
+}
+
+.design-info-view,
+.design-info-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.design-info-edit.hidden,
+.design-info-view.hidden {
+    display: none;
+}
+
+.info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-section label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 14px;
+    color: var(--gray-800);
+    margin: 0;
+}
+
+.description-text {
+    line-height: 1.5;
+    color: var(--gray-600);
+}
+
+/* Tags in modal */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.design-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary));
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 20px;
+}
+
+.no-tags {
+    color: var(--gray-400);
+    font-style: italic;
+    font-size: 13px;
+}
+
+.info-divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 8px 0;
+}
+
+.info-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.meta-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.meta-label {
+    font-size: 12px;
+    color: var(--gray-500);
+}
+
+.meta-value {
+    font-size: 13px;
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+/* Edit form in modal */
+.design-info-edit .form-group {
+    margin-bottom: 0;
+}
+
+.design-info-edit .form-control {
+    font-size: 14px;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gray-200);
+}
+
+/* Responsive design modal */
+@media (max-width: 768px) {
+    .design-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .design-image-container {
+        border-right: none;
+        border-bottom: 1px solid var(--gray-200);
+        max-height: 300px;
+    }
+
+    .design-info-panel {
+        max-height: none;
+    }
+}
+
+/* ============================================
    TOAST NOTIFICATIONS
    ============================================ */
 #toast-container {

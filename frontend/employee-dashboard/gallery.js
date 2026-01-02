@@ -580,31 +580,128 @@ function toggleDesignListPanel() {
 function openDesignModal(design) {
     const isArchived = design.is_archived;
 
+    // Create tags HTML
+    const tagsHTML = design.tags?.length
+        ? design.tags.map(tag => `<span class="design-tag">${escapeHtml(tag)}</span>`).join('')
+        : '<span class="no-tags">Sin etiquetas</span>';
+
     const modal = document.createElement('div');
-    modal.className = 'modal';
+    modal.className = 'modal design-detail-modal';
+    modal.id = `design-modal-${design.id}`;
     modal.innerHTML = `
         <div class="modal-backdrop" onclick="this.parentElement.remove()"></div>
-        <div class="modal-content modal-large">
+        <div class="modal-content modal-xl">
             <div class="modal-header">
-                <h3>${escapeHtml(design.name)}</h3>
-                <button class="btn-close" onclick="this.closest('.modal').remove()">&times;</button>
+                <h3 id="design-modal-title-${design.id}">${escapeHtml(design.name)}</h3>
+                <div class="modal-header-actions">
+                    <button class="btn btn-icon btn-edit" onclick="toggleEditMode(${design.id})" title="Editar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                    <button class="btn-close" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
             </div>
-            <div class="modal-body" style="text-align: center;">
-                <img src="${design.file_url}" alt="${escapeHtml(design.name)}" style="max-width: 100%; max-height: 50vh; border-radius: 8px;">
-                <div style="margin-top: 16px; text-align: left;">
-                    <p><strong>Categoría:</strong> ${design.category_name || 'Sin categoría'}</p>
-                    ${design.description ? `<p><strong>Descripción:</strong> ${escapeHtml(design.description)}</p>` : ''}
-                    ${design.tags?.length ? `<p><strong>Etiquetas:</strong> ${design.tags.join(', ')}</p>` : ''}
-                    <p><strong>Subido por:</strong> ${design.uploaded_by_name || 'Desconocido'}</p>
-                    <p><strong>Fecha:</strong> ${formatDate(design.created_at)}</p>
-                    ${isArchived ? `<p><strong>Archivado:</strong> ${formatDate(design.archived_at)} por ${design.archived_by_name || 'Desconocido'}</p>` : ''}
-                    ${design.download_count ? `<p><strong>Descargas:</strong> ${design.download_count}</p>` : ''}
+            <div class="modal-body design-detail-body">
+                <div class="design-detail-layout">
+                    <!-- Left: Image -->
+                    <div class="design-image-container">
+                        <img src="${design.file_url}" alt="${escapeHtml(design.name)}" class="design-full-image">
+                    </div>
+
+                    <!-- Right: Info -->
+                    <div class="design-info-panel">
+                        <!-- View Mode -->
+                        <div class="design-info-view" id="design-view-${design.id}">
+                            <div class="info-section">
+                                <label>Nombre</label>
+                                <p class="info-value">${escapeHtml(design.name)}</p>
+                            </div>
+
+                            <div class="info-section">
+                                <label>Categoria</label>
+                                <p class="info-value">${design.category_name || 'Sin categoría'}</p>
+                            </div>
+
+                            <div class="info-section">
+                                <label>Etiquetas</label>
+                                <div class="tags-container">${tagsHTML}</div>
+                            </div>
+
+                            <div class="info-section">
+                                <label>Descripcion</label>
+                                <p class="info-value description-text">${design.description ? escapeHtml(design.description) : 'Sin descripción'}</p>
+                            </div>
+
+                            <div class="info-divider"></div>
+
+                            <div class="info-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Subido por</span>
+                                    <span class="meta-value">${design.uploaded_by_name || 'Desconocido'}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Fecha</span>
+                                    <span class="meta-value">${formatDate(design.created_at)}</span>
+                                </div>
+                                ${design.download_count ? `
+                                <div class="meta-item">
+                                    <span class="meta-label">Descargas</span>
+                                    <span class="meta-value">${design.download_count}</span>
+                                </div>
+                                ` : ''}
+                                ${isArchived ? `
+                                <div class="meta-item">
+                                    <span class="meta-label">Archivado</span>
+                                    <span class="meta-value">${formatDate(design.archived_at)}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Edit Mode (hidden by default) -->
+                        <div class="design-info-edit hidden" id="design-edit-${design.id}">
+                            <div class="form-group">
+                                <label for="edit-name-${design.id}">Nombre</label>
+                                <input type="text" id="edit-name-${design.id}" class="form-control" value="${escapeHtml(design.name)}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="edit-category-${design.id}">Categoria</label>
+                                <select id="edit-category-${design.id}" class="form-control select-input">
+                                    <option value="">Sin categoría</option>
+                                    ${galleryState.categories.map(cat =>
+                                        `<option value="${cat.id}" ${design.category_id == cat.id ? 'selected' : ''}>${cat.icon || ''} ${cat.name}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="edit-tags-${design.id}">Etiquetas (separadas por coma)</label>
+                                <input type="text" id="edit-tags-${design.id}" class="form-control" value="${design.tags?.join(', ') || ''}" placeholder="Tortuga, Playa, Tropical...">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="edit-description-${design.id}">Descripcion</label>
+                                <textarea id="edit-description-${design.id}" class="form-control" rows="3" placeholder="Descripción del diseño...">${design.description || ''}</textarea>
+                            </div>
+
+                            <div class="edit-actions">
+                                <button class="btn btn-secondary" onclick="toggleEditMode(${design.id})">Cancelar</button>
+                                <button class="btn btn-primary" onclick="saveDesignChanges(${design.id})">
+                                    <span id="save-text-${design.id}">Guardar Cambios</span>
+                                    <span id="save-loading-${design.id}" class="hidden">Guardando...</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 ${isArchived ? `
-                    <button class="btn btn-secondary" onclick="restoreDesign(${design.id}); this.closest('.modal').remove();">
-                        🔄 Restaurar
+                    <button class="btn btn-success" onclick="restoreDesign(${design.id}); this.closest('.modal').remove();">
+                        🔄 Restaurar a Galeria
                     </button>
                 ` : `
                     <button class="btn btn-secondary" onclick="toggleDesignList(${design.id}); this.closest('.modal').remove();">
@@ -618,6 +715,103 @@ function openDesignModal(design) {
         </div>
     `;
     document.body.appendChild(modal);
+}
+
+// Toggle between view and edit mode in design modal
+function toggleEditMode(designId) {
+    const viewSection = document.getElementById(`design-view-${designId}`);
+    const editSection = document.getElementById(`design-edit-${designId}`);
+    const editBtn = document.querySelector(`#design-modal-${designId} .btn-edit`);
+
+    if (viewSection && editSection) {
+        const isEditing = !editSection.classList.contains('hidden');
+
+        if (isEditing) {
+            // Switch to view mode
+            viewSection.classList.remove('hidden');
+            editSection.classList.add('hidden');
+            editBtn.classList.remove('active');
+        } else {
+            // Switch to edit mode
+            viewSection.classList.add('hidden');
+            editSection.classList.remove('hidden');
+            editBtn.classList.add('active');
+        }
+    }
+}
+
+// Save design changes
+async function saveDesignChanges(designId) {
+    const nameInput = document.getElementById(`edit-name-${designId}`);
+    const categoryInput = document.getElementById(`edit-category-${designId}`);
+    const tagsInput = document.getElementById(`edit-tags-${designId}`);
+    const descriptionInput = document.getElementById(`edit-description-${designId}`);
+    const saveText = document.getElementById(`save-text-${designId}`);
+    const saveLoading = document.getElementById(`save-loading-${designId}`);
+
+    const name = nameInput.value.trim();
+    if (!name) {
+        showToast('El nombre es requerido', 'error');
+        return;
+    }
+
+    // Parse tags
+    const tags = tagsInput.value
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
+
+    // Show loading
+    saveText.classList.add('hidden');
+    saveLoading.classList.remove('hidden');
+
+    try {
+        const response = await fetch(`${API_BASE}/gallery/${designId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.token}`
+            },
+            body: JSON.stringify({
+                name,
+                category_id: categoryInput.value || null,
+                tags,
+                description: descriptionInput.value.trim() || null
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Diseño actualizado', 'success');
+
+            // Update the design in our local state
+            const designIndex = galleryState.designs.findIndex(d => d.id === designId);
+            if (designIndex >= 0) {
+                galleryState.designs[designIndex] = {
+                    ...galleryState.designs[designIndex],
+                    ...data.design
+                };
+            }
+
+            // Close modal and refresh
+            document.getElementById(`design-modal-${designId}`)?.remove();
+
+            // Re-render gallery
+            const grid = document.getElementById('gallery-grid');
+            if (grid) {
+                renderGalleryGrid(grid, galleryState.designs, false);
+            }
+        } else {
+            showToast(data.error || 'Error al actualizar', 'error');
+        }
+    } catch (error) {
+        console.error('Save design error:', error);
+        showToast('Error al guardar cambios', 'error');
+    } finally {
+        saveText.classList.remove('hidden');
+        saveLoading.classList.add('hidden');
+    }
 }
 
 // ========================================
@@ -1138,3 +1332,5 @@ window.recoverAllDesigns = recoverAllDesigns;
 window.openUploadModal = openUploadModal;
 window.clearBatchSelection = clearBatchSelection;
 window.handleFilesSelect = handleFilesSelect;
+window.toggleEditMode = toggleEditMode;
+window.saveDesignChanges = saveDesignChanges;
