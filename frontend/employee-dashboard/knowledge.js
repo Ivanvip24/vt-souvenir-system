@@ -79,32 +79,27 @@ async function askQuickQuestion(question) {
 
 function addMessageToUI(role, content) {
   const messagesContainer = document.getElementById('knowledge-messages');
-  if (!messagesContainer) return;
 
   const messageEl = document.createElement('div');
   messageEl.className = `knowledge-message knowledge-message-${role}`;
 
-  const userIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-  const botIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 12 2z"/><circle cx="8" cy="14" r="1.5"/><circle cx="16" cy="14" r="1.5"/><path d="M9 18h6"/></svg>`;
-  const errorIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
-
   if (role === 'user') {
     messageEl.innerHTML = `
-      <div class="message-avatar">${userIcon}</div>
+      <div class="message-avatar">👤</div>
       <div class="message-content">
         <div class="message-text">${escapeHtml(content)}</div>
       </div>
     `;
   } else if (role === 'assistant') {
     messageEl.innerHTML = `
-      <div class="message-avatar">${botIcon}</div>
+      <div class="message-avatar">🤖</div>
       <div class="message-content">
         <div class="message-text">${formatAIResponse(content)}</div>
       </div>
     `;
   } else if (role === 'error') {
     messageEl.innerHTML = `
-      <div class="message-avatar">${errorIcon}</div>
+      <div class="message-avatar">⚠️</div>
       <div class="message-content message-error">
         <div class="message-text">${escapeHtml(content)}</div>
       </div>
@@ -117,15 +112,11 @@ function addMessageToUI(role, content) {
 
 function showTypingIndicator() {
   const messagesContainer = document.getElementById('knowledge-messages');
-  if (!messagesContainer) return;
-
-  const botIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 12 2z"/><circle cx="8" cy="14" r="1.5"/><circle cx="16" cy="14" r="1.5"/><path d="M9 18h6"/></svg>`;
-
   const indicator = document.createElement('div');
   indicator.className = 'knowledge-message knowledge-message-assistant typing-indicator';
   indicator.id = 'typing-indicator';
   indicator.innerHTML = `
-    <div class="message-avatar">${botIcon}</div>
+    <div class="message-avatar">🤖</div>
     <div class="message-content">
       <div class="typing-dots">
         <span></span><span></span><span></span>
@@ -205,18 +196,14 @@ function clearKnowledgeConversation() {
 
   messagesContainer.innerHTML = `
     <div class="knowledge-welcome">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #e72a88; margin-bottom: 16px;">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
+      <div class="welcome-icon">🎨</div>
       <h3>Asistente de Marca AXKAN</h3>
-      <p>Preguntame sobre colores, tipografia, productos, precios o cualquier aspecto de la marca.</p>
+      <p>Pregúntame sobre colores, tipografía, productos, precios o cualquier aspecto de la marca.</p>
       <div class="quick-questions">
-        <button onclick="askQuickQuestion('Cuales son los colores principales de la marca?')">Colores de marca</button>
-        <button onclick="askQuickQuestion('Cual es la tipografia de AXKAN?')">Tipografia</button>
-        <button onclick="askQuickQuestion('Cuales son los precios de los imanes?')">Precios</button>
-        <button onclick="askQuickQuestion('Dame un guion de venta para Facebook')">Guion de ventas</button>
+        <button onclick="askQuickQuestion('¿Cuáles son los colores principales de la marca?')">🎨 Colores de marca</button>
+        <button onclick="askQuickQuestion('¿Cuál es la tipografía de AXKAN?')">✏️ Tipografía</button>
+        <button onclick="askQuickQuestion('¿Cuáles son los precios de los imanes?')">💰 Precios</button>
+        <button onclick="askQuickQuestion('Dame un guion de venta para Facebook')">💬 Guión de ventas</button>
       </div>
     </div>
   `;
@@ -322,17 +309,12 @@ function closeKnowledgeImageModal() {
 function switchKnowledgeView(view) {
   knowledgeState.currentView = view;
 
-  // Update tab buttons
-  document.querySelectorAll('#knowledge-view .tab-btn').forEach(btn => {
+  document.querySelectorAll('.knowledge-view-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === view);
   });
 
-  // Show/hide sections
-  const chatSection = document.getElementById('knowledge-chat-section');
-  const imagesSection = document.getElementById('knowledge-images-section');
-
-  if (chatSection) chatSection.classList.toggle('hidden', view !== 'chat');
-  if (imagesSection) imagesSection.classList.toggle('hidden', view !== 'images');
+  document.getElementById('knowledge-chat-section').classList.toggle('hidden', view !== 'chat');
+  document.getElementById('knowledge-images-section').classList.toggle('hidden', view !== 'images');
 
   if (view === 'images') {
     loadKnowledgeImages();
@@ -371,18 +353,10 @@ function initKnowledgeEventListeners() {
     newChatBtn.addEventListener('click', clearKnowledgeConversation);
   }
 
-  // View toggle buttons - updated for new HTML structure
-  const tabContainer = document.querySelector('#knowledge-view .tabs-row');
-  if (tabContainer) {
-    tabContainer.addEventListener('click', (e) => {
-      const btn = e.target.closest('.tab-btn');
-      if (btn && btn.dataset.view) {
-        tabContainer.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-        btn.classList.add('active');
-        switchKnowledgeView(btn.dataset.view);
-      }
-    });
-  }
+  // View toggle buttons
+  document.querySelectorAll('#knowledge-view .knowledge-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchKnowledgeView(btn.dataset.view));
+  });
 
   knowledgeInitialized = true;
   console.log('Knowledge AI event listeners initialized');
@@ -423,15 +397,7 @@ async function loadKnowledge() {
   }
 }
 
-// Helper to get auth headers (if employee is logged in)
-function getAuthHeaders() {
-  const headers = { 'Content-Type': 'application/json' };
-  const token = localStorage.getItem('employeeToken');
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
-}
+// NOTE: getAuthHeaders() is defined in dashboard.js - do not duplicate here
 
 // Initialize when DOM is ready (backup)
 if (document.readyState === 'loading') {
