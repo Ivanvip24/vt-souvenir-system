@@ -478,4 +478,339 @@ router.post('/run-gallery-archive-migration', authMiddleware, async (req, res) =
   }
 });
 
+// ========================================
+// EMPLOYEE MANAGEMENT (Admin only)
+// ========================================
+
+const SALT_ROUNDS = 10;
+
+/**
+ * GET /api/admin/employees
+ * List all employees (Admin only)
+ */
+router.get('/employees', authMiddleware, async (req, res) => {
+  try {
+    const { department, role, active } = req.query;
+
+    let sql = `
+      SELECT id, email, name, role, department, phone, avatar_url,
+             is_active, last_login, created_at
+      FROM employees
+      WHERE 1=1
+    `;
+    const values = [];
+    let paramIndex = 1;
+
+    if (department) {
+      sql += ` AND department = $${paramIndex++}`;
+      values.push(department);
+    }
+    if (role) {
+      sql += ` AND role = $${paramIndex++}`;
+      values.push(role);
+    }
+    if (active !== undefined) {
+      sql += ` AND is_active = $${paramIndex++}`;
+      values.push(active === 'true');
+    }
+
+    sql += ' ORDER BY name ASC';
+
+    const result = await query(sql, values);
+
+    res.json({
+      success: true,
+      employees: result.rows,
+      total: result.rows.length
+    });
+
+  } catch (error) {
+    console.error('List employees error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al listar empleados'
+    });
+  }
+});
+
+/**
+ * GET /api/admin/employees/:id
+ * Get single employee (Admin only)
+ */
+router.get('/employees/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      `SELECT id, email, name, role, department, phone, avatar_url,
+              is_active, last_login, created_at, created_by
+       FROM employees WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Empleado no encontrado'
+      });
+    }
+
+    res.json({
+      success: true,
+      employee: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Get employee error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener empleado'
+    });
+  }
+});
+
+/**
+ * POST /api/admin/employees
+ * Create new employee (Admin only)
+ */
+router.post('/employees', authMiddleware, async (req, res) => {
+  try {
+    const { email, password, name, role, department, phone } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !name || !role || !department) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email, contraseña, nombre, rol y departamento son requeridos'
+      });
+    }
+
+    // Validate role
+    const validRoles = ['design', 'production', 'shipping', 'manager'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Rol inválido'
+      });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'La contraseña debe tener al menos 6 caracteres'
+      });
+    }
+
+    // Check if email already exists
+    const existing = await query(
+      'SELECT id FROM employees WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Ya existe un empleado con ese email'
+      });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // Create employee
+    const result = await query(
+      `INSERT INTO employees (email, password_hash, name, role, department, phone)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, email, name, role, department, phone, is_active, created_at`,
+      [email.toLowerCase().trim(), passwordHash, name, role, department, phone]
+    );
+
+    console.log(`✅ Employee created by admin: ${name} (${email})`);
+
+    res.status(201).json({
+      success: true,
+      employee: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Create employee error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al crear empleado'
+    });
+  }
+});
+
+/**
+ * PUT /api/admin/employees/:id
+ * Update employee (Admin only)
+ */
+router.put('/employees/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, role, department, phone, is_active } = req.body;
+
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (role) {
+      const validRoles = ['design', 'production', 'shipping', 'manager'];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Rol inválido'
+        });
+      }
+      updates.push(`role = $${paramIndex++}`);
+      values.push(role);
+    }
+    if (department) {
+      updates.push(`department = $${paramIndex++}`);
+      values.push(department);
+    }
+    if (phone !== undefined) {
+      updates.push(`phone = $${paramIndex++}`);
+      values.push(phone);
+    }
+    if (is_active !== undefined) {
+      updates.push(`is_active = $${paramIndex++}`);
+      values.push(is_active);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No hay campos para actualizar'
+      });
+    }
+
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(id);
+
+    const result = await query(
+      `UPDATE employees SET ${updates.join(', ')}
+       WHERE id = $${paramIndex}
+       RETURNING id, email, name, role, department, phone, is_active, created_at`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Empleado no encontrado'
+      });
+    }
+
+    console.log(`✅ Employee updated by admin: ${result.rows[0].name}`);
+
+    res.json({
+      success: true,
+      employee: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Update employee error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al actualizar empleado'
+    });
+  }
+});
+
+/**
+ * PUT /api/admin/employees/:id/password
+ * Reset employee password (Admin only)
+ */
+router.put('/employees/:id/password', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nueva contraseña es requerida'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'La contraseña debe tener al menos 6 caracteres'
+      });
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    const result = await query(
+      'UPDATE employees SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, name',
+      [passwordHash, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Empleado no encontrado'
+      });
+    }
+
+    console.log(`✅ Password reset by admin for: ${result.rows[0].name}`);
+
+    res.json({
+      success: true,
+      message: 'Contraseña restablecida correctamente'
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al restablecer contraseña'
+    });
+  }
+});
+
+/**
+ * DELETE /api/admin/employees/:id
+ * Deactivate employee (Admin only) - soft delete
+ */
+router.delete('/employees/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      'UPDATE employees SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, name',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Empleado no encontrado'
+      });
+    }
+
+    console.log(`✅ Employee deactivated by admin: ${result.rows[0].name}`);
+
+    res.json({
+      success: true,
+      message: 'Empleado desactivado correctamente'
+    });
+
+  } catch (error) {
+    console.error('Delete employee error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al desactivar empleado'
+    });
+  }
+});
+
 export default router;

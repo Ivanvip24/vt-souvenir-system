@@ -26,7 +26,7 @@ const DEPT_LABELS = {
  */
 async function loadEmployees() {
   try {
-    const response = await fetch(`${API_BASE}/employees`, {
+    const response = await fetch(`${API_BASE}/admin/employees`, {
       headers: getAuthHeaders()
     });
 
@@ -287,8 +287,8 @@ async function saveEmployee(event) {
 
   try {
     const url = isEdit
-      ? `${API_BASE}/employees/${employeeId}`
-      : `${API_BASE}/employees`;
+      ? `${API_BASE}/admin/employees/${employeeId}`
+      : `${API_BASE}/admin/employees`;
 
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -327,7 +327,7 @@ async function toggleEmployeeStatus(employeeId, active) {
   }
 
   try {
-    const response = await fetch(`${API_BASE}/employees/${employeeId}`, {
+    const response = await fetch(`${API_BASE}/admin/employees/${employeeId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -388,7 +388,7 @@ async function resetEmployeePassword(event) {
   }
 
   try {
-    const response = await fetch(`${API_BASE}/employees/${employeeId}/password`, {
+    const response = await fetch(`${API_BASE}/admin/employees/${employeeId}/password`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
