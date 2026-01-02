@@ -715,9 +715,9 @@
             <div class="modal-body">
                 <form id="upload-design-form">
                     <div class="form-group">
-                        <label>Imagen *</label>
+                        <label>Imagenes *</label>
                         <div class="upload-zone" id="upload-dropzone">
-                            <input type="file" id="design-file" accept="image/*" hidden>
+                            <input type="file" id="design-file" accept="image/*" hidden multiple>
                             <div class="upload-placeholder" id="upload-placeholder">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -733,7 +733,17 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
+                    <!-- AI Batch Info - shown when multiple images selected -->
+                    <div class="form-group ai-info-box hidden" id="ai-batch-info">
+                        <div class="ai-info-content">
+                            <span class="ai-icon">🤖</span>
+                            <div>
+                                <strong>Analisis con IA</strong>
+                                <p>Claude analizara cada imagen y extraera automaticamente el titulo, etiquetas (animales, temas, elementos) y descripcion.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group single-upload-field">
                         <label for="design-name">Nombre del diseno *</label>
                         <input type="text" id="design-name" placeholder="Ej: Cancun Playa" required>
                     </div>
@@ -743,11 +753,11 @@
                             <option value="">Sin categoria</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group single-upload-field">
                         <label for="design-tags">Etiquetas (separadas por coma)</label>
                         <input type="text" id="design-tags" placeholder="Ej: playa, caribe, vacaciones">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group single-upload-field">
                         <label for="design-description">Descripcion</label>
                         <textarea id="design-description" rows="2" placeholder="Descripcion opcional..."></textarea>
                     </div>

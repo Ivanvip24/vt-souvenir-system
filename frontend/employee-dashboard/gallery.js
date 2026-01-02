@@ -501,16 +501,71 @@ async function downloadAllDesigns() {
         return;
     }
 
-    showToast(`Descargando ${galleryState.designList.length} diseños...`);
+    const downloadBtn = document.getElementById('download-all-designs');
+    const originalText = downloadBtn.innerHTML;
+    downloadBtn.innerHTML = '⏳ Creando ZIP...';
+    downloadBtn.disabled = true;
 
-    // Download each design with a small delay
-    for (const design of [...galleryState.designList]) {
-        await downloadDesign(design.id);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between downloads
+    try {
+        showToast(`Preparando ZIP con ${galleryState.designList.length} diseños...`, 'info');
+
+        const designIds = galleryState.designList.map(d => d.id);
+
+        const response = await fetch(`${API_BASE}/gallery/download-zip`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.token}`
+            },
+            body: JSON.stringify({ design_ids: designIds })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al descargar');
+        }
+
+        // Get the blob and create download link
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Get filename from header or generate one
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'disenos.zip';
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?(.+)"?/);
+            if (match) filename = match[1];
+        }
+
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        // Update UI - remove designs from active list
+        for (const design of galleryState.designList) {
+            galleryState.designs = galleryState.designs.filter(d => d.id !== design.id);
+        }
+
+        clearDesignList();
+        await loadGalleryStats();
+
+        // Re-render grid
+        const grid = document.getElementById('gallery-grid');
+        renderGalleryGrid(grid, galleryState.designs, false);
+
+        showToast(`ZIP descargado con ${designIds.length} diseños`, 'success');
+
+    } catch (error) {
+        console.error('ZIP download error:', error);
+        showToast(error.message || 'Error al descargar ZIP', 'error');
+    } finally {
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
     }
-
-    clearDesignList();
-    showToast('Todos los diseños descargados', 'success');
 }
 
 function toggleDesignListPanel() {
@@ -623,9 +678,13 @@ function initGalleryEventListeners() {
         document.getElementById('design-file').click();
     });
 
-    // File input change
+    // File input change - support multiple files
     document.getElementById('design-file')?.addEventListener('change', (e) => {
-        handleFileSelect(e.target.files[0]);
+        if (e.target.files.length > 1) {
+            handleFilesSelect(Array.from(e.target.files));
+        } else {
+            handleFileSelect(e.target.files[0]);
+        }
     });
 
     // Change image button
@@ -649,8 +708,12 @@ function initGalleryEventListeners() {
         dropzone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropzone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            handleFileSelect(file);
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 1) {
+                handleFilesSelect(files);
+            } else {
+                handleFileSelect(files[0]);
+            }
         });
     }
 
@@ -686,6 +749,8 @@ if (document.readyState === 'loading') {
 // ========================================
 
 let selectedFile = null;
+let selectedFiles = []; // For batch upload
+let uploadMode = 'single'; // 'single' or 'batch'
 
 function openUploadModal() {
     console.log('openUploadModal called');
@@ -697,16 +762,26 @@ function openUploadModal() {
         return;
     }
 
-    // Reset form
+    // Reset form and state
     const form = document.getElementById('upload-design-form');
     if (form) form.reset();
     selectedFile = null;
+    selectedFiles = [];
+    uploadMode = 'single';
 
     // Reset preview
     const preview = document.getElementById('upload-preview');
     const content = document.querySelector('.dropzone-content');
     if (preview) preview.classList.add('hidden');
     if (content) content.classList.remove('hidden');
+
+    // Hide batch preview if exists
+    const batchPreview = document.getElementById('batch-preview');
+    if (batchPreview) batchPreview.classList.add('hidden');
+
+    // Reset file input to allow multiple
+    const fileInput = document.getElementById('design-file');
+    if (fileInput) fileInput.setAttribute('multiple', 'true');
 
     // Disable submit button
     const submitBtn = document.getElementById('submit-design-btn');
@@ -721,49 +796,202 @@ function openUploadModal() {
         });
     }
 
+    // Update placeholder text for multiple files
+    const placeholder = document.getElementById('upload-placeholder');
+    if (placeholder) {
+        placeholder.innerHTML = `
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p>Arrastra imagenes aqui o <strong>haz clic</strong> para seleccionar</p>
+            <small>Puedes subir multiples imagenes (max. 20 a la vez, 15MB c/u)</small>
+        `;
+    }
+
     // Show modal
     modal.classList.remove('hidden');
     console.log('Upload modal should now be visible');
 }
 
 function handleFileSelect(file) {
-    if (!file) return;
+    // Handle single file from the old interface
+    if (file && !file.length) {
+        handleFilesSelect([file]);
+        return;
+    }
+    if (file && file.length) {
+        handleFilesSelect(Array.from(file));
+    }
+}
 
-    // Validate file type
+function handleFilesSelect(files) {
+    if (!files || files.length === 0) return;
+
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-        showToast('Solo se permiten imágenes (JPG, PNG, GIF, WEBP)', 'error');
+    const validFiles = [];
+    const errors = [];
+
+    for (const file of files) {
+        if (!allowedTypes.includes(file.type)) {
+            errors.push(`${file.name}: tipo no permitido`);
+            continue;
+        }
+        if (file.size > 15 * 1024 * 1024) {
+            errors.push(`${file.name}: muy grande (max 15MB)`);
+            continue;
+        }
+        validFiles.push(file);
+    }
+
+    if (errors.length > 0) {
+        showToast(`Algunos archivos no son válidos:\n${errors.join('\n')}`, 'error');
+    }
+
+    if (validFiles.length === 0) {
+        showToast('No se seleccionaron archivos válidos', 'error');
         return;
     }
 
-    // Validate file size (15MB)
-    if (file.size > 15 * 1024 * 1024) {
-        showToast('La imagen es muy grande. Máximo 15MB', 'error');
-        return;
-    }
+    // Determine upload mode
+    if (validFiles.length === 1) {
+        // Single file mode
+        uploadMode = 'single';
+        selectedFile = validFiles[0];
+        selectedFiles = [];
 
-    selectedFile = file;
+        // Show single preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('preview-image').src = e.target.result;
+            document.getElementById('upload-preview').classList.remove('hidden');
+            document.querySelector('.dropzone-content').classList.add('hidden');
 
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        document.getElementById('preview-image').src = e.target.result;
-        document.getElementById('upload-preview').classList.remove('hidden');
+            // Hide batch preview
+            const batchPreview = document.getElementById('batch-preview');
+            if (batchPreview) batchPreview.classList.add('hidden');
+
+            // Show single file fields
+            showSingleUploadFields(true);
+        };
+        reader.readAsDataURL(validFiles[0]);
+
+    } else {
+        // Batch mode
+        uploadMode = 'batch';
+        selectedFile = null;
+        selectedFiles = validFiles;
+
+        // Hide single preview, show batch preview
+        document.getElementById('upload-preview').classList.add('hidden');
         document.querySelector('.dropzone-content').classList.add('hidden');
-    };
-    reader.readAsDataURL(file);
+
+        // Show or create batch preview
+        let batchPreview = document.getElementById('batch-preview');
+        if (!batchPreview) {
+            batchPreview = document.createElement('div');
+            batchPreview.id = 'batch-preview';
+            batchPreview.className = 'batch-preview';
+            document.getElementById('upload-dropzone').appendChild(batchPreview);
+        }
+
+        // Create thumbnails grid
+        batchPreview.innerHTML = `
+            <div class="batch-info">
+                <strong>${validFiles.length} imagenes seleccionadas</strong>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="clearBatchSelection()">Cambiar</button>
+            </div>
+            <div class="batch-thumbnails" id="batch-thumbnails"></div>
+        `;
+        batchPreview.classList.remove('hidden');
+
+        const thumbsContainer = document.getElementById('batch-thumbnails');
+
+        // Add thumbnails (max 8 shown)
+        const showCount = Math.min(validFiles.length, 8);
+        for (let i = 0; i < showCount; i++) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const thumb = document.createElement('div');
+                thumb.className = 'batch-thumb';
+                thumb.innerHTML = `<img src="${e.target.result}" alt="Preview ${i + 1}">`;
+                thumbsContainer.appendChild(thumb);
+            };
+            reader.readAsDataURL(validFiles[i]);
+        }
+
+        if (validFiles.length > 8) {
+            setTimeout(() => {
+                const more = document.createElement('div');
+                more.className = 'batch-thumb batch-more';
+                more.innerHTML = `+${validFiles.length - 8}`;
+                thumbsContainer.appendChild(more);
+            }, 100);
+        }
+
+        // Hide single file fields for batch upload
+        showSingleUploadFields(false);
+    }
 
     // Enable submit button
+    updateSubmitButton();
+}
+
+function showSingleUploadFields(show) {
+    const singleFields = document.querySelectorAll('.single-upload-field');
+    singleFields.forEach(field => {
+        field.style.display = show ? '' : 'none';
+    });
+
+    // Show AI info for batch
+    const aiInfo = document.getElementById('ai-batch-info');
+    if (aiInfo) {
+        aiInfo.style.display = show ? 'none' : '';
+    }
+}
+
+function clearBatchSelection() {
+    selectedFiles = [];
+    selectedFile = null;
+    uploadMode = 'single';
+
+    const batchPreview = document.getElementById('batch-preview');
+    if (batchPreview) batchPreview.classList.add('hidden');
+
+    document.getElementById('upload-preview').classList.add('hidden');
+    document.querySelector('.dropzone-content').classList.remove('hidden');
+
+    showSingleUploadFields(true);
     updateSubmitButton();
 }
 
 function updateSubmitButton() {
     const nameInput = document.getElementById('design-name');
     const submitBtn = document.getElementById('submit-design-btn');
-    submitBtn.disabled = !selectedFile || !nameInput.value.trim();
+    const btnText = document.getElementById('upload-btn-text');
+
+    if (uploadMode === 'batch' && selectedFiles.length > 0) {
+        // Batch mode - no name required, AI will extract
+        submitBtn.disabled = false;
+        if (btnText) btnText.textContent = `Subir ${selectedFiles.length} Disenos (con IA)`;
+    } else if (uploadMode === 'single' && selectedFile) {
+        // Single mode - name required
+        submitBtn.disabled = !nameInput.value.trim();
+        if (btnText) btnText.textContent = 'Subir Diseno';
+    } else {
+        submitBtn.disabled = true;
+        if (btnText) btnText.textContent = 'Subir Diseno';
+    }
 }
 
 async function submitDesign() {
+    // Check if batch or single mode
+    if (uploadMode === 'batch' && selectedFiles.length > 0) {
+        await submitBatchDesigns();
+        return;
+    }
+
     if (!selectedFile) {
         showToast('Selecciona una imagen', 'error');
         return;
@@ -821,6 +1049,77 @@ async function submitDesign() {
     }
 }
 
+async function submitBatchDesigns() {
+    const submitBtn = document.getElementById('submit-design-btn');
+    const btnText = document.getElementById('upload-btn-text');
+    const btnLoading = document.getElementById('upload-btn-loading');
+
+    // Show loading state
+    submitBtn.disabled = true;
+    btnText.classList.add('hidden');
+    btnLoading.textContent = `Analizando y subiendo ${selectedFiles.length} diseños...`;
+    btnLoading.classList.remove('hidden');
+
+    try {
+        const formData = new FormData();
+
+        // Add all files
+        for (const file of selectedFiles) {
+            formData.append('designs', file);
+        }
+
+        // Add category if selected
+        const categoryId = document.getElementById('design-category').value;
+        if (categoryId) {
+            formData.append('category_id', categoryId);
+        }
+
+        // Enable AI analysis
+        formData.append('auto_analyze', 'true');
+
+        showToast(`Subiendo ${selectedFiles.length} diseños con analisis IA...`, 'info');
+
+        const response = await fetch(`${API_BASE}/gallery/upload-multiple`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${state.token}`
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const message = `${data.uploaded} diseños subidos correctamente` +
+                (data.failed > 0 ? ` (${data.failed} fallaron)` : '');
+            showToast(message, data.failed > 0 ? 'warning' : 'success');
+
+            // Show details of uploaded designs
+            if (data.results && data.results.length > 0) {
+                console.log('Uploaded designs:', data.results.map(r => ({
+                    name: r.design.name,
+                    tags: r.design.tags
+                })));
+            }
+
+            closeModal('upload-design-modal');
+            loadGallery(); // Refresh gallery
+        } else {
+            showToast(data.error || 'Error al subir los diseños', 'error');
+        }
+
+    } catch (error) {
+        console.error('Batch upload error:', error);
+        showToast('Error al subir los diseños', 'error');
+    } finally {
+        // Reset loading state
+        submitBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        btnLoading.classList.add('hidden');
+        btnLoading.textContent = 'Subiendo...';
+    }
+}
+
 // Event listeners are initialized in initGalleryEventListeners()
 
 // Make functions globally available
@@ -837,3 +1136,5 @@ window.removeFromRecoveryList = removeFromRecoveryList;
 window.clearRecoveryList = clearRecoveryList;
 window.recoverAllDesigns = recoverAllDesigns;
 window.openUploadModal = openUploadModal;
+window.clearBatchSelection = clearBatchSelection;
+window.handleFilesSelect = handleFilesSelect;

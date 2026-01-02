@@ -5,8 +5,10 @@
 
 import express from 'express';
 import multer from 'multer';
+import archiver from 'archiver';
 import { query } from '../shared/database.js';
 import { uploadImage } from '../shared/cloudinary-config.js';
+import { analyzeDesign } from '../services/design-analyzer.js';
 import {
   employeeAuth,
   requireManager,
@@ -739,6 +741,323 @@ router.post('/upload', employeeAuth, upload.single('design'), async (req, res) =
     res.status(500).json({
       success: false,
       error: error.message || 'Error al subir el diseño'
+    });
+  }
+});
+
+// ========================================
+// BATCH DOWNLOAD (ZIP)
+// ========================================
+
+/**
+ * POST /api/gallery/download-zip
+ * Download multiple designs as a ZIP file
+ */
+router.post('/download-zip', employeeAuth, async (req, res) => {
+  try {
+    const { design_ids } = req.body;
+
+    if (!design_ids || !Array.isArray(design_ids) || design_ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Se requiere una lista de IDs de diseños'
+      });
+    }
+
+    if (design_ids.length > 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'Máximo 50 diseños por descarga'
+      });
+    }
+
+    console.log(`📦 Creating ZIP with ${design_ids.length} designs...`);
+
+    // Get design info from database
+    const placeholders = design_ids.map((_, i) => `$${i + 1}`).join(',');
+    const result = await query(
+      `SELECT id, name, file_url FROM design_gallery WHERE id IN (${placeholders})`,
+      design_ids
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No se encontraron los diseños'
+      });
+    }
+
+    // Set headers for ZIP download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `disenos_${timestamp}.zip`;
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // Create archive
+    const archive = archiver('zip', {
+      zlib: { level: 5 } // Medium compression for speed
+    });
+
+    archive.on('error', (err) => {
+      console.error('Archive error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          error: 'Error al crear el archivo ZIP'
+        });
+      }
+    });
+
+    // Pipe archive to response
+    archive.pipe(res);
+
+    // Download and add each design to the archive
+    const fetchPromises = result.rows.map(async (design, index) => {
+      try {
+        const response = await fetch(design.file_url);
+        if (!response.ok) {
+          console.warn(`⚠️ Could not fetch design ${design.id}: ${response.status}`);
+          return null;
+        }
+
+        const buffer = await response.arrayBuffer();
+        const extension = design.file_url.split('.').pop().split('?')[0] || 'jpg';
+        const safeName = design.name.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s_-]/g, '').substring(0, 50);
+        const fileName = `${String(index + 1).padStart(2, '0')}_${safeName}.${extension}`;
+
+        return { fileName, buffer: Buffer.from(buffer) };
+      } catch (err) {
+        console.warn(`⚠️ Error fetching design ${design.id}:`, err.message);
+        return null;
+      }
+    });
+
+    const files = await Promise.all(fetchPromises);
+
+    // Add files to archive
+    for (const file of files) {
+      if (file) {
+        archive.append(file.buffer, { name: file.fileName });
+      }
+    }
+
+    // Mark designs as downloaded (archive them)
+    await query(
+      `UPDATE design_gallery
+       SET download_count = COALESCE(download_count, 0) + 1,
+           is_archived = true,
+           archived_at = CURRENT_TIMESTAMP,
+           archived_by = $1
+       WHERE id = ANY($2)`,
+      [req.employee.id, design_ids]
+    );
+
+    // Log activity
+    await logActivity(req.employee.id, 'designs_batch_download', 'design_gallery', null, {
+      count: design_ids.length,
+      design_ids
+    });
+
+    // Finalize archive
+    await archive.finalize();
+
+    console.log(`✅ ZIP created with ${files.filter(f => f).length} files`);
+
+  } catch (error) {
+    console.error('ZIP download error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Error al crear el archivo ZIP'
+      });
+    }
+  }
+});
+
+// ========================================
+// BATCH UPLOAD WITH AI ANALYSIS
+// ========================================
+
+// Configure multer for multiple files
+const uploadMultiple = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 15 * 1024 * 1024, // 15MB max per file
+    files: 20 // Max 20 files at once
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten imágenes (JPG, PNG, GIF, WEBP)'), false);
+    }
+  }
+});
+
+/**
+ * POST /api/gallery/upload-multiple
+ * Upload multiple designs with optional AI analysis
+ */
+router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 20), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se recibieron archivos'
+      });
+    }
+
+    const { category_id, auto_analyze = 'true' } = req.body;
+    const useAI = auto_analyze === 'true';
+
+    console.log(`📤 Uploading ${req.files.length} designs (AI: ${useAI ? 'ON' : 'OFF'})...`);
+
+    const results = [];
+    const errors = [];
+
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+
+      try {
+        console.log(`  Processing ${i + 1}/${req.files.length}: ${file.originalname}`);
+
+        // Convert buffer to base64 data URI for Cloudinary
+        const b64 = Buffer.from(file.buffer).toString('base64');
+        const dataURI = `data:${file.mimetype};base64,${b64}`;
+
+        // Generate initial name from filename
+        const originalName = file.originalname.replace(/\.[^/.]+$/, ''); // Remove extension
+        let designName = originalName;
+        let tags = [];
+        let description = '';
+
+        // AI Analysis
+        if (useAI) {
+          try {
+            const analysis = await analyzeDesign(null, file.buffer, file.mimetype);
+
+            if (analysis.success) {
+              designName = analysis.title || originalName;
+              tags = analysis.tags || [];
+              description = analysis.description || '';
+            }
+          } catch (aiError) {
+            console.warn(`  ⚠️ AI analysis failed for ${file.originalname}:`, aiError.message);
+            // Continue with original name
+          }
+        }
+
+        // Upload to Cloudinary
+        const timestamp = Date.now();
+        const safeName = designName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+        const publicId = `design_${safeName}_${timestamp}_${i}`;
+
+        const uploadResult = await uploadImage(dataURI, 'design-gallery', publicId);
+
+        // Save to database
+        const dbResult = await query(
+          `INSERT INTO design_gallery (
+            name, description, file_url, thumbnail_url, storage_type,
+            external_id, category_id, tags, file_type, file_size,
+            dimensions, uploaded_by
+          ) VALUES ($1, $2, $3, $4, 'cloudinary', $5, $6, $7, $8, $9, $10, $11)
+          RETURNING *`,
+          [
+            designName,
+            description || null,
+            uploadResult.url,
+            uploadResult.url,
+            uploadResult.publicId,
+            category_id ? parseInt(category_id) : null,
+            tags,
+            uploadResult.format,
+            uploadResult.bytes || file.size,
+            uploadResult.width && uploadResult.height ? `${uploadResult.width}x${uploadResult.height}` : null,
+            req.employee.id
+          ]
+        );
+
+        results.push({
+          success: true,
+          originalName: file.originalname,
+          design: dbResult.rows[0],
+          aiAnalyzed: useAI
+        });
+
+        await logActivity(req.employee.id, 'design_uploaded', 'design_gallery', dbResult.rows[0].id, {
+          name: designName,
+          aiAnalyzed: useAI
+        });
+
+      } catch (fileError) {
+        console.error(`  ❌ Error processing ${file.originalname}:`, fileError.message);
+        errors.push({
+          originalName: file.originalname,
+          error: fileError.message
+        });
+      }
+    }
+
+    console.log(`✅ Batch upload complete: ${results.length} success, ${errors.length} failed`);
+
+    res.status(201).json({
+      success: true,
+      uploaded: results.length,
+      failed: errors.length,
+      results,
+      errors
+    });
+
+  } catch (error) {
+    console.error('Batch upload error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error al subir los diseños'
+    });
+  }
+});
+
+/**
+ * POST /api/gallery/analyze
+ * Analyze a single design image with AI
+ */
+router.post('/analyze', employeeAuth, upload.single('design'), async (req, res) => {
+  try {
+    let imageBuffer = null;
+    let mimeType = 'image/jpeg';
+    let imageUrl = null;
+
+    if (req.file) {
+      imageBuffer = req.file.buffer;
+      mimeType = req.file.mimetype;
+    } else if (req.body.image_url) {
+      imageUrl = req.body.image_url;
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'Se requiere una imagen (archivo o URL)'
+      });
+    }
+
+    console.log(`🔍 Analyzing design...`);
+
+    const analysis = await analyzeDesign(imageUrl, imageBuffer, mimeType);
+
+    res.json({
+      success: analysis.success,
+      title: analysis.title,
+      tags: analysis.tags,
+      description: analysis.description,
+      error: analysis.error
+    });
+
+  } catch (error) {
+    console.error('Analysis error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error al analizar el diseño'
     });
   }
 });

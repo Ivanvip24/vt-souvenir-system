@@ -1699,6 +1699,93 @@ textarea {
     display: none;
 }
 
+/* Batch Upload Preview */
+.batch-preview {
+    width: 100%;
+}
+
+.batch-preview.hidden {
+    display: none;
+}
+
+.batch-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: var(--gray-100);
+    border-radius: var(--radius);
+}
+
+.batch-info strong {
+    color: var(--gray-700);
+}
+
+.batch-thumbnails {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.batch-thumb {
+    aspect-ratio: 1;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 2px solid var(--gray-200);
+}
+
+.batch-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.batch-thumb.batch-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-200);
+    color: var(--gray-600);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* AI Info Box */
+.ai-info-box {
+    background: linear-gradient(135deg, rgba(138, 183, 59, 0.1), rgba(9, 173, 194, 0.1));
+    border: 1px solid var(--turquoise);
+    border-radius: var(--radius);
+    padding: 12px;
+}
+
+.ai-info-box.hidden {
+    display: none;
+}
+
+.ai-info-content {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.ai-icon {
+    font-size: 24px;
+}
+
+.ai-info-content strong {
+    color: var(--gray-800);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.ai-info-content p {
+    color: var(--gray-600);
+    font-size: 13px;
+    margin: 0;
+    line-height: 1.4;
+}
+
 /* ============================================
    TOAST NOTIFICATIONS
    ============================================ */
