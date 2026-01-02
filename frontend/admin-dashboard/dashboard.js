@@ -149,6 +149,11 @@ function switchView(viewName) {
   if (viewName === 'marketplace' && typeof initMarketplaceView === 'function') {
     initMarketplaceView();
   }
+
+  // Initialize employees when switching to employees view
+  if (viewName === 'employees' && typeof loadEmployees === 'function') {
+    loadEmployees();
+  }
 }
 
 // ==========================================

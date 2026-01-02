@@ -124,6 +124,17 @@
                     <span class="nav-icon">🌎</span>
                     <span>Marketplace</span>
                 </button>
+
+                <!-- Employee Management Section -->
+                <div class="nav-separator"></div>
+                <button class="nav-item" data-view="employees">
+                    <span class="nav-icon">👥</span>
+                    <span>Empleados</span>
+                </button>
+                <button class="nav-item" data-view="employee-dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span>Portal Empleados</span>
+                </button>
             </nav>
         </aside>
 
@@ -1236,8 +1247,216 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Employee Management View -->
+            <section id="employees-view" class="view">
+                <div class="view-header">
+                    <h2>👥 Gestión de Empleados</h2>
+                    <button class="btn btn-primary" onclick="openAddEmployeeModal()">
+                        ➕ Agregar Empleado
+                    </button>
+                </div>
+
+                <!-- Stats Row -->
+                <div id="employee-stats" class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <span class="stat-icon">👥</span>
+                        <div class="stat-content">
+                            <span class="stat-value" id="total-employees-count">0</span>
+                            <span class="stat-label">Total Empleados</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">✅</span>
+                        <div class="stat-content">
+                            <span class="stat-value" id="active-employees-count">0</span>
+                            <span class="stat-label">Activos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">⏸️</span>
+                        <div class="stat-content">
+                            <span class="stat-value" id="inactive-employees-count">0</span>
+                            <span class="stat-label">Inactivos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">👔</span>
+                        <div class="stat-content">
+                            <span class="stat-value" id="manager-count">0</span>
+                            <span class="stat-label">Gerentes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters-bar" style="margin-bottom: 20px;">
+                    <div class="filter-group">
+                        <select id="employee-dept-filter" onchange="filterEmployees()" class="filter-select">
+                            <option value="">Todos los departamentos</option>
+                            <option value="design">Diseño</option>
+                            <option value="production">Producción</option>
+                            <option value="shipping">Envíos</option>
+                            <option value="management">Gerencia</option>
+                        </select>
+                        <select id="employee-role-filter" onchange="filterEmployees()" class="filter-select">
+                            <option value="">Todos los roles</option>
+                            <option value="design">Diseñador</option>
+                            <option value="production">Producción</option>
+                            <option value="shipping">Envíos</option>
+                            <option value="manager">Gerente</option>
+                        </select>
+                        <select id="employee-status-filter" onchange="filterEmployees()" class="filter-select">
+                            <option value="">Todos los estados</option>
+                            <option value="true">Activos</option>
+                            <option value="false">Inactivos</option>
+                        </select>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="employee-search" placeholder="Buscar empleado..." oninput="searchEmployees()">
+                    </div>
+                </div>
+
+                <!-- Employees Table -->
+                <div class="table-container" style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                                <th style="padding: 16px; text-align: left;">Empleado</th>
+                                <th style="padding: 16px; text-align: left;">Email</th>
+                                <th style="padding: 16px; text-align: left;">Rol</th>
+                                <th style="padding: 16px; text-align: left;">Departamento</th>
+                                <th style="padding: 16px; text-align: center;">Estado</th>
+                                <th style="padding: 16px; text-align: left;">Último acceso</th>
+                                <th style="padding: 16px; text-align: center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-table-body">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Employee Dashboard Link View -->
+            <section id="employee-dashboard-view" class="view">
+                <div class="view-header">
+                    <h2>📊 Portal de Empleados</h2>
+                </div>
+                <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px;">
+                    <div style="font-size: 80px; margin-bottom: 20px;">📱</div>
+                    <h3 style="font-size: 24px; margin: 0 0 12px 0;">Portal de Empleados</h3>
+                    <p style="color: #6b7280; margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                        Accede al portal de empleados donde el equipo puede gestionar tareas, ver diseños,
+                        consultar información de marca y más.
+                    </p>
+                    <a href="../employee-dashboard/index.html" target="_blank" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px; text-decoration: none; display: inline-block;">
+                        🚀 Abrir Portal de Empleados
+                    </a>
+                </div>
+            </section>
         </div>
     </main>
+
+    <!-- Employee Modal -->
+    <div id="employee-modal" class="modal hidden">
+        <div class="modal-backdrop" onclick="closeEmployeeModal()"></div>
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="employee-modal-title">Agregar Empleado</h3>
+                <button class="btn-close" onclick="closeEmployeeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="employee-form" onsubmit="saveEmployee(event)">
+                    <input type="hidden" id="employee-id">
+
+                    <div class="form-group">
+                        <label for="employee-name">Nombre completo *</label>
+                        <input type="text" id="employee-name" required placeholder="Ej: Juan Pérez">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="employee-email">Email *</label>
+                        <input type="email" id="employee-email" required placeholder="empleado@empresa.com">
+                    </div>
+
+                    <div class="form-group" id="password-group">
+                        <label for="employee-password">Contraseña *</label>
+                        <input type="password" id="employee-password" placeholder="Mínimo 6 caracteres">
+                        <small class="form-hint">Dejar vacío para mantener la contraseña actual (al editar)</small>
+                    </div>
+
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label for="employee-role">Rol *</label>
+                            <select id="employee-role" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="design">Diseñador</option>
+                                <option value="production">Producción</option>
+                                <option value="shipping">Envíos</option>
+                                <option value="manager">Gerente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="employee-department">Departamento *</label>
+                            <select id="employee-department" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="design">Diseño</option>
+                                <option value="production">Producción</option>
+                                <option value="shipping">Envíos</option>
+                                <option value="management">Gerencia</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="employee-phone">Teléfono</label>
+                        <input type="tel" id="employee-phone" placeholder="Opcional">
+                    </div>
+
+                    <div class="form-group" id="status-group" style="display: none;">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="employee-active" checked>
+                            <span>Cuenta activa</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Cancelar</button>
+                <button type="submit" form="employee-form" class="btn btn-primary" id="employee-submit-btn">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="reset-password-modal" class="modal hidden">
+        <div class="modal-backdrop" onclick="closeResetPasswordModal()"></div>
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Restablecer Contraseña</h3>
+                <button class="btn-close" onclick="closeResetPasswordModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="reset-password-employee-name" style="margin-bottom: 16px; color: #6b7280;"></p>
+                <form id="reset-password-form" onsubmit="resetEmployeePassword(event)">
+                    <input type="hidden" id="reset-password-employee-id">
+                    <div class="form-group">
+                        <label for="new-password">Nueva contraseña *</label>
+                        <input type="password" id="new-password" required placeholder="Mínimo 6 caracteres" minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Confirmar contraseña *</label>
+                        <input type="password" id="confirm-password" required placeholder="Repetir contraseña">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeResetPasswordModal()">Cancelar</button>
+                <button type="submit" form="reset-password-form" class="btn btn-primary">Restablecer</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Material Detail Modal -->
     <div id="material-detail-modal" class="modal hidden">
@@ -1764,5 +1983,6 @@
     <script src="discounts.js"></script>
     <script src="ai-assistant.js"></script>
     <script src="marketplace.js"></script>
+    <script src="employees.js"></script>
 </body>
 </html>
