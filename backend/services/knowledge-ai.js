@@ -25,9 +25,9 @@ const MARKDOWN_FILES = [
 
 // Available Claude models
 export const AVAILABLE_MODELS = {
-  haiku: { id: 'claude-haiku-4-20250514', name: 'Haiku', description: 'Fastest & cheapest' },
-  sonnet: { id: 'claude-sonnet-4-20250514', name: 'Sonnet', description: 'Balanced' },
-  opus: { id: 'claude-opus-4-20250514', name: 'Opus', description: 'Most capable' }
+  haiku: { id: 'claude-3-5-haiku-20241022', name: 'Haiku 3.5', description: 'Fastest & cheapest' },
+  sonnet: { id: 'claude-sonnet-4-20250514', name: 'Sonnet 4', description: 'Balanced' },
+  opus: { id: 'claude-opus-4-20250514', name: 'Opus 4', description: 'Most capable' }
 };
 
 // Default model (cheapest)
