@@ -871,6 +871,70 @@ textarea {
     background: var(--green);
 }
 
+/* Recovery button styles */
+.gallery-action-btn.recover {
+    background: var(--green);
+    color: var(--white);
+}
+
+.gallery-action-btn.recover:hover {
+    background: #2e7d32;
+}
+
+.gallery-action-btn.add-to-recovery {
+    background: var(--turquoise);
+    color: var(--white);
+}
+
+.gallery-action-btn.add-to-recovery:hover {
+    background: #00838f;
+}
+
+.gallery-action-btn.add-to-recovery.added {
+    background: var(--green);
+}
+
+/* Recovery FAB button */
+.fab-button.fab-recovery {
+    right: 100px;
+    background: linear-gradient(135deg, var(--green) 0%, #2e7d32 100%);
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);
+    animation: fabPulseGreen 2s ease-in-out infinite;
+}
+
+@keyframes fabPulseGreen {
+    0%, 100% { box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4); }
+    50% { box-shadow: 0 4px 30px rgba(76, 175, 80, 0.6); }
+}
+
+.fab-button.fab-recovery:hover {
+    box-shadow: 0 6px 30px rgba(76, 175, 80, 0.5);
+    animation: none;
+}
+
+/* Recovery panel styling */
+.recovery-panel .panel-header {
+    background: linear-gradient(135deg, var(--green) 0%, #2e7d32 100%);
+    color: var(--white);
+}
+
+.recovery-panel .panel-header h3 {
+    color: var(--white);
+}
+
+.recovery-panel .btn-close {
+    color: var(--white);
+}
+
+.btn-success {
+    background: var(--green);
+    color: var(--white);
+}
+
+.btn-success:hover {
+    background: #2e7d32;
+}
+
 .archived-section {
     margin-top: 40px;
     padding-top: 24px;
