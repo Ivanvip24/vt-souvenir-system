@@ -1168,7 +1168,7 @@ function updateSubmitButton() {
     if (uploadMode === 'batch' && selectedFiles.length > 0) {
         // Batch mode - no name required, AI will extract
         submitBtn.disabled = false;
-        if (btnText) btnText.textContent = `Subir ${selectedFiles.length} Disenos (con IA)`;
+        if (btnText) btnText.textContent = `Analizar ${selectedFiles.length} diseños con IA`;
     } else if (uploadMode === 'single' && selectedFile) {
         // Single mode - name required
         submitBtn.disabled = !nameInput.value.trim();
@@ -1251,7 +1251,7 @@ async function submitBatchDesigns() {
     // Show loading state
     submitBtn.disabled = true;
     btnText.classList.add('hidden');
-    btnLoading.textContent = `Analizando y subiendo ${selectedFiles.length} diseños...`;
+    btnLoading.textContent = `Analizando ${selectedFiles.length} diseños con IA...`;
     btnLoading.classList.remove('hidden');
 
     try {
@@ -1271,7 +1271,7 @@ async function submitBatchDesigns() {
         // Enable AI analysis
         formData.append('auto_analyze', 'true');
 
-        showToast(`Subiendo ${selectedFiles.length} diseños con analisis IA...`, 'info');
+        showToast(`Analizando ${selectedFiles.length} diseños con IA...`, 'info');
 
         const response = await fetch(`${API_BASE}/gallery/upload-multiple`, {
             method: 'POST',
