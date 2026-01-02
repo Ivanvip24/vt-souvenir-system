@@ -176,12 +176,19 @@ function renderGalleryGrid(container, designs, isArchived = false) {
             `;
         }
 
+        // Show first 3 tags as preview
+        const tagsPreview = design.tags?.length
+            ? design.tags.slice(0, 3).map(t => `<span class="gallery-tag">${escapeHtml(t)}</span>`).join('') +
+              (design.tags.length > 3 ? `<span class="gallery-tag more">+${design.tags.length - 3}</span>` : '')
+            : '';
+
         item.innerHTML = `
             <img class="gallery-thumb" src="${design.thumbnail_url || design.file_url}" alt="${escapeHtml(design.name)}" loading="lazy">
             ${actionsHTML}
             <div class="gallery-info">
                 <div class="gallery-name">${escapeHtml(design.name)}</div>
                 <div class="gallery-category">${design.category_name || 'Sin categoría'}</div>
+                ${tagsPreview ? `<div class="gallery-tags-preview">${tagsPreview}</div>` : ''}
             </div>
         `;
 
@@ -1265,3 +1272,4 @@ window.clearBatchSelection = clearBatchSelection;
 window.handleFilesSelect = handleFilesSelect;
 window.toggleEditMode = toggleEditMode;
 window.saveDesignChanges = saveDesignChanges;
+window.openDesignModal = openDesignModal;
