@@ -47,8 +47,8 @@ export async function analyzeDesign(imageUrl, imageBuffer = null, mimeType = 'im
     }
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
+      model: 'claude-haiku-4-20250514',
+      max_tokens: 512,
       messages: [
         {
           role: 'user',
