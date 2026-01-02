@@ -343,4 +343,77 @@ router.post('/ai/reload', employeeAuth, async (req, res) => {
   }
 });
 
+// ========================================
+// MODEL SELECTION
+// ========================================
+
+/**
+ * GET /api/knowledge/ai/models
+ * Get available AI models
+ */
+router.get('/ai/models', async (req, res) => {
+  try {
+    const models = Object.entries(knowledgeAI.AVAILABLE_MODELS).map(([key, value]) => ({
+      key,
+      ...value
+    }));
+
+    const current = knowledgeAI.getCurrentModel();
+
+    res.json({
+      success: true,
+      models,
+      current
+    });
+
+  } catch (error) {
+    console.error('Get models error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener modelos'
+    });
+  }
+});
+
+/**
+ * POST /api/knowledge/ai/model
+ * Set the AI model to use
+ */
+router.post('/ai/model', async (req, res) => {
+  try {
+    const { model } = req.body;
+
+    if (!model) {
+      return res.status(400).json({
+        success: false,
+        error: 'Se requiere especificar el modelo'
+      });
+    }
+
+    const success = knowledgeAI.setModel(model);
+
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Modelo no válido. Opciones: haiku, sonnet, opus'
+      });
+    }
+
+    const current = knowledgeAI.getCurrentModel();
+
+    res.json({
+      success: true,
+      message: `Modelo cambiado a ${current.name}`,
+      current
+    });
+
+  } catch (error) {
+    console.error('Set model error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al cambiar modelo'
+    });
+  }
+});
+
 export default router;

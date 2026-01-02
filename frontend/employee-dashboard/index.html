@@ -440,7 +440,17 @@
             <section id="knowledge-view" class="view">
                 <header class="view-header">
                     <h2>Asistente AXKAN</h2>
-                    <div id="knowledge-stats" class="stats-row"></div>
+                    <div class="knowledge-header-row">
+                        <div id="knowledge-stats" class="stats-row"></div>
+                        <div class="model-selector-wrapper">
+                            <label for="ai-model-selector">Modelo:</label>
+                            <select id="ai-model-selector" class="model-selector">
+                                <option value="haiku">Haiku - Fastest & cheapest</option>
+                                <option value="sonnet">Sonnet - Balanced</option>
+                                <option value="opus">Opus - Most capable</option>
+                            </select>
+                        </div>
+                    </div>
                 </header>
 
                 <!-- View Toggle -->

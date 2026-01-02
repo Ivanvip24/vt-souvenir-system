@@ -7,8 +7,62 @@ const knowledgeState = {
   conversationId: null,
   messages: [],
   isLoading: false,
-  currentView: 'chat' // 'chat' or 'images'
+  currentView: 'chat', // 'chat' or 'images'
+  currentModel: null,
+  availableModels: []
 };
+
+// ========================================
+// MODEL SELECTION
+// ========================================
+
+async function loadAIModels() {
+  try {
+    const response = await fetch(`${API_BASE}/knowledge/ai/models`);
+    const data = await response.json();
+
+    if (data.success) {
+      knowledgeState.availableModels = data.models;
+      knowledgeState.currentModel = data.current;
+      updateModelSelector();
+    }
+  } catch (error) {
+    console.error('Error loading AI models:', error);
+  }
+}
+
+function updateModelSelector() {
+  const selector = document.getElementById('ai-model-selector');
+  if (!selector) return;
+
+  selector.innerHTML = knowledgeState.availableModels.map(model => `
+    <option value="${model.key}" ${model.key === knowledgeState.currentModel?.key ? 'selected' : ''}>
+      ${model.name} - ${model.description}
+    </option>
+  `).join('');
+}
+
+async function changeAIModel(modelKey) {
+  try {
+    const response = await fetch(`${API_BASE}/knowledge/ai/model`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: modelKey })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      knowledgeState.currentModel = data.current;
+      showToast(`Modelo cambiado a ${data.current.name}`, 'success');
+    } else {
+      showToast(data.error || 'Error al cambiar modelo', 'error');
+    }
+  } catch (error) {
+    console.error('Error changing model:', error);
+    showToast('Error al cambiar modelo', 'error');
+  }
+}
 
 // ========================================
 // CHAT INTERFACE
@@ -358,6 +412,12 @@ function initKnowledgeEventListeners() {
     btn.addEventListener('click', () => switchKnowledgeView(btn.dataset.view));
   });
 
+  // Model selector
+  const modelSelector = document.getElementById('ai-model-selector');
+  if (modelSelector) {
+    modelSelector.addEventListener('change', (e) => changeAIModel(e.target.value));
+  }
+
   knowledgeInitialized = true;
   console.log('Knowledge AI event listeners initialized');
 }
@@ -367,6 +427,9 @@ async function loadKnowledge() {
 
   // Initialize event listeners
   initKnowledgeEventListeners();
+
+  // Load available AI models
+  loadAIModels();
 
   // Reset to chat view
   switchKnowledgeView('chat');
@@ -414,3 +477,4 @@ window.clearKnowledgeConversation = clearKnowledgeConversation;
 window.switchKnowledgeView = switchKnowledgeView;
 window.openKnowledgeImageModal = openKnowledgeImageModal;
 window.closeKnowledgeImageModal = closeKnowledgeImageModal;
+window.changeAIModel = changeAIModel;

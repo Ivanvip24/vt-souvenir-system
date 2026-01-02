@@ -23,6 +23,16 @@ const MARKDOWN_FILES = [
   'axkan-skill-claude-code/README.md'
 ];
 
+// Available Claude models
+export const AVAILABLE_MODELS = {
+  haiku: { id: 'claude-haiku-4-20250514', name: 'Haiku', description: 'Fastest & cheapest' },
+  sonnet: { id: 'claude-sonnet-4-20250514', name: 'Sonnet', description: 'Balanced' },
+  opus: { id: 'claude-opus-4-20250514', name: 'Opus', description: 'Most capable' }
+};
+
+// Default model (cheapest)
+let currentModel = 'haiku';
+
 // In-memory content store
 let brandContent = {
   documents: [],
@@ -32,6 +42,35 @@ let brandContent = {
 
 // Active conversations (in-memory, could be moved to Redis/DB for persistence)
 const conversations = new Map();
+
+/**
+ * Set the AI model to use
+ */
+export function setModel(modelKey) {
+  if (AVAILABLE_MODELS[modelKey]) {
+    currentModel = modelKey;
+    console.log(`🤖 AI Model switched to: ${AVAILABLE_MODELS[modelKey].name}`);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Get current model info
+ */
+export function getCurrentModel() {
+  return {
+    key: currentModel,
+    ...AVAILABLE_MODELS[currentModel]
+  };
+}
+
+/**
+ * Get model ID for API calls
+ */
+function getModelId() {
+  return AVAILABLE_MODELS[currentModel].id;
+}
 
 // Initialize Anthropic client
 let anthropic = null;
@@ -133,7 +172,7 @@ export async function askQuestion(question, options = {}) {
 
   try {
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: getModelId(),
       max_tokens: maxTokens,
       system: getSystemPrompt(),
       messages: [
@@ -210,7 +249,7 @@ export async function chat(conversationId, message, options = {}) {
     }));
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: getModelId(),
       max_tokens: maxTokens,
       system: getSystemPrompt(),
       messages: apiMessages
@@ -301,5 +340,8 @@ export default {
   getConversation,
   clearConversation,
   getStats,
-  reload
+  reload,
+  setModel,
+  getCurrentModel,
+  AVAILABLE_MODELS
 };
