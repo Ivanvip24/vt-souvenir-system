@@ -375,28 +375,16 @@ function openDesignModal(design) {
 // EVENT LISTENERS
 // ========================================
 
-// Tab switching - use event delegation for dynamic elements
-function initGalleryTabs() {
-    const tabContainer = document.querySelector('#gallery-view .tabs-row');
-    if (tabContainer) {
-        tabContainer.addEventListener('click', (e) => {
-            const tab = e.target.closest('.tab-btn');
-            if (tab && tab.dataset.tab) {
-                tabContainer.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                galleryState.currentTab = tab.dataset.tab;
-                loadGallery();
-            }
-        });
-    }
-}
+// Tab switching
+document.querySelectorAll('.gallery-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.gallery-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
 
-// Initialize tabs on load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGalleryTabs);
-} else {
-    initGalleryTabs();
-}
+        galleryState.currentTab = tab.dataset.tab;
+        loadGallery();
+    });
+});
 
 // Category filter
 document.getElementById('category-filter')?.addEventListener('change', (e) => {
@@ -439,11 +427,11 @@ function openUploadModal() {
     document.getElementById('upload-design-form').reset();
     selectedFile = null;
 
-    // Reset preview - use correct element IDs from new HTML
+    // Reset preview
     const preview = document.getElementById('upload-preview');
-    const placeholder = document.getElementById('upload-placeholder');
-    if (preview) preview.classList.add('hidden');
-    if (placeholder) placeholder.classList.remove('hidden');
+    const content = document.querySelector('.dropzone-content');
+    preview.classList.add('hidden');
+    content.classList.remove('hidden');
 
     // Disable submit button
     document.getElementById('submit-design-btn').disabled = true;
@@ -482,7 +470,7 @@ function handleFileSelect(file) {
     reader.onload = (e) => {
         document.getElementById('preview-image').src = e.target.result;
         document.getElementById('upload-preview').classList.remove('hidden');
-        document.getElementById('upload-placeholder').classList.add('hidden');
+        document.querySelector('.dropzone-content').classList.add('hidden');
     };
     reader.readAsDataURL(file);
 

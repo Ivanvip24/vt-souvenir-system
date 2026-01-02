@@ -147,9 +147,6 @@ function switchView(viewName) {
         case 'notes':
             if (typeof loadWorkspaces === 'function') loadWorkspaces();
             break;
-        case 'knowledge':
-            if (typeof loadKnowledge === 'function') loadKnowledge();
-            break;
         case 'employees':
             loadEmployeesView();
             break;
@@ -167,17 +164,8 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    const token = state.token || localStorage.getItem('employee_token');
-    console.log('[getAuthHeaders] state.token:', state.token ? 'EXISTS' : 'NULL');
-    console.log('[getAuthHeaders] localStorage token:', localStorage.getItem('employee_token') ? 'EXISTS' : 'NULL');
-    console.log('[getAuthHeaders] Using token:', token ? token.substring(0, 20) + '...' : 'NONE');
-    if (!token) {
-        console.error('[getAuthHeaders] NO TOKEN AVAILABLE - redirecting to login');
-        window.location.href = 'login.html';
-        return { 'Content-Type': 'application/json' };
-    }
     return {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${state.token}`,
         'Content-Type': 'application/json'
     };
 }
