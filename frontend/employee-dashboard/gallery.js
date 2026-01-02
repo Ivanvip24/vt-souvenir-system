@@ -1000,9 +1000,12 @@ function openUploadModal() {
                 <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
             <p>Arrastra imagenes aqui o <strong>haz clic</strong> para seleccionar</p>
-            <small>Puedes subir multiples imagenes (max. 20 a la vez, 15MB c/u)</small>
+            <small>Claude IA analizara y extraera titulo, etiquetas y descripcion automaticamente</small>
         `;
     }
+
+    // Always show AI info, hide single upload fields
+    showSingleUploadFields(false);
 
     // Show modal
     modal.classList.remove('hidden');
@@ -1048,85 +1051,64 @@ function handleFilesSelect(files) {
         return;
     }
 
-    // Determine upload mode
-    if (validFiles.length === 1) {
-        // Single file mode
-        uploadMode = 'single';
-        selectedFile = validFiles[0];
-        selectedFiles = [];
+    // All uploads now use AI analysis - always batch mode
+    uploadMode = 'batch';
+    selectedFile = null;
+    selectedFiles = validFiles;
 
-        // Show single preview
+    // Hide single preview, show batch preview
+    const uploadPreview = document.getElementById('upload-preview');
+    const uploadPlaceholder = document.getElementById('upload-placeholder');
+
+    if (uploadPreview) uploadPreview.classList.add('hidden');
+    if (uploadPlaceholder) uploadPlaceholder.classList.add('hidden');
+
+    // Show or create batch preview
+    let batchPreview = document.getElementById('batch-preview');
+    if (!batchPreview) {
+        batchPreview = document.createElement('div');
+        batchPreview.id = 'batch-preview';
+        batchPreview.className = 'batch-preview';
+        document.getElementById('upload-dropzone').appendChild(batchPreview);
+    }
+
+    // Create thumbnails grid
+    const fileText = validFiles.length === 1 ? '1 imagen seleccionada' : `${validFiles.length} imagenes seleccionadas`;
+    batchPreview.innerHTML = `
+        <div class="batch-info">
+            <strong>${fileText}</strong>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="clearBatchSelection()">Cambiar</button>
+        </div>
+        <div class="batch-thumbnails" id="batch-thumbnails"></div>
+    `;
+    batchPreview.classList.remove('hidden');
+
+    const thumbsContainer = document.getElementById('batch-thumbnails');
+
+    // Add thumbnails (max 8 shown)
+    const showCount = Math.min(validFiles.length, 8);
+    for (let i = 0; i < showCount; i++) {
         const reader = new FileReader();
         reader.onload = (e) => {
-            document.getElementById('preview-image').src = e.target.result;
-            document.getElementById('upload-preview').classList.remove('hidden');
-            document.querySelector('.dropzone-content').classList.add('hidden');
-
-            // Hide batch preview
-            const batchPreview = document.getElementById('batch-preview');
-            if (batchPreview) batchPreview.classList.add('hidden');
-
-            // Show single file fields
-            showSingleUploadFields(true);
+            const thumb = document.createElement('div');
+            thumb.className = 'batch-thumb';
+            thumb.innerHTML = `<img src="${e.target.result}" alt="Preview ${i + 1}">`;
+            thumbsContainer.appendChild(thumb);
         };
-        reader.readAsDataURL(validFiles[0]);
-
-    } else {
-        // Batch mode
-        uploadMode = 'batch';
-        selectedFile = null;
-        selectedFiles = validFiles;
-
-        // Hide single preview, show batch preview
-        document.getElementById('upload-preview').classList.add('hidden');
-        document.querySelector('.dropzone-content').classList.add('hidden');
-
-        // Show or create batch preview
-        let batchPreview = document.getElementById('batch-preview');
-        if (!batchPreview) {
-            batchPreview = document.createElement('div');
-            batchPreview.id = 'batch-preview';
-            batchPreview.className = 'batch-preview';
-            document.getElementById('upload-dropzone').appendChild(batchPreview);
-        }
-
-        // Create thumbnails grid
-        batchPreview.innerHTML = `
-            <div class="batch-info">
-                <strong>${validFiles.length} imagenes seleccionadas</strong>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="clearBatchSelection()">Cambiar</button>
-            </div>
-            <div class="batch-thumbnails" id="batch-thumbnails"></div>
-        `;
-        batchPreview.classList.remove('hidden');
-
-        const thumbsContainer = document.getElementById('batch-thumbnails');
-
-        // Add thumbnails (max 8 shown)
-        const showCount = Math.min(validFiles.length, 8);
-        for (let i = 0; i < showCount; i++) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const thumb = document.createElement('div');
-                thumb.className = 'batch-thumb';
-                thumb.innerHTML = `<img src="${e.target.result}" alt="Preview ${i + 1}">`;
-                thumbsContainer.appendChild(thumb);
-            };
-            reader.readAsDataURL(validFiles[i]);
-        }
-
-        if (validFiles.length > 8) {
-            setTimeout(() => {
-                const more = document.createElement('div');
-                more.className = 'batch-thumb batch-more';
-                more.innerHTML = `+${validFiles.length - 8}`;
-                thumbsContainer.appendChild(more);
-            }, 100);
-        }
-
-        // Hide single file fields for batch upload
-        showSingleUploadFields(false);
+        reader.readAsDataURL(validFiles[i]);
     }
+
+    if (validFiles.length > 8) {
+        setTimeout(() => {
+            const more = document.createElement('div');
+            more.className = 'batch-thumb batch-more';
+            more.innerHTML = `+${validFiles.length - 8}`;
+            thumbsContainer.appendChild(more);
+        }, 100);
+    }
+
+    // Hide single file fields - AI will fill everything
+    showSingleUploadFields(false);
 
     // Enable submit button
     updateSubmitButton();
@@ -1148,99 +1130,48 @@ function showSingleUploadFields(show) {
 function clearBatchSelection() {
     selectedFiles = [];
     selectedFile = null;
-    uploadMode = 'single';
+    uploadMode = 'batch';
 
     const batchPreview = document.getElementById('batch-preview');
     if (batchPreview) batchPreview.classList.add('hidden');
 
-    document.getElementById('upload-preview').classList.add('hidden');
-    document.querySelector('.dropzone-content').classList.remove('hidden');
+    const uploadPreview = document.getElementById('upload-preview');
+    const uploadPlaceholder = document.getElementById('upload-placeholder');
 
-    showSingleUploadFields(true);
+    if (uploadPreview) uploadPreview.classList.add('hidden');
+    if (uploadPlaceholder) uploadPlaceholder.classList.remove('hidden');
+
+    showSingleUploadFields(false);
     updateSubmitButton();
 }
 
 function updateSubmitButton() {
-    const nameInput = document.getElementById('design-name');
     const submitBtn = document.getElementById('submit-design-btn');
     const btnText = document.getElementById('upload-btn-text');
 
-    if (uploadMode === 'batch' && selectedFiles.length > 0) {
-        // Batch mode - no name required, AI will extract
+    if (selectedFiles.length > 0) {
+        // Files selected - enable AI analysis
         submitBtn.disabled = false;
-        if (btnText) btnText.textContent = `Analizar ${selectedFiles.length} diseños con IA`;
-    } else if (uploadMode === 'single' && selectedFile) {
-        // Single mode - name required
-        submitBtn.disabled = !nameInput.value.trim();
-        if (btnText) btnText.textContent = 'Subir Diseno';
+        const count = selectedFiles.length;
+        if (btnText) {
+            btnText.textContent = count === 1
+                ? 'Analizar diseño con IA'
+                : `Analizar ${count} diseños con IA`;
+        }
     } else {
         submitBtn.disabled = true;
-        if (btnText) btnText.textContent = 'Subir Diseno';
+        if (btnText) btnText.textContent = 'Analizar con IA';
     }
 }
 
 async function submitDesign() {
-    // Check if batch or single mode
-    if (uploadMode === 'batch' && selectedFiles.length > 0) {
-        await submitBatchDesigns();
+    // All uploads now use AI analysis
+    if (selectedFiles.length === 0) {
+        showToast('Selecciona al menos una imagen', 'error');
         return;
     }
 
-    if (!selectedFile) {
-        showToast('Selecciona una imagen', 'error');
-        return;
-    }
-
-    const name = document.getElementById('design-name').value.trim();
-    if (!name) {
-        showToast('Ingresa un nombre para el diseño', 'error');
-        return;
-    }
-
-    const submitBtn = document.getElementById('submit-design-btn');
-    const btnText = document.getElementById('upload-btn-text');
-    const btnLoading = document.getElementById('upload-btn-loading');
-
-    // Show loading state
-    submitBtn.disabled = true;
-    btnText.classList.add('hidden');
-    btnLoading.classList.remove('hidden');
-
-    try {
-        const formData = new FormData();
-        formData.append('design', selectedFile);
-        formData.append('name', name);
-        formData.append('category_id', document.getElementById('design-category').value);
-        formData.append('tags', document.getElementById('design-tags').value);
-        formData.append('description', document.getElementById('design-description').value);
-
-        const response = await fetch(`${API_BASE}/gallery/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${state.token}`
-            },
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            showToast('Diseño subido correctamente', 'success');
-            closeModal('upload-design-modal');
-            loadGallery(); // Refresh gallery
-        } else {
-            showToast(data.error || 'Error al subir el diseño', 'error');
-        }
-
-    } catch (error) {
-        console.error('Upload error:', error);
-        showToast('Error al subir el diseño', 'error');
-    } finally {
-        // Reset loading state
-        submitBtn.disabled = false;
-        btnText.classList.remove('hidden');
-        btnLoading.classList.add('hidden');
-    }
+    await submitBatchDesigns();
 }
 
 async function submitBatchDesigns() {
