@@ -19,39 +19,21 @@ const state = {
 // INITIALIZATION
 // ========================================
 
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('========== DASHBOARD INIT START ==========');
-
+document.addEventListener('DOMContentLoaded', () => {
     // Check authentication
     const token = localStorage.getItem('employee_token');
     const employeeData = localStorage.getItem('employee_data');
 
-    console.log('INIT: localStorage employee_token =', token);
-    console.log('INIT: localStorage employee_token type =', typeof token);
-    console.log('INIT: localStorage employee_token length =', token ? token.length : 'N/A');
-    console.log('INIT: employeeData exists =', !!employeeData);
-
     if (!token || !employeeData) {
-        console.log('INIT: Missing auth data, redirecting to login');
         window.location.href = 'login.html';
         return;
     }
 
-    // Store token in state FIRST
     state.token = token;
     state.employee = JSON.parse(employeeData);
 
-    console.log('INIT: state.token after assignment =', state.token);
-    console.log('INIT: state.token length =', state.token ? state.token.length : 'N/A');
-
-    // Verify token is still valid - WAIT for this before proceeding
-    const authValid = await verifyAuth();
-    if (!authValid) {
-        console.log('Init - Auth verification failed, stopping initialization');
-        return; // verifyAuth already handles the redirect
-    }
-
-    console.log('Init - Auth verified, proceeding with setup');
+    // Verify token is still valid
+    verifyAuth();
 
     // Setup UI based on role
     setupRoleUI();
@@ -77,50 +59,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function verifyAuth() {
     try {
-        const token = state.token || localStorage.getItem('employee_token');
-        console.log('verifyAuth - Using token:', token ? `${token.length} chars` : 'NONE');
-
-        if (!token) {
-            console.error('verifyAuth - No token available');
-            forceLogout();
-            return false;
-        }
-
         const response = await fetch(`${API_BASE}/employees/verify`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            headers: getAuthHeaders()
         });
 
-        console.log('verifyAuth - Response status:', response.status);
-
         if (!response.ok) {
-            console.error('verifyAuth - Token invalid, status:', response.status);
-            forceLogout();
-            return false;
+            logout();
+            return;
         }
 
         const data = await response.json();
         state.employee = data.employee;
         localStorage.setItem('employee_data', JSON.stringify(data.employee));
         updateEmployeeInfo();
-        console.log('verifyAuth - Success, employee:', data.employee?.name);
-        return true;
 
     } catch (error) {
-        console.error('verifyAuth - Error:', error);
-        forceLogout();
-        return false;
+        console.error('Auth verification failed:', error);
+        logout();
     }
-}
-
-// Force logout without confirmation (for auth failures)
-function forceLogout() {
-    localStorage.removeItem('employee_token');
-    localStorage.removeItem('employee_data');
-    window.location.href = 'login.html';
 }
 
 function setupRoleUI() {
@@ -211,34 +167,16 @@ function switchView(viewName) {
 // ========================================
 
 function getAuthHeaders() {
-    // v2: Read token directly from localStorage
-    const localToken = localStorage.getItem('employee_token');
-    console.log('[AUTH v2] Token from localStorage:', localToken ? `${localToken.length} chars` : 'MISSING');
-
-    if (!localToken) {
-        console.error('[AUTH v2] NO TOKEN - redirecting');
-        window.location.href = 'login.html';
-        return { 'Content-Type': 'application/json' };
-    }
-
     return {
-        'Authorization': `Bearer ${localToken}`,
+        'Authorization': `Bearer ${state.token}`,
         'Content-Type': 'application/json'
     };
 }
 
 async function apiGet(endpoint) {
-    const headers = getAuthHeaders();
-    console.log('apiGet:', endpoint, 'Auth:', headers.Authorization ? 'present' : 'MISSING');
-
     const response = await fetch(`${API_BASE}${endpoint}`, {
-        headers: headers
+        headers: getAuthHeaders()
     });
-
-    if (!response.ok) {
-        console.error('apiGet failed:', endpoint, response.status);
-    }
-
     return response.json();
 }
 
