@@ -236,6 +236,7 @@ function toggleDesignList(designId) {
     if (!design) return;
 
     const existingIndex = galleryState.designList.findIndex(d => d.id === designId);
+    const panel = document.getElementById('design-list-panel');
 
     if (existingIndex >= 0) {
         galleryState.designList.splice(existingIndex, 1);
@@ -243,6 +244,11 @@ function toggleDesignList(designId) {
     } else {
         galleryState.designList.push(design);
         showToast('Agregado a la lista', 'success');
+
+        // Auto-open panel when first item is added
+        if (galleryState.designList.length === 1) {
+            panel.classList.add('open');
+        }
     }
 
     updateDesignListUI();
@@ -265,7 +271,15 @@ function updateDesignListUI() {
     const count = galleryState.designList.length;
 
     badge.textContent = count;
-    toggle.style.display = count > 0 ? 'flex' : 'none';
+
+    // Show/hide the FAB toggle button
+    if (count > 0) {
+        toggle.classList.remove('hidden');
+    } else {
+        toggle.classList.add('hidden');
+        // Close panel if it's open and list is empty
+        panel.classList.remove('open');
+    }
 
     if (count === 0) {
         content.innerHTML = `

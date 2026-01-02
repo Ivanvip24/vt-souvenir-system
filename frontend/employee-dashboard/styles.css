@@ -808,33 +808,45 @@ textarea {
 
 .gallery-item-actions {
     position: absolute;
-    bottom: 60px;
+    bottom: 0;
     left: 0;
     right: 0;
-    padding: 12px;
+    padding: 16px 12px;
+    padding-bottom: 70px;
     display: flex;
     gap: 8px;
     justify-content: center;
     opacity: 0;
-    transition: var(--transition);
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+    transition: opacity 0.15s ease;
+    background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
 }
 
 .gallery-item:hover .gallery-item-actions {
     opacity: 1;
 }
 
+/* Keep actions visible when hovering over them */
+.gallery-item-actions:hover {
+    opacity: 1;
+}
+
 .gallery-action-btn {
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: 10px 16px;
+    font-size: 13px;
     font-weight: 600;
     border: none;
     border-radius: var(--radius);
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.gallery-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .gallery-action-btn.download {
@@ -842,9 +854,21 @@ textarea {
     color: var(--white);
 }
 
+.gallery-action-btn.download:hover {
+    background: var(--primary-dark);
+}
+
 .gallery-action-btn.add-to-list {
     background: var(--orange);
     color: var(--white);
+}
+
+.gallery-action-btn.add-to-list:hover {
+    background: #e65100;
+}
+
+.gallery-action-btn.add-to-list.added {
+    background: var(--green);
 }
 
 .archived-section {
@@ -982,29 +1006,36 @@ textarea {
     color: var(--white);
 }
 
-/* FAB Button */
+/* FAB Button - Design List Toggle */
 .fab-button {
     position: fixed;
     right: 24px;
     bottom: 24px;
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--orange) 0%, #e65100 100%);
     color: var(--white);
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-lg);
-    transition: var(--transition);
+    box-shadow: 0 4px 20px rgba(255, 152, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 100;
+    animation: fabPulse 2s ease-in-out infinite;
+}
+
+@keyframes fabPulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(255, 152, 0, 0.4); }
+    50% { box-shadow: 0 4px 30px rgba(255, 152, 0, 0.6); }
 }
 
 .fab-button:hover {
-    transform: scale(1.05);
-    background: var(--primary-dark);
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(255, 152, 0, 0.5);
+    animation: none;
 }
 
 .fab-button.hidden {
@@ -1013,18 +1044,20 @@ textarea {
 
 .fab-badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
+    top: -6px;
+    right: -6px;
     background: var(--red);
     color: var(--white);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
-    min-width: 20px;
-    height: 20px;
-    border-radius: 10px;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 2px solid var(--white);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* ============================================
