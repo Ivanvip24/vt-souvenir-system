@@ -1575,7 +1575,7 @@
     <!-- Task Modal (Create/Edit) -->
     <div id="task-modal" class="modal hidden">
         <div class="modal-backdrop" onclick="closeTaskModal()"></div>
-        <div class="modal-content" style="max-width: 550px;">
+        <div class="modal-content task-modal-content">
             <div class="modal-header">
                 <h3 id="task-modal-title">Nueva Tarea</h3>
                 <button class="btn-close" onclick="closeTaskModal()">&times;</button>
@@ -1585,20 +1585,20 @@
                     <input type="hidden" id="task-id">
 
                     <div class="form-group">
-                        <label for="task-title">Título *</label>
-                        <input type="text" id="task-title" required placeholder="Describe la tarea...">
+                        <label for="task-title">Título <span class="required-asterisk">*</span></label>
+                        <input type="text" id="task-title" required placeholder="Ej: Preparar diseño para cliente ABC">
                     </div>
 
                     <div class="form-group">
                         <label for="task-description">Descripción</label>
-                        <textarea id="task-description" rows="3" placeholder="Detalles adicionales (opcional)"></textarea>
+                        <textarea id="task-description" rows="3" placeholder="Agrega detalles adicionales, instrucciones o notas..."></textarea>
                     </div>
 
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-row">
                         <div class="form-group">
-                            <label for="task-department">Departamento *</label>
+                            <label for="task-department">Departamento <span class="required-asterisk">*</span></label>
                             <select id="task-department" required>
-                                <option value="">Seleccionar...</option>
+                                <option value="">Seleccionar departamento...</option>
                                 <option value="design">Diseño</option>
                                 <option value="production">Producción</option>
                                 <option value="shipping">Envíos</option>
@@ -1615,7 +1615,7 @@
                         </div>
                     </div>
 
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="task-assigned-to">Asignar a</label>
                             <select id="task-assigned-to">
@@ -1630,14 +1630,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="task-estimated-minutes">Tiempo estimado (minutos)</label>
-                        <input type="number" id="task-estimated-minutes" min="0" placeholder="Ej: 30">
+                        <label for="task-estimated-minutes">Tiempo estimado</label>
+                        <div class="input-suffix-group">
+                            <input type="number" id="task-estimated-minutes" min="0" placeholder="30">
+                            <span class="input-suffix">minutos</span>
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeTaskModal()">Cancelar</button>
-                <button type="submit" form="task-form" class="btn btn-primary" id="task-submit-btn">Guardar</button>
+                <button type="submit" form="task-form" class="btn btn-primary" id="task-submit-btn">Guardar Tarea</button>
             </div>
         </div>
     </div>
