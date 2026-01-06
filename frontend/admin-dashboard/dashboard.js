@@ -827,43 +827,44 @@ async function showOrderDetail(orderId) {
     ${order.trackingNumber || order.shippingLabelGenerated ? `
     <div class="detail-section">
       <h3>🚚 Información de Envío</h3>
-      <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 20px; border-radius: 12px; color: white;">
+      <div style="background: var(--gray-50); padding: 16px; border-radius: 8px;">
         ${order.trackingNumber ? `
-          <div style="text-align: center; margin-bottom: 16px;">
-            <div style="font-size: 12px; opacity: 0.9; margin-bottom: 6px; font-weight: 600;">NÚMERO DE GUÍA</div>
-            <div style="font-family: monospace; font-size: 24px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 12px 20px; border-radius: 8px; letter-spacing: 2px; display: inline-block;">
-              ${order.trackingNumber}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">Número de Guía</div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-family: monospace; font-size: 14px; font-weight: 600; color: var(--gray-800);">${order.trackingNumber}</span>
+                <button onclick="copyToClipboard('${order.trackingNumber}', 'Número de guía')"
+                        style="background: none; border: 1px solid var(--gray-300); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px; color: var(--gray-600);">
+                  📋
+                </button>
+              </div>
             </div>
-            <button onclick="copyToClipboard('${order.trackingNumber}', 'Número de guía')"
-                    style="margin-left: 12px; background: rgba(255,255,255,0.2); border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; color: white; font-size: 14px; vertical-align: middle;">
-              📋 Copiar
-            </button>
+            ${order.carrier ? `
+            <div>
+              <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">Paquetería</div>
+              <div style="font-size: 14px; color: var(--gray-800);">${order.carrier}${order.shippingService ? ` - ${order.shippingService}` : ''}</div>
+            </div>
+            ` : ''}
           </div>
-          ${order.carrier ? `
-            <div style="text-align: center; margin-bottom: 12px;">
-              <span style="background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">
-                🚛 ${order.carrier}${order.shippingService ? ` - ${order.shippingService}` : ''}
-              </span>
-            </div>
-          ` : ''}
-          ${order.estimatedDeliveryDays ? `
-            <div style="text-align: center; font-size: 14px; opacity: 0.9;">
-              Tiempo estimado: <strong>${order.estimatedDeliveryDays} días hábiles</strong>
-            </div>
-          ` : ''}
-          ${order.shippingLabelUrl ? `
-            <div style="text-align: center; margin-top: 16px;">
+          ${order.estimatedDeliveryDays || order.shippingLabelUrl ? `
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-200);">
+            ${order.estimatedDeliveryDays ? `
+              <div style="font-size: 13px; color: var(--gray-600);">
+                Tiempo estimado: <strong>${order.estimatedDeliveryDays} días hábiles</strong>
+              </div>
+            ` : '<div></div>'}
+            ${order.shippingLabelUrl ? `
               <a href="${order.shippingLabelUrl}" target="_blank"
-                 style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.25); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
-                📄 Descargar Guía PDF
+                 style="display: inline-flex; align-items: center; gap: 6px; background: var(--gray-100); color: var(--gray-700); padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 13px; border: 1px solid var(--gray-300);">
+                📄 Descargar Guía
               </a>
-            </div>
+            ` : ''}
+          </div>
           ` : ''}
         ` : `
-          <div style="text-align: center;">
-            <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
-            <div style="font-size: 14px; font-weight: 600;">Guía de envío generada</div>
-            <div style="font-size: 13px; opacity: 0.9;">Número de rastreo pendiente</div>
+          <div style="text-align: center; padding: 12px; color: var(--gray-500);">
+            <div style="font-size: 13px;">Guía de envío generada - Número de rastreo pendiente</div>
           </div>
         `}
       </div>
