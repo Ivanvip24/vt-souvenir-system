@@ -4492,3 +4492,136 @@ body {
   height: 18px;
   cursor: pointer;
 }
+
+/* ==========================================
+   TASK MANAGEMENT STYLES
+   ========================================== */
+
+/* Task stats cards */
+#task-stats .stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#task-stats .stat-icon {
+  font-size: 32px;
+}
+
+#task-stats .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gray-900);
+  display: block;
+}
+
+#task-stats .stat-label {
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+/* Department badges */
+.dept-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dept-badge.dept-design {
+  background: rgba(139, 183, 59, 0.15);
+  color: #7CB342;
+}
+
+.dept-badge.dept-production {
+  background: rgba(243, 146, 35, 0.15);
+  color: #F39223;
+}
+
+.dept-badge.dept-shipping {
+  background: rgba(9, 173, 194, 0.15);
+  color: #09ADC2;
+}
+
+/* Priority badges */
+.priority-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.priority-badge.priority-urgent {
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+}
+
+.priority-badge.priority-high {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+}
+
+.priority-badge.priority-normal {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.priority-badge.priority-low {
+  background: rgba(156, 163, 175, 0.15);
+  color: #6b7280;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.status-pending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+.status-badge.status-in_progress {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.status-badge.status-completed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.status-badge.status-blocked {
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+}
+
+.status-badge.status-cancelled {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+}
+
+/* Button icon styling for tasks */
+.btn-icon {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+  font-size: 16px;
+}
+
+.btn-icon:hover {
+  background: var(--gray-100);
+}

@@ -154,6 +154,11 @@ function switchView(viewName) {
   if (viewName === 'employees' && typeof loadEmployees === 'function') {
     loadEmployees();
   }
+
+  // Initialize tasks when switching to tasks view
+  if (viewName === 'tasks' && typeof loadTasksData === 'function') {
+    loadTasksData();
+  }
 }
 
 // ==========================================

@@ -813,4 +813,479 @@ router.delete('/employees/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// ========================================
+// TASK MANAGEMENT (Admin only)
+// ========================================
+
+/**
+ * GET /api/admin/tasks
+ * List all tasks with filters (Admin only)
+ */
+router.get('/tasks', authMiddleware, async (req, res) => {
+  try {
+    const { department, status, priority, assigned_to, limit = 100 } = req.query;
+
+    let sql = `
+      SELECT t.*,
+             o.order_number,
+             c.name as client_name,
+             e.name as assigned_to_name,
+             ab.name as assigned_by_name
+      FROM tasks t
+      LEFT JOIN orders o ON t.order_id = o.id
+      LEFT JOIN clients c ON o.client_id = c.id
+      LEFT JOIN employees e ON t.assigned_to = e.id
+      LEFT JOIN employees ab ON t.assigned_by = ab.id
+      WHERE 1=1
+    `;
+    const values = [];
+    let paramIndex = 1;
+
+    if (department) {
+      sql += ` AND t.department = $${paramIndex++}`;
+      values.push(department);
+    }
+    if (status) {
+      sql += ` AND t.status = $${paramIndex++}`;
+      values.push(status);
+    }
+    if (priority) {
+      sql += ` AND t.priority = $${paramIndex++}`;
+      values.push(priority);
+    }
+    if (assigned_to) {
+      sql += ` AND t.assigned_to = $${paramIndex++}`;
+      values.push(parseInt(assigned_to));
+    }
+
+    sql += `
+      ORDER BY
+        CASE t.priority
+          WHEN 'urgent' THEN 1
+          WHEN 'high' THEN 2
+          WHEN 'normal' THEN 3
+          WHEN 'low' THEN 4
+        END,
+        t.due_date ASC NULLS LAST,
+        t.created_at DESC
+      LIMIT $${paramIndex}
+    `;
+    values.push(parseInt(limit));
+
+    const result = await query(sql, values);
+
+    res.json({
+      success: true,
+      tasks: result.rows,
+      total: result.rows.length
+    });
+
+  } catch (error) {
+    console.error('Admin list tasks error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al listar tareas'
+    });
+  }
+});
+
+/**
+ * GET /api/admin/tasks/stats
+ * Get task statistics (Admin only)
+ */
+router.get('/tasks/stats', authMiddleware, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending,
+        COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed,
+        COUNT(*) FILTER (WHERE status = 'blocked') as blocked,
+        COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled,
+        COUNT(*) FILTER (WHERE priority = 'urgent') as urgent,
+        COUNT(*) FILTER (WHERE priority = 'high') as high_priority
+      FROM tasks
+    `);
+
+    // Get tasks by department
+    const byDept = await query(`
+      SELECT department, COUNT(*) as count,
+             COUNT(*) FILTER (WHERE status = 'pending') as pending,
+             COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress
+      FROM tasks
+      GROUP BY department
+    `);
+
+    res.json({
+      success: true,
+      stats: result.rows[0],
+      byDepartment: byDept.rows
+    });
+
+  } catch (error) {
+    console.error('Admin task stats error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener estadísticas'
+    });
+  }
+});
+
+/**
+ * GET /api/admin/tasks/:id
+ * Get single task (Admin only)
+ */
+router.get('/tasks/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      `SELECT t.*,
+              o.order_number,
+              o.status as order_status,
+              c.name as client_name,
+              c.phone as client_phone,
+              e.name as assigned_to_name,
+              ab.name as assigned_by_name
+       FROM tasks t
+       LEFT JOIN orders o ON t.order_id = o.id
+       LEFT JOIN clients c ON o.client_id = c.id
+       LEFT JOIN employees e ON t.assigned_to = e.id
+       LEFT JOIN employees ab ON t.assigned_by = ab.id
+       WHERE t.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tarea no encontrada'
+      });
+    }
+
+    res.json({
+      success: true,
+      task: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Admin get task error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener tarea'
+    });
+  }
+});
+
+/**
+ * POST /api/admin/tasks
+ * Create a new task (Admin only)
+ */
+router.post('/tasks', authMiddleware, async (req, res) => {
+  try {
+    const { title, description, department, priority, assigned_to, due_date, order_id, estimated_minutes } = req.body;
+
+    if (!title || !department) {
+      return res.status(400).json({
+        success: false,
+        error: 'Título y departamento son requeridos'
+      });
+    }
+
+    const validDepts = ['design', 'production', 'shipping'];
+    if (!validDepts.includes(department)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Departamento inválido'
+      });
+    }
+
+    const result = await query(
+      `INSERT INTO tasks (title, description, department, task_type, priority, assigned_to, assigned_by, due_date, order_id, estimated_minutes)
+       VALUES ($1, $2, $3, 'manual', $4, $5, NULL, $6, $7, $8)
+       RETURNING *`,
+      [
+        title,
+        description || null,
+        department,
+        priority || 'normal',
+        assigned_to ? parseInt(assigned_to) : null,
+        due_date || null,
+        order_id ? parseInt(order_id) : null,
+        estimated_minutes ? parseInt(estimated_minutes) : null
+      ]
+    );
+
+    // Get the full task with joins
+    const fullTask = await query(
+      `SELECT t.*, e.name as assigned_to_name
+       FROM tasks t
+       LEFT JOIN employees e ON t.assigned_to = e.id
+       WHERE t.id = $1`,
+      [result.rows[0].id]
+    );
+
+    console.log(`✅ Task created by admin: ${title}`);
+
+    res.status(201).json({
+      success: true,
+      task: fullTask.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Admin create task error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al crear tarea'
+    });
+  }
+});
+
+/**
+ * PUT /api/admin/tasks/:id
+ * Update task (Admin only)
+ */
+router.put('/tasks/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, department, priority, due_date, estimated_minutes, notes } = req.body;
+
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (title) {
+      updates.push(`title = $${paramIndex++}`);
+      values.push(title);
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(description);
+    }
+    if (department) {
+      updates.push(`department = $${paramIndex++}`);
+      values.push(department);
+    }
+    if (priority) {
+      updates.push(`priority = $${paramIndex++}`);
+      values.push(priority);
+    }
+    if (due_date !== undefined) {
+      updates.push(`due_date = $${paramIndex++}`);
+      values.push(due_date);
+    }
+    if (estimated_minutes !== undefined) {
+      updates.push(`estimated_minutes = $${paramIndex++}`);
+      values.push(estimated_minutes);
+    }
+    if (notes !== undefined) {
+      updates.push(`notes = $${paramIndex++}`);
+      values.push(notes);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No hay campos para actualizar'
+      });
+    }
+
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(id);
+
+    const result = await query(
+      `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tarea no encontrada'
+      });
+    }
+
+    console.log(`✅ Task updated by admin: ${result.rows[0].title}`);
+
+    res.json({
+      success: true,
+      task: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Admin update task error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al actualizar tarea'
+    });
+  }
+});
+
+/**
+ * PUT /api/admin/tasks/:id/status
+ * Update task status (Admin only)
+ */
+router.put('/tasks/:id/status', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        error: 'Estado es requerido'
+      });
+    }
+
+    const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled', 'blocked'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Estado inválido'
+      });
+    }
+
+    let sql = `
+      UPDATE tasks SET
+        status = $1,
+        updated_at = CURRENT_TIMESTAMP
+    `;
+    const values = [status];
+
+    if (status === 'in_progress') {
+      sql += `, started_at = COALESCE(started_at, CURRENT_TIMESTAMP)`;
+    } else if (status === 'completed') {
+      sql += `, completed_at = CURRENT_TIMESTAMP`;
+    }
+
+    sql += ` WHERE id = $2 RETURNING *`;
+    values.push(id);
+
+    const result = await query(sql, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tarea no encontrada'
+      });
+    }
+
+    console.log(`✅ Task status updated by admin: ${result.rows[0].title} -> ${status}`);
+
+    res.json({
+      success: true,
+      task: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Admin update task status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al actualizar estado'
+    });
+  }
+});
+
+/**
+ * PUT /api/admin/tasks/:id/assign
+ * Assign task to employee (Admin only)
+ */
+router.put('/tasks/:id/assign', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { assigned_to } = req.body;
+
+    // Verify employee exists and is active (if assigning)
+    if (assigned_to) {
+      const employee = await query(
+        'SELECT id, name, department FROM employees WHERE id = $1 AND is_active = true',
+        [assigned_to]
+      );
+
+      if (employee.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Empleado no encontrado o inactivo'
+        });
+      }
+    }
+
+    const result = await query(
+      `UPDATE tasks SET
+         assigned_to = $1,
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING *`,
+      [assigned_to || null, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tarea no encontrada'
+      });
+    }
+
+    // Get full task with employee name
+    const fullTask = await query(
+      `SELECT t.*, e.name as assigned_to_name
+       FROM tasks t
+       LEFT JOIN employees e ON t.assigned_to = e.id
+       WHERE t.id = $1`,
+      [id]
+    );
+
+    console.log(`✅ Task assigned by admin: ${result.rows[0].title}`);
+
+    res.json({
+      success: true,
+      task: fullTask.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Admin assign task error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al asignar tarea'
+    });
+  }
+});
+
+/**
+ * DELETE /api/admin/tasks/:id
+ * Delete task (Admin only)
+ */
+router.delete('/tasks/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      'DELETE FROM tasks WHERE id = $1 RETURNING id, title',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tarea no encontrada'
+      });
+    }
+
+    console.log(`✅ Task deleted by admin: ${result.rows[0].title}`);
+
+    res.json({
+      success: true,
+      message: 'Tarea eliminada correctamente'
+    });
+
+  } catch (error) {
+    console.error('Admin delete task error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al eliminar tarea'
+    });
+  }
+});
+
 export default router;
