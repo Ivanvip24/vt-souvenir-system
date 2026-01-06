@@ -63,7 +63,7 @@ const PRICING_TIERS = {
     { min: 1000, max: Infinity, price: 6.00 }
   ],
   'portallaves de mdf': [
-    { min: 20, max: Infinity, price: 45.00 }
+    { min: 20, max: Infinity, price: 40.00 }
   ],
   'souvenir box': [
     { min: 1, max: Infinity, price: 2250.00 }
@@ -2317,11 +2317,12 @@ window.lookupClientOrders = async function() {
               </div>
             ` : ''}
 
-          <!-- Shipping Section - Only show tracking info after second payment is uploaded -->
-          ${order.secondPaymentReceipt && order.shippingLabelsCount > 0 ? `
-            <div id="shipping-info-${order.id}" style="margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 12px;">
-              <div style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 12px; text-align: center;">
-                🚚 Información de Envío
+          <!-- Shipping Section - Show whenever there are shipping labels -->
+          ${order.shippingLabelsCount > 0 ? `
+            <div id="shipping-info-${order.id}" style="margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 12px; border: 2px solid #059669;">
+              <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 12px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span style="font-size: 24px;">📦</span>
+                <span>Guía de Envío</span>
               </div>
               <div id="shipping-labels-${order.id}" style="background: white; border-radius: 8px; padding: 12px;">
                 <div style="text-align: center; color: #666; font-size: 12px;">
@@ -2915,27 +2916,52 @@ window.loadShippingLabels = async function(orderId) {
       return;
     }
 
-    // Simplified display: Only tracking number and estimated arrival
+    // Display shipping label info with tracking number, carrier and delivery estimate
     container.innerHTML = result.labels.map(label => `
       <div style="padding: 12px;">
         ${label.tracking_number ? `
+          <!-- Carrier Info -->
+          ${label.carrier ? `
+            <div style="text-align: center; margin-bottom: 12px;">
+              <div style="display: inline-block; padding: 6px 16px; background: #e0f2fe; border-radius: 20px;">
+                <span style="font-size: 13px; font-weight: 600; color: #0369a1;">
+                  🚛 ${label.carrier}${label.service ? ` - ${label.service}` : ''}
+                </span>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Tracking Number -->
           <div style="text-align: center; margin-bottom: 12px;">
-            <div style="font-size: 11px; color: #6b7280; margin-bottom: 6px;">Número de Guía:</div>
-            <div style="font-family: monospace; font-size: 18px; font-weight: 700; color: #1f2937; background: #f3f4f6; padding: 10px 14px; border-radius: 8px; letter-spacing: 2px;">
+            <div style="font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600;">NÚMERO DE GUÍA:</div>
+            <div style="font-family: monospace; font-size: 20px; font-weight: 700; color: #1f2937; background: #f3f4f6; padding: 12px 16px; border-radius: 8px; letter-spacing: 2px; border: 2px dashed #d1d5db;">
               ${label.tracking_number}
             </div>
           </div>
-          <div style="text-align: center; padding: 10px; background: #ecfdf5; border-radius: 8px;">
-            <div style="font-size: 11px; color: #059669; margin-bottom: 4px;">Tiempo estimado de entrega:</div>
-            <div style="font-size: 16px; font-weight: 700; color: #047857;">
+
+          <!-- Delivery Estimate -->
+          <div style="text-align: center; padding: 12px; background: #ecfdf5; border-radius: 8px; margin-bottom: 12px;">
+            <div style="font-size: 11px; color: #059669; margin-bottom: 4px; font-weight: 600;">TIEMPO ESTIMADO DE ENTREGA:</div>
+            <div style="font-size: 18px; font-weight: 700; color: #047857;">
               ${label.delivery_days || '3-5'} días hábiles
             </div>
           </div>
+
+          <!-- Track Button -->
+          ${label.tracking_url ? `
+            <a href="${label.tracking_url}" target="_blank" rel="noopener noreferrer"
+               style="display: block; text-align: center; padding: 12px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
+              🔍 Rastrear Mi Paquete
+            </a>
+          ` : ''}
         ` : `
-          <div style="text-align: center; padding: 12px;">
-            <div style="font-size: 20px; margin-bottom: 8px;">⏳</div>
-            <div style="font-size: 13px; color: #6b7280;">
+          <div style="text-align: center; padding: 16px;">
+            <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+            <div style="font-size: 14px; color: #6b7280; font-weight: 500;">
               Generando número de guía...
+            </div>
+            <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">
+              Esto puede tomar unos momentos
             </div>
           </div>
         `}
