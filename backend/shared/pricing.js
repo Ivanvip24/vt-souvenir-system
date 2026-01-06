@@ -6,42 +6,44 @@
  */
 
 // Tiered pricing configuration - SINGLE SOURCE OF TRUTH
+// NOTE: Actual minimum is 50 pieces, but marketing displays "100 pieces minimum"
 export const PRICING_TIERS = {
   'imanes de mdf': [
-    { min: 100, max: 999, price: 11.00 },
+    { min: 50, max: 999, price: 11.00 },
     { min: 1000, max: Infinity, price: 8.00 }
   ],
   'imán 3d mdf 3mm': [
-    { min: 100, max: 999, price: 15.00 },
+    { min: 50, max: 999, price: 15.00 },
     { min: 1000, max: Infinity, price: 12.00 }
   ],
   'imán de mdf con foil': [
-    { min: 100, max: 999, price: 13.00 },
+    { min: 50, max: 999, price: 13.00 },
     { min: 1000, max: Infinity, price: 10.00 }
   ],
   'llaveros de mdf': [
-    { min: 100, max: 999, price: 10.00 },
+    { min: 50, max: 999, price: 10.00 },
     { min: 1000, max: Infinity, price: 7.00 }
   ],
   'destapador de mdf': [
-    { min: 100, max: 999, price: 20.00 },
+    { min: 50, max: 999, price: 20.00 },
     { min: 1000, max: Infinity, price: 17.00 }
   ],
   'botones metálicos': [
-    { min: 100, max: 999, price: 8.00 },
+    { min: 50, max: 999, price: 8.00 },
     { min: 1000, max: Infinity, price: 6.00 }
   ],
   'portallaves de mdf': [
-    { min: 20, max: Infinity, price: 45.00 }
+    { min: 20, max: Infinity, price: 40.00 }
   ],
   'souvenir box': [
     { min: 1, max: Infinity, price: 2250.00 }
   ]
 };
 
-// Minimum order quantities
+// Minimum order quantities (actual validation values)
+// NOTE: Marketing displays "100 pieces minimum" but we accept 50
 export const MOQ = {
-  default: 100,
+  default: 50,
   'portallaves de mdf': 20,
   'souvenir box': 1
 };
