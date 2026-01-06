@@ -261,6 +261,13 @@ app.get('/api/orders', async (req, res) => {
         o.archive_status,
         o.sales_rep,
         o.created_at,
+        -- Shipping label data from shipping_labels table
+        (SELECT sl.tracking_number FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_tracking_number,
+        (SELECT sl.carrier FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_carrier,
+        (SELECT sl.service_name FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_service_name,
+        (SELECT sl.label_url FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_label_url,
+        (SELECT sl.estimated_delivery FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_estimated_delivery,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as shipping_labels_count,
         c.name as client_name,
         c.phone as client_phone,
         c.email as client_email,
@@ -334,9 +341,14 @@ app.get('/api/orders', async (req, res) => {
       clientNotes: order.client_notes || '',
       internalNotes: order.internal_notes || '',
       orderAttachments: order.order_attachments ? JSON.parse(order.order_attachments) : [],
-      // Shipping
-      shippingLabelGenerated: order.shipping_label_generated || false,
-      trackingNumber: order.tracking_number || '',
+      // Shipping - prefer shipping_labels table data, fallback to orders table
+      shippingLabelGenerated: order.shipping_label_generated || parseInt(order.shipping_labels_count) > 0,
+      trackingNumber: order.sl_tracking_number || order.tracking_number || '',
+      carrier: order.sl_carrier || '',
+      shippingService: order.sl_service_name || '',
+      shippingLabelUrl: order.sl_label_url || '',
+      estimatedDeliveryDays: order.sl_estimated_delivery || null,
+      shippingLabelsCount: parseInt(order.shipping_labels_count) || 0,
       deliveryDate: order.delivery_date,
       // Delivery dates (admin only)
       productionDeadline: order.production_deadline,
@@ -610,6 +622,13 @@ app.get('/api/orders/:orderId', async (req, res) => {
         o.notion_page_id,
         o.notion_page_url,
         o.created_at,
+        -- Shipping label data from shipping_labels table
+        (SELECT sl.tracking_number FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_tracking_number,
+        (SELECT sl.carrier FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_carrier,
+        (SELECT sl.service_name FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_service_name,
+        (SELECT sl.label_url FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_label_url,
+        (SELECT sl.estimated_delivery FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_estimated_delivery,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as shipping_labels_count,
         c.name as client_name,
         c.phone as client_phone,
         c.email as client_email,
@@ -689,9 +708,14 @@ app.get('/api/orders/:orderId', async (req, res) => {
       clientNotes: order.client_notes || '',
       internalNotes: order.internal_notes || '',
       orderAttachments: order.order_attachments ? JSON.parse(order.order_attachments) : [],
-      // Shipping
-      shippingLabelGenerated: order.shipping_label_generated || false,
-      trackingNumber: order.tracking_number || '',
+      // Shipping - prefer shipping_labels table data, fallback to orders table
+      shippingLabelGenerated: order.shipping_label_generated || parseInt(order.shipping_labels_count) > 0,
+      trackingNumber: order.sl_tracking_number || order.tracking_number || '',
+      carrier: order.sl_carrier || '',
+      shippingService: order.sl_service_name || '',
+      shippingLabelUrl: order.sl_label_url || '',
+      estimatedDeliveryDays: order.sl_estimated_delivery || null,
+      shippingLabelsCount: parseInt(order.shipping_labels_count) || 0,
       deliveryDate: order.delivery_date,
       // Delivery dates (admin only)
       productionDeadline: order.production_deadline,

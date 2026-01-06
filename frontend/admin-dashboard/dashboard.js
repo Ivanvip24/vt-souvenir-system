@@ -851,6 +851,14 @@ async function showOrderDetail(orderId) {
               Tiempo estimado: <strong>${order.estimatedDeliveryDays} días hábiles</strong>
             </div>
           ` : ''}
+          ${order.shippingLabelUrl ? `
+            <div style="text-align: center; margin-top: 16px;">
+              <a href="${order.shippingLabelUrl}" target="_blank"
+                 style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.25); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                📄 Descargar Guía PDF
+              </a>
+            </div>
+          ` : ''}
         ` : `
           <div style="text-align: center;">
             <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
