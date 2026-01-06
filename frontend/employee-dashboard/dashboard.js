@@ -86,8 +86,11 @@ function setupRoleUI() {
     // Update employee info display
     updateEmployeeInfo();
 
-    // Update department name
-    document.getElementById('dept-name').textContent = getDepartmentName(state.employee.department);
+    // Update department name (if element exists)
+    const deptNameEl = document.getElementById('dept-name');
+    if (deptNameEl) {
+        deptNameEl.textContent = getDepartmentName(state.employee.department);
+    }
 
     // Load employees list if manager (for task assignment)
     if (state.employee.role === 'manager') {

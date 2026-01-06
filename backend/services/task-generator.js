@@ -226,23 +226,37 @@ export async function getDepartmentQueue(department) {
 }
 
 /**
- * Get tasks assigned to an employee
+ * Get tasks for an employee (assigned to them OR unassigned in their department)
  */
-export async function getEmployeeTasks(employeeId, includeCompleted = false) {
+export async function getEmployeeTasks(employeeId, includeCompleted = false, department = null) {
   try {
     let sql = `
       SELECT t.*, o.order_number, c.name as client_name
       FROM tasks t
       LEFT JOIN orders o ON t.order_id = o.id
       LEFT JOIN clients c ON o.client_id = c.id
-      WHERE t.assigned_to = $1
+      WHERE (
+        t.assigned_to = $1
     `;
+
+    const values = [employeeId];
+    let paramIndex = 2;
+
+    // Also include unassigned tasks in their department
+    if (department) {
+      sql += ` OR (t.assigned_to IS NULL AND t.department = $${paramIndex})`;
+      values.push(department);
+      paramIndex++;
+    }
+
+    sql += `)`;
 
     if (!includeCompleted) {
       sql += ` AND t.status NOT IN ('completed', 'cancelled')`;
     }
 
     sql += ` ORDER BY
+      CASE WHEN t.assigned_to = $1 THEN 0 ELSE 1 END,
       CASE t.priority
         WHEN 'urgent' THEN 1
         WHEN 'high' THEN 2
@@ -251,7 +265,7 @@ export async function getEmployeeTasks(employeeId, includeCompleted = false) {
       END,
       t.due_date ASC NULLS LAST`;
 
-    const result = await query(sql, [employeeId]);
+    const result = await query(sql, values);
 
     return result.rows;
 

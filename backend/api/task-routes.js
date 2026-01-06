@@ -108,12 +108,16 @@ router.get('/', employeeAuth, async (req, res) => {
 
 /**
  * GET /api/tasks/my-tasks
- * Get tasks assigned to current employee
+ * Get tasks assigned to current employee + unassigned tasks in their department
  */
 router.get('/my-tasks', employeeAuth, async (req, res) => {
   try {
     const { include_completed } = req.query;
-    const tasks = await getEmployeeTasks(req.employee.id, include_completed === 'true');
+    const tasks = await getEmployeeTasks(
+      req.employee.id,
+      include_completed === 'true',
+      req.employee.department
+    );
 
     res.json({
       success: true,
