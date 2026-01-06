@@ -3033,16 +3033,19 @@ document.head.appendChild(style);
 let selectedShippingRates = {};
 
 /**
- * Load shipping options for an order
+ * Load shipping options for an order with retry logic
  */
-window.loadShippingOptions = async function(orderId) {
+window.loadShippingOptions = async function(orderId, retryCount = 0) {
+  const MAX_RETRIES = 2;
   const container = document.getElementById(`shipping-options-${orderId}`);
 
   // Show loading state
   container.innerHTML = `
     <div style="padding: 16px; background: #f3f4f6; border-radius: 8px; text-align: center;">
       <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #667eea; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-      <div style="margin-top: 8px; font-size: 13px; color: #6b7280;">Cargando opciones de envío...</div>
+      <div style="margin-top: 8px; font-size: 13px; color: #6b7280;">
+        ${retryCount > 0 ? `Reintentando (${retryCount}/${MAX_RETRIES})...` : 'Cargando opciones de envío...'}
+      </div>
     </div>
   `;
 
@@ -3051,7 +3054,10 @@ window.loadShippingOptions = async function(orderId) {
       ? `http://localhost:3000/api/shipping/orders/${orderId}/quotes`
       : `https://vt-souvenir-backend.onrender.com/api/shipping/orders/${orderId}/quotes`;
 
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
     const result = await response.json();
 
     if (!result.success) {
@@ -3113,13 +3119,35 @@ window.loadShippingOptions = async function(orderId) {
 
   } catch (error) {
     console.error('Error loading shipping options:', error);
+
+    // Auto-retry with exponential backoff
+    if (retryCount < MAX_RETRIES) {
+      const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s
+      console.log(`Retrying in ${delay}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+
+      container.innerHTML = `
+        <div style="padding: 16px; background: #fef3c7; border-radius: 8px; text-align: center; color: #92400e;">
+          <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #f59e0b; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <div style="margin-top: 8px; font-size: 13px;">Conexión lenta, reintentando automáticamente...</div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        loadShippingOptions(orderId, retryCount + 1);
+      }, delay);
+      return;
+    }
+
+    // All retries exhausted, show error with manual retry button
     container.innerHTML = `
       <div style="padding: 16px; background: #fee2e2; border-radius: 8px; text-align: center; color: #991b1b;">
-        <div style="font-weight: 600;">Error: ${error.message}</div>
+        <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
+        <div style="font-weight: 600; margin-bottom: 4px;">No se pudieron cargar las opciones</div>
+        <div style="font-size: 12px; margin-bottom: 12px; color: #b91c1c;">La conexión con el servidor de envíos está lenta. Por favor intenta de nuevo.</div>
         <button
-          onclick="loadShippingOptions(${orderId})"
-          style="margin-top: 8px; padding: 8px 16px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer;">
-          Reintentar
+          onclick="loadShippingOptions(${orderId}, 0)"
+          style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">
+          🔄 Reintentar
         </button>
       </div>
     `;

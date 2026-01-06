@@ -113,9 +113,11 @@ export async function skydropxFetch(endpoint, options = {}) {
 }
 
 /**
- * Get shipping quote for a destination
+ * Get shipping quote for a destination with retry logic
  */
-export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE) {
+export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, retryCount = 0) {
+  const MAX_RETRIES = 2;
+
   const quotationPayload = {
     quotation: {
       address_from: {
@@ -143,43 +145,56 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE) {
 
   console.log('📦 Skydropx Quote Request:', JSON.stringify(quotationPayload, null, 2));
 
-  const response = await skydropxFetch('/quotations', {
-    method: 'POST',
-    body: JSON.stringify(quotationPayload)
-  });
+  try {
+    const response = await skydropxFetch('/quotations', {
+      method: 'POST',
+      body: JSON.stringify(quotationPayload)
+    });
 
-  const responseText = await response.text();
+    const responseText = await response.text();
 
-  if (!response.ok) {
-    let errorMessage = 'Error getting quote from Skydropx';
-    try {
-      const errorData = JSON.parse(responseText);
-      errorMessage = errorData.message || errorData.error || JSON.stringify(errorData.errors);
-    } catch (e) {}
-    throw new Error(errorMessage);
+    if (!response.ok) {
+      let errorMessage = 'Error getting quote from Skydropx';
+      try {
+        const errorData = JSON.parse(responseText);
+        errorMessage = errorData.message || errorData.error || JSON.stringify(errorData.errors);
+      } catch (e) {}
+      throw new Error(errorMessage);
+    }
+
+    const result = JSON.parse(responseText);
+    console.log('✅ Skydropx Quote - Found', result.rates?.length || 0, 'rates');
+
+    // Parse rates
+    const rates = (result.rates || [])
+      .filter(rate => rate.success && rate.total)
+      .map(rate => ({
+        rate_id: rate.id,
+        carrier: rate.provider_display_name || rate.provider_name,
+        carrier_code: rate.provider_name?.toUpperCase(),
+        service: rate.provider_service_name,
+        service_code: rate.provider_service_code,
+        total_price: parseFloat(rate.total) || 0,
+        days: rate.days || estimateDeliveryDays(rate.provider_service_code)
+      }))
+      .sort((a, b) => a.total_price - b.total_price);
+
+    return {
+      quotation_id: result.id,
+      rates
+    };
+  } catch (error) {
+    // Retry on failure
+    if (retryCount < MAX_RETRIES) {
+      const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s exponential backoff
+      console.log(`⚠️ Skydropx quote failed, retrying in ${delay}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return getQuote(destAddress, packageInfo, retryCount + 1);
+    }
+    // All retries exhausted
+    console.error('❌ Skydropx quote failed after all retries:', error.message);
+    throw error;
   }
-
-  const result = JSON.parse(responseText);
-  console.log('✅ Skydropx Quote - Found', result.rates?.length || 0, 'rates');
-
-  // Parse rates
-  const rates = (result.rates || [])
-    .filter(rate => rate.success && rate.total)
-    .map(rate => ({
-      rate_id: rate.id,
-      carrier: rate.provider_display_name || rate.provider_name,
-      carrier_code: rate.provider_name?.toUpperCase(),
-      service: rate.provider_service_name,
-      service_code: rate.provider_service_code,
-      total_price: parseFloat(rate.total) || 0,
-      days: rate.days || estimateDeliveryDays(rate.provider_service_code)
-    }))
-    .sort((a, b) => a.total_price - b.total_price);
-
-  return {
-    quotation_id: result.id,
-    rates
-  };
 }
 
 /**
