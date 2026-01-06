@@ -22,38 +22,44 @@ const STORAGE_KEY = 'souvenir_client_data';
 // Each product can have multiple tiers: { min: quantity, price: unit_price }
 //
 // PRICING RULES:
-// 1. Most products require a MINIMUM of 100 pieces (MOQ = Minimum Order Quantity)
+// 1. Most products require a MINIMUM of 50 pieces (actual validation)
+//    but labels show "100 pieces minimum" for marketing purposes
 // 2. Portallaves de MDF: Lower minimum of only 20 pieces
 // 3. Souvenir Box: No minimum, can order from 1 piece
 // 4. Price changes at 1000+ pieces for bulk discount
+
+// Display MOQ shown in labels (marketing value)
+const DISPLAY_MOQ = 100;
+
 const PRICING_TIERS = {
   // Match by product name (case-insensitive partial match)
+  // Note: min values are actual validation (50), display shows DISPLAY_MOQ (100)
   'imanes de mdf chico': [
-    { min: 100, max: 999, price: 11.00 },
+    { min: 50, max: 999, price: 11.00 },
     { min: 1000, max: Infinity, price: 8.00 }
   ],
   'imanes de mdf grande': [
-    { min: 100, max: 999, price: 15.00 },
+    { min: 50, max: 999, price: 15.00 },
     { min: 1000, max: Infinity, price: 12.00 }
   ],
   'llaveros de mdf': [
-    { min: 100, max: 999, price: 10.00 },
+    { min: 50, max: 999, price: 10.00 },
     { min: 1000, max: Infinity, price: 8.00 }
   ],
   'imán 3d mdf': [
-    { min: 100, max: 999, price: 15.00 },
+    { min: 50, max: 999, price: 15.00 },
     { min: 1000, max: Infinity, price: 12.00 }
   ],
   'imán de mdf con foil': [
-    { min: 100, max: 999, price: 15.00 },
+    { min: 50, max: 999, price: 15.00 },
     { min: 1000, max: Infinity, price: 12.00 }
   ],
   'destapador de mdf': [
-    { min: 100, max: 999, price: 20.00 },
+    { min: 50, max: 999, price: 20.00 },
     { min: 1000, max: Infinity, price: 17.00 }
   ],
   'botones metálicos': [
-    { min: 100, max: 999, price: 8.00 },
+    { min: 50, max: 999, price: 8.00 },
     { min: 1000, max: Infinity, price: 6.00 }
   ],
   'portallaves de mdf': [
@@ -115,9 +121,11 @@ function getTieredPrice(product, quantity) {
 
   if (!applicableTier) {
     // Use base price if quantity doesn't match any tier
+    // Use DISPLAY_MOQ for customer-facing message
+    const displayMin = tiers[0].min >= 50 ? DISPLAY_MOQ : tiers[0].min;
     return {
       price: parseFloat(product.base_price),
-      tierInfo: `Mínimo ${tiers[0].min} piezas para precio mayorista`,
+      tierInfo: `Mínimo ${displayMin} piezas para precio mayorista`,
       savings: 0,
       isPromoPrice: false
     };
@@ -128,12 +136,13 @@ function getTieredPrice(product, quantity) {
   const tierPrice = applicableTier.price;
   const savings = (basePrice - tierPrice) * quantity;
 
-  // Format tier info
+  // Format tier info - use DISPLAY_MOQ for customer-facing display
+  const displayMin = applicableTier.min >= 50 ? DISPLAY_MOQ : applicableTier.min;
   let tierInfo = '';
   if (applicableTier.max === Infinity) {
-    tierInfo = `${applicableTier.min}+ piezas: $${tierPrice.toFixed(2)} c/u`;
+    tierInfo = `${displayMin}+ piezas: $${tierPrice.toFixed(2)} c/u`;
   } else {
-    tierInfo = `${applicableTier.min}-${applicableTier.max} piezas: $${tierPrice.toFixed(2)} c/u`;
+    tierInfo = `${displayMin}-${applicableTier.max} piezas: $${tierPrice.toFixed(2)} c/u`;
   }
 
   // Find next tier for incentive message
@@ -1103,8 +1112,9 @@ function createProductCard(product) {
   const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : defaultQuantity);
   const subtotal = price * quantity;
 
-  // #11: MOQ badge text
-  const moqBadgeText = moq === 1 ? 'Sin mínimo' : `Mín. ${moq} pzas`;
+  // #11: MOQ badge text - use DISPLAY_MOQ for customer-facing display
+  const displayMoq = moq >= 50 ? DISPLAY_MOQ : moq;
+  const moqBadgeText = moq === 1 ? 'Sin mínimo' : `Mín. ${displayMoq} pzas`;
 
   div.innerHTML = `
     <!-- #11: MOQ Badge -->
@@ -1201,18 +1211,21 @@ window.handleQuantityChange = function(productId, value) {
     }
   }
 
+  // Display MOQ for customer-facing warning (shows 100 instead of actual 50)
+  const displayMoq = moq >= 50 ? DISPLAY_MOQ : moq;
+
   // If quantity is between 1 and MOQ-1, show warning and don't add to cart
   if (quantity > 0 && quantity < moq) {
     const input = document.getElementById(`qty-${productId}`);
     const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
     const tierInfoEl = document.getElementById(`tier-${productId}`);
 
-    // Show MOQ warning
+    // Show MOQ warning - use displayMoq for customer-facing message
     if (tierInfoEl) {
       tierInfoEl.innerHTML = `
         <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 16px;">⚠️</span>
-          <span>Mínimo ${moq} piezas para este producto</span>
+          <span>Mínimo ${displayMoq} piezas para este producto</span>
         </div>
       `;
     }
