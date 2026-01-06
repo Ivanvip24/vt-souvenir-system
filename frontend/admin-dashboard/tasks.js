@@ -257,13 +257,38 @@ function filterTasksList() {
 /**
  * Open modal to create new task
  */
-function openCreateTaskModal() {
-  document.getElementById('task-modal-title').textContent = 'Nueva Tarea';
-  document.getElementById('task-form').reset();
-  document.getElementById('task-id').value = '';
-  document.getElementById('task-priority').value = 'normal';
-  populateEmployeeDropdowns();
-  document.getElementById('task-modal').classList.remove('hidden');
+async function openCreateTaskModal() {
+  try {
+    console.log('Opening create task modal...');
+
+    const modal = document.getElementById('task-modal');
+    const form = document.getElementById('task-form');
+    const title = document.getElementById('task-modal-title');
+    const taskId = document.getElementById('task-id');
+    const priority = document.getElementById('task-priority');
+
+    if (!modal) {
+      console.error('Task modal not found');
+      return;
+    }
+
+    if (title) title.textContent = 'Nueva Tarea';
+    if (form) form.reset();
+    if (taskId) taskId.value = '';
+    if (priority) priority.value = 'normal';
+
+    // Load employees if not loaded yet
+    if (taskEmployees.length === 0) {
+      await loadTaskEmployees();
+    }
+
+    populateEmployeeDropdowns();
+    modal.classList.remove('hidden');
+    console.log('Modal opened successfully');
+
+  } catch (error) {
+    console.error('Error opening task modal:', error);
+  }
 }
 
 /**
