@@ -355,6 +355,28 @@ async function completeTask(taskId) {
     }
 }
 
+async function completeTaskDirectly(taskId) {
+    try {
+        // First start the task
+        const startData = await apiPost(`/tasks/${taskId}/start`, {});
+        if (!startData.success) {
+            showToast(startData.error || 'Error al iniciar tarea', 'error');
+            return;
+        }
+
+        // Then complete it
+        const completeData = await apiPost(`/tasks/${taskId}/complete`, {});
+        if (completeData.success) {
+            showToast('Tarea completada', 'success');
+            loadMyTasks();
+        } else {
+            showToast(completeData.error || 'Error al completar tarea', 'error');
+        }
+    } catch (error) {
+        showToast('Error de conexión', 'error');
+    }
+}
+
 function openTaskModal(task) {
     const modal = document.getElementById('task-modal');
     const title = document.getElementById('task-modal-title');
@@ -379,6 +401,7 @@ function openTaskModal(task) {
     footer.innerHTML = '';
 
     if (task.status === 'pending') {
+        // Start button
         const startBtn = document.createElement('button');
         startBtn.className = 'btn btn-primary';
         startBtn.textContent = 'Iniciar Tarea';
@@ -387,9 +410,19 @@ function openTaskModal(task) {
             closeModal('task-modal');
         };
         footer.appendChild(startBtn);
+
+        // Complete button (skip start step)
+        const completeBtn = document.createElement('button');
+        completeBtn.className = 'btn btn-success';
+        completeBtn.textContent = 'Marcar Completada';
+        completeBtn.onclick = async () => {
+            await completeTaskDirectly(task.id);
+            closeModal('task-modal');
+        };
+        footer.appendChild(completeBtn);
     } else if (task.status === 'in_progress') {
         const completeBtn = document.createElement('button');
-        completeBtn.className = 'btn btn-primary';
+        completeBtn.className = 'btn btn-success';
         completeBtn.textContent = 'Completar Tarea';
         completeBtn.onclick = async () => {
             await completeTask(task.id);
@@ -706,6 +739,7 @@ document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
 // Make functions globally available
 window.startTask = startTask;
 window.completeTask = completeTask;
+window.completeTaskDirectly = completeTaskDirectly;
 window.closeModal = closeModal;
 window.showToast = showToast;
 window.state = state;
