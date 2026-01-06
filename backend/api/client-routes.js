@@ -383,6 +383,42 @@ router.post('/orders/submit', async (req, res) => {
 
     await query('COMMIT');
 
+    // 4b. Create automatic tasks for the new order (background - don't block response)
+    setImmediate(async () => {
+      try {
+        console.log(`📋 Creating automatic tasks for order ${orderNumber}...`);
+
+        // Task 1: Diseños (Design department)
+        await query(
+          `INSERT INTO tasks (title, description, department, task_type, priority, assigned_to, order_id, status)
+           VALUES ($1, $2, 'design', 'auto', 'normal', NULL, $3, 'pending')`,
+          [
+            `Diseños - ${orderNumber}`,
+            `Crear diseños para el pedido ${orderNumber}.\nCliente: ${clientName}\nProductos: ${orderItems.map(i => `${i.productName} (${i.quantity} pzas)`).join(', ')}`,
+            orderId
+          ]
+        );
+        console.log(`   ✅ Task created: Diseños - ${orderNumber}`);
+
+        // Task 2: Armado (Production department)
+        await query(
+          `INSERT INTO tasks (title, description, department, task_type, priority, assigned_to, order_id, status)
+           VALUES ($1, $2, 'production', 'auto', 'normal', NULL, $3, 'pending')`,
+          [
+            `Armado - ${orderNumber}`,
+            `Armar productos para el pedido ${orderNumber}.\nCliente: ${clientName}\nProductos: ${orderItems.map(i => `${i.productName} (${i.quantity} pzas)`).join(', ')}`,
+            orderId
+          ]
+        );
+        console.log(`   ✅ Task created: Armado - ${orderNumber}`);
+
+        console.log(`📋 Automatic tasks created successfully for order ${orderNumber}`);
+      } catch (taskError) {
+        console.error('❌ Failed to create automatic tasks:', taskError.message);
+        // Tasks can be created manually later - don't fail the order
+      }
+    });
+
     // 5. Sync to Notion (background - don't block response)
     setImmediate(async () => {
       try {
