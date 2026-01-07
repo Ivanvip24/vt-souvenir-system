@@ -823,15 +823,14 @@ async function showOrderDetail(orderId) {
       </div>
     </div>
 
-    <!-- Shipping Information Section -->
-    ${order.trackingNumber || order.shippingLabelGenerated ? `
+    <!-- Shipping Information Section - Always visible -->
     <div class="detail-section">
       <h3>🚚 Información de Envío</h3>
       <div style="background: var(--gray-50); padding: 16px; border-radius: 8px;">
-        ${order.trackingNumber ? `
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-              <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">Número de Guía</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">Número de Guía</div>
+            ${order.trackingNumber ? `
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-family: monospace; font-size: 14px; font-weight: 600; color: var(--gray-800);">${order.trackingNumber}</span>
                 <button onclick="copyToClipboard('${order.trackingNumber}', 'Número de guía')"
@@ -839,37 +838,36 @@ async function showOrderDetail(orderId) {
                   📋
                 </button>
               </div>
-            </div>
+            ` : `
+              <div style="font-size: 14px; color: var(--gray-400);">Pendiente</div>
+            `}
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">Paquetería</div>
             ${order.carrier ? `
-            <div>
-              <div style="font-size: 11px; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">Paquetería</div>
               <div style="font-size: 14px; color: var(--gray-800);">${order.carrier}${order.shippingService ? ` - ${order.shippingService}` : ''}</div>
-            </div>
-            ` : ''}
+            ` : `
+              <div style="font-size: 14px; color: var(--gray-400);">Pendiente</div>
+            `}
           </div>
-          ${order.estimatedDeliveryDays || order.shippingLabelUrl ? `
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-200);">
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-200);">
+          <div style="font-size: 13px; color: var(--gray-600);">
             ${order.estimatedDeliveryDays ? `
-              <div style="font-size: 13px; color: var(--gray-600);">
-                Tiempo estimado: <strong>${order.estimatedDeliveryDays} días hábiles</strong>
-              </div>
-            ` : '<div></div>'}
-            ${order.shippingLabelUrl ? `
-              <a href="${order.shippingLabelUrl}" target="_blank"
-                 style="display: inline-flex; align-items: center; gap: 6px; background: var(--gray-100); color: var(--gray-700); padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 13px; border: 1px solid var(--gray-300);">
-                📄 Descargar Guía
-              </a>
-            ` : ''}
+              Tiempo estimado: <strong>${order.estimatedDeliveryDays} días hábiles</strong>
+            ` : `
+              <span style="color: var(--gray-400);">Tiempo estimado: Pendiente</span>
+            `}
           </div>
+          ${order.shippingLabelUrl ? `
+            <a href="${order.shippingLabelUrl}" target="_blank"
+               style="display: inline-flex; align-items: center; gap: 6px; background: var(--gray-100); color: var(--gray-700); padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 13px; border: 1px solid var(--gray-300);">
+              📄 Descargar Guía
+            </a>
           ` : ''}
-        ` : `
-          <div style="text-align: center; padding: 12px; color: var(--gray-500);">
-            <div style="font-size: 13px;">Guía de envío generada - Número de rastreo pendiente</div>
-          </div>
-        `}
+        </div>
       </div>
     </div>
-    ` : ''}
 
     <!-- Order Items / Products Section -->
     <div class="detail-section">
