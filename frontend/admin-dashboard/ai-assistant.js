@@ -622,13 +622,50 @@ function showClientSelection(clients, title) {
 
 /**
  * Select client and continue action
+ * Directly uses the selected client data without re-querying AI
  */
 async function selectClientForAction(clientId, clientName) {
-    // Re-query the AI with the selected client
-    const input = document.getElementById('ai-chat-input');
-    if (input && currentAction) {
-        input.value = `Usa el cliente ${clientName} (ID: ${clientId}) para las ${currentAction.data.labelsCount || ''} guías`;
-        sendAiMessage();
+    if (!currentAction) {
+        console.error('No current action to process');
+        return;
+    }
+
+    // Find the selected client from the matches
+    const selectedClient = currentAction.data?.clientMatches?.find(c => c.id === clientId);
+
+    if (selectedClient) {
+        // Update the action with the selected client
+        currentAction.data.client = selectedClient;
+        currentAction.data.needsClientSelection = false;
+        currentAction.data.clientMatches = null;
+
+        // Show the modal directly with the selected client
+        addMessageToChat('assistant', `✅ Cliente seleccionado: <strong>${selectedClient.name}</strong> (${selectedClient.city || 'Sin ciudad'})`, { isHtml: true });
+
+        // Show the shipping label modal with the client data
+        showShippingLabelModal(currentAction);
+    } else {
+        // Fallback: fetch client data from API
+        try {
+            const token = localStorage.getItem('admin_token');
+            const response = await fetch(`${API_BASE}/clients/${clientId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                currentAction.data.client = result.data;
+                currentAction.data.needsClientSelection = false;
+
+                addMessageToChat('assistant', `✅ Cliente seleccionado: <strong>${result.data.name}</strong>`, { isHtml: true });
+                showShippingLabelModal(currentAction);
+            } else {
+                addMessageToChat('assistant', `❌ No se pudo cargar el cliente. Intenta de nuevo.`, { error: true });
+            }
+        } catch (error) {
+            console.error('Error fetching client:', error);
+            addMessageToChat('assistant', `❌ Error al cargar cliente: ${error.message}`, { error: true });
+        }
     }
 }
 
