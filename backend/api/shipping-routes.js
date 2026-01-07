@@ -258,27 +258,27 @@ router.get('/labels', async (req, res) => {
 
     const whereClause = whereConditions.join(' AND ');
 
-    // Get total count
+    // Get total count (LEFT JOIN to include labels without orders)
     const countResult = await query(`
       SELECT COUNT(*) as total
       FROM shipping_labels sl
-      JOIN orders o ON sl.order_id = o.id
+      LEFT JOIN orders o ON sl.order_id = o.id
       JOIN clients c ON sl.client_id = c.id
       WHERE ${whereClause}
     `, params);
 
-    // Get paginated results
+    // Get paginated results (LEFT JOIN to include labels without orders)
     const result = await query(`
       SELECT
         sl.*,
-        o.order_number,
+        COALESCE(o.order_number, 'Sin pedido') as order_number,
         o.total_price as order_total,
         c.name as client_name,
         c.phone as client_phone,
         c.city as client_city,
         c.state as client_state
       FROM shipping_labels sl
-      JOIN orders o ON sl.order_id = o.id
+      LEFT JOIN orders o ON sl.order_id = o.id
       JOIN clients c ON sl.client_id = c.id
       WHERE ${whereClause}
       ORDER BY sl.created_at DESC
@@ -325,7 +325,7 @@ router.get('/labels/:labelId', async (req, res) => {
     const result = await query(`
       SELECT
         sl.*,
-        o.order_number,
+        COALESCE(o.order_number, 'Sin pedido') as order_number,
         o.total_price as order_total,
         c.name as client_name,
         c.phone as client_phone,
@@ -333,7 +333,7 @@ router.get('/labels/:labelId', async (req, res) => {
         c.street, c.street_number, c.colonia,
         c.city, c.state, c.postal
       FROM shipping_labels sl
-      JOIN orders o ON sl.order_id = o.id
+      LEFT JOIN orders o ON sl.order_id = o.id
       JOIN clients c ON sl.client_id = c.id
       WHERE sl.id = $1
     `, [labelId]);
@@ -1469,6 +1469,261 @@ router.delete('/pickups/:pickupId', async (req, res) => {
   } catch (error) {
     console.error('❌ Error cancelling pickup:', error);
     res.status(500).json({ error: error.message || 'Error cancelando recolección' });
+  }
+});
+
+// ========================================
+// GENERATE SHIPPING LABEL FOR CLIENT (NO ORDER)
+// POST /api/shipping/clients/:clientId/generate
+// Allows creating shipping labels directly for a client
+// without requiring an associated order
+// ========================================
+router.post('/clients/:clientId/generate', async (req, res) => {
+  const { clientId } = req.params;
+  const { labelsCount = 1, notes } = req.body;
+
+  try {
+    // Get client info
+    const clientResult = await query(`
+      SELECT
+        c.id, c.name, c.phone, c.email,
+        c.street, c.street_number, c.colonia, c.city, c.state,
+        c.postal, c.postal_code, c.reference_notes
+      FROM clients c
+      WHERE c.id = $1
+    `, [clientId]);
+
+    if (clientResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Cliente no encontrado'
+      });
+    }
+
+    const client = clientResult.rows[0];
+
+    // Validate client has shipping address
+    const postal = client.postal || client.postal_code;
+    if (!postal || !client.city || !client.state) {
+      return res.status(400).json({
+        success: false,
+        error: 'El cliente no tiene dirección de envío completa. Necesita: ciudad, estado y código postal.'
+      });
+    }
+
+    // Build destination address
+    const destAddress = {
+      name: client.name,
+      phone: client.phone,
+      email: client.email,
+      street: client.street,
+      street_number: client.street_number,
+      colonia: client.colonia,
+      city: client.city,
+      state: client.state,
+      postal: postal,
+      reference_notes: client.reference_notes
+    };
+
+    console.log(`📦 Generating ${labelsCount} shipping label(s) for client ${client.name} (no order)`);
+
+    // Get quote for shipping
+    const quote = await skydropx.getQuote(destAddress);
+
+    if (!quote.rates || quote.rates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No hay tarifas de envío disponibles para esta dirección'
+      });
+    }
+
+    // Auto-select best (cheapest) rate
+    const selectedRate = skydropx.selectBestRate(quote.rates);
+
+    // Generate label(s)
+    const generatedLabels = [];
+
+    for (let i = 0; i < labelsCount; i++) {
+      const shipment = await skydropx.createShipment(
+        quote.quotation_id,
+        selectedRate.rate_id,
+        selectedRate,
+        destAddress
+      );
+
+      // Save to database (order_id is NULL for client-only labels)
+      const insertResult = await query(`
+        INSERT INTO shipping_labels (
+          order_id, client_id, shipment_id, quotation_id, rate_id,
+          tracking_number, tracking_url, label_url,
+          carrier, service, delivery_days, shipping_cost,
+          package_number, status, notes, label_generated_at
+        ) VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
+        RETURNING *
+      `, [
+        clientId,
+        shipment.shipment_id,
+        quote.quotation_id,
+        selectedRate.rate_id,
+        shipment.tracking_number,
+        shipment.tracking_url,
+        shipment.label_url,
+        shipment.carrier,
+        shipment.service,
+        shipment.delivery_days,
+        shipment.shipping_cost,
+        i + 1,
+        shipment.label_url ? 'label_generated' : 'processing',
+        notes || `Guía manual para ${client.name}`
+      ]);
+
+      generatedLabels.push(insertResult.rows[0]);
+
+      // Auto-request pickup for this carrier (if not already scheduled)
+      if (shipment.shipment_id && shipment.carrier) {
+        setImmediate(async () => {
+          try {
+            const pickupResult = await skydropx.requestPickupIfNeeded(
+              shipment.shipment_id,
+              shipment.carrier
+            );
+            console.log(`📦 Pickup for label: ${pickupResult.message}`);
+          } catch (pickupError) {
+            console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+          }
+        });
+      }
+    }
+
+    console.log(`✅ Generated ${labelsCount} label(s) for client ${client.name}`);
+
+    res.json({
+      success: true,
+      message: `${labelsCount} guía(s) generada(s) exitosamente para ${client.name}`,
+      labels: generatedLabels.map(label => ({
+        id: label.id,
+        tracking_number: label.tracking_number,
+        tracking_url: label.tracking_url,
+        label_url: label.label_url,
+        carrier: label.carrier,
+        service: label.service,
+        delivery_days: label.delivery_days
+      })),
+      client: {
+        id: client.id,
+        name: client.name,
+        city: client.city,
+        state: client.state
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error generating shipping label for client:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error generando guía de envío'
+    });
+  }
+});
+
+// ========================================
+// GET SHIPPING QUOTES FOR CLIENT (NO ORDER)
+// GET /api/shipping/clients/:clientId/quotes
+// ========================================
+router.get('/clients/:clientId/quotes', async (req, res) => {
+  const { clientId } = req.params;
+
+  try {
+    // Get client info
+    const clientResult = await query(`
+      SELECT
+        c.id, c.name, c.phone, c.email,
+        c.street, c.street_number, c.colonia, c.city, c.state,
+        c.postal, c.postal_code, c.reference_notes
+      FROM clients c
+      WHERE c.id = $1
+    `, [clientId]);
+
+    if (clientResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    const client = clientResult.rows[0];
+
+    // Validate client has shipping address
+    const postal = client.postal || client.postal_code;
+    if (!postal || !client.city || !client.state) {
+      return res.status(400).json({
+        error: 'El cliente no tiene dirección de envío completa'
+      });
+    }
+
+    // Build destination address
+    const destAddress = {
+      name: client.name,
+      phone: client.phone,
+      email: client.email,
+      street: client.street,
+      street_number: client.street_number,
+      colonia: client.colonia,
+      city: client.city,
+      state: client.state,
+      zip: postal,
+      reference_notes: client.reference_notes
+    };
+
+    console.log(`📦 Getting shipping quotes for client ${client.name}`);
+
+    // Get quote from Skydropx
+    const quote = await skydropx.getQuote(destAddress);
+
+    if (!quote.rates || quote.rates.length === 0) {
+      return res.status(400).json({
+        error: 'No hay tarifas de envío disponibles para esta dirección'
+      });
+    }
+
+    // Filter and format rates
+    const ALLOWED_CARRIERS = ['Estafeta', 'FedEx', 'Paquetexpress'];
+    const MAX_OPTIONS_TO_SHOW = 5;
+
+    let filteredRates = quote.rates
+      .filter(rate => {
+        const isAllowedCarrier = ALLOWED_CARRIERS.some(
+          allowed => rate.carrier.toLowerCase().includes(allowed.toLowerCase())
+        );
+        return isAllowedCarrier;
+      })
+      .sort((a, b) => a.total_price - b.total_price)
+      .slice(0, MAX_OPTIONS_TO_SHOW);
+
+    const formattedRates = filteredRates.map((rate, index) => ({
+      rate_id: rate.rate_id,
+      carrier: rate.carrier,
+      service: rate.service,
+      price: rate.total_price,
+      priceFormatted: `$${rate.total_price.toFixed(2)}`,
+      days: rate.days,
+      daysText: rate.days === 1 ? '1 día' : `${rate.days} días`,
+      isCheapest: index === 0
+    }));
+
+    res.json({
+      success: true,
+      quotation_id: quote.quotation_id,
+      rates: formattedRates,
+      client: {
+        id: client.id,
+        name: client.name,
+        city: client.city,
+        state: client.state,
+        postal: postal
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting shipping quotes for client:', error);
+    res.status(500).json({ error: error.message || 'Error obteniendo cotizaciones' });
   }
 });
 

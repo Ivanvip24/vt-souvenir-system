@@ -544,15 +544,38 @@ function showShippingLabelModal(action) {
         </div>
     `;
 
-    // Action buttons
-    const canCreate = client && order && parseInt(order.labels_count || 0) === 0 && order.approval_status === 'approved';
+    // Action buttons - allow creating labels for client even without order
+    const hasAddress = client && client.city && client.state && (client.postal || client.postal_code);
+    const hasValidOrder = order && parseInt(order.labels_count || 0) === 0 && order.approval_status === 'approved';
+    const canCreateWithOrder = client && hasValidOrder;
+    const canCreateWithoutOrder = client && hasAddress && !order;
+
+    let buttonText = '🚀 Generar Guías';
+    let buttonDisabled = '';
+    let buttonTitle = '';
+
+    if (canCreateWithOrder) {
+        // Has client and valid order
+        buttonDisabled = '';
+    } else if (canCreateWithoutOrder || (client && hasAddress)) {
+        // Has client with address but no order - can still create
+        buttonText = '📦 Crear Guías (Sin pedido)';
+        buttonDisabled = '';
+    } else if (client && !hasAddress) {
+        buttonDisabled = 'disabled';
+        buttonTitle = 'title="El cliente no tiene dirección completa"';
+    } else {
+        buttonDisabled = 'disabled';
+        buttonTitle = 'title="Selecciona un cliente"';
+    }
+
     modalHtml += `
                 </div>
                 <div class="ai-action-modal-footer">
                     <button onclick="closeAiActionModal()" class="ai-action-btn secondary">Cancelar</button>
                     <button onclick="executeCreateShippingLabels()" class="ai-action-btn primary"
-                            ${!canCreate ? 'disabled title="Selecciona un pedido aprobado sin guías"' : ''}>
-                        🚀 Generar Guías
+                            ${buttonDisabled} ${buttonTitle}>
+                        ${buttonText}
                     </button>
                 </div>
             </div>
@@ -623,6 +646,7 @@ function closeAiActionModal(event) {
 
 /**
  * Execute shipping label creation
+ * Supports both order-based and client-only (no order) labels
  */
 async function executeCreateShippingLabels() {
     const labelsCount = parseInt(document.getElementById('ai-action-labels-count')?.value || 1);
@@ -630,8 +654,11 @@ async function executeCreateShippingLabels() {
 
     let orderId;
     let orderNumber;
+    let clientId;
+    let clientName;
 
-    if (orderSelect) {
+    // Check if we have an order
+    if (orderSelect && orderSelect.value) {
         orderId = orderSelect.value;
         orderNumber = orderSelect.options[orderSelect.selectedIndex]?.dataset?.orderNumber;
     } else if (currentAction?.data?.order) {
@@ -642,31 +669,58 @@ async function executeCreateShippingLabels() {
         orderNumber = currentAction.data.suggestedOrder.order_number;
     }
 
-    if (!orderId) {
-        alert('Por favor selecciona un pedido');
+    // Get client info (for client-only labels)
+    if (currentAction?.data?.client) {
+        clientId = currentAction.data.client.id;
+        clientName = currentAction.data.client.name;
+    }
+
+    // Determine which endpoint to use
+    const useClientEndpoint = !orderId && clientId;
+
+    if (!orderId && !clientId) {
+        alert('Por favor selecciona un cliente o pedido');
         return;
     }
 
     // Close modal and show progress in chat
     closeAiActionModal();
 
-    addMessageToChat('assistant', `⏳ Generando ${labelsCount} guía(s) para el pedido ${orderNumber}...`);
+    const progressMessage = orderId
+        ? `⏳ Generando ${labelsCount} guía(s) para el pedido ${orderNumber}...`
+        : `⏳ Generando ${labelsCount} guía(s) para ${clientName}...`;
+    addMessageToChat('assistant', progressMessage);
 
     try {
         const token = localStorage.getItem('admin_token');
-        const response = await fetch(`${API_BASE}/shipping/orders/${orderId}/generate`, {
+
+        // Use different endpoint based on whether we have an order
+        const endpoint = useClientEndpoint
+            ? `${API_BASE}/shipping/clients/${clientId}/generate`
+            : `${API_BASE}/shipping/orders/${orderId}/generate`;
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ labelsCount })
+            body: JSON.stringify({
+                labelsCount,
+                notes: useClientEndpoint ? `Guía generada desde AI Assistant` : undefined
+            })
         });
 
         const result = await response.json();
 
         if (result.success) {
-            let successHtml = `<p>✅ <strong>¡${labelsCount} guía(s) generada(s) exitosamente!</strong></p>`;
+            const labelWord = labelsCount === 1 ? 'guía' : 'guías';
+            let successHtml = `<p>✅ <strong>¡${labelsCount} ${labelWord} generada(s) exitosamente!</strong></p>`;
+
+            if (useClientEndpoint) {
+                successHtml += `<p style="font-size: 13px; color: #059669;">📍 Para: ${result.client?.name || clientName} (${result.client?.city || 'N/A'})</p>`;
+            }
+
             successHtml += '<div class="ai-shipping-results">';
 
             result.labels.forEach((label, i) => {
