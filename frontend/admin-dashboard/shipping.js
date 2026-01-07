@@ -648,3 +648,339 @@ function showNotification(message, type = 'info') {
     setTimeout(() => notification.remove(), 300);
   }, 3000);
 }
+
+// ==========================================
+// CSV IMPORT
+// ==========================================
+
+let pendingImportClients = [];
+
+/**
+ * Trigger file input for CSV import
+ */
+function triggerImportCSV() {
+  document.getElementById('csv-import-input').click();
+}
+
+/**
+ * Handle CSV file selection and parse
+ */
+async function handleCSVImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Reset input so same file can be selected again
+  event.target.value = '';
+
+  showNotification('Leyendo archivo CSV...', 'info');
+
+  try {
+    const text = await file.text();
+    const lines = text.split('\n').filter(line => line.trim());
+
+    if (lines.length < 2) {
+      showNotification('El archivo CSV está vacío o no tiene datos', 'error');
+      return;
+    }
+
+    // Parse header row
+    const headers = parseCSVLine(lines[0]);
+
+    // Map headers to our expected format (Notion delivery form)
+    const headerMap = {
+      'Nombre Completo': 'name',
+      'Calle': 'street',
+      'Colonia': 'colonia',
+      'Colonia ': 'colonia',
+      'Correo electrónico / Mail': 'email',
+      'Código Postal': 'postalCode',
+      'Nombre del destino': 'destination',
+      'Nombre del destino ': 'destination',
+      'Número exterior': 'streetNumber',
+      'Número exterior ': 'streetNumber',
+      'Referencias': 'references',
+      'Teléfono': 'phone',
+      'Teléfono ': 'phone'
+    };
+
+    // Parse data rows
+    const clients = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length === 0) continue;
+
+      const client = {};
+      headers.forEach((header, index) => {
+        const key = headerMap[header] || header.toLowerCase().replace(/\s+/g, '_');
+        client[key] = values[index] || '';
+      });
+
+      // Only add if has a name
+      if (client.name && client.name.trim()) {
+        clients.push(client);
+      }
+    }
+
+    if (clients.length === 0) {
+      showNotification('No se encontraron clientes válidos en el CSV', 'error');
+      return;
+    }
+
+    pendingImportClients = clients;
+    showImportConfirmModal(clients);
+
+  } catch (error) {
+    console.error('CSV parse error:', error);
+    showNotification('Error al leer el archivo CSV', 'error');
+  }
+}
+
+/**
+ * Parse a CSV line handling quoted values
+ */
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current.trim());
+  return result;
+}
+
+/**
+ * Show import confirmation modal
+ */
+function showImportConfirmModal(clients) {
+  // Remove existing modal if any
+  const existing = document.getElementById('import-confirm-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'import-confirm-modal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>📤 Importar Clientes</h3>
+        <button class="modal-close" onclick="closeImportModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <div style="font-size: 24px; font-weight: 700; color: #16a34a;">${clients.length}</div>
+          <div style="color: #15803d;">clientes encontrados en el CSV</div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <strong>Vista previa (primeros 5):</strong>
+        </div>
+
+        <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+          <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+            <thead style="background: #f9fafb; position: sticky; top: 0;">
+              <tr>
+                <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Nombre</th>
+                <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Teléfono</th>
+                <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Ciudad</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${clients.slice(0, 5).map(c => `
+                <tr>
+                  <td style="padding: 8px; border-bottom: 1px solid #f3f4f6;">${escapeHtml(c.name || '')}</td>
+                  <td style="padding: 8px; border-bottom: 1px solid #f3f4f6;">${escapeHtml(c.phone || '')}</td>
+                  <td style="padding: 8px; border-bottom: 1px solid #f3f4f6;">${escapeHtml(c.destination || '')}</td>
+                </tr>
+              `).join('')}
+              ${clients.length > 5 ? `
+                <tr>
+                  <td colspan="3" style="padding: 8px; text-align: center; color: #6b7280;">
+                    ... y ${clients.length - 5} más
+                  </td>
+                </tr>
+              ` : ''}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; font-size: 13px; color: #92400e;">
+          <strong>Nota:</strong> Los clientes duplicados (mismo teléfono o nombre+CP) serán omitidos automáticamente.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeImportModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="executeClientImport()">
+          🚀 Importar ${clients.length} Clientes
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Add styles if not exists
+  if (!document.getElementById('import-modal-styles')) {
+    const styles = document.createElement('style');
+    styles.id = 'import-modal-styles';
+    styles.textContent = `
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      }
+      .modal-content {
+        background: white;
+        border-radius: 12px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      }
+      .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-header h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6b7280;
+      }
+      .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+      }
+      .modal-footer {
+        padding: 16px 20px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: #f9fafb;
+      }
+    `;
+    document.head.appendChild(styles);
+  }
+}
+
+/**
+ * Close import modal
+ */
+function closeImportModal() {
+  const modal = document.getElementById('import-confirm-modal');
+  if (modal) modal.remove();
+  pendingImportClients = [];
+}
+
+/**
+ * Execute the import via API
+ */
+async function executeClientImport() {
+  if (pendingImportClients.length === 0) return;
+
+  const modal = document.getElementById('import-confirm-modal');
+  const importBtn = modal?.querySelector('.btn-primary');
+
+  if (importBtn) {
+    importBtn.disabled = true;
+    importBtn.innerHTML = '⏳ Importando...';
+  }
+
+  try {
+    const token = localStorage.getItem('admin_token');
+
+    // Send in batches
+    const batchSize = 50;
+    let totalImported = 0;
+    let totalSkipped = 0;
+    let totalErrors = 0;
+
+    for (let i = 0; i < pendingImportClients.length; i += batchSize) {
+      const batch = pendingImportClients.slice(i, i + batchSize);
+
+      const response = await fetch(`${API_BASE}/admin/import-clients`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ clients: batch })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        totalImported += result.imported;
+        totalSkipped += result.skipped;
+        totalErrors += result.errors;
+      } else {
+        throw new Error(result.error || 'Import failed');
+      }
+
+      // Update progress
+      if (importBtn) {
+        const progress = Math.round((i + batch.length) / pendingImportClients.length * 100);
+        importBtn.innerHTML = `⏳ ${progress}%...`;
+      }
+    }
+
+    closeImportModal();
+
+    // Show results
+    showNotification(
+      `✅ Importados: ${totalImported} | Omitidos: ${totalSkipped} | Errores: ${totalErrors}`,
+      totalErrors > 0 ? 'warning' : 'success'
+    );
+
+    // Refresh the clients list
+    loadShippingData();
+
+  } catch (error) {
+    console.error('Import error:', error);
+    showNotification('Error al importar: ' + error.message, 'error');
+
+    if (importBtn) {
+      importBtn.disabled = false;
+      importBtn.innerHTML = `🚀 Importar ${pendingImportClients.length} Clientes`;
+    }
+  }
+}
+
+// Export functions globally
+window.triggerImportCSV = triggerImportCSV;
+window.handleCSVImport = handleCSVImport;
+window.closeImportModal = closeImportModal;
+window.executeClientImport = executeClientImport;
