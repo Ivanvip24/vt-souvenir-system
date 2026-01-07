@@ -83,11 +83,17 @@ TIPOS DE COMPROBANTES QUE PUEDES ENCONTRAR:
 - Transferencias interbancarias
 - Depósitos en efectivo
 - Pagos con tarjeta
-- Comprobantes de apps bancarias (BBVA, Santander, Banamex, Banorte, etc.)
+- Comprobantes de apps bancarias (BBVA, Santander, Banamex, Banorte, HSBC, Scotiabank, etc.)
 - Comprobantes de apps de pago (Mercado Pago, PayPal, etc.)
 
+FORMATOS DE COMPROBANTES BANCARIOS COMUNES:
+- BBVA México: Muestra "COMPROBANTE DE LA OPERACION", "Importe transferido: $X.XX", folio, fecha, hora, concepto, cuenta origen/destino, nombre del beneficiario
+- Santander: Similar con "Comprobante de Transferencia"
+- Banamex/Citibanamex: Formato corporativo azul
+- Banorte: Formato rojo/naranja
+
 DEBES EXTRAER:
-1. El MONTO de la transferencia/pago (número exacto)
+1. El MONTO de la transferencia/pago - busca campos como "Importe transferido", "Monto", "Cantidad", "$X.XX"
 2. La FECHA de la operación
 3. El FOLIO o número de operación (si existe)
 4. Si el comprobante parece LEGÍTIMO o sospechoso
@@ -109,13 +115,19 @@ RESPONDE SIEMPRE EN FORMATO JSON con esta estructura exacta:
   "notes": "string with any relevant observations"
 }
 
-INDICADORES DE SOSPECHA (agregar a suspicious_indicators si detectas):
-- "edited_image" - Si la imagen parece manipulada o editada
-- "screenshot_of_screenshot" - Si es foto de pantalla borrosa
-- "mismatched_fonts" - Si las fuentes no son consistentes
-- "incomplete_info" - Si falta información importante
-- "unusual_format" - Si el formato no parece de un banco real
-- "amount_unclear" - Si el monto no es claramente legible
+INDICADORES DE SOSPECHA (agregar a suspicious_indicators SOLO si realmente aplican):
+- "edited_image" - Si la imagen claramente parece manipulada con Photoshop o similar
+- "screenshot_of_screenshot" - Si es foto de pantalla muy borrosa e ilegible
+- "mismatched_fonts" - Si las fuentes son claramente inconsistentes (señal de edición)
+- "incomplete_info" - Si falta información crítica como monto o banco
+- "unusual_format" - Si el formato no parece de ningún banco real conocido
+
+IMPORTANTE:
+- Si puedes leer el monto claramente (como "$655.00"), NO agregues "amount_unclear"
+- Los comprobantes de BBVA con "Importe transferido" son legítimos y comunes
+- Un comprobante con folio, fecha, monto y banco visible es válido
+- suspicious_indicators debe estar VACÍO [] si el comprobante se ve normal y legítimo
+- Confidence_level debe ser "high" si toda la información es legible
 
 Si NO puedes leer el monto o la imagen no es un comprobante de pago, marca is_valid_receipt como false.`;
 
@@ -193,12 +205,26 @@ Responde SOLO con el JSON estructurado.`;
       amountMatches = amountDetected >= expectedAmount;
     }
 
+    // Filter out contradictory suspicious indicators
+    // If amount was detected successfully, remove "amount_unclear" flag
+    let filteredIndicators = analysisResult.suspicious_indicators || [];
+    if (amountDetected !== null && amountDetected !== undefined && amountDetected > 0) {
+      filteredIndicators = filteredIndicators.filter(ind => ind !== 'amount_unclear');
+    }
+
+    // Critical indicators that should always block auto-approval
+    const criticalIndicators = ['edited_image', 'mismatched_fonts'];
+    const hasCriticalIndicator = filteredIndicators.some(ind => criticalIndicators.includes(ind));
+
     // Determine if we should auto-approve
     const shouldAutoApprove =
       analysisResult.is_valid_receipt === true &&
       amountMatches &&
       analysisResult.confidence_level !== 'low' &&
-      (!analysisResult.suspicious_indicators || analysisResult.suspicious_indicators.length === 0);
+      !hasCriticalIndicator;
+
+    // Update the analysis result with filtered indicators
+    analysisResult.suspicious_indicators = filteredIndicators;
 
     const result = {
       success: true,

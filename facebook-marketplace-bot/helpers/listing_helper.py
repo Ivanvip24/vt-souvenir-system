@@ -1,6 +1,8 @@
 # Remove and then publish each listing
 # SPANISH VERSION - Adapted for Spanish Facebook interface
 
+import time
+
 def update_listings(listings, type, scraper):
 	# If listings are empty stop the function
 	if not listings:
@@ -256,6 +258,7 @@ def add_fields_for_item(data, scraper):
 		if scraper.find_element_by_xpath(xpath, False, 2):
 			scraper.scroll_to_element_by_xpath(xpath)
 			scraper.element_click_by_xpath(xpath)
+			time.sleep(1)  # Wait for dropdown to open
 			break
 
 	# Select category - try both Spanish and English versions
@@ -271,15 +274,33 @@ def add_fields_for_item(data, scraper):
 	spanish_category = category_mapping.get(category, category)
 
 	category_found = False
+	# Try multiple selector patterns for category
 	for cat in [spanish_category, category]:
-		if scraper.find_element_by_xpath('//span[text()="' + cat + '"]', False, 2):
-			scraper.element_click_by_xpath('//span[text()="' + cat + '"]')
-			category_found = True
+		category_selectors = [
+			'//span[text()="' + cat + '"]',
+			'//div[contains(@role,"option")]//span[text()="' + cat + '"]',
+			'//div[contains(text(),"' + cat + '")]',
+			'//*[contains(text(),"' + cat + '")]'
+		]
+		for selector in category_selectors:
+			if scraper.find_element_by_xpath(selector, False, 2):
+				scraper.element_click_by_xpath(selector)
+				category_found = True
+				break
+		if category_found:
 			break
 
 	if not category_found:
-		# Try clicking the first category option
-		scraper.element_click('div[role="listbox"] div[role="option"]:first-child')
+		# Try clicking any visible category option (multiple fallback selectors)
+		fallback_selectors = [
+			'div[role="listbox"] div[role="option"]:first-child',
+			'div[role="option"]',
+			'[role="listbox"] [role="option"]'
+		]
+		for selector in fallback_selectors:
+			if scraper.find_element(selector, False, 3):
+				scraper.element_click(selector, True, False)
+				break
 
 	# Condition field (Spanish: Estado, English: Condition)
 	condition_xpaths = ['//div/span[text()="Estado"]', '//div/span[text()="Condition"]']
