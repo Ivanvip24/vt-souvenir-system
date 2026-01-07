@@ -118,11 +118,32 @@
                     </button>
                 </header>
 
-                <div class="filters-row">
+                <div class="task-filters">
                     <button class="filter-btn active" data-status="all">Todas</button>
                     <button class="filter-btn" data-status="pending">Pendientes</button>
                     <button class="filter-btn" data-status="in_progress">En Progreso</button>
                     <button class="filter-btn" data-status="completed">Completadas</button>
+                </div>
+
+                <!-- Bulk Actions Bar -->
+                <div id="bulk-actions-bar" class="bulk-actions-bar hidden">
+                    <span id="selected-count">0 seleccionadas</span>
+                    <div class="bulk-buttons">
+                        <button class="btn btn-success btn-sm" onclick="bulkComplete()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Completar
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="bulkCancel()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                            Cancelar
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="clearSelection()">Limpiar</button>
+                    </div>
                 </div>
 
                 <div id="my-tasks-loading" class="loading-state">

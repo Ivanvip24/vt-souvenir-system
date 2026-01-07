@@ -290,13 +290,30 @@ async function loadAllTasks() {
     }
 }
 
+// Track selected tasks for bulk actions
+window.selectedTasks = new Set();
+
 function renderTaskList(container, tasks, showAssigned = false) {
+    // Clear selections when re-rendering
+    window.selectedTasks.clear();
+    updateBulkActionsBar();
+
     tasks.forEach(task => {
         const card = document.createElement('div');
         card.className = 'task-card';
-        card.onclick = () => openTaskModal(task);
+        card.dataset.taskId = task.id;
+
+        // Click on card opens modal, but not on checkbox
+        card.onclick = (e) => {
+            if (!e.target.classList.contains('task-checkbox')) {
+                openTaskModal(task);
+            }
+        };
 
         card.innerHTML = `
+            <input type="checkbox" class="task-checkbox" data-task-id="${task.id}"
+                   onclick="event.stopPropagation(); toggleTaskSelection(${task.id})"
+                   ${window.selectedTasks.has(task.id) ? 'checked' : ''}>
             <div class="task-priority ${task.priority}"></div>
             <div class="task-info">
                 <div class="task-title">${escapeHtml(task.title)}</div>
@@ -319,6 +336,81 @@ function renderTaskList(container, tasks, showAssigned = false) {
 
         container.appendChild(card);
     });
+}
+
+function toggleTaskSelection(taskId) {
+    if (window.selectedTasks.has(taskId)) {
+        window.selectedTasks.delete(taskId);
+    } else {
+        window.selectedTasks.add(taskId);
+    }
+    updateBulkActionsBar();
+}
+
+function updateBulkActionsBar() {
+    const bar = document.getElementById('bulk-actions-bar');
+    const countEl = document.getElementById('selected-count');
+
+    if (!bar || !countEl) return;
+
+    const count = window.selectedTasks.size;
+
+    if (count > 0) {
+        bar.classList.remove('hidden');
+        countEl.textContent = `${count} seleccionada${count > 1 ? 's' : ''}`;
+    } else {
+        bar.classList.add('hidden');
+    }
+}
+
+async function bulkComplete() {
+    const taskIds = Array.from(window.selectedTasks);
+    if (taskIds.length === 0) return;
+
+    const confirmMsg = `¿Marcar ${taskIds.length} tarea${taskIds.length > 1 ? 's' : ''} como completada${taskIds.length > 1 ? 's' : ''}?`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        let successCount = 0;
+        for (const taskId of taskIds) {
+            const data = await apiPost(`/tasks/${taskId}/complete`, {});
+            if (data.success) successCount++;
+        }
+
+        showToast(`${successCount} tarea${successCount > 1 ? 's' : ''} completada${successCount > 1 ? 's' : ''}`, 'success');
+        clearSelection();
+        loadMyTasks();
+    } catch (error) {
+        showToast('Error al completar tareas', 'error');
+    }
+}
+
+async function bulkCancel() {
+    const taskIds = Array.from(window.selectedTasks);
+    if (taskIds.length === 0) return;
+
+    const confirmMsg = `¿Cancelar ${taskIds.length} tarea${taskIds.length > 1 ? 's' : ''}?`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        let successCount = 0;
+        for (const taskId of taskIds) {
+            const data = await apiPost(`/tasks/${taskId}/cancel`, {});
+            if (data.success) successCount++;
+        }
+
+        showToast(`${successCount} tarea${successCount > 1 ? 's' : ''} cancelada${successCount > 1 ? 's' : ''}`, 'success');
+        clearSelection();
+        loadMyTasks();
+    } catch (error) {
+        showToast('Error al cancelar tareas', 'error');
+    }
+}
+
+function clearSelection() {
+    window.selectedTasks.clear();
+    document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = false);
+    updateBulkActionsBar();
 }
 
 // ========================================

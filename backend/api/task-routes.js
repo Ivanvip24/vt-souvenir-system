@@ -626,6 +626,76 @@ router.post('/:id/complete', employeeAuth, async (req, res) => {
 });
 
 /**
+ * POST /api/tasks/:id/cancel
+ * Mark task as cancelled
+ */
+router.post('/:id/cancel', employeeAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const current = await query('SELECT * FROM tasks WHERE id = $1', [id]);
+    if (current.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tarea no encontrada'
+      });
+    }
+
+    const task = current.rows[0];
+
+    // Check department access
+    if (req.employee.role !== 'manager' && task.department !== req.employee.department) {
+      return res.status(403).json({
+        success: false,
+        error: 'No tienes acceso a esta tarea'
+      });
+    }
+
+    // Can only cancel tasks that aren't completed
+    if (task.status === 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'No se pueden cancelar tareas completadas'
+      });
+    }
+
+    let updateQuery = `
+      UPDATE tasks
+      SET status = 'cancelled',
+          updated_at = CURRENT_TIMESTAMP
+    `;
+    const values = [id];
+
+    if (reason) {
+      updateQuery += `, notes = COALESCE(notes || E'\\n', '') || $2`;
+      values.unshift(reason);
+      updateQuery += ` WHERE id = $${values.length}`;
+    } else {
+      updateQuery += ` WHERE id = $1`;
+    }
+
+    updateQuery += ' RETURNING *';
+
+    const result = await query(updateQuery, values);
+
+    await logActivity(req.employee.id, 'task_cancelled', 'task', parseInt(id), { reason });
+
+    res.json({
+      success: true,
+      task: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Cancel task error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al cancelar tarea'
+    });
+  }
+});
+
+/**
  * PUT /api/tasks/:id/assign
  * Assign task to an employee (Manager only)
  */
