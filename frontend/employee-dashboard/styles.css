@@ -916,6 +916,28 @@ textarea {
     background: var(--green);
 }
 
+/* Facebook button - compact icon style */
+.gallery-action-btn.facebook {
+    background: #1877f2;
+    color: white;
+    padding: 10px 14px;
+    min-width: auto;
+    flex: 0 0 auto;
+    font-weight: 700;
+}
+
+.gallery-action-btn.facebook:hover {
+    background: #1565c0;
+}
+
+.gallery-action-btn.facebook.loading {
+    background: #6b7280;
+}
+
+.gallery-action-btn.facebook.queued {
+    background: var(--green);
+}
+
 /* Recovery FAB button */
 .fab-button.fab-recovery {
     right: 100px;

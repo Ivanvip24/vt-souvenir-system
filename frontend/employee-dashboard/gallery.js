@@ -175,8 +175,7 @@ function renderGalleryGrid(container, designs, isArchived = false) {
                 <button class="gallery-action-btn facebook"
                         id="fb-gallery-${design.id}"
                         onclick="event.stopPropagation(); queueDesignForFacebook(${design.id})"
-                        title="Publicar en Facebook Marketplace"
-                        style="background: #1877f2; color: white;">
+                        title="Facebook Marketplace">
                     f
                 </button>
             </div>
@@ -1279,7 +1278,7 @@ async function queueDesignForFacebook(designId) {
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = '⏳';
-            btn.style.background = '#6b7280';
+            btn.classList.add('loading');
         }
 
         const response = await fetch(`${API_BASE}/facebook/queue`, {
@@ -1304,7 +1303,8 @@ async function queueDesignForFacebook(designId) {
         // Show success state
         if (btn) {
             btn.innerHTML = '✓';
-            btn.style.background = '#22c55e';
+            btn.classList.remove('loading');
+            btn.classList.add('queued');
             btn.title = 'En cola para Facebook Marketplace';
             btn.disabled = true;
         }
@@ -1318,7 +1318,7 @@ async function queueDesignForFacebook(designId) {
         // Restore button
         if (btn) {
             btn.innerHTML = 'f';
-            btn.style.background = '#1877f2';
+            btn.classList.remove('loading');
             btn.disabled = false;
         }
 
