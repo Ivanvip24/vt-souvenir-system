@@ -19,24 +19,72 @@ router.use(authMiddleware);
 // =====================================================
 
 /**
- * Search for client by name (fuzzy match)
+ * Smart search for client by name, city, or any identifier
+ * Splits search term into words and searches across multiple fields
+ * Returns best matches with relevance scoring
  */
-async function findClientByName(name) {
+async function findClientByName(searchTerm) {
+  // Clean and split search term into words (min 2 chars each)
+  const words = searchTerm
+    .toLowerCase()
+    .replace(/[^\w\sáéíóúüñ]/gi, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 2);
+
+  if (words.length === 0) {
+    return [];
+  }
+
+  // Build dynamic search conditions for each word
+  // Each word can match: name, city, colonia, phone, or email
+  const conditions = [];
+  const params = [];
+  let paramIndex = 1;
+
+  for (const word of words) {
+    conditions.push(`(
+      c.name ILIKE $${paramIndex} OR
+      c.city ILIKE $${paramIndex} OR
+      c.colonia ILIKE $${paramIndex} OR
+      c.phone ILIKE $${paramIndex} OR
+      c.email ILIKE $${paramIndex} OR
+      c.street ILIKE $${paramIndex}
+    )`);
+    params.push(`%${word}%`);
+    paramIndex++;
+  }
+
+  // Search with all words as OR conditions first for broader matches
+  // Then score by how many words match
   const result = await query(`
     SELECT
       c.id, c.name, c.phone, c.email,
       c.street, c.street_number, c.colonia, c.city, c.state, c.postal, c.postal_code,
       (SELECT COUNT(*) FROM orders WHERE client_id = c.id) as order_count,
-      (SELECT MAX(created_at) FROM orders WHERE client_id = c.id) as last_order
+      (SELECT MAX(created_at) FROM orders WHERE client_id = c.id) as last_order,
+      -- Calculate relevance score
+      (
+        ${words.map((_, i) => `
+          CASE WHEN c.name ILIKE $${i + 1} THEN 3 ELSE 0 END +
+          CASE WHEN c.city ILIKE $${i + 1} THEN 2 ELSE 0 END +
+          CASE WHEN c.colonia ILIKE $${i + 1} THEN 1 ELSE 0 END +
+          CASE WHEN c.phone ILIKE $${i + 1} THEN 2 ELSE 0 END
+        `).join(' + ')}
+      ) as relevance_score
     FROM clients c
-    WHERE c.name ILIKE $1
+    WHERE ${conditions.join(' OR ')}
     ORDER BY
-      CASE WHEN c.name ILIKE $2 THEN 0 ELSE 1 END,
+      relevance_score DESC,
+      CASE WHEN c.name ILIKE $${paramIndex} THEN 0 ELSE 1 END,
       (SELECT MAX(created_at) FROM orders WHERE client_id = c.id) DESC NULLS LAST
-    LIMIT 5
-  `, [`%${name}%`, `${name}%`]);
+    LIMIT 10
+  `, [...params, `${words[0]}%`]);
 
-  return result.rows;
+  // Filter to only return results with meaningful relevance
+  const filtered = result.rows.filter(r => r.relevance_score >= words.length);
+
+  // If no good matches with all words, return top results anyway
+  return filtered.length > 0 ? filtered.slice(0, 5) : result.rows.slice(0, 5);
 }
 
 /**

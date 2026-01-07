@@ -426,12 +426,20 @@ function showShippingLabelModal(action) {
 
     // Check if we have enough data
     if (data.clientNotFound) {
-        addMessageToChat('assistant', `No encontré ningún cliente con el nombre "${data.searchTerm}". ¿Podrías verificar el nombre o darme el número de pedido?`, { error: true });
+        let errorHtml = `<p>🔍 No encontré resultados exactos para "<strong>${data.searchTerm}</strong>".</p>`;
+        errorHtml += `<p style="font-size: 14px; color: #6b7280; margin-top: 8px;">Prueba buscar de otra forma:</p>`;
+        errorHtml += `<ul style="font-size: 14px; color: #6b7280; margin-top: 4px;">`;
+        errorHtml += `<li>Solo el nombre: "María García"</li>`;
+        errorHtml += `<li>Nombre y ciudad: "María Guadalajara"</li>`;
+        errorHtml += `<li>Número de teléfono</li>`;
+        errorHtml += `<li>Número de pedido: "VT-0045"</li>`;
+        errorHtml += `</ul>`;
+        addMessageToChat('assistant', errorHtml, { isHtml: true, error: true });
         return;
     }
 
     if (data.needsClientSelection && data.clientMatches) {
-        showClientSelection(data.clientMatches, 'Encontré varios clientes:');
+        showClientSelection(data.clientMatches, 'Encontré varios clientes posibles:');
         return;
     }
 
@@ -452,13 +460,19 @@ function showShippingLabelModal(action) {
 
     // Client info
     if (client) {
-        const hasAddress = client.street && client.city && client.state && client.postal;
+        const hasAddress = client.street && client.city && client.state && (client.postal || client.postal_code);
+        const postalCode = client.postal || client.postal_code || '';
         modalHtml += `
             <div class="ai-action-section">
                 <label>Cliente</label>
                 <div class="ai-action-info-box">
-                    <strong>${client.name}</strong>
-                    ${client.phone ? `<div style="font-size: 13px; color: #6b7280;">${client.phone}</div>` : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <strong>${client.name}</strong>
+                            ${client.city ? `<div style="font-size: 13px; color: #059669; margin-top: 2px;">📍 ${client.city}${client.state ? ', ' + client.state : ''}</div>` : ''}
+                        </div>
+                        ${client.phone ? `<div style="font-size: 13px; color: #6b7280;">📱 ${client.phone}</div>` : ''}
+                    </div>
                 </div>
             </div>
 
@@ -468,9 +482,9 @@ function showShippingLabelModal(action) {
                     ${hasAddress ? `
                         ${client.street} ${client.street_number || ''}<br>
                         ${client.colonia ? `Col. ${client.colonia}<br>` : ''}
-                        ${client.city}, ${client.state} CP ${client.postal}
+                        ${client.city}, ${client.state} ${postalCode ? 'CP ' + postalCode : ''}
                     ` : `
-                        <span style="color: #f59e0b;">⚠️ Dirección incompleta</span>
+                        <span style="color: #f59e0b;">⚠️ Dirección incompleta - verifica en la sección de Envíos</span>
                     `}
                 </div>
             </div>
@@ -550,18 +564,32 @@ function showShippingLabelModal(action) {
 }
 
 /**
- * Show client selection in chat
+ * Show client selection in chat with detailed info
  */
 function showClientSelection(clients, title) {
     let html = `<p>${title}</p><div class="ai-client-selection">`;
     clients.forEach(client => {
+        // Build location string
+        const locationParts = [];
+        if (client.colonia) locationParts.push(client.colonia);
+        if (client.city) locationParts.push(client.city);
+        if (client.state) locationParts.push(client.state);
+        const location = locationParts.join(', ') || 'Sin ubicación';
+
         html += `
-            <button class="ai-client-btn" onclick="selectClientForAction(${client.id}, '${escapeHtml(client.name)}')">
-                <strong>${escapeHtml(client.name)}</strong>
-                <span style="font-size: 12px; color: #6b7280;">
-                    ${client.order_count || 0} pedidos
-                    ${client.city ? `• ${client.city}` : ''}
-                </span>
+            <button class="ai-client-btn" onclick="selectClientForAction(${client.id}, '${escapeHtml(client.name).replace(/'/g, "\\'")}')">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                    <div>
+                        <strong>${escapeHtml(client.name)}</strong>
+                        <div style="font-size: 12px; color: #059669; margin-top: 2px;">
+                            📍 ${escapeHtml(location)}
+                        </div>
+                    </div>
+                    <div style="text-align: right; font-size: 11px; color: #6b7280;">
+                        ${client.phone ? `📱 ${client.phone}<br>` : ''}
+                        ${client.order_count || 0} pedido${client.order_count !== 1 ? 's' : ''}
+                    </div>
+                </div>
             </button>
         `;
     });
