@@ -1296,13 +1296,6 @@
                 <!-- Filters -->
                 <div class="filters-bar" style="margin-bottom: 20px;">
                     <div class="filter-group">
-                        <select id="employee-dept-filter" onchange="filterEmployees()" class="filter-select">
-                            <option value="">Todos los departamentos</option>
-                            <option value="design">Diseño</option>
-                            <option value="production">Producción</option>
-                            <option value="shipping">Envíos</option>
-                            <option value="management">Gerencia</option>
-                        </select>
                         <select id="employee-role-filter" onchange="filterEmployees()" class="filter-select">
                             <option value="">Todos los roles</option>
                             <option value="design">Diseñador</option>
@@ -1329,7 +1322,6 @@
                                 <th style="padding: 16px; text-align: left;">Empleado</th>
                                 <th style="padding: 16px; text-align: left;">Email</th>
                                 <th style="padding: 16px; text-align: left;">Rol</th>
-                                <th style="padding: 16px; text-align: left;">Departamento</th>
                                 <th style="padding: 16px; text-align: center;">Estado</th>
                                 <th style="padding: 16px; text-align: left;">Último acceso</th>
                                 <th style="padding: 16px; text-align: center;">Acciones</th>
@@ -1500,28 +1492,18 @@
                         <small class="form-hint">Dejar vacío para mantener la contraseña actual (al editar)</small>
                     </div>
 
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label for="employee-role">Rol *</label>
-                            <select id="employee-role" required>
-                                <option value="">Seleccionar...</option>
-                                <option value="design">Diseñador</option>
-                                <option value="production">Producción</option>
-                                <option value="shipping">Envíos</option>
-                                <option value="manager">Gerente</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="employee-department">Departamento *</label>
-                            <select id="employee-department" required>
-                                <option value="">Seleccionar...</option>
-                                <option value="design">Diseño</option>
-                                <option value="production">Producción</option>
-                                <option value="shipping">Envíos</option>
-                                <option value="management">Gerencia</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label for="employee-role">Rol *</label>
+                        <select id="employee-role" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="design">Diseñador</option>
+                            <option value="production">Producción</option>
+                            <option value="shipping">Envíos</option>
+                            <option value="manager">Gerente</option>
+                        </select>
                     </div>
+                    <!-- Hidden department field with default value -->
+                    <input type="hidden" id="employee-department" value="production">
 
                     <div class="form-group">
                         <label for="employee-phone">Teléfono</label>

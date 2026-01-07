@@ -70,7 +70,7 @@ function renderEmployeesTable() {
   if (filteredEmployees.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; padding: 40px; color: #6b7280;">
+        <td colspan="6" style="text-align: center; padding: 40px; color: #6b7280;">
           No se encontraron empleados
         </td>
       </tr>
@@ -95,7 +95,6 @@ function renderEmployeesTable() {
       <td style="padding: 16px;">
         <span class="role-badge role-${emp.role}">${ROLE_LABELS[emp.role] || emp.role}</span>
       </td>
-      <td style="padding: 16px; color: #4b5563;">${DEPT_LABELS[emp.department] || emp.department}</td>
       <td style="padding: 16px; text-align: center;">
         <span class="status-badge ${emp.is_active ? 'status-active' : 'status-inactive'}">
           ${emp.is_active ? 'Activo' : 'Inactivo'}
@@ -173,12 +172,10 @@ function formatDate(dateString) {
  * Filter employees based on filters
  */
 function filterEmployees() {
-  const dept = document.getElementById('employee-dept-filter').value;
   const role = document.getElementById('employee-role-filter').value;
   const status = document.getElementById('employee-status-filter').value;
 
   filteredEmployees = allEmployees.filter(emp => {
-    if (dept && emp.department !== dept) return false;
     if (role && emp.role !== role) return false;
     if (status !== '' && emp.is_active !== (status === 'true')) return false;
     return true;
