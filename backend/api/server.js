@@ -2371,6 +2371,39 @@ app.post('/api/orders/:orderId/verify-payment', async (req, res) => {
         console.error('Failed to sync to Notion:', notionError);
       }
 
+      // Create automatic tasks for the auto-approved order (background)
+      setImmediate(async () => {
+        try {
+          console.log(`📋 Creating automatic tasks for AI auto-approved order ${order.order_number}...`);
+
+          // Task 1: Diseños
+          await query(
+            `INSERT INTO tasks (title, description, department, task_type, priority, assigned_to, order_id, status)
+             VALUES ($1, $2, 'design', 'order_task', 'normal', NULL, $3, 'pending')`,
+            [
+              `Diseños - ${order.order_number}`,
+              `Crear diseños para el pedido ${order.order_number}.\nCliente: ${order.client_name}\nProductos: ${items.map(i => `${i.productName} (${i.quantity} pzas)`).join(', ')}`,
+              orderId
+            ]
+          );
+
+          // Task 2: Armado
+          await query(
+            `INSERT INTO tasks (title, description, department, task_type, priority, assigned_to, order_id, status)
+             VALUES ($1, $2, 'design', 'order_task', 'normal', NULL, $3, 'pending')`,
+            [
+              `Armado - ${order.order_number}`,
+              `Armar productos para el pedido ${order.order_number}.\nCliente: ${order.client_name}\nProductos: ${items.map(i => `${i.productName} (${i.quantity} pzas)`).join(', ')}`,
+              orderId
+            ]
+          );
+
+          console.log(`📋 Automatic tasks created for AI auto-approved order ${order.order_number}`);
+        } catch (taskError) {
+          console.error('❌ Failed to create automatic tasks:', taskError.message);
+        }
+      });
+
       return res.json({
         success: true,
         verified: true,
