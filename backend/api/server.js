@@ -3467,6 +3467,17 @@ async function startServer() {
     // Initialize Facebook Marketplace Scheduler (daily at 9 AM)
     await facebookScheduler.initFacebookScheduler();
 
+    // Ensure is_store_pickup column exists (for store pickup feature)
+    try {
+      await query(`
+        ALTER TABLE orders
+        ADD COLUMN IF NOT EXISTS is_store_pickup BOOLEAN DEFAULT FALSE
+      `);
+      console.log('✅ Store pickup column ready');
+    } catch (err) {
+      console.warn('⚠️  Store pickup column migration:', err.message);
+    }
+
     // Build Knowledge Base Index
     console.log('📚 Building knowledge base index...');
     try {
