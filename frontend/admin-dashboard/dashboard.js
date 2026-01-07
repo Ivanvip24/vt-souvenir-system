@@ -922,14 +922,23 @@ async function showOrderDetail(orderId) {
               <td style="text-align: right; padding: 6px 0; font-weight: 600;">${formatCurrency(item.lineTotal)}</td>
             </tr>
           `).join('')}
+          ${(() => {
+            // Calculate shipping if not stored (for legacy orders)
+            const totalPieces = order.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            const calculatedShipping = order.isStorePickup ? 0 : (totalPieces >= 300 ? 0 : 210);
+            const displayShipping = order.shippingCost > 0 ? order.shippingCost : calculatedShipping;
+            const isFreeShipping = order.isStorePickup || displayShipping === 0;
+
+            return `
           <tr style="border-top: 1px solid var(--gray-200);">
             <td colspan="3" style="padding: 6px 0; color: var(--gray-600);">
               ${order.isStorePickup ? '🏪 Recoger en tienda' : '🚚 Envío'}
             </td>
-            <td style="text-align: right; padding: 6px 0; ${order.isStorePickup ? 'color: var(--green);' : ''}">
-              ${order.isStorePickup ? 'Gratis' : formatCurrency(order.shippingCost || 0)}
+            <td style="text-align: right; padding: 6px 0; ${isFreeShipping ? 'color: var(--green);' : ''}">
+              ${order.isStorePickup ? 'Gratis' : (isFreeShipping ? '¡Gratis!' : formatCurrency(displayShipping))}
             </td>
-          </tr>
+          </tr>`;
+          })()}
           <tr style="border-top: 2px solid var(--gray-300);">
             <td colspan="3" style="padding: 8px 0; font-weight: 700;">Total</td>
             <td style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(order.totalPrice)}</td>
