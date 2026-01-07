@@ -400,10 +400,10 @@ router.post('/orders/submit', async (req, res) => {
         );
         console.log(`   ✅ Task created: Diseños - ${orderNumber}`);
 
-        // Task 2: Armado (Production department)
+        // Task 2: Armado (Design department)
         await query(
           `INSERT INTO tasks (title, description, department, task_type, priority, assigned_to, order_id, status)
-           VALUES ($1, $2, 'production', 'order_task', 'normal', NULL, $3, 'pending')`,
+           VALUES ($1, $2, 'design', 'order_task', 'normal', NULL, $3, 'pending')`,
           [
             `Armado - ${orderNumber}`,
             `Armar productos para el pedido ${orderNumber}.\nCliente: ${clientName}\nProductos: ${orderItems.map(i => `${i.productName} (${i.quantity} pzas)`).join(', ')}`,
