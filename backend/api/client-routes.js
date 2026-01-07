@@ -157,6 +157,9 @@ router.post('/orders/submit', async (req, res) => {
 
       // Sales rep from referral link
       salesRep, // e.g., 'alejandra'
+
+      // Store pickup option (skips shipping when true)
+      isStorePickup,
     } = req.body;
 
     // Validation
@@ -348,8 +351,9 @@ router.post('/orders/submit', async (req, res) => {
         production_deadline,
         estimated_delivery_date,
         shipping_days,
-        sales_rep
-      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15)
+        sales_rep,
+        is_store_pickup
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16)
       RETURNING id`,
       [
         orderNumber,
@@ -366,7 +370,8 @@ router.post('/orders/submit', async (req, res) => {
         deliveryDates.productionDeadline,
         deliveryDates.estimatedDeliveryDate,
         deliveryDates.shippingDays,
-        salesRep || null
+        salesRep || null,
+        isStorePickup || false
       ]
     );
 
@@ -974,6 +979,7 @@ router.post('/orders/lookup', async (req, res) => {
         o.deposit_paid,
         o.payment_method,
         o.second_payment_proof_url,
+        o.is_store_pickup,
         c.name as client_name,
         (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as shipping_labels_count,
         (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id AND sl.tracking_number IS NOT NULL) as labels_with_tracking,
@@ -1019,7 +1025,9 @@ router.post('/orders/lookup', async (req, res) => {
       secondPaymentReceived: !!order.second_payment_proof_url, // Derived from having a receipt URL
       shippingLabelsCount: parseInt(order.shipping_labels_count) || 0,
       labelsWithTracking: parseInt(order.labels_with_tracking) || 0,
-      allLabelsGenerated: parseInt(order.shipping_labels_count) > 0 && parseInt(order.labels_with_tracking) === parseInt(order.shipping_labels_count)
+      allLabelsGenerated: parseInt(order.shipping_labels_count) > 0 && parseInt(order.labels_with_tracking) === parseInt(order.shipping_labels_count),
+      // Store pickup
+      isStorePickup: order.is_store_pickup || false
     }));
 
     // ALWAYS return clientInfo, even if no active orders

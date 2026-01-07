@@ -319,7 +319,13 @@
                         <strong id="order-subtotal">$0.00</strong>
                     </div>
                     <div class="summary-row" id="footer-shipping-row">
-                        <span>🚚 Envío:</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span>🚚 Envío:</span>
+                            <button type="button" id="pickup-toggle-footer" onclick="toggleStorePickup()"
+                                    style="font-size: 10px; padding: 4px 8px; border-radius: 12px; border: 1px solid #10b981; background: transparent; color: #10b981; cursor: pointer; white-space: nowrap;">
+                                🏪 Recoger en tienda
+                            </button>
+                        </div>
                         <strong id="footer-shipping">$0.00</strong>
                     </div>
                     <div class="summary-row total-row">
@@ -361,7 +367,13 @@
                             <strong id="summary-subtotal" style="font-size: 15px;">$0.00</strong>
                         </div>
                         <div class="summary-row" style="margin-bottom: 8px;">
-                            <span style="font-size: 15px;">🚚 Envío:</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 15px;">🚚 Envío:</span>
+                                <button type="button" id="pickup-toggle-summary" onclick="toggleStorePickup()"
+                                        style="font-size: 10px; padding: 4px 8px; border-radius: 12px; border: 1px solid #10b981; background: transparent; color: #10b981; cursor: pointer; white-space: nowrap;">
+                                    🏪 Recoger en tienda
+                                </button>
+                            </div>
                             <strong id="summary-shipping" style="font-size: 15px;">$0.00</strong>
                         </div>
                         <div class="summary-row" style="margin-bottom: 12px; padding-top: 8px; border-top: 1px dashed var(--gray-300);">

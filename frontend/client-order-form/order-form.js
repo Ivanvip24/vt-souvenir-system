@@ -252,7 +252,8 @@ const state = {
     total: 0,
     deposit: 0,
     totalPieces: 0
-  }
+  },
+  isStorePickup: false // When true, shipping is $0 and no shipping processes
 };
 
 // Shipping configuration
@@ -260,6 +261,61 @@ const SHIPPING_CONFIG = {
   freeShippingThreshold: 300, // Free shipping at 300+ pieces
   shippingCost: 210 // $210 MXN shipping fee under threshold
 };
+
+// ==========================================
+// STORE PICKUP FUNCTIONS
+// ==========================================
+
+/**
+ * Toggle store pickup option
+ * When enabled, shipping is $0 and shipping processes are skipped
+ */
+window.toggleStorePickup = function() {
+  state.isStorePickup = !state.isStorePickup;
+  console.log(`🏪 Store pickup: ${state.isStorePickup ? 'ENABLED' : 'DISABLED'}`);
+
+  // Recalculate totals
+  updateOrderTotals();
+
+  // Also update summary if on payment step
+  if (state.currentStep === 4) {
+    populateOrderSummary();
+  }
+};
+
+/**
+ * Update pickup button visual states
+ */
+function updatePickupButtonStates() {
+  const footerBtn = document.getElementById('pickup-toggle-footer');
+  const summaryBtn = document.getElementById('pickup-toggle-summary');
+
+  const activeStyle = 'font-size: 10px; padding: 4px 8px; border-radius: 12px; cursor: pointer; white-space: nowrap;';
+
+  if (state.isStorePickup) {
+    // Active state - filled green
+    const activeCSS = activeStyle + ' border: 1px solid #10b981; background: #10b981; color: white;';
+    if (footerBtn) {
+      footerBtn.style.cssText = activeCSS;
+      footerBtn.innerHTML = '✓ Recoger en tienda';
+    }
+    if (summaryBtn) {
+      summaryBtn.style.cssText = activeCSS;
+      summaryBtn.innerHTML = '✓ Recoger en tienda';
+    }
+  } else {
+    // Inactive state - outline
+    const inactiveCSS = activeStyle + ' border: 1px solid #10b981; background: transparent; color: #10b981;';
+    if (footerBtn) {
+      footerBtn.style.cssText = inactiveCSS;
+      footerBtn.innerHTML = '🏪 Recoger en tienda';
+    }
+    if (summaryBtn) {
+      summaryBtn.style.cssText = inactiveCSS;
+      summaryBtn.innerHTML = '🏪 Recoger en tienda';
+    }
+  }
+}
 
 // ==========================================
 // INITIALIZATION
@@ -1308,8 +1364,13 @@ function updateOrderTotals() {
     totalPieces += quantity;
   });
 
-  // Calculate shipping: FREE if >= 300 pieces, otherwise $210
-  const shipping = totalPieces >= SHIPPING_CONFIG.freeShippingThreshold ? 0 : SHIPPING_CONFIG.shippingCost;
+  // Calculate shipping: $0 if store pickup, FREE if >= 300 pieces, otherwise $210
+  let shipping = 0;
+  if (state.isStorePickup) {
+    shipping = 0;
+  } else {
+    shipping = totalPieces >= SHIPPING_CONFIG.freeShippingThreshold ? 0 : SHIPPING_CONFIG.shippingCost;
+  }
   const total = subtotal + shipping;
   const deposit = total * 0.5; // 50% deposit of total (including shipping)
 
@@ -1328,18 +1389,25 @@ function updateOrderTotals() {
   // Update footer shipping display
   const footerShipping = document.getElementById('footer-shipping');
   if (footerShipping) {
-    if (shipping === 0) {
+    if (state.isStorePickup) {
+      footerShipping.innerHTML = `<span style="color: #10b981;">🏪 Recoger</span>`;
+    } else if (shipping === 0) {
       footerShipping.innerHTML = `<span style="color: #10b981;">¡GRATIS!</span>`;
     } else {
       footerShipping.textContent = `$${shipping.toFixed(2)}`;
     }
   }
 
+  // Update pickup button states
+  updatePickupButtonStates();
+
   // Update shipping indicator (progress message)
   const shippingIndicator = document.getElementById('shipping-indicator');
   if (shippingIndicator) {
     if (totalPieces === 0) {
       shippingIndicator.innerHTML = '';
+    } else if (state.isStorePickup) {
+      shippingIndicator.innerHTML = `<span style="color: #10b981; font-weight: 600;">🏪 Recogerás tu pedido en tienda</span>`;
     } else if (shipping === 0) {
       shippingIndicator.innerHTML = `<span style="color: #10b981; font-weight: 600;">🎉 ¡Envío GRATIS incluido!</span>`;
     } else {
@@ -1398,8 +1466,13 @@ function populateOrderSummary() {
     summaryContainer.appendChild(itemRow);
   });
 
-  // Calculate shipping
-  const shipping = totalPieces >= SHIPPING_CONFIG.freeShippingThreshold ? 0 : SHIPPING_CONFIG.shippingCost;
+  // Calculate shipping: $0 if store pickup, FREE if >= 300 pieces, otherwise $210
+  let shipping = 0;
+  if (state.isStorePickup) {
+    shipping = 0;
+  } else {
+    shipping = totalPieces >= SHIPPING_CONFIG.freeShippingThreshold ? 0 : SHIPPING_CONFIG.shippingCost;
+  }
   const total = subtotal + shipping;
   const deposit = total * 0.5;
 
@@ -1409,12 +1482,17 @@ function populateOrderSummary() {
   // Update shipping display
   const shippingEl = document.getElementById('summary-shipping');
   if (shippingEl) {
-    if (shipping === 0) {
+    if (state.isStorePickup) {
+      shippingEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">🏪 Recoger</span>`;
+    } else if (shipping === 0) {
       shippingEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">¡GRATIS!</span>`;
     } else {
       shippingEl.textContent = `$${shipping.toFixed(2)}`;
     }
   }
+
+  // Update pickup button states
+  updatePickupButtonStates();
 
   // Update total display
   const totalEl = document.getElementById('summary-total');
@@ -2054,7 +2132,10 @@ async function handleOrderSubmit() {
       paymentProofUrl: state.payment.proofFile?.cloudinaryUrl || null,
 
       // Sales rep from referral link
-      salesRep: state.order.salesRep || null
+      salesRep: state.order.salesRep || null,
+
+      // Store pickup option (skips shipping processes when true)
+      isStorePickup: state.isStorePickup || false
     };
 
     console.log('Submitting order:', orderData);
@@ -2258,24 +2339,38 @@ window.lookupClientOrders = async function() {
             </div>
 
             ${order.approvalStatus === 'approved' && parseFloat(order.remainingBalance) > 0 && !order.secondPaymentReceipt ? `
-              <!-- STEP 1: Select Shipping Method -->
-              <div style="margin-top: 12px; border-top: 1px solid #fbbf24; padding-top: 12px;" id="shipping-selection-section-${order.id}">
-                <div style="font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 8px;">
-                  🚚 Paso 1: Selecciona tu método de envío
+              ${order.isStorePickup ? `
+                <!-- Store Pickup - No shipping needed -->
+                <div style="margin-top: 12px; border-top: 1px solid #fbbf24; padding-top: 12px;">
+                  <div style="padding: 12px; background: #d1fae5; border: 1px solid #10b981; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 4px;">🏪</div>
+                    <div style="font-size: 14px; font-weight: 600; color: #065f46;">Recoger en Tienda</div>
+                    <div style="font-size: 12px; color: #047857; margin-top: 4px;">Te notificaremos cuando tu pedido esté listo</div>
+                  </div>
                 </div>
-                <div id="shipping-options-${order.id}" style="margin-bottom: 12px;">
-                  <button
-                    onclick="loadShippingOptions(${order.id})"
-                    style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
-                    📦 Ver Opciones de Envío
-                  </button>
-                </div>
-              </div>
 
-              <!-- STEP 2: Upload Payment Receipt (shown after shipping selection) -->
-              <div style="margin-top: 12px; padding-top: 12px; display: none;" id="second-payment-section-${order.id}">
+                <!-- Upload Payment Receipt directly for pickup orders -->
+                <div style="margin-top: 12px; padding-top: 12px;" id="second-payment-section-${order.id}">
+              ` : `
+                <!-- STEP 1: Select Shipping Method -->
+                <div style="margin-top: 12px; border-top: 1px solid #fbbf24; padding-top: 12px;" id="shipping-selection-section-${order.id}">
+                  <div style="font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 8px;">
+                    🚚 Paso 1: Selecciona tu método de envío
+                  </div>
+                  <div id="shipping-options-${order.id}" style="margin-bottom: 12px;">
+                    <button
+                      onclick="loadShippingOptions(${order.id})"
+                      style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                      📦 Ver Opciones de Envío
+                    </button>
+                  </div>
+                </div>
+
+                <!-- STEP 2: Upload Payment Receipt (shown after shipping selection) -->
+                <div style="margin-top: 12px; padding-top: 12px; display: none;" id="second-payment-section-${order.id}">
+              `}
                 <div style="font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 8px;">
-                  💳 Paso 2: Sube tu comprobante de pago final
+                  💳 ${order.isStorePickup ? 'Sube' : 'Paso 2: Sube'} tu comprobante de pago final
                 </div>
                 <input type="file"
                        id="second-payment-upload-${order.id}"
