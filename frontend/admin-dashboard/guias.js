@@ -148,7 +148,7 @@ function renderGuiasTable() {
         ${getStatusBadge(guia.status)}
       </td>
       <td>
-        <div style="font-size: 13px;">${formatDate(guia.created_at)}</div>
+        <div style="font-size: 13px;">${formatDateGuias(guia.created_at)}</div>
       </td>
       <td>
         <div style="display: flex; gap: 8px;">
@@ -191,9 +191,9 @@ function getStatusBadge(status) {
 }
 
 /**
- * Format date
+ * Format date for guias
  */
-function formatDate(dateStr) {
+function formatDateGuias(dateStr) {
   if (!dateStr) return 'N/A';
   const date = new Date(dateStr);
   return date.toLocaleDateString('es-MX', {
@@ -365,7 +365,7 @@ function exportGuiasCSV() {
     g.service || '',
     g.delivery_days || '',
     g.status || '',
-    formatDate(g.created_at),
+    formatDateGuias(g.created_at),
     g.tracking_url || '',
     g.label_url || ''
   ]);

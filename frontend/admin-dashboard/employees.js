@@ -101,7 +101,7 @@ function renderEmployeesTable() {
         </span>
       </td>
       <td style="padding: 16px; color: #6b7280; font-size: 13px;">
-        ${emp.last_login ? formatDate(emp.last_login) : 'Nunca'}
+        ${emp.last_login ? formatDateRelative(emp.last_login) : 'Nunca'}
       </td>
       <td style="padding: 16px; text-align: center;">
         <div style="display: flex; gap: 8px; justify-content: center;">
@@ -147,9 +147,9 @@ function getInitials(name) {
 }
 
 /**
- * Format date for display
+ * Format date for display (relative time for employees)
  */
-function formatDate(dateString) {
+function formatDateRelative(dateString) {
   const date = new Date(dateString);
   const now = new Date();
   const diff = now - date;

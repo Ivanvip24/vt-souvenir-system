@@ -487,7 +487,7 @@ function showProductHistoryModal(history, productId) {
 
     html += `
       <tr>
-        <td>${formatDate(entry.effective_date)}</td>
+        <td>${formatDatePrices(entry.effective_date)}</td>
         <td>${formatCurrency(entry.base_price)}</td>
         <td>${formatCurrency(entry.production_cost)}</td>
         <td>${entry.material_cost ? formatCurrency(entry.material_cost) : 'N/A'}</td>
@@ -1011,7 +1011,7 @@ window.refreshPriceTrends = function() {
 // UTILITY FUNCTIONS
 // ==========================================
 
-function formatDate(dateString) {
+function formatDatePrices(dateString) {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
   return date.toLocaleDateString('es-MX', {
@@ -1902,7 +1902,7 @@ window.showProductDetail = async function(productId) {
         const histMarginColor = histMargin >= 20 ? '#059669' : histMargin >= 10 ? '#f59e0b' : '#ef4444';
         historyHTML += `
           <tr>
-            <td>${formatDate(entry.effective_date)}</td>
+            <td>${formatDatePrices(entry.effective_date)}</td>
             <td>${formatCurrency(entry.base_price)}</td>
             <td>${formatCurrency(entry.production_cost)}</td>
             <td style="color: ${histMarginColor}; font-weight: 700;">${histMargin.toFixed(1)}%</td>
