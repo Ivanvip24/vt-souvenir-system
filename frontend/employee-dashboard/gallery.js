@@ -163,7 +163,7 @@ function renderGalleryGrid(container, designs, isArchived = false) {
             </div>
             `;
         } else {
-            // Active design - show download buttons
+            // Active design - show download buttons and Facebook button
             actionsHTML = `
             <div class="gallery-item-actions">
                 <button class="gallery-action-btn download" onclick="event.stopPropagation(); downloadDesign(${design.id})" title="Descargar">
@@ -171,6 +171,13 @@ function renderGalleryGrid(container, designs, isArchived = false) {
                 </button>
                 <button class="gallery-action-btn add-to-list${isInDownloadList ? ' added' : ''}" onclick="event.stopPropagation(); toggleDesignList(${design.id})" title="${isInDownloadList ? 'Quitar de lista' : 'Agregar a lista'}">
                     ${isInDownloadList ? '✓' : '+'} Lista
+                </button>
+                <button class="gallery-action-btn facebook"
+                        id="fb-gallery-${design.id}"
+                        onclick="event.stopPropagation(); queueDesignForFacebook(${design.id})"
+                        title="Publicar en Facebook Marketplace"
+                        style="background: #1877f2; color: white;">
+                    f
                 </button>
             </div>
             `;
@@ -1254,6 +1261,71 @@ async function submitBatchDesigns() {
 
 // Event listeners are initialized in initGalleryEventListeners()
 
+// ========================================
+// FACEBOOK MARKETPLACE FUNCTIONS
+// ========================================
+
+async function queueDesignForFacebook(designId) {
+    const design = galleryState.designs.find(d => d.id === designId);
+    if (!design) {
+        showToast('Diseño no encontrado', 'error');
+        return;
+    }
+
+    const btn = document.getElementById(`fb-gallery-${designId}`);
+
+    try {
+        // Show loading state
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '⏳';
+            btn.style.background = '#6b7280';
+        }
+
+        const response = await fetch(`${API_BASE}/facebook/queue`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.token}`
+            },
+            body: JSON.stringify({
+                orderId: null, // Gallery designs don't have order IDs
+                imageUrl: design.file_url,
+                title: design.name || `Diseño ${designId}`
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Error al encolar para Facebook');
+        }
+
+        // Show success state
+        if (btn) {
+            btn.innerHTML = '✓';
+            btn.style.background = '#22c55e';
+            btn.title = 'En cola para Facebook Marketplace';
+            btn.disabled = true;
+        }
+
+        showToast('Diseño agregado a Facebook Marketplace', 'success');
+        console.log(`✅ Queued for Facebook: ${design.name}`);
+
+    } catch (error) {
+        console.error('Error queueing for Facebook:', error);
+
+        // Restore button
+        if (btn) {
+            btn.innerHTML = 'f';
+            btn.style.background = '#1877f2';
+            btn.disabled = false;
+        }
+
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
 // Make functions globally available
 window.loadGallery = loadGallery;
 window.downloadDesign = downloadDesign;
@@ -1273,3 +1345,4 @@ window.handleFilesSelect = handleFilesSelect;
 window.toggleEditMode = toggleEditMode;
 window.saveDesignChanges = saveDesignChanges;
 window.openDesignModal = openDesignModal;
+window.queueDesignForFacebook = queueDesignForFacebook;
