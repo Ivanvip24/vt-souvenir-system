@@ -358,8 +358,8 @@
       estimated_minutes: document.getElementById('task-estimated-minutes').value || null
     };
 
-    if (!taskData.title || !taskData.department) {
-      showToast('Titulo y departamento son requeridos', 'error');
+    if (!taskData.title) {
+      showToast('El título es requerido', 'error');
       return;
     }
 
@@ -422,18 +422,11 @@
     const body = document.getElementById('task-detail-body');
     body.innerHTML = `
       <div style="display: grid; gap: 20px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div>
-            <label style="font-size: 12px; color: #6b7280; text-transform: uppercase;">Departamento</label>
-            <p style="font-weight: 500; margin: 4px 0;">${TASK_DEPT_LABELS[task.department] || task.department}</p>
-          </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
           <div>
             <label style="font-size: 12px; color: #6b7280; text-transform: uppercase;">Estado</label>
             <p style="margin: 4px 0;"><span class="status-badge status-${task.status}">${TASK_STATUS_LABELS[task.status] || task.status}</span></p>
           </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div>
             <label style="font-size: 12px; color: #6b7280; text-transform: uppercase;">Prioridad</label>
             <p style="margin: 4px 0;"><span class="priority-badge priority-${task.priority}">${TASK_PRIORITY_LABELS[task.priority] || task.priority}</span></p>

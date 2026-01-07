@@ -1594,25 +1594,17 @@
                         <textarea id="task-description" rows="3" placeholder="Agrega detalles adicionales, instrucciones o notas..."></textarea>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="task-department">Departamento <span class="required-asterisk">*</span></label>
-                            <select id="task-department" required>
-                                <option value="">Seleccionar departamento...</option>
-                                <option value="design">Diseño</option>
-                                <option value="production">Producción</option>
-                                <option value="shipping">Envíos</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="task-priority">Prioridad</label>
-                            <select id="task-priority">
-                                <option value="normal">Normal</option>
-                                <option value="low">Baja</option>
-                                <option value="high">Alta</option>
-                                <option value="urgent">Urgente</option>
-                            </select>
-                        </div>
+                    <!-- Hidden department field with default value -->
+                    <input type="hidden" id="task-department" value="production">
+
+                    <div class="form-group">
+                        <label for="task-priority">Prioridad</label>
+                        <select id="task-priority">
+                            <option value="normal">Normal</option>
+                            <option value="low">Baja</option>
+                            <option value="high">Alta</option>
+                            <option value="urgent">Urgente</option>
+                        </select>
                     </div>
 
                     <div class="form-row">
