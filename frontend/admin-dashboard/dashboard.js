@@ -159,7 +159,39 @@ function switchView(viewName) {
   if (viewName === 'tasks' && typeof loadTasksData === 'function') {
     loadTasksData();
   }
+
+  // Initialize employee portal - load both employees and tasks
+  if (viewName === 'employee-portal') {
+    if (typeof loadEmployees === 'function') {
+      loadEmployees();
+    }
+    if (typeof loadTasksData === 'function') {
+      loadTasksData();
+    }
+  }
 }
+
+// Switch between tabs in the Employee Portal
+function switchPortalTab(tabName) {
+  // Update tab buttons
+  document.querySelectorAll('.portal-tab').forEach(tab => {
+    if (tab.dataset.portalTab === tabName) {
+      tab.classList.add('active');
+      tab.style.background = 'white';
+      tab.style.color = '#1f2937';
+    } else {
+      tab.classList.remove('active');
+      tab.style.background = 'transparent';
+      tab.style.color = '#6b7280';
+    }
+  });
+
+  // Show/hide content
+  document.getElementById('portal-employees-content').style.display = tabName === 'employees' ? 'block' : 'none';
+  document.getElementById('portal-tasks-content').style.display = tabName === 'tasks' ? 'block' : 'none';
+}
+
+window.switchPortalTab = switchPortalTab;
 
 // ==========================================
 // ORDER ALERTS WIDGET

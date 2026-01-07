@@ -127,16 +127,8 @@
 
                 <!-- Employee Management Section -->
                 <div class="nav-separator"></div>
-                <button class="nav-item" data-view="employees">
+                <button class="nav-item" data-view="employee-portal">
                     <span class="nav-icon">👥</span>
-                    <span>Empleados</span>
-                </button>
-                <button class="nav-item" data-view="tasks">
-                    <span class="nav-icon">📋</span>
-                    <span>Tareas</span>
-                </button>
-                <button class="nav-item" data-view="employee-dashboard">
-                    <span class="nav-icon">📊</span>
                     <span>Portal Empleados</span>
                 </button>
             </nav>
@@ -1252,14 +1244,32 @@
                 </div>
             </section>
 
-            <!-- Employee Management View -->
-            <section id="employees-view" class="view">
+            <!-- Combined Employee Portal View -->
+            <section id="employee-portal-view" class="view">
                 <div class="view-header">
-                    <h2>👥 Gestión de Empleados</h2>
-                    <button class="btn btn-primary" onclick="openAddEmployeeModal()">
-                        ➕ Agregar Empleado
+                    <h2>👥 Portal Empleados</h2>
+                    <div id="portal-header-actions">
+                        <!-- Dynamic buttons based on active tab -->
+                    </div>
+                </div>
+
+                <!-- Internal Tabs -->
+                <div class="portal-tabs" style="display: flex; gap: 0; margin-bottom: 24px; background: #f3f4f6; border-radius: 12px; padding: 4px;">
+                    <button class="portal-tab active" data-portal-tab="employees" onclick="switchPortalTab('employees')" style="flex: 1; padding: 12px 24px; border: none; background: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                        👥 Empleados
+                    </button>
+                    <button class="portal-tab" data-portal-tab="tasks" onclick="switchPortalTab('tasks')" style="flex: 1; padding: 12px 24px; border: none; background: transparent; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #6b7280;">
+                        📋 Tareas
                     </button>
                 </div>
+
+                <!-- Employees Tab Content -->
+                <div id="portal-employees-content" class="portal-tab-content">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                        <button class="btn btn-primary" onclick="openAddEmployeeModal()">
+                            ➕ Agregar Empleado
+                        </button>
+                    </div>
 
                 <!-- Stats Row -->
                 <div id="employee-stats" class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
@@ -1332,16 +1342,15 @@
                         </tbody>
                     </table>
                 </div>
-            </section>
+                </div><!-- End portal-employees-content -->
 
-            <!-- Tasks Management View -->
-            <section id="tasks-view" class="view">
-                <div class="view-header">
-                    <h2>📋 Gestión de Tareas</h2>
-                    <button class="btn btn-primary" onclick="openCreateTaskModal()">
-                        ➕ Nueva Tarea
-                    </button>
-                </div>
+                <!-- Tasks Tab Content -->
+                <div id="portal-tasks-content" class="portal-tab-content" style="display: none;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                        <button class="btn btn-primary" onclick="openCreateTaskModal()">
+                            ➕ Nueva Tarea
+                        </button>
+                    </div>
 
                 <!-- Stats Row -->
                 <div id="task-stats" class="stats-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px;">
@@ -1442,25 +1451,9 @@
                     <h3 style="color: #374151; margin-bottom: 8px;">No hay tareas</h3>
                     <p style="color: #6b7280;">Las tareas aparecerán aquí cuando las crees</p>
                 </div>
-            </section>
+                </div><!-- End portal-tasks-content -->
 
-            <!-- Employee Dashboard Link View -->
-            <section id="employee-dashboard-view" class="view">
-                <div class="view-header">
-                    <h2>📊 Portal de Empleados</h2>
-                </div>
-                <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 16px;">
-                    <div style="font-size: 80px; margin-bottom: 20px;">📱</div>
-                    <h3 style="font-size: 24px; margin: 0 0 12px 0;">Portal de Empleados</h3>
-                    <p style="color: #6b7280; margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
-                        Accede al portal de empleados donde el equipo puede gestionar tareas, ver diseños,
-                        consultar información de marca y más.
-                    </p>
-                    <a href="../employee-dashboard/index.html" target="_blank" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px; text-decoration: none; display: inline-block;">
-                        🚀 Abrir Portal de Empleados
-                    </a>
-                </div>
-            </section>
+            </section><!-- End employee-portal-view -->
         </div>
     </main>
 
