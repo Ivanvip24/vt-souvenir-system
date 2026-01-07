@@ -929,6 +929,11 @@ async function showOrderDetail(orderId) {
             const displayShipping = order.shippingCost > 0 ? order.shippingCost : calculatedShipping;
             const isFreeShipping = order.isStorePickup || displayShipping === 0;
 
+            // Calculate correct total (subtotal + shipping for legacy orders)
+            const subtotal = order.items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+            const hasStoredShipping = order.shippingCost > 0 || order.isStorePickup;
+            const displayTotal = hasStoredShipping ? order.totalPrice : (subtotal + displayShipping);
+
             return `
           <tr style="border-top: 1px solid var(--gray-200);">
             <td colspan="3" style="padding: 6px 0; color: var(--gray-600);">
@@ -937,12 +942,12 @@ async function showOrderDetail(orderId) {
             <td style="text-align: right; padding: 6px 0; ${isFreeShipping ? 'color: var(--green);' : ''}">
               ${order.isStorePickup ? 'Gratis' : (isFreeShipping ? '¡Gratis!' : formatCurrency(displayShipping))}
             </td>
-          </tr>`;
-          })()}
+          </tr>
           <tr style="border-top: 2px solid var(--gray-300);">
             <td colspan="3" style="padding: 8px 0; font-weight: 700;">Total</td>
-            <td style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(order.totalPrice)}</td>
-          </tr>
+            <td style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(displayTotal)}</td>
+          </tr>`;
+          })()}
         </table>
       </div>
     </div>
