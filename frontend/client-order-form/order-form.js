@@ -1864,11 +1864,28 @@ function removeFile(type, index) {
 // STEP 4: PAYMENT
 // ==========================================
 
+/**
+ * Toggle bank details collapsible section
+ */
+window.toggleBankDetails = function() {
+  const content = document.getElementById('bank-details-content');
+  const icon = document.getElementById('bank-toggle-icon');
+
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    icon.style.transform = 'rotate(180deg)';
+  } else {
+    content.style.display = 'none';
+    icon.style.transform = 'rotate(0deg)';
+  }
+};
+
 function populatePaymentSummary() {
   document.getElementById('payment-total').textContent = `$${state.totals.subtotal.toFixed(2)}`;
   document.getElementById('payment-deposit').textContent = `$${state.totals.deposit.toFixed(2)}`;
   document.getElementById('bank-amount').textContent = `$${state.totals.deposit.toFixed(2)}`;
   document.getElementById('card-amount').textContent = `$${state.totals.deposit.toFixed(2)}`;
+  document.getElementById('bank-amount-preview').textContent = `$${state.totals.deposit.toFixed(2)}`;
 
   // Initialize payment UI with bank_transfer as default
   const bankDetails = document.getElementById('bank-details');

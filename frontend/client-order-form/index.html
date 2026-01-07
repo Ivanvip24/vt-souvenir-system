@@ -440,67 +440,83 @@
 
                 <!-- Bank Transfer Details (hidden initially) -->
                 <div id="bank-details" class="bank-details hidden">
-                    <h3>Datos Bancarios</h3>
-
-                    <!-- SPEI Reference tip -->
-                    <div class="spei-tip">
-                        <span class="spei-icon">💡</span>
-                        <div>
-                            <strong>Tip:</strong> En el concepto/referencia de tu transferencia escribe tu número de teléfono para identificar tu pago más rápido.
-                        </div>
-                    </div>
-
-                    <p style="font-weight: 600; margin-bottom: 16px;">Opción 1: Transferencia Bancaria (SPEI)</p>
-                    <div class="bank-info">
-                        <div class="info-row">
-                            <span>Banco:</span>
-                            <strong id="bank-name">BBVA</strong>
-                        </div>
-                        <div class="info-row">
-                            <span>Cuenta CLABE:</span>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <strong id="bank-account">012 180 01571714055 4</strong>
-                                <button type="button" class="copy-btn" onclick="copyToClipboard('012180015717140554', this)" aria-label="Copiar número de cuenta">
-                                    📋 <span class="copy-text">Copiar</span>
-                                </button>
+                    <!-- Collapsible Header -->
+                    <div onclick="toggleBankDetails()" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 12px 16px; background: var(--gray-800); border-radius: 12px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 20px;">🏦</span>
+                            <div>
+                                <h3 style="margin: 0; font-size: 16px;">Datos Bancarios</h3>
+                                <div style="font-size: 12px; color: var(--gray-400);">Toca para ver opciones de pago</div>
                             </div>
                         </div>
-                        <div class="info-row">
-                            <span>Titular:</span>
-                            <strong id="bank-holder">Iván Valencia</strong>
-                        </div>
-                        <div class="info-row">
-                            <span>Monto a depositar:</span>
-                            <strong id="bank-amount" class="highlight-amount"></strong>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <strong id="bank-amount-preview" class="highlight-amount" style="font-size: 18px;"></strong>
+                            <span id="bank-toggle-icon" style="font-size: 16px; transition: transform 0.3s;">▼</span>
                         </div>
                     </div>
 
-                    <p style="font-weight: 600; margin: 24px 0 16px;">Opción 2: Depósito en Banco/Cajero/Oxxo</p>
-                    <div class="bank-info">
-                        <div class="info-row">
-                            <span>Banco:</span>
-                            <strong>BBVA</strong>
-                        </div>
-                        <div class="info-row">
-                            <span>Tarjeta:</span>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <strong>4152 3138 4049 8567</strong>
-                                <button type="button" class="copy-btn" onclick="copyToClipboard('4152313840498567', this)" aria-label="Copiar número de tarjeta">
-                                    📋 <span class="copy-text">Copiar</span>
-                                </button>
+                    <!-- Collapsible Content -->
+                    <div id="bank-details-content" style="display: none;">
+                        <!-- SPEI Reference tip -->
+                        <div class="spei-tip">
+                            <span class="spei-icon">💡</span>
+                            <div>
+                                <strong>Tip:</strong> En el concepto/referencia de tu transferencia escribe tu número de teléfono para identificar tu pago más rápido.
                             </div>
                         </div>
-                        <div class="info-row">
-                            <span>Titular:</span>
-                            <strong>Iván Valencia</strong>
+
+                        <p style="font-weight: 600; margin-bottom: 16px;">Opción 1: Transferencia Bancaria (SPEI)</p>
+                        <div class="bank-info">
+                            <div class="info-row">
+                                <span>Banco:</span>
+                                <strong id="bank-name">BBVA</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Cuenta CLABE:</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <strong id="bank-account">012 180 01571714055 4</strong>
+                                    <button type="button" class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('012180015717140554', this)" aria-label="Copiar número de cuenta">
+                                        📋 <span class="copy-text">Copiar</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <span>Titular:</span>
+                                <strong id="bank-holder">Iván Valencia</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Monto a depositar:</span>
+                                <strong id="bank-amount" class="highlight-amount"></strong>
+                            </div>
                         </div>
-                        <div class="info-row">
-                            <span>Monto a depositar:</span>
-                            <strong id="card-amount" class="highlight-amount"></strong>
+
+                        <p style="font-weight: 600; margin: 24px 0 16px;">Opción 2: Depósito en Banco/Cajero/Oxxo</p>
+                        <div class="bank-info">
+                            <div class="info-row">
+                                <span>Banco:</span>
+                                <strong>BBVA</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Tarjeta:</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <strong>4152 3138 4049 8567</strong>
+                                    <button type="button" class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('4152313840498567', this)" aria-label="Copiar número de tarjeta">
+                                        📋 <span class="copy-text">Copiar</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <span>Titular:</span>
+                                <strong>Iván Valencia</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Monto a depositar:</span>
+                                <strong id="card-amount" class="highlight-amount"></strong>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" style="margin-top: 16px;">
                         <label>Subir Comprobante de Pago</label>
                         <div class="file-upload-area" id="proof-upload-area">
                             <input type="file"
