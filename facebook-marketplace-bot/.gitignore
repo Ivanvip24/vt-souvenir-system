@@ -1,0 +1,9 @@
+__pycache__/
+cookies/
+.DS_Store
+csvs/
+fotos-axkan/
+fotos-axkan-upscaled/
+fotos-axkan-white-bg/
+fotos-pending/
+*.pyc
