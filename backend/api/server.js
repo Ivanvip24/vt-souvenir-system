@@ -237,12 +237,42 @@ app.get('/api/facebook/order/:orderId', async (req, res) => {
   }
 });
 
-// Manually trigger Facebook upload (admin only)
-app.post('/api/facebook/upload-now', async (req, res) => {
+// Get pending uploads data for local bot to process
+app.get('/api/facebook/export', async (req, res) => {
   try {
-    console.log('📱 Manual Facebook upload triggered via API');
-    const result = await facebookScheduler.triggerManualUpload();
-    res.json({ success: true, ...result });
+    const pending = await facebookMarketplace.getPendingUploads();
+
+    if (pending.length === 0) {
+      return res.json({ success: true, count: 0, listings: [], message: 'No pending uploads' });
+    }
+
+    // Return data for local processing
+    res.json({
+      success: true,
+      count: pending.length,
+      listings: pending.map(l => ({
+        id: l.id,
+        title: l.listing_title,
+        imageUrl: l.image_url,
+        price: l.listing_price || '11'
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Mark listings as uploaded (called by local bot after success)
+app.post('/api/facebook/mark-uploaded', async (req, res) => {
+  try {
+    const { listingIds } = req.body;
+
+    if (!listingIds || !Array.isArray(listingIds)) {
+      return res.status(400).json({ success: false, error: 'listingIds array required' });
+    }
+
+    await facebookMarketplace.markAsUploaded(listingIds);
+    res.json({ success: true, marked: listingIds.length });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
