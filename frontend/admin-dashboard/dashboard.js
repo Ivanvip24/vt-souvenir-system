@@ -957,7 +957,7 @@ async function showOrderDetail(orderId) {
         <div id="order-attachments-${order.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
           ${(() => {
             const attachments = order.orderAttachments || [];
-            return attachments.length > 0 ? attachments.map(att => `
+            return attachments.length > 0 ? attachments.map((att, idx) => `
               <div style="position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; border: 2px solid var(--gray-200);">
                 <img src="${att.url}" alt="${att.filename || 'Adjunto'}"
                      style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
@@ -965,6 +965,13 @@ async function showOrderDetail(orderId) {
                 <button onclick="removeOrderAttachment(${order.id}, '${att.url}')"
                         style="position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; background: rgba(239, 68, 68, 0.9); color: white; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;">
                   ×
+                </button>
+                <!-- Facebook Marketplace Button -->
+                <button onclick="queueForFacebook(${order.id}, '${att.url}', '${order.orderNumber} - Diseño ${idx + 1}')"
+                        id="fb-btn-${btoa(att.url).substring(0, 10)}"
+                        style="position: absolute; bottom: 2px; left: 2px; width: 24px; height: 24px; border-radius: 4px; background: rgba(24, 119, 242, 0.9); color: white; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;"
+                        title="Publicar en Facebook Marketplace">
+                  f
                 </button>
               </div>
             `).join('') : '<span style="font-size: 13px; color: var(--gray-400);">Sin archivos adjuntos</span>';
@@ -2789,6 +2796,77 @@ function copyToClipboard(text, label = 'Texto') {
   });
 }
 
+// ==========================================
+// FACEBOOK MARKETPLACE FUNCTIONS
+// ==========================================
+
+async function queueForFacebook(orderId, imageUrl, title) {
+  const btnId = `fb-btn-${btoa(imageUrl).substring(0, 10)}`;
+  const btn = document.getElementById(btnId);
+
+  try {
+    // Show loading state
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳';
+      btn.style.background = 'rgba(107, 114, 128, 0.9)';
+    }
+
+    const response = await fetch(`${API_BASE}/facebook/queue`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        orderId,
+        imageUrl,
+        title
+      })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al encolar para Facebook');
+    }
+
+    // Show success state - green checkmark
+    if (btn) {
+      btn.innerHTML = '✓';
+      btn.style.background = 'rgba(34, 197, 94, 0.9)';
+      btn.title = 'En cola para Facebook Marketplace';
+      btn.disabled = true;
+    }
+
+    console.log(`✅ Queued for Facebook: ${title}`);
+
+  } catch (error) {
+    console.error('Error queueing for Facebook:', error);
+
+    // Show error state - restore original
+    if (btn) {
+      btn.innerHTML = 'f';
+      btn.style.background = 'rgba(24, 119, 242, 0.9)';
+      btn.disabled = false;
+    }
+
+    alert(`Error: ${error.message}`);
+  }
+}
+
+async function checkFacebookStatus(imageUrl) {
+  try {
+    const response = await fetch(`${API_BASE}/facebook/status?imageUrl=${encodeURIComponent(imageUrl)}`, {
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+    return result.data || { queued: false, uploaded: false };
+
+  } catch (error) {
+    console.error('Error checking Facebook status:', error);
+    return { queued: false, uploaded: false };
+  }
+}
+
 // Make functions globally accessible for onclick handlers
 window.loadOrders = loadOrders;
 window.closeOrderDetail = closeOrderDetail;
@@ -2811,3 +2889,4 @@ window.clearSelection = clearSelection;
 window.bulkApproveOrders = bulkApproveOrders;
 window.bulkArchiveOrders = bulkArchiveOrders;
 window.copyToClipboard = copyToClipboard;
+window.queueForFacebook = queueForFacebook;

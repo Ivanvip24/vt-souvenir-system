@@ -37,6 +37,8 @@ import { verifyPaymentReceipt, isConfigured as isClaudeConfigured } from '../ser
 import * as orderAlerts from '../agents/alerts/order-alerts.js';
 import * as skydropxService from '../services/skydropx.js';
 import * as pickupScheduler from '../services/pickup-scheduler.js';
+import * as facebookMarketplace from '../services/facebook-marketplace.js';
+import * as facebookScheduler from '../services/facebook-scheduler.js';
 
 config();
 
@@ -152,6 +154,99 @@ app.use('/api/ai-assistant', aiAssistantRoutes);
 // MERCADO LIBRE INTEGRATION ROUTES
 // ========================================
 app.use('/api/mercadolibre', mercadolibreRoutes);
+
+// ========================================
+// FACEBOOK MARKETPLACE ROUTES
+// ========================================
+
+// Get Facebook upload statistics
+app.get('/api/facebook/stats', async (req, res) => {
+  try {
+    const stats = await facebookMarketplace.getUploadStats();
+    const schedulerStatus = facebookScheduler.getSchedulerStatus();
+
+    res.json({
+      success: true,
+      stats,
+      scheduler: schedulerStatus
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get pending uploads
+app.get('/api/facebook/pending', async (req, res) => {
+  try {
+    const pending = await facebookMarketplace.getPendingUploads();
+    res.json({ success: true, count: pending.length, data: pending });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Queue a design for Facebook upload
+app.post('/api/facebook/queue', async (req, res) => {
+  try {
+    const { orderId, orderItemId, imageUrl, title } = req.body;
+
+    if (!imageUrl || !title) {
+      return res.status(400).json({
+        success: false,
+        error: 'imageUrl and title are required'
+      });
+    }
+
+    const result = await facebookMarketplace.queueDesignForUpload(
+      orderId, orderItemId, imageUrl, title
+    );
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Check if an image is uploaded to Facebook
+app.get('/api/facebook/status', async (req, res) => {
+  try {
+    const { imageUrl } = req.query;
+
+    if (!imageUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'imageUrl query parameter is required'
+      });
+    }
+
+    const status = await facebookMarketplace.isImageUploaded(imageUrl);
+    res.json({ success: true, ...status });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get Facebook status for an order
+app.get('/api/facebook/order/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const status = await facebookMarketplace.getOrderFacebookStatus(orderId);
+    res.json({ success: true, data: status });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Manually trigger Facebook upload (admin only)
+app.post('/api/facebook/upload-now', async (req, res) => {
+  try {
+    console.log('📱 Manual Facebook upload triggered via API');
+    const result = await facebookScheduler.triggerManualUpload();
+    res.json({ success: true, ...result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // ========================================
 // EMPLOYEE DASHBOARD ROUTES
@@ -3338,6 +3433,9 @@ async function startServer() {
 
     // Initialize Pickup Scheduler (daily pickup requests)
     pickupScheduler.initializePickupScheduler();
+
+    // Initialize Facebook Marketplace Scheduler (daily at 9 AM)
+    await facebookScheduler.initFacebookScheduler();
 
     // Build Knowledge Base Index
     console.log('📚 Building knowledge base index...');
