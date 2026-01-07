@@ -1076,13 +1076,8 @@ async function loadProducts() {
       throw new Error(data.error || 'Error al cargar productos');
     }
 
-    // Filter out "Imán de MDF con Foil" from the products list
-    const filteredProducts = data.products.filter(product =>
-      product.name !== 'Imán de MDF con Foil'
-    );
-
-    state.products = filteredProducts;
-    renderProducts(filteredProducts);
+    state.products = data.products;
+    renderProducts(data.products);
 
     loading.classList.add('hidden');
   } catch (error) {

@@ -17,8 +17,8 @@ export const PRICING_TIERS = {
     { min: 1000, max: Infinity, price: 12.00 }
   ],
   'imán de mdf con foil': [
-    { min: 50, max: 999, price: 13.00 },
-    { min: 1000, max: Infinity, price: 10.00 }
+    { min: 50, max: 999, price: 15.00 },
+    { min: 1000, max: Infinity, price: 12.00 }
   ],
   'llaveros de mdf': [
     { min: 50, max: 999, price: 10.00 },
