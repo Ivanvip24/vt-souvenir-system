@@ -1288,4 +1288,149 @@ router.delete('/tasks/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// ========================================
+// CLIENT IMPORT FROM CSV
+// ========================================
+
+// Mexican states for matching
+const MEXICAN_STATES = [
+  'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas',
+  'Chihuahua', 'Coahuila', 'Colima', 'CDMX', 'Ciudad de México', 'Durango', 'Guanajuato',
+  'Guerrero', 'Hidalgo', 'Jalisco', 'Estado de México', 'México', 'Michoacán', 'Morelos',
+  'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí',
+  'Sinaloa', 'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz', 'Yucatán', 'Zacatecas'
+];
+
+function parseDestination(destination) {
+  if (!destination) return { city: null, state: null };
+  const clean = destination.trim();
+  let foundState = null;
+  for (const state of MEXICAN_STATES) {
+    if (clean.toLowerCase().includes(state.toLowerCase())) {
+      foundState = state;
+      break;
+    }
+  }
+  let city = null;
+  const parts = clean.split(/[,\/\-]/);
+  if (parts.length > 0) {
+    city = parts[0].trim();
+    if (foundState && city.toLowerCase().includes(foundState.toLowerCase()) && parts.length > 1) {
+      city = parts[1].trim();
+    }
+  }
+  if (city) {
+    city = city.replace(/\s+/g, ' ').trim().replace(/^(Ciudad de|Cd\.|CD\.?)\s*/i, '');
+  }
+  return { city, state: foundState };
+}
+
+function normalizePhone(phone) {
+  if (!phone) return null;
+  let digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('52') && digits.length > 10) digits = digits.slice(2);
+  return digits.slice(-10) || null;
+}
+
+/**
+ * POST /api/admin/import-clients
+ * Import clients from CSV data (Notion delivery form format)
+ */
+router.post('/import-clients', authMiddleware, async (req, res) => {
+  try {
+    const { clients } = req.body;
+
+    if (!clients || !Array.isArray(clients) || clients.length === 0) {
+      return res.status(400).json({ success: false, error: 'No clients data provided' });
+    }
+
+    console.log(`📦 Starting import of ${clients.length} clients...`);
+
+    let imported = 0;
+    let skipped = 0;
+    let errors = [];
+
+    for (const record of clients) {
+      try {
+        const name = record.name?.trim();
+        const street = record.street?.trim();
+        const colonia = record.colonia?.trim();
+        const email = record.email?.trim();
+        const postalCode = record.postalCode?.trim();
+        const destination = record.destination?.trim();
+        const streetNumber = record.streetNumber?.trim();
+        const references = record.references?.trim();
+        const phone = normalizePhone(record.phone);
+
+        if (!name) {
+          skipped++;
+          continue;
+        }
+
+        const { city, state } = parseDestination(destination);
+
+        const addressParts = [];
+        if (street) addressParts.push(street);
+        if (streetNumber && streetNumber !== '0') addressParts.push(`#${streetNumber}`);
+        if (colonia) addressParts.push(`Col. ${colonia}`);
+        const fullAddress = addressParts.join(', ') || null;
+
+        // Check duplicates
+        if (phone) {
+          const existing = await query('SELECT id, name FROM clients WHERE phone = $1', [phone]);
+          if (existing.rows.length > 0) {
+            skipped++;
+            continue;
+          }
+        }
+
+        const existingByName = await query(
+          'SELECT id FROM clients WHERE LOWER(name) = LOWER($1) AND postal = $2',
+          [name, postalCode]
+        );
+        if (existingByName.rows.length > 0) {
+          skipped++;
+          continue;
+        }
+
+        await query(
+          `INSERT INTO clients (name, phone, email, address, street, street_number, colonia, city, state, postal, reference_notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [
+            name,
+            phone,
+            email || null,
+            fullAddress,
+            street || null,
+            (streetNumber && streetNumber !== '0') ? streetNumber : null,
+            colonia || null,
+            city || null,
+            state || null,
+            postalCode || null,
+            references || null
+          ]
+        );
+
+        imported++;
+      } catch (error) {
+        errors.push({ name: record.name, error: error.message });
+      }
+    }
+
+    console.log(`✅ Import complete: ${imported} imported, ${skipped} skipped, ${errors.length} errors`);
+
+    res.json({
+      success: true,
+      imported,
+      skipped,
+      errors: errors.length,
+      errorDetails: errors.slice(0, 10) // Only return first 10 errors
+    });
+
+  } catch (error) {
+    console.error('❌ Import error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;
