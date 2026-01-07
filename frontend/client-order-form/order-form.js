@@ -2147,7 +2147,14 @@ async function handleOrderSubmit() {
       salesRep: state.order.salesRep || null,
 
       // Store pickup option (skips shipping processes when true)
-      isStorePickup: state.isStorePickup || false
+      isStorePickup: state.isStorePickup || false,
+
+      // Shipping cost (calculated at submission time)
+      shippingCost: (() => {
+        if (state.isStorePickup) return 0;
+        const totalPieces = Object.values(state.cart).reduce((sum, { quantity }) => sum + quantity, 0);
+        return totalPieces >= SHIPPING_CONFIG.freeShippingThreshold ? 0 : SHIPPING_CONFIG.shippingCost;
+      })()
     };
 
     console.log('Submitting order:', orderData);

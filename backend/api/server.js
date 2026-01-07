@@ -386,6 +386,8 @@ app.get('/api/orders', async (req, res) => {
         o.archive_status,
         o.sales_rep,
         o.created_at,
+        o.shipping_cost,
+        o.is_store_pickup,
         -- Shipping label data from shipping_labels table
         (SELECT sl.tracking_number FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_tracking_number,
         (SELECT sl.carrier FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_carrier,
@@ -482,6 +484,9 @@ app.get('/api/orders', async (req, res) => {
       // Notion sync
       notionPageId: order.notion_page_id,
       notionPageUrl: order.notion_page_url,
+      // Shipping cost and store pickup
+      shippingCost: parseFloat(order.shipping_cost) || 0,
+      isStorePickup: order.is_store_pickup || false,
       // Summary for compatibility
       summary: order.client_notes || ''
     }));
@@ -1031,7 +1036,9 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
       totalPrice: parseFloat(order.total_price),
       actualDepositAmount: parseFloat(actualDepositAmount),
       remainingBalance: parseFloat(remainingBalance),
-      eventDate: order.event_date
+      eventDate: order.event_date,
+      shippingCost: parseFloat(order.shipping_cost) || 0,
+      isStorePickup: order.is_store_pickup || false
     });
 
     const receiptUrl = getReceiptUrl(pdfPath);
@@ -2136,6 +2143,8 @@ app.get('/api/orders/:orderId/receipt/download', async (req, res) => {
         o.total_price,
         o.deposit_amount,
         o.deposit_paid,
+        o.shipping_cost,
+        o.is_store_pickup,
         c.name as client_name,
         c.phone as client_phone,
         c.email as client_email
@@ -2186,7 +2195,9 @@ app.get('/api/orders/:orderId/receipt/download', async (req, res) => {
       })),
       totalPrice: totalPrice,
       actualDepositAmount: actualDepositAmount,
-      remainingBalance: remainingBalance
+      remainingBalance: remainingBalance,
+      shippingCost: parseFloat(order.shipping_cost) || 0,
+      isStorePickup: order.is_store_pickup || false
     };
 
     // Generate PDF
@@ -2345,10 +2356,14 @@ app.post('/api/orders/:orderId/verify-payment', async (req, res) => {
       SELECT
         o.id,
         o.order_number,
+        o.order_date,
+        o.event_date,
         o.deposit_amount,
         o.total_price,
         o.payment_proof_url,
         o.approval_status,
+        o.shipping_cost,
+        o.is_store_pickup,
         c.name as client_name,
         c.email as client_email,
         c.phone as client_phone
@@ -2445,7 +2460,9 @@ app.post('/api/orders/:orderId/verify-payment', async (req, res) => {
         totalPrice: parseFloat(order.total_price),
         actualDepositAmount: detectedAmount,
         remainingBalance: remainingBalance,
-        eventDate: order.event_date
+        eventDate: order.event_date,
+        shippingCost: parseFloat(order.shipping_cost) || 0,
+        isStorePickup: order.is_store_pickup || false
       });
 
       const receiptUrl = getReceiptUrl(pdfPath);

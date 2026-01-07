@@ -160,6 +160,9 @@ router.post('/orders/submit', async (req, res) => {
 
       // Store pickup option (skips shipping when true)
       isStorePickup,
+
+      // Shipping cost
+      shippingCost,
     } = req.body;
 
     // Validation
@@ -352,8 +355,9 @@ router.post('/orders/submit', async (req, res) => {
         estimated_delivery_date,
         shipping_days,
         sales_rep,
-        is_store_pickup
-      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16)
+        is_store_pickup,
+        shipping_cost
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16, $17)
       RETURNING id`,
       [
         orderNumber,
@@ -362,7 +366,7 @@ router.post('/orders/submit', async (req, res) => {
         eventDate,
         clientNotes,
         subtotal,
-        subtotal, // total_price = subtotal for now (no tax/shipping in client orders)
+        subtotal + (parseFloat(shippingCost) || 0), // total_price = subtotal + shipping
         orderItems.reduce((sum, item) => sum + (item.unitCost * item.quantity), 0),
         depositAmount,
         paymentMethod,
@@ -371,7 +375,8 @@ router.post('/orders/submit', async (req, res) => {
         deliveryDates.estimatedDeliveryDate,
         deliveryDates.shippingDays,
         salesRep || null,
-        isStorePickup || false
+        isStorePickup || false,
+        parseFloat(shippingCost) || 0
       ]
     );
 
@@ -422,6 +427,7 @@ router.post('/orders/submit', async (req, res) => {
 
           const remainingBalance = subtotal - depositAmount;
 
+          const totalWithShipping = subtotal + (parseFloat(shippingCost) || 0);
           const pdfPath = await generateReceipt({
             orderNumber,
             clientName,
@@ -434,11 +440,13 @@ router.post('/orders/submit', async (req, res) => {
               unitPrice: item.unitPrice,
               lineTotal: item.lineTotal
             })),
-            totalPrice: subtotal,
+            totalPrice: totalWithShipping,
             actualDepositAmount: depositAmount,
-            remainingBalance: remainingBalance,
+            remainingBalance: totalWithShipping - depositAmount,
             eventDate: eventDate || null,
-            eventType: eventType || null
+            eventType: eventType || null,
+            shippingCost: parseFloat(shippingCost) || 0,
+            isStorePickup: isStorePickup || false
           });
 
           console.log(`✅ PDF receipt generated: ${pdfPath}`);
@@ -550,6 +558,7 @@ router.post('/orders/submit', async (req, res) => {
             console.log(`📄 Generating PDF receipt with AI-verified amount: $${pdfDepositAmount.toFixed(2)}...`);
             console.log(`   PDF values: total=${pdfTotalPrice}, deposit=${pdfDepositAmount}, remaining=${pdfRemainingBalance}`);
 
+            const pdfTotalWithShipping = pdfTotalPrice + (parseFloat(shippingCost) || 0);
             const newPdfPath = await generateReceipt({
               orderNumber,
               clientName,
@@ -562,11 +571,13 @@ router.post('/orders/submit', async (req, res) => {
                 unitPrice: parseFloat(item.unitPrice) || 0,
                 lineTotal: parseFloat(item.lineTotal) || 0
               })),
-              totalPrice: pdfTotalPrice,
+              totalPrice: pdfTotalWithShipping,
               actualDepositAmount: pdfDepositAmount,
-              remainingBalance: pdfRemainingBalance,
+              remainingBalance: pdfTotalWithShipping - pdfDepositAmount,
               eventDate: eventDate || null,
-              eventType: eventType || null
+              eventType: eventType || null,
+              shippingCost: parseFloat(shippingCost) || 0,
+              isStorePickup: isStorePickup || false
             });
             pdfUrl = getReceiptUrl(newPdfPath);
             await query('UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2', [pdfUrl, orderId]);

@@ -202,6 +202,19 @@ export async function generateReceipt(orderData) {
         itemY += 20;
       });
 
+      // Shipping line
+      const shippingCost = parseFloat(orderData.shippingCost) || 0;
+      const isStorePickup = orderData.isStorePickup || false;
+
+      doc.fillColor(COLORS.textGray);
+      doc.text(isStorePickup ? '🏪 Recoger en tienda' : '🚚 Envío', 50, itemY, { width: 240 });
+      doc.text('—', 300, itemY);
+      doc.text('—', 380, itemY);
+      doc.fillColor(isStorePickup ? COLORS.depositGreen : COLORS.textDark);
+      doc.text(isStorePickup ? 'Gratis' : formatCurrency(shippingCost), 480, itemY);
+      doc.fillColor('#000000');
+      itemY += 20;
+
       // Draw line before totals
       doc.moveTo(50, itemY)
          .lineTo(560, itemY)
