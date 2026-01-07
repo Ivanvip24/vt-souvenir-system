@@ -1,6 +1,7 @@
 /**
  * AI Universal Assistant API Routes
  * Powered by Claude API - knows everything about the business
+ * Supports AI Actions: shipping labels, order management, etc.
  */
 
 import express from 'express';
@@ -12,6 +13,87 @@ const router = express.Router();
 
 // Apply authentication
 router.use(authMiddleware);
+
+// =====================================================
+// AI ACTION HANDLERS
+// =====================================================
+
+/**
+ * Search for client by name (fuzzy match)
+ */
+async function findClientByName(name) {
+  const result = await query(`
+    SELECT
+      c.id, c.name, c.phone, c.email,
+      c.street, c.street_number, c.colonia, c.city, c.state, c.postal, c.postal_code,
+      (SELECT COUNT(*) FROM orders WHERE client_id = c.id) as order_count,
+      (SELECT MAX(created_at) FROM orders WHERE client_id = c.id) as last_order
+    FROM clients c
+    WHERE c.name ILIKE $1
+    ORDER BY
+      CASE WHEN c.name ILIKE $2 THEN 0 ELSE 1 END,
+      (SELECT MAX(created_at) FROM orders WHERE client_id = c.id) DESC NULLS LAST
+    LIMIT 5
+  `, [`%${name}%`, `${name}%`]);
+
+  return result.rows;
+}
+
+/**
+ * Get client's recent orders
+ */
+async function getClientOrders(clientId, limit = 5) {
+  const result = await query(`
+    SELECT
+      o.id, o.order_number, o.total_price, o.status, o.approval_status,
+      o.created_at, o.production_deadline,
+      (SELECT COUNT(*) FROM shipping_labels WHERE order_id = o.id) as labels_count,
+      (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as total_pieces
+    FROM orders o
+    WHERE o.client_id = $1
+    ORDER BY o.created_at DESC
+    LIMIT $2
+  `, [clientId, limit]);
+
+  return result.rows;
+}
+
+/**
+ * Get order details by order number or ID
+ */
+async function getOrderDetails(orderIdentifier) {
+  const result = await query(`
+    SELECT
+      o.id, o.order_number, o.total_price, o.status, o.approval_status,
+      o.created_at, o.production_deadline, o.shipping_labels_count,
+      c.id as client_id, c.name as client_name, c.phone as client_phone, c.email as client_email,
+      c.street, c.street_number, c.colonia, c.city, c.state,
+      COALESCE(c.postal, c.postal_code) as postal,
+      (SELECT COUNT(*) FROM shipping_labels WHERE order_id = o.id) as existing_labels,
+      (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as total_pieces
+    FROM orders o
+    JOIN clients c ON o.client_id = c.id
+    WHERE o.order_number ILIKE $1 OR o.id::text = $1
+  `, [orderIdentifier.replace('#', '').replace('VT-', 'VT-')]);
+
+  return result.rows[0];
+}
+
+/**
+ * Parse AI response for actions
+ */
+function parseAIResponseForActions(response) {
+  // Look for JSON action block in response
+  const actionMatch = response.match(/```action\n([\s\S]*?)\n```/);
+  if (actionMatch) {
+    try {
+      return JSON.parse(actionMatch[1]);
+    } catch (e) {
+      console.error('Failed to parse action JSON:', e);
+    }
+  }
+  return null;
+}
 
 // Store conversation history per session (in-memory for now)
 const conversationStore = new Map();
@@ -248,7 +330,63 @@ Ejemplo:
 
 El valor promedio por pedido fue de $1,966.52.
 
-Para ver el desglose completo con gráficos interactivos, visita la sección de **Analíticas**."`;
+Para ver el desglose completo con gráficos interactivos, visita la sección de **Analíticas**."
+
+## ACCIONES EJECUTABLES:
+
+Puedes ejecutar acciones cuando el usuario lo solicite. Las acciones disponibles son:
+
+### 1. CREAR GUÍAS DE ENVÍO
+Cuando el usuario pida crear guías de envío, debes:
+1. Identificar el cliente o pedido mencionado
+2. Determinar cuántas cajas/guías necesita
+3. Responder con un bloque de acción
+
+**Ejemplos de solicitudes de guías:**
+- "Crea 8 guías para el pedido de María García"
+- "Necesito generar etiquetas de envío para VT-0045, son 5 cajas"
+- "Hazme las guías del cliente Juan Pérez, el pedido de los llaveros"
+
+**Cuando detectes una solicitud de guías, incluye este bloque en tu respuesta:**
+
+\`\`\`action
+{
+  "type": "create_shipping_labels",
+  "clientName": "Nombre del cliente mencionado",
+  "orderNumber": "VT-XXXX si se menciona",
+  "labelsCount": número de guías/cajas,
+  "needsConfirmation": true
+}
+\`\`\`
+
+**Si te falta información**, pregunta específicamente qué necesitas:
+- Si no sabes cuántas cajas: "¿Cuántas cajas/guías necesitas para este pedido?"
+- Si no identificas al cliente: "¿Podrías confirmarme el nombre del cliente o número de pedido?"
+
+### 2. BUSCAR CLIENTE
+Si mencionan un cliente pero no tienes certeza de cuál es:
+
+\`\`\`action
+{
+  "type": "search_client",
+  "searchTerm": "término de búsqueda"
+}
+\`\`\`
+
+### 3. VER DETALLES DE PEDIDO
+
+\`\`\`action
+{
+  "type": "view_order",
+  "orderNumber": "VT-XXXX"
+}
+\`\`\`
+
+## IMPORTANTE PARA ACCIONES:
+- Solo incluye el bloque \`\`\`action\`\`\` cuando tengas suficiente información
+- El bloque action debe estar en JSON válido
+- Siempre confirma la acción antes de ejecutarla
+- Si hay múltiples coincidencias de cliente, pregunta cuál es el correcto`;
 }
 
 /**
@@ -307,7 +445,92 @@ router.post('/chat', async (req, res) => {
       messages: messages
     });
 
-    const assistantMessage = response.content[0].text;
+    let assistantMessage = response.content[0].text;
+
+    // Parse for action blocks
+    const action = parseAIResponseForActions(assistantMessage);
+    let actionData = null;
+
+    if (action) {
+      console.log('🎯 AI Action detected:', action.type);
+
+      // Process the action and enrich with database data
+      if (action.type === 'create_shipping_labels') {
+        actionData = {
+          type: 'create_shipping_labels',
+          needsConfirmation: true,
+          data: {
+            labelsCount: action.labelsCount || 1
+          }
+        };
+
+        // Look up client if name provided
+        if (action.clientName) {
+          const clients = await findClientByName(action.clientName);
+          if (clients.length === 1) {
+            actionData.data.client = clients[0];
+            // Get recent orders for this client
+            const orders = await getClientOrders(clients[0].id);
+            actionData.data.recentOrders = orders;
+            // Auto-select most recent approved order without labels
+            const eligibleOrder = orders.find(o =>
+              o.approval_status === 'approved' &&
+              parseInt(o.labels_count) === 0
+            );
+            if (eligibleOrder) {
+              actionData.data.suggestedOrder = eligibleOrder;
+            }
+          } else if (clients.length > 1) {
+            actionData.data.clientMatches = clients;
+            actionData.needsClientSelection = true;
+          } else {
+            actionData.data.clientNotFound = true;
+            actionData.data.searchTerm = action.clientName;
+          }
+        }
+
+        // Look up order if order number provided
+        if (action.orderNumber) {
+          const order = await getOrderDetails(action.orderNumber);
+          if (order) {
+            actionData.data.order = order;
+            actionData.data.client = {
+              id: order.client_id,
+              name: order.client_name,
+              phone: order.client_phone,
+              email: order.client_email,
+              street: order.street,
+              street_number: order.street_number,
+              colonia: order.colonia,
+              city: order.city,
+              state: order.state,
+              postal: order.postal
+            };
+          } else {
+            actionData.data.orderNotFound = true;
+            actionData.data.searchTerm = action.orderNumber;
+          }
+        }
+      } else if (action.type === 'search_client') {
+        const clients = await findClientByName(action.searchTerm);
+        actionData = {
+          type: 'search_client',
+          data: {
+            clients,
+            searchTerm: action.searchTerm
+          }
+        };
+      } else if (action.type === 'view_order') {
+        const order = await getOrderDetails(action.orderNumber);
+        actionData = {
+          type: 'view_order',
+          data: { order }
+        };
+      }
+
+      // Remove the action block from displayed message
+      assistantMessage = assistantMessage.replace(/```action\n[\s\S]*?\n```/g, '').trim();
+    }
 
     // Store in conversation history
     conversation.messages.push({ role: 'user', content: message });
@@ -395,6 +618,7 @@ router.post('/chat', async (req, res) => {
         detectedSections,
         quickStats,
         chartData,
+        action: actionData,
         timestamp: new Date().toISOString()
       }
     });

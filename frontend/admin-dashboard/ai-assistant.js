@@ -10,6 +10,9 @@ localStorage.setItem('ai_session_id', aiSessionId);
 // Track mini chart instances for cleanup
 let miniChartInstances = [];
 
+// Current action data for confirmation modal
+let currentAction = null;
+
 function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
@@ -154,6 +157,11 @@ async function sendAiMessage() {
         if (data.success) {
             // Add assistant message
             addMessageToChat('assistant', data.data.message, data.data);
+
+            // Handle any action from the AI
+            if (data.data.action) {
+                handleAiAction(data.data.action);
+            }
         } else {
             addMessageToChat('assistant', `Lo siento, hubo un error: ${data.error}`, { error: true });
         }
@@ -185,8 +193,8 @@ function addMessageToChat(role, content, data = {}) {
             <div class="ai-message-avatar user-avatar">👤</div>
         `;
     } else {
-        // Parse markdown-like formatting
-        const formattedContent = formatAiResponse(content);
+        // Parse markdown-like formatting (unless already HTML)
+        const formattedContent = data.isHtml ? content : formatAiResponse(content);
 
         let extraContent = '';
 
@@ -384,6 +392,291 @@ function formatAiResponse(content) {
 }
 
 // =====================================================
+// AI ACTION HANDLING
+// =====================================================
+
+/**
+ * Handle AI action response
+ */
+function handleAiAction(action) {
+    if (!action) return;
+
+    console.log('🎯 Processing AI action:', action.type);
+    currentAction = action;
+
+    if (action.type === 'create_shipping_labels') {
+        showShippingLabelModal(action);
+    } else if (action.type === 'search_client') {
+        // Show client selection in chat
+        showClientSelection(action.data.clients, action.data.searchTerm);
+    } else if (action.type === 'view_order') {
+        // Navigate to order detail
+        if (action.data.order) {
+            closeAiChatModal();
+            showOrderDetail(action.data.order.id);
+        }
+    }
+}
+
+/**
+ * Show shipping label creation modal
+ */
+function showShippingLabelModal(action) {
+    const data = action.data;
+
+    // Check if we have enough data
+    if (data.clientNotFound) {
+        addMessageToChat('assistant', `No encontré ningún cliente con el nombre "${data.searchTerm}". ¿Podrías verificar el nombre o darme el número de pedido?`, { error: true });
+        return;
+    }
+
+    if (data.needsClientSelection && data.clientMatches) {
+        showClientSelection(data.clientMatches, 'Encontré varios clientes:');
+        return;
+    }
+
+    // Build modal content
+    const client = data.client;
+    const order = data.order || data.suggestedOrder;
+    const labelsCount = data.labelsCount || 1;
+
+    let modalHtml = `
+        <div id="ai-action-modal" class="ai-action-modal" onclick="closeAiActionModal(event)">
+            <div class="ai-action-modal-content" onclick="event.stopPropagation()">
+                <div class="ai-action-modal-header">
+                    <h3>📦 Crear Guías de Envío</h3>
+                    <button onclick="closeAiActionModal()" class="ai-action-close">&times;</button>
+                </div>
+                <div class="ai-action-modal-body">
+    `;
+
+    // Client info
+    if (client) {
+        const hasAddress = client.street && client.city && client.state && client.postal;
+        modalHtml += `
+            <div class="ai-action-section">
+                <label>Cliente</label>
+                <div class="ai-action-info-box">
+                    <strong>${client.name}</strong>
+                    ${client.phone ? `<div style="font-size: 13px; color: #6b7280;">${client.phone}</div>` : ''}
+                </div>
+            </div>
+
+            <div class="ai-action-section">
+                <label>Dirección de envío</label>
+                <div class="ai-action-info-box ${!hasAddress ? 'warning' : ''}">
+                    ${hasAddress ? `
+                        ${client.street} ${client.street_number || ''}<br>
+                        ${client.colonia ? `Col. ${client.colonia}<br>` : ''}
+                        ${client.city}, ${client.state} CP ${client.postal}
+                    ` : `
+                        <span style="color: #f59e0b;">⚠️ Dirección incompleta</span>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
+    // Order selection
+    if (order) {
+        modalHtml += `
+            <div class="ai-action-section">
+                <label>Pedido</label>
+                <div class="ai-action-info-box">
+                    <strong>${order.order_number}</strong>
+                    <span style="float: right; color: ${order.approval_status === 'approved' ? '#059669' : '#f59e0b'};">
+                        ${order.approval_status === 'approved' ? '✅ Aprobado' : '⏳ ' + order.approval_status}
+                    </span>
+                    <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
+                        ${order.total_pieces || '?'} piezas • $${parseFloat(order.total_price).toLocaleString('es-MX', {minimumFractionDigits: 2})}
+                    </div>
+                    ${parseInt(order.labels_count) > 0 ? `
+                        <div style="color: #f59e0b; font-size: 13px; margin-top: 4px;">
+                            ⚠️ Ya tiene ${order.labels_count} guía(s) generada(s)
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    } else if (data.recentOrders && data.recentOrders.length > 0) {
+        // Show order dropdown
+        modalHtml += `
+            <div class="ai-action-section">
+                <label>Seleccionar Pedido</label>
+                <select id="ai-action-order-select" class="ai-action-select">
+                    <option value="">-- Selecciona un pedido --</option>
+                    ${data.recentOrders.map(o => `
+                        <option value="${o.id}"
+                            data-order-number="${o.order_number}"
+                            data-labels="${o.labels_count || 0}"
+                            ${o.approval_status !== 'approved' ? 'disabled' : ''}>
+                            ${o.order_number} - ${o.total_pieces || '?'} pzas - $${parseFloat(o.total_price).toLocaleString('es-MX')}
+                            ${o.approval_status !== 'approved' ? '(No aprobado)' : ''}
+                            ${parseInt(o.labels_count) > 0 ? '(Ya tiene guías)' : ''}
+                        </option>
+                    `).join('')}
+                </select>
+            </div>
+        `;
+    }
+
+    // Labels count
+    modalHtml += `
+        <div class="ai-action-section">
+            <label>Número de guías (cajas)</label>
+            <input type="number" id="ai-action-labels-count" class="ai-action-input"
+                   value="${labelsCount}" min="1" max="20">
+            <div class="ai-action-hint">Cada guía es una caja separada con su propia etiqueta</div>
+        </div>
+    `;
+
+    // Action buttons
+    const canCreate = client && order && parseInt(order.labels_count || 0) === 0 && order.approval_status === 'approved';
+    modalHtml += `
+                </div>
+                <div class="ai-action-modal-footer">
+                    <button onclick="closeAiActionModal()" class="ai-action-btn secondary">Cancelar</button>
+                    <button onclick="executeCreateShippingLabels()" class="ai-action-btn primary"
+                            ${!canCreate ? 'disabled title="Selecciona un pedido aprobado sin guías"' : ''}>
+                        🚀 Generar Guías
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add modal to DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+/**
+ * Show client selection in chat
+ */
+function showClientSelection(clients, title) {
+    let html = `<p>${title}</p><div class="ai-client-selection">`;
+    clients.forEach(client => {
+        html += `
+            <button class="ai-client-btn" onclick="selectClientForAction(${client.id}, '${escapeHtml(client.name)}')">
+                <strong>${escapeHtml(client.name)}</strong>
+                <span style="font-size: 12px; color: #6b7280;">
+                    ${client.order_count || 0} pedidos
+                    ${client.city ? `• ${client.city}` : ''}
+                </span>
+            </button>
+        `;
+    });
+    html += '</div>';
+    addMessageToChat('assistant', html, { isHtml: true });
+}
+
+/**
+ * Select client and continue action
+ */
+async function selectClientForAction(clientId, clientName) {
+    // Re-query the AI with the selected client
+    const input = document.getElementById('ai-chat-input');
+    if (input && currentAction) {
+        input.value = `Usa el cliente ${clientName} (ID: ${clientId}) para las ${currentAction.data.labelsCount || ''} guías`;
+        sendAiMessage();
+    }
+}
+
+/**
+ * Close action modal
+ */
+function closeAiActionModal(event) {
+    if (event && event.target.id !== 'ai-action-modal') return;
+    const modal = document.getElementById('ai-action-modal');
+    if (modal) {
+        modal.remove();
+    }
+    currentAction = null;
+}
+
+/**
+ * Execute shipping label creation
+ */
+async function executeCreateShippingLabels() {
+    const labelsCount = parseInt(document.getElementById('ai-action-labels-count')?.value || 1);
+    const orderSelect = document.getElementById('ai-action-order-select');
+
+    let orderId;
+    let orderNumber;
+
+    if (orderSelect) {
+        orderId = orderSelect.value;
+        orderNumber = orderSelect.options[orderSelect.selectedIndex]?.dataset?.orderNumber;
+    } else if (currentAction?.data?.order) {
+        orderId = currentAction.data.order.id;
+        orderNumber = currentAction.data.order.order_number;
+    } else if (currentAction?.data?.suggestedOrder) {
+        orderId = currentAction.data.suggestedOrder.id;
+        orderNumber = currentAction.data.suggestedOrder.order_number;
+    }
+
+    if (!orderId) {
+        alert('Por favor selecciona un pedido');
+        return;
+    }
+
+    // Close modal and show progress in chat
+    closeAiActionModal();
+
+    addMessageToChat('assistant', `⏳ Generando ${labelsCount} guía(s) para el pedido ${orderNumber}...`);
+
+    try {
+        const token = localStorage.getItem('admin_token');
+        const response = await fetch(`${API_BASE}/shipping/orders/${orderId}/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ labelsCount })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            let successHtml = `<p>✅ <strong>¡${labelsCount} guía(s) generada(s) exitosamente!</strong></p>`;
+            successHtml += '<div class="ai-shipping-results">';
+
+            result.labels.forEach((label, i) => {
+                successHtml += `
+                    <div class="ai-shipping-label-card">
+                        <div class="ai-label-header">
+                            <span class="ai-label-number">Caja ${i + 1}</span>
+                            <span class="ai-label-carrier">${label.carrier}</span>
+                        </div>
+                        <div class="ai-label-tracking">
+                            <strong>Tracking:</strong> ${label.tracking_number || 'Procesando...'}
+                        </div>
+                        ${label.label_url ? `
+                            <a href="${label.label_url}" target="_blank" class="ai-label-download">
+                                📄 Descargar PDF
+                            </a>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            successHtml += '</div>';
+            addMessageToChat('assistant', successHtml, { isHtml: true, isSuccess: true });
+
+            // Refresh the guias view if visible
+            if (typeof loadGuias === 'function') {
+                loadGuias();
+            }
+        } else {
+            addMessageToChat('assistant', `❌ Error: ${result.error}`, { error: true });
+        }
+    } catch (error) {
+        console.error('Error creating shipping labels:', error);
+        addMessageToChat('assistant', `❌ Error de conexión: ${error.message}`, { error: true });
+    }
+}
+
+// =====================================================
 // NAVIGATION (keeps modal open)
 // =====================================================
 
@@ -435,5 +728,12 @@ document.addEventListener('keydown', (e) => {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🤖 AI Assistant initialized');
+    console.log('🤖 AI Assistant initialized with action support');
 });
+
+// Export action functions globally
+window.handleAiAction = handleAiAction;
+window.showShippingLabelModal = showShippingLabelModal;
+window.closeAiActionModal = closeAiActionModal;
+window.executeCreateShippingLabels = executeCreateShippingLabels;
+window.selectClientForAction = selectClientForAction;

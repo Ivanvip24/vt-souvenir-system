@@ -101,13 +101,38 @@ def publish_listing(data, listing_type, scraper):
 		'//span[text()="Location"]/following-sibling::input[1]',
 		'//label[contains(text(),"Ubicación")]//following::input[1]'
 	]
+	location_entered = False
 	for xpath in location_xpaths:
 		element = scraper.find_element_by_xpath(xpath, False, 2)
 		if element:
 			scraper.element_send_keys_by_xpath(xpath, data['Location'])
+			location_entered = True
 			break
 
-	scraper.element_click('ul[role="listbox"] li:first-child > div')
+	# Wait for location dropdown to appear and select first option
+	if location_entered:
+		time.sleep(2)  # Wait for dropdown to load
+		# Try multiple selectors for the location dropdown
+		location_dropdown_selectors = [
+			'ul[role="listbox"] li:first-child > div',
+			'ul[role="listbox"] li:first-child',
+			'div[role="listbox"] div[role="option"]:first-child',
+			'[role="listbox"] [role="option"]',
+			'//ul[@role="listbox"]//li[1]',
+			'//div[@role="listbox"]//div[@role="option"][1]'
+		]
+		dropdown_clicked = False
+		for selector in location_dropdown_selectors[:4]:  # CSS selectors
+			if scraper.find_element(selector, False, 3):
+				scraper.element_click(selector, True, False)
+				dropdown_clicked = True
+				break
+		if not dropdown_clicked:
+			for xpath in location_dropdown_selectors[4:]:  # XPath selectors
+				if scraper.find_element_by_xpath(xpath, False, 3):
+					scraper.element_click_by_xpath(xpath, True, False)
+					dropdown_clicked = True
+					break
 
 	# Next button (Spanish: Siguiente, English: Next)
 	next_selectors = [
@@ -345,7 +370,8 @@ def generate_title_for_listing_type(data, listing_type):
 
 def add_listing_to_multiple_groups(data, scraper):
 	# Create an array for group names by spliting the string by this symbol ";"
-	group_names = data['Groups'].split(';')
+	# Filter out empty strings after splitting
+	group_names = [g.strip() for g in data['Groups'].split(';') if g.strip()]
 
 	# If the groups are empty do not do nothing
 	if not group_names:
@@ -353,9 +379,6 @@ def add_listing_to_multiple_groups(data, scraper):
 
 	# Post in different groups
 	for group_name in group_names:
-		# Remove whitespace before and after the name
-		group_name = group_name.strip()
-
 		scraper.element_click_by_xpath('//span[text()="' + group_name + '"]')
 
 def post_listing_to_multiple_groups(data, listing_type, scraper):
@@ -367,7 +390,8 @@ def post_listing_to_multiple_groups(data, listing_type, scraper):
 		return
 
 	# Create an array for group names by spliting the string by this symbol ";"
-	group_names = data['Groups'].split(';')
+	# Filter out empty strings after splitting
+	group_names = [g.strip() for g in data['Groups'].split(';') if g.strip()]
 
 	# If the groups are empty do not do nothing
 	if not group_names:
