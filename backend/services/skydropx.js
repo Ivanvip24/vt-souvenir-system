@@ -114,9 +114,21 @@ export async function skydropxFetch(endpoint, options = {}) {
 
 /**
  * Get shipping quote for a destination with retry logic
+ * @param {number} packagesCount - Number of packages for multiguía (default 1)
  */
-export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, retryCount = 0) {
+export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, packagesCount = 1, retryCount = 0) {
   const MAX_RETRIES = 2;
+
+  // Build parcels array for multiguía
+  const parcels = [];
+  for (let i = 0; i < packagesCount; i++) {
+    parcels.push({
+      weight: packageInfo.weight || DEFAULT_PACKAGE.weight,
+      length: packageInfo.length || DEFAULT_PACKAGE.length,
+      width: packageInfo.width || DEFAULT_PACKAGE.width,
+      height: packageInfo.height || DEFAULT_PACKAGE.height
+    });
+  }
 
   const quotationPayload = {
     quotation: {
@@ -134,14 +146,11 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, retry
         area_level2: destAddress.city || 'Ciudad',
         area_level3: destAddress.colonia || destAddress.neighborhood || 'Colonia'
       },
-      parcel: {
-        weight: packageInfo.weight || DEFAULT_PACKAGE.weight,
-        length: packageInfo.length || DEFAULT_PACKAGE.length,
-        width: packageInfo.width || DEFAULT_PACKAGE.width,
-        height: packageInfo.height || DEFAULT_PACKAGE.height
-      }
+      parcels: parcels
     }
   };
+
+  console.log(`📦 Requesting quote for ${packagesCount} package(s)`);
 
   console.log('📦 Skydropx Quote Request:', JSON.stringify(quotationPayload, null, 2));
 
@@ -189,7 +198,7 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, retry
       const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s exponential backoff
       console.log(`⚠️ Skydropx quote failed, retrying in ${delay}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
       await new Promise(resolve => setTimeout(resolve, delay));
-      return getQuote(destAddress, packageInfo, retryCount + 1);
+      return getQuote(destAddress, packageInfo, packagesCount, retryCount + 1);
     }
     // All retries exhausted
     console.error('❌ Skydropx quote failed after all retries:', error.message);

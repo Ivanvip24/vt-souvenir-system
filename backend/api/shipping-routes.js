@@ -156,8 +156,8 @@ router.post('/orders/:orderId/generate', async (req, res) => {
 
     console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for order ${order.order_number}`);
 
-    // Get quote for shipping
-    const quote = await skydropx.getQuote(destAddress);
+    // Get quote for shipping (with multiple packages for multiguía)
+    const quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, labelsCount);
 
     if (!quote.rates || quote.rates.length === 0) {
       return res.status(400).json({
@@ -1684,17 +1684,17 @@ router.post('/clients/:clientId/generate', async (req, res) => {
       reference_notes: client.reference_notes
     };
 
-    console.log(`📦 Generating ${labelsCount} shipping label(s) for client ${client.name} (no order)`);
+    console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for client ${client.name} (no order)`);
     console.log(`   Address: ${destAddress.street} ${destAddress.street_number}, ${destAddress.colonia}, ${destAddress.city}, ${destAddress.state} CP ${destAddress.postal}`);
 
-    // Get quote for shipping - with retry for empty rates
+    // Get quote for shipping (with multiple packages for multiguía) - with retry for empty rates
     let quote;
     const MAX_QUOTE_RETRIES = 3;
 
     for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
       try {
         console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
-        quote = await skydropx.getQuote(destAddress);
+        quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, labelsCount);
 
         if (quote.rates && quote.rates.length > 0) {
           console.log(`   ✅ Got ${quote.rates.length} rate(s)`);
