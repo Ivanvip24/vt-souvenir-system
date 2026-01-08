@@ -15,6 +15,58 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // =====================================================
+// PIECES PER BOX CONFIGURATION
+// =====================================================
+const PIECES_PER_BOX = {
+  'iman': 200,
+  'imanes': 200,
+  'magnet': 200,
+  'llavero': 450,
+  'llaveros': 450,
+  'keychain': 450,
+  'destapador': 200,
+  'destapadores': 200,
+  'bottle opener': 200,
+  'abridor': 200,
+  'portallaves': 40,
+  'porta llaves': 40,
+  'key holder': 40,
+  'default': 100
+};
+
+function getPiecesPerBox(productName) {
+  if (!productName) return PIECES_PER_BOX.default;
+  const name = productName.toLowerCase().trim();
+  for (const [keyword, pieces] of Object.entries(PIECES_PER_BOX)) {
+    if (keyword !== 'default' && name.includes(keyword)) return pieces;
+  }
+  return PIECES_PER_BOX.default;
+}
+
+async function calculateBoxesForOrder(orderId) {
+  const itemsResult = await query(`
+    SELECT product_name, quantity FROM order_items WHERE order_id = $1
+  `, [orderId]);
+
+  let totalBoxes = 0;
+  const breakdown = [];
+
+  for (const item of itemsResult.rows) {
+    const piecesPerBox = getPiecesPerBox(item.product_name);
+    const boxes = Math.ceil(item.quantity / piecesPerBox);
+    totalBoxes += boxes;
+    breakdown.push({
+      product: item.product_name,
+      quantity: item.quantity,
+      piecesPerBox,
+      boxes
+    });
+  }
+
+  return { totalBoxes: Math.max(1, totalBoxes), breakdown };
+}
+
+// =====================================================
 // AI ACTION HANDLERS
 // =====================================================
 
@@ -554,10 +606,23 @@ router.post('/chat', async (req, res) => {
               state: order.state,
               postal: order.postal
             };
+            // Calculate boxes for this order
+            const { totalBoxes, breakdown } = await calculateBoxesForOrder(order.id);
+            actionData.data.calculatedBoxes = totalBoxes;
+            actionData.data.boxBreakdown = breakdown;
+            actionData.data.labelsCount = totalBoxes; // Auto-set to calculated
           } else {
             actionData.data.orderNotFound = true;
             actionData.data.searchTerm = action.orderNumber;
           }
+        }
+
+        // If we have a suggested order, calculate boxes for it too
+        if (actionData.data.suggestedOrder) {
+          const { totalBoxes, breakdown } = await calculateBoxesForOrder(actionData.data.suggestedOrder.id);
+          actionData.data.calculatedBoxes = totalBoxes;
+          actionData.data.boxBreakdown = breakdown;
+          actionData.data.labelsCount = totalBoxes;
         }
       } else if (action.type === 'search_client') {
         const clients = await findClientByName(action.searchTerm);

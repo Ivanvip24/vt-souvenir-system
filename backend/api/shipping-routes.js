@@ -11,12 +11,75 @@ import * as pickupScheduler from '../services/pickup-scheduler.js';
 const router = express.Router();
 
 // ========================================
+// PIECES PER BOX CONFIGURATION
+// How many pieces of each product type fit in one shipping box
+// ========================================
+const PIECES_PER_BOX = {
+  'iman': 200,
+  'imanes': 200,
+  'magnet': 200,
+  'llavero': 450,
+  'llaveros': 450,
+  'keychain': 450,
+  'destapador': 200,
+  'destapadores': 200,
+  'bottle opener': 200,
+  'abridor': 200,
+  'portallaves': 40,
+  'porta llaves': 40,
+  'key holder': 40,
+  'default': 100 // Default if product type not recognized
+};
+
+/**
+ * Get pieces per box for a product based on its name
+ */
+function getPiecesPerBox(productName) {
+  if (!productName) return PIECES_PER_BOX.default;
+
+  const name = productName.toLowerCase().trim();
+
+  for (const [keyword, pieces] of Object.entries(PIECES_PER_BOX)) {
+    if (keyword !== 'default' && name.includes(keyword)) {
+      return pieces;
+    }
+  }
+
+  return PIECES_PER_BOX.default;
+}
+
+/**
+ * Calculate total boxes needed for order items
+ * Returns { totalBoxes, breakdown: [{ product, quantity, piecesPerBox, boxes }] }
+ */
+function calculateBoxesForOrder(orderItems) {
+  let totalBoxes = 0;
+  const breakdown = [];
+
+  for (const item of orderItems) {
+    const piecesPerBox = getPiecesPerBox(item.product_name);
+    const boxes = Math.ceil(item.quantity / piecesPerBox);
+    totalBoxes += boxes;
+
+    breakdown.push({
+      product: item.product_name,
+      quantity: item.quantity,
+      piecesPerBox,
+      boxes
+    });
+  }
+
+  return { totalBoxes: Math.max(1, totalBoxes), breakdown };
+}
+
+// ========================================
 // GENERATE SHIPPING LABEL FOR ORDER
 // POST /api/shipping/orders/:orderId/generate
+// Auto-calculates boxes based on order items and pieces per box
 // ========================================
 router.post('/orders/:orderId/generate', async (req, res) => {
   const { orderId } = req.params;
-  const { labelsCount = 1 } = req.body; // Allow override for multiple labels
+  const { labelsCount: manualLabelsCount, autoCalculate = true } = req.body;
 
   try {
     // Get order with client info
@@ -37,6 +100,23 @@ router.post('/orders/:orderId/generate', async (req, res) => {
     }
 
     const order = orderResult.rows[0];
+
+    // Get order items to calculate boxes
+    const itemsResult = await query(`
+      SELECT product_name, quantity
+      FROM order_items
+      WHERE order_id = $1
+    `, [orderId]);
+
+    // Calculate boxes based on items
+    const { totalBoxes, breakdown } = calculateBoxesForOrder(itemsResult.rows);
+
+    // Use manual count if provided, otherwise use calculated
+    const labelsCount = manualLabelsCount || (autoCalculate ? totalBoxes : 1);
+
+    console.log(`📦 Order ${order.order_number} - Calculated ${totalBoxes} boxes:`, breakdown);
+    console.log(`   Generating ${labelsCount} label(s)`);
+
 
     // Check if order is approved (labels are generated on approval)
     if (order.approval_status !== 'approved') {
@@ -156,6 +236,9 @@ router.post('/orders/:orderId/generate', async (req, res) => {
     res.json({
       success: true,
       message: `${labelsCount} guía(s) generada(s) exitosamente`,
+      labelsGenerated: labelsCount,
+      calculatedBoxes: totalBoxes,
+      breakdown,
       labels: generatedLabels.map(label => ({
         id: label.id,
         tracking_number: label.tracking_number,
@@ -170,6 +253,60 @@ router.post('/orders/:orderId/generate', async (req, res) => {
   } catch (error) {
     console.error('❌ Error generating shipping label:', error);
     res.status(500).json({ error: error.message || 'Error generando guía de envío' });
+  }
+});
+
+// ========================================
+// CALCULATE BOXES FOR ORDER (preview without generating)
+// GET /api/shipping/orders/:orderId/calculate-boxes
+// ========================================
+router.get('/orders/:orderId/calculate-boxes', async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    // Get order info
+    const orderResult = await query(`
+      SELECT o.id, o.order_number, c.name as client_name
+      FROM orders o
+      JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Orden no encontrada' });
+    }
+
+    // Get order items
+    const itemsResult = await query(`
+      SELECT product_name, quantity
+      FROM order_items
+      WHERE order_id = $1
+    `, [orderId]);
+
+    if (itemsResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        order: orderResult.rows[0],
+        totalBoxes: 1,
+        breakdown: [],
+        message: 'No hay items en el pedido, se generará 1 guía por defecto'
+      });
+    }
+
+    // Calculate boxes
+    const { totalBoxes, breakdown } = calculateBoxesForOrder(itemsResult.rows);
+
+    res.json({
+      success: true,
+      order: orderResult.rows[0],
+      totalBoxes,
+      breakdown,
+      piecesPerBoxConfig: PIECES_PER_BOX
+    });
+
+  } catch (error) {
+    console.error('Error calculating boxes:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

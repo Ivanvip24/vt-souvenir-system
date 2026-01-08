@@ -554,13 +554,32 @@ function showShippingLabelModal(action) {
         `;
     }
 
-    // Labels count
+    // Labels count with auto-calculation display
+    const calculatedBoxes = data.calculatedBoxes || labelsCount;
+    const boxBreakdown = data.boxBreakdown || [];
+
     modalHtml += `
         <div class="ai-action-section">
-            <label>Número de guías (cajas)</label>
+            <label>NÚMERO DE GUÍAS (CAJAS)</label>
             <input type="number" id="ai-action-labels-count" class="ai-action-input"
-                   value="${labelsCount}" min="1" max="20">
-            <div class="ai-action-hint">Cada guía es una caja separada con su propia etiqueta</div>
+                   value="${calculatedBoxes}" min="1" max="50" style="font-size: 24px; font-weight: bold; text-align: center;">
+            ${boxBreakdown.length > 0 ? `
+                <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px; margin-top: 10px;">
+                    <div style="font-weight: 600; color: #166534; margin-bottom: 8px;">
+                        📦 Cálculo automático: ${calculatedBoxes} caja(s)
+                    </div>
+                    <div style="font-size: 13px; color: #15803d;">
+                        ${boxBreakdown.map(item => `
+                            <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                                <span>${item.product}</span>
+                                <span><strong>${item.quantity}</strong> pzas ÷ ${item.piecesPerBox}/caja = <strong>${item.boxes}</strong> caja(s)</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : `
+                <div class="ai-action-hint">Cada guía es una caja separada con su propia etiqueta</div>
+            `}
         </div>
     `;
 
