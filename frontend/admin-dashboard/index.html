@@ -928,23 +928,8 @@
                     <p>Cargando clientes...</p>
                 </div>
 
-                <!-- Clients Table -->
-                <div class="shipping-table-container">
-                    <table class="shipping-table" id="shipping-table">
-                        <thead>
-                            <tr>
-                                <th class="sortable" onclick="sortShippingTable('name')">Nombre <span class="sort-icon" data-col="name"></span></th>
-                                <th class="sortable" onclick="sortShippingTable('phone')">Teléfono <span class="sort-icon" data-col="phone"></span></th>
-                                <th class="sortable" onclick="sortShippingTable('email')">Email <span class="sort-icon" data-col="email"></span></th>
-                                <th class="sortable" onclick="sortShippingTable('address')">Dirección <span class="sort-icon" data-col="address"></span></th>
-                                <th class="sortable" onclick="sortShippingTable('city')">Ciudad <span class="sort-icon" data-col="city"></span></th>
-                                <th class="sortable" onclick="sortShippingTable('state')">Estado <span class="sort-icon" data-col="state"></span></th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="shipping-table-body"></tbody>
-                    </table>
-                </div>
+                <!-- Address Cards Grid -->
+                <div id="shipping-cards-container" class="address-cards-grid"></div>
 
                 <!-- Empty State -->
                 <div id="shipping-empty-state" class="empty-state hidden">

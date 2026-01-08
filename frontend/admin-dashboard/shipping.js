@@ -53,11 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadShippingData() {
   const loading = document.getElementById('shipping-loading');
-  const tableContainer = document.querySelector('.shipping-table-container');
+  const cardsContainer = document.getElementById('shipping-cards-container');
   const emptyState = document.getElementById('shipping-empty-state');
 
   if (loading) loading.classList.remove('hidden');
-  if (tableContainer) tableContainer.style.display = 'none';
+  if (cardsContainer) cardsContainer.style.display = 'none';
   if (emptyState) emptyState.classList.add('hidden');
 
   try {
@@ -101,9 +101,9 @@ async function loadShippingData() {
 
       if (result.data.length === 0) {
         if (emptyState) emptyState.classList.remove('hidden');
-        if (tableContainer) tableContainer.style.display = 'none';
+        if (cardsContainer) cardsContainer.style.display = 'none';
       } else {
-        if (tableContainer) tableContainer.style.display = 'block';
+        if (cardsContainer) cardsContainer.style.display = 'grid';
       }
     }
   } catch (error) {
@@ -129,8 +129,8 @@ function renderShippingStats() {
 }
 
 function renderShippingTable() {
-  const tbody = document.getElementById('shipping-table-body');
-  if (!tbody) return;
+  const container = document.getElementById('shipping-cards-container');
+  if (!container) return;
 
   // Sort clients
   const sorted = [...shippingState.filteredClients].sort((a, b) => {
@@ -145,52 +145,161 @@ function renderShippingTable() {
     return 0;
   });
 
-  tbody.innerHTML = sorted.map(client => `
-    <tr data-id="${client.id}">
-      <td class="cell-name">
-        <div class="client-name-cell">
-          <span class="client-name">${escapeHtml(client.name)}</span>
-          ${client.order_count > 0 ? `<span class="order-badge">${client.order_count} pedidos</span>` : ''}
-        </div>
-      </td>
-      <td class="cell-phone">
-        ${client.phone ? `
-          <div class="phone-cell">
-            <span>${escapeHtml(client.phone)}</span>
-            <a href="https://wa.me/52${client.phone.replace(/\D/g, '')}" target="whatsapp-chat" class="whatsapp-btn" title="WhatsApp">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-              </svg>
-            </a>
-          </div>
-        ` : '<span class="empty-cell">—</span>'}
-      </td>
-      <td class="cell-email">
-        ${client.email ? `<a href="mailto:${escapeHtml(client.email)}" class="email-link">${escapeHtml(client.email)}</a>` : '<span class="empty-cell">—</span>'}
-      </td>
-      <td class="cell-address">
-        ${client.address ? `<span class="address-text">${escapeHtml(client.address)}</span>` : '<span class="empty-cell">Sin dirección</span>'}
-      </td>
-      <td class="cell-city">
-        ${client.city ? `<span class="city-tag">${escapeHtml(client.city)}</span>` : '<span class="empty-cell">—</span>'}
-      </td>
-      <td class="cell-state">
-        ${client.state ? escapeHtml(client.state) : '<span class="empty-cell">—</span>'}
-      </td>
-      <td class="cell-actions">
-        <button class="action-btn edit-btn" onclick="editClient(${client.id})" title="Editar">
-          ✏️
-        </button>
-        <button class="action-btn view-btn" onclick="viewClientOrders(${client.id})" title="Ver pedidos">
-          📦
-        </button>
-      </td>
-    </tr>
-  `).join('');
+  container.innerHTML = sorted.map(client => {
+    const hasFullAddress = client.street && client.city && client.state && (client.postal || client.postal_code);
+    const location = [client.city, client.state].filter(Boolean).join(', ') || 'Sin ubicación';
+    const postal = client.postal || client.postal_code || '';
 
-  // Update sort icons
-  updateSortIcons();
+    return `
+      <div class="address-card ${hasFullAddress ? '' : 'incomplete'}" onclick="showClientDetailPopup(${client.id})">
+        <div class="address-card-header">
+          <span class="address-card-name">${escapeHtml(client.name)}</span>
+          ${hasFullAddress
+            ? '<span class="address-status complete">✓</span>'
+            : '<span class="address-status incomplete">!</span>'
+          }
+        </div>
+        <div class="address-card-location">
+          📍 ${escapeHtml(location)} ${postal ? `CP ${postal}` : ''}
+        </div>
+        ${client.order_count > 0
+          ? `<div class="address-card-orders">${client.order_count} pedido${client.order_count > 1 ? 's' : ''}</div>`
+          : ''
+        }
+      </div>
+    `;
+  }).join('');
 }
+
+/**
+ * Show client detail popup
+ */
+async function showClientDetailPopup(clientId) {
+  try {
+    const response = await fetch(`${API_BASE}/clients/${clientId}`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch client');
+
+    const result = await response.json();
+    if (!result.success) throw new Error(result.error);
+
+    const client = result.data;
+    const hasFullAddress = client.street && client.city && client.state && (client.postal || client.postal_code);
+    const postal = client.postal || client.postal_code || '';
+
+    // Build address display
+    let addressHtml = '';
+    if (client.street || client.address) {
+      const parts = [];
+      if (client.street) {
+        parts.push(client.street + (client.street_number ? ` #${client.street_number}` : ''));
+      } else if (client.address) {
+        parts.push(client.address);
+      }
+      if (client.colonia) parts.push(`Col. ${client.colonia}`);
+      if (client.city) parts.push(client.city);
+      if (client.state) parts.push(client.state);
+      if (postal) parts.push(`CP ${postal}`);
+      addressHtml = parts.join('<br>');
+    } else {
+      addressHtml = '<span style="color: #f59e0b;">Sin dirección registrada</span>';
+    }
+
+    // Remove existing popup
+    const existing = document.getElementById('client-detail-popup');
+    if (existing) existing.remove();
+
+    const popup = document.createElement('div');
+    popup.id = 'client-detail-popup';
+    popup.className = 'client-popup-overlay';
+    popup.onclick = (e) => { if (e.target === popup) popup.remove(); };
+
+    popup.innerHTML = `
+      <div class="client-popup-content">
+        <div class="client-popup-header">
+          <h3>${escapeHtml(client.name)}</h3>
+          <button class="client-popup-close" onclick="document.getElementById('client-detail-popup').remove()">&times;</button>
+        </div>
+
+        <div class="client-popup-body">
+          <div class="client-popup-section">
+            <h4>📍 Dirección</h4>
+            <div class="client-popup-address">${addressHtml}</div>
+          </div>
+
+          <div class="client-popup-section">
+            <h4>📞 Contacto</h4>
+            <div class="client-popup-info-grid">
+              ${client.phone ? `
+                <div class="client-popup-info-item">
+                  <div class="client-popup-info-label">Teléfono</div>
+                  <div class="client-popup-info-value">
+                    ${escapeHtml(client.phone)}
+                    <a href="https://wa.me/52${client.phone.replace(/\D/g, '')}" target="_blank" style="margin-left: 8px; color: #25D366;">📱</a>
+                  </div>
+                </div>
+              ` : ''}
+              ${client.email ? `
+                <div class="client-popup-info-item">
+                  <div class="client-popup-info-label">Email</div>
+                  <div class="client-popup-info-value">
+                    <a href="mailto:${escapeHtml(client.email)}">${escapeHtml(client.email)}</a>
+                  </div>
+                </div>
+              ` : ''}
+              ${client.reference_notes ? `
+                <div class="client-popup-info-item full-width">
+                  <div class="client-popup-info-label">Referencias</div>
+                  <div class="client-popup-info-value">${escapeHtml(client.reference_notes)}</div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          ${client.orders && client.orders.length > 0 ? `
+            <div class="client-popup-section">
+              <h4>📦 Pedidos (${client.orders.length})</h4>
+              <div class="client-popup-orders">
+                ${client.orders.slice(0, 5).map(o => `
+                  <div class="client-popup-order" onclick="navigateToOrder('${o.orderNumber}')">
+                    <span class="client-popup-order-number">${o.orderNumber}</span>
+                    <span class="client-popup-order-date">$${parseFloat(o.totalPrice || 0).toLocaleString('es-MX')}</span>
+                  </div>
+                `).join('')}
+                ${client.orders.length > 5 ? `<div class="client-popup-no-orders">+ ${client.orders.length - 5} más</div>` : ''}
+              </div>
+            </div>
+          ` : `
+            <div class="client-popup-section">
+              <h4>📦 Pedidos</h4>
+              <div class="client-popup-no-orders">Sin pedidos registrados</div>
+            </div>
+          `}
+        </div>
+
+        <div class="client-popup-footer">
+          <button class="client-popup-btn secondary" onclick="document.getElementById('client-detail-popup').remove()">
+            Cerrar
+          </button>
+          <button class="client-popup-btn primary" onclick="document.getElementById('client-detail-popup').remove(); editClient(${client.id})">
+            ✏️ Editar
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(popup);
+
+  } catch (error) {
+    console.error('Error loading client details:', error);
+    showNotification('Error al cargar detalles', 'error');
+  }
+}
+
+// Export function globally
+window.showClientDetailPopup = showClientDetailPopup;
 
 function renderPagination() {
   const paginationInfo = document.getElementById('pagination-info');
