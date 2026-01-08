@@ -5156,6 +5156,16 @@ textarea:disabled {
   margin-top: 2px;
 }
 
+.ai-rate-estimated {
+  font-size: 10px;
+  color: #f59e0b;
+  font-style: italic;
+}
+
+.ai-rate-option.estimated {
+  border-style: dashed;
+}
+
 .ai-rate-days {
   font-size: 13px;
   color: var(--gray-600);

@@ -1899,36 +1899,83 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
     console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
 
-    // Quote for actual package count to get MULTIGUÍA pricing (bulk discounts)
-    let quote;
+    // Get quotes in parallel: 1-package (shows all carriers) + N-package (bulk pricing)
     const MAX_QUOTE_RETRIES = 3;
+    let singlePackageQuote = null;
+    let multiPackageQuote = null;
 
+    // Try to get both quotes
     for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
-      console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES} for ${packagesCount} package(s)...`);
-      quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
+      console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
 
-      if (quote.rates && quote.rates.length > 0) {
-        console.log(`   ✅ Got ${quote.rates.length} rate(s)`);
-        break;
+      try {
+        // Get both quotes in parallel
+        const [single, multi] = await Promise.all([
+          skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1),
+          packagesCount > 1 ? skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount) : null
+        ]);
+
+        singlePackageQuote = single;
+        multiPackageQuote = multi;
+
+        if ((singlePackageQuote?.rates?.length > 0) || (multiPackageQuote?.rates?.length > 0)) {
+          console.log(`   ✅ Got rates: ${singlePackageQuote?.rates?.length || 0} single, ${multiPackageQuote?.rates?.length || 0} multi`);
+          break;
+        }
+      } catch (err) {
+        console.log(`   ⚠️ Quote attempt ${attempt} error: ${err.message}`);
       }
 
-      console.log(`   ⚠️ Empty rates on attempt ${attempt}, retrying...`);
       if (attempt < MAX_QUOTE_RETRIES) {
         await new Promise(resolve => setTimeout(resolve, 1500));
       }
     }
 
-    if (!quote || !quote.rates || quote.rates.length === 0) {
+    if ((!singlePackageQuote?.rates?.length) && (!multiPackageQuote?.rates?.length)) {
       return res.status(400).json({
         error: 'No hay tarifas de envío disponibles para esta dirección. Intenta de nuevo.'
       });
     }
 
-    // Show ALL available carriers - sort by price
-    const sortedRates = quote.rates.sort((a, b) => a.total_price - b.total_price);
+    // Build combined rates map - prefer multi-package rates (bulk pricing), fallback to single × N
+    const ratesMap = new Map();
 
-    // Format rates - price is already the total for all packages (multiguía pricing)
-    const formattedRates = sortedRates.map((rate, index) => {
+    // First add multi-package rates (already have bulk pricing)
+    if (multiPackageQuote?.rates) {
+      multiPackageQuote.rates.forEach(rate => {
+        const key = `${rate.carrier}-${rate.service}`;
+        ratesMap.set(key, {
+          ...rate,
+          total_price: rate.total_price,
+          source: 'multi',
+          quotation_id: multiPackageQuote.quotation_id
+        });
+      });
+    }
+
+    // Then add single-package rates for carriers not in multi (with estimated pricing)
+    if (singlePackageQuote?.rates) {
+      singlePackageQuote.rates.forEach(rate => {
+        const key = `${rate.carrier}-${rate.service}`;
+        if (!ratesMap.has(key)) {
+          // Carrier not available in multi-quote, estimate price (may have bulk discount when creating)
+          const estimatedTotal = rate.total_price * packagesCount;
+          ratesMap.set(key, {
+            ...rate,
+            total_price: estimatedTotal,
+            source: 'single_estimated',
+            quotation_id: singlePackageQuote.quotation_id,
+            note: 'Precio estimado, puede ser menor al crear'
+          });
+        }
+      });
+    }
+
+    // Convert to array and sort by price
+    const combinedRates = Array.from(ratesMap.values()).sort((a, b) => a.total_price - b.total_price);
+
+    // Format rates
+    const formattedRates = combinedRates.map((rate, index) => {
       const totalPrice = rate.total_price;
       const pricePerPackage = packagesCount > 1 ? (totalPrice / packagesCount) : totalPrice;
       return {
@@ -1941,13 +1988,15 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
         pricePerPackageFormatted: `$${pricePerPackage.toFixed(2)}`,
         days: rate.days,
         daysText: rate.days === 1 ? '1 día' : `${rate.days} días`,
-        isCheapest: index === 0
+        isCheapest: index === 0,
+        isEstimated: rate.source === 'single_estimated',
+        quotation_id: rate.quotation_id
       };
     });
 
     res.json({
       success: true,
-      quotation_id: quote.quotation_id,
+      quotation_id: multiPackageQuote?.quotation_id || singlePackageQuote?.quotation_id,
       packagesCount: packagesCount,
       rates: formattedRates,
       client: {

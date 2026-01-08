@@ -775,8 +775,11 @@ async function getShippingQuotes() {
             const priceBreakdown = pkgCount > 1
                 ? `<div class="ai-rate-breakdown">${pkgCount} cajas (${rate.pricePerPackageFormatted}/caja)</div>`
                 : '';
+            const estimatedNote = rate.isEstimated
+                ? '<div class="ai-rate-estimated">* Precio estimado</div>'
+                : '';
             ratesHtml += `
-                <div class="ai-rate-option ${index === 0 ? 'recommended' : ''}"
+                <div class="ai-rate-option ${index === 0 ? 'recommended' : ''} ${rate.isEstimated ? 'estimated' : ''}"
                      onclick="selectShippingRate(${index})"
                      data-rate-index="${index}">
                     <div class="ai-rate-header">
@@ -788,6 +791,7 @@ async function getShippingQuotes() {
                         <div>
                             <span class="ai-rate-price">${rate.priceFormatted}</span>
                             ${priceBreakdown}
+                            ${estimatedNote}
                         </div>
                         <span class="ai-rate-days">📅 ${rate.daysText}</span>
                     </div>
@@ -915,7 +919,8 @@ async function executeCreateShippingLabels() {
 
         // Include selected rate data if available
         if (quoteData && quoteData.selectedRate) {
-            requestBody.quotationId = quoteData.quotationId;
+            // Use the quotation_id from the specific rate (may differ for estimated rates)
+            requestBody.quotationId = quoteData.selectedRate.quotation_id || quoteData.quotationId;
             requestBody.rateId = quoteData.selectedRate.rate_id;
             requestBody.selectedRate = quoteData.selectedRate;
         }
