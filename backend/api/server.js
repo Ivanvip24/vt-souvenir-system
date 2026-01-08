@@ -3507,6 +3507,22 @@ async function startServer() {
       console.warn('⚠️  Warning: Knowledge base indexing failed:', kbError.message);
     }
 
+    // Run startup migrations
+    console.log('🔄 Running startup migrations...');
+    try {
+      // Allow NULL order_id in shipping_labels (for client-only labels)
+      await query(`
+        ALTER TABLE shipping_labels
+        ALTER COLUMN order_id DROP NOT NULL
+      `);
+      console.log('   ✅ shipping_labels.order_id is now nullable');
+    } catch (migrationError) {
+      // Ignore if already nullable or table doesn't exist
+      if (!migrationError.message.includes('already')) {
+        console.log('   ℹ️  Migration skipped:', migrationError.message.split('\n')[0]);
+      }
+    }
+
     // Load AI Knowledge Content
     console.log('🤖 Loading AI knowledge content...');
     try {
