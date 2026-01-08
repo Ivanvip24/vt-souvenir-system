@@ -578,7 +578,7 @@ function showShippingLabelModal(action) {
                     </div>
                 </div>
             ` : `
-                <div class="ai-action-hint">Cada guía es una caja separada con su propia etiqueta</div>
+                <div class="ai-action-hint">Se creará 1 multiguía con múltiples paquetes (cada caja con su etiqueta)</div>
             `}
         </div>
     `;
