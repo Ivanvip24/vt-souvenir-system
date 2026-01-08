@@ -1504,10 +1504,25 @@ router.post('/clients/:clientId/generate', async (req, res) => {
 
     // Validate client has shipping address
     const postal = client.postal || client.postal_code;
-    if (!postal || !client.city || !client.state) {
+    const missingFields = [];
+    if (!client.street) missingFields.push('calle');
+    if (!client.city) missingFields.push('ciudad');
+    if (!client.state) missingFields.push('estado');
+    if (!postal) missingFields.push('código postal');
+
+    if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'El cliente no tiene dirección de envío completa. Necesita: ciudad, estado y código postal.'
+        error: `Dirección incompleta. Faltan: ${missingFields.join(', ')}. Edita el cliente en la sección de Clientes.`,
+        missingFields: missingFields,
+        client: {
+          id: client.id,
+          name: client.name,
+          street: client.street,
+          city: client.city,
+          state: client.state,
+          postal: postal
+        }
       });
     }
 
@@ -1528,12 +1543,32 @@ router.post('/clients/:clientId/generate', async (req, res) => {
     console.log(`📦 Generating ${labelsCount} shipping label(s) for client ${client.name} (no order)`);
 
     // Get quote for shipping
-    const quote = await skydropx.getQuote(destAddress);
+    let quote;
+    try {
+      quote = await skydropx.getQuote(destAddress);
+    } catch (quoteError) {
+      console.error('❌ Skydropx quote error:', quoteError.message);
+      return res.status(400).json({
+        success: false,
+        error: `Error al cotizar envío: ${quoteError.message}. Verifica que la dirección sea correcta.`,
+        address: {
+          street: destAddress.street,
+          city: destAddress.city,
+          state: destAddress.state,
+          postal: destAddress.postal
+        }
+      });
+    }
 
     if (!quote.rates || quote.rates.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'No hay tarifas de envío disponibles para esta dirección'
+        error: `No hay cobertura de envío para: ${client.city}, ${client.state} CP ${postal}. Verifica que el código postal sea correcto.`,
+        address: {
+          city: client.city,
+          state: client.state,
+          postal: postal
+        }
       });
     }
 
