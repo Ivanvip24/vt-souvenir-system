@@ -172,11 +172,27 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, packa
     }
 
     const result = JSON.parse(responseText);
-    console.log('✅ Skydropx Quote - Found', result.rates?.length || 0, 'rates');
+    console.log('✅ Skydropx Quote - Raw response has', result.rates?.length || 0, 'rates');
 
-    // Parse rates
+    // Log all raw rates for debugging
+    if (result.rates && result.rates.length > 0) {
+      console.log('📋 Raw rates from Skydropx:');
+      result.rates.forEach((rate, i) => {
+        console.log(`   ${i + 1}. ${rate.provider_display_name || rate.provider_name} - ${rate.provider_service_name} - $${rate.total} (success: ${rate.success}, out_of_area: ${rate.out_of_area})`);
+      });
+    }
+
+    // Parse rates - only filter out rates that are out_of_area or have no price
     const rates = (result.rates || [])
-      .filter(rate => rate.success && rate.total)
+      .filter(rate => {
+        // Include rate if it has a price and is not out of area
+        const hasPrice = rate.total && parseFloat(rate.total) > 0;
+        const isAvailable = rate.out_of_area !== true && rate.success !== false;
+        if (!hasPrice || !isAvailable) {
+          console.log(`   ❌ Filtered out: ${rate.provider_display_name || rate.provider_name} - ${rate.provider_service_name} (hasPrice: ${hasPrice}, isAvailable: ${isAvailable})`);
+        }
+        return hasPrice && isAvailable;
+      })
       .map(rate => ({
         rate_id: rate.id,
         carrier: rate.provider_display_name || rate.provider_name,
@@ -187,6 +203,8 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, packa
         days: rate.days || estimateDeliveryDays(rate.provider_service_code)
       }))
       .sort((a, b) => a.total_price - b.total_price);
+
+    console.log('✅ After filtering:', rates.length, 'rates available');
 
     return {
       quotation_id: result.id,
