@@ -1899,15 +1899,13 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
     console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
 
-    // Quote for 1 parcel to get ALL available carriers (some don't support multi-parcel quotes)
-    // We'll multiply the price by packagesCount for display
+    // Quote for actual package count to get MULTIGUÍA pricing (bulk discounts)
     let quote;
     const MAX_QUOTE_RETRIES = 3;
 
     for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
-      console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
-      // Quote for 1 parcel to see all carrier options
-      quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1);
+      console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES} for ${packagesCount} package(s)...`);
+      quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
 
       if (quote.rates && quote.rates.length > 0) {
         console.log(`   ✅ Got ${quote.rates.length} rate(s)`);
@@ -1926,13 +1924,13 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
       });
     }
 
-    // Show ALL available carriers - no filter, just sort by total price (price × packages)
+    // Show ALL available carriers - sort by price
     const sortedRates = quote.rates.sort((a, b) => a.total_price - b.total_price);
 
-    // Calculate total price for all packages
+    // Format rates - price is already the total for all packages (multiguía pricing)
     const formattedRates = sortedRates.map((rate, index) => {
-      const totalPrice = rate.total_price * packagesCount;
-      const pricePerPackage = rate.total_price;
+      const totalPrice = rate.total_price;
+      const pricePerPackage = packagesCount > 1 ? (totalPrice / packagesCount) : totalPrice;
       return {
         rate_id: rate.rate_id,
         carrier: rate.carrier,

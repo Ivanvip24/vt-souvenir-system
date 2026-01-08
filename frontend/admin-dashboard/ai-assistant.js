@@ -773,7 +773,7 @@ async function getShippingQuotes() {
         let ratesHtml = '';
         result.rates.forEach((rate, index) => {
             const priceBreakdown = pkgCount > 1
-                ? `<div class="ai-rate-breakdown">${rate.pricePerPackageFormatted} × ${pkgCount} cajas</div>`
+                ? `<div class="ai-rate-breakdown">${pkgCount} cajas (${rate.pricePerPackageFormatted}/caja)</div>`
                 : '';
             ratesHtml += `
                 <div class="ai-rate-option ${index === 0 ? 'recommended' : ''}"
