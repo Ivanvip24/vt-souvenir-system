@@ -280,6 +280,9 @@ async function showClientDetailPopup(clientId) {
         </div>
 
         <div class="client-popup-footer">
+          <button class="client-popup-btn danger" onclick="deleteClient(${client.id}, '${escapeHtml(client.name).replace(/'/g, "\\'")}')">
+            🗑️ Eliminar
+          </button>
           <button class="client-popup-btn secondary" onclick="document.getElementById('client-detail-popup').remove()">
             Cerrar
           </button>
@@ -1088,8 +1091,45 @@ async function executeClientImport() {
   }
 }
 
+// ==========================================
+// DELETE CLIENT
+// ==========================================
+
+async function deleteClient(clientId, clientName) {
+  // Show confirmation dialog
+  const confirmed = confirm(`¿Estás seguro que deseas eliminar a "${clientName}"?\n\nEsta acción no se puede deshacer.`);
+
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/clients/${clientId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || 'Failed to delete client');
+    }
+
+    // Close popup if open
+    const popup = document.getElementById('client-detail-popup');
+    if (popup) popup.remove();
+
+    showNotification('Cliente eliminado correctamente', 'success');
+    loadShippingData();
+
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    showNotification('Error al eliminar cliente: ' + error.message, 'error');
+  }
+}
+
 // Export functions globally
 window.triggerImportCSV = triggerImportCSV;
 window.handleCSVImport = handleCSVImport;
 window.closeImportModal = closeImportModal;
 window.executeClientImport = executeClientImport;
+window.editClient = editClient;
+window.deleteClient = deleteClient;
+window.showClientDetailPopup = showClientDetailPopup;

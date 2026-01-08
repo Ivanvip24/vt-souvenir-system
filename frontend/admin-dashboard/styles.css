@@ -5526,6 +5526,20 @@ textarea:disabled {
   background: var(--gray-100);
 }
 
+.client-popup-btn.danger {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  flex: 0;
+  padding: 12px;
+}
+
+.client-popup-btn.danger:hover {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .address-cards-grid {
