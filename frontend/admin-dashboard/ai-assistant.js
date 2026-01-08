@@ -892,9 +892,9 @@ async function searchClientsForModal() {
         });
         const result = await response.json();
 
-        if (result.success && result.clients && result.clients.length > 0) {
+        if (result.success && result.data && result.data.length > 0) {
             let html = '';
-            result.clients.forEach(client => {
+            result.data.forEach(client => {
                 const location = [client.city, client.state].filter(Boolean).join(', ') || 'Sin ubicación';
                 const hasAddress = client.city && client.state && (client.postal || client.postal_code);
                 html += `
