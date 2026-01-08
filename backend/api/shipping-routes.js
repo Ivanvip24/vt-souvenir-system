@@ -154,7 +154,7 @@ router.post('/orders/:orderId/generate', async (req, res) => {
       reference_notes: order.reference_notes
     };
 
-    console.log(`📦 Generating ${labelsCount} shipping label(s) for order ${order.order_number}`);
+    console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for order ${order.order_number}`);
 
     // Get quote for shipping
     const quote = await skydropx.getQuote(destAddress);
@@ -168,18 +168,25 @@ router.post('/orders/:orderId/generate', async (req, res) => {
     // Auto-select best (cheapest) rate
     const selectedRate = skydropx.selectBestRate(quote.rates);
 
-    // Generate label(s)
+    // Create ONE shipment with multiple packages (MULTIGUÍA)
+    const shipment = await skydropx.createShipment(
+      quote.quotation_id,
+      selectedRate.rate_id,
+      selectedRate,
+      destAddress,
+      skydropx.DEFAULT_PACKAGE,
+      labelsCount  // Number of packages in this multiguía
+    );
+
+    console.log(`✅ Multiguía created with ${shipment.packages?.length || labelsCount} packages`);
+
+    // Save each package as a record in the database
     const generatedLabels = [];
+    const packagesData = shipment.packages || [];
 
     for (let i = 0; i < labelsCount; i++) {
-      const shipment = await skydropx.createShipment(
-        quote.quotation_id,
-        selectedRate.rate_id,
-        selectedRate,
-        destAddress
-      );
+      const pkg = packagesData[i] || {};
 
-      // Save to database
       const insertResult = await query(`
         INSERT INTO shipping_labels (
           order_id, client_id, shipment_id, quotation_id, rate_id,
@@ -194,33 +201,33 @@ router.post('/orders/:orderId/generate', async (req, res) => {
         shipment.shipment_id,
         quote.quotation_id,
         selectedRate.rate_id,
-        shipment.tracking_number,
-        shipment.tracking_url,
-        shipment.label_url,
+        pkg.tracking_number || shipment.master_tracking_number,
+        pkg.tracking_url || shipment.tracking_url,
+        pkg.label_url || shipment.label_url,
         shipment.carrier,
         shipment.service,
         shipment.delivery_days,
-        shipment.shipping_cost,
+        shipment.shipping_cost / labelsCount, // Divide cost among packages
         i + 1,
-        shipment.label_url ? 'label_generated' : 'processing'
+        pkg.label_url || shipment.label_url ? 'label_generated' : 'processing'
       ]);
 
       generatedLabels.push(insertResult.rows[0]);
+    }
 
-      // Auto-request pickup for this carrier (if not already scheduled)
-      if (shipment.shipment_id && shipment.carrier) {
-        setImmediate(async () => {
-          try {
-            const pickupResult = await skydropx.requestPickupIfNeeded(
-              shipment.shipment_id,
-              shipment.carrier
-            );
-            console.log(`📦 Pickup for label: ${pickupResult.message}`);
-          } catch (pickupError) {
-            console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
-          }
-        });
-      }
+    // Auto-request pickup for this multiguía
+    if (shipment.shipment_id && shipment.carrier) {
+      setImmediate(async () => {
+        try {
+          const pickupResult = await skydropx.requestPickupIfNeeded(
+            shipment.shipment_id,
+            shipment.carrier
+          );
+          console.log(`📦 Pickup for multiguía: ${pickupResult.message}`);
+        } catch (pickupError) {
+          console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+        }
+      });
     }
 
     // Update order
@@ -1736,16 +1743,24 @@ router.post('/clients/:clientId/generate', async (req, res) => {
     // Auto-select best (cheapest) rate
     const selectedRate = skydropx.selectBestRate(quote.rates);
 
-    // Generate label(s)
-    const generatedLabels = [];
+    // Generate ONE shipment with multiple packages (MULTIGUÍA)
+    console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for client ${client.name}`);
 
-    for (let i = 0; i < labelsCount; i++) {
-      const shipment = await skydropx.createShipment(
-        quote.quotation_id,
-        selectedRate.rate_id,
-        selectedRate,
-        destAddress
-      );
+    const shipment = await skydropx.createShipment(
+      quote.quotation_id,
+      selectedRate.rate_id,
+      selectedRate,
+      destAddress,
+      skydropx.DEFAULT_PACKAGE,
+      labelsCount  // Number of packages in this multiguía
+    );
+
+    // Save each package as a separate database record
+    const generatedLabels = [];
+    const packagesArray = shipment.packages || [shipment]; // Fallback to single package
+
+    for (let i = 0; i < packagesArray.length; i++) {
+      const pkg = packagesArray[i];
 
       // Save to database (order_id is NULL for client-only labels)
       const insertResult = await query(`
@@ -1761,36 +1776,36 @@ router.post('/clients/:clientId/generate', async (req, res) => {
         shipment.shipment_id,
         quote.quotation_id,
         selectedRate.rate_id,
-        shipment.tracking_number,
-        shipment.tracking_url,
-        shipment.label_url,
+        pkg.tracking_number || shipment.tracking_number,
+        pkg.tracking_url || shipment.tracking_url,
+        pkg.label_url || shipment.label_url,
         shipment.carrier,
         shipment.service,
         shipment.delivery_days,
         shipment.shipping_cost,
         i + 1,
-        shipment.label_url ? 'label_generated' : 'processing'
+        (pkg.label_url || shipment.label_url) ? 'label_generated' : 'processing'
       ]);
 
       generatedLabels.push(insertResult.rows[0]);
-
-      // Auto-request pickup for this carrier (if not already scheduled)
-      if (shipment.shipment_id && shipment.carrier) {
-        setImmediate(async () => {
-          try {
-            const pickupResult = await skydropx.requestPickupIfNeeded(
-              shipment.shipment_id,
-              shipment.carrier
-            );
-            console.log(`📦 Pickup for label: ${pickupResult.message}`);
-          } catch (pickupError) {
-            console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
-          }
-        });
-      }
     }
 
-    console.log(`✅ Generated ${labelsCount} label(s) for client ${client.name}`);
+    // Auto-request pickup ONCE for the entire shipment
+    if (shipment.shipment_id && shipment.carrier) {
+      setImmediate(async () => {
+        try {
+          const pickupResult = await skydropx.requestPickupIfNeeded(
+            shipment.shipment_id,
+            shipment.carrier
+          );
+          console.log(`📦 Pickup for multiguía: ${pickupResult.message}`);
+        } catch (pickupError) {
+          console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+        }
+      });
+    }
+
+    console.log(`✅ Generated MULTIGUÍA with ${packagesArray.length} package(s) for client ${client.name}`);
 
     res.json({
       success: true,

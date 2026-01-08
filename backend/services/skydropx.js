@@ -198,11 +198,29 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, retry
 }
 
 /**
- * Create shipment and generate label
+ * Create shipment and generate label (supports multiguía with multiple packages)
+ * @param {number} packagesCount - Number of packages/boxes in this shipment (default 1)
  */
-export async function createShipment(quotationId, rateId, rate, destAddress, packageInfo = DEFAULT_PACKAGE) {
+export async function createShipment(quotationId, rateId, rate, destAddress, packageInfo = DEFAULT_PACKAGE, packagesCount = 1) {
   const destStreet = `${destAddress.street || ''} ${destAddress.street_number || destAddress.number || 'S/N'}`.trim();
   const originStreet = `${ORIGIN_ADDRESS.street} ${ORIGIN_ADDRESS.number}`;
+
+  // Build packages array for multiguía
+  const packages = [];
+  for (let i = 0; i < packagesCount; i++) {
+    packages.push({
+      package_number: i + 1,
+      weight: packageInfo.weight || DEFAULT_PACKAGE.weight,
+      height: packageInfo.height || DEFAULT_PACKAGE.height,
+      width: packageInfo.width || DEFAULT_PACKAGE.width,
+      length: packageInfo.length || DEFAULT_PACKAGE.length,
+      dimension_unit: 'CM',
+      mass_unit: 'KG',
+      quantity: 1,
+      consignment_note: DEFAULT_CONSIGNMENT_NOTE,
+      package_type: DEFAULT_PACKAGE_TYPE
+    });
+  }
 
   const shipmentPayload = {
     shipment: {
@@ -236,20 +254,11 @@ export async function createShipment(quotationId, rateId, rate, destAddress, pac
         email: destAddress.email || 'cliente@example.com',
         reference: truncate(destAddress.reference_notes || destAddress.reference || 'Sin referencia', MAX_REFERENCE_LENGTH)
       },
-      packages: [{
-        package_number: 1,
-        weight: packageInfo.weight || DEFAULT_PACKAGE.weight,
-        height: packageInfo.height || DEFAULT_PACKAGE.height,
-        width: packageInfo.width || DEFAULT_PACKAGE.width,
-        length: packageInfo.length || DEFAULT_PACKAGE.length,
-        dimension_unit: 'CM',
-        mass_unit: 'KG',
-        quantity: 1,
-        consignment_note: DEFAULT_CONSIGNMENT_NOTE,
-        package_type: DEFAULT_PACKAGE_TYPE
-      }]
+      packages: packages
     }
   };
+
+  console.log(`📦 Creating multiguía with ${packagesCount} package(s)`);
 
   console.log('📦 Skydropx Shipment Request:', JSON.stringify(shipmentPayload, null, 2));
 
@@ -283,23 +292,32 @@ export async function createShipment(quotationId, rateId, rate, destAddress, pac
   }
 
   const result = JSON.parse(responseText);
-  console.log('✅ Shipment Created');
+  console.log('✅ Shipment Created (Multiguía)');
 
   // Extract data from response
   const shipmentData = result.data?.attributes || result.data || result;
-  let packageData = result.included?.find(i => i.type === 'package')?.attributes || {};
   const shipmentId = result.data?.id || shipmentData.id;
 
-  // Check if tracking number is available immediately
-  let trackingNumber = packageData.tracking_number || shipmentData.master_tracking_number;
-  let trackingUrl = packageData.tracking_url_provider;
-  let labelUrl = packageData.label_url;
+  // Extract ALL packages from response (for multiguía)
+  const allPackages = result.included?.filter(i => i.type === 'package') || [];
+  console.log(`   Found ${allPackages.length} package(s) in response`);
 
-  // If no tracking number, poll Skydropx to wait for it (max 15 seconds)
-  if (!trackingNumber && shipmentId) {
-    console.log('⏳ Tracking number not immediately available, polling...');
+  // Get master tracking number
+  let masterTrackingNumber = shipmentData.master_tracking_number;
+
+  // Build packages array with individual tracking numbers and labels
+  let packagesData = allPackages.map((pkg, index) => ({
+    package_number: index + 1,
+    tracking_number: pkg.attributes?.tracking_number,
+    tracking_url: pkg.attributes?.tracking_url_provider,
+    label_url: pkg.attributes?.label_url
+  }));
+
+  // If no packages data immediately, poll for it
+  if (packagesData.length === 0 || !packagesData[0]?.tracking_number) {
+    console.log('⏳ Package data not immediately available, polling...');
     const MAX_POLLS = 5;
-    const POLL_DELAY_MS = 3000; // 3 seconds
+    const POLL_DELAY_MS = 3000;
 
     for (let i = 0; i < MAX_POLLS; i++) {
       await new Promise(resolve => setTimeout(resolve, POLL_DELAY_MS));
@@ -309,38 +327,44 @@ export async function createShipment(quotationId, rateId, rate, destAddress, pac
         if (pollResponse.ok) {
           const pollResult = await pollResponse.json();
           const pollShipmentData = pollResult.data?.attributes || pollResult.data || pollResult;
-          const pollPackageData = pollResult.included?.find(item => item.type === 'package')?.attributes || {};
+          const pollPackages = pollResult.included?.filter(item => item.type === 'package') || [];
 
-          trackingNumber = pollPackageData.tracking_number || pollShipmentData.master_tracking_number;
-          trackingUrl = pollPackageData.tracking_url_provider || trackingUrl;
-          labelUrl = pollPackageData.label_url || labelUrl;
+          masterTrackingNumber = pollShipmentData.master_tracking_number || masterTrackingNumber;
 
-          if (trackingNumber) {
-            console.log(`✅ Tracking number retrieved after ${i + 1} poll(s): ${trackingNumber}`);
+          if (pollPackages.length > 0 && pollPackages[0].attributes?.tracking_number) {
+            packagesData = pollPackages.map((pkg, index) => ({
+              package_number: index + 1,
+              tracking_number: pkg.attributes?.tracking_number,
+              tracking_url: pkg.attributes?.tracking_url_provider,
+              label_url: pkg.attributes?.label_url
+            }));
+            console.log(`✅ Got ${packagesData.length} package(s) after ${i + 1} poll(s)`);
             break;
           }
-          console.log(`   Poll ${i + 1}/${MAX_POLLS}: Still waiting for tracking number...`);
+          console.log(`   Poll ${i + 1}/${MAX_POLLS}: Still waiting for package data...`);
         }
       } catch (pollError) {
         console.log(`   Poll ${i + 1}/${MAX_POLLS} failed:`, pollError.message);
       }
     }
-
-    if (!trackingNumber) {
-      console.log('⚠️ Tracking number not available after polling. Will be fetched later.');
-    }
   }
+
+  // For backward compatibility, also return first package data at top level
+  const firstPackage = packagesData[0] || {};
 
   return {
     shipment_id: shipmentId,
-    tracking_number: trackingNumber,
-    tracking_url: trackingUrl,
-    label_url: labelUrl,
+    master_tracking_number: masterTrackingNumber,
+    tracking_number: firstPackage.tracking_number || masterTrackingNumber,
+    tracking_url: firstPackage.tracking_url,
+    label_url: firstPackage.label_url,
     carrier: rate.carrier,
     service: rate.service,
     delivery_days: rate.days,
     shipping_cost: rate.total_price,
-    status: shipmentData.workflow_status || 'processing'
+    status: shipmentData.workflow_status || 'processing',
+    packages_count: packagesData.length || packagesCount,
+    packages: packagesData // All packages with their individual tracking/labels
   };
 }
 
