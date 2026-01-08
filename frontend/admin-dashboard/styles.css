@@ -5077,6 +5077,84 @@ textarea:disabled {
   background: var(--gray-200);
 }
 
+/* Shipping Rate Options */
+.ai-rates-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ai-rate-option {
+  background: white;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ai-rate-option:hover {
+  border-color: var(--primary);
+  background: #f8faff;
+}
+
+.ai-rate-option.selected {
+  border-color: #059669;
+  background: #ecfdf5;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+.ai-rate-option.recommended {
+  position: relative;
+}
+
+.ai-rate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.ai-rate-carrier {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--gray-800);
+}
+
+.ai-rate-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ai-rate-service {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-bottom: 8px;
+}
+
+.ai-rate-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-rate-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #059669;
+}
+
+.ai-rate-days {
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
 /* Client Selection in Chat */
 .ai-client-selection {
   display: flex;

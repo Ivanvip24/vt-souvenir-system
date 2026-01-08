@@ -1624,7 +1624,7 @@ router.delete('/pickups/:pickupId', async (req, res) => {
 // ========================================
 router.post('/clients/:clientId/generate', async (req, res) => {
   const { clientId } = req.params;
-  const { labelsCount = 1, notes } = req.body;
+  const { labelsCount = 1, notes, quotationId, rateId, selectedRate } = req.body;
 
   try {
     // Get client info
@@ -1740,16 +1740,30 @@ router.post('/clients/:clientId/generate', async (req, res) => {
       });
     }
 
-    // Auto-select best (cheapest) rate
-    const selectedRate = skydropx.selectBestRate(quote.rates);
+    // Use pre-selected rate if provided, otherwise auto-select cheapest
+    let finalRate;
+    let finalQuotationId;
+
+    if (quotationId && rateId && selectedRate) {
+      // Use the rate selected by the user
+      console.log(`📦 Using pre-selected rate: ${selectedRate.carrier} - ${selectedRate.service}`);
+      finalRate = selectedRate;
+      finalQuotationId = quotationId;
+    } else {
+      // Auto-select best (cheapest) rate
+      console.log(`📦 Auto-selecting cheapest rate`);
+      finalRate = skydropx.selectBestRate(quote.rates);
+      finalQuotationId = quote.quotation_id;
+    }
 
     // Generate ONE shipment with multiple packages (MULTIGUÍA)
     console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for client ${client.name}`);
+    console.log(`   Carrier: ${finalRate.carrier} - ${finalRate.service} - $${finalRate.total_price}`);
 
     const shipment = await skydropx.createShipment(
-      quote.quotation_id,
-      selectedRate.rate_id,
-      selectedRate,
+      finalQuotationId,
+      finalRate.rate_id,
+      finalRate,
       destAddress,
       skydropx.DEFAULT_PACKAGE,
       labelsCount  // Number of packages in this multiguía
@@ -1774,8 +1788,8 @@ router.post('/clients/:clientId/generate', async (req, res) => {
       `, [
         clientId,
         shipment.shipment_id,
-        quote.quotation_id,
-        selectedRate.rate_id,
+        finalQuotationId,
+        finalRate.rate_id,
         pkg.tracking_number || shipment.tracking_number,
         pkg.tracking_url || shipment.tracking_url,
         pkg.label_url || shipment.label_url,
@@ -1842,6 +1856,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
 // ========================================
 router.get('/clients/:clientId/quotes', async (req, res) => {
   const { clientId } = req.params;
+  const packagesCount = parseInt(req.query.packagesCount) || 1;
 
   try {
     // Get client info
@@ -1882,10 +1897,10 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
       reference_notes: client.reference_notes
     };
 
-    console.log(`📦 Getting shipping quotes for client ${client.name}`);
+    console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
 
-    // Get quote from Skydropx
-    const quote = await skydropx.getQuote(destAddress);
+    // Get quote from Skydropx (with package count for multiguía)
+    const quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
 
     if (!quote.rates || quote.rates.length === 0) {
       return res.status(400).json({

@@ -608,13 +608,27 @@ function showShippingLabelModal(action) {
         buttonTitle = 'title="Selecciona un cliente"';
     }
 
+    // Rates selection section (hidden initially, shown after getting quotes)
+    modalHtml += `
+            <div id="ai-rates-section" class="ai-action-section" style="display: none;">
+                <label>OPCIONES DE ENVÍO</label>
+                <div id="ai-rates-container" class="ai-rates-container">
+                    <!-- Rates will be loaded here -->
+                </div>
+            </div>
+    `;
+
     modalHtml += `
                 </div>
                 <div class="ai-action-modal-footer">
                     <button onclick="closeAiActionModal()" class="ai-action-btn secondary">Cancelar</button>
-                    <button onclick="executeCreateShippingLabels()" class="ai-action-btn primary"
+                    <button id="ai-quote-btn" onclick="getShippingQuotes()" class="ai-action-btn primary"
                             ${buttonDisabled} ${buttonTitle}>
-                        ${buttonText}
+                        💰 Cotizar Envío
+                    </button>
+                    <button id="ai-create-btn" onclick="executeCreateShippingLabels()" class="ai-action-btn primary"
+                            style="display: none;" disabled>
+                        📦 Crear Guías
                     </button>
                 </div>
             </div>
@@ -708,6 +722,105 @@ async function selectClientForAction(clientId, clientName) {
     }
 }
 
+// Store selected quote data
+let selectedQuoteData = null;
+
+/**
+ * Get shipping quotes and display options
+ */
+async function getShippingQuotes() {
+    const labelsCount = parseInt(document.getElementById('ai-action-labels-count')?.value || 1);
+    let clientId = currentAction?.data?.client?.id;
+
+    if (!clientId) {
+        alert('No se encontró el cliente');
+        return;
+    }
+
+    // Show loading state
+    const quoteBtn = document.getElementById('ai-quote-btn');
+    const originalText = quoteBtn.innerHTML;
+    quoteBtn.innerHTML = '⏳ Cotizando...';
+    quoteBtn.disabled = true;
+
+    try {
+        const token = localStorage.getItem('admin_token');
+        const response = await fetch(`${API_BASE}/shipping/clients/${clientId}/quotes?packagesCount=${labelsCount}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Error obteniendo cotizaciones');
+        }
+
+        // Store quote data
+        selectedQuoteData = {
+            quotationId: result.quotation_id,
+            rates: result.rates,
+            selectedRate: null
+        };
+
+        // Show rates section
+        const ratesSection = document.getElementById('ai-rates-section');
+        const ratesContainer = document.getElementById('ai-rates-container');
+
+        let ratesHtml = '';
+        result.rates.forEach((rate, index) => {
+            ratesHtml += `
+                <div class="ai-rate-option ${index === 0 ? 'recommended' : ''}"
+                     onclick="selectShippingRate(${index})"
+                     data-rate-index="${index}">
+                    <div class="ai-rate-header">
+                        <span class="ai-rate-carrier">${rate.carrier}</span>
+                        ${index === 0 ? '<span class="ai-rate-badge">Más económico</span>' : ''}
+                    </div>
+                    <div class="ai-rate-service">${rate.service}</div>
+                    <div class="ai-rate-details">
+                        <span class="ai-rate-price">${rate.priceFormatted}</span>
+                        <span class="ai-rate-days">📅 ${rate.daysText}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        ratesContainer.innerHTML = ratesHtml;
+        ratesSection.style.display = 'block';
+
+        // Hide quote button, show create button (disabled until rate selected)
+        quoteBtn.style.display = 'none';
+        document.getElementById('ai-create-btn').style.display = 'inline-flex';
+
+    } catch (error) {
+        console.error('Error getting quotes:', error);
+        alert(`Error al cotizar: ${error.message}`);
+        quoteBtn.innerHTML = originalText;
+        quoteBtn.disabled = false;
+    }
+}
+
+/**
+ * Select a shipping rate
+ */
+function selectShippingRate(index) {
+    if (!selectedQuoteData || !selectedQuoteData.rates[index]) return;
+
+    // Update selection visually
+    document.querySelectorAll('.ai-rate-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`[data-rate-index="${index}"]`).classList.add('selected');
+
+    // Store selected rate
+    selectedQuoteData.selectedRate = selectedQuoteData.rates[index];
+
+    // Enable create button
+    const createBtn = document.getElementById('ai-create-btn');
+    createBtn.disabled = false;
+    createBtn.innerHTML = `📦 Crear Guías (${selectedQuoteData.selectedRate.priceFormatted})`;
+}
+
 /**
  * Close action modal
  */
@@ -718,6 +831,7 @@ function closeAiActionModal(event) {
         modal.remove();
     }
     currentAction = null;
+    selectedQuoteData = null;
 }
 
 /**
@@ -759,12 +873,22 @@ async function executeCreateShippingLabels() {
         return;
     }
 
+    // Verify rate is selected for client endpoint
+    if (useClientEndpoint && (!selectedQuoteData || !selectedQuoteData.selectedRate)) {
+        alert('Por favor selecciona una opción de envío');
+        return;
+    }
+
+    // Store quote data before closing modal (which clears it)
+    const quoteData = selectedQuoteData ? { ...selectedQuoteData } : null;
+
     // Close modal and show progress in chat
     closeAiActionModal();
 
+    const carrierInfo = quoteData?.selectedRate ? ` con ${quoteData.selectedRate.carrier}` : '';
     const progressMessage = orderId
-        ? `⏳ Generando ${labelsCount} guía(s) para el pedido ${orderNumber}...`
-        : `⏳ Generando ${labelsCount} guía(s) para ${clientName}...`;
+        ? `⏳ Generando ${labelsCount} guía(s) para el pedido ${orderNumber}${carrierInfo}...`
+        : `⏳ Generando ${labelsCount} guía(s) para ${clientName}${carrierInfo}...`;
     addMessageToChat('assistant', progressMessage);
 
     try {
@@ -775,16 +899,26 @@ async function executeCreateShippingLabels() {
             ? `${API_BASE}/shipping/clients/${clientId}/generate`
             : `${API_BASE}/shipping/orders/${orderId}/generate`;
 
+        // Build request body with selected rate if available
+        const requestBody = {
+            labelsCount,
+            notes: useClientEndpoint ? `Guía generada desde AI Assistant` : undefined
+        };
+
+        // Include selected rate data if available
+        if (quoteData && quoteData.selectedRate) {
+            requestBody.quotationId = quoteData.quotationId;
+            requestBody.rateId = quoteData.selectedRate.rate_id;
+            requestBody.selectedRate = quoteData.selectedRate;
+        }
+
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({
-                labelsCount,
-                notes: useClientEndpoint ? `Guía generada desde AI Assistant` : undefined
-            })
+            body: JSON.stringify(requestBody)
         });
 
         const result = await response.json();
@@ -986,3 +1120,5 @@ window.executeCreateShippingLabels = executeCreateShippingLabels;
 window.selectClientForAction = selectClientForAction;
 window.searchClientsForModal = searchClientsForModal;
 window.selectClientInModal = selectClientInModal;
+window.getShippingQuotes = getShippingQuotes;
+window.selectShippingRate = selectShippingRate;
