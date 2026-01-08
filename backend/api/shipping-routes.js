@@ -1616,8 +1616,8 @@ router.post('/clients/:clientId/generate', async (req, res) => {
           order_id, client_id, shipment_id, quotation_id, rate_id,
           tracking_number, tracking_url, label_url,
           carrier, service, delivery_days, shipping_cost,
-          package_number, status, notes, label_generated_at
-        ) VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
+          package_number, status, label_generated_at
+        ) VALUES (NULL, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP)
         RETURNING *
       `, [
         clientId,
@@ -1632,8 +1632,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
         shipment.delivery_days,
         shipment.shipping_cost,
         i + 1,
-        shipment.label_url ? 'label_generated' : 'processing',
-        notes || `Guía manual para ${client.name}`
+        shipment.label_url ? 'label_generated' : 'processing'
       ]);
 
       generatedLabels.push(insertResult.rows[0]);
