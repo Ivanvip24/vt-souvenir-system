@@ -1541,33 +1541,57 @@ router.post('/clients/:clientId/generate', async (req, res) => {
     };
 
     console.log(`📦 Generating ${labelsCount} shipping label(s) for client ${client.name} (no order)`);
+    console.log(`   Address: ${destAddress.street} ${destAddress.street_number}, ${destAddress.colonia}, ${destAddress.city}, ${destAddress.state} CP ${destAddress.postal}`);
 
-    // Get quote for shipping
+    // Get quote for shipping - with retry for empty rates
     let quote;
-    try {
-      quote = await skydropx.getQuote(destAddress);
-    } catch (quoteError) {
-      console.error('❌ Skydropx quote error:', quoteError.message);
-      return res.status(400).json({
-        success: false,
-        error: `Error al cotizar envío: ${quoteError.message}. Verifica que la dirección sea correcta.`,
-        address: {
-          street: destAddress.street,
-          city: destAddress.city,
-          state: destAddress.state,
-          postal: destAddress.postal
+    const MAX_QUOTE_RETRIES = 3;
+
+    for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
+      try {
+        console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
+        quote = await skydropx.getQuote(destAddress);
+
+        if (quote.rates && quote.rates.length > 0) {
+          console.log(`   ✅ Got ${quote.rates.length} rate(s)`);
+          break; // Success!
         }
-      });
+
+        // Empty rates - retry after clearing token cache
+        console.log(`   ⚠️ Empty rates on attempt ${attempt}, retrying...`);
+        if (attempt < MAX_QUOTE_RETRIES) {
+          // Small delay before retry
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      } catch (quoteError) {
+        console.error(`   ❌ Quote attempt ${attempt} error:`, quoteError.message);
+        if (attempt === MAX_QUOTE_RETRIES) {
+          return res.status(400).json({
+            success: false,
+            error: `Error al cotizar envío: ${quoteError.message}. Verifica que la dirección sea correcta.`,
+            address: {
+              street: destAddress.street,
+              city: destAddress.city,
+              state: destAddress.state,
+              postal: destAddress.postal
+            }
+          });
+        }
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
     }
 
-    if (!quote.rates || quote.rates.length === 0) {
+    if (!quote || !quote.rates || quote.rates.length === 0) {
+      console.error(`❌ No rates after ${MAX_QUOTE_RETRIES} attempts for: ${client.city}, ${client.state} CP ${postal}`);
       return res.status(400).json({
         success: false,
-        error: `No hay cobertura de envío para: ${client.city}, ${client.state} CP ${postal}. Verifica que el código postal sea correcto.`,
+        error: `No hay tarifas de envío disponibles para: ${client.city}, ${client.state} CP ${postal}. Intenta de nuevo en unos segundos o verifica la dirección.`,
         address: {
           city: client.city,
           state: client.state,
-          postal: postal
+          postal: postal,
+          street: client.street
         }
       });
     }
