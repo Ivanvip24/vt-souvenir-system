@@ -447,6 +447,7 @@ function showShippingLabelModal(action) {
     const client = data.client;
     const order = data.order || data.suggestedOrder;
     const labelsCount = data.labelsCount || 1;
+    const searchTerm = data.searchTerm || '';
 
     let modalHtml = `
         <div id="ai-action-modal" class="ai-action-modal" onclick="closeAiActionModal(event)">
@@ -458,7 +459,26 @@ function showShippingLabelModal(action) {
                 <div class="ai-action-modal-body">
     `;
 
-    // Client info
+    // If no client found, show search box
+    if (!client) {
+        modalHtml += `
+            <div class="ai-action-section">
+                <label>Buscar Cliente</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="ai-client-search" class="ai-action-input"
+                           placeholder="Nombre, teléfono o ciudad..."
+                           value="${searchTerm}"
+                           onkeypress="if(event.key==='Enter') searchClientsForModal()">
+                    <button onclick="searchClientsForModal()" class="ai-action-btn primary" style="white-space: nowrap;">
+                        🔍 Buscar
+                    </button>
+                </div>
+                <div id="ai-client-search-results" class="ai-client-search-results"></div>
+            </div>
+        `;
+    }
+
+    // Client info (if found)
     if (client) {
         const hasAddress = client.street && client.city && client.state && (client.postal || client.postal_code);
         const postalCode = client.postal || client.postal_code || '';
@@ -850,9 +870,100 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🤖 AI Assistant initialized with action support');
 });
 
+/**
+ * Search clients from within the modal
+ */
+async function searchClientsForModal() {
+    const searchInput = document.getElementById('ai-client-search');
+    const resultsDiv = document.getElementById('ai-client-search-results');
+    const searchTerm = searchInput?.value?.trim();
+
+    if (!searchTerm || searchTerm.length < 2) {
+        resultsDiv.innerHTML = '<p style="color: #6b7280; font-size: 13px;">Escribe al menos 2 caracteres</p>';
+        return;
+    }
+
+    resultsDiv.innerHTML = '<p style="color: #6b7280;">Buscando...</p>';
+
+    try {
+        const token = localStorage.getItem('admin_token');
+        const response = await fetch(`${API_BASE}/clients?search=${encodeURIComponent(searchTerm)}&limit=10`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+
+        if (result.success && result.clients && result.clients.length > 0) {
+            let html = '';
+            result.clients.forEach(client => {
+                const location = [client.city, client.state].filter(Boolean).join(', ') || 'Sin ubicación';
+                const hasAddress = client.city && client.state && (client.postal || client.postal_code);
+                html += `
+                    <div class="ai-client-result ${!hasAddress ? 'no-address' : ''}"
+                         onclick="selectClientInModal(${client.id})">
+                        <div class="ai-client-result-name">${client.name}</div>
+                        <div class="ai-client-result-info">
+                            📍 ${location}
+                            ${client.phone ? ` • 📱 ${client.phone}` : ''}
+                            ${!hasAddress ? '<span style="color: #f59e0b;"> ⚠️ Dirección incompleta</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            resultsDiv.innerHTML = html;
+        } else {
+            resultsDiv.innerHTML = '<p style="color: #ef4444;">No se encontraron clientes</p>';
+        }
+    } catch (error) {
+        console.error('Error searching clients:', error);
+        resultsDiv.innerHTML = '<p style="color: #ef4444;">Error al buscar</p>';
+    }
+}
+
+/**
+ * Select a client from search results in modal
+ */
+async function selectClientInModal(clientId) {
+    try {
+        const token = localStorage.getItem('admin_token');
+        const response = await fetch(`${API_BASE}/clients/${clientId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            const client = result.data;
+
+            // Update currentAction with selected client
+            if (currentAction) {
+                currentAction.data.client = client;
+            }
+
+            // Close current modal and reopen with client data
+            const labelsCount = document.getElementById('ai-action-labels-count')?.value || 1;
+            closeAiActionModal();
+
+            // Create new action with client
+            const newAction = {
+                type: 'create_shipping_labels',
+                data: {
+                    client: client,
+                    labelsCount: parseInt(labelsCount)
+                }
+            };
+            currentAction = newAction;
+            showShippingLabelModal(newAction);
+        }
+    } catch (error) {
+        console.error('Error selecting client:', error);
+        alert('Error al seleccionar cliente');
+    }
+}
+
 // Export action functions globally
 window.handleAiAction = handleAiAction;
 window.showShippingLabelModal = showShippingLabelModal;
 window.closeAiActionModal = closeAiActionModal;
 window.executeCreateShippingLabels = executeCreateShippingLabels;
 window.selectClientForAction = selectClientForAction;
+window.searchClientsForModal = searchClientsForModal;
+window.selectClientInModal = selectClientInModal;
