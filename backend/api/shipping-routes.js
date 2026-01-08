@@ -1899,13 +1899,15 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
     console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
 
-    // Get quote from Skydropx with retry logic for empty rates
+    // Quote for 1 parcel to get ALL available carriers (some don't support multi-parcel quotes)
+    // We'll multiply the price by packagesCount for display
     let quote;
     const MAX_QUOTE_RETRIES = 3;
 
     for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
       console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
-      quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
+      // Quote for 1 parcel to see all carrier options
+      quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1);
 
       if (quote.rates && quote.rates.length > 0) {
         console.log(`   ✅ Got ${quote.rates.length} rate(s)`);
@@ -1924,23 +1926,31 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
       });
     }
 
-    // Show ALL available carriers - no filter, just sort by price
+    // Show ALL available carriers - no filter, just sort by total price (price × packages)
     const sortedRates = quote.rates.sort((a, b) => a.total_price - b.total_price);
 
-    const formattedRates = sortedRates.map((rate, index) => ({
-      rate_id: rate.rate_id,
-      carrier: rate.carrier,
-      service: rate.service,
-      price: rate.total_price,
-      priceFormatted: `$${rate.total_price.toFixed(2)}`,
-      days: rate.days,
-      daysText: rate.days === 1 ? '1 día' : `${rate.days} días`,
-      isCheapest: index === 0
-    }));
+    // Calculate total price for all packages
+    const formattedRates = sortedRates.map((rate, index) => {
+      const totalPrice = rate.total_price * packagesCount;
+      const pricePerPackage = rate.total_price;
+      return {
+        rate_id: rate.rate_id,
+        carrier: rate.carrier,
+        service: rate.service,
+        price: totalPrice,
+        pricePerPackage: pricePerPackage,
+        priceFormatted: `$${totalPrice.toFixed(2)}`,
+        pricePerPackageFormatted: `$${pricePerPackage.toFixed(2)}`,
+        days: rate.days,
+        daysText: rate.days === 1 ? '1 día' : `${rate.days} días`,
+        isCheapest: index === 0
+      };
+    });
 
     res.json({
       success: true,
       quotation_id: quote.quotation_id,
+      packagesCount: packagesCount,
       rates: formattedRates,
       client: {
         id: client.id,

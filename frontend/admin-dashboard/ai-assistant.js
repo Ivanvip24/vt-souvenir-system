@@ -760,6 +760,7 @@ async function getShippingQuotes() {
         // Store quote data
         selectedQuoteData = {
             quotationId: result.quotation_id,
+            packagesCount: result.packagesCount || labelsCount,
             rates: result.rates,
             selectedRate: null
         };
@@ -767,9 +768,13 @@ async function getShippingQuotes() {
         // Show rates section
         const ratesSection = document.getElementById('ai-rates-section');
         const ratesContainer = document.getElementById('ai-rates-container');
+        const pkgCount = result.packagesCount || labelsCount;
 
         let ratesHtml = '';
         result.rates.forEach((rate, index) => {
+            const priceBreakdown = pkgCount > 1
+                ? `<div class="ai-rate-breakdown">${rate.pricePerPackageFormatted} × ${pkgCount} cajas</div>`
+                : '';
             ratesHtml += `
                 <div class="ai-rate-option ${index === 0 ? 'recommended' : ''}"
                      onclick="selectShippingRate(${index})"
@@ -780,7 +785,10 @@ async function getShippingQuotes() {
                     </div>
                     <div class="ai-rate-service">${rate.service}</div>
                     <div class="ai-rate-details">
-                        <span class="ai-rate-price">${rate.priceFormatted}</span>
+                        <div>
+                            <span class="ai-rate-price">${rate.priceFormatted}</span>
+                            ${priceBreakdown}
+                        </div>
                         <span class="ai-rate-days">📅 ${rate.daysText}</span>
                     </div>
                 </div>
