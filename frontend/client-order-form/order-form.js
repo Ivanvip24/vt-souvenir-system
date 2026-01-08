@@ -1184,8 +1184,6 @@ function createProductCard(product) {
       </div>
     </div>
 
-    ${product.description ? `<p style="font-size: 14px; color: var(--gray-600); margin-bottom: 12px;">${product.description}</p>` : ''}
-
     <!-- Tier Information -->
     <div class="tier-info" id="tier-${product.id}">
       ${tierInfo ? `
