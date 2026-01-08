@@ -575,17 +575,24 @@ async function editClient(clientId) {
     const modal = document.getElementById('client-modal');
     const title = document.getElementById('client-modal-title');
 
-    if (!modal) return;
+    if (!modal) {
+      console.error('Client modal not found');
+      showNotification('Error: Modal no encontrado', 'error');
+      return;
+    }
 
-    // Populate form
+    // Populate form with all address fields
     document.getElementById('client_id').value = client.id;
     document.getElementById('client_name').value = client.name || '';
     document.getElementById('client_phone').value = client.phone || '';
     document.getElementById('client_email').value = client.email || '';
-    document.getElementById('client_address').value = client.address || '';
+    document.getElementById('client_street').value = client.street || '';
+    document.getElementById('client_street_number').value = client.street_number || '';
+    document.getElementById('client_colonia').value = client.colonia || '';
     document.getElementById('client_city').value = client.city || '';
     document.getElementById('client_state').value = client.state || '';
-    document.getElementById('client_postal_code').value = client.postal_code || '';
+    document.getElementById('client_postal_code').value = client.postal_code || client.postal || '';
+    document.getElementById('client_reference_notes').value = client.reference_notes || '';
 
     if (title) title.textContent = 'Editar Cliente';
 
@@ -599,17 +606,19 @@ async function editClient(clientId) {
 async function saveClient(event) {
   event.preventDefault();
 
-  const form = event.target;
   const clientId = document.getElementById('client_id').value;
 
   const data = {
     name: document.getElementById('client_name').value,
     phone: document.getElementById('client_phone').value || null,
     email: document.getElementById('client_email').value || null,
-    address: document.getElementById('client_address').value || null,
+    street: document.getElementById('client_street').value || null,
+    street_number: document.getElementById('client_street_number').value || null,
+    colonia: document.getElementById('client_colonia').value || null,
     city: document.getElementById('client_city').value || null,
     state: document.getElementById('client_state').value || null,
-    postal_code: document.getElementById('client_postal_code').value || null
+    postal_code: document.getElementById('client_postal_code').value || null,
+    reference_notes: document.getElementById('client_reference_notes').value || null
   };
 
   try {
@@ -1133,3 +1142,5 @@ window.executeClientImport = executeClientImport;
 window.editClient = editClient;
 window.deleteClient = deleteClient;
 window.showClientDetailPopup = showClientDetailPopup;
+window.closeClientModal = closeClientModal;
+window.saveClient = saveClient;

@@ -3362,21 +3362,24 @@ app.post('/api/clients', async (req, res) => {
 app.put('/api/clients/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, phone, email, address, city, state, postal_code } = req.body;
+    const { name, phone, email, street, street_number, colonia, city, state, postal_code, reference_notes } = req.body;
 
     const result = await query(`
       UPDATE clients
       SET name = COALESCE($1, name),
           phone = COALESCE($2, phone),
           email = COALESCE($3, email),
-          address = COALESCE($4, address),
-          city = COALESCE($5, city),
-          state = COALESCE($6, state),
-          postal_code = COALESCE($7, postal_code),
+          street = COALESCE($4, street),
+          street_number = COALESCE($5, street_number),
+          colonia = COALESCE($6, colonia),
+          city = COALESCE($7, city),
+          state = COALESCE($8, state),
+          postal_code = COALESCE($9, postal_code),
+          reference_notes = COALESCE($10, reference_notes),
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $8
+      WHERE id = $11
       RETURNING *
-    `, [name, phone, email, address, city, state, postal_code, id]);
+    `, [name, phone, email, street, street_number, colonia, city, state, postal_code, reference_notes, id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Client not found' });
