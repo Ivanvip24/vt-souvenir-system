@@ -1899,30 +1899,35 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
     console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
 
-    // Get quote from Skydropx (with package count for multiguía)
-    const quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
+    // Get quote from Skydropx with retry logic for empty rates
+    let quote;
+    const MAX_QUOTE_RETRIES = 3;
 
-    if (!quote.rates || quote.rates.length === 0) {
+    for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
+      console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
+      quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
+
+      if (quote.rates && quote.rates.length > 0) {
+        console.log(`   ✅ Got ${quote.rates.length} rate(s)`);
+        break;
+      }
+
+      console.log(`   ⚠️ Empty rates on attempt ${attempt}, retrying...`);
+      if (attempt < MAX_QUOTE_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+    }
+
+    if (!quote || !quote.rates || quote.rates.length === 0) {
       return res.status(400).json({
-        error: 'No hay tarifas de envío disponibles para esta dirección'
+        error: 'No hay tarifas de envío disponibles para esta dirección. Intenta de nuevo.'
       });
     }
 
-    // Filter and format rates
-    const ALLOWED_CARRIERS = ['Estafeta', 'FedEx', 'Paquetexpress'];
-    const MAX_OPTIONS_TO_SHOW = 5;
+    // Show ALL available carriers - no filter, just sort by price
+    const sortedRates = quote.rates.sort((a, b) => a.total_price - b.total_price);
 
-    let filteredRates = quote.rates
-      .filter(rate => {
-        const isAllowedCarrier = ALLOWED_CARRIERS.some(
-          allowed => rate.carrier.toLowerCase().includes(allowed.toLowerCase())
-        );
-        return isAllowedCarrier;
-      })
-      .sort((a, b) => a.total_price - b.total_price)
-      .slice(0, MAX_OPTIONS_TO_SHOW);
-
-    const formattedRates = filteredRates.map((rate, index) => ({
+    const formattedRates = sortedRates.map((rate, index) => ({
       rate_id: rate.rate_id,
       carrier: rate.carrier,
       service: rate.service,
