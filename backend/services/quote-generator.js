@@ -222,19 +222,25 @@ export async function generateQuotePDF(quoteData) {
 
       // Calculate totals
       let subtotal = 0;
+      let totalPieces = 0;
       const validItems = quoteData.items.filter(item => !item.belowMinimum);
       const invalidItems = quoteData.items.filter(item => item.belowMinimum);
 
       for (const item of validItems) {
         subtotal += item.subtotal;
+        totalPieces += item.quantity;
       }
 
-      // Apply any discounts or shipping
-      const shippingEstimate = quoteData.includeShipping ? 350 : 0;
+      // Free shipping for orders >= 300 pieces
+      const freeShipping = totalPieces >= 300;
+      const shippingEstimate = 0; // Shipping quoted separately if needed
       const total = subtotal + shippingEstimate;
 
-      // Validity date
-      const validityDays = quoteData.validityDays || 15;
+      // Calculate 50% deposit
+      const depositAmount = Math.ceil(total * 0.5);
+
+      // Validity date (default 3 days)
+      const validityDays = quoteData.validityDays || 3;
       const validUntil = new Date(now);
       validUntil.setDate(validUntil.getDate() + validityDays);
 
@@ -437,7 +443,28 @@ export async function generateQuotePDF(quoteData) {
       doc.text('TOTAL:', 355, itemY + 5);
       doc.text(formatCurrency(total), 355, itemY + 5, { width: 195, align: 'right' });
 
-      itemY += 50;
+      itemY += 45;
+
+      // Deposit amount box (50% anticipo)
+      doc.roundedRect(340, itemY - 5, 220, 30, 3)
+         .fillAndStroke(COLORS.warningBg, '#f59e0b');
+
+      doc.fontSize(11)
+         .fillColor(COLORS.warningOrange)
+         .font('Helvetica-Bold');
+      doc.text('ANTICIPO (50%):', 355, itemY + 3);
+      doc.text(formatCurrency(depositAmount), 355, itemY + 3, { width: 195, align: 'right' });
+
+      itemY += 40;
+
+      // Free shipping notice if applicable
+      if (freeShipping) {
+        doc.fontSize(10)
+           .fillColor(COLORS.successGreen)
+           .font('Helvetica-Bold')
+           .text('✓ ¡Envío GRATIS incluido! (pedido de ' + totalPieces.toLocaleString('es-MX') + ' piezas)', 50, itemY, { align: 'center', width: 510 });
+        itemY += 20;
+      }
 
       // ============================================
       // PRICE BREAKDOWN / TIERS INFO
@@ -486,8 +513,7 @@ export async function generateQuotePDF(quoteData) {
         '• Precios en pesos mexicanos (MXN), no incluyen IVA.',
         '• Se requiere anticipo del 50% para iniciar producción.',
         '• Tiempo de producción: 5-7 días hábiles después del anticipo.',
-        '• Envío no incluido (se cotiza según destino).',
-        '• Los diseños deben enviarse en alta resolución (300 DPI mínimo).'
+        '• Envío incluido en pedidos de 300+ piezas. Otros envíos se cotizan según destino.'
       ];
 
       for (const term of terms) {
@@ -508,7 +534,7 @@ export async function generateQuotePDF(quoteData) {
       doc.fontSize(9)
          .fillColor(COLORS.textGray)
          .font('Helvetica')
-         .text('WhatsApp: +52 961 123 4567 | Email: ventas@axkan.com', { align: 'center' });
+         .text('WhatsApp: 55 3825 3251 | Email: informacion@axkan.art', { align: 'center' });
 
       doc.moveDown(0.3);
       doc.fontSize(7)
@@ -621,8 +647,8 @@ export function getPricingInfo() {
     notes: {
       production: '5-7 días hábiles',
       deposit: '50% anticipo',
-      shipping: 'No incluido',
-      validity: '15 días'
+      shipping: 'Incluido en pedidos de 300+ piezas',
+      validity: '3 días'
     }
   };
 }
