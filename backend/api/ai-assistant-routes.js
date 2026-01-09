@@ -493,17 +493,24 @@ Cuando el usuario pida crear una cotización o "cotizar" productos, debes:
 - **Imanes MDF Chico**: $8/u (50-999 pzas) → $6/u (1000+ pzas)
 - **Imanes MDF Mediano**: $11/u (50-999 pzas) → $8/u (1000+ pzas)
 - **Imanes MDF Grande**: $15/u (50-999 pzas) → $12/u (1000+ pzas)
+- **Imanes 3D**: $15/u (100-999 pzas) → $12/u (1000+ pzas) - Mínimo 100 pzas
+- **Imanes Foil Metálico**: $15/u (100-999 pzas) → $12/u (1000+ pzas) - Mínimo 100 pzas
 - **Llaveros MDF**: $10/u (50-999 pzas) → $8/u (1000+ pzas)
-- **Destapadores MDF**: $20/u (50-999 pzas) → $17/u (1000+ pzas)
+- **Destapadores MDF**: $20/u (50-499 pzas) → $17/u (500-999 pzas) → $15/u (1000+ pzas)
 - **Portallaves MDF**: $40/u (mín. 20 pzas)
 - **Souvenir Box**: $2,250/u (sin mínimo)
 - **Botones Metálicos**: $8/u (50-999 pzas) → $6/u (1000+ pzas)
+
+**PRECIOS ESPECIALES/DESCUENTOS:**
+Cuando el usuario especifique precios personalizados (ej: "Llavero $6", "Iman en $8", "3D $25"), DEBES incluir estos en el texto de la acción para que el sistema los aplique. Estos se marcarán como "Precio Especial" en el PDF.
 
 **Ejemplos de solicitudes de cotización:**
 - "Cotiza 50 imanes y 30 llaveros"
 - "Crea una cotización de 100 imanes grandes para María García"
 - "Cuánto cuesta 200 destapadores y 100 llaveros?"
 - "Dame una cotización de 50 imanes chicos"
+- "Cotiza 1000 llaveros, 500 destapadores con Llavero $6 Destapador $16" (precios especiales)
+- "100 imanes 3D y 100 imanes foil con 3D $25 Foil $25" (precios especiales)
 
 **Cuando detectes una solicitud de cotización, incluye este bloque en tu respuesta:**
 
@@ -706,7 +713,7 @@ router.post('/chat', async (req, res) => {
               clientEmail: action.clientEmail || null,
               items,
               notes: action.notes || null,
-              validityDays: 15,
+              validityDays: 3,
               includeShipping: false
             });
 

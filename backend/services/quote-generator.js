@@ -146,12 +146,18 @@ function parseCustomPrices(text) {
   const customPrices = {};
   const textLower = text.toLowerCase();
 
-  // Pattern to match: product + price (e.g., "Llavero $6", "iman en $8", "destapador a $16")
+  // Pattern 1: product + optional type + price (e.g., "Llavero $6", "iman 3d $25", "destapador a $16")
   const pricePatterns = [
     // Product + "en/a/$" + price: "llavero en $6", "iman $8", "destapador a $16"
     /(imanes?|imán|magnetos?|llaveros?|destapadores?|abridores?|portallaves?|porta[\s-]?llaves|souvenir\s*box|botones?)\s*(3d|foil\s*metálico|foil\s*metalico|foil)?\s*(?:en|a)?\s*\$\s*([\d.]+)/gi,
   ];
 
+  // Pattern 2: standalone special types with price (e.g., "3D $25", "foil $25")
+  const specialTypePatterns = [
+    /(3d|foil\s*metálico|foil\s*metalico|foil)\s*(?:en|a)?\s*\$\s*([\d.]+)/gi,
+  ];
+
+  // First parse product patterns
   for (const pattern of pricePatterns) {
     let match;
     while ((match = pattern.exec(textLower)) !== null) {
@@ -179,6 +185,28 @@ function parseCustomPrices(text) {
           }
         }
         customPrices[productKey] = price;
+      }
+    }
+  }
+
+  // Then parse standalone special type patterns (3D $25, foil $25)
+  for (const pattern of specialTypePatterns) {
+    let match;
+    while ((match = pattern.exec(textLower)) !== null) {
+      const specialType = match[1].trim();
+      const price = parseFloat(match[2]);
+
+      if (!isNaN(price)) {
+        // Map special type to product key
+        for (const [alias, key] of Object.entries(SPECIAL_PRODUCT_TYPES)) {
+          if (specialType.includes(alias) || alias.includes(specialType)) {
+            // Only set if not already set by the more specific pattern
+            if (!customPrices[key]) {
+              customPrices[key] = price;
+            }
+            break;
+          }
+        }
       }
     }
   }
