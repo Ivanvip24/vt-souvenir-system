@@ -459,6 +459,8 @@ function renderOrders() {
 
   if (state.filteredOrders.length === 0) {
     emptyState.classList.remove('hidden');
+    // Refresh Lucide icons for empty state
+    if (window.refreshIcons) window.refreshIcons();
     return;
   }
 
@@ -468,6 +470,9 @@ function renderOrders() {
     const card = createOrderCard(order);
     container.appendChild(card);
   });
+
+  // Refresh Lucide icons after rendering
+  if (window.refreshIcons) window.refreshIcons();
 }
 
 function createOrderCard(order) {

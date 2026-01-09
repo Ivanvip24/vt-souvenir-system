@@ -9,15 +9,32 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Chart.js for analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-        // Authentication check - runs before page loads
-        (function() {
+        // Authentication check - validates token with backend
+        (async function() {
             const token = localStorage.getItem('admin_token');
             if (!token) {
-                // No token, redirect to login
                 window.location.href = 'login.html';
+                return;
+            }
+            // Verify token is valid with backend
+            const API_BASE = window.location.hostname === 'localhost'
+                ? 'http://localhost:3000/api'
+                : 'https://vt-souvenir-backend.onrender.com/api';
+            try {
+                const response = await fetch(`${API_BASE}/admin/verify`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    localStorage.removeItem('admin_token');
+                    window.location.href = 'login.html';
+                }
+            } catch (e) {
+                console.warn('Auth verification failed, continuing with cached token');
             }
         })();
     </script>
@@ -26,111 +43,123 @@
     <!-- Header -->
     <header class="dashboard-header">
         <div class="header-content">
+            <!-- Mobile Menu Button -->
+            <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+                <i data-lucide="menu" class="icon"></i>
+            </button>
             <div class="logo-area">
-                <img src="../assets/images/LOGO-01.png" alt="AXKAN" class="logo-image" style="height: 48px; width: auto;">
-                <div>
+                <img src="../assets/images/LOGO-01.png" alt="AXKAN" class="logo-image">
+                <div class="logo-text">
                     <h1>AXKAN</h1>
                     <p class="subtitle">Panel de Administración</p>
                 </div>
             </div>
-            <!-- AI Assistant Search Bar -->
-            <div class="ai-assistant-bar" id="ai-assistant-bar">
-                <div class="ai-search-container">
-                    <span class="ai-icon">🤖</span>
-                    <input
-                        type="text"
-                        id="ai-assistant-input"
-                        class="ai-search-input"
-                        placeholder="Pregúntame cualquier cosa sobre el negocio..."
-                        onkeydown="if(event.key === 'Enter') openAiChat(this.value)"
-                        onclick="openAiChatModal()"
-                    />
-                    <button class="ai-search-btn" onclick="openAiChat(document.getElementById('ai-assistant-input').value)" title="Enviar pregunta">
-                        <span>↗</span>
-                    </button>
-                </div>
+            <!-- Command Palette Trigger (⌘K) -->
+            <div class="command-palette-trigger" id="command-palette-trigger" onclick="openCommandPalette()">
+                <i data-lucide="search" class="icon-sm"></i>
+                <span class="command-placeholder">Buscar o ejecutar comando...</span>
+                <kbd class="kbd-shortcut">⌘K</kbd>
             </div>
             <div class="header-stats">
                 <div class="stat-card">
-                    <span class="stat-label">Pedidos Pendientes</span>
+                    <span class="stat-label">Pendientes</span>
                     <span class="stat-value" id="pending-count">0</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Total Hoy</span>
+                    <span class="stat-label">Hoy</span>
                     <span class="stat-value" id="today-revenue">$0</span>
                 </div>
-                <div class="stat-card" style="position: relative;">
-                    <span class="stat-label">💳 Pagos Finales</span>
-                    <span class="stat-value" id="second-payment-badge" style="display: none; background: #fb923c; color: white; padding: 8px 16px; border-radius: 12px; font-size: 20px; font-weight: 700;">0</span>
+                <div class="stat-card payment-badge-card" id="payment-badge-card">
+                    <span class="stat-label">Pagos</span>
+                    <span class="stat-value payment-badge" id="second-payment-badge">0</span>
                 </div>
-                <button onclick="logout()" style="padding: 10px 20px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                    🚪 Cerrar Sesión
+                <button class="btn-logout" onclick="logout()" aria-label="Cerrar sesión">
+                    <i data-lucide="log-out" class="icon-sm"></i>
+                    <span class="logout-text">Salir</span>
                 </button>
             </div>
         </div>
     </header>
 
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobile-overlay" onclick="toggleMobileMenu()"></div>
+
     <!-- Main Content -->
     <main class="dashboard-main">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <nav class="sidebar-nav">
-                <!-- Pedidos Section with Sub-tabs -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar-nav" role="navigation" aria-label="Main navigation">
+                <!-- 1. Pedidos (Orders + Calendar) -->
                 <div class="nav-section">
-                    <button class="nav-item active" data-view="orders">
-                        <span class="nav-icon">📋</span>
+                    <button class="nav-item active" data-view="orders" tabindex="0">
+                        <i data-lucide="clipboard-list" class="nav-icon"></i>
                         <span>Pedidos</span>
                     </button>
                     <div class="nav-sub-items">
-                        <button class="nav-sub-item" data-view="calendar">
-                            <span class="nav-icon">📅</span>
+                        <button class="nav-sub-item" data-view="calendar" tabindex="0">
+                            <i data-lucide="calendar" class="nav-icon-sm"></i>
                             <span>Calendario</span>
                         </button>
-                        <button class="nav-sub-item" data-view="discounts">
-                            <span class="nav-icon">🏷️</span>
+                    </div>
+                </div>
+
+                <!-- 2. Dashboard/Analytics -->
+                <button class="nav-item" data-view="analytics" tabindex="0">
+                    <i data-lucide="bar-chart-3" class="nav-icon"></i>
+                    <span>Dashboard</span>
+                </button>
+
+                <!-- 3. Inventario (Products + Materials) -->
+                <button class="nav-item" data-view="products" tabindex="0">
+                    <i data-lucide="package" class="nav-icon"></i>
+                    <span>Inventario</span>
+                </button>
+
+                <!-- 4. Finanzas (Prices + Margins) -->
+                <button class="nav-item" data-view="prices" tabindex="0">
+                    <i data-lucide="wallet" class="nav-icon"></i>
+                    <span>Finanzas</span>
+                </button>
+
+                <!-- 5. Logística (Shipping + Guías + Pickups) -->
+                <div class="nav-section">
+                    <button class="nav-item" data-view="shipping" tabindex="0">
+                        <i data-lucide="truck" class="nav-icon"></i>
+                        <span>Logística</span>
+                    </button>
+                    <div class="nav-sub-items">
+                        <button class="nav-sub-item" data-view="guias" tabindex="0">
+                            <i data-lucide="tag" class="nav-icon-sm"></i>
+                            <span>Guías</span>
+                        </button>
+                        <button class="nav-sub-item" data-view="pickups" tabindex="0">
+                            <i data-lucide="package-check" class="nav-icon-sm"></i>
+                            <span>Recolecciones</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 6. Marketplace -->
+                <button class="nav-item" data-view="marketplace" tabindex="0">
+                    <i data-lucide="globe" class="nav-icon"></i>
+                    <span>Marketplace</span>
+                </button>
+
+                <div class="nav-separator"></div>
+
+                <!-- 7. Configuración (Employees + Discounts + Settings) -->
+                <div class="nav-section">
+                    <button class="nav-item" data-view="employee-portal" tabindex="0">
+                        <i data-lucide="settings" class="nav-icon"></i>
+                        <span>Configuración</span>
+                    </button>
+                    <div class="nav-sub-items">
+                        <button class="nav-sub-item" data-view="discounts" tabindex="0">
+                            <i data-lucide="percent" class="nav-icon-sm"></i>
                             <span>Descuentos</span>
                         </button>
                     </div>
                 </div>
-                <button class="nav-item" data-view="analytics">
-                    <span class="nav-icon">📊</span>
-                    <span>Analíticas</span>
-                </button>
-                <button class="nav-item" data-view="products">
-                    <span class="nav-icon">🛍️</span>
-                    <span>Productos</span>
-                </button>
-                <button class="nav-item" data-view="prices">
-                    <span class="nav-icon">💰</span>
-                    <span>Precios</span>
-                </button>
-                <div class="nav-group">
-                    <button class="nav-item" data-view="shipping">
-                        <span class="nav-icon">📦</span>
-                        <span>Envíos</span>
-                    </button>
-                    <div class="nav-sub-items">
-                        <button class="nav-sub-item" data-view="guias">
-                            <span class="nav-icon">🏷️</span>
-                            <span>Guías</span>
-                        </button>
-                        <button class="nav-sub-item" data-view="pickups">
-                            <span class="nav-icon">🚚</span>
-                            <span>Pickups</span>
-                        </button>
-                    </div>
-                </div>
-                <button class="nav-item" data-view="marketplace">
-                    <span class="nav-icon">🌎</span>
-                    <span>Marketplace</span>
-                </button>
-
-                <!-- Employee Management Section -->
-                <div class="nav-separator"></div>
-                <button class="nav-item" data-view="employee-portal">
-                    <span class="nav-icon">👥</span>
-                    <span>Portal Empleados</span>
-                </button>
             </nav>
         </aside>
 
@@ -138,9 +167,9 @@
         <div class="content-area">
             <!-- Orders View -->
             <section id="orders-view" class="view active">
-                <!-- Order Alerts Widget -->
-                <div id="order-alerts-widget" class="alerts-widget" style="margin-bottom: 20px;">
-                    <!-- Dynamic content loaded by JS -->
+                <!-- Proactive AI Alerts Widget -->
+                <div id="ai-alerts-widget" class="ai-alerts-widget">
+                    <!-- Dynamic AI insights loaded by JS -->
                 </div>
 
                 <!-- Filters -->
@@ -150,31 +179,35 @@
                             Todos <span class="badge" id="all-count">0</span>
                         </button>
                         <button class="filter-btn" data-filter="pending_review">
-                            ⏳ Pendientes <span class="badge badge-warning" id="pending-count-badge">0</span>
+                            <i data-lucide="clock" class="filter-icon"></i> Pendientes <span class="badge badge-warning" id="pending-count-badge">0</span>
                         </button>
                         <button class="filter-btn" data-filter="approved">
-                            ✅ Aprobados <span class="badge badge-success" id="approved-count">0</span>
+                            <i data-lucide="check-circle" class="filter-icon"></i> Aprobados <span class="badge badge-success" id="approved-count">0</span>
                         </button>
                         <button class="filter-btn" data-filter="completed">
-                            📦 Completados <span class="badge badge-secondary" id="completed-count">0</span>
+                            <i data-lucide="package" class="filter-icon"></i> Completados <span class="badge badge-secondary" id="completed-count">0</span>
                         </button>
                     </div>
                     <div class="search-container">
+                        <i data-lucide="search" class="search-icon"></i>
                         <input
                             type="text"
                             id="search-input"
                             class="search-input"
-                            placeholder="🔍 Buscar por número, cliente o teléfono..."
+                            placeholder="Buscar por número, cliente o teléfono..."
                             oninput="handleSearch(this.value)"
                         />
-                        <button class="search-clear" id="search-clear" onclick="clearSearch()" style="display: none;">
-                            ✕
+                        <button class="search-clear hidden" id="search-clear" onclick="clearSearch()">
+                            <i data-lucide="x" class="icon-xs"></i>
                         </button>
                     </div>
                     <button class="btn-refresh" onclick="loadOrders()">
-                        <span id="refresh-icon">🔄</span> Actualizar
+                        <i data-lucide="refresh-cw" class="icon-sm" id="refresh-icon"></i>
+                        <span class="refresh-text">Actualizar</span>
                     </button>
                 </div>
+
+                <!-- Bulk Actions Bar (created dynamically by dashboard.js) -->
 
                 <!-- Loading State -->
                 <div id="orders-loading" class="loading hidden">
@@ -187,7 +220,7 @@
 
                 <!-- Empty State -->
                 <div id="empty-state" class="empty-state hidden">
-                    <span class="empty-icon">📦</span>
+                    <i data-lucide="inbox" class="empty-icon"></i>
                     <h3>No hay pedidos</h3>
                     <p>Los pedidos aparecerán aquí cuando los clientes los envíen</p>
                 </div>
@@ -2129,12 +2162,83 @@
         <div class="modal-backdrop" onclick="closePickupModal()"></div>
     </div>
 
+    <!-- Command Palette Modal (⌘K) -->
+    <div id="command-palette" class="command-palette hidden">
+        <div class="command-palette-container">
+            <div class="command-palette-header">
+                <i data-lucide="search" class="command-search-icon"></i>
+                <input
+                    type="text"
+                    id="command-palette-input"
+                    class="command-palette-input"
+                    placeholder="Buscar pedido, ejecutar comando, o preguntar a AI..."
+                    autocomplete="off"
+                    onkeydown="handleCommandPaletteKey(event)"
+                    oninput="handleCommandSearch(this.value)"
+                />
+                <kbd class="kbd-close">ESC</kbd>
+            </div>
+            <div class="command-palette-body" id="command-palette-results">
+                <div class="command-section">
+                    <div class="command-section-title">Acciones Rápidas</div>
+                    <div class="command-item" data-action="new-quote" onclick="executeCommand('new-quote')">
+                        <i data-lucide="file-text" class="command-icon"></i>
+                        <span class="command-text">Nueva cotización</span>
+                        <span class="command-hint">/quote</span>
+                    </div>
+                    <div class="command-item" data-action="pending-orders" onclick="executeCommand('pending-orders')">
+                        <i data-lucide="clock" class="command-icon"></i>
+                        <span class="command-text">Ver pedidos pendientes</span>
+                        <span class="command-hint">/pending</span>
+                    </div>
+                    <div class="command-item" data-action="analytics" onclick="executeCommand('analytics')">
+                        <i data-lucide="bar-chart-3" class="command-icon"></i>
+                        <span class="command-text">Abrir Dashboard</span>
+                        <span class="command-hint">/dashboard</span>
+                    </div>
+                    <div class="command-item" data-action="create-label" onclick="executeCommand('create-label')">
+                        <i data-lucide="tag" class="command-icon"></i>
+                        <span class="command-text">Crear guía de envío</span>
+                        <span class="command-hint">/ship</span>
+                    </div>
+                </div>
+                <div class="command-section">
+                    <div class="command-section-title">Navegación</div>
+                    <div class="command-item" data-action="nav-orders" onclick="executeCommand('nav-orders')">
+                        <i data-lucide="clipboard-list" class="command-icon"></i>
+                        <span class="command-text">Ir a Pedidos</span>
+                    </div>
+                    <div class="command-item" data-action="nav-inventory" onclick="executeCommand('nav-inventory')">
+                        <i data-lucide="package" class="command-icon"></i>
+                        <span class="command-text">Ir a Inventario</span>
+                    </div>
+                    <div class="command-item" data-action="nav-shipping" onclick="executeCommand('nav-shipping')">
+                        <i data-lucide="truck" class="command-icon"></i>
+                        <span class="command-text">Ir a Logística</span>
+                    </div>
+                </div>
+                <div class="command-section command-ai-section">
+                    <div class="command-section-title">
+                        <i data-lucide="sparkles" class="ai-sparkle"></i> Preguntar a AI
+                    </div>
+                    <div class="command-item command-ai" data-action="ask-ai" onclick="executeCommand('ask-ai')">
+                        <i data-lucide="message-circle" class="command-icon"></i>
+                        <span class="command-text">Hacer pregunta al asistente...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop command-backdrop" onclick="closeCommandPalette()"></div>
+    </div>
+
     <!-- AI Assistant Chat Modal -->
     <div id="ai-chat-modal" class="ai-chat-modal hidden">
         <div class="ai-chat-container">
             <div class="ai-chat-header">
                 <div class="ai-chat-title">
-                    <span class="ai-avatar">🤖</span>
+                    <div class="ai-avatar">
+                        <i data-lucide="bot" class="icon"></i>
+                    </div>
                     <div>
                         <h3>Asistente AXKAN</h3>
                         <span class="ai-status">En línea - Conoce todo sobre tu negocio</span>
@@ -2142,31 +2246,33 @@
                 </div>
                 <div class="ai-chat-actions">
                     <button class="ai-action-btn" onclick="clearAiChat()" title="Limpiar conversación">
-                        🗑️
+                        <i data-lucide="trash-2" class="icon-sm"></i>
                     </button>
                     <button class="ai-action-btn" onclick="closeAiChatModal()" title="Cerrar">
-                        ✕
+                        <i data-lucide="x" class="icon-sm"></i>
                     </button>
                 </div>
             </div>
             <div class="ai-chat-body" id="ai-chat-messages">
                 <!-- Welcome message -->
                 <div class="ai-message assistant">
-                    <div class="ai-message-avatar">🤖</div>
+                    <div class="ai-message-avatar">
+                        <i data-lucide="bot" class="icon-sm"></i>
+                    </div>
                     <div class="ai-message-content">
-                        <p>¡Hola! Soy tu asistente de AXKAN. Puedo ayudarte con:</p>
+                        <p>Soy tu asistente de AXKAN. ¿En qué puedo ayudarte?</p>
                         <div class="ai-suggestions">
                             <button class="ai-suggestion-btn" onclick="sendAiQuestion('¿Cuántos pedidos tenemos pendientes?')">
-                                📋 Pedidos pendientes
+                                <i data-lucide="clipboard-list" class="icon-xs"></i> Pedidos pendientes
                             </button>
                             <button class="ai-suggestion-btn" onclick="sendAiQuestion('¿Cuál fue el ingreso de este mes?')">
-                                💰 Ingresos del mes
+                                <i data-lucide="dollar-sign" class="icon-xs"></i> Ingresos del mes
+                            </button>
+                            <button class="ai-suggestion-btn" onclick="sendAiQuestion('Cotiza 100 imanes y 50 llaveros')">
+                                <i data-lucide="file-text" class="icon-xs"></i> Nueva cotización
                             </button>
                             <button class="ai-suggestion-btn" onclick="sendAiQuestion('¿Cuáles son los productos más vendidos?')">
-                                🏆 Productos top
-                            </button>
-                            <button class="ai-suggestion-btn" onclick="sendAiQuestion('¿Qué clientes tienen pedidos en producción?')">
-                                🏭 En producción
+                                <i data-lucide="trophy" class="icon-xs"></i> Productos top
                             </button>
                         </div>
                     </div>
@@ -2183,8 +2289,7 @@
                         oninput="this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px';"
                     ></textarea>
                     <button class="ai-send-btn" onclick="sendAiMessage()" id="ai-send-btn">
-                        <span>Enviar</span>
-                        <span class="ai-send-icon">↗</span>
+                        <i data-lucide="send" class="icon-sm"></i>
                     </button>
                 </div>
                 <p class="ai-disclaimer">
@@ -2196,8 +2301,8 @@
     </div>
 
     <!-- AI Mobile Button (visible on mobile only) -->
-    <button class="ai-mobile-btn" onclick="openAiChatModal()" title="Asistente AI">
-        🤖
+    <button class="ai-mobile-btn" onclick="openAiChatModal()" title="Asistente AI" aria-label="Abrir asistente AI">
+        <i data-lucide="bot" class="icon"></i>
     </button>
 
     <script src="dashboard.js"></script>
@@ -2212,5 +2317,20 @@
     <script src="marketplace.js"></script>
     <script src="employees.js"></script>
     <script src="tasks.js?v=2"></script>
+    <script src="command-palette.js"></script>
+    <!-- Initialize Lucide Icons -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+        // Re-initialize icons after dynamic content loads
+        window.refreshIcons = () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        };
+    </script>
 </body>
 </html>
