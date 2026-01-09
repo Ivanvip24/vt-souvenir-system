@@ -5751,6 +5751,18 @@ textarea:disabled {
     text-align: right;
 }
 
+.ai-quote-item.special-price {
+    background: linear-gradient(90deg, #fce4ec 0%, transparent 100%);
+    border-left: 3px solid #be185d;
+    padding-left: 8px;
+    margin-left: -8px;
+}
+
+.ai-quote-item.special-price .ai-quote-item-name {
+    color: #be185d;
+    font-weight: 600;
+}
+
 .ai-quote-warnings {
     background: #fef3c7;
     border: 1px solid #fbbf24;

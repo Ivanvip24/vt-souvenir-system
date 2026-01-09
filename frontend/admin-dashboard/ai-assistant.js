@@ -450,12 +450,12 @@ function showQuoteResult(data) {
                     ${data.clientName ? `<div class="ai-quote-client">👤 ${escapeHtml(data.clientName)}</div>` : ''}
 
                     <div class="ai-quote-items">
-                        ${data.items.map(item => `
-                            <div class="ai-quote-item">
-                                <span class="ai-quote-item-name">${escapeHtml(item.productName)}</span>
-                                <span class="ai-quote-item-qty">${item.quantity} pzas</span>
-                                <span class="ai-quote-item-price">$${item.unitPrice.toFixed(2)}/u</span>
-                                <span class="ai-quote-item-subtotal">$${item.subtotal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                        ${(data.items || []).map(item => `
+                            <div class="ai-quote-item ${item.isSpecialPrice ? 'special-price' : ''}">
+                                <span class="ai-quote-item-name">${item.isSpecialPrice ? '★ ' : ''}${escapeHtml(item.productName || 'Producto')}</span>
+                                <span class="ai-quote-item-qty">${(item.quantity || 0).toLocaleString('es-MX')} pzas</span>
+                                <span class="ai-quote-item-price">$${(item.unitPrice || 0).toFixed(2)}/u</span>
+                                <span class="ai-quote-item-subtotal">$${(item.subtotal || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -465,7 +465,7 @@ function showQuoteResult(data) {
                             <div class="ai-quote-warning-title">⚠️ Productos por debajo del mínimo:</div>
                             ${data.invalidItems.map(item => `
                                 <div class="ai-quote-warning-item">
-                                    ${escapeHtml(item.productName)}: ${item.quantity} pzas (mín. ${item.minimumRequired})
+                                    ${escapeHtml(item.productName || 'Producto')}: ${item.quantity || 0} pzas (mín. ${item.minimumRequired || 50})
                                 </div>
                             `).join('')}
                         </div>
