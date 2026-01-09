@@ -89,11 +89,13 @@ export const priorityOptions = [
 // Validate configuration
 export function validateConfig() {
   if (!notionConfig.auth) {
-    throw new Error('NOTION_API_TOKEN is not set in environment variables');
+    console.warn('⚠️  NOTION_API_TOKEN is not set - Notion integration disabled');
+    return false;
   }
 
   if (!notionConfig.ordersDatabase) {
-    throw new Error('NOTION_ORDERS_DATABASE_ID is not set in environment variables');
+    console.warn('⚠️  NOTION_ORDERS_DATABASE_ID is not set - Notion integration disabled');
+    return false;
   }
 
   return true;

@@ -8,6 +8,7 @@ import express from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
+import { parseQuoteRequest, generateQuotePDF, getQuoteUrl, getPricingInfo } from '../services/quote-generator.js';
 
 const router = express.Router();
 
@@ -482,11 +483,63 @@ Si mencionan un cliente pero no tienes certeza de cuál es:
 }
 \`\`\`
 
+### 4. GENERAR COTIZACIÓN / QUOTE PDF
+Cuando el usuario pida crear una cotización o "cotizar" productos, debes:
+1. Extraer los productos y cantidades mencionados
+2. Opcionalmente obtener el nombre del cliente
+3. Generar la cotización con el bloque de acción
+
+**LISTA DE PRECIOS OFICIAL:**
+- **Imanes MDF Chico**: $8/u (50-999 pzas) → $6/u (1000+ pzas)
+- **Imanes MDF Mediano**: $11/u (50-999 pzas) → $8/u (1000+ pzas)
+- **Imanes MDF Grande**: $15/u (50-999 pzas) → $12/u (1000+ pzas)
+- **Llaveros MDF**: $10/u (50-999 pzas) → $8/u (1000+ pzas)
+- **Destapadores MDF**: $20/u (50-999 pzas) → $17/u (1000+ pzas)
+- **Portallaves MDF**: $40/u (mín. 20 pzas)
+- **Souvenir Box**: $2,250/u (sin mínimo)
+- **Botones Metálicos**: $8/u (50-999 pzas) → $6/u (1000+ pzas)
+
+**Ejemplos de solicitudes de cotización:**
+- "Cotiza 50 imanes y 30 llaveros"
+- "Crea una cotización de 100 imanes grandes para María García"
+- "Cuánto cuesta 200 destapadores y 100 llaveros?"
+- "Dame una cotización de 50 imanes chicos"
+
+**Cuando detectes una solicitud de cotización, incluye este bloque en tu respuesta:**
+
+\`\`\`action
+{
+  "type": "generate_quote",
+  "text": "texto original con productos y cantidades",
+  "clientName": "nombre del cliente si se menciona (opcional)",
+  "clientPhone": "teléfono si se menciona (opcional)",
+  "notes": "notas adicionales (opcional)"
+}
+\`\`\`
+
+**IMPORTANTE para cotizaciones:**
+- Si el usuario pregunta "cuánto cuesta" o "cuál es el precio", SIEMPRE genera la cotización PDF
+- El sistema automáticamente calculará los precios por volumen
+- Mínimo de 50 piezas para la mayoría de productos (excepto Portallaves: 20, Souvenir Box: 1)
+- Si el usuario no especifica tamaño de imán, asume MEDIANO
+- Responde primero con un resumen de los precios, luego genera el PDF
+
+Ejemplo de respuesta para cotización:
+"¡Claro! Aquí tienes la cotización:
+
+**50 Imanes MDF Mediano**: $11.00 c/u = **$550.00**
+**30 Llaveros MDF**: $10.00 c/u = **$300.00**
+
+**Total: $850.00** (MXN, sin envío)
+
+Generando tu PDF de cotización..."
+
 ## IMPORTANTE PARA ACCIONES:
 - Solo incluye el bloque \`\`\`action\`\`\` cuando tengas suficiente información
 - El bloque action debe estar en JSON válido
 - Siempre confirma la acción antes de ejecutarla
-- Si hay múltiples coincidencias de cliente, pregunta cuál es el correcto`;
+- Si hay múltiples coincidencias de cliente, pregunta cuál es el correcto
+- Para cotizaciones, SIEMPRE genera el PDF además de dar el resumen de precios`;
 }
 
 /**
@@ -639,6 +692,61 @@ router.post('/chat', async (req, res) => {
           type: 'view_order',
           data: { order }
         };
+      } else if (action.type === 'generate_quote') {
+        // Parse the quote request text to extract items
+        const quoteText = action.text || message;
+        const items = parseQuoteRequest(quoteText);
+
+        if (items.length > 0) {
+          try {
+            // Generate the PDF
+            const result = await generateQuotePDF({
+              clientName: action.clientName || null,
+              clientPhone: action.clientPhone || null,
+              clientEmail: action.clientEmail || null,
+              items,
+              notes: action.notes || null,
+              validityDays: 15,
+              includeShipping: false
+            });
+
+            actionData = {
+              type: 'generate_quote',
+              data: {
+                success: true,
+                quoteNumber: result.quoteNumber,
+                total: result.total,
+                subtotal: result.subtotal,
+                itemCount: result.itemCount,
+                validUntil: result.validUntil,
+                pdfUrl: getQuoteUrl(result.filepath),
+                filename: result.filename,
+                items: result.items,
+                invalidItems: result.invalidItems,
+                clientName: action.clientName
+              }
+            };
+
+            console.log(`📄 Quote generated: ${result.quoteNumber} - Total: $${result.total}`);
+          } catch (quoteError) {
+            console.error('Error generating quote PDF:', quoteError);
+            actionData = {
+              type: 'generate_quote',
+              data: {
+                success: false,
+                error: quoteError.message || 'Error al generar la cotización'
+              }
+            };
+          }
+        } else {
+          actionData = {
+            type: 'generate_quote',
+            data: {
+              success: false,
+              error: 'No se encontraron productos válidos. Intenta especificar cantidades y productos, ejemplo: "50 imanes y 30 llaveros"'
+            }
+          };
+        }
       }
 
       // Remove the action block from displayed message

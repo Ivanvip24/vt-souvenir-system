@@ -120,3 +120,4 @@ SYSTEM_ACTIVE.md
 # And verify no sensitive files are staged!
 # ============================================
 .vercel
+backend/quotes/*.pdf

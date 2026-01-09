@@ -415,8 +415,116 @@ function handleAiAction(action) {
             closeAiChatModal();
             showOrderDetail(action.data.order.id);
         }
+    } else if (action.type === 'generate_quote') {
+        // Show quote result in chat
+        showQuoteResult(action.data);
     }
 }
+
+/**
+ * Show quote generation result in chat
+ */
+function showQuoteResult(data) {
+    if (!data) return;
+
+    let html = '';
+
+    if (data.success) {
+        // Format total as currency
+        const totalFormatted = new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN'
+        }).format(data.total);
+
+        html = `
+            <div class="ai-quote-result">
+                <div class="ai-quote-header">
+                    <span class="ai-quote-icon">📄</span>
+                    <div>
+                        <div class="ai-quote-title">Cotización Generada</div>
+                        <div class="ai-quote-number">${data.quoteNumber}</div>
+                    </div>
+                </div>
+
+                <div class="ai-quote-details">
+                    ${data.clientName ? `<div class="ai-quote-client">👤 ${escapeHtml(data.clientName)}</div>` : ''}
+
+                    <div class="ai-quote-items">
+                        ${data.items.map(item => `
+                            <div class="ai-quote-item">
+                                <span class="ai-quote-item-name">${escapeHtml(item.productName)}</span>
+                                <span class="ai-quote-item-qty">${item.quantity} pzas</span>
+                                <span class="ai-quote-item-price">$${item.unitPrice.toFixed(2)}/u</span>
+                                <span class="ai-quote-item-subtotal">$${item.subtotal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${data.invalidItems && data.invalidItems.length > 0 ? `
+                        <div class="ai-quote-warnings">
+                            <div class="ai-quote-warning-title">⚠️ Productos por debajo del mínimo:</div>
+                            ${data.invalidItems.map(item => `
+                                <div class="ai-quote-warning-item">
+                                    ${escapeHtml(item.productName)}: ${item.quantity} pzas (mín. ${item.minimumRequired})
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <div class="ai-quote-total">
+                        <span>TOTAL:</span>
+                        <span class="ai-quote-total-amount">${totalFormatted}</span>
+                    </div>
+
+                    <div class="ai-quote-validity">
+                        📅 Válida hasta: ${data.validUntil}
+                    </div>
+                </div>
+
+                <div class="ai-quote-actions">
+                    <a href="${data.pdfUrl}" target="_blank" class="ai-quote-download-btn">
+                        📥 Descargar PDF
+                    </a>
+                    <button onclick="copyQuoteLink('${data.pdfUrl}')" class="ai-quote-copy-btn">
+                        📋 Copiar enlace
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        html = `
+            <div class="ai-quote-error">
+                <span class="ai-quote-error-icon">❌</span>
+                <span>${escapeHtml(data.error || 'Error al generar la cotización')}</span>
+            </div>
+        `;
+    }
+
+    addMessageToChat('assistant', html, { isHtml: true });
+}
+
+/**
+ * Copy quote link to clipboard
+ */
+function copyQuoteLink(url) {
+    const fullUrl = window.location.origin + url;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+        // Show brief success message
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✅ Copiado!';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+        }, 2000);
+    }).catch(err => {
+        console.error('Error copying link:', err);
+        alert('Error al copiar el enlace');
+    });
+}
+
+// Export quote functions globally
+window.showQuoteResult = showQuoteResult;
+window.copyQuoteLink = copyQuoteLink;
 
 /**
  * Show shipping label creation modal

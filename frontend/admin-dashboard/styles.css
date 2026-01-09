@@ -5657,3 +5657,217 @@ textarea:disabled {
     flex-direction: column;
   }
 }
+
+
+/* ==========================================
+   AI QUOTE RESULT STYLES
+   ========================================== */
+
+.ai-quote-result {
+    background: linear-gradient(135deg, #fdf2f8 0%, #fff1f2 100%);
+    border: 1px solid #fbcfe8;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 8px;
+}
+
+.ai-quote-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #fbcfe8;
+}
+
+.ai-quote-icon {
+    font-size: 32px;
+}
+
+.ai-quote-title {
+    font-weight: 600;
+    color: #be185d;
+    font-size: 14px;
+}
+
+.ai-quote-number {
+    font-size: 12px;
+    color: #9d174d;
+    font-family: monospace;
+}
+
+.ai-quote-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ai-quote-client {
+    font-size: 14px;
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+.ai-quote-items {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #f9a8d4;
+}
+
+.ai-quote-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #fce7f3;
+    font-size: 13px;
+    align-items: center;
+}
+
+.ai-quote-item:last-child {
+    border-bottom: none;
+}
+
+.ai-quote-item-name {
+    color: var(--gray-800);
+    font-weight: 500;
+}
+
+.ai-quote-item-qty {
+    color: var(--gray-600);
+    text-align: right;
+}
+
+.ai-quote-item-price {
+    color: var(--gray-500);
+    text-align: right;
+    font-size: 12px;
+}
+
+.ai-quote-item-subtotal {
+    color: #be185d;
+    font-weight: 600;
+    text-align: right;
+}
+
+.ai-quote-warnings {
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+}
+
+.ai-quote-warning-title {
+    font-weight: 600;
+    color: #b45309;
+    margin-bottom: 6px;
+}
+
+.ai-quote-warning-item {
+    color: #92400e;
+    margin-left: 16px;
+}
+
+.ai-quote-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #be185d 0%, #e11d48 100%);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.ai-quote-total-amount {
+    font-size: 20px;
+}
+
+.ai-quote-validity {
+    font-size: 12px;
+    color: var(--gray-500);
+    text-align: center;
+}
+
+.ai-quote-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.ai-quote-download-btn,
+.ai-quote-copy-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.ai-quote-download-btn {
+    background: linear-gradient(135deg, #be185d 0%, #e11d48 100%);
+    color: white;
+    border: none;
+}
+
+.ai-quote-download-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(190, 24, 93, 0.3);
+}
+
+.ai-quote-copy-btn {
+    background: white;
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+}
+
+.ai-quote-copy-btn:hover {
+    background: var(--gray-100);
+}
+
+.ai-quote-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.ai-quote-error-icon {
+    font-size: 18px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .ai-quote-item {
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+    }
+
+    .ai-quote-item-name {
+        grid-column: span 2;
+    }
+
+    .ai-quote-item-price {
+        text-align: left;
+    }
+
+    .ai-quote-actions {
+        flex-direction: column;
+    }
+}

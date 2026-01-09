@@ -26,6 +26,7 @@ import taskRoutes from './task-routes.js';
 import galleryRoutes from './gallery-routes.js';
 import notesRoutes from './notes-routes.js';
 import knowledgeRoutes from './knowledge-routes.js';
+import quoteRoutes from './quote-routes.js';
 import * as knowledgeIndex from '../services/knowledge-index.js';
 import * as knowledgeAI from '../services/knowledge-ai.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
@@ -79,6 +80,14 @@ console.log(`📁 Serving payment receipts from: ${paymentReceiptsPath}`);
 const axkanPath = process.env.AXKAN_REPO_PATH || path.join(__dirname, '../assets/axkan');
 app.use('/axkan-assets', express.static(axkanPath));
 console.log(`📁 Serving Axkan assets from: ${axkanPath}`);
+
+// Quote PDFs
+const quotesPath = path.join(__dirname, '../quotes');
+if (!fs.existsSync(quotesPath)) {
+  fs.mkdirSync(quotesPath, { recursive: true });
+}
+app.use('/quotes', express.static(quotesPath));
+console.log(`📁 Serving quotes from: ${quotesPath}`);
 
 // ========================================
 // HEALTH CHECK
@@ -149,6 +158,11 @@ app.use('/api/receipts', receiptRoutes);
 // AI ASSISTANT ROUTES (Claude Chat)
 // ========================================
 app.use('/api/ai-assistant', aiAssistantRoutes);
+
+// ========================================
+// QUOTE GENERATION ROUTES
+// ========================================
+app.use('/api/quotes', quoteRoutes);
 
 // ========================================
 // MERCADO LIBRE INTEGRATION ROUTES
