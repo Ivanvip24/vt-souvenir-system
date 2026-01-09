@@ -31,17 +31,47 @@ const STORAGE_KEY = 'souvenir_client_data';
 // Display MOQ shown in labels (marketing value)
 const DISPLAY_MOQ = 100;
 
+// Magnet size configuration - used for the size selector
+const MAGNET_SIZES = {
+  'Ch': {
+    label: 'Chico',
+    key: 'imanes_ch',
+    tiers: [
+      { min: 50, max: 999, price: 8.00 },
+      { min: 1000, max: Infinity, price: 6.00 }
+    ]
+  },
+  'M': {
+    label: 'Mediano',
+    key: 'imanes_m',
+    tiers: [
+      { min: 50, max: 999, price: 11.00 },
+      { min: 1000, max: Infinity, price: 8.00 }
+    ]
+  },
+  'G': {
+    label: 'Grande',
+    key: 'imanes_g',
+    tiers: [
+      { min: 50, max: 999, price: 15.00 },
+      { min: 1000, max: Infinity, price: 12.00 }
+    ]
+  }
+};
+
 const PRICING_TIERS = {
   // Match by product name (case-insensitive partial match)
   // Note: min values are actual validation (50), display shows DISPLAY_MOQ (100)
-  'imanes de mdf chico': [
-    { min: 50, max: 999, price: 11.00 },
-    { min: 1000, max: Infinity, price: 8.00 }
-  ],
-  'imanes de mdf grande': [
-    { min: 50, max: 999, price: 15.00 },
-    { min: 1000, max: Infinity, price: 12.00 }
-  ],
+
+  // Magnet sizes - used dynamically based on size selection
+  'imanes_ch': MAGNET_SIZES['Ch'].tiers,
+  'imanes_m': MAGNET_SIZES['M'].tiers,
+  'imanes_g': MAGNET_SIZES['G'].tiers,
+
+  // Legacy keys for backwards compatibility
+  'imanes de mdf chico': MAGNET_SIZES['Ch'].tiers,
+  'imanes de mdf grande': MAGNET_SIZES['G'].tiers,
+  'imanes de mdf': MAGNET_SIZES['M'].tiers,
   'llaveros de mdf': [
     { min: 50, max: 999, price: 10.00 },
     { min: 1000, max: Infinity, price: 8.00 }
@@ -75,9 +105,10 @@ const PRICING_TIERS = {
  * Checks for promo code custom prices first, then falls back to tiered pricing
  * @param {Object} product - The product object
  * @param {number} quantity - The quantity ordered
+ * @param {string} [pricingKey] - Optional specific pricing key to use (e.g., for magnet sizes)
  * @returns {Object} { price: number, tierInfo: string, savings: number, isPromoPrice: boolean }
  */
-function getTieredPrice(product, quantity) {
+function getTieredPrice(product, quantity, pricingKey = null) {
   // Check if promo code is applied and has custom price for this product
   if (state.promo.applied && state.promo.customPrices[product.id]) {
     const promoPrice = state.promo.customPrices[product.id].customPrice;
@@ -96,11 +127,16 @@ function getTieredPrice(product, quantity) {
   const productNameLower = product.name.toLowerCase();
   let tiers = null;
 
-  // Find tiers by partial name match
-  for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
-    if (productNameLower.includes(key) || key.includes(productNameLower)) {
-      tiers = tierArray;
-      break;
+  // If a specific pricing key is provided (e.g., for magnet sizes), use it directly
+  if (pricingKey && PRICING_TIERS[pricingKey]) {
+    tiers = PRICING_TIERS[pricingKey];
+  } else {
+    // Find tiers by partial name match
+    for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
+      if (productNameLower.includes(key) || key.includes(productNameLower)) {
+        tiers = tierArray;
+        break;
+      }
     }
   }
 
@@ -229,6 +265,7 @@ const state = {
   },
   products: [],
   cart: {}, // { productId: { product, quantity } }
+  magnetSizes: {}, // { productId: 'Ch' | 'M' | 'G' } - Track selected magnet size per product
   order: {
     clientNotes: '',
     salesRep: null // Sales rep from referral link (e.g., ?ref=alejandra)
@@ -1146,26 +1183,56 @@ function createProductCard(product) {
   const quantity = state.cart[product.id]?.quantity || 0;
   const basePrice = parseFloat(product.base_price);
 
-  // Get tiered pricing - show Tier 1 price (minimum quantity) when no items in cart
+  // Check if this is the main "Imanes de MDF" product (for size selector)
   const productNameLower = product.name.toLowerCase();
+  const isMagnetProduct = productNameLower === 'imanes de mdf';
+
+  // Get selected size for magnets (default to 'M' - Mediano)
+  const selectedSize = state.magnetSizes?.[product.id] || 'M';
+
+  // Get tiered pricing - show Tier 1 price (minimum quantity) when no items in cart
   let defaultQuantity = 1;
   let moq = 100; // Default MOQ
 
-  // Find the minimum quantity for this product to show the wholesale price
-  for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
-    if (productNameLower.includes(key) || key.includes(productNameLower)) {
-      defaultQuantity = tierArray[0].min; // Use minimum of first tier
-      moq = tierArray[0].min;
-      break;
+  // For magnets, use the selected size's pricing tier
+  let pricingKey = null;
+  if (isMagnetProduct) {
+    pricingKey = MAGNET_SIZES[selectedSize].key;
+    const tiers = MAGNET_SIZES[selectedSize].tiers;
+    defaultQuantity = tiers[0].min;
+    moq = tiers[0].min;
+  } else {
+    // Find the minimum quantity for this product to show the wholesale price
+    for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
+      if (productNameLower.includes(key) || key.includes(productNameLower)) {
+        defaultQuantity = tierArray[0].min; // Use minimum of first tier
+        moq = tierArray[0].min;
+        break;
+      }
     }
   }
 
-  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : defaultQuantity);
+  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : defaultQuantity, pricingKey);
   const subtotal = price * quantity;
 
   // #11: MOQ badge text - use DISPLAY_MOQ for customer-facing display
   const displayMoq = moq >= 50 ? DISPLAY_MOQ : moq;
   const moqBadgeText = moq === 1 ? 'Sin mínimo' : `Mín. ${displayMoq} pzas`;
+
+  // Size selector HTML for magnet products
+  const sizeSelectorHTML = isMagnetProduct ? `
+    <div class="size-selector-container">
+      <span class="size-selector-label">Tamano:</span>
+      <div class="size-selector-buttons">
+        <button type="button" class="size-btn ${selectedSize === 'Ch' ? 'selected' : ''}"
+                onclick="selectMagnetSize(${product.id}, 'Ch')" title="Chico">Ch</button>
+        <button type="button" class="size-btn ${selectedSize === 'M' ? 'selected' : ''}"
+                onclick="selectMagnetSize(${product.id}, 'M')" title="Mediano">M</button>
+        <button type="button" class="size-btn ${selectedSize === 'G' ? 'selected' : ''}"
+                onclick="selectMagnetSize(${product.id}, 'G')" title="Grande">G</button>
+      </div>
+    </div>
+  ` : '';
 
   div.innerHTML = `
     <!-- #11: MOQ Badge -->
@@ -1183,6 +1250,8 @@ function createProductCard(product) {
         </div>
       </div>
     </div>
+
+    ${sizeSelectorHTML}
 
     <!-- Tier Information -->
     <div class="tier-info" id="tier-${product.id}">
@@ -1236,6 +1305,78 @@ function getCategoryLabel(category) {
   return labels[category] || category.toUpperCase();
 }
 
+/**
+ * Handle magnet size selection
+ * Updates the selected size and re-renders the product card with new pricing
+ */
+window.selectMagnetSize = function(productId, size) {
+  // Store the selected size
+  state.magnetSizes[productId] = size;
+
+  // Get the product
+  const product = state.products.find(p => p.id === productId);
+  if (!product) return;
+
+  // Get the card element
+  const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+  if (!card) return;
+
+  // Update size button styles with animation
+  const buttons = card.querySelectorAll('.size-btn');
+  buttons.forEach(btn => {
+    btn.classList.remove('selected');
+    if (btn.textContent.trim() === size) {
+      btn.classList.add('selected');
+    }
+  });
+
+  // Get the new pricing for this size
+  const pricingKey = MAGNET_SIZES[size].key;
+  const tiers = MAGNET_SIZES[size].tiers;
+  const moq = tiers[0].min;
+  const quantity = state.cart[productId]?.quantity || 0;
+  const { price, tierInfo } = getTieredPrice(product, quantity > 0 ? quantity : moq, pricingKey);
+
+  // Update the price display
+  const priceEl = card.querySelector('.product-price');
+  if (priceEl) {
+    priceEl.innerHTML = `$${price.toFixed(2)} <span>por unidad</span>`;
+  }
+
+  // Update the tier info (green box)
+  const tierInfoEl = document.getElementById(`tier-${productId}`);
+  if (tierInfoEl) {
+    tierInfoEl.innerHTML = tierInfo ? `
+      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 16px;">💰</span>
+        <span>${tierInfo}</span>
+      </div>
+    ` : '';
+  }
+
+  // If there's a quantity in the cart, update it with the new size info
+  if (state.cart[productId]) {
+    state.cart[productId].size = size;
+    state.cart[productId].sizeName = MAGNET_SIZES[size].label;
+    state.cart[productId].pricingKey = pricingKey;
+
+    // Recalculate subtotal
+    const subtotal = price * quantity;
+    const subtotalEl = document.getElementById(`subtotal-${productId}`);
+    if (subtotalEl) {
+      subtotalEl.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span>Subtotal (${MAGNET_SIZES[size].label}):</span>
+          <strong>$${subtotal.toFixed(2)}</strong>
+        </div>
+      `;
+    }
+
+    // Update order totals
+    updateOrderTotals();
+  }
+};
+
 window.changeQuantity = function(productId, delta) {
   const input = document.getElementById(`qty-${productId}`);
   const newValue = Math.max(0, parseInt(input.value || 0) + delta);
@@ -1249,14 +1390,27 @@ window.handleQuantityChange = function(productId, value) {
 
   if (!product) return;
 
-  // Check minimum order quantity (MOQ)
+  // Check if this is a magnet product
   const productNameLower = product.name.toLowerCase();
-  let moq = 0; // Default no minimum
+  const isMagnetProduct = productNameLower === 'imanes de mdf';
 
-  for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
-    if (productNameLower.includes(key) || key.includes(productNameLower)) {
-      moq = tierArray[0].min;
-      break;
+  // Get selected size for magnets (default to 'M')
+  const selectedSize = state.magnetSizes[productId] || 'M';
+
+  // Check minimum order quantity (MOQ)
+  let moq = 0; // Default no minimum
+  let pricingKey = null;
+
+  if (isMagnetProduct) {
+    // Use the selected size's pricing
+    pricingKey = MAGNET_SIZES[selectedSize].key;
+    moq = MAGNET_SIZES[selectedSize].tiers[0].min;
+  } else {
+    for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
+      if (productNameLower.includes(key) || key.includes(productNameLower)) {
+        moq = tierArray[0].min;
+        break;
+      }
     }
   }
 
@@ -1292,13 +1446,20 @@ window.handleQuantityChange = function(productId, value) {
 
   // Update cart
   if (quantity > 0) {
-    state.cart[productId] = { product, quantity };
+    const cartItem = { product, quantity };
+    // Store size info for magnet products
+    if (isMagnetProduct) {
+      cartItem.size = selectedSize;
+      cartItem.sizeName = MAGNET_SIZES[selectedSize].label;
+      cartItem.pricingKey = pricingKey;
+    }
+    state.cart[productId] = cartItem;
   } else {
     delete state.cart[productId];
   }
 
   // Get tiered pricing for new quantity
-  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : moq || 1);
+  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : moq || 1, pricingKey);
   const subtotal = price * quantity;
 
   // Update UI
@@ -1326,9 +1487,10 @@ window.handleQuantityChange = function(productId, value) {
   if (quantity > 0) {
     card.classList.add('selected');
     subtotalEl.classList.remove('hidden');
+    const sizeLabel = isMagnetProduct ? ` (${MAGNET_SIZES[selectedSize].label})` : '';
     subtotalEl.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span>Subtotal:</span>
+        <span>Subtotal${sizeLabel}:</span>
         <strong>$${subtotal.toFixed(2)}</strong>
       </div>
       ${savings > 0 ? `
@@ -1350,9 +1512,9 @@ function updateOrderTotals() {
   let subtotal = 0;
   let totalPieces = 0;
 
-  Object.values(state.cart).forEach(({ product, quantity }) => {
-    // Use tiered pricing for each product
-    const { price } = getTieredPrice(product, quantity);
+  Object.values(state.cart).forEach(({ product, quantity, pricingKey }) => {
+    // Use tiered pricing for each product (with size-specific key for magnets)
+    const { price } = getTieredPrice(product, quantity, pricingKey || null);
     subtotal += price * quantity;
     totalPieces += quantity;
   });
@@ -1437,17 +1599,20 @@ function populateOrderSummary() {
   let totalPieces = 0;
 
   // Generate HTML for each item in cart
-  Object.values(state.cart).forEach(({ product, quantity }) => {
-    const { price } = getTieredPrice(product, quantity);
+  Object.values(state.cart).forEach(({ product, quantity, pricingKey, sizeName }) => {
+    const { price } = getTieredPrice(product, quantity, pricingKey || null);
     const lineTotal = price * quantity;
     subtotal += lineTotal;
     totalPieces += quantity;
+
+    // Show size info for magnets
+    const sizeLabel = sizeName ? ` (${sizeName})` : '';
 
     const itemRow = document.createElement('div');
     itemRow.className = 'order-item-row';
     itemRow.innerHTML = `
       <div class="order-item-info">
-        <div class="order-item-name">${product.name}</div>
+        <div class="order-item-name">${product.name}${sizeLabel}</div>
         <div class="order-item-details">
           ${quantity} unidades × $${price.toFixed(2)}
         </div>
@@ -2111,11 +2276,12 @@ async function handleOrderSubmit() {
   try {
     // Prepare order data
     const orderData = {
-      // Products with tiered pricing
-      items: Object.values(state.cart).map(({ product, quantity }) => {
-        const { price } = getTieredPrice(product, quantity);
+      // Products with tiered pricing (includes size info for magnets)
+      items: Object.values(state.cart).map(({ product, quantity, pricingKey, sizeName }) => {
+        const { price } = getTieredPrice(product, quantity, pricingKey || null);
         return {
           productId: product.id,
+          productName: sizeName ? `${product.name} (${sizeName})` : product.name,
           quantity,
           unitPrice: price // Send the tiered price to backend
         };

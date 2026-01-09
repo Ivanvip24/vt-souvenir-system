@@ -2216,3 +2216,92 @@ details[open] .notes-summary {
     color: var(--danger);
 }
 
+/* ==========================================
+   SIZE SELECTOR FOR MAGNETS
+   ========================================== */
+
+.size-selector-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+    padding: 0 4px;
+}
+
+.size-selector-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-700);
+    font-style: italic;
+}
+
+.size-selector-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.size-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 3px solid var(--primary);
+    background: var(--primary);
+    color: white;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.size-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+}
+
+.size-btn:active {
+    transform: scale(0.95);
+}
+
+.size-btn.selected {
+    background: transparent;
+    color: var(--primary);
+    border-width: 3px;
+    animation: pulse-ring 0.4s ease-out;
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Dark mode support for size selector */
+@media (prefers-color-scheme: dark) {
+    .size-selector-label {
+        color: #cbd5e1;
+    }
+
+    .size-btn {
+        border-color: var(--axkan-pink);
+        background: var(--axkan-pink);
+    }
+
+    .size-btn.selected {
+        background: transparent;
+        color: var(--axkan-pink);
+    }
+}
+
