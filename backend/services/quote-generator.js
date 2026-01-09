@@ -57,13 +57,20 @@ const PRICING_TIERS = {
     { min: 50, max: 999, price: 11.00, label: 'Imanes MDF' },
     { min: 1000, max: Infinity, price: 8.00, label: 'Imanes MDF' }
   ],
+  'imanes_3d': [
+    { min: 50, max: Infinity, price: 13.91, label: 'Imanes 3D MDF' }
+  ],
+  'imanes_foil': [
+    { min: 50, max: Infinity, price: 0, label: 'Imanes Foil Metálico', requiresQuote: true }
+  ],
   'llaveros': [
     { min: 50, max: 999, price: 10.00, label: 'Llaveros MDF' },
     { min: 1000, max: Infinity, price: 8.00, label: 'Llaveros MDF' }
   ],
   'destapadores': [
-    { min: 50, max: 999, price: 20.00, label: 'Destapadores MDF' },
-    { min: 1000, max: Infinity, price: 17.00, label: 'Destapadores MDF' }
+    { min: 50, max: 499, price: 20.00, label: 'Destapadores MDF' },
+    { min: 500, max: 999, price: 17.00, label: 'Destapadores MDF' },
+    { min: 1000, max: Infinity, price: 15.00, label: 'Destapadores MDF' }
   ],
   'portallaves': [
     { min: 20, max: Infinity, price: 40.00, label: 'Portallaves MDF' }
@@ -101,6 +108,16 @@ const PRODUCT_ALIASES = {
   'botones': 'botones'
 };
 
+// Special product type aliases (detected from text context)
+const SPECIAL_PRODUCT_TYPES = {
+  '3d': 'imanes_3d',
+  'foil': 'imanes_foil',
+  'foil metálico': 'imanes_foil',
+  'foil metalico': 'imanes_foil',
+  'metálico': 'imanes_foil',
+  'metalico': 'imanes_foil'
+};
+
 // Size aliases for magnets
 const SIZE_ALIASES = {
   'chico': 'ch',
@@ -125,21 +142,24 @@ const SIZE_ALIASES = {
  */
 export function parseQuoteRequest(text) {
   const items = [];
-  const textLower = text.toLowerCase();
+  // Normalize text: remove commas from numbers (1,000 → 1000), then lowercase
+  const textNormalized = text.replace(/(\d),(\d)/g, '$1$2').toLowerCase();
 
-  // Pattern to match: number + product name + optional size
-  // Examples: "50 imanes", "100 llaveros grandes", "30 destapadores"
+  // Pattern to match: number + product name + optional modifiers (3D, Foil, size)
+  // Examples: "50 imanes", "1000 llaveros", "100 imanes 3d", "100 imanes foil metálico"
   const patterns = [
-    // Number + product + size
-    /(\d+)\s*(imanes?|imán|magnetos?|llaveros?|destapadores?|abridores?|portallaves?|porta[\s-]?llaves|souvenir\s*box|caja\s*souvenir|botones?)\s*(chicos?|pequeños?|medianos?|normales?|grandes?|ch|m|g)?/gi,
+    // Number + product + optional modifiers (3d, foil, size, mdf)
+    /([\d,]+)\s*(imanes?|imán|magnetos?|llaveros?|destapadores?|abridores?|portallaves?|porta[\s-]?llaves|souvenir\s*box|caja\s*souvenir|botones?)\s*(3d|foil\s*metálico|foil\s*metalico|foil|metálico|metalico|mdf)?\s*(chicos?|pequeños?|medianos?|normales?|grandes?|ch|m|g)?/gi,
   ];
 
   for (const pattern of patterns) {
     let match;
-    while ((match = pattern.exec(textLower)) !== null) {
-      const quantity = parseInt(match[1]);
+    while ((match = pattern.exec(textNormalized)) !== null) {
+      // Parse quantity (remove commas)
+      const quantity = parseInt(match[1].replace(/,/g, ''));
       const productRaw = match[2].trim();
-      const sizeRaw = match[3]?.trim() || null;
+      const specialType = match[3]?.trim() || null;
+      const sizeRaw = match[4]?.trim() || null;
 
       // Normalize product name
       let productKey = null;
@@ -152,21 +172,35 @@ export function parseQuoteRequest(text) {
 
       if (!productKey) continue;
 
-      // Normalize size for magnets
-      let sizeKey = null;
-      if (productKey === 'imanes' && sizeRaw) {
-        for (const [alias, key] of Object.entries(SIZE_ALIASES)) {
-          if (sizeRaw.includes(alias)) {
-            sizeKey = key;
+      // Check for special product types (3D, Foil) for imanes
+      let pricingKey = productKey;
+      let specialLabel = '';
+
+      if (productKey === 'imanes' && specialType) {
+        // Check for special product type
+        for (const [alias, key] of Object.entries(SPECIAL_PRODUCT_TYPES)) {
+          if (specialType.includes(alias) || alias.includes(specialType)) {
+            pricingKey = key;
             break;
           }
         }
       }
 
-      // Determine the pricing key
-      let pricingKey = productKey;
-      if (productKey === 'imanes' && sizeKey) {
-        pricingKey = `imanes_${sizeKey}`;
+      // Normalize size for regular magnets (only if not a special type)
+      let sizeKey = null;
+      if (productKey === 'imanes' && pricingKey === 'imanes') {
+        if (sizeRaw) {
+          for (const [alias, key] of Object.entries(SIZE_ALIASES)) {
+            if (sizeRaw.includes(alias)) {
+              sizeKey = key;
+              break;
+            }
+          }
+        }
+        // Apply size to pricing key
+        if (sizeKey) {
+          pricingKey = `imanes_${sizeKey}`;
+        }
       }
 
       // Get price from tiers
@@ -174,6 +208,10 @@ export function parseQuoteRequest(text) {
       if (!tiers) continue;
 
       const applicableTier = tiers.find(t => quantity >= t.min && quantity <= t.max);
+
+      // Check if this product requires special quote
+      const requiresQuote = applicableTier?.requiresQuote || tiers[0].requiresQuote;
+
       if (!applicableTier) {
         // Below minimum - use first tier's price and note the minimum
         items.push({
@@ -181,9 +219,10 @@ export function parseQuoteRequest(text) {
           productName: tiers[0].label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : ''),
           quantity,
           unitPrice: tiers[0].price,
-          subtotal: quantity * tiers[0].price,
+          subtotal: requiresQuote ? 0 : quantity * tiers[0].price,
           minimumRequired: tiers[0].min,
-          belowMinimum: quantity < tiers[0].min
+          belowMinimum: quantity < tiers[0].min,
+          requiresQuote
         });
       } else {
         items.push({
@@ -191,9 +230,10 @@ export function parseQuoteRequest(text) {
           productName: applicableTier.label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : ''),
           quantity,
           unitPrice: applicableTier.price,
-          subtotal: quantity * applicableTier.price,
+          subtotal: requiresQuote ? 0 : quantity * applicableTier.price,
           minimumRequired: tiers[0].min,
-          belowMinimum: false
+          belowMinimum: false,
+          requiresQuote
         });
       }
     }
@@ -223,11 +263,17 @@ export async function generateQuotePDF(quoteData) {
       // Calculate totals
       let subtotal = 0;
       let totalPieces = 0;
-      const validItems = quoteData.items.filter(item => !item.belowMinimum);
+      const validItems = quoteData.items.filter(item => !item.belowMinimum && !item.requiresQuote);
       const invalidItems = quoteData.items.filter(item => item.belowMinimum);
+      const specialQuoteItems = quoteData.items.filter(item => item.requiresQuote);
 
       for (const item of validItems) {
         subtotal += item.subtotal;
+        totalPieces += item.quantity;
+      }
+
+      // Add special quote items to total pieces count (but not subtotal)
+      for (const item of specialQuoteItems) {
         totalPieces += item.quantity;
       }
 
@@ -385,6 +431,17 @@ export async function generateQuotePDF(quoteData) {
         itemY += 22;
       }
 
+      // Special quote items (price to be determined)
+      for (const item of specialQuoteItems) {
+        doc.fillColor(COLORS.textGray);
+        doc.text(item.productName, 50, itemY, { width: 220 });
+        doc.text(item.quantity.toLocaleString('es-MX'), 280, itemY);
+        doc.fillColor(COLORS.warningOrange);
+        doc.text('Por cotizar', 360, itemY);
+        doc.text('—', 470, itemY);
+        itemY += 22;
+      }
+
       // Invalid items (below minimum) with warning
       if (invalidItems.length > 0) {
         itemY += 5;
@@ -489,7 +546,23 @@ export async function generateQuotePDF(quoteData) {
       // ============================================
       // NOTES & TERMS
       // ============================================
+      // Build notes text including special quote items and user notes
+      const notesLines = [];
+
+      // Add note about special quote items
+      if (specialQuoteItems.length > 0) {
+        const specialItemNames = specialQuoteItems.map(item =>
+          `${item.productName} (${item.quantity.toLocaleString('es-MX')} pzas)`
+        ).join(', ');
+        notesLines.push(`${specialItemNames} requiere precio especial - contactar para cotización.`);
+      }
+
+      // Add user notes
       if (quoteData.notes) {
+        notesLines.push(quoteData.notes);
+      }
+
+      if (notesLines.length > 0) {
         doc.fillColor(COLORS.textDark)
            .fontSize(10)
            .font('Helvetica-Bold')
@@ -498,9 +571,9 @@ export async function generateQuotePDF(quoteData) {
         doc.font('Helvetica')
            .fontSize(9)
            .fillColor(COLORS.textGray)
-           .text(quoteData.notes, 50, itemY + 15, { width: 510 });
+           .text(notesLines.join(' '), 50, itemY + 15, { width: 510 });
 
-        itemY += 40;
+        itemY += 40 + (notesLines.length > 1 ? 15 : 0);
       }
 
       // Terms
@@ -554,7 +627,8 @@ export async function generateQuotePDF(quoteData) {
           itemCount: validItems.length,
           validUntil: formatDate(validUntil),
           items: validItems,
-          invalidItems
+          invalidItems,
+          specialQuoteItems
         });
       });
 
@@ -638,8 +712,10 @@ export function getPricingInfo() {
       { name: 'Imanes MDF Chico', minQty: 50, prices: [{ qty: '50-999', price: 8 }, { qty: '1000+', price: 6 }] },
       { name: 'Imanes MDF Mediano', minQty: 50, prices: [{ qty: '50-999', price: 11 }, { qty: '1000+', price: 8 }] },
       { name: 'Imanes MDF Grande', minQty: 50, prices: [{ qty: '50-999', price: 15 }, { qty: '1000+', price: 12 }] },
+      { name: 'Imanes 3D MDF', minQty: 50, prices: [{ qty: '50+', price: 13.91 }] },
+      { name: 'Imanes Foil Metálico', minQty: 50, prices: [{ qty: '50+', price: 'Por cotizar' }] },
       { name: 'Llaveros MDF', minQty: 50, prices: [{ qty: '50-999', price: 10 }, { qty: '1000+', price: 8 }] },
-      { name: 'Destapadores MDF', minQty: 50, prices: [{ qty: '50-999', price: 20 }, { qty: '1000+', price: 17 }] },
+      { name: 'Destapadores MDF', minQty: 50, prices: [{ qty: '50-499', price: 20 }, { qty: '500-999', price: 17 }, { qty: '1000+', price: 15 }] },
       { name: 'Portallaves MDF', minQty: 20, prices: [{ qty: '20+', price: 40 }] },
       { name: 'Souvenir Box', minQty: 1, prices: [{ qty: '1+', price: 2250 }] },
       { name: 'Botones Metálicos', minQty: 50, prices: [{ qty: '50-999', price: 8 }, { qty: '1000+', price: 6 }] }
