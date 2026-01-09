@@ -2174,13 +2174,14 @@
             </div>
             <div class="ai-chat-footer">
                 <div class="ai-input-container">
-                    <input
-                        type="text"
+                    <textarea
                         id="ai-chat-input"
                         class="ai-chat-input"
                         placeholder="Escribe tu pregunta..."
+                        rows="1"
                         onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendAiMessage(); }"
-                    />
+                        oninput="this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px';"
+                    ></textarea>
                     <button class="ai-send-btn" onclick="sendAiMessage()" id="ai-send-btn">
                         <span>Enviar</span>
                         <span class="ai-send-icon">↗</span>
