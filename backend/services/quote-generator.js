@@ -58,10 +58,12 @@ const PRICING_TIERS = {
     { min: 1000, max: Infinity, price: 8.00, label: 'Imanes MDF' }
   ],
   'imanes_3d': [
-    { min: 50, max: Infinity, price: 13.91, label: 'Imanes 3D MDF' }
+    { min: 100, max: 999, price: 15.00, label: 'Imanes 3D' },
+    { min: 1000, max: Infinity, price: 12.00, label: 'Imanes 3D' }
   ],
   'imanes_foil': [
-    { min: 50, max: Infinity, price: 0, label: 'Imanes Foil Metálico', requiresQuote: true }
+    { min: 100, max: 999, price: 15.00, label: 'Imanes Foil Metálico' },
+    { min: 1000, max: Infinity, price: 12.00, label: 'Imanes Foil Metálico' }
   ],
   'llaveros': [
     { min: 50, max: 999, price: 10.00, label: 'Llaveros MDF' },
@@ -712,8 +714,8 @@ export function getPricingInfo() {
       { name: 'Imanes MDF Chico', minQty: 50, prices: [{ qty: '50-999', price: 8 }, { qty: '1000+', price: 6 }] },
       { name: 'Imanes MDF Mediano', minQty: 50, prices: [{ qty: '50-999', price: 11 }, { qty: '1000+', price: 8 }] },
       { name: 'Imanes MDF Grande', minQty: 50, prices: [{ qty: '50-999', price: 15 }, { qty: '1000+', price: 12 }] },
-      { name: 'Imanes 3D MDF', minQty: 50, prices: [{ qty: '50+', price: 13.91 }] },
-      { name: 'Imanes Foil Metálico', minQty: 50, prices: [{ qty: '50+', price: 'Por cotizar' }] },
+      { name: 'Imanes 3D', minQty: 100, prices: [{ qty: '100-999', price: 15 }, { qty: '1000+', price: 12 }] },
+      { name: 'Imanes Foil Metálico', minQty: 100, prices: [{ qty: '100-999', price: 15 }, { qty: '1000+', price: 12 }] },
       { name: 'Llaveros MDF', minQty: 50, prices: [{ qty: '50-999', price: 10 }, { qty: '1000+', price: 8 }] },
       { name: 'Destapadores MDF', minQty: 50, prices: [{ qty: '50-499', price: 20 }, { qty: '500-999', price: 17 }, { qty: '1000+', price: 15 }] },
       { name: 'Portallaves MDF', minQty: 20, prices: [{ qty: '20+', price: 40 }] },
