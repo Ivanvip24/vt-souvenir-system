@@ -567,10 +567,23 @@ function formatDate(date) {
 
 /**
  * Get the URL path for a quote file
+ * Returns full URL for production, relative for local
  */
 export function getQuoteUrl(filepath) {
   const filename = path.basename(filepath);
-  return `/quotes/${filename}`;
+  const relativePath = `/quotes/${filename}`;
+
+  // In production, return full backend URL
+  const backendUrl = process.env.BACKEND_URL
+    || process.env.RENDER_EXTERNAL_URL
+    || (process.env.NODE_ENV === 'production' ? 'https://vt-souvenir-backend.onrender.com' : null);
+
+  if (backendUrl) {
+    return `${backendUrl}${relativePath}`;
+  }
+
+  // For local development
+  return relativePath;
 }
 
 /**
