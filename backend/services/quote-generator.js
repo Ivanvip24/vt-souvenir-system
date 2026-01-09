@@ -349,21 +349,48 @@ export async function generateQuotePDF(quoteData) {
       const quoteNumber = `COT-${Date.now().toString(36).toUpperCase()}`;
       const now = new Date();
 
+      // Deduplicate items by productKey (keep the one with valid quantity, prefer special price)
+      const itemMap = new Map();
+      for (const item of quoteData.items) {
+        // Skip items with invalid data
+        if (!item.quantity || isNaN(item.quantity) || item.quantity <= 0) continue;
+        if (item.unitPrice === undefined || isNaN(item.unitPrice)) continue;
+
+        const key = item.productKey;
+        const existing = itemMap.get(key);
+
+        if (!existing) {
+          itemMap.set(key, item);
+        } else {
+          // If new item has special price, prefer it; otherwise keep the one with higher quantity
+          if (item.isSpecialPrice && !existing.isSpecialPrice) {
+            itemMap.set(key, item);
+          } else if (item.quantity > existing.quantity && !existing.isSpecialPrice) {
+            itemMap.set(key, item);
+          }
+        }
+      }
+
+      const deduplicatedItems = Array.from(itemMap.values());
+
       // Calculate totals
       let subtotal = 0;
       let totalPieces = 0;
-      const validItems = quoteData.items.filter(item => !item.belowMinimum && !item.requiresQuote);
-      const invalidItems = quoteData.items.filter(item => item.belowMinimum);
-      const specialQuoteItems = quoteData.items.filter(item => item.requiresQuote);
+      const validItems = deduplicatedItems.filter(item => !item.belowMinimum && !item.requiresQuote);
+      const invalidItems = deduplicatedItems.filter(item => item.belowMinimum);
+      const specialQuoteItems = deduplicatedItems.filter(item => item.requiresQuote);
 
       for (const item of validItems) {
-        subtotal += item.subtotal;
-        totalPieces += item.quantity;
+        const itemSubtotal = item.subtotal || 0;
+        const itemQuantity = item.quantity || 0;
+        if (!isNaN(itemSubtotal)) subtotal += itemSubtotal;
+        if (!isNaN(itemQuantity)) totalPieces += itemQuantity;
       }
 
       // Add special quote items to total pieces count (but not subtotal)
       for (const item of specialQuoteItems) {
-        totalPieces += item.quantity;
+        const itemQuantity = item.quantity || 0;
+        if (!isNaN(itemQuantity)) totalPieces += itemQuantity;
       }
 
       // Free shipping for orders >= 300 pieces
@@ -516,7 +543,7 @@ export async function generateQuotePDF(quoteData) {
       // Valid items
       for (const item of validItems) {
         // Product name (with special price marker if applicable)
-        const displayName = item.isSpecialPrice ? `★ ${item.productName}` : item.productName;
+        const displayName = item.isSpecialPrice ? `* ${item.productName}` : item.productName;
         doc.fillColor(item.isSpecialPrice ? COLORS.pinkDark : COLORS.textDark);
         doc.text(displayName, 50, itemY, { width: 220 });
         doc.text(item.quantity.toLocaleString('es-MX'), 280, itemY);
@@ -643,12 +670,12 @@ export async function generateQuotePDF(quoteData) {
       // Build notes text including special price items, special quote items, and user notes
       const notesLines = [];
 
-      // Add note about special prices applied (marked with ★)
+      // Add note about special prices applied (marked with *)
       if (specialPriceItems.length > 0) {
         const priceList = specialPriceItems.map(item =>
           `${item.productName} ${formatCurrency(item.unitPrice)}`
         ).join(', ');
-        notesLines.push(`★ Precios especiales aplicados: ${priceList}.`);
+        notesLines.push(`* Precios especiales aplicados: ${priceList}.`);
       }
 
       // Add note about special quote items
