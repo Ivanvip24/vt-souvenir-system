@@ -138,14 +138,68 @@ const SIZE_ALIASES = {
 };
 
 /**
+ * Parse custom prices from text like "Llavero $6" or "iman en $8"
+ * @param {string} text - Text containing price specifications
+ * @returns {Object} Map of product key to custom price
+ */
+function parseCustomPrices(text) {
+  const customPrices = {};
+  const textLower = text.toLowerCase();
+
+  // Pattern to match: product + price (e.g., "Llavero $6", "iman en $8", "destapador a $16")
+  const pricePatterns = [
+    // Product + "en/a/$" + price: "llavero en $6", "iman $8", "destapador a $16"
+    /(imanes?|imán|magnetos?|llaveros?|destapadores?|abridores?|portallaves?|porta[\s-]?llaves|souvenir\s*box|botones?)\s*(3d|foil\s*metálico|foil\s*metalico|foil)?\s*(?:en|a)?\s*\$\s*([\d.]+)/gi,
+  ];
+
+  for (const pattern of pricePatterns) {
+    let match;
+    while ((match = pattern.exec(textLower)) !== null) {
+      const productRaw = match[1].trim();
+      const specialType = match[2]?.trim() || null;
+      const price = parseFloat(match[3]);
+
+      // Normalize product name
+      let productKey = null;
+      for (const [alias, key] of Object.entries(PRODUCT_ALIASES)) {
+        if (productRaw.includes(alias) || alias.includes(productRaw)) {
+          productKey = key;
+          break;
+        }
+      }
+
+      if (productKey && !isNaN(price)) {
+        // Check for special product types
+        if (productKey === 'imanes' && specialType) {
+          for (const [alias, key] of Object.entries(SPECIAL_PRODUCT_TYPES)) {
+            if (specialType.includes(alias)) {
+              productKey = key;
+              break;
+            }
+          }
+        }
+        customPrices[productKey] = price;
+      }
+    }
+  }
+
+  return customPrices;
+}
+
+/**
  * Parse natural language quote request
  * @param {string} text - Natural language text like "50 imanes y 30 llaveros"
+ * @param {Object} options - Optional settings
+ * @param {Object} options.customPrices - Custom prices to override default pricing
  * @returns {Array} Array of items with product, quantity, size
  */
-export function parseQuoteRequest(text) {
+export function parseQuoteRequest(text, options = {}) {
   const items = [];
   // Normalize text: remove commas from numbers (1,000 → 1000), then lowercase
   const textNormalized = text.replace(/(\d),(\d)/g, '$1$2').toLowerCase();
+
+  // Parse custom prices from text if not provided
+  const customPrices = options.customPrices || parseCustomPrices(text);
 
   // Pattern to match: number + product name + optional modifiers (3D, Foil, size)
   // Examples: "50 imanes", "1000 llaveros", "100 imanes 3d", "100 imanes foil metálico"
@@ -176,7 +230,6 @@ export function parseQuoteRequest(text) {
 
       // Check for special product types (3D, Foil) for imanes
       let pricingKey = productKey;
-      let specialLabel = '';
 
       if (productKey === 'imanes' && specialType) {
         // Check for special product type
@@ -205,39 +258,45 @@ export function parseQuoteRequest(text) {
         }
       }
 
-      // Get price from tiers
+      // Check for custom price (check both pricingKey and productKey)
+      const customPrice = customPrices[pricingKey] || customPrices[productKey];
+      const hasCustomPrice = customPrice !== undefined;
+
+      // Get price from tiers (as fallback)
       const tiers = PRICING_TIERS[pricingKey] || PRICING_TIERS[productKey];
       if (!tiers) continue;
 
       const applicableTier = tiers.find(t => quantity >= t.min && quantity <= t.max);
 
       // Check if this product requires special quote
-      const requiresQuote = applicableTier?.requiresQuote || tiers[0].requiresQuote;
+      const requiresQuote = !hasCustomPrice && (applicableTier?.requiresQuote || tiers[0].requiresQuote);
 
-      if (!applicableTier) {
-        // Below minimum - use first tier's price and note the minimum
-        items.push({
-          productKey: pricingKey,
-          productName: tiers[0].label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : ''),
-          quantity,
-          unitPrice: tiers[0].price,
-          subtotal: requiresQuote ? 0 : quantity * tiers[0].price,
-          minimumRequired: tiers[0].min,
-          belowMinimum: quantity < tiers[0].min,
-          requiresQuote
-        });
+      // Determine the price to use
+      let unitPrice, productName;
+      if (hasCustomPrice) {
+        unitPrice = customPrice;
+        productName = (applicableTier?.label || tiers[0].label) + (sizeKey ? ` (${sizeKey.toUpperCase()})` : '');
+      } else if (applicableTier) {
+        unitPrice = applicableTier.price;
+        productName = applicableTier.label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : '');
       } else {
-        items.push({
-          productKey: pricingKey,
-          productName: applicableTier.label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : ''),
-          quantity,
-          unitPrice: applicableTier.price,
-          subtotal: requiresQuote ? 0 : quantity * applicableTier.price,
-          minimumRequired: tiers[0].min,
-          belowMinimum: false,
-          requiresQuote
-        });
+        unitPrice = tiers[0].price;
+        productName = tiers[0].label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : '');
       }
+
+      const belowMinimum = !hasCustomPrice && (!applicableTier && quantity < tiers[0].min);
+
+      items.push({
+        productKey: pricingKey,
+        productName,
+        quantity,
+        unitPrice,
+        subtotal: requiresQuote ? 0 : quantity * unitPrice,
+        minimumRequired: tiers[0].min,
+        belowMinimum,
+        requiresQuote,
+        isSpecialPrice: hasCustomPrice
+      });
     }
   }
 
@@ -423,10 +482,15 @@ export async function generateQuotePDF(quoteData) {
       let itemY = tableTop + 27;
       doc.font('Helvetica').fontSize(10);
 
+      // Track items with special prices for notes
+      const specialPriceItems = validItems.filter(item => item.isSpecialPrice);
+
       // Valid items
       for (const item of validItems) {
-        doc.fillColor(COLORS.textDark);
-        doc.text(item.productName, 50, itemY, { width: 220 });
+        // Product name (with special price marker if applicable)
+        const displayName = item.isSpecialPrice ? `★ ${item.productName}` : item.productName;
+        doc.fillColor(item.isSpecialPrice ? COLORS.pinkDark : COLORS.textDark);
+        doc.text(displayName, 50, itemY, { width: 220 });
         doc.text(item.quantity.toLocaleString('es-MX'), 280, itemY);
         doc.text(formatCurrency(item.unitPrice), 360, itemY);
         doc.text(formatCurrency(item.subtotal), 470, itemY);
@@ -548,8 +612,16 @@ export async function generateQuotePDF(quoteData) {
       // ============================================
       // NOTES & TERMS
       // ============================================
-      // Build notes text including special quote items and user notes
+      // Build notes text including special price items, special quote items, and user notes
       const notesLines = [];
+
+      // Add note about special prices applied (marked with ★)
+      if (specialPriceItems.length > 0) {
+        const priceList = specialPriceItems.map(item =>
+          `${item.productName} ${formatCurrency(item.unitPrice)}`
+        ).join(', ');
+        notesLines.push(`★ Precios especiales aplicados: ${priceList}.`);
+      }
 
       // Add note about special quote items
       if (specialQuoteItems.length > 0) {
