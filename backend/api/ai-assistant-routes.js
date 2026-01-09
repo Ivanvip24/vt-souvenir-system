@@ -517,12 +517,26 @@ Cuando el usuario especifique precios personalizados (ej: "Llavero $6", "Iman en
 \`\`\`action
 {
   "type": "generate_quote",
-  "text": "texto original con productos y cantidades",
+  "text": "INCLUIR AQUÍ EL TEXTO COMPLETO con cantidades + productos + precios especiales",
   "clientName": "nombre del cliente si se menciona (opcional)",
   "clientPhone": "teléfono si se menciona (opcional)",
   "notes": "notas adicionales (opcional)"
 }
 \`\`\`
+
+**CRÍTICO - El campo "text" DEBE incluir:**
+- Cantidades: "1000", "500", "100"
+- Productos: "llaveros", "imanes", "destapadores", "imanes 3d", "imanes foil"
+- Precios especiales si los hay: "llavero $6", "iman $8", "3d $25"
+
+**Ejemplos CORRECTOS de "text":**
+- "1000 llaveros, 500 destapadores, llavero $6, destapador $16"
+- "100 imanes 3d, 100 imanes foil, 3d $25, foil $25"
+- "1200 imanes mediano, 250 portallaves, iman $8, portallaves $33"
+
+**Ejemplo INCORRECTO (NO HACER):**
+- "llavero $6" (falta la cantidad!)
+- "" (texto vacío!)
 
 **IMPORTANTE para cotizaciones:**
 - Si el usuario pregunta "cuánto cuesta" o "cuál es el precio", SIEMPRE genera la cotización PDF
