@@ -3034,7 +3034,7 @@ async function openAddProductModal(orderId) {
     });
     const data = await response.json();
     if (data.success) {
-      products = data.products || [];
+      products = data.data || [];
     }
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -3064,7 +3064,7 @@ async function openAddProductModal(orderId) {
         <select id="add-product-select" onchange="updateAddProductPrice()"
                 style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
           <option value="">-- Selecciona un producto --</option>
-          ${products.map(p => `<option value="${p.id}" data-price="${p.basePrice}" data-name="${p.title}">${p.title} - ${formatCurrency(p.basePrice)}/pza</option>`).join('')}
+          ${products.map(p => `<option value="${p.product_id}" data-price="${p.current_price}" data-name="${p.product_name}">${p.product_name} - ${formatCurrency(p.current_price)}/pza</option>`).join('')}
         </select>
       </div>
 
