@@ -1931,6 +1931,294 @@ app.delete('/api/orders/:orderId/items/:itemId/attachment', async (req, res) => 
 });
 
 // ========================================
+// ORDER ITEM MODIFICATION (Edit/Add Products)
+// ========================================
+
+/**
+ * PUT /api/orders/:orderId/items/:itemId/modify
+ * Modify an existing order item's quantity
+ */
+app.put('/api/orders/:orderId/items/:itemId/modify', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const itemId = parseInt(req.params.itemId);
+    const { newQuantity, reason, oldQuantity, productName, unitPrice } = req.body;
+
+    console.log(`✏️ Modifying item ${itemId} in order ${orderId}: ${oldQuantity} -> ${newQuantity}`);
+
+    // Verify the item belongs to the order
+    const itemCheck = await query(
+      'SELECT id, quantity FROM order_items WHERE id = $1 AND order_id = $2',
+      [itemId, orderId]
+    );
+
+    if (itemCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Item not found in this order'
+      });
+    }
+
+    // Get the order and client info for email
+    const orderResult = await query(`
+      SELECT o.*, o.order_number, c.email, c.name as client_name, o.internal_notes
+      FROM orders o
+      JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = orderResult.rows[0];
+    const oldLineTotal = oldQuantity * unitPrice;
+    const newLineTotal = newQuantity * unitPrice;
+    const priceDiff = newLineTotal - oldLineTotal;
+
+    // Update the item quantity
+    await query(`
+      UPDATE order_items
+      SET quantity = $1
+      WHERE id = $2
+    `, [newQuantity, itemId]);
+
+    // Recalculate order total
+    const totalsResult = await query(`
+      SELECT COALESCE(SUM(quantity * unit_price), 0) as new_total
+      FROM order_items
+      WHERE order_id = $1
+    `, [orderId]);
+
+    const newOrderTotal = parseFloat(totalsResult.rows[0].new_total);
+
+    // Add shipping if exists
+    const shippingResult = await query('SELECT shipping_cost FROM orders WHERE id = $1', [orderId]);
+    const shippingCost = parseFloat(shippingResult.rows[0]?.shipping_cost || 0);
+    const finalTotal = newOrderTotal + shippingCost;
+
+    // Update order total
+    await query(`
+      UPDATE orders
+      SET total_price = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+    `, [finalTotal, orderId]);
+
+    // Create change log entry
+    const timestamp = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+    const changeLog = `\n📝 MODIFICACION (${timestamp})\n` +
+      `Producto: ${productName}\n` +
+      `Cantidad: ${oldQuantity} → ${newQuantity} pzas\n` +
+      `Diferencia: ${priceDiff >= 0 ? '+' : ''}$${priceDiff.toFixed(2)}\n` +
+      `Razon: ${reason}\n` +
+      `Nuevo total: $${finalTotal.toFixed(2)}`;
+
+    const newNotes = (order.internal_notes || '') + changeLog;
+
+    // Update internal notes
+    await query(`
+      UPDATE orders
+      SET internal_notes = $1
+      WHERE id = $2
+    `, [newNotes, orderId]);
+
+    // Send email notification to client
+    if (order.email) {
+      try {
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #2563eb;">📦 Actualizacion de tu Pedido</h2>
+            <p>Hola <strong>${order.client_name}</strong>,</p>
+            <p>Te informamos que se ha realizado una modificacion a tu pedido <strong>${order.order_number}</strong>:</p>
+
+            <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Producto:</strong> ${productName}</p>
+              <p style="margin: 5px 0;"><strong>Cantidad anterior:</strong> ${oldQuantity} piezas</p>
+              <p style="margin: 5px 0;"><strong>Nueva cantidad:</strong> ${newQuantity} piezas</p>
+              <p style="margin: 5px 0;"><strong>Diferencia en precio:</strong> ${priceDiff >= 0 ? '+' : ''}$${priceDiff.toFixed(2)}</p>
+            </div>
+
+            <p style="font-size: 18px; color: #059669;"><strong>Nuevo total del pedido: $${finalTotal.toFixed(2)}</strong></p>
+
+            <p style="color: #6b7280; font-size: 14px;">Motivo: ${reason}</p>
+
+            <p>Si tienes alguna duda, contactanos por WhatsApp: <strong>55-3825-3251</strong></p>
+
+            <p style="margin-top: 30px; color: #6b7280; font-size: 12px;">
+              Gracias por tu preferencia,<br>
+              <strong>AXKAN Souvenirs</strong>
+            </p>
+          </div>
+        `;
+
+        await sendEmail({
+          to: order.email,
+          subject: `Actualizacion de tu pedido ${order.order_number} - AXKAN`,
+          html: emailHtml
+        });
+        console.log(`📧 Modification email sent to ${order.email}`);
+      } catch (emailError) {
+        console.error('Error sending modification email:', emailError);
+      }
+    }
+
+    console.log('✅ Item modified successfully');
+
+    res.json({
+      success: true,
+      message: 'Item modified successfully',
+      newTotal: finalTotal
+    });
+
+  } catch (error) {
+    console.error('Error modifying order item:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/orders/:orderId/items/add
+ * Add a new product to an existing order
+ */
+app.post('/api/orders/:orderId/items/add', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { productId, productName, quantity, unitPrice, reason } = req.body;
+
+    console.log(`➕ Adding new item to order ${orderId}: ${productName} x ${quantity}`);
+
+    // Get the order and client info
+    const orderResult = await query(`
+      SELECT o.*, o.order_number, c.email, c.name as client_name, o.internal_notes
+      FROM orders o
+      JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = orderResult.rows[0];
+    const lineTotal = quantity * unitPrice;
+
+    // Insert the new order item
+    const insertResult = await query(`
+      INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
+    `, [orderId, productId, productName, quantity, unitPrice]);
+
+    const newItemId = insertResult.rows[0].id;
+
+    // Recalculate order total
+    const totalsResult = await query(`
+      SELECT COALESCE(SUM(quantity * unit_price), 0) as new_total
+      FROM order_items
+      WHERE order_id = $1
+    `, [orderId]);
+
+    const newOrderTotal = parseFloat(totalsResult.rows[0].new_total);
+
+    // Add shipping if exists
+    const shippingResult = await query('SELECT shipping_cost FROM orders WHERE id = $1', [orderId]);
+    const shippingCost = parseFloat(shippingResult.rows[0]?.shipping_cost || 0);
+    const finalTotal = newOrderTotal + shippingCost;
+
+    // Update order total
+    await query(`
+      UPDATE orders
+      SET total_price = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+    `, [finalTotal, orderId]);
+
+    // Create change log entry
+    const timestamp = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+    const changeLog = `\n➕ PRODUCTO AGREGADO (${timestamp})\n` +
+      `Producto: ${productName}\n` +
+      `Cantidad: ${quantity} pzas\n` +
+      `Precio: $${unitPrice.toFixed(2)}/pza\n` +
+      `Subtotal: $${lineTotal.toFixed(2)}\n` +
+      `Razon: ${reason}\n` +
+      `Nuevo total: $${finalTotal.toFixed(2)}`;
+
+    const newNotes = (order.internal_notes || '') + changeLog;
+
+    // Update internal notes
+    await query(`
+      UPDATE orders
+      SET internal_notes = $1
+      WHERE id = $2
+    `, [newNotes, orderId]);
+
+    // Send email notification to client
+    if (order.email) {
+      try {
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #2563eb;">📦 Producto Agregado a tu Pedido</h2>
+            <p>Hola <strong>${order.client_name}</strong>,</p>
+            <p>Te informamos que se ha agregado un nuevo producto a tu pedido <strong>${order.order_number}</strong>:</p>
+
+            <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Producto:</strong> ${productName}</p>
+              <p style="margin: 5px 0;"><strong>Cantidad:</strong> ${quantity} piezas</p>
+              <p style="margin: 5px 0;"><strong>Precio unitario:</strong> $${unitPrice.toFixed(2)}</p>
+              <p style="margin: 5px 0;"><strong>Subtotal:</strong> $${lineTotal.toFixed(2)}</p>
+            </div>
+
+            <p style="font-size: 18px; color: #059669;"><strong>Nuevo total del pedido: $${finalTotal.toFixed(2)}</strong></p>
+
+            <p style="color: #6b7280; font-size: 14px;">Motivo: ${reason}</p>
+
+            <p>Si tienes alguna duda, contactanos por WhatsApp: <strong>55-3825-3251</strong></p>
+
+            <p style="margin-top: 30px; color: #6b7280; font-size: 12px;">
+              Gracias por tu preferencia,<br>
+              <strong>AXKAN Souvenirs</strong>
+            </p>
+          </div>
+        `;
+
+        await sendEmail({
+          to: order.email,
+          subject: `Producto agregado a tu pedido ${order.order_number} - AXKAN`,
+          html: emailHtml
+        });
+        console.log(`📧 New product email sent to ${order.email}`);
+      } catch (emailError) {
+        console.error('Error sending new product email:', emailError);
+      }
+    }
+
+    console.log('✅ New item added successfully');
+
+    res.json({
+      success: true,
+      message: 'Item added successfully',
+      itemId: newItemId,
+      newTotal: finalTotal
+    });
+
+  } catch (error) {
+    console.error('Error adding order item:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ========================================
 // ORDER-LEVEL NOTES AND ATTACHMENTS
 // ========================================
 

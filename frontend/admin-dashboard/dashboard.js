@@ -913,6 +913,7 @@ async function showOrderDetail(orderId) {
             <th style="text-align: center; padding: 8px 0; color: var(--gray-600);">Cantidad</th>
             <th style="text-align: right; padding: 8px 0; color: var(--gray-600);">P. Unit.</th>
             <th style="text-align: right; padding: 8px 0; color: var(--gray-600);">Subtotal</th>
+            <th style="text-align: center; padding: 8px 0; color: var(--gray-600); width: 60px;">Editar</th>
           </tr>
           ${order.items.map(item => `
             <tr>
@@ -920,6 +921,12 @@ async function showOrderDetail(orderId) {
               <td style="text-align: center; padding: 6px 0;">${item.quantity} pzas</td>
               <td style="text-align: right; padding: 6px 0;">${formatCurrency(item.unitPrice)}</td>
               <td style="text-align: right; padding: 6px 0; font-weight: 600;">${formatCurrency(item.lineTotal)}</td>
+              <td style="text-align: center; padding: 6px 0;">
+                <button onclick="openEditProductModal(${order.id}, ${item.id}, '${item.productName.replace(/'/g, "\\'")}', ${item.quantity}, ${item.unitPrice})"
+                        style="background: var(--primary); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                  ✏️
+                </button>
+              </td>
             </tr>
           `).join('')}
           ${(() => {
@@ -936,7 +943,7 @@ async function showOrderDetail(orderId) {
 
             return `
           <tr style="border-top: 1px solid var(--gray-200);">
-            <td colspan="3" style="padding: 6px 0; color: var(--gray-600);">
+            <td colspan="4" style="padding: 6px 0; color: var(--gray-600);">
               ${order.isStorePickup ? '🏪 Recoger en tienda' : '🚚 Envío'}
             </td>
             <td style="text-align: right; padding: 6px 0; ${isFreeShipping ? 'color: var(--green);' : ''}">
@@ -944,11 +951,19 @@ async function showOrderDetail(orderId) {
             </td>
           </tr>
           <tr style="border-top: 2px solid var(--gray-300);">
-            <td colspan="3" style="padding: 8px 0; font-weight: 700;">Total</td>
+            <td colspan="4" style="padding: 8px 0; font-weight: 700;">Total</td>
             <td style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(displayTotal)}</td>
           </tr>`;
           })()}
         </table>
+
+        <!-- Add Product Button -->
+        <div style="margin-top: 12px; text-align: center;">
+          <button onclick="openAddProductModal(${order.id})"
+                  style="background: var(--success); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+            ➕ Agregar Producto
+          </button>
+        </div>
       </div>
     </div>
 
@@ -2889,6 +2904,292 @@ async function checkFacebookStatus(imageUrl) {
   }
 }
 
+// ========================================
+// ORDER ITEM EDIT FUNCTIONS
+// ========================================
+
+/**
+ * Open modal to edit a product's quantity
+ */
+function openEditProductModal(orderId, itemId, productName, currentQuantity, unitPrice) {
+  const modal = document.createElement('div');
+  modal.id = 'edit-product-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+  `;
+
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 12px; padding: 24px; width: 400px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+      <h3 style="margin: 0 0 20px 0; font-size: 18px; color: var(--gray-800);">✏️ Editar Producto</h3>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Producto</label>
+        <div style="padding: 10px; background: var(--gray-100); border-radius: 6px; font-weight: 500;">${productName}</div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Cantidad Actual</label>
+        <div style="padding: 10px; background: var(--gray-100); border-radius: 6px;">${currentQuantity} pzas</div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Nueva Cantidad</label>
+        <input type="number" id="new-quantity" value="${currentQuantity}" min="1"
+               style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Razon del cambio</label>
+        <textarea id="change-reason" placeholder="Ej: Cliente solicito agregar mas piezas..."
+                  style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; min-height: 60px; resize: vertical; box-sizing: border-box;"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button onclick="closeEditProductModal()"
+                style="padding: 10px 20px; background: var(--gray-200); border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+          Cancelar
+        </button>
+        <button onclick="saveProductChanges(${orderId}, ${itemId}, '${productName.replace(/'/g, "\\'")}', ${currentQuantity}, ${unitPrice})"
+                style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  document.getElementById('new-quantity').focus();
+}
+
+function closeEditProductModal() {
+  const modal = document.getElementById('edit-product-modal');
+  if (modal) modal.remove();
+}
+
+async function saveProductChanges(orderId, itemId, productName, oldQuantity, unitPrice) {
+  const newQuantity = parseInt(document.getElementById('new-quantity').value);
+  const reason = document.getElementById('change-reason').value.trim();
+
+  if (!newQuantity || newQuantity < 1) {
+    alert('La cantidad debe ser mayor a 0');
+    return;
+  }
+
+  if (newQuantity === oldQuantity) {
+    alert('La cantidad no ha cambiado');
+    return;
+  }
+
+  if (!reason) {
+    alert('Por favor indica la razon del cambio');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}/items/${itemId}/modify`, {
+      method: 'PUT',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        newQuantity,
+        reason,
+        oldQuantity,
+        productName,
+        unitPrice
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      closeEditProductModal();
+      alert('Producto actualizado correctamente. Se ha notificado al cliente.');
+      showOrderDetail(orderId);
+      loadOrders();
+    } else {
+      alert('Error: ' + (data.error || 'No se pudo actualizar el producto'));
+    }
+  } catch (error) {
+    console.error('Error updating product:', error);
+    alert('Error al actualizar el producto');
+  }
+}
+
+async function openAddProductModal(orderId) {
+  let products = [];
+  try {
+    const response = await fetch(`${API_BASE}/prices/products`, {
+      headers: getAuthHeaders()
+    });
+    const data = await response.json();
+    if (data.success) {
+      products = data.products || [];
+    }
+  } catch (error) {
+    console.error('Error fetching products:', error);
+  }
+
+  const modal = document.createElement('div');
+  modal.id = 'add-product-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+  `;
+
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 12px; padding: 24px; width: 450px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+      <h3 style="margin: 0 0 20px 0; font-size: 18px; color: var(--gray-800);">➕ Agregar Producto al Pedido</h3>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Seleccionar Producto</label>
+        <select id="add-product-select" onchange="updateAddProductPrice()"
+                style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+          <option value="">-- Selecciona un producto --</option>
+          ${products.map(p => `<option value="${p.id}" data-price="${p.basePrice}" data-name="${p.title}">${p.title} - ${formatCurrency(p.basePrice)}/pza</option>`).join('')}
+        </select>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Cantidad</label>
+        <input type="number" id="add-product-quantity" value="50" min="1" onchange="updateAddProductTotal()"
+               style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Precio Unitario</label>
+        <input type="number" id="add-product-price" value="0" min="0" step="0.01" onchange="updateAddProductTotal()"
+               style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+      </div>
+
+      <div style="margin-bottom: 16px; padding: 12px; background: var(--gray-100); border-radius: 6px;">
+        <div style="display: flex; justify-content: space-between; font-weight: 600;">
+          <span>Subtotal:</span>
+          <span id="add-product-total">$0.00</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Razon para agregar</label>
+        <textarea id="add-product-reason" placeholder="Ej: Cliente solicito agregar este producto a su pedido..."
+                  style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; min-height: 60px; resize: vertical; box-sizing: border-box;"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button onclick="closeAddProductModal()"
+                style="padding: 10px 20px; background: var(--gray-200); border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+          Cancelar
+        </button>
+        <button onclick="addNewProduct(${orderId})"
+                style="padding: 10px 20px; background: var(--success); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+          Agregar Producto
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function updateAddProductPrice() {
+  const select = document.getElementById('add-product-select');
+  const option = select.options[select.selectedIndex];
+  const price = option.dataset.price || 0;
+  document.getElementById('add-product-price').value = price;
+  updateAddProductTotal();
+}
+
+function updateAddProductTotal() {
+  const quantity = parseInt(document.getElementById('add-product-quantity').value) || 0;
+  const price = parseFloat(document.getElementById('add-product-price').value) || 0;
+  const total = quantity * price;
+  document.getElementById('add-product-total').textContent = formatCurrency(total);
+}
+
+function closeAddProductModal() {
+  const modal = document.getElementById('add-product-modal');
+  if (modal) modal.remove();
+}
+
+async function addNewProduct(orderId) {
+  const select = document.getElementById('add-product-select');
+  const option = select.options[select.selectedIndex];
+  const productId = select.value;
+  const productName = option.dataset.name;
+  const quantity = parseInt(document.getElementById('add-product-quantity').value);
+  const unitPrice = parseFloat(document.getElementById('add-product-price').value);
+  const reason = document.getElementById('add-product-reason').value.trim();
+
+  if (!productId) {
+    alert('Por favor selecciona un producto');
+    return;
+  }
+
+  if (!quantity || quantity < 1) {
+    alert('La cantidad debe ser mayor a 0');
+    return;
+  }
+
+  if (!unitPrice || unitPrice <= 0) {
+    alert('El precio debe ser mayor a 0');
+    return;
+  }
+
+  if (!reason) {
+    alert('Por favor indica la razon para agregar el producto');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}/items/add`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        productId,
+        productName,
+        quantity,
+        unitPrice,
+        reason
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      closeAddProductModal();
+      alert('Producto agregado correctamente. Se ha notificado al cliente.');
+      showOrderDetail(orderId);
+      loadOrders();
+    } else {
+      alert('Error: ' + (data.error || 'No se pudo agregar el producto'));
+    }
+  } catch (error) {
+    console.error('Error adding product:', error);
+    alert('Error al agregar el producto');
+  }
+}
+
 // Make functions globally accessible for onclick handlers
 window.loadOrders = loadOrders;
 window.closeOrderDetail = closeOrderDetail;
@@ -2912,3 +3213,11 @@ window.bulkApproveOrders = bulkApproveOrders;
 window.bulkArchiveOrders = bulkArchiveOrders;
 window.copyToClipboard = copyToClipboard;
 window.queueForFacebook = queueForFacebook;
+window.openEditProductModal = openEditProductModal;
+window.closeEditProductModal = closeEditProductModal;
+window.saveProductChanges = saveProductChanges;
+window.openAddProductModal = openAddProductModal;
+window.closeAddProductModal = closeAddProductModal;
+window.addNewProduct = addNewProduct;
+window.updateAddProductPrice = updateAddProductPrice;
+window.updateAddProductTotal = updateAddProductTotal;
