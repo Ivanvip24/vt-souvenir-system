@@ -495,17 +495,23 @@ Cuando el usuario pida crear una cotización o "cotizar" productos, debes:
 2. Opcionalmente obtener el nombre del cliente
 3. Generar la cotización con el bloque de acción
 
+**PEDIDO MÍNIMO (MOQ):**
+- El pedido mínimo es de **100 piezas** para todos los productos
+- EXCEPCIONES: Portallaves, Portaretratos y Souvenir Box tienen mínimo de **50 piezas**
+- SIEMPRE menciona estos mínimos cuando te pregunten sobre cantidades o pedidos mínimos
+
 **LISTA DE PRECIOS OFICIAL:**
-- **Imanes MDF Chico**: $8/u (50-999 pzas) → $6/u (1000+ pzas)
-- **Imanes MDF Mediano**: $11/u (50-999 pzas) → $8/u (1000+ pzas)
-- **Imanes MDF Grande**: $15/u (50-999 pzas) → $12/u (1000+ pzas)
-- **Imanes 3D**: $15/u (100-999 pzas) → $12/u (1000+ pzas) - Mínimo 100 pzas
-- **Imanes Foil Metálico**: $15/u (100-999 pzas) → $12/u (1000+ pzas) - Mínimo 100 pzas
-- **Llaveros MDF**: $10/u (50-999 pzas) → $8/u (1000+ pzas)
-- **Destapadores MDF**: $20/u (50-499 pzas) → $17/u (500-999 pzas) → $15/u (1000+ pzas)
-- **Portallaves MDF**: $40/u (mín. 20 pzas)
+- **Imanes MDF Chico**: $8/u (100-999 pzas) → $6/u (1000+ pzas)
+- **Imanes MDF Mediano**: $11/u (100-999 pzas) → $8/u (1000+ pzas)
+- **Imanes MDF Grande**: $15/u (100-999 pzas) → $12/u (1000+ pzas)
+- **Imanes 3D**: $15/u (100-999 pzas) → $12/u (1000+ pzas)
+- **Imanes Foil Metálico**: $15/u (100-999 pzas) → $12/u (1000+ pzas)
+- **Llaveros MDF**: $10/u (100-999 pzas) → $8/u (1000+ pzas)
+- **Destapadores MDF**: $20/u (100-499 pzas) → $17/u (500-999 pzas) → $15/u (1000+ pzas)
+- **Portallaves MDF**: $40/u (mín. 50 pzas)
+- **Portaretratos MDF**: (mín. 50 pzas)
 - **Souvenir Box**: $2,250/u (sin mínimo)
-- **Botones Metálicos**: $8/u (50-999 pzas) → $6/u (1000+ pzas)
+- **Botones Metálicos**: $8/u (100-999 pzas) → $6/u (1000+ pzas)
 
 **PRECIOS ESPECIALES/DESCUENTOS:**
 Cuando el usuario especifique precios personalizados (ej: "Llavero $6", "Iman en $8", "3D $25"), DEBES incluir estos en el texto de la acción para que el sistema los aplique. Estos se marcarán como "Precio Especial" en el PDF.
@@ -547,7 +553,7 @@ Cuando el usuario especifique precios personalizados (ej: "Llavero $6", "Iman en
 **IMPORTANTE para cotizaciones:**
 - Si el usuario pregunta "cuánto cuesta" o "cuál es el precio", SIEMPRE genera la cotización PDF
 - El sistema automáticamente calculará los precios por volumen
-- Mínimo de 50 piezas para la mayoría de productos (excepto Portallaves: 20, Souvenir Box: 1)
+- Mínimo de 100 piezas para la mayoría de productos (excepto Portallaves: 50, Portaretratos: 50, Souvenir Box: 1)
 - Si el usuario no especifica tamaño de imán, asume MEDIANO
 - Responde primero con un resumen de los precios, luego genera el PDF
 
