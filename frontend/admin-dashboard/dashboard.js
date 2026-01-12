@@ -3347,17 +3347,19 @@ function renderProductsForCreateOrder() {
 
   container.innerHTML = createOrderState.products.map(product => {
     const quantity = createOrderState.selectedProducts[product.id] || 0;
-    const subtotal = quantity * product.base_price;
+    // Handle different field names and ensure it's a number
+    const price = parseFloat(product.base_price || product.basePrice || product.price || 0);
+    const subtotal = quantity * price;
 
     return `
       <div class="create-order-product-card ${quantity > 0 ? 'selected' : ''}" data-product-id="${product.id}">
         <div style="display: flex; gap: 12px; align-items: center;">
-          <img src="${product.thumbnail_url || product.image_url}" alt="${product.name}"
+          <img src="${product.thumbnail_url || product.image_url || product.thumbnailUrl || product.imageUrl || ''}" alt="${product.name}"
                style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #f3f4f6;"
                onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f3f4f6%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 font-size=%2240%22 text-anchor=%22middle%22 dy=%22.3em%22>📦</text></svg>'">
           <div style="flex: 1;">
             <h4 style="margin: 0 0 4px 0; font-weight: 600; color: #111827;">${product.name}</h4>
-            <p style="margin: 0; font-size: 14px; color: #6b7280;">$${product.base_price.toFixed(2)} c/u</p>
+            <p style="margin: 0; font-size: 14px; color: #6b7280;">$${price.toFixed(2)} c/u</p>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <button onclick="updateCreateOrderQuantity(${product.id}, -1)" class="qty-btn" ${quantity === 0 ? 'disabled' : ''}>−</button>
@@ -3415,7 +3417,8 @@ function updateCreateOrderTotal() {
   for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
     const product = createOrderState.products.find(p => p.id === parseInt(productId));
     if (product) {
-      total += product.base_price * quantity;
+      const price = parseFloat(product.base_price || product.basePrice || product.price || 0);
+      total += price * quantity;
     }
   }
 
@@ -3516,8 +3519,10 @@ async function submitNewOrder() {
   for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
     const product = createOrderState.products.find(p => p.id === parseInt(productId));
     if (product) {
-      const lineTotal = product.base_price * quantity;
-      const lineCost = (product.production_cost || 0) * quantity;
+      const unitPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
+      const unitCost = parseFloat(product.production_cost || product.productionCost || product.cost || 0);
+      const lineTotal = unitPrice * quantity;
+      const lineCost = unitCost * quantity;
       totalPrice += lineTotal;
       totalCost += lineCost;
 
@@ -3525,8 +3530,8 @@ async function submitNewOrder() {
         productId: product.id,
         productName: product.name,
         quantity: quantity,
-        unitPrice: product.base_price,
-        unitCost: product.production_cost || 0,
+        unitPrice: unitPrice,
+        unitCost: unitCost,
         lineTotal: lineTotal,
         lineCost: lineCost
       });
