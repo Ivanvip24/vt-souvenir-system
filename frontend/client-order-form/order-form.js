@@ -355,6 +355,91 @@ function updatePickupButtonStates() {
 }
 
 // ==========================================
+// BANK INFO BY SALES REP
+// ==========================================
+
+/**
+ * Bank account configurations by sales rep
+ * Default (Ivan) uses the original bank info
+ * Daniel/Sarahi use Eduardo Daniel's account
+ */
+const BANK_ACCOUNTS = {
+  default: {
+    holder: 'Iván Valencia',
+    clabe: '012 180 01571714055 4',
+    clabeRaw: '012180015717140554',
+    card: '4152 3138 4049 8567',
+    cardRaw: '4152313840498567',
+    bank: 'BBVA'
+  },
+  daniel: {
+    holder: 'Eduardo Daniel Valencia Pérez',
+    accountNumber: '155 881 3978',
+    accountNumberRaw: '1558813978',
+    card: '4152 3141 4913 5827',
+    cardRaw: '4152314149135827',
+    bank: 'BBVA'
+  },
+  sarahi: {
+    holder: 'Eduardo Daniel Valencia Pérez',
+    accountNumber: '155 881 3978',
+    accountNumberRaw: '1558813978',
+    card: '4152 3141 4913 5827',
+    cardRaw: '4152314149135827',
+    bank: 'BBVA'
+  }
+};
+
+/**
+ * Update bank information displayed based on sales rep
+ */
+function updateBankInfoForSalesRep(salesRep) {
+  const account = BANK_ACCOUNTS[salesRep] || BANK_ACCOUNTS.default;
+  const isAlternateAccount = salesRep === 'daniel' || salesRep === 'sarahi';
+
+  console.log(`🏦 Using bank account for: ${salesRep} (${account.holder})`);
+
+  // Update holder names
+  const holderElements = document.querySelectorAll('#bank-holder');
+  holderElements.forEach(el => el.textContent = account.holder);
+
+  // Update card holder (Option 2)
+  const cardHolderRow = document.querySelector('#bank-details .bank-info:last-of-type .info-row:nth-child(3) strong');
+  if (cardHolderRow) cardHolderRow.textContent = account.holder;
+
+  // Update card number
+  const cardNumberEl = document.querySelector('#bank-details .bank-info:last-of-type .info-row:nth-child(2) strong');
+  if (cardNumberEl) cardNumberEl.textContent = account.card;
+
+  // Update copy button for card
+  const cardCopyBtn = document.querySelector('#bank-details .bank-info:last-of-type .info-row:nth-child(2) .copy-btn');
+  if (cardCopyBtn) {
+    cardCopyBtn.setAttribute('onclick', `event.stopPropagation(); copyToClipboard('${account.cardRaw}', this)`);
+  }
+
+  // For Daniel/Sarahi: Change CLABE section to Account Number
+  if (isAlternateAccount) {
+    // Update Option 1 label from "Cuenta CLABE" to "Núm de Cuenta"
+    const clabeLabel = document.querySelector('#bank-details .bank-info:first-of-type .info-row:nth-child(2) span');
+    if (clabeLabel) clabeLabel.textContent = 'Núm de Cuenta:';
+
+    // Update account number
+    const clabeEl = document.getElementById('bank-account');
+    if (clabeEl) clabeEl.textContent = account.accountNumber;
+
+    // Update copy button for account
+    const clabeCopyBtn = document.querySelector('#bank-details .bank-info:first-of-type .info-row:nth-child(2) .copy-btn');
+    if (clabeCopyBtn) {
+      clabeCopyBtn.setAttribute('onclick', `event.stopPropagation(); copyToClipboard('${account.accountNumberRaw}', this)`);
+    }
+
+    // Update Option 1 title
+    const option1Title = document.querySelector('#bank-details-content p:first-of-type');
+    if (option1Title) option1Title.textContent = 'Opción 1: Transferencia Bancaria (BBVA Débito)';
+  }
+}
+
+// ==========================================
 // INITIALIZATION
 // ==========================================
 
@@ -367,6 +452,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (salesRep) {
     state.order.salesRep = salesRep.trim();
     console.log(`👤 Sales rep detected: ${state.order.salesRep}`);
+
+    // Update bank info based on sales rep
+    updateBankInfoForSalesRep(salesRep.trim().toLowerCase());
   }
 
   initializeEventListeners();
