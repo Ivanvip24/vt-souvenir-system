@@ -804,7 +804,7 @@ async function showOrderDetail(orderId) {
                 <div style="font-size: 12px; font-weight: 600; color: var(--gray-700);">Subir anticipo</div>
                 <div style="font-size: 11px; color: var(--gray-500);">Arrastra o clic</div>
               </div>
-              <input type="file" id="first-payment-input-${order.id}" accept="image/*" style="display: none;" onchange="handlePaymentUpload(event, ${order.id}, 'first')">
+              <input type="file" id="first-payment-input-${order.id}" accept="image/*,.heic,.HEIC" style="display: none;" onchange="handlePaymentUpload(event, ${order.id}, 'first')">
               <div style="margin-top: 6px; text-align: center;">
                 <button onclick="pastePaymentReceipt(${order.id}, 'first')" style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; color: var(--gray-600);">📋 Pegar</button>
               </div>
@@ -850,7 +850,7 @@ async function showOrderDetail(orderId) {
                 <div style="font-size: 12px; font-weight: 600; color: var(--gray-700);">Subir pago final</div>
                 <div style="font-size: 11px; color: var(--gray-500);">Arrastra o clic</div>
               </div>
-              <input type="file" id="second-payment-input-${order.id}" accept="image/*" style="display: none;" onchange="handlePaymentUpload(event, ${order.id}, 'second')">
+              <input type="file" id="second-payment-input-${order.id}" accept="image/*,.heic,.HEIC" style="display: none;" onchange="handlePaymentUpload(event, ${order.id}, 'second')">
               <div style="margin-top: 6px; text-align: center;">
                 <button onclick="pastePaymentReceipt(${order.id}, 'second')" style="background: var(--gray-100); border: 1px solid var(--gray-300); padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; color: var(--gray-600);">📋 Pegar</button>
               </div>
@@ -1059,11 +1059,11 @@ async function showOrderDetail(orderId) {
              ondrop="handleOrderDrop(event, ${order.id})">
           <div style="font-size: 28px; margin-bottom: 4px;">📤</div>
           <div style="font-size: 14px; color: var(--gray-600);">Arrastra o haz clic para subir archivos</div>
-          <div style="font-size: 12px; color: var(--gray-400);">JPG, PNG, PDF (máx 10MB)</div>
+          <div style="font-size: 12px; color: var(--gray-400);">JPG, PNG, HEIC, PDF (máx 10MB)</div>
         </div>
         <input type="file"
                id="order-file-input-${order.id}"
-               accept="image/*,.pdf"
+               accept="image/*,.pdf,.heic,.HEIC"
                multiple
                style="display: none;"
                onchange="handleOrderFileUpload(event, ${order.id})">
@@ -2028,7 +2028,7 @@ function replacePaymentReceipt(orderId, paymentType) {
           Arrastra o haz clic para seleccionar
         </div>
       </div>
-      <input type="file" id="${paymentType}-payment-input-${orderId}" accept="image/*" style="display: none;"
+      <input type="file" id="${paymentType}-payment-input-${orderId}" accept="image/*,.heic,.HEIC" style="display: none;"
              onchange="handlePaymentUpload(event, ${orderId}, '${paymentType}')">
       <div style="margin-top: 10px; text-align: center;">
         <button onclick="pastePaymentReceipt(${orderId}, '${paymentType}')"

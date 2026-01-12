@@ -2069,11 +2069,11 @@
             <div class="modal-body">
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; padding: 40px; border: 3px dashed #d1d5db; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#6366f1'; this.style.background='#f0f9ff'" onmouseout="this.style.borderColor='#d1d5db'; this.style.background=''">
-                        <input type="file" id="invoice-file-input" accept="image/*" onchange="handleInvoiceFileSelect(event)" style="display: none;">
+                        <input type="file" id="invoice-file-input" accept="image/*,.pdf,.heic,.HEIC" onchange="handleInvoiceFileSelect(event)" style="display: none;">
                         <div style="font-size: 48px; margin-bottom: 12px;">📄</div>
                         <div style="font-weight: 600; margin-bottom: 8px;">Click to upload invoice image</div>
                         <div style="font-size: 14px; color: #6b7280;">or drag and drop</div>
-                        <div style="font-size: 12px; color: #9ca3af; margin-top: 8px;">PNG, JPG, PDF up to 50MB</div>
+                        <div style="font-size: 12px; color: #9ca3af; margin-top: 8px;">PNG, JPG, HEIC, PDF up to 50MB</div>
                     </label>
                 </div>
                 <div id="invoice-preview" style="margin-bottom: 20px; text-align: center;"></div>
@@ -2182,10 +2182,10 @@
             <div class="modal-body">
                 <div style="margin-bottom: 20px;">
                     <label id="receipt-drop-zone" style="display: block; padding: 40px; border: 3px dashed #d1d5db; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#6366f1'; this.style.background='#f0f9ff'" onmouseout="this.style.borderColor='#d1d5db'; this.style.background=''">
-                        <input type="file" id="receipt-file-input" accept="image/*,.pdf" onchange="handleReceiptFileSelect(event)" style="display: none;">
+                        <input type="file" id="receipt-file-input" accept="image/*,.pdf,.heic,.HEIC" onchange="handleReceiptFileSelect(event)" style="display: none;">
                         <div style="font-size: 48px; margin-bottom: 12px;">🧾</div>
                         <div style="font-weight: 600; margin-bottom: 8px;">Arrastra tu recibo aqui o haz clic para seleccionar</div>
-                        <div style="font-size: 14px; color: #6b7280;">PNG, JPG, PDF hasta 15MB</div>
+                        <div style="font-size: 14px; color: #6b7280;">PNG, JPG, HEIC, PDF hasta 15MB</div>
                     </label>
                 </div>
                 <div id="receipt-preview" style="margin-bottom: 20px; text-align: center; display: none;">
