@@ -40,6 +40,7 @@ import * as skydropxService from '../services/skydropx.js';
 import * as pickupScheduler from '../services/pickup-scheduler.js';
 import * as facebookMarketplace from '../services/facebook-marketplace.js';
 import * as facebookScheduler from '../services/facebook-scheduler.js';
+import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
 
 config();
 
@@ -1741,6 +1742,208 @@ app.delete('/api/orders/:orderId/production-sheet', async (req, res) => {
     });
   } catch (error) {
     console.error('Error removing production sheet:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ========================================
+// REFERENCE SHEET GENERATION
+// ========================================
+
+/**
+ * POST /api/orders/:orderId/reference-sheet
+ * Generate a reference sheet PDF for production tracking
+ */
+app.post('/api/orders/:orderId/reference-sheet', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+
+    console.log(`📋 Generating reference sheet for order ${orderId}`);
+
+    // Get full order data including items and attachments
+    const orderResult = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.status,
+        o.client_name,
+        o.client_phone,
+        o.client_email,
+        o.event_type,
+        o.event_date,
+        o.client_notes,
+        o.internal_notes,
+        o.total_price,
+        o.order_attachments
+      FROM orders o
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Get order items
+    const itemsResult = await query(`
+      SELECT
+        oi.id,
+        oi.product_name,
+        oi.quantity,
+        oi.unit_price,
+        oi.notes,
+        oi.attachments
+      FROM order_items oi
+      WHERE oi.order_id = $1
+      ORDER BY oi.id
+    `, [orderId]);
+
+    // Build order data for PDF generation
+    const orderData = {
+      orderNumber: order.order_number,
+      clientName: order.client_name,
+      clientPhone: order.client_phone,
+      clientEmail: order.client_email,
+      eventType: order.event_type,
+      eventDate: order.event_date,
+      clientNotes: order.client_notes || order.internal_notes,
+      orderAttachments: order.order_attachments,
+      items: itemsResult.rows.map(item => ({
+        id: item.id,
+        productName: item.product_name,
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+        notes: item.notes,
+        attachments: item.attachments
+      }))
+    };
+
+    // Generate PDF
+    const pdfBuffer = await generateReferenceSheet(orderData);
+
+    // Set response headers for PDF download
+    const filename = `Referencia_${order.order_number}_${Date.now()}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    console.log(`✅ Reference sheet generated for order ${orderId} (${pdfBuffer.length} bytes)`);
+
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('Error generating reference sheet:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/orders/:orderId/reference-sheet/save
+ * Generate and save reference sheet as an attachment to the order
+ */
+app.post('/api/orders/:orderId/reference-sheet/save', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+
+    console.log(`📋 Generating and saving reference sheet for order ${orderId}`);
+
+    // Get full order data
+    const orderResult = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.status,
+        o.client_name,
+        o.client_phone,
+        o.client_email,
+        o.event_type,
+        o.event_date,
+        o.client_notes,
+        o.internal_notes,
+        o.total_price,
+        o.order_attachments
+      FROM orders o
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Get order items
+    const itemsResult = await query(`
+      SELECT
+        oi.id,
+        oi.product_name,
+        oi.quantity,
+        oi.unit_price,
+        oi.notes,
+        oi.attachments
+      FROM order_items oi
+      WHERE oi.order_id = $1
+      ORDER BY oi.id
+    `, [orderId]);
+
+    // Build order data
+    const orderData = {
+      orderNumber: order.order_number,
+      clientName: order.client_name,
+      clientPhone: order.client_phone,
+      clientEmail: order.client_email,
+      eventType: order.event_type,
+      eventDate: order.event_date,
+      clientNotes: order.client_notes || order.internal_notes,
+      orderAttachments: order.order_attachments,
+      items: itemsResult.rows.map(item => ({
+        id: item.id,
+        productName: item.product_name,
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+        notes: item.notes,
+        attachments: item.attachments
+      }))
+    };
+
+    // Generate PDF
+    const pdfBuffer = await generateReferenceSheet(orderData);
+
+    // Convert to base64 data URL for storage
+    const base64Pdf = pdfBuffer.toString('base64');
+    const dataUrl = `data:application/pdf;base64,${base64Pdf}`;
+
+    // Save to order's production_sheet_url field
+    await query(
+      'UPDATE orders SET production_sheet_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [dataUrl, orderId]
+    );
+
+    console.log(`✅ Reference sheet saved for order ${orderId}`);
+
+    res.json({
+      success: true,
+      message: 'Reference sheet generated and saved',
+      filename: `Referencia_${order.order_number}.pdf`,
+      size: pdfBuffer.length
+    });
+
+  } catch (error) {
+    console.error('Error generating/saving reference sheet:', error);
     res.status(500).json({
       success: false,
       error: error.message

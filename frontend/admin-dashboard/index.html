@@ -172,6 +172,14 @@
                     <!-- Dynamic AI insights loaded by JS -->
                 </div>
 
+                <!-- Actions Bar -->
+                <div class="orders-actions-bar">
+                    <button class="btn-create-order" onclick="openCreateOrderModal()">
+                        <i data-lucide="plus-circle" class="icon-sm"></i>
+                        <span>Nuevo Pedido</span>
+                    </button>
+                </div>
+
                 <!-- Filters -->
                 <div class="filters-bar">
                     <div class="filter-group">
@@ -449,6 +457,133 @@
                     </div>
                 </div>
                 <div class="modal-backdrop" onclick="closeDepositModal()"></div>
+            </div>
+
+            <!-- Create Order Modal -->
+            <div id="create-order-modal" class="modal hidden">
+                <div class="modal-content modal-large" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2><i data-lucide="plus-circle" class="icon-sm" style="display: inline; vertical-align: middle;"></i> Crear Nuevo Pedido</h2>
+                        <button class="modal-close" onclick="closeCreateOrderModal()">×</button>
+                    </div>
+                    <div class="modal-body" style="padding: 24px;">
+                        <!-- Step indicator -->
+                        <div class="create-order-steps" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;">
+                            <div class="step active" data-step="1">
+                                <span class="step-number">1</span>
+                                <span class="step-label">Cliente</span>
+                            </div>
+                            <div class="step-connector"></div>
+                            <div class="step" data-step="2">
+                                <span class="step-number">2</span>
+                                <span class="step-label">Productos</span>
+                            </div>
+                            <div class="step-connector"></div>
+                            <div class="step" data-step="3">
+                                <span class="step-number">3</span>
+                                <span class="step-label">Evento</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 1: Client Info -->
+                        <div id="create-order-step-1" class="create-order-step">
+                            <h3 style="margin-bottom: 16px; color: #374151;">Información del Cliente</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group">
+                                    <label for="new-order-client-name">Nombre del Cliente *</label>
+                                    <input type="text" id="new-order-client-name" placeholder="Ej: María González" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-order-client-phone">Teléfono *</label>
+                                    <input type="tel" id="new-order-client-phone" placeholder="Ej: 5512345678" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-order-client-email">Email</label>
+                                    <input type="email" id="new-order-client-email" placeholder="Ej: maria@email.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-order-client-city">Ciudad</label>
+                                    <input type="text" id="new-order-client-city" placeholder="Ej: Ciudad de México">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label for="new-order-client-address">Dirección de Envío</label>
+                                <textarea id="new-order-client-address" rows="2" placeholder="Calle, número, colonia, CP..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Products -->
+                        <div id="create-order-step-2" class="create-order-step hidden">
+                            <h3 style="margin-bottom: 16px; color: #374151;">Seleccionar Productos</h3>
+                            <div id="create-order-products-list" style="display: grid; gap: 12px; max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                                <!-- Products loaded dynamically -->
+                            </div>
+                            <div class="order-summary-bar" style="margin-top: 16px; padding: 16px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 600; color: #166534;">Total del Pedido:</span>
+                                    <span id="create-order-total" style="font-size: 24px; font-weight: 700; color: #166534;">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Event Details -->
+                        <div id="create-order-step-3" class="create-order-step hidden">
+                            <h3 style="margin-bottom: 16px; color: #374151;">Detalles del Evento</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group">
+                                    <label for="new-order-event-type">Tipo de Evento</label>
+                                    <select id="new-order-event-type">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Quinceañera">Quinceañera</option>
+                                        <option value="Boda">Boda</option>
+                                        <option value="Bautizo">Bautizo</option>
+                                        <option value="Cumpleaños">Cumpleaños</option>
+                                        <option value="Graduación">Graduación</option>
+                                        <option value="Baby Shower">Baby Shower</option>
+                                        <option value="Primera Comunión">Primera Comunión</option>
+                                        <option value="Confirmación">Confirmación</option>
+                                        <option value="Aniversario">Aniversario</option>
+                                        <option value="Corporativo">Corporativo</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-order-event-date">Fecha del Evento</label>
+                                    <input type="date" id="new-order-event-date">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label for="new-order-notes">Notas del Pedido</label>
+                                <textarea id="new-order-notes" rows="3" placeholder="Instrucciones especiales, diseño deseado, colores, etc."></textarea>
+                            </div>
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label for="new-order-status">Estado Inicial</label>
+                                <select id="new-order-status">
+                                    <option value="pending_review">Pendiente de Revisión</option>
+                                    <option value="approved">Aprobado</option>
+                                    <option value="in_production">En Producción</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div style="display: flex; justify-content: space-between; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                            <button id="create-order-prev-btn" class="btn btn-secondary" onclick="createOrderPrevStep()" style="display: none;">
+                                ← Anterior
+                            </button>
+                            <div style="margin-left: auto; display: flex; gap: 12px;">
+                                <button class="btn btn-secondary" onclick="closeCreateOrderModal()">Cancelar</button>
+                                <button id="create-order-next-btn" class="btn btn-primary" onclick="createOrderNextStep()">
+                                    Siguiente →
+                                </button>
+                                <button id="create-order-submit-btn" class="btn btn-success" onclick="submitNewOrder()" style="display: none;">
+                                    ✓ Crear Pedido
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-backdrop" onclick="closeCreateOrderModal()"></div>
             </div>
 
             <!-- Discounts View (Sub-tab of Pedidos) -->

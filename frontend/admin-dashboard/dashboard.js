@@ -989,6 +989,36 @@ async function showOrderDetail(orderId) {
         >${order.internalNotes || ''}</textarea>
       </div>
 
+      <!-- Reference Sheet Generation Section -->
+      <div style="margin: 16px 0; padding: 16px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 10px; border: 1px solid #f59e0b;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #92400e;">
+              📋 Hoja de Referencia para Producción
+            </h4>
+            <p style="margin: 0; font-size: 12px; color: #a16207;">
+              Genera un PDF con los productos y diseños aprobados para el equipo de producción
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="generateReferenceSheet(${order.id}, '${order.orderNumber}')"
+                    class="btn-reference-sheet"
+                    id="btn-ref-sheet-${order.id}"
+                    style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">
+              <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
+              Generar PDF
+            </button>
+            ${order.productionSheetUrl ? `
+              <button onclick="viewReferenceSheet('${order.productionSheetUrl}')"
+                      style="display: inline-flex; align-items: center; gap: 6px; background: white; color: #d97706; border: 2px solid #d97706; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
+                Ver Guardada
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+
       <!-- Attachments Section -->
       <div>
         <label style="display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">
@@ -3226,3 +3256,459 @@ window.closeAddProductModal = closeAddProductModal;
 window.addNewProduct = addNewProduct;
 window.updateAddProductPrice = updateAddProductPrice;
 window.updateAddProductTotal = updateAddProductTotal;
+
+// ==========================================
+// CREATE ORDER MODAL
+// ==========================================
+
+let createOrderState = {
+  currentStep: 1,
+  products: [],
+  selectedProducts: {} // productId -> quantity
+};
+
+/**
+ * Open the create order modal
+ */
+async function openCreateOrderModal() {
+  // Reset state
+  createOrderState = {
+    currentStep: 1,
+    products: [],
+    selectedProducts: {}
+  };
+
+  // Reset form fields
+  document.getElementById('new-order-client-name').value = '';
+  document.getElementById('new-order-client-phone').value = '';
+  document.getElementById('new-order-client-email').value = '';
+  document.getElementById('new-order-client-city').value = '';
+  document.getElementById('new-order-client-address').value = '';
+  document.getElementById('new-order-event-type').value = '';
+  document.getElementById('new-order-event-date').value = '';
+  document.getElementById('new-order-notes').value = '';
+  document.getElementById('new-order-status').value = 'pending_review';
+
+  // Reset steps
+  updateCreateOrderStep(1);
+
+  // Load products for step 2
+  await loadProductsForCreateOrder();
+
+  // Show modal
+  document.getElementById('create-order-modal').classList.remove('hidden');
+
+  // Re-initialize Lucide icons
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+}
+
+/**
+ * Close the create order modal
+ */
+function closeCreateOrderModal() {
+  document.getElementById('create-order-modal').classList.add('hidden');
+}
+
+/**
+ * Load products for the create order form
+ */
+async function loadProductsForCreateOrder() {
+  const container = document.getElementById('create-order-products-list');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando productos...</p></div>';
+
+  try {
+    const response = await fetch(`${API_BASE}/client/products`);
+    const data = await response.json();
+
+    if (data.success && data.products) {
+      createOrderState.products = data.products;
+      renderProductsForCreateOrder();
+    } else {
+      container.innerHTML = '<p style="text-align: center; color: #6b7280;">No se pudieron cargar los productos</p>';
+    }
+  } catch (error) {
+    console.error('Error loading products:', error);
+    container.innerHTML = '<p style="text-align: center; color: #ef4444;">Error al cargar productos</p>';
+  }
+}
+
+/**
+ * Render products in the create order form
+ */
+function renderProductsForCreateOrder() {
+  const container = document.getElementById('create-order-products-list');
+
+  if (!createOrderState.products.length) {
+    container.innerHTML = '<p style="text-align: center; color: #6b7280;">No hay productos disponibles</p>';
+    return;
+  }
+
+  container.innerHTML = createOrderState.products.map(product => {
+    const quantity = createOrderState.selectedProducts[product.id] || 0;
+    const subtotal = quantity * product.base_price;
+
+    return `
+      <div class="create-order-product-card ${quantity > 0 ? 'selected' : ''}" data-product-id="${product.id}">
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <img src="${product.thumbnail_url || product.image_url}" alt="${product.name}"
+               style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #f3f4f6;"
+               onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f3f4f6%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 font-size=%2240%22 text-anchor=%22middle%22 dy=%22.3em%22>📦</text></svg>'">
+          <div style="flex: 1;">
+            <h4 style="margin: 0 0 4px 0; font-weight: 600; color: #111827;">${product.name}</h4>
+            <p style="margin: 0; font-size: 14px; color: #6b7280;">$${product.base_price.toFixed(2)} c/u</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button onclick="updateCreateOrderQuantity(${product.id}, -1)" class="qty-btn" ${quantity === 0 ? 'disabled' : ''}>−</button>
+            <input type="number" value="${quantity}" min="0"
+                   onchange="setCreateOrderQuantity(${product.id}, this.value)"
+                   style="width: 60px; text-align: center; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 600;">
+            <button onclick="updateCreateOrderQuantity(${product.id}, 1)" class="qty-btn">+</button>
+          </div>
+        </div>
+        ${quantity > 0 ? `<div style="text-align: right; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;"><span style="font-weight: 600; color: #166534;">Subtotal: $${subtotal.toFixed(2)}</span></div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  updateCreateOrderTotal();
+}
+
+/**
+ * Update product quantity
+ */
+function updateCreateOrderQuantity(productId, delta) {
+  const current = createOrderState.selectedProducts[productId] || 0;
+  const newQty = Math.max(0, current + delta);
+
+  if (newQty === 0) {
+    delete createOrderState.selectedProducts[productId];
+  } else {
+    createOrderState.selectedProducts[productId] = newQty;
+  }
+
+  renderProductsForCreateOrder();
+}
+
+/**
+ * Set product quantity directly
+ */
+function setCreateOrderQuantity(productId, value) {
+  const qty = parseInt(value) || 0;
+
+  if (qty <= 0) {
+    delete createOrderState.selectedProducts[productId];
+  } else {
+    createOrderState.selectedProducts[productId] = qty;
+  }
+
+  renderProductsForCreateOrder();
+}
+
+/**
+ * Update order total display
+ */
+function updateCreateOrderTotal() {
+  let total = 0;
+
+  for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
+    const product = createOrderState.products.find(p => p.id === parseInt(productId));
+    if (product) {
+      total += product.base_price * quantity;
+    }
+  }
+
+  document.getElementById('create-order-total').textContent = `$${total.toFixed(2)}`;
+}
+
+/**
+ * Update step indicator and visibility
+ */
+function updateCreateOrderStep(step) {
+  createOrderState.currentStep = step;
+
+  // Update step indicators
+  document.querySelectorAll('.create-order-steps .step').forEach((el, idx) => {
+    if (idx + 1 <= step) {
+      el.classList.add('active');
+    } else {
+      el.classList.remove('active');
+    }
+  });
+
+  // Show/hide step content
+  for (let i = 1; i <= 3; i++) {
+    const stepEl = document.getElementById(`create-order-step-${i}`);
+    if (stepEl) {
+      stepEl.classList.toggle('hidden', i !== step);
+    }
+  }
+
+  // Update buttons
+  document.getElementById('create-order-prev-btn').style.display = step > 1 ? 'block' : 'none';
+  document.getElementById('create-order-next-btn').style.display = step < 3 ? 'block' : 'none';
+  document.getElementById('create-order-submit-btn').style.display = step === 3 ? 'block' : 'none';
+}
+
+/**
+ * Go to next step
+ */
+function createOrderNextStep() {
+  // Validate current step
+  if (createOrderState.currentStep === 1) {
+    const name = document.getElementById('new-order-client-name').value.trim();
+    const phone = document.getElementById('new-order-client-phone').value.trim();
+
+    if (!name) {
+      alert('Por favor ingresa el nombre del cliente');
+      document.getElementById('new-order-client-name').focus();
+      return;
+    }
+    if (!phone) {
+      alert('Por favor ingresa el teléfono del cliente');
+      document.getElementById('new-order-client-phone').focus();
+      return;
+    }
+  }
+
+  if (createOrderState.currentStep === 2) {
+    if (Object.keys(createOrderState.selectedProducts).length === 0) {
+      alert('Por favor selecciona al menos un producto');
+      return;
+    }
+  }
+
+  if (createOrderState.currentStep < 3) {
+    updateCreateOrderStep(createOrderState.currentStep + 1);
+  }
+}
+
+/**
+ * Go to previous step
+ */
+function createOrderPrevStep() {
+  if (createOrderState.currentStep > 1) {
+    updateCreateOrderStep(createOrderState.currentStep - 1);
+  }
+}
+
+/**
+ * Submit the new order
+ */
+async function submitNewOrder() {
+  // Gather form data
+  const clientName = document.getElementById('new-order-client-name').value.trim();
+  const clientPhone = document.getElementById('new-order-client-phone').value.trim();
+  const clientEmail = document.getElementById('new-order-client-email').value.trim();
+  const clientCity = document.getElementById('new-order-client-city').value.trim();
+  const clientAddress = document.getElementById('new-order-client-address').value.trim();
+  const eventType = document.getElementById('new-order-event-type').value;
+  const eventDate = document.getElementById('new-order-event-date').value;
+  const notes = document.getElementById('new-order-notes').value.trim();
+  const status = document.getElementById('new-order-status').value;
+
+  // Build items array
+  const items = [];
+  let totalPrice = 0;
+  let totalCost = 0;
+
+  for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
+    const product = createOrderState.products.find(p => p.id === parseInt(productId));
+    if (product) {
+      const lineTotal = product.base_price * quantity;
+      const lineCost = (product.production_cost || 0) * quantity;
+      totalPrice += lineTotal;
+      totalCost += lineCost;
+
+      items.push({
+        productId: product.id,
+        productName: product.name,
+        quantity: quantity,
+        unitPrice: product.base_price,
+        unitCost: product.production_cost || 0,
+        lineTotal: lineTotal,
+        lineCost: lineCost
+      });
+    }
+  }
+
+  // Build order payload
+  const orderData = {
+    clientName,
+    clientPhone,
+    clientEmail: clientEmail || null,
+    clientCity: clientCity || null,
+    clientAddress: clientAddress || null,
+    eventType: eventType || null,
+    eventDate: eventDate || null,
+    clientNotes: notes || null,
+    items,
+    totalPrice,
+    productionCost: totalCost,
+    status,
+    depositAmount: Math.ceil(totalPrice * 0.5),
+    createdBy: 'admin'
+  };
+
+  // Submit button state
+  const submitBtn = document.getElementById('create-order-submit-btn');
+  const originalText = submitBtn.innerHTML;
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner-sm"></span> Creando...';
+
+  try {
+    const response = await fetch(`${API_BASE}/orders`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(orderData)
+    });
+
+    const result = await response.json();
+
+    if (result.success || response.ok) {
+      closeCreateOrderModal();
+
+      // Show success message
+      alert(`✅ Pedido creado exitosamente!\n\nNúmero: ${result.data?.orderNumber || 'Generado'}\nCliente: ${clientName}\nTotal: $${totalPrice.toFixed(2)}`);
+
+      // Reload orders list
+      loadOrders();
+    } else {
+      alert('Error al crear el pedido: ' + (result.message || 'Error desconocido'));
+    }
+  } catch (error) {
+    console.error('Error creating order:', error);
+    alert('Error de conexión al crear el pedido');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalText;
+  }
+}
+
+// Export create order functions
+window.openCreateOrderModal = openCreateOrderModal;
+window.closeCreateOrderModal = closeCreateOrderModal;
+window.updateCreateOrderQuantity = updateCreateOrderQuantity;
+window.setCreateOrderQuantity = setCreateOrderQuantity;
+window.createOrderNextStep = createOrderNextStep;
+window.createOrderPrevStep = createOrderPrevStep;
+window.submitNewOrder = submitNewOrder;
+
+// ==========================================
+// REFERENCE SHEET GENERATION
+// ==========================================
+
+/**
+ * Generate and download reference sheet PDF for an order
+ * @param {number} orderId - Order ID
+ * @param {string} orderNumber - Order number for filename
+ */
+async function generateReferenceSheet(orderId, orderNumber) {
+  const btn = document.getElementById(`btn-ref-sheet-${orderId}`);
+  const originalContent = btn.innerHTML;
+
+  try {
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Generando...';
+
+    // Call API to generate PDF
+    const response = await fetch(`${API_BASE}/orders/${orderId}/reference-sheet`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al generar PDF');
+    }
+
+    // Get the PDF blob
+    const blob = await response.blob();
+
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Referencia_${orderNumber || orderId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    // Show success
+    btn.innerHTML = '✓ Descargado';
+    btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+
+    setTimeout(() => {
+      btn.innerHTML = originalContent;
+      btn.style.background = '';
+      btn.disabled = false;
+      // Re-initialize lucide icons
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, 2000);
+
+  } catch (error) {
+    console.error('Error generating reference sheet:', error);
+    alert('Error al generar la hoja de referencia: ' + error.message);
+
+    btn.innerHTML = originalContent;
+    btn.disabled = false;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+}
+
+/**
+ * Generate and save reference sheet to order
+ * @param {number} orderId - Order ID
+ */
+async function generateAndSaveReferenceSheet(orderId) {
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}/reference-sheet/save`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al guardar');
+    }
+
+    alert('✅ Hoja de referencia guardada exitosamente');
+    loadOrders(); // Refresh to show the saved sheet
+
+  } catch (error) {
+    console.error('Error saving reference sheet:', error);
+    alert('Error al guardar la hoja de referencia: ' + error.message);
+  }
+}
+
+/**
+ * View a saved reference sheet
+ * @param {string} url - URL or data URL of the PDF
+ */
+function viewReferenceSheet(url) {
+  if (url.startsWith('data:application/pdf')) {
+    // Convert data URL to blob and open
+    const byteString = atob(url.split(',')[1]);
+    const mimeString = url.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank');
+  } else {
+    // Regular URL
+    window.open(url, '_blank');
+  }
+}
+
+// Export reference sheet functions
+window.generateReferenceSheet = generateReferenceSheet;
+window.generateAndSaveReferenceSheet = generateAndSaveReferenceSheet;
+window.viewReferenceSheet = viewReferenceSheet;

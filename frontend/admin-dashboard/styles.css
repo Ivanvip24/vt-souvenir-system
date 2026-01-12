@@ -6585,3 +6585,210 @@ textarea:disabled {
 body.mobile-menu-open {
     overflow: hidden;
 }
+
+/* ==========================================
+   CREATE ORDER BUTTON & MODAL
+   ========================================== */
+
+/* Actions bar at top of orders view */
+.orders-actions-bar {
+    display: flex;
+    justify-content: flex-start;
+    padding: 0 0 16px 0;
+    margin-bottom: 0;
+}
+
+/* Create Order Button */
+.btn-create-order {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #7CB342 0%, #558B2F 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(124, 179, 66, 0.3);
+    transition: all 0.2s ease;
+}
+
+.btn-create-order:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 179, 66, 0.4);
+    background: linear-gradient(135deg, #8BC34A 0%, #689F38 100%);
+}
+
+.btn-create-order:active {
+    transform: translateY(0);
+}
+
+.btn-create-order .icon-sm {
+    width: 18px;
+    height: 18px;
+}
+
+/* Step indicator styles */
+.create-order-steps {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.create-order-steps .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #f3f4f6;
+    color: #6b7280;
+    transition: all 0.2s ease;
+}
+
+.create-order-steps .step.active {
+    background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
+    color: white;
+}
+
+.create-order-steps .step-number {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.create-order-steps .step.active .step-number {
+    background: rgba(255,255,255,0.3);
+}
+
+.create-order-steps .step-label {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.create-order-steps .step-connector {
+    width: 30px;
+    height: 2px;
+    background: #e5e7eb;
+}
+
+/* Create order step content */
+.create-order-step {
+    animation: fadeIn 0.2s ease;
+}
+
+.create-order-step.hidden {
+    display: none;
+}
+
+/* Product card in create order */
+.create-order-product-card {
+    padding: 16px;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.create-order-product-card.selected {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.create-order-product-card:hover {
+    border-color: #d1d5db;
+}
+
+.create-order-product-card.selected:hover {
+    border-color: #4ade80;
+}
+
+/* Quantity buttons */
+.qty-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.qty-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.qty-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Small spinner for button */
+.spinner-sm {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile responsiveness for create order */
+@media (max-width: 768px) {
+    .orders-actions-bar {
+        padding: 0 16px 16px 16px;
+    }
+
+    .btn-create-order {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .create-order-steps {
+        flex-wrap: wrap;
+    }
+
+    .create-order-steps .step-connector {
+        display: none;
+    }
+
+    #create-order-modal .modal-content {
+        margin: 8px;
+        max-width: calc(100% - 16px);
+        max-height: calc(100vh - 16px);
+    }
+
+    .create-order-step .form-group {
+        grid-column: span 2;
+    }
+
+    .create-order-step > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    .create-order-product-card > div:first-child {
+        flex-wrap: wrap;
+    }
+}

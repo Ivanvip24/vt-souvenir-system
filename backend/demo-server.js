@@ -1704,6 +1704,61 @@ app.get('/api/inventory/smart-barcodes/sheet', authenticateToken, (req, res) => 
 });
 
 // ========================================
+// REFERENCE SHEET GENERATION (Demo)
+// ========================================
+
+// Generate reference sheet PDF (demo - returns simple PDF)
+app.post('/api/orders/:orderId/reference-sheet', authenticateToken, async (req, res) => {
+  const { orderId } = req.params;
+  const order = demoOrders.find(o => o.id === parseInt(orderId));
+
+  if (!order) {
+    return res.status(404).json({
+      success: false,
+      error: 'Order not found'
+    });
+  }
+
+  // In demo mode, create a simple text response indicating PDF would be generated
+  // For full functionality, use the real server with pdfkit
+  console.log(`📋 [DEMO] Generating reference sheet for order ${order.orderNumber}`);
+
+  // Return a simple placeholder message
+  // In production, this would return actual PDF binary
+  res.json({
+    success: true,
+    mode: 'demo',
+    message: 'En modo demo. Para generar PDFs reales, usa el servidor de produccion.',
+    orderNumber: order.orderNumber,
+    items: order.items?.length || 0
+  });
+});
+
+// Save reference sheet (demo)
+app.post('/api/orders/:orderId/reference-sheet/save', authenticateToken, (req, res) => {
+  const { orderId } = req.params;
+  const order = demoOrders.find(o => o.id === parseInt(orderId));
+
+  if (!order) {
+    return res.status(404).json({
+      success: false,
+      error: 'Order not found'
+    });
+  }
+
+  console.log(`📋 [DEMO] Saving reference sheet for order ${order.orderNumber}`);
+
+  order.productionSheetUrl = `demo://reference-sheet-${order.orderNumber}`;
+
+  res.json({
+    success: true,
+    mode: 'demo',
+    message: 'Reference sheet saved (demo mode)',
+    filename: `Referencia_${order.orderNumber}.pdf`
+  });
+});
+
+// ========================================
 // ADMIN ROUTES (Protected)
 // ========================================
 
