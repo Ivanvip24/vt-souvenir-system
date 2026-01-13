@@ -44,7 +44,9 @@ const upload = multer({
  */
 router.get('/', employeeAuth, async (req, res) => {
   try {
-    const { category_id, storage_type, tags, search, include_archived, limit = 50, offset = 0 } = req.query;
+    const { category_id, storage_type, tags, search, include_archived, limit = 200, offset = 0 } = req.query;
+
+    console.log(`📸 Gallery request: limit=${limit}, category=${category_id || 'all'}, search=${search || 'none'}`);
 
     let sql = `
       SELECT g.*,
@@ -118,6 +120,8 @@ router.get('/', employeeAuth, async (req, res) => {
 
     const countResult = await query(countSql, countValues);
 
+    console.log(`📸 Gallery response: returning ${result.rows.length} designs, total=${countResult.rows[0].count}`);
+
     res.json({
       success: true,
       designs: result.rows,
@@ -141,7 +145,7 @@ router.get('/', employeeAuth, async (req, res) => {
  */
 router.get('/archived', employeeAuth, async (req, res) => {
   try {
-    const { limit = 50, offset = 0 } = req.query;
+    const { limit = 200, offset = 0 } = req.query;
 
     const result = await query(
       `SELECT g.*,
