@@ -1769,9 +1769,9 @@ app.post('/api/orders/:orderId/reference-sheet', async (req, res) => {
         o.id,
         o.order_number,
         o.status,
-        o.client_name,
-        o.client_phone,
-        o.client_email,
+        c.name as client_name,
+        c.phone as client_phone,
+        c.email as client_email,
         o.event_type,
         o.event_date,
         o.client_notes,
@@ -1779,6 +1779,7 @@ app.post('/api/orders/:orderId/reference-sheet', async (req, res) => {
         o.total_price,
         o.order_attachments
       FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
       WHERE o.id = $1
     `, [orderId]);
 
@@ -1864,9 +1865,9 @@ app.post('/api/orders/:orderId/reference-sheet/save', async (req, res) => {
         o.id,
         o.order_number,
         o.status,
-        o.client_name,
-        o.client_phone,
-        o.client_email,
+        c.name as client_name,
+        c.phone as client_phone,
+        c.email as client_email,
         o.event_type,
         o.event_date,
         o.client_notes,
@@ -1874,6 +1875,7 @@ app.post('/api/orders/:orderId/reference-sheet/save', async (req, res) => {
         o.total_price,
         o.order_attachments
       FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
       WHERE o.id = $1
     `, [orderId]);
 
