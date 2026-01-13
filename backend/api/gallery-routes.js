@@ -82,9 +82,11 @@ router.get('/', employeeAuth, async (req, res) => {
       values.push(tags.split(','));
     }
     if (search) {
-      sql += ` AND (g.name ILIKE $${paramIndex} OR g.description ILIKE $${paramIndex})`;
-      values.push(`%${search}%`);
-      paramIndex++;
+      // Normalize search: remove spaces for phone numbers, etc.
+      const normalizedSearch = search.replace(/\s+/g, '');
+      sql += ` AND (g.name ILIKE $${paramIndex} OR g.description ILIKE $${paramIndex} OR REPLACE(g.name, ' ', '') ILIKE $${paramIndex + 1} OR REPLACE(g.description, ' ', '') ILIKE $${paramIndex + 1})`;
+      values.push(`%${search}%`, `%${normalizedSearch}%`);
+      paramIndex += 2;
     }
 
     sql += ` ORDER BY g.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
@@ -114,8 +116,9 @@ router.get('/', employeeAuth, async (req, res) => {
       countValues.push(tags.split(','));
     }
     if (search) {
-      countSql += ` AND (g.name ILIKE $${countIndex} OR g.description ILIKE $${countIndex})`;
-      countValues.push(`%${search}%`);
+      const normalizedSearch = search.replace(/\s+/g, '');
+      countSql += ` AND (g.name ILIKE $${countIndex} OR g.description ILIKE $${countIndex} OR REPLACE(g.name, ' ', '') ILIKE $${countIndex + 1} OR REPLACE(g.description, ' ', '') ILIKE $${countIndex + 1})`;
+      countValues.push(`%${search}%`, `%${normalizedSearch}%`);
     }
 
     const countResult = await query(countSql, countValues);
@@ -199,6 +202,9 @@ router.get('/search', employeeAuth, async (req, res) => {
       });
     }
 
+    // Normalize search: remove spaces for phone numbers, etc.
+    const normalizedQ = q.replace(/\s+/g, '');
+
     const result = await query(
       `SELECT g.*, c.name as category_name
        FROM design_gallery g
@@ -206,9 +212,11 @@ router.get('/search', employeeAuth, async (req, res) => {
        WHERE g.name ILIKE $1
           OR g.description ILIKE $1
           OR $2 = ANY(g.tags)
+          OR REPLACE(g.name, ' ', '') ILIKE $3
+          OR REPLACE(g.description, ' ', '') ILIKE $3
        ORDER BY g.used_in_orders DESC, g.created_at DESC
-       LIMIT $3`,
-      [`%${q}%`, q.toLowerCase(), parseInt(limit)]
+       LIMIT $4`,
+      [`%${q}%`, q.toLowerCase(), `%${normalizedQ}%`, parseInt(limit)]
     );
 
     res.json({
