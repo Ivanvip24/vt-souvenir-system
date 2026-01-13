@@ -1754,6 +1754,57 @@ app.delete('/api/orders/:orderId/production-sheet', async (req, res) => {
 // ========================================
 
 /**
+ * POST /api/orders/reference-sheet/generate
+ * Generate a custom reference sheet PDF with user-provided data (AXKAN ORDEN DE COMPRA)
+ */
+app.post('/api/orders/reference-sheet/generate', async (req, res) => {
+  try {
+    const { orderName, instructions, numDesigns, designs } = req.body;
+
+    console.log(`📋 Generating custom reference sheet: ${orderName} with ${numDesigns} designs`);
+
+    // Build order data for PDF generator
+    const orderData = {
+      orderNumber: orderName,
+      clientName: orderName,
+      clientNotes: instructions,
+      items: designs.map((d, i) => ({
+        productName: d.type || `Design ${i + 1}`,
+        quantity: d.quantity || 0
+      })),
+      // Pass designs with base64 images
+      customDesigns: designs.map((d, i) => ({
+        type: d.type || '',
+        quantity: d.quantity || 0,
+        imageData: d.imageData || null
+      }))
+    };
+
+    // Generate PDF
+    const pdfBuffer = await generateReferenceSheet(orderData);
+
+    // Set response headers
+    const safeName = orderName.replace(/[^a-zA-Z0-9]/g, '_');
+    const filename = `${safeName}_${Date.now()}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    console.log(`✅ Custom reference sheet generated: ${filename} (${pdfBuffer.length} bytes)`);
+
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('Error generating custom reference sheet:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/orders/:orderId/reference-sheet
  * Generate a reference sheet PDF for production tracking
  */

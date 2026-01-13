@@ -203,38 +203,52 @@ export async function generateReferenceSheet(order) {
       // DESIGN CARDS GRID
       // ========================================
 
-      // Get attachments (design images)
-      let attachments = order.orderAttachments || order.order_attachments || [];
-      if (typeof attachments === 'string') {
-        try {
-          attachments = JSON.parse(attachments);
-        } catch (e) {
-          attachments = [];
-        }
-      }
-
-      // Create design items from attachments or order items
+      // Check if we have customDesigns (from the frontend modal with base64 images)
       const designs = [];
 
-      // If we have attachments, use those as the primary source
-      if (attachments && attachments.length > 0) {
-        for (let i = 0; i < attachments.length; i++) {
-          const att = attachments[i];
-          const item = items[i] || {};
+      if (order.customDesigns && order.customDesigns.length > 0) {
+        // Use custom designs from frontend modal
+        for (const d of order.customDesigns) {
           designs.push({
-            type: item.productName || item.product_name || '',
-            quantity: item.quantity || 0,
-            imageUrl: att.url || att
-          });
-        }
-      } else if (items.length > 0) {
-        // Fall back to items if no attachments
-        for (const item of items) {
-          designs.push({
-            type: item.productName || item.product_name || '',
-            quantity: item.quantity || 0,
+            type: d.type || '',
+            quantity: d.quantity || 0,
+            imageData: d.imageData || null, // base64 data
             imageUrl: null
           });
+        }
+      } else {
+        // Legacy: Get attachments (design images from URLs)
+        let attachments = order.orderAttachments || order.order_attachments || [];
+        if (typeof attachments === 'string') {
+          try {
+            attachments = JSON.parse(attachments);
+          } catch (e) {
+            attachments = [];
+          }
+        }
+
+        // Create design items from attachments or order items
+        if (attachments && attachments.length > 0) {
+          for (let i = 0; i < attachments.length; i++) {
+            const att = attachments[i];
+            const item = items[i] || {};
+            designs.push({
+              type: item.productName || item.product_name || '',
+              quantity: item.quantity || 0,
+              imageUrl: att.url || att,
+              imageData: null
+            });
+          }
+        } else if (items.length > 0) {
+          // Fall back to items if no attachments
+          for (const item of items) {
+            designs.push({
+              type: item.productName || item.product_name || '',
+              quantity: item.quantity || 0,
+              imageUrl: null,
+              imageData: null
+            });
+          }
         }
       }
 
@@ -289,7 +303,27 @@ export async function generateReferenceSheet(order) {
         const imageAreaY = yPos + 25;
         const imageAreaHeight = cellHeight - 90;
 
-        if (design.imageUrl) {
+        let imageDrawn = false;
+
+        // Try base64 imageData first (from frontend modal)
+        if (design.imageData) {
+          try {
+            // Convert base64 data URL to buffer
+            const base64Data = design.imageData.replace(/^data:image\/\w+;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            doc.image(imageBuffer, currentX + 5, imageAreaY, {
+              fit: [cellWidth - 10, imageAreaHeight],
+              align: 'center',
+              valign: 'center'
+            });
+            imageDrawn = true;
+          } catch (err) {
+            console.warn(`Could not process base64 image for design ${idx + 1}:`, err.message);
+          }
+        }
+
+        // Try URL-based image if no base64 data
+        if (!imageDrawn && design.imageUrl) {
           try {
             const imageBuffer = await downloadImage(design.imageUrl);
             doc.image(imageBuffer, currentX + 5, imageAreaY, {
@@ -297,23 +331,14 @@ export async function generateReferenceSheet(order) {
               align: 'center',
               valign: 'center'
             });
+            imageDrawn = true;
           } catch (err) {
             console.warn(`Could not download image for design ${idx + 1}:`, err.message);
-            // Draw placeholder
-            doc.strokeColor('#CCCCCC')
-               .lineWidth(0.5)
-               .rect(currentX + 5, imageAreaY, cellWidth - 10, imageAreaHeight)
-               .stroke();
-            doc.fillColor('#999999')
-               .font('Helvetica')
-               .fontSize(9)
-               .text('[Image not available]', currentX + 5, imageAreaY + imageAreaHeight / 2 - 5, {
-                 width: cellWidth - 10,
-                 align: 'center'
-               });
           }
-        } else {
-          // Draw placeholder box
+        }
+
+        // Draw placeholder if no image
+        if (!imageDrawn) {
           doc.strokeColor('#CCCCCC')
              .lineWidth(0.5)
              .rect(currentX + 5, imageAreaY, cellWidth - 10, imageAreaHeight)

@@ -3593,27 +3593,341 @@ window.createOrderPrevStep = createOrderPrevStep;
 window.submitNewOrder = submitNewOrder;
 
 // ==========================================
-// REFERENCE SHEET GENERATION
+// REFERENCE SHEET GENERATION (AXKAN ORDEN DE COMPRA)
 // ==========================================
 
+// AXKAN brand colors
+const AXKAN_COLORS = ['#E91E63', '#7CB342', '#FF9800', '#00BCD4', '#F44336'];
+
+// Reference sheet modal state
+const refSheetState = {
+  orderId: null,
+  orderNumber: null,
+  orderName: '',
+  instructions: '',
+  numDesigns: 0,
+  selectedSlot: null,
+  designs: {} // { slotIndex: { type: '', quantity: 0, imageData: null } }
+};
+
 /**
- * Generate and download reference sheet PDF for an order
- * @param {number} orderId - Order ID
- * @param {string} orderNumber - Order number for filename
+ * Open the reference sheet generator modal
  */
-async function generateReferenceSheet(orderId, orderNumber) {
-  const btn = document.getElementById(`btn-ref-sheet-${orderId}`);
-  const originalContent = btn.innerHTML;
+function generateReferenceSheet(orderId, orderNumber) {
+  refSheetState.orderId = orderId;
+  refSheetState.orderNumber = orderNumber;
+  refSheetState.orderName = orderNumber || '';
+  refSheetState.instructions = '';
+  refSheetState.numDesigns = 0;
+  refSheetState.selectedSlot = null;
+  refSheetState.designs = {};
+
+  // Pre-fill order name
+  document.getElementById('ref-sheet-order-name').value = refSheetState.orderName;
+  document.getElementById('ref-sheet-instructions').value = '';
+  document.getElementById('ref-sheet-custom-num').value = '';
+  document.getElementById('ref-sheet-selected-num').textContent = 'Seleccionado: -';
+
+  // Reset button highlights
+  document.querySelectorAll('.num-designs-btn').forEach(btn => {
+    btn.style.opacity = '1';
+    btn.style.transform = 'scale(1)';
+  });
+
+  // Show step 1, hide step 2
+  document.getElementById('ref-sheet-step-1').classList.remove('hidden');
+  document.getElementById('ref-sheet-step-2').classList.add('hidden');
+
+  // Show modal
+  document.getElementById('reference-sheet-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  // Setup paste listener
+  document.addEventListener('paste', handleRefSheetPaste);
+}
+
+/**
+ * Close the reference sheet modal
+ */
+function closeRefSheetModal() {
+  document.getElementById('reference-sheet-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  document.removeEventListener('paste', handleRefSheetPaste);
+}
+
+/**
+ * Select number of designs
+ */
+function selectNumDesigns(num) {
+  num = parseInt(num);
+  if (isNaN(num) || num < 1) return;
+
+  refSheetState.numDesigns = num;
+  document.getElementById('ref-sheet-selected-num').textContent = `Seleccionado: ${num} diseños`;
+
+  // Highlight selected button
+  document.querySelectorAll('.num-designs-btn').forEach(btn => {
+    const btnNum = parseInt(btn.dataset.num);
+    if (btnNum === num) {
+      btn.style.opacity = '1';
+      btn.style.transform = 'scale(1.1)';
+      btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+    } else {
+      btn.style.opacity = '0.6';
+      btn.style.transform = 'scale(1)';
+      btn.style.boxShadow = 'none';
+    }
+  });
+}
+
+/**
+ * Go to step 1
+ */
+function goToRefSheetStep1() {
+  document.getElementById('ref-sheet-step-1').classList.remove('hidden');
+  document.getElementById('ref-sheet-step-2').classList.add('hidden');
+}
+
+/**
+ * Go to step 2 and render design slots
+ */
+function goToRefSheetStep2() {
+  refSheetState.orderName = document.getElementById('ref-sheet-order-name').value.trim();
+  refSheetState.instructions = document.getElementById('ref-sheet-instructions').value.trim();
+
+  if (!refSheetState.orderName) {
+    alert('Por favor ingresa el nombre del pedido');
+    document.getElementById('ref-sheet-order-name').focus();
+    return;
+  }
+
+  if (refSheetState.numDesigns < 1) {
+    alert('Por favor selecciona el número de diseños');
+    return;
+  }
+
+  // Render design slots
+  renderDesignSlots();
+
+  // Show step 2, hide step 1
+  document.getElementById('ref-sheet-step-1').classList.add('hidden');
+  document.getElementById('ref-sheet-step-2').classList.remove('hidden');
+}
+
+/**
+ * Render design slots grid
+ */
+function renderDesignSlots() {
+  const grid = document.getElementById('ref-sheet-designs-grid');
+  grid.innerHTML = '';
+
+  for (let i = 0; i < refSheetState.numDesigns; i++) {
+    const color = AXKAN_COLORS[i % 5];
+    const design = refSheetState.designs[i] || { type: '', quantity: 0, imageData: null };
+
+    const slot = document.createElement('div');
+    slot.className = 'ref-sheet-slot';
+    slot.dataset.index = i;
+    slot.style.cssText = `
+      border: 2px solid ${color};
+      border-radius: 8px;
+      background: white;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+
+    slot.innerHTML = `
+      <!-- Tipo header -->
+      <div style="background: ${color}; color: white; padding: 6px 8px; margin: -8px -8px 8px -8px; border-radius: 6px 6px 0 0; display: flex; align-items: center; gap: 8px;">
+        <span style="font-weight: 600; font-size: 11px;">Tipo:</span>
+        <input type="text" class="ref-slot-type" data-index="${i}" placeholder="Ej: Llavero"
+               value="${design.type}"
+               onclick="event.stopPropagation()"
+               style="flex: 1; padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; background: rgba(255,255,255,0.9);">
+      </div>
+
+      <!-- Image area -->
+      <div class="ref-slot-image-area" data-index="${i}"
+           onclick="selectRefSheetSlot(${i})"
+           style="height: 100px; border: 1px dashed #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; background: #f9f9f9; overflow: hidden;">
+        ${design.imageData
+          ? `<img src="${design.imageData}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`
+          : `<div style="text-align: center; color: #999; font-size: 11px;">
+               <div style="font-size: 24px; margin-bottom: 4px;">📷</div>
+               Clic + Ctrl/Cmd+V<br>para pegar
+             </div>`
+        }
+      </div>
+
+      <!-- Quantity -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+        <span style="font-weight: 600; font-size: 11px; color: #333;">Requeridos:</span>
+        <input type="number" class="ref-slot-qty" data-index="${i}" min="0" placeholder="0"
+               value="${design.quantity || ''}"
+               onclick="event.stopPropagation()"
+               style="flex: 1; padding: 6px; border: 1px solid ${color}; border-radius: 4px; font-size: 12px; background: #f5f5f5;">
+      </div>
+
+      <!-- Browse button -->
+      <button onclick="browseRefSheetImage(${i}); event.stopPropagation();"
+              style="width: 100%; padding: 6px; background: ${color}; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+        📁 Examinar
+      </button>
+
+      <!-- Hidden file input -->
+      <input type="file" id="ref-file-${i}" accept="image/*,.heic,.HEIC" style="display: none;"
+             onchange="handleRefSheetFileSelect(${i}, event)">
+    `;
+
+    grid.appendChild(slot);
+  }
+}
+
+/**
+ * Select a slot for pasting
+ */
+function selectRefSheetSlot(index) {
+  refSheetState.selectedSlot = index;
+
+  // Visual feedback
+  document.querySelectorAll('.ref-sheet-slot').forEach((slot, i) => {
+    if (i === index) {
+      slot.style.boxShadow = '0 0 0 3px #E91E63';
+      slot.style.transform = 'scale(1.02)';
+    } else {
+      slot.style.boxShadow = 'none';
+      slot.style.transform = 'scale(1)';
+    }
+  });
+}
+
+/**
+ * Handle paste event
+ */
+function handleRefSheetPaste(event) {
+  if (refSheetState.selectedSlot === null) {
+    // Try to find if we're focused on an image area
+    return;
+  }
+
+  const items = event.clipboardData?.items;
+  if (!items) return;
+
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      event.preventDefault();
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        addImageToSlot(refSheetState.selectedSlot, e.target.result);
+      };
+      reader.readAsDataURL(blob);
+      break;
+    }
+  }
+}
+
+/**
+ * Browse for image file
+ */
+function browseRefSheetImage(index) {
+  document.getElementById(`ref-file-${index}`).click();
+}
+
+/**
+ * Handle file selection
+ */
+function handleRefSheetFileSelect(index, event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    addImageToSlot(index, e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+/**
+ * Add image to a slot
+ */
+function addImageToSlot(index, imageData) {
+  if (!refSheetState.designs[index]) {
+    refSheetState.designs[index] = { type: '', quantity: 0, imageData: null };
+  }
+  refSheetState.designs[index].imageData = imageData;
+
+  // Update the image area
+  const imageArea = document.querySelector(`.ref-slot-image-area[data-index="${index}"]`);
+  if (imageArea) {
+    imageArea.innerHTML = `<img src="${imageData}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+    imageArea.style.background = '#fff';
+  }
+
+  // Visual feedback
+  const slot = document.querySelector(`.ref-sheet-slot[data-index="${index}"]`);
+  if (slot) {
+    slot.style.background = '#f0fff4';
+    setTimeout(() => {
+      slot.style.background = 'white';
+    }, 500);
+  }
+}
+
+/**
+ * Collect form data and generate PDF
+ */
+async function generateRefSheetPDF() {
+  // Collect all data from inputs
+  document.querySelectorAll('.ref-slot-type').forEach(input => {
+    const idx = parseInt(input.dataset.index);
+    if (!refSheetState.designs[idx]) {
+      refSheetState.designs[idx] = { type: '', quantity: 0, imageData: null };
+    }
+    refSheetState.designs[idx].type = input.value.trim();
+  });
+
+  document.querySelectorAll('.ref-slot-qty').forEach(input => {
+    const idx = parseInt(input.dataset.index);
+    if (!refSheetState.designs[idx]) {
+      refSheetState.designs[idx] = { type: '', quantity: 0, imageData: null };
+    }
+    refSheetState.designs[idx].quantity = parseInt(input.value) || 0;
+  });
+
+  // Build payload
+  const payload = {
+    orderName: refSheetState.orderName,
+    instructions: refSheetState.instructions,
+    numDesigns: refSheetState.numDesigns,
+    designs: []
+  };
+
+  for (let i = 0; i < refSheetState.numDesigns; i++) {
+    const design = refSheetState.designs[i] || { type: '', quantity: 0, imageData: null };
+    payload.designs.push({
+      type: design.type,
+      quantity: design.quantity,
+      imageData: design.imageData
+    });
+  }
+
+  // Show loading
+  const btn = document.getElementById('ref-sheet-generate-btn');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-sm"></span> Generando...';
 
   try {
-    // Show loading state
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-sm"></span> Generando...';
-
-    // Call API to generate PDF
-    const response = await fetch(`${API_BASE}/orders/${orderId}/reference-sheet`, {
+    // Call API
+    const response = await fetch(`${API_BASE}/orders/reference-sheet/generate`, {
       method: 'POST',
-      headers: getAuthHeaders()
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -3621,74 +3935,41 @@ async function generateReferenceSheet(orderId, orderNumber) {
       throw new Error(errorData.error || 'Error al generar PDF');
     }
 
-    // Get the PDF blob
+    // Download PDF
     const blob = await response.blob();
-
-    // Create download link
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Referencia_${orderNumber || orderId}.pdf`;
+    a.download = `${refSheetState.orderName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 
-    // Show success
+    // Success
     btn.innerHTML = '✓ Descargado';
     btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
 
     setTimeout(() => {
-      btn.innerHTML = originalContent;
+      closeRefSheetModal();
+      btn.innerHTML = originalText;
       btn.style.background = '';
       btn.disabled = false;
-      // Re-initialize lucide icons
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    }, 2000);
+    }, 1500);
 
   } catch (error) {
     console.error('Error generating reference sheet:', error);
     alert('Error al generar la hoja de referencia: ' + error.message);
-
-    btn.innerHTML = originalContent;
+    btn.innerHTML = originalText;
     btn.disabled = false;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-  }
-}
-
-/**
- * Generate and save reference sheet to order
- * @param {number} orderId - Order ID
- */
-async function generateAndSaveReferenceSheet(orderId) {
-  try {
-    const response = await fetch(`${API_BASE}/orders/${orderId}/reference-sheet/save`, {
-      method: 'POST',
-      headers: getAuthHeaders()
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || 'Error al guardar');
-    }
-
-    alert('✅ Hoja de referencia guardada exitosamente');
-    loadOrders(); // Refresh to show the saved sheet
-
-  } catch (error) {
-    console.error('Error saving reference sheet:', error);
-    alert('Error al guardar la hoja de referencia: ' + error.message);
   }
 }
 
 /**
  * View a saved reference sheet
- * @param {string} url - URL or data URL of the PDF
  */
 function viewReferenceSheet(url) {
   if (url.startsWith('data:application/pdf')) {
-    // Convert data URL to blob and open
     const byteString = atob(url.split(',')[1]);
     const mimeString = url.split(',')[0].split(':')[1].split(';')[0];
     const ab = new ArrayBuffer(byteString.length);
@@ -3700,12 +3981,18 @@ function viewReferenceSheet(url) {
     const blobUrl = URL.createObjectURL(blob);
     window.open(blobUrl, '_blank');
   } else {
-    // Regular URL
     window.open(url, '_blank');
   }
 }
 
 // Export reference sheet functions
 window.generateReferenceSheet = generateReferenceSheet;
-window.generateAndSaveReferenceSheet = generateAndSaveReferenceSheet;
+window.closeRefSheetModal = closeRefSheetModal;
+window.selectNumDesigns = selectNumDesigns;
+window.goToRefSheetStep1 = goToRefSheetStep1;
+window.goToRefSheetStep2 = goToRefSheetStep2;
+window.selectRefSheetSlot = selectRefSheetSlot;
+window.browseRefSheetImage = browseRefSheetImage;
+window.handleRefSheetFileSelect = handleRefSheetFileSelect;
+window.generateRefSheetPDF = generateRefSheetPDF;
 window.viewReferenceSheet = viewReferenceSheet;
