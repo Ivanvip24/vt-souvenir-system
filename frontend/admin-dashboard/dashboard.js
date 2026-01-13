@@ -3441,7 +3441,7 @@ function updateCreateOrderStep(step) {
   });
 
   // Show/hide step content
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 2; i++) {
     const stepEl = document.getElementById(`create-order-step-${i}`);
     if (stepEl) {
       stepEl.classList.toggle('hidden', i !== step);
@@ -3450,8 +3450,8 @@ function updateCreateOrderStep(step) {
 
   // Update buttons
   document.getElementById('create-order-prev-btn').style.display = step > 1 ? 'block' : 'none';
-  document.getElementById('create-order-next-btn').style.display = step < 3 ? 'block' : 'none';
-  document.getElementById('create-order-submit-btn').style.display = step === 3 ? 'block' : 'none';
+  document.getElementById('create-order-next-btn').style.display = step < 2 ? 'block' : 'none';
+  document.getElementById('create-order-submit-btn').style.display = step === 2 ? 'block' : 'none';
 }
 
 /**
@@ -3475,14 +3475,7 @@ function createOrderNextStep() {
     }
   }
 
-  if (createOrderState.currentStep === 2) {
-    if (Object.keys(createOrderState.selectedProducts).length === 0) {
-      alert('Por favor selecciona al menos un producto');
-      return;
-    }
-  }
-
-  if (createOrderState.currentStep < 3) {
+  if (createOrderState.currentStep < 2) {
     updateCreateOrderStep(createOrderState.currentStep + 1);
   }
 }
@@ -3500,16 +3493,18 @@ function createOrderPrevStep() {
  * Submit the new order
  */
 async function submitNewOrder() {
+  // Validate products are selected
+  if (Object.keys(createOrderState.selectedProducts).length === 0) {
+    alert('Por favor selecciona al menos un producto');
+    return;
+  }
+
   // Gather form data
   const clientName = document.getElementById('new-order-client-name').value.trim();
   const clientPhone = document.getElementById('new-order-client-phone').value.trim();
   const clientEmail = document.getElementById('new-order-client-email').value.trim();
   const clientCity = document.getElementById('new-order-client-city').value.trim();
   const clientAddress = document.getElementById('new-order-client-address').value.trim();
-  const eventType = document.getElementById('new-order-event-type').value;
-  const eventDate = document.getElementById('new-order-event-date').value;
-  const notes = document.getElementById('new-order-notes').value.trim();
-  const status = document.getElementById('new-order-status').value;
 
   // Build items array
   const items = [];
@@ -3545,13 +3540,10 @@ async function submitNewOrder() {
     clientEmail: clientEmail || null,
     clientCity: clientCity || null,
     clientAddress: clientAddress || null,
-    eventType: eventType || null,
-    eventDate: eventDate || null,
-    clientNotes: notes || null,
     items,
     totalPrice,
     productionCost: totalCost,
-    status,
+    status: 'pending_review',
     depositAmount: Math.ceil(totalPrice * 0.5),
     createdBy: 'admin'
   };
