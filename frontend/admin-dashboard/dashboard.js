@@ -3284,10 +3284,6 @@ async function openCreateOrderModal() {
   document.getElementById('new-order-client-email').value = '';
   document.getElementById('new-order-client-city').value = '';
   document.getElementById('new-order-client-address').value = '';
-  document.getElementById('new-order-event-type').value = '';
-  document.getElementById('new-order-event-date').value = '';
-  document.getElementById('new-order-notes').value = '';
-  document.getElementById('new-order-status').value = 'pending_review';
 
   // Reset steps
   updateCreateOrderStep(1);
