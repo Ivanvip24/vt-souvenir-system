@@ -1756,10 +1756,11 @@ app.delete('/api/orders/:orderId/production-sheet', async (req, res) => {
 /**
  * POST /api/orders/reference-sheet/generate
  * Generate a custom reference sheet PDF with user-provided data (AXKAN ORDEN DE COMPRA)
+ * Optionally saves to an order if orderId is provided
  */
 app.post('/api/orders/reference-sheet/generate', async (req, res) => {
   try {
-    const { orderName, instructions, numDesigns, designs } = req.body;
+    const { orderName, instructions, numDesigns, designs, orderId } = req.body;
 
     console.log(`📋 Generating custom reference sheet: ${orderName} with ${numDesigns} designs`);
 
@@ -1782,6 +1783,19 @@ app.post('/api/orders/reference-sheet/generate', async (req, res) => {
 
     // Generate PDF
     const pdfBuffer = await generateReferenceSheet(orderData);
+
+    // If orderId is provided, save the PDF to the order
+    if (orderId) {
+      const base64Pdf = pdfBuffer.toString('base64');
+      const dataUrl = `data:application/pdf;base64,${base64Pdf}`;
+
+      await query(
+        'UPDATE orders SET production_sheet_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        [dataUrl, parseInt(orderId)]
+      );
+
+      console.log(`✅ Reference sheet saved to order ${orderId}`);
+    }
 
     // Set response headers
     const safeName = orderName.replace(/[^a-zA-Z0-9]/g, '_');

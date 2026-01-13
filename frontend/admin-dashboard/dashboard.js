@@ -997,24 +997,32 @@ async function showOrderDetail(orderId) {
               📋 Hoja de Referencia para Producción
             </h4>
             <p style="margin: 0; font-size: 12px; color: #a16207;">
-              Genera un PDF con los productos y diseños aprobados para el equipo de producción
+              ${order.productionSheetUrl
+                ? '✅ Hoja guardada - Haz clic para ver o editar'
+                : 'Genera un PDF con los productos y diseños aprobados'}
             </p>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button onclick="generateReferenceSheet(${order.id}, '${order.orderNumber}')"
-                    class="btn-reference-sheet"
-                    id="btn-ref-sheet-${order.id}"
-                    style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">
-              <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
-              Generar PDF
-            </button>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             ${order.productionSheetUrl ? `
-              <button onclick="viewReferenceSheet('${order.productionSheetUrl}')"
-                      style="display: inline-flex; align-items: center; gap: 6px; background: white; color: #d97706; border: 2px solid #d97706; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
-                <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
-                Ver Guardada
+              <button onclick="viewSavedReferenceSheet('${order.id}')"
+                      style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">
+                <i data-lucide="file-check" style="width: 16px; height: 16px;"></i>
+                Ver Hoja
               </button>
-            ` : ''}
+              <button onclick="generateReferenceSheet(${order.id}, '${order.orderNumber}')"
+                      style="display: inline-flex; align-items: center; gap: 6px; background: white; color: #d97706; border: 2px solid #d97706; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                Editar/Regenerar
+              </button>
+            ` : `
+              <button onclick="generateReferenceSheet(${order.id}, '${order.orderNumber}')"
+                      class="btn-reference-sheet"
+                      id="btn-ref-sheet-${order.id}"
+                      style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">
+                <i data-lucide="file-plus" style="width: 16px; height: 16px;"></i>
+                Crear Hoja de Referencia
+              </button>
+            `}
           </div>
         </div>
       </div>
@@ -3897,6 +3905,7 @@ async function generateRefSheetPDF() {
     orderName: refSheetState.orderName,
     instructions: refSheetState.instructions,
     numDesigns: refSheetState.numDesigns,
+    orderId: refSheetState.orderId, // Include orderId to save to order
     designs: []
   };
 
@@ -3942,15 +3951,24 @@ async function generateRefSheetPDF() {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 
-    // Success
-    btn.innerHTML = '✓ Descargado';
+    // Success - show different message if saved to order
+    if (refSheetState.orderId) {
+      btn.innerHTML = '✓ Guardado y Descargado';
+    } else {
+      btn.innerHTML = '✓ Descargado';
+    }
     btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
 
-    setTimeout(() => {
+    setTimeout(async () => {
       closeRefSheetModal();
       btn.innerHTML = originalText;
       btn.style.background = '';
       btn.disabled = false;
+
+      // Refresh orders if we saved to an order
+      if (refSheetState.orderId) {
+        await loadOrders();
+      }
     }, 1500);
 
   } catch (error) {
@@ -3962,7 +3980,51 @@ async function generateRefSheetPDF() {
 }
 
 /**
- * View a saved reference sheet
+ * View a saved reference sheet by fetching it from the server
+ */
+async function viewSavedReferenceSheet(orderId) {
+  try {
+    // Fetch the order to get the production sheet URL
+    const response = await fetch(`${API_BASE}/orders/${orderId}`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error('No se pudo obtener el pedido');
+    }
+
+    const data = await response.json();
+    const order = data.order || data;
+
+    if (!order.productionSheetUrl) {
+      alert('Este pedido no tiene hoja de referencia guardada');
+      return;
+    }
+
+    // Open the PDF
+    const url = order.productionSheetUrl;
+    if (url.startsWith('data:application/pdf')) {
+      const byteString = atob(url.split(',')[1]);
+      const mimeString = url.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      const blob = new Blob([ab], { type: mimeString });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } else {
+      window.open(url, '_blank');
+    }
+  } catch (error) {
+    console.error('Error viewing reference sheet:', error);
+    alert('Error al cargar la hoja de referencia: ' + error.message);
+  }
+}
+
+/**
+ * View a reference sheet from a direct URL
  */
 function viewReferenceSheet(url) {
   if (url.startsWith('data:application/pdf')) {
@@ -3992,3 +4054,4 @@ window.browseRefSheetImage = browseRefSheetImage;
 window.handleRefSheetFileSelect = handleRefSheetFileSelect;
 window.generateRefSheetPDF = generateRefSheetPDF;
 window.viewReferenceSheet = viewReferenceSheet;
+window.viewSavedReferenceSheet = viewSavedReferenceSheet;

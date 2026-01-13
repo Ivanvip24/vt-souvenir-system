@@ -92,6 +92,9 @@ CREATE TABLE IF NOT EXISTS orders (
   shipping_label_url TEXT,
   tracking_number VARCHAR(100),
 
+  -- Production Reference Sheet
+  production_sheet_url TEXT,
+
   -- Notes
   notes TEXT,
   internal_notes TEXT,
