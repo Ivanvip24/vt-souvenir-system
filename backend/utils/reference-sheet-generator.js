@@ -1,14 +1,34 @@
 /**
- * Reference Sheet PDF Generator
- * Generates PDF reference sheets for laser-cut souvenir orders
- * Used to track approved designs and quantities during production
+ * AXKAN Reference Sheet PDF Generator
+ * Generates styled PDFs with AXKAN branding for souvenir production tracking
+ * Matches the Python generate_axkan.py format
  */
 
 import PDFDocument from 'pdfkit';
 import https from 'https';
 import http from 'http';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale/index.js';
+
+// AXKAN Brand Colors
+const AXKAN_COLORS = {
+  pink: '#E91E63',     // A
+  green: '#7CB342',    // X
+  orange: '#FF9800',   // K
+  cyan: '#00BCD4',     // A
+  red: '#F44336',      // N
+  dark: '#333333',
+  light: '#F5F5F5',
+  white: '#FFFFFF'
+};
+
+// Color sequence for cycling through cells
+const ACCENT_COLORS = [
+  AXKAN_COLORS.pink,
+  AXKAN_COLORS.green,
+  AXKAN_COLORS.orange,
+  AXKAN_COLORS.cyan,
+  AXKAN_COLORS.red
+];
 
 /**
  * Download image from URL and return as buffer
@@ -37,7 +57,7 @@ async function downloadImage(url) {
 }
 
 /**
- * Generate a reference sheet PDF for an order
+ * Generate a reference sheet PDF for an order (AXKAN ORDEN DE COMPRA format)
  * @param {Object} order - Order data with items and attachments
  * @returns {Promise<Buffer>} - PDF buffer
  */
@@ -46,11 +66,11 @@ export async function generateReferenceSheet(order) {
     try {
       const doc = new PDFDocument({
         size: 'A4',
-        margin: 40,
+        margin: 25,
         info: {
-          Title: `Hoja de Referencia - ${order.orderNumber || order.order_number}`,
+          Title: `AXKAN - ${order.orderNumber || order.order_number}`,
           Author: 'AXKAN Sistema de Pedidos',
-          Subject: 'Hoja de referencia para produccion'
+          Subject: 'Orden de Compra para Produccion'
         }
       });
 
@@ -62,312 +82,291 @@ export async function generateReferenceSheet(order) {
       // Page dimensions
       const pageWidth = doc.page.width;
       const pageHeight = doc.page.height;
-      const margin = 40;
+      const margin = 25;
       const contentWidth = pageWidth - (margin * 2);
 
-      // Colors (AXKAN brand)
-      const primaryColor = '#E91E63';
-      const secondaryColor = '#7CB342';
-      const grayColor = '#6B7280';
-      const lightGray = '#F3F4F6';
-
       // ========================================
-      // HEADER
+      // HEADER - AXKAN LOGO + ORDEN DE COMPRA
       // ========================================
 
-      // Title bar
-      doc.rect(0, 0, pageWidth, 80)
-         .fill(primaryColor);
+      let yPos = margin;
 
-      doc.fontSize(24)
-         .fillColor('white')
+      // Draw AXKAN colorful text logo
+      const axkanLetters = [
+        { letter: 'A', color: AXKAN_COLORS.pink },
+        { letter: 'X', color: AXKAN_COLORS.green },
+        { letter: 'K', color: AXKAN_COLORS.orange },
+        { letter: 'A', color: AXKAN_COLORS.cyan },
+        { letter: 'N', color: AXKAN_COLORS.red }
+      ];
+
+      doc.font('Helvetica-Bold').fontSize(36);
+      let logoX = margin;
+      for (const item of axkanLetters) {
+        doc.fillColor(item.color).text(item.letter, logoX, yPos, { continued: false });
+        logoX += 28;
+      }
+
+      // Title "ORDEN DE COMPRA"
+      doc.fillColor(AXKAN_COLORS.dark)
          .font('Helvetica-Bold')
-         .text('HOJA DE REFERENCIA', margin, 25, { align: 'center', width: contentWidth });
+         .fontSize(18)
+         .text('ORDEN DE COMPRA', margin + 180, yPos + 10);
 
-      doc.fontSize(12)
-         .text('PRODUCCION Y CONTEO', margin, 52, { align: 'center', width: contentWidth });
+      yPos += 50;
 
-      // Order info bar
-      doc.rect(0, 80, pageWidth, 50)
-         .fill(lightGray);
+      // ========================================
+      // ORDER INFO BOX
+      // ========================================
 
       const orderNumber = order.orderNumber || order.order_number || 'N/A';
       const clientName = order.clientName || order.client_name || 'N/A';
-      const eventDate = order.eventDate || order.event_date;
-      const eventType = order.eventType || order.event_type || '';
+      const items = order.items || [];
+      const numDesigns = items.length;
+      const currentDate = format(new Date(), 'yyyy-MM-dd');
 
-      let formattedDate = 'N/A';
-      if (eventDate) {
-        try {
-          formattedDate = format(new Date(eventDate), 'dd MMM yyyy', { locale: es });
-        } catch (e) {
-          formattedDate = eventDate;
-        }
+      // Pink bordered box with order info
+      doc.strokeColor(AXKAN_COLORS.pink)
+         .lineWidth(2)
+         .roundedRect(margin, yPos, contentWidth, 25, 5)
+         .fillAndStroke(AXKAN_COLORS.white, AXKAN_COLORS.pink);
+
+      doc.fillColor(AXKAN_COLORS.dark)
+         .font('Helvetica-Bold')
+         .fontSize(10)
+         .text(`Order: ${clientName} | Designs: ${numDesigns} | ${currentDate}`, margin + 10, yPos + 8);
+
+      yPos += 35;
+
+      // ========================================
+      // INSTRUCTIONS ROW
+      // ========================================
+
+      doc.fillColor(AXKAN_COLORS.dark)
+         .font('Helvetica-Bold')
+         .fontSize(10)
+         .text('Instructions:', margin, yPos + 5);
+
+      // Cyan bordered instructions box
+      const instrX = margin + 75;
+      const instrWidth = contentWidth - 75;
+      doc.strokeColor(AXKAN_COLORS.cyan)
+         .lineWidth(2)
+         .roundedRect(instrX, yPos, instrWidth, 25, 3)
+         .fillAndStroke(AXKAN_COLORS.light, AXKAN_COLORS.cyan);
+
+      // Add instructions text if available
+      const instructions = order.clientNotes || order.client_notes || order.notes || '';
+      if (instructions) {
+        doc.fillColor(AXKAN_COLORS.dark)
+           .font('Helvetica')
+           .fontSize(10)
+           .text(instructions, instrX + 5, yPos + 8, { width: instrWidth - 10 });
       }
 
-      doc.fontSize(11)
-         .fillColor(grayColor)
+      yPos += 35;
+
+      // ========================================
+      // CAJAS TOTALES
+      // ========================================
+
+      doc.fillColor(AXKAN_COLORS.dark)
          .font('Helvetica-Bold')
-         .text(`Pedido: ${orderNumber}`, margin, 92)
-         .text(`Cliente: ${clientName}`, margin + 180, 92)
-         .text(`Evento: ${eventType || 'N/A'}`, margin + 360, 92);
+         .fontSize(14)
+         .text('CAJAS TOTALES:', margin, yPos + 8);
 
-      doc.fontSize(10)
-         .font('Helvetica')
-         .text(`Fecha evento: ${formattedDate}`, margin, 108)
-         .text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, margin + 360, 108);
+      // Orange bordered box for total boxes
+      const cajasX = margin + 130;
+      doc.strokeColor(AXKAN_COLORS.orange)
+         .lineWidth(3)
+         .roundedRect(cajasX, yPos, 150, 35, 5)
+         .fillAndStroke(AXKAN_COLORS.light, AXKAN_COLORS.orange);
+
+      yPos += 45;
 
       // ========================================
-      // ITEMS GRID
+      // COLORFUL SEPARATOR LINE
       // ========================================
 
-      let yPosition = 150;
-      const items = order.items || [];
-      const attachments = order.orderAttachments || order.order_attachments || [];
+      const segmentWidth = contentWidth / 5;
+      doc.lineWidth(3);
+      for (let i = 0; i < 5; i++) {
+        doc.strokeColor(ACCENT_COLORS[i])
+           .moveTo(margin + i * segmentWidth, yPos)
+           .lineTo(margin + (i + 1) * segmentWidth, yPos)
+           .stroke();
+      }
 
-      // Parse attachments if string
-      let parsedAttachments = attachments;
+      yPos += 15;
+
+      // ========================================
+      // DESIGN CARDS GRID
+      // ========================================
+
+      // Get attachments (design images)
+      let attachments = order.orderAttachments || order.order_attachments || [];
       if (typeof attachments === 'string') {
         try {
-          parsedAttachments = JSON.parse(attachments);
+          attachments = JSON.parse(attachments);
         } catch (e) {
-          parsedAttachments = [];
+          attachments = [];
         }
       }
 
-      // Section title
-      doc.fontSize(14)
-         .fillColor(primaryColor)
-         .font('Helvetica-Bold')
-         .text('PRODUCTOS DEL PEDIDO', margin, yPosition);
+      // Create design items from attachments or order items
+      const designs = [];
 
-      yPosition += 25;
+      // If we have attachments, use those as the primary source
+      if (attachments && attachments.length > 0) {
+        for (let i = 0; i < attachments.length; i++) {
+          const att = attachments[i];
+          const item = items[i] || {};
+          designs.push({
+            type: item.productName || item.product_name || '',
+            quantity: item.quantity || 0,
+            imageUrl: att.url || att
+          });
+        }
+      } else if (items.length > 0) {
+        // Fall back to items if no attachments
+        for (const item of items) {
+          designs.push({
+            type: item.productName || item.product_name || '',
+            quantity: item.quantity || 0,
+            imageUrl: null
+          });
+        }
+      }
 
-      // Draw each item
-      const cellWidth = (contentWidth - 20) / 2; // 2 columns with gap
-      const cellHeight = 200;
-      const cellGap = 20;
+      // Grid settings
+      const columns = 3;
+      const cellSpacing = 10;
+      const cellWidth = (contentWidth - (columns - 1) * cellSpacing) / columns;
+      const cellHeight = 180;
+
       let currentX = margin;
-      let itemsInRow = 0;
+      let currentCol = 0;
 
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
+      for (let idx = 0; idx < designs.length; idx++) {
+        const design = designs[idx];
+        const accentColor = ACCENT_COLORS[idx % 5];
 
         // Check if need new page
-        if (yPosition + cellHeight > pageHeight - margin) {
+        if (yPos + cellHeight > pageHeight - margin) {
           doc.addPage();
-          yPosition = margin;
+          yPos = margin;
         }
 
-        // Draw cell background
-        doc.rect(currentX, yPosition, cellWidth, cellHeight)
-           .lineWidth(1)
-           .stroke('#E5E7EB');
+        // Draw cell border with accent color
+        doc.strokeColor(accentColor)
+           .lineWidth(2)
+           .rect(currentX, yPos, cellWidth, cellHeight)
+           .stroke();
 
-        // Item header with product name
-        doc.rect(currentX, yPosition, cellWidth, 30)
-           .fill(secondaryColor);
+        // "Tipo:" header bar
+        doc.fillColor(accentColor)
+           .rect(currentX, yPos, cellWidth, 18)
+           .fill();
 
-        const productName = item.productName || item.product_name || item.name || 'Producto';
-        doc.fontSize(11)
-           .fillColor('white')
+        doc.fillColor(AXKAN_COLORS.white)
            .font('Helvetica-Bold')
-           .text(productName, currentX + 8, yPosition + 9, {
-             width: cellWidth - 16,
-             ellipsis: true
-           });
+           .fontSize(8)
+           .text('Tipo:', currentX + 5, yPos + 5);
 
-        // Quantity info
-        const quantity = item.quantity || 0;
-        doc.fontSize(10)
-           .fillColor(grayColor)
-           .font('Helvetica')
-           .text(`Cantidad requerida: ${quantity} piezas`, currentX + 8, yPosition + 40);
+        // Type value box
+        doc.fillColor(AXKAN_COLORS.light)
+           .rect(currentX + 35, yPos + 2, cellWidth - 40, 14)
+           .fill();
 
-        // Image placeholder area
-        const imageAreaY = yPosition + 60;
-        const imageAreaHeight = 80;
-
-        doc.rect(currentX + 8, imageAreaY, cellWidth - 16, imageAreaHeight)
-           .lineWidth(0.5)
-           .dash(3, { space: 3 })
-           .stroke('#D1D5DB')
-           .undash();
-
-        doc.fontSize(9)
-           .fillColor('#9CA3AF')
-           .text('Espacio para imagen de referencia', currentX + 8, imageAreaY + 35, {
-             width: cellWidth - 16,
-             align: 'center'
-           });
-
-        // Editable fields section
-        const fieldsY = yPosition + 150;
-
-        doc.fontSize(9)
-           .fillColor(grayColor)
-           .font('Helvetica-Bold');
-
-        // Counted field
-        doc.text('Contados:', currentX + 8, fieldsY);
-        doc.rect(currentX + 60, fieldsY - 3, cellWidth - 75, 14)
-           .fill('#F9FAFB')
-           .stroke('#E5E7EB');
-
-        // Boxes field
-        doc.text('Cajas:', currentX + 8, fieldsY + 18);
-        doc.rect(currentX + 60, fieldsY + 15, cellWidth - 75, 14)
-           .fill('#F9FAFB')
-           .stroke('#E5E7EB');
-
-        // Move to next cell position
-        itemsInRow++;
-        if (itemsInRow >= 2) {
-          // Move to next row
-          yPosition += cellHeight + cellGap;
-          currentX = margin;
-          itemsInRow = 0;
-        } else {
-          // Move to next column
-          currentX += cellWidth + cellGap;
-        }
-      }
-
-      // Reset position after items
-      if (itemsInRow > 0) {
-        yPosition += cellHeight + cellGap;
-      }
-
-      // ========================================
-      // ATTACHMENTS SECTION (if any)
-      // ========================================
-
-      if (parsedAttachments && parsedAttachments.length > 0) {
-        // Check if need new page
-        if (yPosition + 150 > pageHeight - margin) {
-          doc.addPage();
-          yPosition = margin;
+        if (design.type) {
+          doc.fillColor(AXKAN_COLORS.dark)
+             .font('Helvetica')
+             .fontSize(8)
+             .text(design.type, currentX + 38, yPos + 5, { width: cellWidth - 45 });
         }
 
-        doc.fontSize(14)
-           .fillColor(primaryColor)
-           .font('Helvetica-Bold')
-           .text('DISENOS ADJUNTOS', margin, yPosition);
+        // Image area
+        const imageAreaY = yPos + 25;
+        const imageAreaHeight = cellHeight - 90;
 
-        yPosition += 25;
-
-        // Download and add images
-        const imageWidth = 150;
-        const imageHeight = 120;
-        currentX = margin;
-        itemsInRow = 0;
-
-        for (let i = 0; i < Math.min(parsedAttachments.length, 6); i++) {
-          const att = parsedAttachments[i];
-          const imageUrl = att.url || att;
-
-          // Check if need new page
-          if (yPosition + imageHeight + 30 > pageHeight - margin) {
-            doc.addPage();
-            yPosition = margin;
-          }
-
+        if (design.imageUrl) {
           try {
-            // Try to download and embed image
-            const imageBuffer = await downloadImage(imageUrl);
-
-            doc.image(imageBuffer, currentX, yPosition, {
-              fit: [imageWidth, imageHeight],
+            const imageBuffer = await downloadImage(design.imageUrl);
+            doc.image(imageBuffer, currentX + 5, imageAreaY, {
+              fit: [cellWidth - 10, imageAreaHeight],
               align: 'center',
               valign: 'center'
             });
-
-            // Image border
-            doc.rect(currentX, yPosition, imageWidth, imageHeight)
-               .lineWidth(1)
-               .stroke('#E5E7EB');
-
-            // Image label
-            doc.fontSize(8)
-               .fillColor(grayColor)
-               .text(`Diseno ${i + 1}`, currentX, yPosition + imageHeight + 5, {
-                 width: imageWidth,
-                 align: 'center'
-               });
-
           } catch (err) {
-            console.warn(`Could not download image ${i + 1}:`, err.message);
-
+            console.warn(`Could not download image for design ${idx + 1}:`, err.message);
             // Draw placeholder
-            doc.rect(currentX, yPosition, imageWidth, imageHeight)
-               .fill('#F9FAFB')
-               .stroke('#E5E7EB');
-
-            doc.fontSize(9)
-               .fillColor('#9CA3AF')
-               .text(`Imagen ${i + 1}\n(no disponible)`, currentX, yPosition + 45, {
-                 width: imageWidth,
+            doc.strokeColor('#CCCCCC')
+               .lineWidth(0.5)
+               .rect(currentX + 5, imageAreaY, cellWidth - 10, imageAreaHeight)
+               .stroke();
+            doc.fillColor('#999999')
+               .font('Helvetica')
+               .fontSize(9)
+               .text('[Image not available]', currentX + 5, imageAreaY + imageAreaHeight / 2 - 5, {
+                 width: cellWidth - 10,
                  align: 'center'
                });
           }
+        } else {
+          // Draw placeholder box
+          doc.strokeColor('#CCCCCC')
+             .lineWidth(0.5)
+             .rect(currentX + 5, imageAreaY, cellWidth - 10, imageAreaHeight)
+             .stroke();
+          doc.fillColor('#999999')
+             .font('Helvetica')
+             .fontSize(9)
+             .text('[No image]', currentX + 5, imageAreaY + imageAreaHeight / 2 - 5, {
+               width: cellWidth - 10,
+               align: 'center'
+             });
+        }
 
-          // Move to next position
-          itemsInRow++;
-          if (itemsInRow >= 3) {
-            yPosition += imageHeight + 30;
-            currentX = margin;
-            itemsInRow = 0;
-          } else {
-            currentX += imageWidth + 15;
-          }
+        // "Requeridos:" field
+        const reqY = yPos + cellHeight - 55;
+        doc.fillColor(AXKAN_COLORS.dark)
+           .font('Helvetica-Bold')
+           .fontSize(9)
+           .text('Requeridos:', currentX + 5, reqY);
+
+        doc.strokeColor(accentColor)
+           .lineWidth(1)
+           .roundedRect(currentX + 5, reqY + 12, cellWidth - 10, 16, 2)
+           .fillAndStroke(AXKAN_COLORS.light, accentColor);
+
+        // Show quantity value
+        doc.fillColor(AXKAN_COLORS.dark)
+           .font('Helvetica')
+           .fontSize(10)
+           .text(String(design.quantity || 0), currentX + 10, reqY + 15);
+
+        // "Contados:" field
+        const contY = reqY + 32;
+        doc.fillColor(AXKAN_COLORS.dark)
+           .font('Helvetica-Bold')
+           .fontSize(9)
+           .text('Contados:', currentX + 5, contY);
+
+        doc.strokeColor(accentColor)
+           .lineWidth(1)
+           .roundedRect(currentX + 5, contY + 12, cellWidth - 10, 16, 2)
+           .fillAndStroke(AXKAN_COLORS.light, accentColor);
+
+        // Move to next cell
+        currentCol++;
+        if (currentCol >= columns) {
+          currentCol = 0;
+          currentX = margin;
+          yPos += cellHeight + cellSpacing;
+        } else {
+          currentX += cellWidth + cellSpacing;
         }
       }
-
-      // ========================================
-      // FOOTER / NOTES SECTION
-      // ========================================
-
-      // Add notes section at the bottom
-      if (yPosition + 100 > pageHeight - margin) {
-        doc.addPage();
-        yPosition = margin;
-      } else {
-        yPosition += 40;
-      }
-
-      doc.fontSize(12)
-         .fillColor(grayColor)
-         .font('Helvetica-Bold')
-         .text('NOTAS DE PRODUCCION:', margin, yPosition);
-
-      yPosition += 20;
-
-      // Notes box
-      doc.rect(margin, yPosition, contentWidth, 60)
-         .fill('#F9FAFB')
-         .stroke('#E5E7EB');
-
-      // Client notes if any
-      const clientNotes = order.clientNotes || order.client_notes || order.notes || '';
-      if (clientNotes) {
-        doc.fontSize(9)
-           .fillColor(grayColor)
-           .font('Helvetica')
-           .text(clientNotes, margin + 10, yPosition + 10, {
-             width: contentWidth - 20,
-             height: 50,
-             ellipsis: true
-           });
-      }
-
-      // Footer
-      doc.fontSize(8)
-         .fillColor('#9CA3AF')
-         .text('AXKAN - Sistema de Pedidos | Hoja de Referencia para Produccion',
-               margin, pageHeight - 30, {
-                 width: contentWidth,
-                 align: 'center'
-               });
 
       // Finalize PDF
       doc.end();
