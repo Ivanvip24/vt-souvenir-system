@@ -1087,19 +1087,22 @@ function handleFilesSelect(files) {
 
     // Create thumbnails grid
     const fileText = validFiles.length === 1 ? '1 imagen seleccionada' : `${validFiles.length} imagenes seleccionadas`;
+    const sizeWarning = validFiles.length > 50 ? '<span style="color: #f59e0b; font-size: 11px; display: block;">Lotes grandes pueden tomar varios minutos</span>' : '';
     batchPreview.innerHTML = `
         <div class="batch-info">
             <strong>${fileText}</strong>
+            ${sizeWarning}
             <button type="button" class="btn btn-sm btn-secondary" onclick="clearBatchSelection()">Cambiar</button>
         </div>
         <div class="batch-thumbnails" id="batch-thumbnails"></div>
+        <div id="batch-progress" class="batch-progress hidden"></div>
     `;
     batchPreview.classList.remove('hidden');
 
     const thumbsContainer = document.getElementById('batch-thumbnails');
 
-    // Add thumbnails (max 8 shown)
-    const showCount = Math.min(validFiles.length, 8);
+    // Add thumbnails (max 12 shown for larger batches)
+    const showCount = Math.min(validFiles.length, 12);
     for (let i = 0; i < showCount; i++) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -1111,11 +1114,11 @@ function handleFilesSelect(files) {
         reader.readAsDataURL(validFiles[i]);
     }
 
-    if (validFiles.length > 8) {
+    if (validFiles.length > 12) {
         setTimeout(() => {
             const more = document.createElement('div');
             more.className = 'batch-thumb batch-more';
-            more.innerHTML = `+${validFiles.length - 8}`;
+            more.innerHTML = `+${validFiles.length - 12}`;
             thumbsContainer.appendChild(more);
         }, 100);
     }
@@ -1191,19 +1194,46 @@ async function submitBatchDesigns() {
     const submitBtn = document.getElementById('submit-design-btn');
     const btnText = document.getElementById('upload-btn-text');
     const btnLoading = document.getElementById('upload-btn-loading');
+    const batchProgress = document.getElementById('batch-progress');
 
-    // Show loading state
+    // Show loading state with progress
     submitBtn.disabled = true;
     btnText.classList.add('hidden');
-    btnLoading.textContent = `Analizando ${selectedFiles.length} diseños con IA...`;
+
+    const fileCount = selectedFiles.length;
+    const estimatedTime = fileCount > 50 ? ' (esto puede tomar varios minutos)' : '';
+    btnLoading.textContent = `Subiendo ${fileCount} diseños...`;
     btnLoading.classList.remove('hidden');
+
+    // Show progress bar for large batches
+    if (batchProgress && fileCount > 10) {
+        batchProgress.classList.remove('hidden');
+        batchProgress.innerHTML = `
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="upload-progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="progress-text" id="upload-progress-text">Preparando archivos...</div>
+        `;
+    }
+
+    const updateProgress = (stage, percent) => {
+        const progressBar = document.getElementById('upload-progress-bar');
+        const progressText = document.getElementById('upload-progress-text');
+        if (progressBar) progressBar.style.width = `${percent}%`;
+        if (progressText) progressText.textContent = stage;
+        btnLoading.textContent = stage;
+    };
 
     try {
         const formData = new FormData();
 
-        // Add all files
-        for (const file of selectedFiles) {
-            formData.append('designs', file);
+        // Add all files with progress update
+        updateProgress(`Preparando ${fileCount} archivos...`, 5);
+        for (let i = 0; i < selectedFiles.length; i++) {
+            formData.append('designs', selectedFiles[i]);
+            if (i % 10 === 0) {
+                updateProgress(`Preparando archivos... (${i + 1}/${fileCount})`, 5 + (i / fileCount * 15));
+            }
         }
 
         // Add category if selected
@@ -1215,26 +1245,52 @@ async function submitBatchDesigns() {
         // Enable AI analysis
         formData.append('auto_analyze', 'true');
 
-        showToast(`Analizando ${selectedFiles.length} diseños con IA...`, 'info');
+        updateProgress(`Subiendo ${fileCount} diseños al servidor...`, 20);
+        showToast(`Subiendo ${fileCount} diseños para análisis con IA...${estimatedTime}`, 'info');
 
-        const response = await fetch(`${API_BASE}/gallery/upload-multiple`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${state.token}`
-            },
-            body: formData
+        // Use XMLHttpRequest for upload progress tracking
+        const response = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const uploadPercent = 20 + (e.loaded / e.total * 30);
+                    updateProgress(`Subiendo... ${Math.round(e.loaded / e.total * 100)}%`, uploadPercent);
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(JSON.parse(xhr.responseText));
+                } else {
+                    try {
+                        reject(new Error(JSON.parse(xhr.responseText).error || 'Upload failed'));
+                    } catch {
+                        reject(new Error('Upload failed'));
+                    }
+                }
+            });
+
+            xhr.addEventListener('error', () => reject(new Error('Network error')));
+            xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
+
+            xhr.open('POST', `${API_BASE}/gallery/upload-multiple`);
+            xhr.setRequestHeader('Authorization', `Bearer ${state.token}`);
+
+            updateProgress(`Analizando diseños con IA...`, 50);
+            xhr.send(formData);
         });
 
-        const data = await response.json();
+        updateProgress(`Procesamiento completo`, 100);
 
-        if (data.success) {
-            const message = `${data.uploaded} diseños subidos correctamente` +
-                (data.failed > 0 ? ` (${data.failed} fallaron)` : '');
-            showToast(message, data.failed > 0 ? 'warning' : 'success');
+        if (response.success) {
+            const message = `${response.uploaded} diseños subidos correctamente` +
+                (response.failed > 0 ? ` (${response.failed} fallaron)` : '');
+            showToast(message, response.failed > 0 ? 'warning' : 'success');
 
             // Show details of uploaded designs
-            if (data.results && data.results.length > 0) {
-                console.log('Uploaded designs:', data.results.map(r => ({
+            if (response.results && response.results.length > 0) {
+                console.log('Uploaded designs:', response.results.map(r => ({
                     name: r.design.name,
                     tags: r.design.tags
                 })));
@@ -1243,18 +1299,21 @@ async function submitBatchDesigns() {
             closeModal('upload-design-modal');
             loadGallery(); // Refresh gallery
         } else {
-            showToast(data.error || 'Error al subir los diseños', 'error');
+            showToast(response.error || 'Error al subir los diseños', 'error');
         }
 
     } catch (error) {
         console.error('Batch upload error:', error);
-        showToast('Error al subir los diseños', 'error');
+        showToast('Error al subir los diseños: ' + error.message, 'error');
     } finally {
         // Reset loading state
         submitBtn.disabled = false;
         btnText.classList.remove('hidden');
         btnLoading.classList.add('hidden');
         btnLoading.textContent = 'Subiendo...';
+        if (batchProgress) {
+            batchProgress.classList.add('hidden');
+        }
     }
 }
 

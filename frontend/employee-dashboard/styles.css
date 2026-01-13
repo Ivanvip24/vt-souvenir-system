@@ -1919,6 +1919,40 @@ textarea {
     font-size: 14px;
 }
 
+/* Batch Upload Progress */
+.batch-progress {
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+}
+
+.batch-progress.hidden {
+    display: none;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background: var(--gray-200);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--turquoise), var(--lime));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--gray-600);
+    text-align: center;
+}
+
 /* AI Info Box */
 .ai-info-box {
     background: linear-gradient(135deg, rgba(138, 183, 59, 0.1), rgba(9, 173, 194, 0.1));

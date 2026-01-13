@@ -879,12 +879,12 @@ router.post('/download-zip', employeeAuth, async (req, res) => {
 // BATCH UPLOAD WITH AI ANALYSIS
 // ========================================
 
-// Configure multer for multiple files
+// Configure multer for multiple files (batch upload up to 100)
 const uploadMultiple = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 15 * 1024 * 1024, // 15MB max per file
-    files: 20 // Max 20 files at once
+    files: 100 // Max 100 files at once for batch analysis
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -900,7 +900,7 @@ const uploadMultiple = multer({
  * POST /api/gallery/upload-multiple
  * Upload multiple designs with optional AI analysis
  */
-router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 20), async (req, res) => {
+router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 100), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
