@@ -513,8 +513,20 @@ Cuando el usuario pida crear una cotización o "cotizar" productos, debes:
 - **Souvenir Box**: $2,250/u (sin mínimo)
 - **Botones Metálicos**: $8/u (100-999 pzas) → $6/u (1000+ pzas)
 
-**PRECIOS ESPECIALES/DESCUENTOS:**
-Cuando el usuario especifique precios personalizados (ej: "Llavero $6", "Iman en $8", "3D $25"), DEBES incluir estos en el texto de la acción para que el sistema los aplique. Estos se marcarán como "Precio Especial" en el PDF.
+**PRECIOS ESPECIALES/DESCUENTOS - MUY IMPORTANTE:**
+Cuando el usuario especifique precios personalizados de CUALQUIER forma, DEBES incluirlos en el "text" de la acción.
+
+**Formas comunes de especificar precio personalizado:**
+- "en precio $7" → extraer "iman $7"
+- "a $7" → extraer "iman $7"
+- "precio de $7" → extraer "iman $7"
+- "con precio $7" → extraer "iman $7"
+- "llavero $6" → incluir "llavero $6"
+- "$7 cada uno" → extraer el producto + "$7"
+
+**REGLA CRÍTICA:** Si el usuario menciona UN precio específico (ej: "precio $7", "a $7", "en $7"), SIEMPRE incluye "[producto] $[precio]" en el campo text. Por ejemplo:
+- Usuario: "1200 imanes en precio $7" → text: "1200 imanes mediano, iman $7"
+- Usuario: "500 llaveros a $6" → text: "500 llaveros, llavero $6"
 
 **Ejemplos de solicitudes de cotización:**
 - "Cotiza 50 imanes y 30 llaveros"
@@ -523,6 +535,7 @@ Cuando el usuario especifique precios personalizados (ej: "Llavero $6", "Iman en
 - "Dame una cotización de 50 imanes chicos"
 - "Cotiza 1000 llaveros, 500 destapadores con Llavero $6 Destapador $16" (precios especiales)
 - "100 imanes 3D y 100 imanes foil con 3D $25 Foil $25" (precios especiales)
+- "1200 imanes en precio $7" → debe generar "iman $7" en el text
 
 **Cuando detectes una solicitud de cotización, incluye este bloque en tu respuesta:**
 
