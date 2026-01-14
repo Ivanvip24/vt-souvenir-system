@@ -138,7 +138,7 @@ const SIZE_ALIASES = {
 };
 
 /**
- * Parse custom prices from text like "Llavero $6" or "iman en $8"
+ * Parse custom prices from text like "Llavero $6" or "iman en $8" or "en precio $7"
  * @param {string} text - Text containing price specifications
  * @returns {Object} Map of product key to custom price
  */
@@ -146,10 +146,12 @@ function parseCustomPrices(text) {
   const customPrices = {};
   const textLower = text.toLowerCase();
 
-  // Pattern 1: product + optional type + price (e.g., "Llavero $6", "iman 3d $25", "destapador a $16")
+  // Pattern 1: product + optional type/size + price
+  // Handles: "iman $7", "iman en precio $7", "imanes mediano en precio $7", "llavero a $6"
   const pricePatterns = [
-    // Product + "en/a/$" + price: "llavero en $6", "iman $8", "destapador a $16"
-    /(imanes?|imán|magnetos?|llaveros?|destapadores?|abridores?|portallaves?|porta[\s-]?llaves|souvenir\s*box|botones?)\s*(3d|foil\s*metálico|foil\s*metalico|foil)?\s*(?:en|a)?\s*\$\s*([\d.]+)/gi,
+    // Product + optional (3d/foil/size words) + optional (en/a/precio/de) + $ + price
+    // Note: iman(es)? matches both "iman" and "imanes", llavero(s)? matches "llavero" and "llaveros", etc.
+    /(iman(?:es)?|imán|magneto(?:s)?|llavero(?:s)?|destapador(?:es)?|abridor(?:es)?|portallaves?|porta[\s-]?llaves|souvenir\s*box|boto(?:n|nes))\s*(?:3d|foil\s*metálico|foil\s*metalico|foil|mdf|chicos?|pequeños?|medianos?|normales?|grandes?)?\s*(?:en|a|precio|de|\s)*\$\s*([\d.]+)/gi,
   ];
 
   // Pattern 2: standalone special types with price (e.g., "3D $25", "foil $25")
@@ -162,8 +164,7 @@ function parseCustomPrices(text) {
     let match;
     while ((match = pattern.exec(textLower)) !== null) {
       const productRaw = match[1].trim();
-      const specialType = match[2]?.trim() || null;
-      const price = parseFloat(match[3]);
+      const price = parseFloat(match[2]);
 
       // Normalize product name
       let productKey = null;
@@ -175,15 +176,6 @@ function parseCustomPrices(text) {
       }
 
       if (productKey && !isNaN(price)) {
-        // Check for special product types
-        if (productKey === 'imanes' && specialType) {
-          for (const [alias, key] of Object.entries(SPECIAL_PRODUCT_TYPES)) {
-            if (specialType.includes(alias)) {
-              productKey = key;
-              break;
-            }
-          }
-        }
         customPrices[productKey] = price;
       }
     }
