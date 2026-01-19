@@ -21,6 +21,7 @@ const state = {
   currentFilter: 'all',
   selectedOrder: null,
   searchQuery: '',
+  salespersonFilter: '', // Filter by salesperson name
   selectedOrders: new Set() // Track selected order IDs for bulk operations
 };
 
@@ -69,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initializeNavigation();
   initializeFilters();
+  loadSalespeople(); // Load salespeople dropdown
   loadOrders();
   loadOrderAlerts(); // Load alerts widget
 
@@ -389,6 +391,14 @@ function applyFilter(filter) {
         (order.clientPhone && order.clientPhone.toString().includes(query)) ||
         (order.status && order.status.toLowerCase().includes(query))
       );
+    });
+  }
+
+  // Apply salesperson filter if set
+  if (state.salespersonFilter && state.salespersonFilter.trim() !== '') {
+    const salesperson = state.salespersonFilter.toLowerCase().trim();
+    filtered = filtered.filter(order => {
+      return order.salesRep && order.salesRep.toLowerCase() === salesperson;
     });
   }
 
@@ -4192,3 +4202,253 @@ window.handleRefSheetFileSelect = handleRefSheetFileSelect;
 window.generateRefSheetPDF = generateRefSheetPDF;
 window.viewReferenceSheet = viewReferenceSheet;
 window.viewSavedReferenceSheet = viewSavedReferenceSheet;
+
+// ==========================================
+// SALESPEOPLE & COMMISSIONS SYSTEM
+// ==========================================
+
+/**
+ * Load salespeople into the filter dropdown
+ */
+async function loadSalespeople() {
+  try {
+    const response = await fetch(`${API_BASE}/salespeople`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      console.error('Failed to load salespeople');
+      return;
+    }
+
+    const data = await response.json();
+    const salespeople = data.salespeople || [];
+
+    const dropdown = document.getElementById('salesperson-filter');
+    if (!dropdown) return;
+
+    // Keep the first option "Todos los vendedores"
+    dropdown.innerHTML = '<option value="">👤 Todos los vendedores</option>';
+
+    // Add each salesperson
+    salespeople.forEach(sp => {
+      if (sp.is_active) {
+        const option = document.createElement('option');
+        option.value = sp.name;
+        option.textContent = `👤 ${sp.name}`;
+        dropdown.appendChild(option);
+      }
+    });
+
+    console.log(`📋 Loaded ${salespeople.length} salespeople`);
+  } catch (error) {
+    console.error('Error loading salespeople:', error);
+  }
+}
+
+/**
+ * Filter orders by salesperson
+ */
+function filterBySalesperson(salespersonName) {
+  state.salespersonFilter = salespersonName;
+  applyFilter(state.currentFilter);
+}
+
+/**
+ * Show commissions modal with summary data
+ */
+async function showCommissionsModal() {
+  // Create modal HTML
+  const modalHTML = `
+    <div id="commissions-modal" class="modal-overlay" onclick="if(event.target === this) closeCommissionsModal()">
+      <div class="modal-content commissions-modal-content">
+        <div class="modal-header">
+          <h2>💰 Resumen de Comisiones</h2>
+          <button onclick="closeCommissionsModal()" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="commissions-loading">
+            <div class="spinner"></div>
+            <p>Cargando datos de comisiones...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Add modal to page
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+  // Fetch commissions data
+  try {
+    const [commissionsRes, monthlyRes] = await Promise.all([
+      fetch(`${API_BASE}/commissions`, { headers: getAuthHeaders() }),
+      fetch(`${API_BASE}/commissions/monthly`, { headers: getAuthHeaders() })
+    ]);
+
+    const commissionsData = await commissionsRes.json();
+    const monthlyData = await monthlyRes.json();
+
+    const commissions = commissionsData.commissions || [];
+    const monthlyCommissions = monthlyData.commissions || [];
+
+    // Build modal content
+    const modalBody = document.querySelector('#commissions-modal .modal-body');
+
+    if (commissions.length === 0) {
+      modalBody.innerHTML = `
+        <div class="commissions-empty">
+          <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+          <p>No hay datos de comisiones disponibles</p>
+          <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">
+            Las comisiones se calculan automáticamente cuando los pedidos tienen un vendedor asignado.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    // Calculate totals
+    const totalSales = commissions.reduce((sum, c) => sum + parseFloat(c.total_sales || 0), 0);
+    const totalCommissions = commissions.reduce((sum, c) => sum + parseFloat(c.total_commission || 0), 0);
+    const approvedCommissions = commissions.reduce((sum, c) => sum + parseFloat(c.approved_commission || 0), 0);
+
+    modalBody.innerHTML = `
+      <div class="commissions-summary-cards">
+        <div class="commission-stat-card">
+          <div class="commission-stat-icon">📦</div>
+          <div class="commission-stat-value">${formatCurrency(totalSales)}</div>
+          <div class="commission-stat-label">Ventas Totales</div>
+        </div>
+        <div class="commission-stat-card highlight">
+          <div class="commission-stat-icon">💰</div>
+          <div class="commission-stat-value">${formatCurrency(totalCommissions)}</div>
+          <div class="commission-stat-label">Comisiones Totales</div>
+        </div>
+        <div class="commission-stat-card success">
+          <div class="commission-stat-icon">✅</div>
+          <div class="commission-stat-value">${formatCurrency(approvedCommissions)}</div>
+          <div class="commission-stat-label">Comisiones Aprobadas</div>
+        </div>
+      </div>
+
+      <h3 style="margin: 24px 0 16px; font-size: 16px; font-weight: 600;">Desglose por Vendedor</h3>
+      <div class="commissions-table-container">
+        <table class="commissions-table">
+          <thead>
+            <tr>
+              <th>Vendedor</th>
+              <th>Tasa</th>
+              <th>Pedidos</th>
+              <th>Ventas</th>
+              <th>Comisión</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${commissions.map(c => `
+              <tr>
+                <td>
+                  <div class="salesperson-name">
+                    <span class="salesperson-avatar">${(c.salesperson_name || 'N/A').charAt(0).toUpperCase()}</span>
+                    ${c.salesperson_name || 'Sin asignar'}
+                  </div>
+                </td>
+                <td><span class="commission-rate">${parseFloat(c.commission_rate || 0).toFixed(1)}%</span></td>
+                <td><span class="orders-count">${c.total_orders || 0}</span></td>
+                <td class="sales-amount">${formatCurrency(parseFloat(c.total_sales || 0))}</td>
+                <td class="commission-amount">${formatCurrency(parseFloat(c.total_commission || 0))}</td>
+                <td>
+                  <button class="btn-view-orders" onclick="viewSalespersonOrders('${c.salesperson_name}')">
+                    Ver pedidos
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      ${monthlyCommissions.length > 0 ? `
+        <h3 style="margin: 24px 0 16px; font-size: 16px; font-weight: 600;">📅 Comisiones Mensuales (Aprobadas)</h3>
+        <div class="commissions-table-container">
+          <table class="commissions-table">
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th>Vendedor</th>
+                <th>Pedidos</th>
+                <th>Ventas</th>
+                <th>Comisión</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${monthlyCommissions.slice(0, 10).map(c => `
+                <tr>
+                  <td><span class="month-badge">${c.month}</span></td>
+                  <td>${c.salesperson_name}</td>
+                  <td>${c.orders_count || 0}</td>
+                  <td class="sales-amount">${formatCurrency(parseFloat(c.sales || 0))}</td>
+                  <td class="commission-amount">${formatCurrency(parseFloat(c.commission || 0))}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
+    `;
+
+  } catch (error) {
+    console.error('Error loading commissions:', error);
+    document.querySelector('#commissions-modal .modal-body').innerHTML = `
+      <div class="commissions-error">
+        <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+        <p>Error al cargar los datos de comisiones</p>
+        <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">${error.message}</p>
+      </div>
+    `;
+  }
+}
+
+/**
+ * Close commissions modal
+ */
+function closeCommissionsModal() {
+  const modal = document.getElementById('commissions-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+/**
+ * View orders for a specific salesperson
+ */
+function viewSalespersonOrders(salespersonName) {
+  closeCommissionsModal();
+
+  // Set the filter dropdown
+  const dropdown = document.getElementById('salesperson-filter');
+  if (dropdown) {
+    dropdown.value = salespersonName;
+  }
+
+  // Filter orders
+  filterBySalesperson(salespersonName);
+}
+
+/**
+ * Format currency (helper function if not already defined)
+ */
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN'
+  }).format(amount || 0);
+}
+
+// Export salespeople functions
+window.loadSalespeople = loadSalespeople;
+window.filterBySalesperson = filterBySalesperson;
+window.showCommissionsModal = showCommissionsModal;
+window.closeCommissionsModal = closeCommissionsModal;
+window.viewSalespersonOrders = viewSalespersonOrders;
