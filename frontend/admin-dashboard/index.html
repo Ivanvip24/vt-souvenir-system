@@ -115,11 +115,19 @@
                     <span>Inventario</span>
                 </button>
 
-                <!-- 4. Finanzas (Prices + Margins) -->
-                <button class="nav-item" data-view="prices" tabindex="0">
-                    <i data-lucide="wallet" class="nav-icon"></i>
-                    <span>Finanzas</span>
-                </button>
+                <!-- 4. Finanzas (Prices + Margins + Commissions) -->
+                <div class="nav-section">
+                    <button class="nav-item" data-view="prices" tabindex="0">
+                        <i data-lucide="wallet" class="nav-icon"></i>
+                        <span>Finanzas</span>
+                    </button>
+                    <div class="nav-sub-items">
+                        <button class="nav-sub-item" onclick="showCommissionsModal()" tabindex="0">
+                            <i data-lucide="percent" class="nav-icon-sm"></i>
+                            <span>Comisiones</span>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- 5. Logística (Shipping + Guías + Pickups) -->
                 <div class="nav-section">
@@ -214,9 +222,6 @@
                             <i data-lucide="x" class="icon-xs"></i>
                         </button>
                     </div>
-                    <button class="btn-commissions" onclick="showCommissionsModal()" title="Ver comisiones">
-                        💰 Comisiones
-                    </button>
                     <button class="btn-refresh" onclick="loadOrders()">
                         <i data-lucide="refresh-cw" class="icon-sm" id="refresh-icon"></i>
                         <span class="refresh-text">Actualizar</span>
