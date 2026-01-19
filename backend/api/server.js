@@ -2226,9 +2226,13 @@ app.put('/api/orders/:orderId/items/:itemId/modify', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const itemId = parseInt(req.params.itemId);
-    const { newQuantity, reason, oldQuantity, productName, unitPrice } = req.body;
+    const { newQuantity, reason, oldQuantity, productName, unitPrice, newUnitPrice, newSize } = req.body;
 
-    console.log(`✏️ Modifying item ${itemId} in order ${orderId}: ${oldQuantity} -> ${newQuantity}`);
+    // Use new price if provided, otherwise keep old price
+    const finalUnitPrice = newUnitPrice !== undefined ? newUnitPrice : unitPrice;
+    const priceChanged = newUnitPrice !== undefined && newUnitPrice !== unitPrice;
+
+    console.log(`✏️ Modifying item ${itemId} in order ${orderId}: ${oldQuantity} -> ${newQuantity}${priceChanged ? `, price: $${unitPrice} -> $${finalUnitPrice}` : ''}`);
 
     // Verify the item belongs to the order
     const itemCheck = await query(
@@ -2260,15 +2264,32 @@ app.put('/api/orders/:orderId/items/:itemId/modify', async (req, res) => {
 
     const order = orderResult.rows[0];
     const oldLineTotal = oldQuantity * unitPrice;
-    const newLineTotal = newQuantity * unitPrice;
+    const newLineTotal = newQuantity * finalUnitPrice;
     const priceDiff = newLineTotal - oldLineTotal;
 
-    // Update the item quantity
+    // Determine new product name if size changed (for magnets)
+    let finalProductName = productName;
+    if (newSize) {
+      // Map size to display name
+      const sizeNames = { chico: 'Chico', mediano: 'Mediano', grande: 'Grande' };
+      const sizeName = sizeNames[newSize] || '';
+
+      // Update product name to reflect new size
+      // Remove any existing size suffix and add new one
+      const baseName = productName
+        .replace(/\s*(chico|mediano|grande|pequeño|small|medium|large)/gi, '')
+        .replace(/\s*\([^)]*\)/g, '') // Remove parenthetical content like (Mediano)
+        .trim();
+
+      finalProductName = `${baseName} ${sizeName}`.trim();
+    }
+
+    // Update the item quantity, price, and product name
     await query(`
       UPDATE order_items
-      SET quantity = $1
-      WHERE id = $2
-    `, [newQuantity, itemId]);
+      SET quantity = $1, unit_price = $2, product_name = $3
+      WHERE id = $4
+    `, [newQuantity, finalUnitPrice, finalProductName, itemId]);
 
     // Recalculate order total
     const totalsResult = await query(`
@@ -2293,9 +2314,15 @@ app.put('/api/orders/:orderId/items/:itemId/modify', async (req, res) => {
 
     // Create change log entry
     const timestamp = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+    const sizeDisplayNames = { chico: 'Chico', mediano: 'Mediano', grande: 'Grande' };
+    const sizeInfo = newSize ? `Tamaño: ${sizeDisplayNames[newSize] || newSize}\n` : '';
+    const priceInfo = priceChanged ? `Precio unitario: $${unitPrice} → $${finalUnitPrice}\n` : '';
+    const productInfo = newSize ? `Producto: ${productName} → ${finalProductName}\n` : `Producto: ${productName}\n`;
     const changeLog = `\n📝 MODIFICACION (${timestamp})\n` +
-      `Producto: ${productName}\n` +
+      productInfo +
+      sizeInfo +
       `Cantidad: ${oldQuantity} → ${newQuantity} pzas\n` +
+      priceInfo +
       `Diferencia: ${priceDiff >= 0 ? '+' : ''}$${priceDiff.toFixed(2)}\n` +
       `Razon: ${reason}\n` +
       `Nuevo total: $${finalTotal.toFixed(2)}`;
@@ -2312,6 +2339,13 @@ app.put('/api/orders/:orderId/items/:itemId/modify', async (req, res) => {
     // Send email notification to client
     if (order.email) {
       try {
+        // Build size change info for email
+        const sizeEmailInfo = newSize ? `<p style="margin: 5px 0;"><strong>Tamaño:</strong> ${sizeDisplayNames[newSize] || newSize}</p>` : '';
+        const priceEmailInfo = priceChanged ? `<p style="margin: 5px 0;"><strong>Precio unitario:</strong> $${unitPrice.toFixed(2)} → $${finalUnitPrice.toFixed(2)}</p>` : '';
+        const productEmailInfo = newSize
+          ? `<p style="margin: 5px 0;"><strong>Producto:</strong> ${productName} → ${finalProductName}</p>`
+          : `<p style="margin: 5px 0;"><strong>Producto:</strong> ${productName}</p>`;
+
         const emailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #2563eb;">📦 Actualizacion de tu Pedido</h2>
@@ -2319,9 +2353,11 @@ app.put('/api/orders/:orderId/items/:itemId/modify', async (req, res) => {
             <p>Te informamos que se ha realizado una modificacion a tu pedido <strong>${order.order_number}</strong>:</p>
 
             <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 5px 0;"><strong>Producto:</strong> ${productName}</p>
+              ${productEmailInfo}
+              ${sizeEmailInfo}
               <p style="margin: 5px 0;"><strong>Cantidad anterior:</strong> ${oldQuantity} piezas</p>
               <p style="margin: 5px 0;"><strong>Nueva cantidad:</strong> ${newQuantity} piezas</p>
+              ${priceEmailInfo}
               <p style="margin: 5px 0;"><strong>Diferencia en precio:</strong> ${priceDiff >= 0 ? '+' : ''}$${priceDiff.toFixed(2)}</p>
             </div>
 

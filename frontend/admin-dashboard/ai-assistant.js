@@ -471,6 +471,19 @@ function showQuoteResult(data) {
                         </div>
                     ` : ''}
 
+                    ${data.shipping && data.shipping > 0 ? `
+                        <div class="ai-quote-shipping">
+                            <span>🚚 Envío:</span>
+                            <span>$${data.shipping.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                        </div>
+                    ` : ''}
+
+                    ${data.freeShipping ? `
+                        <div class="ai-quote-free-shipping">
+                            ✓ ¡Envío GRATIS incluido! (${data.totalPieces?.toLocaleString('es-MX') || ''} piezas)
+                        </div>
+                    ` : ''}
+
                     <div class="ai-quote-total">
                         <span>TOTAL:</span>
                         <span class="ai-quote-total-amount">${totalFormatted}</span>

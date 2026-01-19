@@ -2952,7 +2952,7 @@ async function checkFacebookStatus(imageUrl) {
 // ========================================
 
 /**
- * Open modal to edit a product's quantity
+ * Open modal to edit a product's quantity and size (for magnets)
  */
 function openEditProductModal(orderId, itemId, productName, currentQuantity, unitPrice) {
   const modal = document.createElement('div');
@@ -2970,8 +2970,72 @@ function openEditProductModal(orderId, itemId, productName, currentQuantity, uni
     z-index: 10001;
   `;
 
+  // Check if product is a magnet (Imanes de MDF) - exclude 3D and Foil variants
+  const productLower = productName.toLowerCase();
+  const isMagnet = (productLower.includes('iman') || productLower.includes('imán') || productLower.includes('imanes'))
+                   && !productLower.includes('3d') && !productLower.includes('foil');
+
+  // Determine current size based on product name first, then unit price
+  // Pricing: Chico: $8 (50-999) / $6 (1000+), Mediano: $11 (50-999) / $8 (1000+), Grande: $15 (50-999) / $12 (1000+)
+  let currentSize = 'mediano'; // Default to mediano
+  if (isMagnet) {
+    // Try to detect from product name first
+    if (productLower.includes('chico') || productLower.includes('pequeño')) {
+      currentSize = 'chico';
+    } else if (productLower.includes('grande') || productLower.includes('large')) {
+      currentSize = 'grande';
+    } else if (productLower.includes('mediano') || productLower.includes('medium')) {
+      currentSize = 'mediano';
+    } else {
+      // Fallback: detect from unit price
+      if (unitPrice === 8 || unitPrice === 6) {
+        // Could be Chico at low vol ($8) or Chico at high vol ($6), or Mediano at high vol ($8)
+        // Check quantity to disambiguate
+        currentSize = currentQuantity >= 1000 ? 'mediano' : 'chico';
+      } else if (unitPrice === 11) {
+        currentSize = 'mediano';
+      } else if (unitPrice === 15 || unitPrice === 12) {
+        currentSize = 'grande';
+      }
+    }
+  }
+
+  // Size selector HTML (only for magnets)
+  const sizeSelector = isMagnet ? `
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Tamaño del Imán</label>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <label style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid ${currentSize === 'chico' ? 'var(--primary)' : 'var(--gray-200)'}; border-radius: 8px; cursor: pointer; background: ${currentSize === 'chico' ? 'rgba(231, 42, 136, 0.05)' : 'white'};">
+            <input type="radio" name="magnet-size" value="chico" ${currentSize === 'chico' ? 'checked' : ''} onchange="updateMagnetPrice()" style="margin-right: 8px;">
+            <div>
+              <div style="font-weight: 600; font-size: 14px;">Chico</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$8 (50-999) · $6 (1000+)</div>
+            </div>
+          </label>
+          <label style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid ${currentSize === 'mediano' ? 'var(--primary)' : 'var(--gray-200)'}; border-radius: 8px; cursor: pointer; background: ${currentSize === 'mediano' ? 'rgba(231, 42, 136, 0.05)' : 'white'};">
+            <input type="radio" name="magnet-size" value="mediano" ${currentSize === 'mediano' ? 'checked' : ''} onchange="updateMagnetPrice()" style="margin-right: 8px;">
+            <div>
+              <div style="font-weight: 600; font-size: 14px;">Mediano</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$11 (50-999) · $8 (1000+)</div>
+            </div>
+          </label>
+          <label style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid ${currentSize === 'grande' ? 'var(--primary)' : 'var(--gray-200)'}; border-radius: 8px; cursor: pointer; background: ${currentSize === 'grande' ? 'rgba(231, 42, 136, 0.05)' : 'white'};">
+            <input type="radio" name="magnet-size" value="grande" ${currentSize === 'grande' ? 'checked' : ''} onchange="updateMagnetPrice()" style="margin-right: 8px;">
+            <div>
+              <div style="font-weight: 600; font-size: 14px;">Grande</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$15 (50-999) · $12 (1000+)</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div id="price-preview" style="margin-bottom: 16px; padding: 12px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 13px; color: var(--gray-600);">Precio unitario:</span>
+        <span id="unit-price-display" style="font-size: 18px; font-weight: 700; color: var(--primary);">$${unitPrice.toFixed(2)}</span>
+      </div>
+  ` : '';
+
   modal.innerHTML = `
-    <div style="background: white; border-radius: 12px; padding: 24px; width: 400px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+    <div style="background: white; border-radius: 12px; padding: 24px; width: 450px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
       <h3 style="margin: 0 0 20px 0; font-size: 18px; color: var(--gray-800);">✏️ Editar Producto</h3>
 
       <div style="margin-bottom: 16px;">
@@ -2984,9 +3048,11 @@ function openEditProductModal(orderId, itemId, productName, currentQuantity, uni
         <div style="padding: 10px; background: var(--gray-100); border-radius: 6px;">${currentQuantity} pzas</div>
       </div>
 
+      ${sizeSelector}
+
       <div style="margin-bottom: 16px;">
         <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Nueva Cantidad</label>
-        <input type="number" id="new-quantity" value="${currentQuantity}" min="1"
+        <input type="number" id="new-quantity" value="${currentQuantity}" min="1" onchange="updateMagnetPrice()"
                style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
       </div>
 
@@ -2995,6 +3061,10 @@ function openEditProductModal(orderId, itemId, productName, currentQuantity, uni
         <textarea id="change-reason" placeholder="Ej: Cliente solicito agregar mas piezas..."
                   style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; min-height: 60px; resize: vertical; box-sizing: border-box;"></textarea>
       </div>
+
+      <input type="hidden" id="original-unit-price" value="${unitPrice}">
+      <input type="hidden" id="is-magnet" value="${isMagnet}">
+      <input type="hidden" id="current-unit-price" value="${unitPrice}">
 
       <div style="display: flex; gap: 10px; justify-content: flex-end;">
         <button onclick="closeEditProductModal()"
@@ -3011,6 +3081,58 @@ function openEditProductModal(orderId, itemId, productName, currentQuantity, uni
 
   document.body.appendChild(modal);
   document.getElementById('new-quantity').focus();
+
+  // Initial price update for magnets
+  if (isMagnet) {
+    updateMagnetPrice();
+  }
+}
+
+/**
+ * Update magnet price based on size and quantity selection
+ */
+function updateMagnetPrice() {
+  const isMagnet = document.getElementById('is-magnet')?.value === 'true';
+  if (!isMagnet) return;
+
+  const sizeRadio = document.querySelector('input[name="magnet-size"]:checked');
+  const quantityInput = document.getElementById('new-quantity');
+  const priceDisplay = document.getElementById('unit-price-display');
+  const currentPriceInput = document.getElementById('current-unit-price');
+
+  if (!sizeRadio || !quantityInput || !priceDisplay) return;
+
+  const size = sizeRadio.value;
+  const quantity = parseInt(quantityInput.value) || 100;
+
+  // Calculate price based on size and quantity
+  // Chico: $8 (50-999), $6 (1000+)
+  // Mediano: $11 (50-999), $8 (1000+)
+  // Grande: $15 (50-999), $12 (1000+)
+  let newPrice;
+  if (size === 'chico') {
+    newPrice = quantity >= 1000 ? 6 : 8;
+  } else if (size === 'mediano') {
+    newPrice = quantity >= 1000 ? 8 : 11;
+  } else {
+    // grande
+    newPrice = quantity >= 1000 ? 12 : 15;
+  }
+
+  priceDisplay.textContent = `$${newPrice.toFixed(2)}`;
+  currentPriceInput.value = newPrice;
+
+  // Update radio button styles
+  document.querySelectorAll('input[name="magnet-size"]').forEach(radio => {
+    const label = radio.closest('label');
+    if (radio.checked) {
+      label.style.borderColor = 'var(--primary)';
+      label.style.background = 'rgba(231, 42, 136, 0.05)';
+    } else {
+      label.style.borderColor = 'var(--gray-200)';
+      label.style.background = 'white';
+    }
+  });
 }
 
 function closeEditProductModal() {
@@ -3018,17 +3140,29 @@ function closeEditProductModal() {
   if (modal) modal.remove();
 }
 
-async function saveProductChanges(orderId, itemId, productName, oldQuantity, unitPrice) {
+async function saveProductChanges(orderId, itemId, productName, oldQuantity, originalUnitPrice) {
   const newQuantity = parseInt(document.getElementById('new-quantity').value);
   const reason = document.getElementById('change-reason').value.trim();
+
+  // Get the new unit price (may have changed if magnet size was changed)
+  const currentPriceInput = document.getElementById('current-unit-price');
+  const newUnitPrice = currentPriceInput ? parseFloat(currentPriceInput.value) : originalUnitPrice;
+
+  // Get magnet size if applicable
+  const sizeRadio = document.querySelector('input[name="magnet-size"]:checked');
+  const newSize = sizeRadio ? sizeRadio.value : null;
 
   if (!newQuantity || newQuantity < 1) {
     alert('La cantidad debe ser mayor a 0');
     return;
   }
 
-  if (newQuantity === oldQuantity) {
-    alert('La cantidad no ha cambiado');
+  // Check if anything changed
+  const quantityChanged = newQuantity !== oldQuantity;
+  const priceChanged = newUnitPrice !== originalUnitPrice;
+
+  if (!quantityChanged && !priceChanged) {
+    alert('No se han realizado cambios');
     return;
   }
 
@@ -3049,7 +3183,9 @@ async function saveProductChanges(orderId, itemId, productName, oldQuantity, uni
         reason,
         oldQuantity,
         productName,
-        unitPrice
+        unitPrice: originalUnitPrice,
+        newUnitPrice: newUnitPrice,
+        newSize: newSize
       })
     });
 
@@ -3259,6 +3395,7 @@ window.queueForFacebook = queueForFacebook;
 window.openEditProductModal = openEditProductModal;
 window.closeEditProductModal = closeEditProductModal;
 window.saveProductChanges = saveProductChanges;
+window.updateMagnetPrice = updateMagnetPrice;
 window.openAddProductModal = openAddProductModal;
 window.closeAddProductModal = closeAddProductModal;
 window.addNewProduct = addNewProduct;

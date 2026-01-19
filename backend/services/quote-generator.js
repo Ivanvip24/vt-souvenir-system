@@ -386,8 +386,10 @@ export async function generateQuotePDF(quoteData) {
       }
 
       // Free shipping for orders >= 300 pieces
+      // Standard shipping cost: $210 MXN (per AXKAN brand guidelines)
+      const STANDARD_SHIPPING_COST = 210;
       const freeShipping = totalPieces >= 300;
-      const shippingEstimate = 0; // Shipping quoted separately if needed
+      const shippingEstimate = freeShipping ? 0 : STANDARD_SHIPPING_COST;
       const total = subtotal + shippingEstimate;
 
       // Calculate 50% deposit
@@ -745,6 +747,9 @@ export async function generateQuotePDF(quoteData) {
           quoteNumber,
           total,
           subtotal,
+          shipping: shippingEstimate,
+          freeShipping,
+          totalPieces,
           itemCount: validItems.length,
           validUntil: formatDate(validUntil),
           items: validItems,
