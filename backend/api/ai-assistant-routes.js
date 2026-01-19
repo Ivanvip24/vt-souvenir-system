@@ -549,6 +549,30 @@ Cuando el usuario especifique precios personalizados de CUALQUIER forma, DEBES i
 }
 \`\`\`
 
+**MÚLTIPLES COTIZACIONES PARA COMPARACIÓN:**
+Cuando el usuario pida cotizaciones con DIFERENTES CANTIDADES del MISMO producto para comparar opciones, genera MÚLTIPLES cotizaciones separadas.
+
+**Detectar solicitudes de múltiples cotizaciones:**
+- "cotización para 200 y 300 imanes" → 2 cotizaciones separadas
+- "cotiza 100, 200 y 500 llaveros" → 3 cotizaciones separadas
+- "precio de 200 y 300 imanes 3d" → 2 cotizaciones separadas
+- "cuánto cuestan 100 o 200 destapadores" → 2 cotizaciones separadas
+
+**Para múltiples cotizaciones, usa este formato:**
+
+\`\`\`action
+{
+  "type": "generate_multiple_quotes",
+  "quotes": [
+    { "text": "200 imanes 3d", "label": "Opción 200 pzas" },
+    { "text": "300 imanes 3d", "label": "Opción 300 pzas" }
+  ],
+  "clientName": "nombre del cliente si se menciona (opcional)"
+}
+\`\`\`
+
+**REGLA IMPORTANTE:** Si el usuario menciona cantidades separadas por "y", "o", comas, o dice "para X y Y piezas", SIEMPRE genera múltiples cotizaciones separadas, NO una sola cotización combinada.
+
 **CRÍTICO - El campo "text" DEBE incluir:**
 - Cantidades: "1000", "500", "100"
 - Productos: "llaveros", "imanes", "destapadores", "imanes 3d", "imanes foil"
@@ -791,6 +815,70 @@ router.post('/chat', async (req, res) => {
             }
           };
         }
+      } else if (action.type === 'generate_multiple_quotes') {
+        // Generate multiple separate quotes for comparison
+        const quotes = action.quotes || [];
+        const results = [];
+
+        for (const quoteSpec of quotes) {
+          const quoteText = quoteSpec.text || '';
+          const items = parseQuoteRequest(quoteText);
+
+          if (items.length > 0) {
+            try {
+              const result = await generateQuotePDF({
+                clientName: action.clientName || null,
+                clientPhone: action.clientPhone || null,
+                clientEmail: action.clientEmail || null,
+                items,
+                notes: quoteSpec.label || null,
+                validityDays: 3,
+                includeShipping: false
+              });
+
+              results.push({
+                success: true,
+                label: quoteSpec.label || `Opción ${results.length + 1}`,
+                quoteNumber: result.quoteNumber,
+                total: result.total,
+                subtotal: result.subtotal,
+                shipping: result.shipping,
+                freeShipping: result.freeShipping,
+                totalPieces: result.totalPieces,
+                itemCount: result.itemCount,
+                validUntil: result.validUntil,
+                pdfUrl: getQuoteUrl(result.filepath),
+                filename: result.filename,
+                items: result.items,
+                invalidItems: result.invalidItems
+              });
+
+              console.log(`📄 Quote generated: ${result.quoteNumber} - Total: $${result.total}`);
+            } catch (quoteError) {
+              console.error('Error generating quote PDF:', quoteError);
+              results.push({
+                success: false,
+                label: quoteSpec.label || `Opción ${results.length + 1}`,
+                error: quoteError.message || 'Error al generar la cotización'
+              });
+            }
+          } else {
+            results.push({
+              success: false,
+              label: quoteSpec.label || `Opción ${results.length + 1}`,
+              error: 'No se encontraron productos válidos en: ' + quoteText
+            });
+          }
+        }
+
+        actionData = {
+          type: 'generate_multiple_quotes',
+          data: {
+            success: results.some(r => r.success),
+            quotes: results,
+            clientName: action.clientName
+          }
+        };
       }
 
       // Remove the action block from displayed message

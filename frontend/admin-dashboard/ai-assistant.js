@@ -418,6 +418,9 @@ function handleAiAction(action) {
     } else if (action.type === 'generate_quote') {
         // Show quote result in chat
         showQuoteResult(action.data);
+    } else if (action.type === 'generate_multiple_quotes') {
+        // Show multiple quotes for comparison
+        showMultipleQuotesResult(action.data);
     }
 }
 
@@ -517,6 +520,82 @@ function showQuoteResult(data) {
 }
 
 /**
+ * Show multiple quotes comparison result in chat
+ */
+function showMultipleQuotesResult(data) {
+    if (!data || !data.quotes || data.quotes.length === 0) {
+        addMessageToChat('assistant', '<div class="ai-quote-error">❌ No se generaron cotizaciones</div>', { isHtml: true });
+        return;
+    }
+
+    const formatCurrency = (amount) => new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+    }).format(amount);
+
+    // Build comparison cards for each quote
+    const quoteCards = data.quotes.map((quote, index) => {
+        if (!quote.success) {
+            return `
+                <div class="ai-quote-card ai-quote-card-error">
+                    <div class="ai-quote-card-label">${escapeHtml(quote.label || `Opción ${index + 1}`)}</div>
+                    <div class="ai-quote-error-msg">❌ ${escapeHtml(quote.error || 'Error')}</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="ai-quote-card">
+                <div class="ai-quote-card-label">${escapeHtml(quote.label || `Opción ${index + 1}`)}</div>
+                <div class="ai-quote-card-number">${quote.quoteNumber}</div>
+
+                <div class="ai-quote-card-items">
+                    ${(quote.items || []).map(item => `
+                        <div class="ai-quote-card-item">
+                            <span>${escapeHtml(item.productName || 'Producto')}</span>
+                            <span>${(item.quantity || 0).toLocaleString('es-MX')} pzas × $${(item.unitPrice || 0).toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                ${quote.shipping && quote.shipping > 0 ? `
+                    <div class="ai-quote-card-shipping">🚚 Envío: ${formatCurrency(quote.shipping)}</div>
+                ` : ''}
+
+                ${quote.freeShipping ? `
+                    <div class="ai-quote-card-free-shipping">✓ Envío GRATIS</div>
+                ` : ''}
+
+                <div class="ai-quote-card-total">
+                    <span>TOTAL:</span>
+                    <span class="ai-quote-card-total-amount">${formatCurrency(quote.total)}</span>
+                </div>
+
+                <div class="ai-quote-card-actions">
+                    <a href="${quote.pdfUrl}" target="_blank" class="ai-quote-card-download">📥 PDF</a>
+                    <button onclick="copyQuoteLink('${quote.pdfUrl}')" class="ai-quote-card-copy">📋 Copiar</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const html = `
+        <div class="ai-multiple-quotes">
+            <div class="ai-multiple-quotes-header">
+                <span class="ai-quote-icon">📊</span>
+                <span>Comparación de Cotizaciones</span>
+            </div>
+            ${data.clientName ? `<div class="ai-multiple-quotes-client">👤 ${escapeHtml(data.clientName)}</div>` : ''}
+            <div class="ai-quote-cards-container">
+                ${quoteCards}
+            </div>
+        </div>
+    `;
+
+    addMessageToChat('assistant', html, { isHtml: true });
+}
+
+/**
  * Copy quote link to clipboard
  */
 function copyQuoteLink(url) {
@@ -537,6 +616,7 @@ function copyQuoteLink(url) {
 
 // Export quote functions globally
 window.showQuoteResult = showQuoteResult;
+window.showMultipleQuotesResult = showMultipleQuotesResult;
 window.copyQuoteLink = copyQuoteLink;
 
 /**

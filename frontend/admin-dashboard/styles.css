@@ -5911,6 +5911,184 @@ textarea:disabled {
     }
 }
 
+/* Multiple Quotes Comparison Styles */
+.ai-multiple-quotes {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.ai-multiple-quotes-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.ai-multiple-quotes-client {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin-bottom: 12px;
+}
+
+.ai-quote-cards-container {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ai-quote-card {
+    flex: 1;
+    min-width: 200px;
+    max-width: 280px;
+    background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+    border: 2px solid #f9a8d4;
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ai-quote-card-error {
+    background: #fee2e2;
+    border-color: #fecaca;
+}
+
+.ai-quote-card-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ai-quote-card-number {
+    font-size: 11px;
+    color: var(--gray-500);
+    font-family: monospace;
+}
+
+.ai-quote-card-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.ai-quote-card-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--gray-700);
+}
+
+.ai-quote-card-item span:first-child {
+    font-weight: 500;
+}
+
+.ai-quote-card-item span:last-child {
+    color: var(--gray-500);
+    white-space: nowrap;
+}
+
+.ai-quote-card-shipping {
+    font-size: 12px;
+    color: var(--gray-600);
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+}
+
+.ai-quote-card-free-shipping {
+    font-size: 12px;
+    color: #065f46;
+    font-weight: 600;
+    padding: 6px 8px;
+    background: #d1fae5;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.ai-quote-card-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #be185d 0%, #e11d48 100%);
+    color: white;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.ai-quote-card-total-amount {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.ai-quote-card-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.ai-quote-card-download,
+.ai-quote-card-copy {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+
+.ai-quote-card-download {
+    background: white;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.ai-quote-card-download:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.ai-quote-card-copy {
+    background: white;
+    color: var(--gray-600);
+    border: 1px solid var(--gray-300);
+}
+
+.ai-quote-card-copy:hover {
+    background: var(--gray-100);
+}
+
+.ai-quote-error-msg {
+    color: #dc2626;
+    font-size: 13px;
+    padding: 10px;
+}
+
+@media (max-width: 600px) {
+    .ai-quote-cards-container {
+        flex-direction: column;
+    }
+
+    .ai-quote-card {
+        max-width: 100%;
+    }
+}
+
 /* ==========================================
    LUCIDE ICONS
    ========================================== */
