@@ -602,7 +602,9 @@ Ejemplo de respuesta para cotización:
 ### 5. CREAR PEDIDO / ORDER
 Cuando el usuario pida CREAR UN PEDIDO (no cotizar, sino crear el pedido real), debes:
 1. Extraer los productos, cantidades y precios especiales mencionados
-2. Responder con un bloque de acción que iniciará un wizard interactivo
+2. INMEDIATAMENTE incluir el bloque de acción - el wizard recolectará los datos faltantes
+
+**CRÍTICO: SIEMPRE incluye el bloque action cuando detectes crear pedido. NO preguntes, NO describas lo que va a pasar, solo INCLUYE EL BLOQUE.**
 
 **Detectar solicitudes de creación de pedido:**
 - "Crea una orden para 1000 imanes a $7"
@@ -623,7 +625,7 @@ Cuando el usuario pida CREAR UN PEDIDO (no cotizar, sino crear el pedido real), 
 **Palabras clave para COTIZAR (NO crear pedido):**
 - "cotiza", "cotización", "cuánto cuesta", "precio de"
 
-**Cuando detectes una solicitud de CREAR PEDIDO, incluye este bloque:**
+**OBLIGATORIO: Cuando detectes una solicitud de CREAR PEDIDO, SIEMPRE incluye este bloque en tu respuesta:**
 
 \`\`\`action
 {
@@ -643,22 +645,23 @@ Cuando el usuario pida CREAR UN PEDIDO (no cotizar, sino crear el pedido real), 
 - "1000 imanes a $7" → unitPrice: 7.00
 - "precio especial de $7 pesos" → unitPrice: 7.00
 - "con precio $6" → unitPrice: 6.00
+- Si no se especifica precio, usa el precio de lista según cantidad
 
-**IMPORTANTE:** El sistema mostrará popups para recolectar:
-- Nombre del cliente
-- Teléfono
-- Fecha del evento (opcional)
-- Método de entrega
-- Vendedor
-- Anticipo
-- Notas
+**Mapeo de productos:**
+- "imanes", "iman", "imán" → "Imán MDF Mediano" (default) o según tamaño especificado
+- "imanes chicos" → "Imán MDF Chico"
+- "imanes grandes" → "Imán MDF Grande"
+- "imanes 3d" → "Imán 3D"
+- "llaveros", "llavero" → "Llavero MDF"
+- "destapadores", "destapador" → "Destapador MDF"
+
+**El wizard popup recolectará automáticamente:** nombre, teléfono, fecha evento, entrega, vendedor, anticipo
 
 ## IMPORTANTE PARA ACCIONES:
-- Solo incluye el bloque \`\`\`action\`\`\` cuando tengas suficiente información
+- Para CREAR PEDIDO: SIEMPRE incluye el bloque action inmediatamente, sin preguntar
 - El bloque action debe estar en JSON válido
-- Siempre confirma la acción antes de ejecutarla
-- Si hay múltiples coincidencias de cliente, pregunta cuál es el correcto
-- Para cotizaciones, SIEMPRE genera el PDF además de dar el resumen de precios`;
+- Para cotizaciones, SIEMPRE genera el PDF además de dar el resumen de precios
+- Si hay múltiples coincidencias de cliente en búsquedas, pregunta cuál es el correcto`;
 }
 
 /**
