@@ -7270,3 +7270,445 @@ body.mobile-menu-open {
         font-size: 13px;
     }
 }
+
+/* ==========================================
+   ORDER WIZARD STYLES
+   ========================================== */
+
+.order-wizard-modal {
+    max-width: 550px;
+    width: 95%;
+}
+
+.wizard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--gray-200);
+    gap: 16px;
+}
+
+.wizard-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0;
+}
+
+.wizard-steps {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-step {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-200);
+    color: var(--gray-500);
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.wizard-step.active {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+}
+
+.wizard-step-line {
+    width: 20px;
+    height: 2px;
+    background: var(--gray-200);
+}
+
+.wizard-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.wizard-product-summary {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.wizard-product-summary h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin: 0 0 12px 0;
+}
+
+.wizard-product-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 14px;
+}
+
+.wizard-product-item:last-of-type {
+    border-bottom: none;
+}
+
+.wizard-product-item .product-name {
+    font-weight: 500;
+    color: var(--gray-800);
+}
+
+.wizard-product-item .product-qty {
+    color: var(--gray-600);
+}
+
+.wizard-product-item .product-price {
+    color: var(--gray-500);
+}
+
+.wizard-product-item .product-subtotal {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.wizard-total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 2px solid var(--gray-300);
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.wizard-total .total-amount {
+    color: var(--primary);
+}
+
+.wizard-form-section h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0 0 16px 0;
+}
+
+.wizard-form-group {
+    margin-bottom: 16px;
+}
+
+.wizard-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+}
+
+.wizard-form-group input,
+.wizard-form-group select,
+.wizard-form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.wizard-form-group input:focus,
+.wizard-form-group select:focus,
+.wizard-form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(231, 42, 136, 0.1);
+}
+
+.wizard-radio-group {
+    display: flex;
+    gap: 12px;
+}
+
+.wizard-radio {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    border: 2px solid var(--gray-200);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wizard-radio:hover {
+    border-color: var(--gray-300);
+}
+
+.wizard-radio.selected {
+    border-color: var(--primary);
+    background: rgba(231, 42, 136, 0.05);
+}
+
+.wizard-radio input {
+    display: none;
+}
+
+.wizard-radio .radio-icon {
+    font-size: 20px;
+}
+
+.wizard-deposit-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-deposit-input .currency-prefix {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-600);
+}
+
+.wizard-deposit-input input {
+    flex: 1;
+}
+
+.wizard-deposit-preset {
+    padding: 8px 12px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wizard-deposit-preset:hover {
+    background: var(--gray-200);
+}
+
+.wizard-deposit-info {
+    font-size: 12px;
+    color: var(--gray-500);
+    margin-top: 6px;
+}
+
+.wizard-confirmation h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0 0 20px 0;
+}
+
+.wizard-confirm-section {
+    margin-bottom: 16px;
+}
+
+.wizard-confirm-section .confirm-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-500);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.wizard-confirm-section .confirm-value {
+    font-size: 14px;
+    color: var(--gray-800);
+}
+
+.wizard-confirm-section .confirm-product {
+    font-size: 14px;
+    color: var(--gray-700);
+    padding: 4px 0;
+}
+
+.wizard-confirm-totals {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 20px 0;
+}
+
+.confirm-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+.confirm-total-row.highlight {
+    background: #fef3c7;
+    margin: 8px -12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+}
+
+.confirm-total-row .total-amount {
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.confirm-total-row .deposit-amount {
+    font-weight: 700;
+    color: #d97706;
+}
+
+.confirm-total-row .remaining-amount {
+    color: var(--gray-600);
+}
+
+.wizard-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-top: 1px solid var(--gray-200);
+    gap: 12px;
+}
+
+.wizard-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wizard-btn-secondary {
+    background: white;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-700);
+}
+
+.wizard-btn-secondary:hover {
+    background: var(--gray-50);
+}
+
+.wizard-btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+    color: white;
+}
+
+.wizard-btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.wizard-btn-success {
+    background: linear-gradient(135deg, #059669, #10b981);
+    border: none;
+    color: white;
+}
+
+.wizard-btn-success:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Order created success message */
+.ai-order-created {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border: 1px solid #34d399;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.order-created-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.order-created-icon {
+    font-size: 32px;
+}
+
+.order-created-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #047857;
+}
+
+.order-created-number {
+    font-size: 14px;
+    color: #059669;
+    font-weight: 600;
+}
+
+.order-created-details {
+    font-size: 14px;
+    color: #065f46;
+    margin-bottom: 16px;
+}
+
+.order-created-details p {
+    margin: 4px 0;
+}
+
+.order-created-btn {
+    display: inline-block;
+    padding: 10px 16px;
+    background: #059669;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.order-created-btn:hover {
+    background: #047857;
+}
+
+/* Mobile responsiveness for wizard */
+@media (max-width: 768px) {
+    .order-wizard-modal {
+        margin: 8px;
+        max-width: calc(100% - 16px);
+    }
+
+    .wizard-header {
+        flex-wrap: wrap;
+        padding: 16px;
+    }
+
+    .wizard-steps {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        margin-top: 12px;
+    }
+
+    .wizard-radio-group {
+        flex-direction: column;
+    }
+
+    .wizard-product-item {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .wizard-deposit-input {
+        flex-wrap: wrap;
+    }
+
+    .wizard-deposit-input input {
+        width: 100%;
+    }
+}

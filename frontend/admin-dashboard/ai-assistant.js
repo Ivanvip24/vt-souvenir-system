@@ -421,6 +421,9 @@ function handleAiAction(action) {
     } else if (action.type === 'generate_multiple_quotes') {
         // Show multiple quotes for comparison
         showMultipleQuotesResult(action.data);
+    } else if (action.type === 'start_order_creation') {
+        // Start interactive order creation wizard
+        startOrderCreationWizard(action.data);
     }
 }
 
@@ -1326,6 +1329,511 @@ async function selectClientInModal(clientId) {
     }
 }
 
+// =====================================================
+// ORDER CREATION WIZARD
+// =====================================================
+
+// Store wizard state
+let orderWizardState = {
+    products: [],
+    clientName: '',
+    clientPhone: '',
+    eventDate: '',
+    deliveryMethod: 'pickup',
+    salesRep: '',
+    depositAmount: 0,
+    notes: '',
+    currentStep: 1
+};
+
+/**
+ * Start the order creation wizard
+ */
+function startOrderCreationWizard(data) {
+    console.log('🛒 Starting order creation wizard:', data);
+
+    // Initialize wizard state with products from AI
+    orderWizardState = {
+        products: data.products || [],
+        clientName: '',
+        clientPhone: '',
+        eventDate: '',
+        deliveryMethod: 'pickup',
+        salesRep: '',
+        depositAmount: 0,
+        notes: '',
+        currentStep: 1
+    };
+
+    // Calculate initial total
+    const total = orderWizardState.products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
+    const suggestedDeposit = Math.ceil(total * 0.5);
+    orderWizardState.depositAmount = suggestedDeposit;
+
+    // Show first step
+    showOrderWizardStep1();
+}
+
+/**
+ * Step 1: Show product summary and ask for client name
+ */
+function showOrderWizardStep1() {
+    const products = orderWizardState.products;
+    const total = products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
+
+    const modalHTML = `
+        <div id="order-wizard-modal" class="modal-overlay" onclick="if(event.target === this) closeOrderWizard()">
+            <div class="modal-content order-wizard-modal">
+                <div class="wizard-header">
+                    <h2>🛒 Crear Nuevo Pedido</h2>
+                    <div class="wizard-steps">
+                        <span class="wizard-step active">1</span>
+                        <span class="wizard-step-line"></span>
+                        <span class="wizard-step">2</span>
+                        <span class="wizard-step-line"></span>
+                        <span class="wizard-step">3</span>
+                        <span class="wizard-step-line"></span>
+                        <span class="wizard-step">4</span>
+                    </div>
+                    <button onclick="closeOrderWizard()" class="modal-close">&times;</button>
+                </div>
+
+                <div class="wizard-body">
+                    <div class="wizard-product-summary">
+                        <h3>📦 Resumen del Pedido</h3>
+                        ${products.map(p => `
+                            <div class="wizard-product-item">
+                                <span class="product-name">${escapeHtml(p.name)}</span>
+                                <span class="product-qty">${p.quantity.toLocaleString('es-MX')} pzas</span>
+                                <span class="product-price">$${p.unitPrice.toFixed(2)}/u</span>
+                                <span class="product-subtotal">$${(p.quantity * p.unitPrice).toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        `).join('')}
+                        <div class="wizard-total">
+                            <span>Total:</span>
+                            <span class="total-amount">$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                        </div>
+                    </div>
+
+                    <div class="wizard-form-section">
+                        <h3>👤 Información del Cliente</h3>
+                        <div class="wizard-form-group">
+                            <label for="wizard-client-name">Nombre del Cliente *</label>
+                            <input type="text" id="wizard-client-name" placeholder="Ej: María García"
+                                   value="${escapeHtml(orderWizardState.clientName)}" autofocus>
+                        </div>
+                        <div class="wizard-form-group">
+                            <label for="wizard-client-phone">Teléfono *</label>
+                            <input type="tel" id="wizard-client-phone" placeholder="Ej: 3312345678"
+                                   value="${escapeHtml(orderWizardState.clientPhone)}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-footer">
+                    <button onclick="closeOrderWizard()" class="wizard-btn wizard-btn-secondary">Cancelar</button>
+                    <button onclick="orderWizardNext(1)" class="wizard-btn wizard-btn-primary">
+                        Siguiente →
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal if any
+    const existing = document.getElementById('order-wizard-modal');
+    if (existing) existing.remove();
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+/**
+ * Step 2: Delivery details
+ */
+function showOrderWizardStep2() {
+    const modal = document.querySelector('#order-wizard-modal .wizard-body');
+    const steps = document.querySelectorAll('#order-wizard-modal .wizard-step');
+    steps.forEach((s, i) => s.classList.toggle('active', i <= 1));
+
+    modal.innerHTML = `
+        <div class="wizard-form-section">
+            <h3>🚚 Detalles de Entrega</h3>
+
+            <div class="wizard-form-group">
+                <label>Método de Entrega *</label>
+                <div class="wizard-radio-group">
+                    <label class="wizard-radio ${orderWizardState.deliveryMethod === 'pickup' ? 'selected' : ''}">
+                        <input type="radio" name="delivery-method" value="pickup"
+                               ${orderWizardState.deliveryMethod === 'pickup' ? 'checked' : ''}
+                               onchange="updateDeliveryMethod('pickup')">
+                        <span class="radio-icon">🏪</span>
+                        <span>Recoger en tienda</span>
+                    </label>
+                    <label class="wizard-radio ${orderWizardState.deliveryMethod === 'shipping' ? 'selected' : ''}">
+                        <input type="radio" name="delivery-method" value="shipping"
+                               ${orderWizardState.deliveryMethod === 'shipping' ? 'checked' : ''}
+                               onchange="updateDeliveryMethod('shipping')">
+                        <span class="radio-icon">📦</span>
+                        <span>Envío</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="wizard-form-group">
+                <label for="wizard-event-date">Fecha del Evento (opcional)</label>
+                <input type="date" id="wizard-event-date" value="${orderWizardState.eventDate}">
+            </div>
+        </div>
+    `;
+
+    orderWizardState.currentStep = 2;
+}
+
+/**
+ * Step 3: Sales rep and deposit
+ */
+async function showOrderWizardStep3() {
+    const modal = document.querySelector('#order-wizard-modal .wizard-body');
+    const steps = document.querySelectorAll('#order-wizard-modal .wizard-step');
+    steps.forEach((s, i) => s.classList.toggle('active', i <= 2));
+
+    // Fetch salespeople for dropdown
+    let salespeopleOptions = '<option value="">Sin vendedor asignado</option>';
+    try {
+        const token = localStorage.getItem('admin_token');
+        const response = await fetch(`${API_BASE}/salespeople`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.salespeople) {
+            salespeopleOptions += data.salespeople
+                .filter(sp => sp.is_active)
+                .map(sp => `<option value="${escapeHtml(sp.name)}" ${orderWizardState.salesRep === sp.name ? 'selected' : ''}>${escapeHtml(sp.name)}</option>`)
+                .join('');
+        }
+    } catch (e) {
+        console.error('Error loading salespeople:', e);
+    }
+
+    const total = orderWizardState.products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
+
+    modal.innerHTML = `
+        <div class="wizard-form-section">
+            <h3>💰 Vendedor y Anticipo</h3>
+
+            <div class="wizard-form-group">
+                <label for="wizard-sales-rep">Vendedor</label>
+                <select id="wizard-sales-rep">
+                    ${salespeopleOptions}
+                </select>
+            </div>
+
+            <div class="wizard-form-group">
+                <label for="wizard-deposit">Anticipo (50% sugerido)</label>
+                <div class="wizard-deposit-input">
+                    <span class="currency-prefix">$</span>
+                    <input type="number" id="wizard-deposit" value="${orderWizardState.depositAmount}" min="0" max="${total}">
+                    <button type="button" class="wizard-deposit-preset" onclick="setDepositPercent(50)">50%</button>
+                    <button type="button" class="wizard-deposit-preset" onclick="setDepositPercent(100)">100%</button>
+                </div>
+                <div class="wizard-deposit-info">
+                    Total del pedido: $${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}
+                </div>
+            </div>
+
+            <div class="wizard-form-group">
+                <label for="wizard-notes">Notas adicionales</label>
+                <textarea id="wizard-notes" rows="3" placeholder="Instrucciones especiales, detalles del diseño, etc.">${escapeHtml(orderWizardState.notes)}</textarea>
+            </div>
+        </div>
+    `;
+
+    orderWizardState.currentStep = 3;
+}
+
+/**
+ * Step 4: Confirm and create
+ */
+function showOrderWizardStep4() {
+    const modal = document.querySelector('#order-wizard-modal .wizard-body');
+    const steps = document.querySelectorAll('#order-wizard-modal .wizard-step');
+    steps.forEach((s, i) => s.classList.toggle('active', i <= 3));
+
+    const products = orderWizardState.products;
+    const total = products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
+    const remaining = total - orderWizardState.depositAmount;
+
+    modal.innerHTML = `
+        <div class="wizard-confirmation">
+            <h3>✅ Confirmar Pedido</h3>
+
+            <div class="wizard-confirm-section">
+                <div class="confirm-label">Cliente:</div>
+                <div class="confirm-value">${escapeHtml(orderWizardState.clientName)} - ${escapeHtml(orderWizardState.clientPhone)}</div>
+            </div>
+
+            <div class="wizard-confirm-section">
+                <div class="confirm-label">Productos:</div>
+                ${products.map(p => `
+                    <div class="confirm-product">
+                        ${escapeHtml(p.name)} × ${p.quantity.toLocaleString('es-MX')} @ $${p.unitPrice.toFixed(2)} = $${(p.quantity * p.unitPrice).toLocaleString('es-MX', {minimumFractionDigits: 2})}
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="wizard-confirm-section">
+                <div class="confirm-label">Entrega:</div>
+                <div class="confirm-value">${orderWizardState.deliveryMethod === 'pickup' ? '🏪 Recoger en tienda' : '📦 Envío'}</div>
+            </div>
+
+            ${orderWizardState.eventDate ? `
+                <div class="wizard-confirm-section">
+                    <div class="confirm-label">Fecha del Evento:</div>
+                    <div class="confirm-value">📅 ${new Date(orderWizardState.eventDate).toLocaleDateString('es-MX')}</div>
+                </div>
+            ` : ''}
+
+            ${orderWizardState.salesRep ? `
+                <div class="wizard-confirm-section">
+                    <div class="confirm-label">Vendedor:</div>
+                    <div class="confirm-value">👤 ${escapeHtml(orderWizardState.salesRep)}</div>
+                </div>
+            ` : ''}
+
+            <div class="wizard-confirm-totals">
+                <div class="confirm-total-row">
+                    <span>Total del Pedido:</span>
+                    <span class="total-amount">$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="confirm-total-row highlight">
+                    <span>Anticipo:</span>
+                    <span class="deposit-amount">$${orderWizardState.depositAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="confirm-total-row">
+                    <span>Saldo Restante:</span>
+                    <span class="remaining-amount">$${remaining.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                </div>
+            </div>
+
+            ${orderWizardState.notes ? `
+                <div class="wizard-confirm-section">
+                    <div class="confirm-label">Notas:</div>
+                    <div class="confirm-value">${escapeHtml(orderWizardState.notes)}</div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    // Update footer buttons
+    const footer = document.querySelector('#order-wizard-modal .wizard-footer');
+    footer.innerHTML = `
+        <button onclick="orderWizardBack()" class="wizard-btn wizard-btn-secondary">← Atrás</button>
+        <button onclick="executeOrderCreation()" class="wizard-btn wizard-btn-success" id="create-order-btn">
+            ✓ Crear Pedido
+        </button>
+    `;
+
+    orderWizardState.currentStep = 4;
+}
+
+/**
+ * Navigate to next step
+ */
+function orderWizardNext(fromStep) {
+    if (fromStep === 1) {
+        // Validate step 1
+        const clientName = document.getElementById('wizard-client-name')?.value.trim();
+        const clientPhone = document.getElementById('wizard-client-phone')?.value.trim();
+
+        if (!clientName) {
+            alert('Por favor ingresa el nombre del cliente');
+            return;
+        }
+        if (!clientPhone) {
+            alert('Por favor ingresa el teléfono del cliente');
+            return;
+        }
+
+        orderWizardState.clientName = clientName;
+        orderWizardState.clientPhone = clientPhone;
+        showOrderWizardStep2();
+
+        // Update footer
+        const footer = document.querySelector('#order-wizard-modal .wizard-footer');
+        footer.innerHTML = `
+            <button onclick="orderWizardBack()" class="wizard-btn wizard-btn-secondary">← Atrás</button>
+            <button onclick="orderWizardNext(2)" class="wizard-btn wizard-btn-primary">Siguiente →</button>
+        `;
+    } else if (fromStep === 2) {
+        // Save step 2 data
+        orderWizardState.eventDate = document.getElementById('wizard-event-date')?.value || '';
+        showOrderWizardStep3();
+
+        // Update footer
+        const footer = document.querySelector('#order-wizard-modal .wizard-footer');
+        footer.innerHTML = `
+            <button onclick="orderWizardBack()" class="wizard-btn wizard-btn-secondary">← Atrás</button>
+            <button onclick="orderWizardNext(3)" class="wizard-btn wizard-btn-primary">Siguiente →</button>
+        `;
+    } else if (fromStep === 3) {
+        // Save step 3 data
+        orderWizardState.salesRep = document.getElementById('wizard-sales-rep')?.value || '';
+        orderWizardState.depositAmount = parseFloat(document.getElementById('wizard-deposit')?.value) || 0;
+        orderWizardState.notes = document.getElementById('wizard-notes')?.value || '';
+        showOrderWizardStep4();
+    }
+}
+
+/**
+ * Navigate back
+ */
+function orderWizardBack() {
+    const currentStep = orderWizardState.currentStep;
+
+    if (currentStep === 2) {
+        showOrderWizardStep1();
+    } else if (currentStep === 3) {
+        showOrderWizardStep2();
+        const footer = document.querySelector('#order-wizard-modal .wizard-footer');
+        footer.innerHTML = `
+            <button onclick="orderWizardBack()" class="wizard-btn wizard-btn-secondary">← Atrás</button>
+            <button onclick="orderWizardNext(2)" class="wizard-btn wizard-btn-primary">Siguiente →</button>
+        `;
+    } else if (currentStep === 4) {
+        showOrderWizardStep3();
+        const footer = document.querySelector('#order-wizard-modal .wizard-footer');
+        footer.innerHTML = `
+            <button onclick="orderWizardBack()" class="wizard-btn wizard-btn-secondary">← Atrás</button>
+            <button onclick="orderWizardNext(3)" class="wizard-btn wizard-btn-primary">Siguiente →</button>
+        `;
+    }
+}
+
+/**
+ * Update delivery method radio selection
+ */
+function updateDeliveryMethod(method) {
+    orderWizardState.deliveryMethod = method;
+    document.querySelectorAll('.wizard-radio').forEach(r => {
+        r.classList.toggle('selected', r.querySelector('input').value === method);
+    });
+}
+
+/**
+ * Set deposit percentage
+ */
+function setDepositPercent(percent) {
+    const total = orderWizardState.products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
+    const deposit = Math.ceil(total * (percent / 100));
+    document.getElementById('wizard-deposit').value = deposit;
+}
+
+/**
+ * Close the wizard
+ */
+function closeOrderWizard() {
+    const modal = document.getElementById('order-wizard-modal');
+    if (modal) modal.remove();
+}
+
+/**
+ * Execute the order creation
+ */
+async function executeOrderCreation() {
+    const btn = document.getElementById('create-order-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-sm"></span> Creando...';
+    }
+
+    try {
+        const token = localStorage.getItem('admin_token');
+        const total = orderWizardState.products.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
+
+        // Prepare order data
+        const orderData = {
+            clientName: orderWizardState.clientName,
+            clientPhone: orderWizardState.clientPhone,
+            items: orderWizardState.products.map(p => ({
+                productName: p.name,
+                quantity: p.quantity,
+                unitPrice: p.unitPrice,
+                productionCost: p.unitPrice * 0.4 // Estimate 40% cost
+            })),
+            totalPrice: total,
+            depositAmount: orderWizardState.depositAmount,
+            depositPaid: orderWizardState.depositAmount > 0,
+            deliveryMethod: orderWizardState.deliveryMethod,
+            salesRep: orderWizardState.salesRep || null,
+            eventDate: orderWizardState.eventDate || null,
+            notes: orderWizardState.notes || null,
+            status: 'Nuevo',
+            approvalStatus: 'pending_review'
+        };
+
+        const response = await fetch(`${API_BASE}/orders`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Close wizard
+            closeOrderWizard();
+
+            // Show success message in chat
+            const messagesContainer = document.getElementById('ai-chat-messages');
+            if (messagesContainer) {
+                const successHTML = `
+                    <div class="ai-message assistant">
+                        <div class="ai-message-avatar">🤖</div>
+                        <div class="ai-message-content">
+                            <div class="ai-order-created">
+                                <div class="order-created-header">
+                                    <span class="order-created-icon">✅</span>
+                                    <div>
+                                        <div class="order-created-title">¡Pedido Creado!</div>
+                                        <div class="order-created-number">${result.data?.orderNumber || 'Nuevo Pedido'}</div>
+                                    </div>
+                                </div>
+                                <div class="order-created-details">
+                                    <p><strong>Cliente:</strong> ${escapeHtml(orderWizardState.clientName)}</p>
+                                    <p><strong>Total:</strong> $${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                                    <p><strong>Anticipo:</strong> $${orderWizardState.depositAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
+                                </div>
+                                <button onclick="closeAiChatModal(); if(typeof loadOrders === 'function') loadOrders();" class="order-created-btn">
+                                    Ver en Pedidos →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                messagesContainer.insertAdjacentHTML('beforeend', successHTML);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // Refresh orders list if function exists
+            if (typeof loadOrders === 'function') {
+                loadOrders();
+            }
+        } else {
+            throw new Error(result.error || 'Error al crear el pedido');
+        }
+    } catch (error) {
+        console.error('Error creating order:', error);
+        alert('Error al crear el pedido: ' + error.message);
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '✓ Crear Pedido';
+        }
+    }
+}
+
 // Export action functions globally
 window.handleAiAction = handleAiAction;
 window.showShippingLabelModal = showShippingLabelModal;
@@ -1336,3 +1844,12 @@ window.searchClientsForModal = searchClientsForModal;
 window.selectClientInModal = selectClientInModal;
 window.getShippingQuotes = getShippingQuotes;
 window.selectShippingRate = selectShippingRate;
+
+// Export order wizard functions
+window.startOrderCreationWizard = startOrderCreationWizard;
+window.closeOrderWizard = closeOrderWizard;
+window.orderWizardNext = orderWizardNext;
+window.orderWizardBack = orderWizardBack;
+window.updateDeliveryMethod = updateDeliveryMethod;
+window.setDepositPercent = setDepositPercent;
+window.executeOrderCreation = executeOrderCreation;

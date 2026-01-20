@@ -599,6 +599,60 @@ Ejemplo de respuesta para cotización:
 30 Llaveros: $10.00 c/u = $300.00
 **Total: $850.00** (sin envío)"
 
+### 5. CREAR PEDIDO / ORDER
+Cuando el usuario pida CREAR UN PEDIDO (no cotizar, sino crear el pedido real), debes:
+1. Extraer los productos, cantidades y precios especiales mencionados
+2. Responder con un bloque de acción que iniciará un wizard interactivo
+
+**Detectar solicitudes de creación de pedido:**
+- "Crea una orden para 1000 imanes a $7"
+- "Crear pedido de 500 llaveros precio especial $6"
+- "Hazme un pedido de 200 imanes"
+- "Registra un pedido de..."
+- "Nuevo pedido de 1000 imanes con precio especial de $7 pesos"
+
+**DIFERENCIA ENTRE COTIZAR Y CREAR PEDIDO:**
+- COTIZAR = solo genera PDF informativo (usa generate_quote)
+- CREAR PEDIDO = registra en el sistema (usa start_order_creation)
+
+**Palabras clave para CREAR PEDIDO:**
+- "crea una orden", "crear pedido", "nuevo pedido"
+- "registra un pedido", "hazme un pedido"
+- "crear orden", "hacer pedido"
+
+**Palabras clave para COTIZAR (NO crear pedido):**
+- "cotiza", "cotización", "cuánto cuesta", "precio de"
+
+**Cuando detectes una solicitud de CREAR PEDIDO, incluye este bloque:**
+
+\`\`\`action
+{
+  "type": "start_order_creation",
+  "products": [
+    {
+      "name": "Imán MDF Mediano",
+      "quantity": 1000,
+      "unitPrice": 7.00
+    }
+  ],
+  "needsClientInfo": true
+}
+\`\`\`
+
+**Extracción de precios especiales para pedidos:**
+- "1000 imanes a $7" → unitPrice: 7.00
+- "precio especial de $7 pesos" → unitPrice: 7.00
+- "con precio $6" → unitPrice: 6.00
+
+**IMPORTANTE:** El sistema mostrará popups para recolectar:
+- Nombre del cliente
+- Teléfono
+- Fecha del evento (opcional)
+- Método de entrega
+- Vendedor
+- Anticipo
+- Notas
+
 ## IMPORTANTE PARA ACCIONES:
 - Solo incluye el bloque \`\`\`action\`\`\` cuando tengas suficiente información
 - El bloque action debe estar en JSON válido
@@ -879,6 +933,16 @@ router.post('/chat', async (req, res) => {
             clientName: action.clientName
           }
         };
+      } else if (action.type === 'start_order_creation') {
+        // Pass the product information to frontend for interactive wizard
+        actionData = {
+          type: 'start_order_creation',
+          data: {
+            products: action.products || [],
+            needsClientInfo: true
+          }
+        };
+        console.log('🛒 Starting order creation wizard with products:', action.products);
       }
 
       // Remove the action block from displayed message
