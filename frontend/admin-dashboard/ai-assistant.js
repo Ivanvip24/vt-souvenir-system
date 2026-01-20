@@ -159,8 +159,13 @@ async function sendAiMessage() {
             addMessageToChat('assistant', data.data.message, data.data);
 
             // Handle any action from the AI
+            console.log('🔍 DEBUG: Full response data:', JSON.stringify(data.data, null, 2));
+            console.log('🔍 DEBUG: Action received:', data.data.action);
             if (data.data.action) {
+                console.log('🎯 DEBUG: Calling handleAiAction with:', data.data.action);
                 handleAiAction(data.data.action);
+            } else {
+                console.log('⚠️ DEBUG: No action in response');
             }
         } else {
             addMessageToChat('assistant', `Lo siento, hubo un error: ${data.error}`, { error: true });
@@ -423,7 +428,10 @@ function handleAiAction(action) {
         showMultipleQuotesResult(action.data);
     } else if (action.type === 'start_order_creation') {
         // Start interactive order creation wizard
+        console.log('🛒 DEBUG: start_order_creation detected, calling wizard with:', action.data);
         startOrderCreationWizard(action.data);
+    } else {
+        console.log('⚠️ DEBUG: Unknown action type:', action.type);
     }
 }
 
@@ -1351,6 +1359,13 @@ let orderWizardState = {
  */
 function startOrderCreationWizard(data) {
     console.log('🛒 Starting order creation wizard:', data);
+    console.log('🛒 DEBUG: Products received:', data?.products);
+
+    if (!data || !data.products || data.products.length === 0) {
+        console.error('❌ ERROR: No products provided to wizard');
+        alert('Error: No se recibieron productos para el pedido');
+        return;
+    }
 
     // Initialize wizard state with products from AI
     orderWizardState = {
