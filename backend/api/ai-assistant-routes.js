@@ -952,6 +952,78 @@ router.post('/chat', async (req, res) => {
       assistantMessage = assistantMessage.replace(/```action\n[\s\S]*?\n```/g, '').trim();
     }
 
+    // FALLBACK: If AI didn't output action block but message clearly indicates order creation
+    if (!actionData) {
+      const lowerMsg = message.toLowerCase();
+      const orderCreationKeywords = [
+        'crea una orden', 'crear orden', 'crear pedido', 'crea un pedido',
+        'nuevo pedido', 'registra un pedido', 'hazme un pedido', 'hacer pedido',
+        'registrar pedido', 'nuevo orden'
+      ];
+
+      const isOrderCreation = orderCreationKeywords.some(kw => lowerMsg.includes(kw));
+
+      if (isOrderCreation) {
+        console.log('🔧 Fallback: Detecting order creation intent from message');
+
+        // Extract quantity
+        const qtyMatch = lowerMsg.match(/(\d+)\s*(imanes?|llaveros?|destapadores?|portallaves?)/i);
+        const quantity = qtyMatch ? parseInt(qtyMatch[1]) : 100;
+
+        // Extract product
+        let productName = 'Imán MDF Mediano';
+        if (lowerMsg.includes('llavero')) productName = 'Llavero MDF';
+        else if (lowerMsg.includes('destapador')) productName = 'Destapador MDF';
+        else if (lowerMsg.includes('portallaves') || lowerMsg.includes('porta llaves')) productName = 'Portallaves MDF';
+        else if (lowerMsg.includes('3d') || lowerMsg.includes('imanes 3d')) productName = 'Imán 3D';
+        else if (lowerMsg.includes('chico') || lowerMsg.includes('pequeño')) productName = 'Imán MDF Chico';
+        else if (lowerMsg.includes('grande')) productName = 'Imán MDF Grande';
+
+        // Extract price - look for various patterns
+        let unitPrice = null;
+        const pricePatterns = [
+          /precio\s*(?:especial\s*)?(?:de\s*)?\$?(\d+(?:\.\d+)?)/i,
+          /\$(\d+(?:\.\d+)?)\s*(?:pesos?|c\/u|cada uno)?/i,
+          /a\s*\$?(\d+(?:\.\d+)?)/i,
+          /en\s*\$?(\d+(?:\.\d+)?)/i,
+          /(\d+(?:\.\d+)?)\s*pesos/i
+        ];
+
+        for (const pattern of pricePatterns) {
+          const match = lowerMsg.match(pattern);
+          if (match) {
+            unitPrice = parseFloat(match[1]);
+            break;
+          }
+        }
+
+        // Default prices if not specified
+        if (!unitPrice) {
+          if (productName.includes('Llavero')) unitPrice = quantity >= 1000 ? 8 : 10;
+          else if (productName.includes('Destapador')) unitPrice = quantity >= 1000 ? 15 : quantity >= 500 ? 17 : 20;
+          else if (productName.includes('Portallaves')) unitPrice = 40;
+          else if (productName.includes('3D')) unitPrice = quantity >= 1000 ? 12 : 15;
+          else if (productName.includes('Chico')) unitPrice = quantity >= 1000 ? 6 : 8;
+          else if (productName.includes('Grande')) unitPrice = quantity >= 1000 ? 12 : 15;
+          else unitPrice = quantity >= 1000 ? 8 : 11; // Mediano default
+        }
+
+        actionData = {
+          type: 'start_order_creation',
+          data: {
+            products: [{
+              name: productName,
+              quantity: quantity,
+              unitPrice: unitPrice
+            }],
+            needsClientInfo: true
+          }
+        };
+
+        console.log('🛒 Fallback order creation:', actionData.data.products);
+      }
+    }
+
     // Store in conversation history
     conversation.messages.push({ role: 'user', content: message });
     conversation.messages.push({ role: 'assistant', content: assistantMessage });
