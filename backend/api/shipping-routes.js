@@ -1899,80 +1899,74 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
     console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
 
-    // Get quotes in parallel: 1-package (shows all carriers) + N-package (bulk pricing)
+    // Get multi-package quote (bulk pricing) — this is what actually gets charged
+    // Only fall back to single × N if multi completely fails after retries
     const MAX_QUOTE_RETRIES = 3;
-    let singlePackageQuote = null;
     let multiPackageQuote = null;
 
-    // Try to get both quotes
-    for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
-      console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
-
-      try {
-        // Get both quotes in parallel
-        const [single, multi] = await Promise.all([
-          skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1),
-          packagesCount > 1 ? skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount) : null
-        ]);
-
-        singlePackageQuote = single;
-        multiPackageQuote = multi;
-
-        if ((singlePackageQuote?.rates?.length > 0) || (multiPackageQuote?.rates?.length > 0)) {
-          console.log(`   ✅ Got rates: ${singlePackageQuote?.rates?.length || 0} single, ${multiPackageQuote?.rates?.length || 0} multi`);
-          break;
+    // For single package, just get one quote
+    if (packagesCount <= 1) {
+      for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
+        try {
+          multiPackageQuote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1);
+          if (multiPackageQuote?.rates?.length > 0) break;
+        } catch (err) {
+          console.log(`   ⚠️ Quote attempt ${attempt} error: ${err.message}`);
         }
-      } catch (err) {
-        console.log(`   ⚠️ Quote attempt ${attempt} error: ${err.message}`);
+        if (attempt < MAX_QUOTE_RETRIES) await new Promise(r => setTimeout(r, 1500));
+      }
+    } else {
+      // For multiple packages, aggressively retry multi-package quote to get bulk pricing
+      for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
+        console.log(`   Multi-package quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
+        try {
+          multiPackageQuote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
+          if (multiPackageQuote?.rates?.length > 0) {
+            console.log(`   ✅ Got ${multiPackageQuote.rates.length} multi-package rates`);
+            break;
+          }
+        } catch (err) {
+          console.log(`   ⚠️ Multi-package attempt ${attempt} error: ${err.message}`);
+        }
+        if (attempt < MAX_QUOTE_RETRIES) await new Promise(r => setTimeout(r, 1500));
       }
 
-      if (attempt < MAX_QUOTE_RETRIES) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
+      // If multi-package completely failed, fall back to single × N as last resort
+      if (!multiPackageQuote?.rates?.length) {
+        console.log(`   ⚠️ Multi-package quotes empty, falling back to single × ${packagesCount}`);
+        for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
+          try {
+            const singleQuote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1);
+            if (singleQuote?.rates?.length > 0) {
+              // Convert single rates to estimated multi-package rates
+              multiPackageQuote = {
+                ...singleQuote,
+                rates: singleQuote.rates.map(rate => ({
+                  ...rate,
+                  total_price: rate.total_price * packagesCount,
+                  _estimated: true
+                }))
+              };
+              console.log(`   ✅ Fallback: ${singleQuote.rates.length} estimated rates (single × ${packagesCount})`);
+              break;
+            }
+          } catch (err) {
+            console.log(`   ⚠️ Single fallback attempt ${attempt} error: ${err.message}`);
+          }
+          if (attempt < MAX_QUOTE_RETRIES) await new Promise(r => setTimeout(r, 1500));
+        }
       }
     }
 
-    if ((!singlePackageQuote?.rates?.length) && (!multiPackageQuote?.rates?.length)) {
+    if (!multiPackageQuote?.rates?.length) {
       return res.status(400).json({
         error: 'No hay tarifas de envío disponibles para esta dirección. Intenta de nuevo.'
       });
     }
 
-    // Build combined rates map - prefer multi-package rates (bulk pricing), fallback to single × N
-    const ratesMap = new Map();
-
-    // First add multi-package rates (already have bulk pricing)
-    if (multiPackageQuote?.rates) {
-      multiPackageQuote.rates.forEach(rate => {
-        const key = `${rate.carrier}-${rate.service}`;
-        ratesMap.set(key, {
-          ...rate,
-          total_price: rate.total_price,
-          source: 'multi',
-          quotation_id: multiPackageQuote.quotation_id
-        });
-      });
-    }
-
-    // Then add single-package rates for carriers not in multi (with estimated pricing)
-    if (singlePackageQuote?.rates) {
-      singlePackageQuote.rates.forEach(rate => {
-        const key = `${rate.carrier}-${rate.service}`;
-        if (!ratesMap.has(key)) {
-          // Carrier not available in multi-quote, estimate price (may have bulk discount when creating)
-          const estimatedTotal = rate.total_price * packagesCount;
-          ratesMap.set(key, {
-            ...rate,
-            total_price: estimatedTotal,
-            source: 'single_estimated',
-            quotation_id: singlePackageQuote.quotation_id,
-            note: 'Precio estimado, puede ser menor al crear'
-          });
-        }
-      });
-    }
-
-    // Convert to array and sort by price
-    const combinedRates = Array.from(ratesMap.values()).sort((a, b) => a.total_price - b.total_price);
+    // Use the multi-package rates directly (real bulk pricing from Skydropx)
+    const combinedRates = multiPackageQuote.rates
+      .sort((a, b) => a.total_price - b.total_price);
 
     // Format rates
     const formattedRates = combinedRates.map((rate, index) => {
@@ -1989,14 +1983,14 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
         days: rate.days,
         daysText: rate.days === 1 ? '1 día' : `${rate.days} días`,
         isCheapest: index === 0,
-        isEstimated: rate.source === 'single_estimated',
-        quotation_id: rate.quotation_id
+        isEstimated: !!rate._estimated,
+        quotation_id: multiPackageQuote.quotation_id
       };
     });
 
     res.json({
       success: true,
-      quotation_id: multiPackageQuote?.quotation_id || singlePackageQuote?.quotation_id,
+      quotation_id: multiPackageQuote.quotation_id,
       packagesCount: packagesCount,
       rates: formattedRates,
       client: {
