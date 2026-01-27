@@ -1,6 +1,12 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/client-order-form/index.html" },
+    { "source": "/", "destination": "/landing/index.html" },
+    { "source": "/landing", "destination": "/landing/index.html" },
+    { "source": "/souvenirs", "destination": "/landing/souvenirs/index.html" },
+    { "source": "/souvenirs/:slug", "destination": "/landing/souvenirs/:slug.html" },
+    { "source": "/sitemap.xml", "destination": "/landing/sitemap.xml" },
+    { "source": "/robots.txt", "destination": "/landing/robots.txt" },
+    { "source": "/pedidos", "destination": "/client-order-form/index.html" },
     { "source": "/order-form", "destination": "/client-order-form/index.html" },
     { "source": "/admin/login", "destination": "/admin-dashboard/login.html" },
     { "source": "/admin", "destination": "/admin-dashboard/index.html" },
