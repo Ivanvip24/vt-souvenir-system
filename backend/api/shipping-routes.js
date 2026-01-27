@@ -1899,55 +1899,89 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
     console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
 
-    // Fetch both single-package and multi-package quotes in parallel.
-    // For each carrier, use the LOWER price between multi (bulk) and single × N.
-    // This ensures we always show the best available price.
-    const MAX_QUOTE_RETRIES = 3;
+    // Strategy: Skydropx multi-package quotes are inconsistent — they sometimes
+    // omit carriers (e.g. FedEx) that DO support multi-package. To get accurate
+    // bulk pricing, we:
+    // 1. Get single-package quote (reliable, returns all carriers)
+    // 2. Retry multi-package quote up to 3 times, merging results across attempts
+    //    to capture as many carriers as possible at bulk rates
+    // 3. For each carrier, use the LOWEST price between multi (bulk) and single × N
+
+    // Step 1: Get single-package quote
     let singlePackageQuote = null;
-    let multiPackageQuote = null;
-
-    for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
-      console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
-      try {
-        const [single, multi] = await Promise.all([
-          skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1),
-          packagesCount > 1 ? skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount) : null
-        ]);
-        singlePackageQuote = single;
-        multiPackageQuote = multi;
-
-        if ((singlePackageQuote?.rates?.length > 0) || (multiPackageQuote?.rates?.length > 0)) {
-          console.log(`   ✅ Got rates: ${singlePackageQuote?.rates?.length || 0} single, ${multiPackageQuote?.rates?.length || 0} multi`);
-          break;
-        }
-      } catch (err) {
-        console.log(`   ⚠️ Quote attempt ${attempt} error: ${err.message}`);
-      }
-      if (attempt < MAX_QUOTE_RETRIES) await new Promise(r => setTimeout(r, 1500));
+    try {
+      singlePackageQuote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1);
+      console.log(`   ✅ Single-package quote: ${singlePackageQuote?.rates?.length || 0} carriers`);
+    } catch (err) {
+      console.log(`   ⚠️ Single quote error: ${err.message}`);
     }
 
-    if ((!singlePackageQuote?.rates?.length) && (!multiPackageQuote?.rates?.length)) {
+    // Step 2: Get multi-package quotes (retry to capture more carriers)
+    // Skydropx is flaky — sometimes FedEx appears, sometimes it doesn't.
+    // Retry and merge all multi-package results to maximize carrier coverage.
+    const multiRatesMap = new Map(); // carrier-service → best multi rate
+    let bestMultiQuotationId = null;
+    const singleCarriers = new Set(
+      (singlePackageQuote?.rates || []).map(r => r.carrier)
+    );
+
+    if (packagesCount > 1) {
+      const MAX_MULTI_RETRIES = 3;
+      for (let attempt = 1; attempt <= MAX_MULTI_RETRIES; attempt++) {
+        try {
+          console.log(`   Multi-package quote attempt ${attempt}/${MAX_MULTI_RETRIES}...`);
+          const multiQuote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
+
+          if (multiQuote?.rates?.length > 0) {
+            if (!bestMultiQuotationId) bestMultiQuotationId = multiQuote.quotation_id;
+
+            multiQuote.rates.forEach(rate => {
+              const key = `${rate.carrier}-${rate.service}`;
+              const existing = multiRatesMap.get(key);
+              // Keep the cheapest multi rate for each carrier-service
+              if (!existing || rate.total_price < existing.total_price) {
+                multiRatesMap.set(key, {
+                  ...rate,
+                  quotation_id: multiQuote.quotation_id
+                });
+              }
+            });
+
+            const multiCarriers = new Set([...multiRatesMap.keys()].map(k => k.split('-')[0]));
+            const missingCarriers = [...singleCarriers].filter(c => !multiCarriers.has(c));
+            console.log(`   ✅ Multi attempt ${attempt}: ${multiQuote.rates.length} rates (total unique: ${multiRatesMap.size})`);
+
+            if (missingCarriers.length === 0) {
+              console.log(`   ✅ All carriers captured in multi-package quote`);
+              break; // All carriers from single quote are now in multi too
+            }
+            console.log(`   ⏳ Missing carriers in multi: ${missingCarriers.join(', ')} — retrying...`);
+          }
+        } catch (err) {
+          console.log(`   ⚠️ Multi attempt ${attempt} error: ${err.message}`);
+        }
+        if (attempt < MAX_MULTI_RETRIES) await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+
+    if ((!singlePackageQuote?.rates?.length) && multiRatesMap.size === 0) {
       return res.status(400).json({
         error: 'No hay tarifas de envío disponibles para esta dirección. Intenta de nuevo.'
       });
     }
 
-    // Build combined rates: for each carrier, pick the LOWEST price between
-    // multi-package (bulk) and single × N. This way we always show the best deal.
+    // Step 3: Build combined rates — for each carrier, pick the LOWEST price
     const ratesMap = new Map();
 
-    // Add multi-package rates (real bulk pricing)
-    if (multiPackageQuote?.rates) {
-      multiPackageQuote.rates.forEach(rate => {
-        const key = `${rate.carrier}-${rate.service}`;
-        ratesMap.set(key, {
-          ...rate,
-          total_price: rate.total_price,
-          source: 'multi',
-          quotation_id: multiPackageQuote.quotation_id
-        });
+    // Add all multi-package rates (real bulk pricing)
+    multiRatesMap.forEach((rate, key) => {
+      ratesMap.set(key, {
+        ...rate,
+        total_price: rate.total_price,
+        source: 'multi',
+        quotation_id: rate.quotation_id
       });
-    }
+    });
 
     // For carriers only in single quote, or if single × N is cheaper than multi, use that
     if (singlePackageQuote?.rates) {
@@ -2002,7 +2036,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
     res.json({
       success: true,
-      quotation_id: multiPackageQuote?.quotation_id || singlePackageQuote?.quotation_id,
+      quotation_id: bestMultiQuotationId || singlePackageQuote?.quotation_id,
       packagesCount: packagesCount,
       rates: formattedRates,
       client: {
