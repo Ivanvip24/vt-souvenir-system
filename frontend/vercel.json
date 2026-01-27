@@ -6,6 +6,7 @@
     { "source": "/souvenirs/:slug", "destination": "/landing/souvenirs/:slug.html" },
     { "source": "/sitemap.xml", "destination": "/landing/sitemap.xml" },
     { "source": "/robots.txt", "destination": "/landing/robots.txt" },
+    { "source": "/assets/:path*", "destination": "/landing/assets/:path*" },
     { "source": "/pedidos", "destination": "/client-order-form/index.html" },
     { "source": "/order-form", "destination": "/client-order-form/index.html" },
     { "source": "/admin/login", "destination": "/admin-dashboard/login.html" },
