@@ -1907,60 +1907,77 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
     //    to capture as many carriers as possible at bulk rates
     // 3. For each carrier, use the LOWEST price between multi (bulk) and single × N
 
-    // Step 1: Get single-package quote
+    // Step 1: Fetch single + multi quotes in parallel (like original, proven to work)
     let singlePackageQuote = null;
-    try {
-      singlePackageQuote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1);
-      console.log(`   ✅ Single-package quote: ${singlePackageQuote?.rates?.length || 0} carriers`);
-    } catch (err) {
-      console.log(`   ⚠️ Single quote error: ${err.message}`);
-    }
-
-    // Step 2: Get multi-package quotes (retry to capture more carriers)
-    // Skydropx is flaky — sometimes FedEx appears, sometimes it doesn't.
-    // Retry and merge all multi-package results to maximize carrier coverage.
     const multiRatesMap = new Map(); // carrier-service → best multi rate
     let bestMultiQuotationId = null;
-    const singleCarriers = new Set(
-      (singlePackageQuote?.rates || []).map(r => r.carrier)
-    );
 
-    if (packagesCount > 1) {
-      const MAX_MULTI_RETRIES = 3;
-      for (let attempt = 1; attempt <= MAX_MULTI_RETRIES; attempt++) {
-        try {
-          console.log(`   Multi-package quote attempt ${attempt}/${MAX_MULTI_RETRIES}...`);
-          const multiQuote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
+    try {
+      const [single, multi] = await Promise.all([
+        skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1).catch(err => {
+          console.log(`   ⚠️ Single quote error: ${err.message}`);
+          return null;
+        }),
+        packagesCount > 1
+          ? skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount).catch(err => {
+              console.log(`   ⚠️ Multi quote error: ${err.message}`);
+              return null;
+            })
+          : Promise.resolve(null)
+      ]);
+      singlePackageQuote = single;
 
-          if (multiQuote?.rates?.length > 0) {
-            if (!bestMultiQuotationId) bestMultiQuotationId = multiQuote.quotation_id;
+      if (multi?.rates?.length > 0) {
+        bestMultiQuotationId = multi.quotation_id;
+        multi.rates.forEach(rate => {
+          const key = `${rate.carrier}-${rate.service}`;
+          multiRatesMap.set(key, { ...rate, quotation_id: multi.quotation_id });
+        });
+      }
+      console.log(`   ✅ Initial: ${singlePackageQuote?.rates?.length || 0} single, ${multiRatesMap.size} multi`);
+    } catch (err) {
+      console.log(`   ⚠️ Initial quote error: ${err.message}`);
+    }
 
-            multiQuote.rates.forEach(rate => {
-              const key = `${rate.carrier}-${rate.service}`;
-              const existing = multiRatesMap.get(key);
-              // Keep the cheapest multi rate for each carrier-service
-              if (!existing || rate.total_price < existing.total_price) {
-                multiRatesMap.set(key, {
-                  ...rate,
-                  quotation_id: multiQuote.quotation_id
-                });
+    // Step 2: If multi-package quote is missing carriers that single has, retry multi
+    // Skydropx is flaky — sometimes FedEx appears in multi, sometimes it doesn't.
+    if (packagesCount > 1 && singlePackageQuote?.rates?.length > 0) {
+      const singleCarriers = new Set(singlePackageQuote.rates.map(r => r.carrier));
+      const multiCarriers = new Set([...multiRatesMap.keys()].map(k => k.split('-')[0]));
+      const missingCarriers = [...singleCarriers].filter(c => !multiCarriers.has(c));
+
+      if (missingCarriers.length > 0) {
+        console.log(`   ⏳ Missing in multi: ${missingCarriers.join(', ')} — retrying multi-package quote...`);
+        const MAX_MULTI_RETRIES = 2;
+        for (let attempt = 1; attempt <= MAX_MULTI_RETRIES; attempt++) {
+          try {
+            await new Promise(r => setTimeout(r, 800));
+            console.log(`   Multi retry ${attempt}/${MAX_MULTI_RETRIES}...`);
+            const multiQuote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
+
+            if (multiQuote?.rates?.length > 0) {
+              if (!bestMultiQuotationId) bestMultiQuotationId = multiQuote.quotation_id;
+              multiQuote.rates.forEach(rate => {
+                const key = `${rate.carrier}-${rate.service}`;
+                const existing = multiRatesMap.get(key);
+                if (!existing || rate.total_price < existing.total_price) {
+                  multiRatesMap.set(key, { ...rate, quotation_id: multiQuote.quotation_id });
+                }
+              });
+
+              const nowMulti = new Set([...multiRatesMap.keys()].map(k => k.split('-')[0]));
+              const stillMissing = [...singleCarriers].filter(c => !nowMulti.has(c));
+              console.log(`   ✅ Multi retry ${attempt}: ${multiQuote.rates.length} rates (total: ${multiRatesMap.size})`);
+              if (stillMissing.length === 0) {
+                console.log(`   ✅ All carriers now captured in multi`);
+                break;
               }
-            });
-
-            const multiCarriers = new Set([...multiRatesMap.keys()].map(k => k.split('-')[0]));
-            const missingCarriers = [...singleCarriers].filter(c => !multiCarriers.has(c));
-            console.log(`   ✅ Multi attempt ${attempt}: ${multiQuote.rates.length} rates (total unique: ${multiRatesMap.size})`);
-
-            if (missingCarriers.length === 0) {
-              console.log(`   ✅ All carriers captured in multi-package quote`);
-              break; // All carriers from single quote are now in multi too
+              console.log(`   ⏳ Still missing: ${stillMissing.join(', ')}`);
             }
-            console.log(`   ⏳ Missing carriers in multi: ${missingCarriers.join(', ')} — retrying...`);
+          } catch (err) {
+            console.log(`   ⚠️ Multi retry ${attempt} error: ${err.message}`);
           }
-        } catch (err) {
-          console.log(`   ⚠️ Multi attempt ${attempt} error: ${err.message}`);
         }
-        if (attempt < MAX_MULTI_RETRIES) await new Promise(r => setTimeout(r, 1000));
       }
     }
 
