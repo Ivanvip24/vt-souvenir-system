@@ -77,12 +77,18 @@ async function calculateBoxesForOrder(orderId) {
  * Returns best matches with relevance scoring
  */
 async function findClientByName(searchTerm) {
-  // Clean and split search term into words (min 2 chars each)
+  // Clean and split search term into words, filtering out stop words
+  const STOP_WORDS = new Set([
+    'de', 'del', 'la', 'el', 'en', 'lo', 'los', 'las', 'un', 'una',
+    'al', 'es', 'si', 'no', 'por', 'con', 'su', 'para', 'que', 'se',
+    'le', 'mi', 'ya', 'ni', 'me', 'te', 'tu', 'yo', 'nos', 'son',
+    'the', 'of', 'and', 'to', 'in', 'is', 'it', 'for'
+  ]);
   const words = searchTerm
     .toLowerCase()
     .replace(/[^\w\sáéíóúüñ]/gi, ' ')
     .split(/\s+/)
-    .filter(w => w.length >= 2);
+    .filter(w => w.length >= 2 && !STOP_WORDS.has(w));
 
   if (words.length === 0) {
     return [];
