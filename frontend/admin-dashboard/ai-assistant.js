@@ -13,6 +13,9 @@ let miniChartInstances = [];
 // Current action data for confirmation modal
 let currentAction = null;
 
+// Pending images for next message (array of {base64, mediaType, preview})
+let aiPendingImages = [];
+
 function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
@@ -110,6 +113,87 @@ function clearAiChat() {
 }
 
 // =====================================================
+// IMAGE HANDLING
+// =====================================================
+
+function handleAiImageSelect(event) {
+    var files = event.target.files;
+    if (!files || files.length === 0) return;
+    for (var i = 0; i < files.length; i++) {
+        processImageFile(files[i]);
+    }
+    event.target.value = '';
+}
+
+function processImageFile(file) {
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 10 * 1024 * 1024) {
+        showNotification('La imagen es muy grande (máx 10MB)', 'error');
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var dataUrl = e.target.result;
+        var base64 = dataUrl.split(',')[1];
+        var mediaType = file.type || 'image/png';
+        aiPendingImages.push({ base64: base64, mediaType: mediaType, preview: dataUrl });
+        renderImagePreviews();
+    };
+    reader.readAsDataURL(file);
+}
+
+function renderImagePreviews() {
+    var bar = document.getElementById('ai-image-preview-bar');
+    if (!bar) return;
+    bar.textContent = '';
+    if (aiPendingImages.length === 0) {
+        bar.classList.add('hidden');
+        return;
+    }
+    bar.classList.remove('hidden');
+    aiPendingImages.forEach(function(img, i) {
+        var item = document.createElement('div');
+        item.className = 'ai-image-preview-item';
+
+        var imgEl = document.createElement('img');
+        imgEl.src = img.preview;
+        imgEl.alt = 'Preview';
+        item.appendChild(imgEl);
+
+        var removeBtn = document.createElement('button');
+        removeBtn.className = 'ai-image-preview-remove';
+        removeBtn.textContent = '\u2715';
+        removeBtn.addEventListener('click', function() { removeAiPendingImage(i); });
+        item.appendChild(removeBtn);
+
+        bar.appendChild(item);
+    });
+}
+
+function removeAiPendingImage(index) {
+    aiPendingImages.splice(index, 1);
+    renderImagePreviews();
+}
+
+// Paste handler for images
+document.addEventListener('DOMContentLoaded', function() {
+    var chatInput = document.getElementById('ai-chat-input');
+    if (chatInput) {
+        chatInput.addEventListener('paste', function(e) {
+            var items = e.clipboardData && e.clipboardData.items;
+            if (!items) return;
+            for (var k = 0; k < items.length; k++) {
+                if (items[k].type.startsWith('image/')) {
+                    e.preventDefault();
+                    var file = items[k].getAsFile();
+                    if (file) processImageFile(file);
+                }
+            }
+        });
+    }
+});
+
+// =====================================================
 // MESSAGE HANDLING
 // =====================================================
 
@@ -117,13 +201,19 @@ async function sendAiMessage() {
     const input = document.getElementById('ai-chat-input');
     const message = input?.value?.trim();
 
-    if (!message) return;
+    if (!message && aiPendingImages.length === 0) return;
+
+    // Capture images before clearing
+    const imagesToSend = aiPendingImages.slice();
+    aiPendingImages = [];
+    renderImagePreviews();
 
     // Clear input
     input.value = '';
+    input.style.height = 'auto';
 
-    // Add user message to chat
-    addMessageToChat('user', message);
+    // Add user message to chat (with image previews)
+    addMessageToChat('user', message || '(imagen)', { images: imagesToSend });
 
     // Show typing indicator
     showTypingIndicator();
@@ -137,16 +227,25 @@ async function sendAiMessage() {
 
     try {
         const token = localStorage.getItem('admin_token');
+
+        // Build request body with images
+        const requestBody = {
+            message: message || '',
+            sessionId: aiSessionId
+        };
+        if (imagesToSend.length > 0) {
+            requestBody.images = imagesToSend.map(function(img) {
+                return { base64: img.base64, mediaType: img.mediaType };
+            });
+        }
+
         const response = await fetch(`${API_BASE}/ai-assistant/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({
-                message: message,
-                sessionId: aiSessionId
-            })
+            body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
@@ -191,12 +290,33 @@ function addMessageToChat(role, content, data = {}) {
     messageDiv.className = `ai-message ${role}`;
 
     if (role === 'user') {
-        messageDiv.innerHTML = `
-            <div class="ai-message-content user-message">
-                <p>${escapeHtml(content)}</p>
-            </div>
-            <div class="ai-message-avatar user-avatar">👤</div>
-        `;
+        var userContent = document.createElement('div');
+        userContent.className = 'ai-message-content user-message';
+
+        // Show image thumbnails if present
+        if (data.images && data.images.length > 0) {
+            var imagesDiv = document.createElement('div');
+            imagesDiv.className = 'ai-msg-images';
+            data.images.forEach(function(img) {
+                var thumb = document.createElement('img');
+                thumb.src = img.preview || ('data:' + img.mediaType + ';base64,' + img.base64);
+                thumb.alt = 'Imagen adjunta';
+                thumb.addEventListener('click', function() { window.open(thumb.src, '_blank'); });
+                imagesDiv.appendChild(thumb);
+            });
+            userContent.appendChild(imagesDiv);
+        }
+
+        var textP = document.createElement('p');
+        textP.textContent = content;
+        userContent.appendChild(textP);
+
+        var avatarDiv = document.createElement('div');
+        avatarDiv.className = 'ai-message-avatar user-avatar';
+        avatarDiv.textContent = '\uD83D\uDC64';
+
+        messageDiv.appendChild(userContent);
+        messageDiv.appendChild(avatarDiv);
     } else {
         // Parse markdown-like formatting (unless already HTML)
         const formattedContent = data.isHtml ? content : formatAiResponse(content);

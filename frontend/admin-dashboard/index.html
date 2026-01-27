@@ -2470,11 +2470,16 @@
                 </div>
             </div>
             <div class="ai-chat-footer">
+                <div id="ai-image-preview-bar" class="ai-image-preview-bar hidden"></div>
                 <div class="ai-input-container">
+                    <input type="file" id="ai-image-input" accept="image/*" multiple style="display:none" onchange="handleAiImageSelect(event)">
+                    <button class="ai-attach-btn" onclick="document.getElementById('ai-image-input').click()" title="Adjuntar imagen">
+                        <i data-lucide="image-plus" class="icon-sm"></i>
+                    </button>
                     <textarea
                         id="ai-chat-input"
                         class="ai-chat-input"
-                        placeholder="Escribe tu pregunta..."
+                        placeholder="Escribe tu pregunta o pega una imagen..."
                         rows="1"
                         onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendAiMessage(); }"
                         oninput="this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px';"

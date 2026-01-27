@@ -670,9 +670,9 @@ Cuando el usuario pida CREAR UN PEDIDO (no cotizar, sino crear el pedido real), 
  */
 router.post('/chat', async (req, res) => {
   try {
-    const { message, sessionId } = req.body;
+    const { message, sessionId, images } = req.body;
 
-    if (!message || !message.trim()) {
+    if ((!message || !message.trim()) && (!images || images.length === 0)) {
       return res.status(400).json({
         success: false,
         error: 'Mensaje vacío'
@@ -686,7 +686,7 @@ router.post('/chat', async (req, res) => {
       });
     }
 
-    console.log(`🤖 AI Assistant query: "${message.substring(0, 50)}..."`);
+    console.log(`🤖 AI Assistant query: "${(message || '').substring(0, 50)}..."${images ? ` [${images.length} image(s)]` : ''}`);
 
     // Get or create conversation history
     const conversationKey = sessionId || req.headers['x-session-id'] || 'default';
@@ -702,10 +702,35 @@ router.post('/chat', async (req, res) => {
     // Get fresh business context
     const businessContext = await getBusinessContext();
 
+    // Build user content (text + optional images)
+    let userContent;
+    if (images && images.length > 0) {
+      userContent = [];
+      // Add image blocks first
+      for (const img of images) {
+        userContent.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: img.mediaType || 'image/png',
+            data: img.base64
+          }
+        });
+      }
+      // Add text block
+      if (message && message.trim()) {
+        userContent.push({ type: 'text', text: message });
+      } else {
+        userContent.push({ type: 'text', text: 'Describe esta imagen.' });
+      }
+    } else {
+      userContent = message;
+    }
+
     // Build messages array with history
     const messages = [
       ...conversation.messages.slice(-10), // Keep last 10 messages for context
-      { role: 'user', content: message }
+      { role: 'user', content: userContent }
     ];
 
     // Call Claude API
@@ -715,7 +740,7 @@ router.post('/chat', async (req, res) => {
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
+      max_tokens: (images && images.length > 0) ? 2500 : 1500,
       system: buildSystemPrompt(businessContext),
       messages: messages
     });
@@ -1024,12 +1049,15 @@ router.post('/chat', async (req, res) => {
       }
     }
 
-    // Store in conversation history
-    conversation.messages.push({ role: 'user', content: message });
+    // Store in conversation history (text only - skip image data to save memory)
+    const historyUserContent = (images && images.length > 0)
+      ? `[${images.length} imagen(es) adjunta(s)] ${message || ''}`
+      : message;
+    conversation.messages.push({ role: 'user', content: historyUserContent });
     conversation.messages.push({ role: 'assistant', content: assistantMessage });
 
     // Detect ALL sections mentioned in message or response
-    const lowerMessage = message.toLowerCase();
+    const lowerMessage = (message || '').toLowerCase();
     const lowerResponse = assistantMessage.toLowerCase();
     const combinedText = lowerMessage + ' ' + lowerResponse;
 
