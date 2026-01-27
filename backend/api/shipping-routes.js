@@ -15,9 +15,9 @@ const router = express.Router();
 // How many pieces of each product type fit in one shipping box
 // ========================================
 const PIECES_PER_BOX = {
-  'iman': 200,
-  'imanes': 200,
-  'magnet': 200,
+  'iman': 250,
+  'imanes': 250,
+  'magnet': 250,
   'llavero': 450,
   'llaveros': 450,
   'keychain': 450,

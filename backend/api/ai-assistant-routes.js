@@ -89,11 +89,13 @@ async function findClientByName(searchTerm) {
   }
 
   // Build dynamic search conditions for each word
-  // Each word can match: name, city, colonia, phone, or email
+  // Each word can match via exact substring (ILIKE) or fuzzy trigram similarity
+  // This handles typos like "emanuel" matching "Emmanuel"
   const conditions = [];
   const params = [];
   let paramIndex = 1;
 
+  // First set of params: ILIKE patterns (%word%)
   for (const word of words) {
     conditions.push(`(
       c.name ILIKE $${paramIndex} OR
@@ -107,25 +109,60 @@ async function findClientByName(searchTerm) {
     paramIndex++;
   }
 
-  // Search with all words as OR conditions first for broader matches
-  // Then score by how many words match
+  // Second set of params: raw words for trigram similarity
+  const fuzzyConditions = [];
+  const fuzzyStartIndex = paramIndex;
+  for (const word of words) {
+    if (word.length >= 3) {
+      fuzzyConditions.push(`(
+        similarity(lower(c.name), $${paramIndex}) > 0.2 OR
+        similarity(lower(c.city), $${paramIndex}) > 0.3
+      )`);
+      params.push(word);
+      paramIndex++;
+    }
+  }
+
+  // Combine: exact OR fuzzy matches
+  const allConditions = fuzzyConditions.length > 0
+    ? `(${conditions.join(' OR ')}) OR (${fuzzyConditions.join(' OR ')})`
+    : conditions.join(' OR ');
+
+  // Build relevance scoring that includes both ILIKE and trigram similarity
+  // ILIKE match scores full points, trigram match scores slightly less
+  const relevanceExpr = words.map((_, i) => {
+    const ilikeParam = i + 1;
+    // Check if this word has a corresponding fuzzy param (words >= 3 chars)
+    const fuzzyParam = words[i].length >= 3 ? fuzzyStartIndex + words.slice(0, i).filter(w => w.length >= 3).length : null;
+
+    let nameScore = `CASE WHEN c.name ILIKE $${ilikeParam} THEN 3`;
+    if (fuzzyParam) {
+      nameScore += ` WHEN similarity(lower(c.name), $${fuzzyParam}) > 0.2 THEN 2`;
+    }
+    nameScore += ` ELSE 0 END`;
+
+    let cityScore = `CASE WHEN c.city ILIKE $${ilikeParam} THEN 2`;
+    if (fuzzyParam) {
+      cityScore += ` WHEN similarity(lower(c.city), $${fuzzyParam}) > 0.3 THEN 1`;
+    }
+    cityScore += ` ELSE 0 END`;
+
+    return `${nameScore} + ${cityScore} +
+          CASE WHEN c.colonia ILIKE $${ilikeParam} THEN 1 ELSE 0 END +
+          CASE WHEN c.phone ILIKE $${ilikeParam} THEN 2 ELSE 0 END`;
+  }).join(' + ');
+
+  // Search with combined exact + fuzzy conditions, scored by relevance
   const result = await query(`
     SELECT
       c.id, c.name, c.phone, c.email,
       c.street, c.street_number, c.colonia, c.city, c.state, c.postal, c.postal_code,
       (SELECT COUNT(*) FROM orders WHERE client_id = c.id) as order_count,
       (SELECT MAX(created_at) FROM orders WHERE client_id = c.id) as last_order,
-      -- Calculate relevance score
-      (
-        ${words.map((_, i) => `
-          CASE WHEN c.name ILIKE $${i + 1} THEN 3 ELSE 0 END +
-          CASE WHEN c.city ILIKE $${i + 1} THEN 2 ELSE 0 END +
-          CASE WHEN c.colonia ILIKE $${i + 1} THEN 1 ELSE 0 END +
-          CASE WHEN c.phone ILIKE $${i + 1} THEN 2 ELSE 0 END
-        `).join(' + ')}
-      ) as relevance_score
+      -- Calculate relevance score (ILIKE = full points, trigram = partial points)
+      (${relevanceExpr}) as relevance_score
     FROM clients c
-    WHERE ${conditions.join(' OR ')}
+    WHERE ${allConditions}
     ORDER BY
       relevance_score DESC,
       CASE WHEN c.name ILIKE $${paramIndex} THEN 0 ELSE 1 END,
@@ -133,10 +170,11 @@ async function findClientByName(searchTerm) {
     LIMIT 10
   `, [...params, `${words[0]}%`]);
 
-  // Filter to only return results with meaningful relevance
-  const filtered = result.rows.filter(r => r.relevance_score >= words.length);
+  // Filter to results with meaningful relevance (tolerate 1 non-matching word)
+  const minScore = Math.max(1, words.length - 1);
+  const filtered = result.rows.filter(r => r.relevance_score >= minScore);
 
-  // If no good matches with all words, return top results anyway
+  // If no good matches with relaxed threshold, return top results anyway
   return filtered.length > 0 ? filtered.slice(0, 5) : result.rows.slice(0, 5);
 }
 

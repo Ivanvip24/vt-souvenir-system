@@ -3196,7 +3196,7 @@ window.generateShippingLabel = async function(orderId) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ labelsCount: 1 })
+      body: JSON.stringify({ autoCalculate: true })
     });
 
     const result = await response.json();
