@@ -2033,6 +2033,315 @@ textarea:disabled {
 }
 
 /* ==========================================
+   STARTUP ALERTS MODAL
+   ========================================== */
+
+.startup-alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.startup-alert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 12px;
+}
+
+.startup-alert-item:hover {
+  transform: translateX(4px);
+}
+
+.startup-alert-item.critical {
+  background: #fef2f2;
+  border-left: 4px solid #dc2626;
+}
+
+.startup-alert-item.warning {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+}
+
+.startup-alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.startup-alert-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--gray-900);
+  margin-bottom: 2px;
+}
+
+.startup-alert-meta {
+  font-size: 13px;
+  color: var(--gray-600);
+  margin-bottom: 2px;
+}
+
+.startup-alert-message {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.startup-alert-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-dismiss-permanent,
+.btn-dismiss-snooze {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
+.btn-dismiss-permanent:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.btn-dismiss-snooze:hover {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+/* ==========================================
+   NOTIFICATION BELL & DROPDOWN
+   ========================================== */
+
+.notification-bell-wrapper {
+  position: relative;
+}
+
+.notification-bell-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-bell-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  color: white;
+  line-height: 1;
+}
+
+.notification-badge.badge-critical { background: #dc2626; }
+.notification-badge.badge-warning { background: #f59e0b; }
+.notification-badge.badge-info { background: #3b82f6; }
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 380px;
+  max-height: 500px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.notification-panel.hidden {
+  display: none;
+}
+
+.notif-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.notif-panel-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.notif-mark-read {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notif-mark-read:hover {
+  text-decoration: underline;
+}
+
+.notif-panel-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--gray-200);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.notif-summary-card {
+  background: white;
+  padding: 10px;
+  text-align: center;
+}
+
+.notif-summary-card .count {
+  font-size: 22px;
+  font-weight: 800;
+  display: block;
+}
+
+.notif-summary-card .label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+}
+
+.notif-summary-card.critical .count { color: #dc2626; }
+.notif-summary-card.critical .label { color: #991b1b; }
+.notif-summary-card.warning .count { color: #f59e0b; }
+.notif-summary-card.warning .label { color: #92400e; }
+.notif-summary-card.upcoming .count { color: #3b82f6; }
+.notif-summary-card.upcoming .label { color: #1e40af; }
+
+.notif-panel-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 340px;
+}
+
+.notif-alert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--gray-100);
+  cursor: pointer;
+  transition: background 0.2s;
+  gap: 8px;
+}
+
+.notif-alert-item:hover {
+  background: var(--gray-50);
+}
+
+.notif-alert-item.critical { border-left: 3px solid #dc2626; }
+.notif-alert-item.warning { border-left: 3px solid #f59e0b; }
+.notif-alert-item.upcoming { border-left: 3px solid #3b82f6; }
+
+.notif-alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-alert-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--gray-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-alert-meta {
+  font-size: 11px;
+  color: var(--gray-500);
+}
+
+.notif-alert-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.notif-alert-actions .btn-dismiss-permanent,
+.notif-alert-actions .btn-dismiss-snooze {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.notif-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--gray-500);
+}
+
+.notif-panel-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--gray-200);
+  text-align: center;
+  background: var(--gray-50);
+}
+
+.notif-footer-text {
+  font-size: 12px;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .notification-panel {
+    position: fixed;
+    top: 80px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100vh - 100px);
+  }
+}
+
+/* ==========================================
    SHIPPING / CLIENTS DATABASE VIEW
    Notion-like database styling
    ========================================== */

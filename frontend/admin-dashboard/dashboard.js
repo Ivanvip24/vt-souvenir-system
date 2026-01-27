@@ -72,7 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeFilters();
   loadSalespeople(); // Load salespeople dropdown
   loadOrders();
-  loadOrderAlerts(); // Load alerts widget
+  loadOrderAlerts().then(function() {
+    checkStartupAlerts();
+  }); // Load alerts widget + show daily popup
 
   // Auto-refresh every 30 seconds
   setInterval(loadOrders, 30000);
@@ -201,14 +203,92 @@ window.switchPortalTab = switchPortalTab;
 
 let alertsState = {
   data: null,
+  rawData: null,
   activeCategory: null, // 'critical', 'warning', 'upcoming'
   isExpanded: false
 };
 
-async function loadOrderAlerts() {
-  const widget = document.getElementById('order-alerts-widget');
-  if (!widget) return;
+// ==========================================
+// ALERT DISMISSAL SYSTEM
+// ==========================================
 
+var DISMISSED_ALERTS_KEY = 'dismissedAlerts';
+var LAST_POPUP_DATE_KEY = 'lastAlertPopupDate';
+
+function getDismissedAlerts() {
+  try {
+    return JSON.parse(localStorage.getItem(DISMISSED_ALERTS_KEY) || '{}');
+  } catch (e) { return {}; }
+}
+
+function saveDismissedAlerts(dismissed) {
+  localStorage.setItem(DISMISSED_ALERTS_KEY, JSON.stringify(dismissed));
+}
+
+function dismissAlert(orderId, alertType, mode) {
+  var dismissed = getDismissedAlerts();
+  var key = orderId + '_' + alertType;
+  if (mode === 'permanent') {
+    dismissed[key] = { type: 'permanent' };
+  } else {
+    // Snooze for 1 hour
+    dismissed[key] = { type: 'snoozed', until: Date.now() + 60 * 60 * 1000 };
+  }
+  saveDismissedAlerts(dismissed);
+}
+
+function cleanupExpiredSnoozes() {
+  var dismissed = getDismissedAlerts();
+  var now = Date.now();
+  var changed = false;
+  Object.keys(dismissed).forEach(function(key) {
+    if (dismissed[key].type === 'snoozed' && dismissed[key].until <= now) {
+      delete dismissed[key];
+      changed = true;
+    }
+  });
+  if (changed) saveDismissedAlerts(dismissed);
+}
+
+function filterDismissedAlerts(alertsData) {
+  if (!alertsData) return alertsData;
+  cleanupExpiredSnoozes();
+  var dismissed = getDismissedAlerts();
+
+  var filterFn = function(alerts) {
+    return (alerts || []).filter(function(a) {
+      var key = a.id + '_' + a.alertType;
+      var entry = dismissed[key];
+      if (!entry) return true;
+      if (entry.type === 'permanent') return false;
+      if (entry.type === 'snoozed' && entry.until > Date.now()) return false;
+      return true;
+    });
+  };
+
+  var filtered = {
+    critical: filterFn(alertsData.critical),
+    warning: filterFn(alertsData.warning),
+    upcoming: filterFn(alertsData.upcoming)
+  };
+  filtered.summary = {
+    criticalCount: filtered.critical.length,
+    warningCount: filtered.warning.length,
+    upcomingCount: filtered.upcoming.length,
+    totalAlerts: filtered.critical.length + filtered.warning.length + filtered.upcoming.length
+  };
+  return filtered;
+}
+
+function markAllAlertsRead() {
+  if (!alertsState.data) return;
+  var all = (alertsState.data.critical || [])
+    .concat(alertsState.data.warning || [])
+    .concat(alertsState.data.upcoming || []);
+  all.forEach(function(a) { dismissAlert(a.id, a.alertType, 'permanent'); });
+}
+
+async function loadOrderAlerts() {
   try {
     const response = await fetch(`${API_BASE}/alerts`, {
       headers: getAuthHeaders()
@@ -220,17 +300,19 @@ async function loadOrderAlerts() {
 
     const result = await response.json();
     if (result.success) {
-      alertsState.data = result.data;
+      alertsState.rawData = result.data;
+      alertsState.data = filterDismissedAlerts(result.data);
       renderAlertsWidget();
+      updateNotificationBell();
     }
   } catch (error) {
     console.error('Error loading alerts:', error);
-    widget.innerHTML = ''; // Hide widget on error
   }
 }
 
 function renderAlertsWidget() {
   const widget = document.getElementById('order-alerts-widget');
+  if (!widget) return;
   const { data, activeCategory, isExpanded } = alertsState;
 
   if (!data || data.summary.totalAlerts === 0) {
@@ -337,6 +419,294 @@ async function loadOrderDetail(orderId) {
     console.error('Error loading order detail:', error);
   }
 }
+
+// ==========================================
+// STARTUP ALERTS MODAL
+// ==========================================
+
+function checkStartupAlerts() {
+  var today = new Date().toISOString().split('T')[0];
+  var lastShown = localStorage.getItem(LAST_POPUP_DATE_KEY);
+  if (lastShown === today) return;
+
+  var data = alertsState.data;
+  if (!data) return;
+
+  var importantAlerts = (data.critical || []).concat(data.warning || []);
+  if (importantAlerts.length === 0) return;
+
+  renderStartupModal(importantAlerts.slice(0, 8));
+  document.getElementById('startup-alerts-modal').classList.remove('hidden');
+  localStorage.setItem(LAST_POPUP_DATE_KEY, today);
+}
+
+function renderStartupModal(alerts) {
+  var body = document.getElementById('startup-alerts-body');
+  var title = document.getElementById('startup-alerts-title');
+
+  var hour = new Date().getHours();
+  var greeting = hour < 12 ? 'Buenos dias' : hour < 18 ? 'Buenas tardes' : 'Buenas noches';
+  title.textContent = greeting + ' \u2014 ' + alerts.length + ' alerta(s) importante(s)';
+
+  // Build with safe DOM methods
+  var list = document.createElement('div');
+  list.className = 'startup-alerts-list';
+
+  alerts.forEach(function(alert) {
+    var categoryClass = alert.priority <= 4 ? 'critical' : 'warning';
+
+    var item = document.createElement('div');
+    item.className = 'startup-alert-item ' + categoryClass;
+
+    var content = document.createElement('div');
+    content.className = 'startup-alert-content';
+    content.addEventListener('click', function() {
+      viewOrderFromAlert(alert.id);
+      closeStartupAlerts();
+    });
+
+    var titleEl = document.createElement('div');
+    titleEl.className = 'startup-alert-title';
+    titleEl.textContent = alert.alertTitle;
+
+    var meta = document.createElement('div');
+    meta.className = 'startup-alert-meta';
+    meta.textContent = alert.clientName + ' \u2014 ' + alert.orderNumber +
+      (alert.daysSinceCreation ? ' \u2014 ' + alert.daysSinceCreation + ' dias' : '');
+
+    var msg = document.createElement('div');
+    msg.className = 'startup-alert-message';
+    msg.textContent = alert.alertMessage || '';
+
+    content.appendChild(titleEl);
+    content.appendChild(meta);
+    content.appendChild(msg);
+
+    var actions = document.createElement('div');
+    actions.className = 'startup-alert-actions';
+
+    var btnDismiss = document.createElement('button');
+    btnDismiss.className = 'btn-dismiss-permanent';
+    btnDismiss.title = 'No recordar mas';
+    btnDismiss.textContent = '\u2715';
+    btnDismiss.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dismissAlertFromUI(alert.id, alert.alertType, 'permanent', item);
+    });
+
+    var btnSnooze = document.createElement('button');
+    btnSnooze.className = 'btn-dismiss-snooze';
+    btnSnooze.title = 'Recordar despues (1h)';
+    btnSnooze.textContent = '\u23F0';
+    btnSnooze.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dismissAlertFromUI(alert.id, alert.alertType, 'snoozed', item);
+    });
+
+    actions.appendChild(btnDismiss);
+    actions.appendChild(btnSnooze);
+
+    item.appendChild(content);
+    item.appendChild(actions);
+    list.appendChild(item);
+  });
+
+  body.textContent = '';
+  body.appendChild(list);
+}
+
+function dismissAlertFromUI(orderId, alertType, mode, el) {
+  dismissAlert(orderId, alertType, mode);
+  if (el) {
+    el.style.transition = 'opacity 0.3s, max-height 0.3s';
+    el.style.opacity = '0';
+    el.style.maxHeight = '0';
+    el.style.overflow = 'hidden';
+    setTimeout(function() { el.remove(); }, 300);
+  }
+  alertsState.data = filterDismissedAlerts(alertsState.rawData);
+  updateNotificationBell();
+  renderAlertsWidget();
+}
+
+function closeStartupAlerts() {
+  document.getElementById('startup-alerts-modal').classList.add('hidden');
+}
+
+window.closeStartupAlerts = closeStartupAlerts;
+window.dismissAlertFromUI = dismissAlertFromUI;
+
+// ==========================================
+// NOTIFICATION CENTER
+// ==========================================
+
+function updateNotificationBell() {
+  var badge = document.getElementById('notification-badge');
+  if (!badge || !alertsState.data) return;
+
+  var summary = alertsState.data.summary;
+  var total = summary.totalAlerts;
+
+  if (total === 0) {
+    badge.style.display = 'none';
+    return;
+  }
+
+  badge.textContent = total > 99 ? '99+' : total;
+  badge.style.display = 'flex';
+
+  badge.classList.remove('badge-critical', 'badge-warning', 'badge-info');
+  if (summary.criticalCount > 0) {
+    badge.classList.add('badge-critical');
+  } else if (summary.warningCount > 0) {
+    badge.classList.add('badge-warning');
+  } else {
+    badge.classList.add('badge-info');
+  }
+}
+
+function toggleNotificationCenter() {
+  var panel = document.getElementById('notification-panel');
+  var isVisible = !panel.classList.contains('hidden');
+
+  if (isVisible) {
+    panel.classList.add('hidden');
+    document.removeEventListener('click', closeNotifOnOutsideClick);
+  } else {
+    renderNotificationPanel();
+    panel.classList.remove('hidden');
+    setTimeout(function() {
+      document.addEventListener('click', closeNotifOnOutsideClick);
+    }, 0);
+  }
+}
+
+function closeNotifOnOutsideClick(e) {
+  var wrapper = document.getElementById('notification-bell-wrapper');
+  if (!wrapper.contains(e.target)) {
+    document.getElementById('notification-panel').classList.add('hidden');
+    document.removeEventListener('click', closeNotifOnOutsideClick);
+  }
+}
+
+function renderNotificationPanel() {
+  var data = alertsState.data;
+  if (!data) return;
+
+  var summaryEl = document.getElementById('notif-panel-summary');
+  var listEl = document.getElementById('notif-panel-list');
+  var footerText = document.getElementById('notif-footer-text');
+
+  // Summary cards — safe DOM
+  summaryEl.textContent = '';
+  var categories = [
+    { key: 'critical', label: 'Criticos', count: data.summary.criticalCount },
+    { key: 'warning', label: 'Advertencias', count: data.summary.warningCount },
+    { key: 'upcoming', label: 'Proximos', count: data.summary.upcomingCount }
+  ];
+  categories.forEach(function(cat) {
+    var card = document.createElement('div');
+    card.className = 'notif-summary-card ' + cat.key;
+    var countSpan = document.createElement('span');
+    countSpan.className = 'count';
+    countSpan.textContent = cat.count;
+    var labelSpan = document.createElement('span');
+    labelSpan.className = 'label';
+    labelSpan.textContent = cat.label;
+    card.appendChild(countSpan);
+    card.appendChild(labelSpan);
+    summaryEl.appendChild(card);
+  });
+
+  // Alert list — safe DOM
+  var allAlerts = (data.critical || []).map(function(a) { return Object.assign({}, a, { category: 'critical' }); })
+    .concat((data.warning || []).map(function(a) { return Object.assign({}, a, { category: 'warning' }); }))
+    .concat((data.upcoming || []).map(function(a) { return Object.assign({}, a, { category: 'upcoming' }); }));
+
+  listEl.textContent = '';
+
+  if (allAlerts.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'notif-empty';
+    var emptyIcon = document.createElement('div');
+    emptyIcon.style.fontSize = '32px';
+    emptyIcon.style.marginBottom = '8px';
+    emptyIcon.textContent = '\u2705';
+    var emptyText = document.createElement('p');
+    emptyText.textContent = 'No hay alertas pendientes';
+    empty.appendChild(emptyIcon);
+    empty.appendChild(emptyText);
+    listEl.appendChild(empty);
+  } else {
+    allAlerts.forEach(function(alert) {
+      var item = document.createElement('div');
+      item.className = 'notif-alert-item ' + alert.category;
+      item.addEventListener('click', function() {
+        viewOrderFromAlert(alert.id);
+        toggleNotificationCenter();
+      });
+
+      var content = document.createElement('div');
+      content.className = 'notif-alert-content';
+      var titleEl = document.createElement('div');
+      titleEl.className = 'notif-alert-title';
+      titleEl.textContent = alert.alertTitle;
+      var metaEl = document.createElement('div');
+      metaEl.className = 'notif-alert-meta';
+      metaEl.textContent = alert.clientName + ' \u2014 ' + alert.orderNumber;
+      content.appendChild(titleEl);
+      content.appendChild(metaEl);
+
+      var actions = document.createElement('div');
+      actions.className = 'notif-alert-actions';
+      actions.addEventListener('click', function(e) { e.stopPropagation(); });
+
+      var btnX = document.createElement('button');
+      btnX.className = 'btn-dismiss-permanent';
+      btnX.title = 'No recordar mas';
+      btnX.textContent = '\u2715';
+      btnX.addEventListener('click', function() {
+        dismissAlertFromUI(alert.id, alert.alertType, 'permanent', item);
+        renderNotificationPanel();
+      });
+
+      var btnClock = document.createElement('button');
+      btnClock.className = 'btn-dismiss-snooze';
+      btnClock.title = 'Recordar despues (1h)';
+      btnClock.textContent = '\u23F0';
+      btnClock.addEventListener('click', function() {
+        dismissAlertFromUI(alert.id, alert.alertType, 'snoozed', item);
+        renderNotificationPanel();
+      });
+
+      actions.appendChild(btnX);
+      actions.appendChild(btnClock);
+
+      item.appendChild(content);
+      item.appendChild(actions);
+      listEl.appendChild(item);
+    });
+  }
+
+  footerText.textContent = data.summary.totalAlerts + ' alerta(s) activa(s)';
+}
+
+function markAllAlertsReadAndRefresh() {
+  markAllAlertsRead();
+  alertsState.data = filterDismissedAlerts(alertsState.rawData);
+  updateNotificationBell();
+  renderNotificationPanel();
+  renderAlertsWidget();
+}
+
+window.toggleNotificationCenter = toggleNotificationCenter;
+window.markAllAlertsReadAndRefresh = markAllAlertsReadAndRefresh;
+window.openNotificationCenter = function() {
+  var panel = document.getElementById('notification-panel');
+  if (panel && panel.classList.contains('hidden')) {
+    toggleNotificationCenter();
+  }
+};
 
 // ==========================================
 // FILTERS

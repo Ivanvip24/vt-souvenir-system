@@ -69,9 +69,22 @@
                     <span class="stat-label">Hoy</span>
                     <span class="stat-value" id="today-revenue">$0</span>
                 </div>
-                <div class="stat-card payment-badge-card" id="payment-badge-card">
-                    <span class="stat-label">Pagos</span>
-                    <span class="stat-value payment-badge" id="second-payment-badge">0</span>
+                <div class="notification-bell-wrapper" id="notification-bell-wrapper">
+                    <button class="notification-bell-btn" id="notification-bell-btn" onclick="toggleNotificationCenter()" aria-label="Notificaciones">
+                        <i data-lucide="bell" class="icon-sm"></i>
+                        <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                    </button>
+                    <div class="notification-panel hidden" id="notification-panel">
+                        <div class="notif-panel-header">
+                            <h3>Notificaciones</h3>
+                            <button class="notif-mark-read" onclick="markAllAlertsReadAndRefresh()">Marcar todo leido</button>
+                        </div>
+                        <div class="notif-panel-summary" id="notif-panel-summary"></div>
+                        <div class="notif-panel-list" id="notif-panel-list"></div>
+                        <div class="notif-panel-footer">
+                            <span class="notif-footer-text" id="notif-footer-text">Sin alertas</span>
+                        </div>
+                    </div>
                 </div>
                 <button class="btn-logout" onclick="logout()" aria-label="Cerrar sesión">
                     <i data-lucide="log-out" class="icon-sm"></i>
@@ -2500,6 +2513,28 @@
     <button class="ai-mobile-btn" onclick="openAiChatModal()" title="Asistente AI" aria-label="Abrir asistente AI">
         <i data-lucide="bot" class="icon">🤖</i>
     </button>
+
+    <!-- Daily Startup Alerts Modal -->
+    <div id="startup-alerts-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 640px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%); color: white; border-radius: 16px 16px 0 0;">
+                <h2 id="startup-alerts-title" style="margin:0; font-size:18px;">Alertas del dia</h2>
+                <button class="modal-close" onclick="closeStartupAlerts()" style="color: white; background: rgba(255,255,255,0.2);">&times;</button>
+            </div>
+            <div class="modal-body" id="startup-alerts-body" style="padding: 16px 20px; max-height: 420px; overflow-y: auto;">
+                <!-- Populated dynamically -->
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn-secondary" onclick="openNotificationCenter(); closeStartupAlerts();" style="font-size: 13px;">
+                    Ver Centro de Notificaciones
+                </button>
+                <button class="btn-primary" onclick="closeStartupAlerts()">
+                    Entendido
+                </button>
+            </div>
+        </div>
+        <div class="modal-backdrop" onclick="closeStartupAlerts()"></div>
+    </div>
 
     <script src="dashboard.js"></script>
     <script src="inventory.js"></script>
