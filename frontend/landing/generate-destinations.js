@@ -251,6 +251,182 @@ const destinations = [
     relatedDestinations: ['guanajuato', 'san-luis-potosi', 'aguascalientes'],
     image: '/assets/TEST-03.png',
     region: 'colonial'
+  },
+  {
+    slug: 'bacalar',
+    name: 'Bacalar',
+    state: 'Quintana Roo',
+    description: 'Souvenirs premium de Bacalar con corte láser. Imanes y llaveros con diseños de la Laguna de los Siete Colores, el Fuerte y la naturaleza caribeña.',
+    longDescription: 'Bacalar es la joya escondida del Caribe mexicano, famosa por la Laguna de los Siete Colores. Nuestros souvenirs capturan los tonos turquesa de la laguna, el Fuerte de San Felipe, los cenotes, el Canal de los Piratas y la exuberante vegetación tropical. Cada pieza AXKAN de Bacalar es un recuerdo de uno de los destinos más mágicos de Quintana Roo.',
+    keywords: 'souvenirs bacalar, imanes bacalar, recuerdos bacalar, llaveros bacalar, laguna siete colores, recuerdos quintana roo',
+    relatedDestinations: ['cancun', 'tulum', 'playa-del-carmen'],
+    image: '/assets/TEST-03.png',
+    region: 'caribe'
+  },
+  {
+    slug: 'campeche',
+    name: 'Campeche',
+    state: 'Campeche',
+    description: 'Souvenirs premium de Campeche con corte láser. Imanes y llaveros con diseños de murallas coloniales, edificios coloridos y costa del Golfo.',
+    longDescription: 'Campeche es una ciudad amurallada Patrimonio de la Humanidad, con edificios coloniales de colores vibrantes. Nuestros souvenirs representan las murallas y baluartes, la catedral, las casonas coloridas del centro histórico, el malecón y la rica biodiversidad de la región. Cada souvenir AXKAN de Campeche celebra la historia y belleza de esta joya del Golfo de México.',
+    keywords: 'souvenirs campeche, imanes campeche, recuerdos campeche, llaveros campeche, murallas campeche, recuerdos golfo mexico',
+    relatedDestinations: ['merida', 'cancun', 'chiapas'],
+    image: '/assets/TEST-03.png',
+    region: 'sur'
+  },
+  {
+    slug: 'chignahuapan',
+    name: 'Chignahuapan',
+    state: 'Puebla',
+    description: 'Souvenirs premium de Chignahuapan con corte láser. Imanes y llaveros con diseños de esferas navideñas, aguas termales y la Virgen Inmaculada.',
+    longDescription: 'Chignahuapan es el Pueblo Mágico de las esferas navideñas, famoso por sus talleres artesanales y sus aguas termales. Nuestros souvenirs capturan la tradición esferera, la imponente Virgen Inmaculada Concepción, la laguna, las aguas termales y la arquitectura serrana de la Sierra Norte de Puebla. Cada pieza AXKAN de Chignahuapan es un recuerdo de la magia navideña mexicana.',
+    keywords: 'souvenirs chignahuapan, imanes chignahuapan, recuerdos chignahuapan, esferas navideñas, pueblo magico puebla, llaveros chignahuapan',
+    relatedDestinations: ['puebla', 'zacatlan', 'cuetzalan'],
+    image: '/assets/TEST-03.png',
+    region: 'centro'
+  },
+  {
+    slug: 'ciudad-mier',
+    name: 'Ciudad Mier',
+    state: 'Tamaulipas',
+    description: 'Souvenirs premium de Ciudad Mier con corte láser. Imanes y llaveros con diseños de arquitectura colonial, naturaleza tamaulipeca y tradiciones norteñas.',
+    longDescription: 'Ciudad Mier es un Pueblo Mágico en Tamaulipas con rica historia colonial y naturaleza impresionante. Nuestros souvenirs representan su arquitectura de cantera, la iglesia del Señor del Amparo, el río Álamo, la fauna silvestre y las tradiciones norteñas. Cada pieza AXKAN de Ciudad Mier celebra la identidad y orgullo de este destino tamaulipeco.',
+    keywords: 'souvenirs ciudad mier, imanes mier tamaulipas, recuerdos ciudad mier, llaveros tamaulipas, pueblo magico tamaulipas',
+    relatedDestinations: ['monterrey', 'huasteca-potosina'],
+    image: '/assets/TEST-03.png',
+    region: 'norte'
+  },
+  {
+    slug: 'comalcalco',
+    name: 'Comalcalco',
+    state: 'Tabasco',
+    description: 'Souvenirs premium de Comalcalco con corte láser. Imanes y llaveros con diseños de ruinas mayas de ladrillo, cacao y cultura tabasqueña.',
+    longDescription: 'Comalcalco es hogar de la única zona arqueológica maya construida con ladrillo cocido. Nuestros souvenirs capturan las pirámides de ladrillo, la Ruta del Cacao, las haciendas chocolateras, la exuberante vegetación tropical y la rica gastronomía tabasqueña. Cada souvenir AXKAN de Comalcalco conecta con las raíces más antiguas del chocolate mexicano.',
+    keywords: 'souvenirs comalcalco, imanes comalcalco, recuerdos tabasco, llaveros comalcalco, ruta del cacao, zona arqueologica comalcalco',
+    relatedDestinations: ['chiapas', 'campeche'],
+    image: '/assets/TEST-03.png',
+    region: 'sur'
+  },
+  {
+    slug: 'cozumel',
+    name: 'Cozumel',
+    state: 'Quintana Roo',
+    description: 'Souvenirs premium de Cozumel con corte láser. Imanes y llaveros con diseños de arrecifes, tortugas marinas, playas caribeñas y vida marina.',
+    longDescription: 'Cozumel es un paraíso para el buceo y el snorkel, con el segundo arrecife más grande del mundo. Nuestros souvenirs capturan las tortugas marinas, los delfines, los arrecifes de coral, las playas de arena blanca, el Parque Chankanaab y la cultura maya de la isla. Cada pieza AXKAN de Cozumel es un recuerdo del Caribe mexicano en su máxima expresión.',
+    keywords: 'souvenirs cozumel, imanes cozumel, recuerdos cozumel, llaveros cozumel, regalos cozumel, souvenir arrecife cozumel, recuerdos quintana roo isla',
+    relatedDestinations: ['playa-del-carmen', 'cancun', 'tulum'],
+    image: '/assets/TEST-03.png',
+    region: 'caribe'
+  },
+  {
+    slug: 'cuetzalan',
+    name: 'Cuetzalan',
+    state: 'Puebla',
+    description: 'Souvenirs premium de Cuetzalan con corte láser. Imanes y llaveros con diseños de cascadas, voladores de Papantla, niebla y Sierra Norte.',
+    longDescription: 'Cuetzalan es un Pueblo Mágico envuelto en niebla en la Sierra Norte de Puebla. Nuestros souvenirs representan sus cascadas (Las Brisas, Las Hamacas), la ceremonia de los Voladores, las grutas, la parroquia, el tianguis dominical y la cultura totonaca y nahua que vive en cada rincón. Cada souvenir AXKAN de Cuetzalan captura la mística de la sierra poblana.',
+    keywords: 'souvenirs cuetzalan, imanes cuetzalan, recuerdos cuetzalan, pueblo magico puebla sierra, llaveros cuetzalan, voladores papantla',
+    relatedDestinations: ['puebla', 'chignahuapan', 'zacatlan'],
+    image: '/assets/TEST-03.png',
+    region: 'centro'
+  },
+  {
+    slug: 'playa-las-gatas',
+    name: 'Playa Las Gatas',
+    state: 'Guerrero',
+    description: 'Souvenirs premium de Playa Las Gatas con corte láser. Imanes y llaveros con diseños de vida marina, playa y la bahía de Zihuatanejo.',
+    longDescription: 'Playa Las Gatas es una de las playas más famosas de Zihuatanejo, accesible solo por lancha. Nuestros souvenirs capturan la vida marina, el arrecife de coral, los caballitos de mar, las aguas cristalinas y la atmósfera de pueblo pesquero con encanto. Cada pieza AXKAN de Las Gatas es un recuerdo del Pacífico guerrerense en su forma más pura.',
+    keywords: 'souvenirs las gatas, imanes zihuatanejo, recuerdos playa las gatas, llaveros guerrero, souvenir zihuatanejo ixtapa',
+    relatedDestinations: ['acapulco', 'puerto-vallarta'],
+    image: '/assets/TEST-03.png',
+    region: 'pacifico'
+  },
+  {
+    slug: 'puerto-escondido',
+    name: 'Puerto Escondido',
+    state: 'Oaxaca',
+    description: 'Souvenirs premium de Puerto Escondido con corte láser. Imanes y llaveros con diseños de surf, playa Zicatela, fauna marina y costa oaxaqueña.',
+    longDescription: 'Puerto Escondido es la capital mexicana del surf, con la legendaria playa Zicatela. Nuestros souvenirs representan las olas gigantes, la playa Carrizalillo, la bioluminiscencia de la laguna, los delfines, las tortugas marinas y la vibrante escena bohemia de la costa oaxaqueña. Cada souvenir AXKAN de Puerto Escondido captura la energía del Pacífico mexicano.',
+    keywords: 'souvenirs puerto escondido, imanes puerto escondido, recuerdos puerto escondido, llaveros oaxaca costa, souvenir zicatela, surf mexico',
+    relatedDestinations: ['oaxaca', 'acapulco', 'playa-las-gatas'],
+    image: '/assets/TEST-03.png',
+    region: 'pacifico'
+  },
+  {
+    slug: 'san-antonio-cuajimoloyas',
+    name: 'San Antonio Cuajimoloyas',
+    state: 'Oaxaca',
+    description: 'Souvenirs premium de San Antonio Cuajimoloyas con corte láser. Imanes y llaveros con diseños de bosques de niebla, hongos y ecoturismo serrano.',
+    longDescription: 'San Antonio Cuajimoloyas es un destino de ecoturismo en la Sierra Norte de Oaxaca, parte de los Pueblos Mancomunados. Nuestros souvenirs capturan los bosques de niebla, los hongos silvestres, las orquídeas, los senderos de montaña y la biodiversidad única de la sierra oaxaqueña. Cada pieza AXKAN celebra el turismo comunitario y la naturaleza en su estado más puro.',
+    keywords: 'souvenirs cuajimoloyas, imanes sierra norte oaxaca, recuerdos ecoturismo oaxaca, llaveros pueblos mancomunados, hongos silvestres oaxaca',
+    relatedDestinations: ['oaxaca', 'puerto-escondido'],
+    image: '/assets/TEST-03.png',
+    region: 'sur'
+  },
+  {
+    slug: 'san-felipe',
+    name: 'San Felipe',
+    state: 'Baja California',
+    description: 'Souvenirs premium de San Felipe con corte láser. Imanes y llaveros con diseños del Mar de Cortés, faro, off-road y desierto bajacaliforniano.',
+    longDescription: 'San Felipe es un destino de aventura en el Mar de Cortés, famoso por sus carreras off-road y su tranquila vida costera. Nuestros souvenirs representan el faro, las playas del Mar de Cortés, los paisajes desérticos, las carreras Baja 1000, y la fusión de desierto y mar que hace único a este puerto bajacaliforniano. Cada souvenir AXKAN de San Felipe captura el espíritu aventurero de Baja.',
+    keywords: 'souvenirs san felipe, imanes san felipe baja california, recuerdos san felipe, llaveros mar de cortes, off-road baja, souvenir baja california',
+    relatedDestinations: ['los-cabos', 'mazatlan'],
+    image: '/assets/TEST-03.png',
+    region: 'pacifico'
+  },
+  {
+    slug: 'san-gabriel',
+    name: 'San Gabriel',
+    state: 'Jalisco',
+    description: 'Souvenirs premium de San Gabriel con corte láser. Imanes y llaveros con diseños de arquitectura colonial, volcán y paisajes jaliscienses.',
+    longDescription: 'San Gabriel es un pueblo jalisciense de tradición y belleza colonial, conocido por su cercanía al Volcán de Fuego de Colima. Nuestros souvenirs capturan la arquitectura colonial, la parroquia, los paisajes volcánicos, la vegetación exuberante y la tranquilidad de la vida rural de Jalisco. Cada pieza AXKAN de San Gabriel es un recuerdo de la provincia mexicana auténtica.',
+    keywords: 'souvenirs san gabriel, imanes san gabriel jalisco, recuerdos san gabriel, llaveros jalisco, pueblo jalisco volcan',
+    relatedDestinations: ['guadalajara', 'puerto-vallarta'],
+    image: '/assets/TEST-03.png',
+    region: 'colonial'
+  },
+  {
+    slug: 'toluca',
+    name: 'Toluca',
+    state: 'Estado de México',
+    description: 'Souvenirs premium de Toluca con corte láser. Imanes y llaveros con diseños del Nevado de Toluca, Cosmovitral y portales coloniales.',
+    longDescription: 'Toluca es la capital más alta de México, rodeada de montañas y volcanes. Nuestros souvenirs representan el majestuoso Nevado de Toluca, el Cosmovitral Jardín Botánico, los Portales, la Catedral, el centro histórico y la riqueza natural del Estado de México. Cada souvenir AXKAN de Toluca captura la grandeza de esta ciudad a los pies del volcán.',
+    keywords: 'souvenirs toluca, imanes toluca, recuerdos toluca, llaveros estado de mexico, nevado de toluca, cosmovitral, recuerdos toluca de lerdo',
+    relatedDestinations: ['cdmx', 'puebla', 'queretaro'],
+    image: '/assets/TEST-03.png',
+    region: 'centro'
+  },
+  {
+    slug: 'union-juarez',
+    name: 'Unión Juárez',
+    state: 'Chiapas',
+    description: 'Souvenirs premium de Unión Juárez con corte láser. Imanes y llaveros con diseños del Volcán Tacaná, quetzales, café y selva chiapaneca.',
+    longDescription: 'Unión Juárez es un pueblo cafetalero al pie del Volcán Tacaná, en la frontera con Guatemala. Nuestros souvenirs capturan el majestuoso volcán, los quetzales, las plantaciones de café, la biodiversidad de la selva alta y la cultura fronteriza chiapaneca. Cada pieza AXKAN de Unión Juárez celebra uno de los destinos más auténticos y naturales de Chiapas.',
+    keywords: 'souvenirs union juarez, imanes union juarez chiapas, recuerdos tacana, llaveros chiapas, volcan tacana, cafe chiapas',
+    relatedDestinations: ['chiapas', 'oaxaca'],
+    image: '/assets/TEST-03.png',
+    region: 'sur'
+  },
+  {
+    slug: 'zacatlan',
+    name: 'Zacatlán de las Manzanas',
+    state: 'Puebla',
+    description: 'Souvenirs premium de Zacatlán con corte láser. Imanes y llaveros con diseños del reloj floral, manzanas, niebla y sierra poblana.',
+    longDescription: 'Zacatlán de las Manzanas es un Pueblo Mágico en la Sierra Norte de Puebla, famoso por sus relojes monumentales, sidra y manzanas. Nuestros souvenirs representan el icónico Reloj Floral, la Cascada de Tulimán, las barrancas con niebla, los huertos de manzana y la arquitectura serrana. Cada souvenir AXKAN de Zacatlán captura la frescura y magia de la sierra poblana.',
+    keywords: 'souvenirs zacatlan, imanes zacatlan, recuerdos zacatlan de las manzanas, llaveros pueblo magico puebla, reloj floral zacatlan, sidra zacatlan',
+    relatedDestinations: ['puebla', 'chignahuapan', 'cuetzalan'],
+    image: '/assets/TEST-03.png',
+    region: 'centro'
+  },
+  {
+    slug: 'cerro-de-san-pedro',
+    name: 'Cerro de San Pedro',
+    state: 'San Luis Potosí',
+    description: 'Souvenirs premium de Cerro de San Pedro con corte láser. Imanes y llaveros con diseños de pueblo minero, cactus y paisaje potosino.',
+    longDescription: 'Cerro de San Pedro es un pueblo fantasma minero con historia de más de 400 años en San Luis Potosí. Nuestros souvenirs capturan las ruinas coloniales, la iglesia, los cactus y agaves, las montañas del altiplano y la historia minera que dio origen a la ciudad de San Luis Potosí. Cada pieza AXKAN de Cerro de San Pedro es un recuerdo de la historia minera de México.',
+    keywords: 'souvenirs cerro de san pedro, imanes san luis potosi, recuerdos cerro san pedro, llaveros slp, pueblo minero mexico',
+    relatedDestinations: ['huasteca-potosina', 'queretaro'],
+    image: '/assets/TEST-03.png',
+    region: 'centro'
   }
 ];
 

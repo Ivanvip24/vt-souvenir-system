@@ -26,6 +26,15 @@
       "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322709/design-gallery/design_Jalpan_Quer_taro_1768322709177_4.jpg"
     ]
   },
+  "morelia": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323511/design-gallery/design_Michoac_n_1768323511127_6.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323511/design-gallery/design_Michoac_n_1768323511127_6.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323511/design-gallery/design_Michoac_n_1768323511127_6.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323511/design-gallery/design_Michoac_n_1768323511127_6.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323511/design-gallery/design_Michoac_n_1768323511127_6.jpg"
+    ]
+  },
   "acapulco": {
     "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323079/design-gallery/design_Acapulco_1768323078674_7.jpg",
     "products": [
@@ -42,6 +51,150 @@
       "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323526/design-gallery/design_Plateros__Zacatecas__M_xico_1768323525844_9.jpg",
       "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323536/design-gallery/design_Plateros_Zacatecas_M_xico_1768323535799_11.jpg",
       "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323536/design-gallery/design_Plateros_Zacatecas_M_xico_1768323535799_11.jpg"
+    ]
+  },
+  "bacalar": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322865/design-gallery/design_Bacalar_1768322865056_6.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1767636918/design-gallery/design_Bacalar_1767636917569_0.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322865/design-gallery/design_Bacalar_1768322865056_6.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322865/design-gallery/design_Bacalar_1768322865056_6.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322865/design-gallery/design_Bacalar_1768322865056_6.jpg"
+    ]
+  },
+  "campeche": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322729/design-gallery/design_Campeche_1768322729397_8.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322725/design-gallery/design_Campeche_1768322724792_7.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322729/design-gallery/design_Campeche_1768322729397_8.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322729/design-gallery/design_Campeche_1768322729397_8.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322729/design-gallery/design_Campeche_1768322729397_8.jpg"
+    ]
+  },
+  "chignahuapan": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323049/design-gallery/design_Chignahuapan_1768323048780_1.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323044/design-gallery/design_Chignahupan_1768323043853_0.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322892/design-gallery/design_Chignahupan_1768322890766_11.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322885/design-gallery/design_Chignahupan_1768322884513_10.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322880/design-gallery/design_Chignahupan_1768322879948_9.jpg"
+    ]
+  },
+  "ciudad-mier": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323123/design-gallery/design_CD__MIER_1768323122870_16.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323118/design-gallery/design_Cd__Mier_Tamaulipas_M_xico_1768323118149_15.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323113/design-gallery/design_Cd__Mier_1768323113072_14.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323108/design-gallery/design_Cd__Mier__Tamaulipas_M_xico_1768323108539_13.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323098/design-gallery/design_Cd__Mier_Tamaulipas_1768323098284_11.jpg"
+    ]
+  },
+  "comalcalco": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323481/design-gallery/design_Comalcalco_1768323480465_0.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323481/design-gallery/design_Comalcalco_1768323480465_0.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323481/design-gallery/design_Comalcalco_1768323480465_0.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323481/design-gallery/design_Comalcalco_1768323480465_0.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323481/design-gallery/design_Comalcalco_1768323480465_0.jpg"
+    ]
+  },
+  "cozumel": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323496/design-gallery/design_Cozumel_Quintana_Roo_1768323495590_3.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323491/design-gallery/design_Cozumel_1768323490890_2.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323486/design-gallery/design_Cozumel_1768323486083_1.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1767728110/design-gallery/design_Cozumel_1767728110447_4.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1767728105/design-gallery/design_Cozumel_Quintana_Roo_1767728104797_3.jpg"
+    ]
+  },
+  "cuetzalan": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322735/design-gallery/design_Cuetzalan_1768322734545_9.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322735/design-gallery/design_Cuetzalan_1768322734545_9.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322735/design-gallery/design_Cuetzalan_1768322734545_9.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322735/design-gallery/design_Cuetzalan_1768322734545_9.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322735/design-gallery/design_Cuetzalan_1768322734545_9.jpg"
+    ]
+  },
+  "playa-las-gatas": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323506/design-gallery/design_Las_Gatas_1768323505941_5.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323500/design-gallery/design_Las_Gatas_1768323500330_4.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323506/design-gallery/design_Las_Gatas_1768323505941_5.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323506/design-gallery/design_Las_Gatas_1768323505941_5.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323506/design-gallery/design_Las_Gatas_1768323505941_5.jpg"
+    ]
+  },
+  "puerto-escondido": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323104/design-gallery/design_Puerto_Escondido_1768323103918_12.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323088/design-gallery/design_Puerto_Escondido_1768323088107_9.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323104/design-gallery/design_Puerto_Escondido_1768323103918_12.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323104/design-gallery/design_Puerto_Escondido_1768323103918_12.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323104/design-gallery/design_Puerto_Escondido_1768323103918_12.jpg"
+    ]
+  },
+  "san-antonio-cuajimoloyas": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323521/design-gallery/design_San_Antonio_Cuajimoloyas_1768323520743_8.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323516/design-gallery/design_San_Antonio_Cuajimoloyas_1768323515730_7.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323521/design-gallery/design_San_Antonio_Cuajimoloyas_1768323520743_8.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323521/design-gallery/design_San_Antonio_Cuajimoloyas_1768323520743_8.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323521/design-gallery/design_San_Antonio_Cuajimoloyas_1768323520743_8.jpg"
+    ]
+  },
+  "san-felipe": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322719/design-gallery/design_San_Felipe_1768322719465_6.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322704/design-gallery/design_San_Felipe_1768322704097_3.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322699/design-gallery/design_San_Felipe_1768322699272_2.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322719/design-gallery/design_San_Felipe_1768322719465_6.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322719/design-gallery/design_San_Felipe_1768322719465_6.jpg"
+    ]
+  },
+  "san-gabriel": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322845/design-gallery/design_San_Gabriel_1768322845156_2.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322845/design-gallery/design_San_Gabriel_1768322845156_2.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322845/design-gallery/design_San_Gabriel_1768322845156_2.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322845/design-gallery/design_San_Gabriel_1768322845156_2.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322845/design-gallery/design_San_Gabriel_1768322845156_2.jpg"
+    ]
+  },
+  "toluca": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322855/design-gallery/design_Toluca_1768322855221_4.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322850/design-gallery/design_Toluca_1768322849563_3.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322855/design-gallery/design_Toluca_1768322855221_4.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322855/design-gallery/design_Toluca_1768322855221_4.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322855/design-gallery/design_Toluca_1768322855221_4.jpg"
+    ]
+  },
+  "union-juarez": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1767728095/design-gallery/design_Uni_n_Ju_rez_1767728094822_1.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1767728095/design-gallery/design_Uni_n_Ju_rez_1767728094822_1.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1767728095/design-gallery/design_Uni_n_Ju_rez_1767728094822_1.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1767728095/design-gallery/design_Uni_n_Ju_rez_1767728094822_1.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1767728095/design-gallery/design_Uni_n_Ju_rez_1767728094822_1.jpg"
+    ]
+  },
+  "zacatlan": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322861/design-gallery/design_Zacatl_n_de_las_Manzanas_1768322860590_5.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322861/design-gallery/design_Zacatl_n_de_las_Manzanas_1768322860590_5.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322861/design-gallery/design_Zacatl_n_de_las_Manzanas_1768322860590_5.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322861/design-gallery/design_Zacatl_n_de_las_Manzanas_1768322860590_5.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322861/design-gallery/design_Zacatl_n_de_las_Manzanas_1768322860590_5.jpg"
+    ]
+  },
+  "cerro-de-san-pedro": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323128/design-gallery/design_Cerro_de_San_Pedro_S_L_P__1768323127705_17.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323128/design-gallery/design_Cerro_de_San_Pedro_S_L_P__1768323127705_17.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323128/design-gallery/design_Cerro_de_San_Pedro_S_L_P__1768323127705_17.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323128/design-gallery/design_Cerro_de_San_Pedro_S_L_P__1768323127705_17.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323128/design-gallery/design_Cerro_de_San_Pedro_S_L_P__1768323127705_17.jpg"
     ]
   }
 }

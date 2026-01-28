@@ -25,10 +25,16 @@ const __dirname = dirname(__filename);
 
 // All 20 destination slugs matching generate-destinations.js
 const DESTINATION_SLUGS = [
+  // Original 20
   'cancun', 'cdmx', 'oaxaca', 'guanajuato', 'san-miguel-de-allende',
   'guadalajara', 'puerto-vallarta', 'merida', 'los-cabos', 'puebla',
   'huasteca-potosina', 'tulum', 'playa-del-carmen', 'queretaro',
-  'mazatlan', 'morelia', 'chiapas', 'acapulco', 'monterrey', 'zacatecas'
+  'mazatlan', 'morelia', 'chiapas', 'acapulco', 'monterrey', 'zacatecas',
+  // New from gallery
+  'bacalar', 'campeche', 'chignahuapan', 'ciudad-mier', 'comalcalco',
+  'cozumel', 'cuetzalan', 'playa-las-gatas', 'puerto-escondido',
+  'san-antonio-cuajimoloyas', 'san-felipe', 'san-gabriel', 'toluca',
+  'union-juarez', 'zacatlan', 'cerro-de-san-pedro'
 ];
 
 // Product type tags → maps to the 4 product slots in generate-destinations.js
