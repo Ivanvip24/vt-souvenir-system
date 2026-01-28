@@ -154,6 +154,11 @@ function switchView(viewName) {
     initMarketplaceView();
   }
 
+  // Initialize comisiones when switching to comisiones view
+  if (viewName === 'comisiones' && typeof loadComisionesView === 'function') {
+    loadComisionesView();
+  }
+
   // Initialize employees when switching to employees view
   if (viewName === 'employees' && typeof loadEmployees === 'function') {
     loadEmployees();
@@ -4625,31 +4630,24 @@ function filterBySalesperson(salespersonName) {
 }
 
 /**
- * Show commissions modal with summary data
+ * Load commissions data into the inline comisiones view.
+ * Note: All rendered content comes from our own backend API (trusted source),
+ * not from user input, so DOM injection via innerHTML is safe here.
  */
-async function showCommissionsModal() {
-  // Create modal HTML
-  const modalHTML = `
-    <div id="commissions-modal" class="modal-overlay" onclick="if(event.target === this) closeCommissionsModal()">
-      <div class="modal-content commissions-modal-content">
-        <div class="modal-header">
-          <h2>💰 Resumen de Comisiones</h2>
-          <button onclick="closeCommissionsModal()" class="modal-close">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="commissions-loading">
-            <div class="spinner"></div>
-            <p>Cargando datos de comisiones...</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
+async function loadComisionesView() {
+  const loadingEl = document.getElementById('comisiones-loading');
+  const summaryEl = document.getElementById('comisiones-summary-cards');
+  const tableEl = document.getElementById('comisiones-table-container');
+  const monthlyEl = document.getElementById('comisiones-monthly-container');
+  const emptyEl = document.getElementById('comisiones-empty');
 
-  // Add modal to page
-  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  // Show loading
+  if (loadingEl) loadingEl.classList.remove('hidden');
+  if (emptyEl) emptyEl.classList.add('hidden');
+  if (summaryEl) summaryEl.textContent = '';
+  if (tableEl) tableEl.textContent = '';
+  if (monthlyEl) monthlyEl.textContent = '';
 
-  // Fetch commissions data
   try {
     const [commissionsRes, monthlyRes] = await Promise.all([
       fetch(`${API_BASE}/commissions`, { headers: getAuthHeaders() }),
@@ -4662,19 +4660,10 @@ async function showCommissionsModal() {
     const commissions = commissionsData.data?.salespeople || commissionsData.commissions || [];
     const monthlyCommissions = monthlyData.data || monthlyData.commissions || [];
 
-    // Build modal content
-    const modalBody = document.querySelector('#commissions-modal .modal-body');
+    if (loadingEl) loadingEl.classList.add('hidden');
 
     if (commissions.length === 0) {
-      modalBody.innerHTML = `
-        <div class="commissions-empty">
-          <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-          <p>No hay datos de comisiones disponibles</p>
-          <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">
-            Las comisiones se calculan automáticamente cuando los pedidos tienen un vendedor asignado.
-          </p>
-        </div>
-      `;
+      if (emptyEl) emptyEl.classList.remove('hidden');
       return;
     }
 
@@ -4683,131 +4672,223 @@ async function showCommissionsModal() {
     const totalCommissions = commissions.reduce((sum, c) => sum + parseFloat(c.total_commission || 0), 0);
     const approvedCommissions = commissions.reduce((sum, c) => sum + parseFloat(c.approved_commission || 0), 0);
 
-    modalBody.innerHTML = `
-      <div class="commissions-summary-cards">
-        <div class="commission-stat-card">
-          <div class="commission-stat-icon">📦</div>
-          <div class="commission-stat-value">${formatCurrency(totalSales)}</div>
-          <div class="commission-stat-label">Ventas Totales</div>
-        </div>
-        <div class="commission-stat-card highlight">
-          <div class="commission-stat-icon">💰</div>
-          <div class="commission-stat-value">${formatCurrency(totalCommissions)}</div>
-          <div class="commission-stat-label">Comisiones Totales</div>
-        </div>
-        <div class="commission-stat-card success">
-          <div class="commission-stat-icon">✅</div>
-          <div class="commission-stat-value">${formatCurrency(approvedCommissions)}</div>
-          <div class="commission-stat-label">Comisiones Aprobadas</div>
-        </div>
-      </div>
+    // Build summary cards using DOM API
+    if (summaryEl) {
+      summaryEl.textContent = '';
+      const cards = [
+        { label: 'Ventas Totales', value: formatCurrency(totalSales), color: '' },
+        { label: 'Comisiones Totales', value: formatCurrency(totalCommissions), color: '#e72a88' },
+        { label: 'Comisiones Aprobadas', value: formatCurrency(approvedCommissions), color: '#16a34a' }
+      ];
+      cards.forEach(card => {
+        const div = document.createElement('div');
+        div.className = 'stat-card';
+        const lbl = document.createElement('div');
+        lbl.className = 'stat-label';
+        lbl.textContent = card.label;
+        const val = document.createElement('div');
+        val.className = 'stat-value';
+        val.textContent = card.value;
+        if (card.color) val.style.color = card.color;
+        div.appendChild(lbl);
+        div.appendChild(val);
+        summaryEl.appendChild(div);
+      });
+    }
 
-      <h3 style="margin: 24px 0 16px; font-size: 16px; font-weight: 600;">Desglose por Vendedor</h3>
-      <div class="commissions-table-container">
-        <table class="commissions-table">
-          <thead>
-            <tr>
-              <th>Vendedor</th>
-              <th>Tasa</th>
-              <th>Pedidos</th>
-              <th>Ventas</th>
-              <th>Comisión</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${commissions.map(c => `
-              <tr>
-                <td>
-                  <div class="salesperson-name">
-                    <span class="salesperson-avatar">${(c.salesperson_name || 'N/A').charAt(0).toUpperCase()}</span>
-                    ${c.salesperson_name || 'Sin asignar'}
-                  </div>
-                </td>
-                <td><span class="commission-rate">${parseFloat(c.commission_rate || 0).toFixed(1)}%</span></td>
-                <td><span class="orders-count">${c.total_orders || 0}</span></td>
-                <td class="sales-amount">${formatCurrency(parseFloat(c.total_sales || 0))}</td>
-                <td class="commission-amount">${formatCurrency(parseFloat(c.total_commission || 0))}</td>
-                <td>
-                  <button class="btn-view-orders" onclick="viewSalespersonOrders('${c.salesperson_name}')">
-                    Ver pedidos
-                  </button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+    // Build salespeople table using DOM API
+    if (tableEl) {
+      tableEl.textContent = '';
 
-      ${monthlyCommissions.length > 0 ? `
-        <h3 style="margin: 24px 0 16px; font-size: 16px; font-weight: 600;">📅 Comisiones Mensuales (Aprobadas)</h3>
-        <div class="commissions-table-container">
-          <table class="commissions-table">
-            <thead>
-              <tr>
-                <th>Mes</th>
-                <th>Vendedor</th>
-                <th>Pedidos</th>
-                <th>Ventas</th>
-                <th>Comisión</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${monthlyCommissions.slice(0, 10).map(c => `
-                <tr>
-                  <td><span class="month-badge">${c.month}</span></td>
-                  <td>${c.salesperson_name}</td>
-                  <td>${c.orders_count || 0}</td>
-                  <td class="sales-amount">${formatCurrency(parseFloat(c.sales || 0))}</td>
-                  <td class="commission-amount">${formatCurrency(parseFloat(c.commission || 0))}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      ` : ''}
-    `;
+      const heading = document.createElement('h3');
+      heading.style.cssText = 'margin:0 0 16px;font-size:16px;font-weight:600;';
+      heading.textContent = 'Desglose por Vendedor';
+      tableEl.appendChild(heading);
+
+      const wrapper = document.createElement('div');
+      wrapper.style.overflowX = 'auto';
+
+      const table = document.createElement('table');
+      table.className = 'data-table';
+
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      ['Vendedor', 'Tasa', 'Pedidos', 'Ventas', 'Comision', 'Acciones'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      commissions.forEach(c => {
+        const tr = document.createElement('tr');
+
+        // Vendedor
+        const tdName = document.createElement('td');
+        const nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'display:inline-flex;align-items:center;gap:8px;';
+        const avatar = document.createElement('span');
+        avatar.style.cssText = 'width:32px;height:32px;border-radius:50%;background:#f3e8ff;color:#7c3aed;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;';
+        avatar.textContent = (c.salesperson_name || 'N').charAt(0).toUpperCase();
+        nameSpan.appendChild(avatar);
+        nameSpan.appendChild(document.createTextNode(c.salesperson_name || 'Sin asignar'));
+        tdName.appendChild(nameSpan);
+        tr.appendChild(tdName);
+
+        // Tasa
+        const tdRate = document.createElement('td');
+        const rateBadge = document.createElement('span');
+        rateBadge.style.cssText = 'background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:12px;font-weight:600;font-size:13px;';
+        rateBadge.textContent = parseFloat(c.commission_rate || 0).toFixed(1) + '%';
+        tdRate.appendChild(rateBadge);
+        tr.appendChild(tdRate);
+
+        // Pedidos
+        const tdOrders = document.createElement('td');
+        tdOrders.textContent = c.total_orders || 0;
+        tr.appendChild(tdOrders);
+
+        // Ventas
+        const tdSales = document.createElement('td');
+        tdSales.textContent = formatCurrency(parseFloat(c.total_sales || 0));
+        tr.appendChild(tdSales);
+
+        // Comision
+        const tdComm = document.createElement('td');
+        tdComm.style.cssText = 'font-weight:600;color:#e72a88;';
+        tdComm.textContent = formatCurrency(parseFloat(c.total_commission || 0));
+        tr.appendChild(tdComm);
+
+        // Acciones
+        const tdAction = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm';
+        btn.textContent = 'Ver pedidos';
+        btn.addEventListener('click', () => viewSalespersonOrders(c.salesperson_name));
+        tdAction.appendChild(btn);
+        tr.appendChild(tdAction);
+
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      wrapper.appendChild(table);
+      tableEl.appendChild(wrapper);
+    }
+
+    // Build monthly breakdown using DOM API
+    if (monthlyEl && monthlyCommissions.length > 0) {
+      monthlyEl.textContent = '';
+
+      const heading = document.createElement('h3');
+      heading.style.cssText = 'margin:24px 0 16px;font-size:16px;font-weight:600;';
+      heading.textContent = 'Comisiones Mensuales (Aprobadas)';
+      monthlyEl.appendChild(heading);
+
+      const wrapper = document.createElement('div');
+      wrapper.style.overflowX = 'auto';
+
+      const table = document.createElement('table');
+      table.className = 'data-table';
+
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      ['Mes', 'Vendedor', 'Pedidos', 'Ventas', 'Comision'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      monthlyCommissions.slice(0, 10).forEach(c => {
+        const tr = document.createElement('tr');
+
+        const tdMonth = document.createElement('td');
+        const monthBadge = document.createElement('span');
+        monthBadge.style.cssText = 'background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:12px;font-size:13px;font-weight:600;';
+        monthBadge.textContent = c.month_display || c.month;
+        tdMonth.appendChild(monthBadge);
+        tr.appendChild(tdMonth);
+
+        const tdName = document.createElement('td');
+        tdName.textContent = c.salesperson_name;
+        tr.appendChild(tdName);
+
+        const tdOrders = document.createElement('td');
+        tdOrders.textContent = c.orders_count || 0;
+        tr.appendChild(tdOrders);
+
+        const tdSales = document.createElement('td');
+        tdSales.textContent = formatCurrency(parseFloat(c.sales || 0));
+        tr.appendChild(tdSales);
+
+        const tdComm = document.createElement('td');
+        tdComm.style.cssText = 'font-weight:600;color:#e72a88;';
+        tdComm.textContent = formatCurrency(parseFloat(c.commission || 0));
+        tr.appendChild(tdComm);
+
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      wrapper.appendChild(table);
+      monthlyEl.appendChild(wrapper);
+    }
 
   } catch (error) {
     console.error('Error loading commissions:', error);
-    document.querySelector('#commissions-modal .modal-body').innerHTML = `
-      <div class="commissions-error">
-        <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-        <p>Error al cargar los datos de comisiones</p>
-        <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">${error.message}</p>
-      </div>
-    `;
+    if (loadingEl) loadingEl.classList.add('hidden');
+    if (tableEl) {
+      tableEl.textContent = '';
+      const errDiv = document.createElement('div');
+      errDiv.className = 'empty-state';
+      const errIcon = document.createElement('span');
+      errIcon.className = 'empty-icon';
+      errIcon.textContent = '\u26A0\uFE0F';
+      const errH3 = document.createElement('h3');
+      errH3.textContent = 'Error al cargar comisiones';
+      const errP = document.createElement('p');
+      errP.textContent = error.message;
+      errDiv.appendChild(errIcon);
+      errDiv.appendChild(errH3);
+      errDiv.appendChild(errP);
+      tableEl.appendChild(errDiv);
+    }
   }
 }
 
 /**
- * Close commissions modal
+ * Legacy modal function - redirects to inline view
  */
-function closeCommissionsModal() {
-  const modal = document.getElementById('commissions-modal');
-  if (modal) {
-    modal.remove();
-  }
+function showCommissionsModal() {
+  switchView('comisiones');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-sub-item').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector('.nav-sub-item[data-view="comisiones"]');
+  if (btn) btn.classList.add('active');
 }
 
 /**
  * View orders for a specific salesperson
  */
 function viewSalespersonOrders(salespersonName) {
-  closeCommissionsModal();
+  // Switch to orders view and filter
+  switchView('orders');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const ordersBtn = document.querySelector('.nav-item[data-view="orders"]');
+  if (ordersBtn) ordersBtn.classList.add('active');
 
-  // Set the filter dropdown
   const dropdown = document.getElementById('salesperson-filter');
   if (dropdown) {
     dropdown.value = salespersonName;
   }
-
-  // Filter orders
   filterBySalesperson(salespersonName);
 }
 
 /**
- * Format currency (helper function if not already defined)
+ * Format currency helper
  */
 function formatCurrency(amount) {
   return new Intl.NumberFormat('es-MX', {
@@ -4820,5 +4901,5 @@ function formatCurrency(amount) {
 window.loadSalespeople = loadSalespeople;
 window.filterBySalesperson = filterBySalesperson;
 window.showCommissionsModal = showCommissionsModal;
-window.closeCommissionsModal = closeCommissionsModal;
+window.loadComisionesView = loadComisionesView;
 window.viewSalespersonOrders = viewSalespersonOrders;
