@@ -806,11 +806,15 @@ router.post('/chat', async (req, res) => {
 
       // Process the action and enrich with database data
       if (action.type === 'create_shipping_labels') {
+        // Track if user explicitly specified labels count (e.g., "son 4 cajas")
+        const userSpecifiedLabels = action.labelsCount && action.labelsCount > 1;
+
         actionData = {
           type: 'create_shipping_labels',
           needsConfirmation: true,
           data: {
-            labelsCount: action.labelsCount || 1
+            labelsCount: action.labelsCount || 1,
+            userSpecifiedLabels // Flag to preserve user's explicit request
           }
         };
 
@@ -856,23 +860,29 @@ router.post('/chat', async (req, res) => {
               state: order.state,
               postal: order.postal
             };
-            // Calculate boxes for this order
+            // Calculate boxes for this order (as reference)
             const { totalBoxes, breakdown } = await calculateBoxesForOrder(order.id);
             actionData.data.calculatedBoxes = totalBoxes;
             actionData.data.boxBreakdown = breakdown;
-            actionData.data.labelsCount = totalBoxes; // Auto-set to calculated
+            // Only auto-set labelsCount if user didn't explicitly specify
+            if (!actionData.data.userSpecifiedLabels) {
+              actionData.data.labelsCount = totalBoxes;
+            }
           } else {
             actionData.data.orderNotFound = true;
             actionData.data.searchTerm = action.orderNumber;
           }
         }
 
-        // If we have a suggested order, calculate boxes for it too
+        // If we have a suggested order, calculate boxes for it (as reference)
         if (actionData.data.suggestedOrder) {
           const { totalBoxes, breakdown } = await calculateBoxesForOrder(actionData.data.suggestedOrder.id);
           actionData.data.calculatedBoxes = totalBoxes;
           actionData.data.boxBreakdown = breakdown;
-          actionData.data.labelsCount = totalBoxes;
+          // Only auto-set labelsCount if user didn't explicitly specify
+          if (!actionData.data.userSpecifiedLabels) {
+            actionData.data.labelsCount = totalBoxes;
+          }
         }
       } else if (action.type === 'search_client') {
         const clients = await findClientByName(action.searchTerm);

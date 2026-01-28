@@ -887,7 +887,9 @@ function showShippingLabelModal(action) {
     }
 
     // Labels count with auto-calculation display
-    const calculatedBoxes = data.calculatedBoxes || labelsCount;
+    // If user explicitly specified labels (e.g., "son 4 cajas"), use their value
+    // Otherwise use calculated boxes from order, or fall back to AI-parsed labelsCount
+    const calculatedBoxes = data.userSpecifiedLabels ? labelsCount : (data.calculatedBoxes || labelsCount);
     const boxBreakdown = data.boxBreakdown || [];
 
     modalHtml += `
