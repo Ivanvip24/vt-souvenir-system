@@ -17,13 +17,19 @@ dotenv.config({ path: join(__dirname, '../../.env') });
 
 const { Pool } = pg;
 
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'souvenir_management',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD
-});
+// Support DATABASE_URL (Render/production) or individual vars (local)
+const pool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    })
+  : new Pool({
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      database: process.env.DB_NAME || 'souvenir_management',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD
+    });
 
 async function migrate() {
   console.log('🚀 Starting salespeople and commissions migration...\n');

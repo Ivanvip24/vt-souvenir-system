@@ -4448,6 +4448,53 @@ async function startServer() {
       }
     }
 
+    // Create salespeople table and sales_rep column for commissions
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS salespeople (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          phone VARCHAR(20),
+          email VARCHAR(100),
+          commission_rate DECIMAL(5, 2) NOT NULL DEFAULT 6.00,
+          is_active BOOLEAN DEFAULT true,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      await query(`CREATE INDEX IF NOT EXISTS idx_salespeople_name ON salespeople(name)`);
+      await query(`CREATE INDEX IF NOT EXISTS idx_salespeople_active ON salespeople(is_active)`);
+      console.log('   ✅ salespeople table ready');
+    } catch (spErr) {
+      console.log('   ℹ️  salespeople migration:', spErr.message.split('\n')[0]);
+    }
+
+    // Add sales_rep and salesperson_id columns to orders
+    try {
+      await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS sales_rep VARCHAR(100)`);
+      await query(`CREATE INDEX IF NOT EXISTS idx_orders_sales_rep ON orders(sales_rep)`);
+      await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS salesperson_id INTEGER REFERENCES salespeople(id)`);
+      await query(`CREATE INDEX IF NOT EXISTS idx_orders_salesperson_id ON orders(salesperson_id)`);
+      console.log('   ✅ orders.sales_rep column ready');
+    } catch (srErr) {
+      console.log('   ℹ️  sales_rep migration:', srErr.message.split('\n')[0]);
+    }
+
+    // Insert default salespeople
+    try {
+      await query(`
+        INSERT INTO salespeople (name, commission_rate, notes)
+        VALUES
+          ('Sarahi', 6.00, 'Vendedora principal'),
+          ('Ivan', 0.00, 'Propietario - sin comisión')
+        ON CONFLICT (name) DO NOTHING
+      `);
+      console.log('   ✅ Default salespeople ready');
+    } catch (defErr) {
+      console.log('   ℹ️  Default salespeople:', defErr.message.split('\n')[0]);
+    }
+
     // Load AI Knowledge Content
     console.log('🤖 Loading AI knowledge content...');
     try {

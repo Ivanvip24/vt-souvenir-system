@@ -4592,7 +4592,7 @@ async function loadSalespeople() {
     }
 
     const data = await response.json();
-    const salespeople = data.salespeople || [];
+    const salespeople = data.data || data.salespeople || [];
 
     const dropdown = document.getElementById('salesperson-filter');
     if (!dropdown) return;
@@ -4659,8 +4659,8 @@ async function showCommissionsModal() {
     const commissionsData = await commissionsRes.json();
     const monthlyData = await monthlyRes.json();
 
-    const commissions = commissionsData.commissions || [];
-    const monthlyCommissions = monthlyData.commissions || [];
+    const commissions = commissionsData.data?.salespeople || commissionsData.commissions || [];
+    const monthlyCommissions = monthlyData.data || monthlyData.commissions || [];
 
     // Build modal content
     const modalBody = document.querySelector('#commissions-modal .modal-body');
