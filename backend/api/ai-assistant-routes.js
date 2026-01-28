@@ -15,6 +15,12 @@ const router = express.Router();
 // Apply authentication
 router.use(authMiddleware);
 
+// Enable pg_trgm extension for fuzzy text search (similarity function)
+// Safe to call repeatedly — only creates if not already present
+query('CREATE EXTENSION IF NOT EXISTS pg_trgm').catch(err => {
+  console.warn('⚠️ Could not enable pg_trgm extension:', err.message);
+});
+
 // =====================================================
 // PIECES PER BOX CONFIGURATION
 // =====================================================

@@ -2,6 +2,11 @@ import { query, testConnection, closePool } from './database.js';
 
 const createTablesSQL = `
 -- =====================================================
+-- EXTENSIONS (fuzzy text search)
+-- =====================================================
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- =====================================================
 -- CLIENTS TABLE
 -- =====================================================
 CREATE TABLE IF NOT EXISTS clients (
