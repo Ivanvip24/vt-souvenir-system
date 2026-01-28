@@ -10,7 +10,7 @@
     <link rel="canonical" href="https://axkan.art/souvenirs">
     <meta property="og:title" content="Souvenirs por Destino — AXKAN">
     <meta property="og:description" content="Souvenirs premium de 20+ destinos turísticos de México. Imanes, llaveros y más con corte láser.">
-    <meta property="og:image" content="https://axkan.art/assets/TEST-03.png">
+    <meta property="og:image" content="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322840/design-gallery/design_Oaxaca_1768322840495_1.jpg">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://axkan.art/souvenirs">
     <meta property="og:site_name" content="AXKAN">
@@ -18,7 +18,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Souvenirs por Destino — AXKAN">
     <meta name="twitter:description" content="Souvenirs premium de 20+ destinos turísticos de México.">
-    <meta name="twitter:image" content="https://axkan.art/assets/TEST-03.png">
+    <meta name="twitter:image" content="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322840/design-gallery/design_Oaxaca_1768322840495_1.jpg">
     <link rel="icon" type="image/png" href="/assets/LOGO-01.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,7 +60,7 @@
     <style>
       @font-face { font-family: 'RL Aqva'; src: url('/fonts/rl-aqva-black.otf') format('opentype'); font-weight: 900; font-display: swap; }
       @font-face { font-family: 'Objektiv'; src: url('/fonts/objektiv-vf.otf') format('opentype'); font-weight: 100 900; font-display: swap; }
-      :root { --rosa-mexicano: #e72a88; --font-display: 'RL Aqva', 'Fredoka', sans-serif; --font-body: 'Objektiv', 'Inter', sans-serif; }
+      :root { --rosa-mexicano: #e72a88; --verde-selva: #8ab73b; --naranja-calido: #f39223; --turquesa: #09adc2; --font-display: 'RL Aqva', 'Fredoka', sans-serif; --font-body: 'Objektiv', 'Inter', sans-serif; }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: var(--font-body); color: #1f1f1f; background: #fafafa; }
       .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 5%; background: white; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
@@ -68,19 +68,48 @@
       .nav-links { display: flex; gap: 24px; list-style: none; }
       .nav-links a { color: #333; font-weight: 500; font-size: 14px; text-decoration: none; }
       .nav-cta { background: var(--rosa-mexicano); color: white !important; padding: 8px 20px; border-radius: 24px; }
-      .index-header { text-align: center; padding: 60px 5% 32px; }
+      .index-header { text-align: center; padding: 60px 5% 24px; }
       .index-header h1 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 12px; }
       .index-header h1 .hl { color: var(--rosa-mexicano); }
       .index-header p { color: #666; font-size: 16px; max-width: 600px; margin: 0 auto; }
+
+      /* Search & Filters */
+      .index-controls { max-width: 700px; margin: 0 auto; padding: 0 5% 8px; }
+      .search-wrap { position: relative; margin-bottom: 16px; }
+      .search-wrap svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #999; pointer-events: none; }
+      .search-input { width: 100%; padding: 14px 16px 14px 48px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; font-family: var(--font-body); background: white; transition: border-color 0.2s; outline: none; }
+      .search-input:focus { border-color: var(--rosa-mexicano); }
+      .search-input::placeholder { color: #aaa; }
+      .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+      .filter-pill { padding: 8px 18px; border-radius: 24px; border: 2px solid #ddd; background: white; font-size: 14px; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.2s; color: #555; }
+      .filter-pill:hover { border-color: var(--rosa-mexicano); color: var(--rosa-mexicano); }
+      .filter-pill.active { background: var(--rosa-mexicano); border-color: var(--rosa-mexicano); color: white; }
+      .index-status { text-align: center; padding: 8px 5% 0; font-size: 14px; color: #999; }
+
+      /* Grid & Cards */
       .index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; padding: 24px 5% 60px; max-width: 1200px; margin: 0 auto; }
-      .index-card { display: block; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); transition: transform 0.3s; text-decoration: none; color: inherit; }
+      .index-card { display: block; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); transition: transform 0.3s, opacity 0.3s; text-decoration: none; color: inherit; }
       .index-card:hover { transform: translateY(-4px); }
+      .index-card.hidden { display: none; }
       .index-card img { width: 100%; height: 180px; object-fit: cover; }
       .index-card-text { padding: 20px; }
       .index-card-text h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
       .index-card-text span { font-size: 13px; color: #888; }
       .index-card-text p { font-size: 14px; color: #666; margin-top: 8px; }
+
+      /* No results */
+      .no-results { display: none; text-align: center; padding: 48px 5%; }
+      .no-results.visible { display: block; }
+      .no-results p { font-size: 18px; color: #888; margin-bottom: 8px; }
+      .no-results small { font-size: 14px; color: #aaa; }
+
       .index-footer { text-align: center; padding: 24px; font-size: 13px; color: #aaa; border-top: 1px solid #eee; }
+
+      @media (max-width: 600px) {
+        .filter-pills { gap: 6px; }
+        .filter-pill { padding: 6px 14px; font-size: 13px; }
+        .search-input { font-size: 15px; padding: 12px 12px 12px 44px; }
+      }
     </style>
 </head>
 <body>
@@ -99,9 +128,27 @@
       <p>Encuentra souvenirs premium de tu destino favorito en México. Imanes, llaveros, portallaves y destapadores con corte láser de precisión.</p>
     </div>
 
-    <div class="index-grid">
+    <div class="index-controls">
+      <div class="search-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="search-input" id="searchInput" placeholder="Buscar destino, estado..." autocomplete="off">
+      </div>
+      <div class="filter-pills" id="filterPills">
+        <button class="filter-pill active" data-region="todos">Todos</button>
+        <button class="filter-pill" data-region="caribe">Caribe</button>
+        <button class="filter-pill" data-region="pacifico">Pacífico</button>
+        <button class="filter-pill" data-region="centro">Centro</button>
+        <button class="filter-pill" data-region="colonial">Colonial</button>
+        <button class="filter-pill" data-region="sur">Sur</button>
+        <button class="filter-pill" data-region="norte">Norte</button>
+      </div>
+    </div>
 
-          <a href="/souvenirs/cancun" class="index-card">
+    <div class="index-status" id="indexStatus">Mostrando 20 de 20 destinos</div>
+
+    <div class="index-grid" id="indexGrid">
+
+          <a href="/souvenirs/cancun" class="index-card" data-name="Cancún" data-state="Quintana Roo" data-region="caribe" data-desc="Souvenirs premium de Cancún con corte láser. Imanes, llaveros y portallaves con diseños del Caribe mexicano, zona hotelera, playas y cultura maya.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Cancún México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Cancún</h2>
@@ -110,7 +157,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/cdmx" class="index-card">
+          <a href="/souvenirs/cdmx" class="index-card" data-name="Ciudad de México" data-state="CDMX" data-region="centro" data-desc="Souvenirs premium de la Ciudad de México con corte láser. Imanes y llaveros con diseños del Ángel de la Independencia, Palacio de Bellas Artes, Zócalo y más.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Ciudad de México México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Ciudad de México</h2>
@@ -119,8 +166,8 @@
             </div>
           </a>
 
-          <a href="/souvenirs/oaxaca" class="index-card">
-            <img src="/assets/TEST-03.png" alt="Souvenirs Oaxaca México - AXKAN" loading="lazy">
+          <a href="/souvenirs/oaxaca" class="index-card" data-name="Oaxaca" data-state="Oaxaca" data-region="sur" data-desc="Souvenirs premium de Oaxaca con corte láser. Imanes y llaveros con diseños de Monte Albán, Hierve el Agua, alebrijes, mezcal y cultura zapoteca.">
+            <img src="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322840/design-gallery/design_Oaxaca_1768322840495_1.jpg" alt="Souvenirs Oaxaca México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Oaxaca</h2>
               <span>Oaxaca</span>
@@ -128,7 +175,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/guanajuato" class="index-card">
+          <a href="/souvenirs/guanajuato" class="index-card" data-name="Guanajuato" data-state="Guanajuato" data-region="colonial" data-desc="Souvenirs premium de Guanajuato con corte láser. Imanes y llaveros con diseños de callejones coloridos, el Callejón del Beso, la Alhóndiga y el Pípila.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Guanajuato México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Guanajuato</h2>
@@ -137,7 +184,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/san-miguel-de-allende" class="index-card">
+          <a href="/souvenirs/san-miguel-de-allende" class="index-card" data-name="San Miguel de Allende" data-state="Guanajuato" data-region="colonial" data-desc="Souvenirs premium de San Miguel de Allende con corte láser. Imanes y llaveros con la Parroquia de San Miguel Arcángel y calles coloniales.">
             <img src="/assets/TEST-03.png" alt="Souvenirs San Miguel de Allende México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>San Miguel de Allende</h2>
@@ -146,7 +193,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/guadalajara" class="index-card">
+          <a href="/souvenirs/guadalajara" class="index-card" data-name="Guadalajara" data-state="Jalisco" data-region="norte" data-desc="Souvenirs premium de Guadalajara con corte láser. Imanes y llaveros con diseños de la Catedral, Hospicio Cabañas, mariachi y cultura tapatía.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Guadalajara México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Guadalajara</h2>
@@ -155,7 +202,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/puerto-vallarta" class="index-card">
+          <a href="/souvenirs/puerto-vallarta" class="index-card" data-name="Puerto Vallarta" data-state="Jalisco" data-region="pacifico" data-desc="Souvenirs premium de Puerto Vallarta con corte láser. Imanes y llaveros con diseños del malecón, playas del Pacífico y la Sierra Madre.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Puerto Vallarta México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Puerto Vallarta</h2>
@@ -164,7 +211,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/merida" class="index-card">
+          <a href="/souvenirs/merida" class="index-card" data-name="Mérida" data-state="Yucatán" data-region="caribe" data-desc="Souvenirs premium de Mérida con corte láser. Imanes y llaveros con diseños de arquitectura colonial yucateca, cenotes y cultura maya.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Mérida México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Mérida</h2>
@@ -173,7 +220,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/los-cabos" class="index-card">
+          <a href="/souvenirs/los-cabos" class="index-card" data-name="Los Cabos" data-state="Baja California Sur" data-region="pacifico" data-desc="Souvenirs premium de Los Cabos con corte láser. Imanes y llaveros con diseños del Arco de Cabo San Lucas, El Médano y el desierto junto al mar.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Los Cabos México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Los Cabos</h2>
@@ -182,8 +229,8 @@
             </div>
           </a>
 
-          <a href="/souvenirs/puebla" class="index-card">
-            <img src="/assets/TEST-03.png" alt="Souvenirs Puebla México - AXKAN" loading="lazy">
+          <a href="/souvenirs/puebla" class="index-card" data-name="Puebla" data-state="Puebla" data-region="centro" data-desc="Souvenirs premium de Puebla con corte láser. Imanes y llaveros con diseños de talavera, la Catedral, Cholula y volcanes.">
+            <img src="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322740/design-gallery/design_Metepec_Puebla_1768322739649_10.jpg" alt="Souvenirs Puebla México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Puebla</h2>
               <span>Puebla</span>
@@ -191,7 +238,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/huasteca-potosina" class="index-card">
+          <a href="/souvenirs/huasteca-potosina" class="index-card" data-name="Huasteca Potosina" data-state="San Luis Potosí" data-region="centro" data-desc="Souvenirs premium de la Huasteca Potosina con corte láser. Imanes y llaveros con diseños de cascadas, sótanos, puente de dios y selva.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Huasteca Potosina México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Huasteca Potosina</h2>
@@ -200,7 +247,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/tulum" class="index-card">
+          <a href="/souvenirs/tulum" class="index-card" data-name="Tulum" data-state="Quintana Roo" data-region="caribe" data-desc="Souvenirs premium de Tulum con corte láser. Imanes y llaveros con diseños de ruinas mayas frente al mar, cenotes y playa caribeña.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Tulum México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Tulum</h2>
@@ -209,7 +256,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/playa-del-carmen" class="index-card">
+          <a href="/souvenirs/playa-del-carmen" class="index-card" data-name="Playa del Carmen" data-state="Quintana Roo" data-region="caribe" data-desc="Souvenirs premium de Playa del Carmen con corte láser. Imanes y llaveros con diseños de la Quinta Avenida, playas caribeñas y Xcaret.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Playa del Carmen México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Playa del Carmen</h2>
@@ -218,8 +265,8 @@
             </div>
           </a>
 
-          <a href="/souvenirs/queretaro" class="index-card">
-            <img src="/assets/TEST-03.png" alt="Souvenirs Querétaro México - AXKAN" loading="lazy">
+          <a href="/souvenirs/queretaro" class="index-card" data-name="Querétaro" data-state="Querétaro" data-region="centro" data-desc="Souvenirs premium de Querétaro con corte láser. Imanes y llaveros con diseños del acueducto, Centro Histórico y viñedos.">
+            <img src="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322709/design-gallery/design_Jalpan_Quer_taro_1768322709177_4.jpg" alt="Souvenirs Querétaro México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Querétaro</h2>
               <span>Querétaro</span>
@@ -227,7 +274,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/mazatlan" class="index-card">
+          <a href="/souvenirs/mazatlan" class="index-card" data-name="Mazatlán" data-state="Sinaloa" data-region="pacifico" data-desc="Souvenirs premium de Mazatlán con corte láser. Imanes y llaveros con diseños del malecón, faro, machado y playas del Pacífico.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Mazatlán México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Mazatlán</h2>
@@ -236,7 +283,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/morelia" class="index-card">
+          <a href="/souvenirs/morelia" class="index-card" data-name="Morelia" data-state="Michoacán" data-region="colonial" data-desc="Souvenirs premium de Morelia con corte láser. Imanes y llaveros con diseños de la Catedral, acueducto y arquitectura colonial michoacana.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Morelia México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Morelia</h2>
@@ -245,7 +292,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/chiapas" class="index-card">
+          <a href="/souvenirs/chiapas" class="index-card" data-name="Chiapas" data-state="Chiapas" data-region="sur" data-desc="Souvenirs premium de Chiapas con corte láser. Imanes y llaveros con diseños del Cañón del Sumidero, San Cristóbal, Palenque y cascadas.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Chiapas México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Chiapas</h2>
@@ -254,8 +301,8 @@
             </div>
           </a>
 
-          <a href="/souvenirs/acapulco" class="index-card">
-            <img src="/assets/TEST-03.png" alt="Souvenirs Acapulco México - AXKAN" loading="lazy">
+          <a href="/souvenirs/acapulco" class="index-card" data-name="Acapulco" data-state="Guerrero" data-region="pacifico" data-desc="Souvenirs premium de Acapulco con corte láser. Imanes y llaveros con diseños de la bahía, clavadistas de La Quebrada y playas del Pacífico.">
+            <img src="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323079/design-gallery/design_Acapulco_1768323078674_7.jpg" alt="Souvenirs Acapulco México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Acapulco</h2>
               <span>Guerrero</span>
@@ -263,7 +310,7 @@
             </div>
           </a>
 
-          <a href="/souvenirs/monterrey" class="index-card">
+          <a href="/souvenirs/monterrey" class="index-card" data-name="Monterrey" data-state="Nuevo León" data-region="norte" data-desc="Souvenirs premium de Monterrey con corte láser. Imanes y llaveros con diseños del Cerro de la Silla, Fundidora, Macroplaza y Sierra Madre.">
             <img src="/assets/TEST-03.png" alt="Souvenirs Monterrey México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Monterrey</h2>
@@ -272,8 +319,8 @@
             </div>
           </a>
 
-          <a href="/souvenirs/zacatecas" class="index-card">
-            <img src="/assets/TEST-03.png" alt="Souvenirs Zacatecas México - AXKAN" loading="lazy">
+          <a href="/souvenirs/zacatecas" class="index-card" data-name="Zacatecas" data-state="Zacatecas" data-region="colonial" data-desc="Souvenirs premium de Zacatecas con corte láser. Imanes y llaveros con diseños de la Catedral, teleférico, mina El Edén y callejones coloniales.">
+            <img src="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323536/design-gallery/design_Plateros_Zacatecas_M_xico_1768323535799_11.jpg" alt="Souvenirs Zacatecas México - AXKAN" loading="lazy">
             <div class="index-card-text">
               <h2>Zacatecas</h2>
               <span>Zacatecas</span>
@@ -282,8 +329,71 @@
           </a>
     </div>
 
+    <div class="no-results" id="noResults">
+      <p>No se encontraron destinos</p>
+      <small>Intenta con otro término o selecciona otra región</small>
+    </div>
+
     <footer class="index-footer">
       <p>© 2025 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</p>
     </footer>
+
+    <script>
+    (function() {
+      var searchInput = document.getElementById('searchInput');
+      var pills = document.querySelectorAll('.filter-pill');
+      var cards = document.querySelectorAll('.index-card');
+      var statusEl = document.getElementById('indexStatus');
+      var noResults = document.getElementById('noResults');
+      var total = cards.length;
+      var activeRegion = 'todos';
+
+      function normalize(str) {
+        return str.toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9 ]/g, ' ');
+      }
+
+      function filterCards() {
+        var query = normalize(searchInput.value);
+        var visible = 0;
+
+        cards.forEach(function(card) {
+          var name = normalize(card.dataset.name);
+          var state = normalize(card.dataset.state);
+          var desc = normalize(card.dataset.desc);
+          var region = card.dataset.region;
+
+          var matchesRegion = activeRegion === 'todos' || region === activeRegion;
+          var matchesSearch = !query || name.indexOf(query) !== -1 || state.indexOf(query) !== -1 || desc.indexOf(query) !== -1;
+
+          if (matchesRegion && matchesSearch) {
+            card.classList.remove('hidden');
+            visible++;
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+
+        statusEl.textContent = 'Mostrando ' + visible + ' de ' + total + ' destinos';
+        if (visible === 0) {
+          noResults.classList.add('visible');
+        } else {
+          noResults.classList.remove('visible');
+        }
+      }
+
+      searchInput.addEventListener('input', filterCards);
+
+      pills.forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          pills.forEach(function(p) { p.classList.remove('active'); });
+          pill.classList.add('active');
+          activeRegion = pill.dataset.region;
+          filterCards();
+        });
+      });
+    })();
+    </script>
 </body>
 </html>

@@ -1,0 +1,47 @@
+{
+  "oaxaca": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322840/design-gallery/design_Oaxaca_1768322840495_1.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322835/design-gallery/design_Oaxaca_M_xico_1768322834694_0.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322840/design-gallery/design_Oaxaca_1768322840495_1.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322840/design-gallery/design_Oaxaca_1768322840495_1.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322840/design-gallery/design_Oaxaca_1768322840495_1.jpg"
+    ]
+  },
+  "puebla": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322740/design-gallery/design_Metepec_Puebla_1768322739649_10.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322740/design-gallery/design_Metepec_Puebla_1768322739649_10.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322740/design-gallery/design_Metepec_Puebla_1768322739649_10.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322740/design-gallery/design_Metepec_Puebla_1768322739649_10.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322740/design-gallery/design_Metepec_Puebla_1768322739649_10.jpg"
+    ]
+  },
+  "queretaro": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322709/design-gallery/design_Jalpan_Quer_taro_1768322709177_4.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322709/design-gallery/design_Jalpan_Quer_taro_1768322709177_4.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322709/design-gallery/design_Jalpan_Quer_taro_1768322709177_4.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322709/design-gallery/design_Jalpan_Quer_taro_1768322709177_4.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322709/design-gallery/design_Jalpan_Quer_taro_1768322709177_4.jpg"
+    ]
+  },
+  "acapulco": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323079/design-gallery/design_Acapulco_1768323078674_7.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323074/design-gallery/design_Acapulco_1768323073516_6.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323069/design-gallery/design_Acapulco_1768323068833_5.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323064/design-gallery/design_Acapulco_1768323064251_4.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768322714/design-gallery/design_Acapulco_1768322713721_5.jpg"
+    ]
+  },
+  "zacatecas": {
+    "hero": "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323536/design-gallery/design_Plateros_Zacatecas_M_xico_1768323535799_11.jpg",
+    "products": [
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323531/design-gallery/design_Plateros__Zacatecas__M_xico_1768323531350_10.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323526/design-gallery/design_Plateros__Zacatecas__M_xico_1768323525844_9.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323536/design-gallery/design_Plateros_Zacatecas_M_xico_1768323535799_11.jpg",
+      "https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323536/design-gallery/design_Plateros_Zacatecas_M_xico_1768323535799_11.jpg"
+    ]
+  }
+}
