@@ -563,15 +563,25 @@ function generateIndex() {
   const firstMapped = destinations.find(d => d.image.startsWith('http'));
   const indexOgImage = firstMapped ? firstMapped.image : 'https://axkan.art/assets/TEST-03.png';
 
-  const cards = destinations.map(d => `
+  const cards = destinations.map(d => {
+    const allImgs = [d.image, ...d.productImages];
+    const uniqueImgs = [...new Set(allImgs)];
+    const count = uniqueImgs.length;
+    const imgTags = uniqueImgs.map(url =>
+      `<img src="${url}" alt="Souvenirs ${escapeAttr(d.name)} México - AXKAN" loading="lazy">`
+    ).join('');
+    return `
           <a href="/souvenirs/${d.slug}" class="index-card" data-name="${escapeAttr(d.name)}" data-state="${escapeAttr(d.state)}" data-region="${d.region}" data-desc="${escapeAttr(d.description)}">
-            <img src="${d.image}" alt="Souvenirs ${escapeAttr(d.name)} México - AXKAN" loading="lazy">
+            <div class="card-carousel" data-count="${count}">
+              <div class="card-strip">${imgTags}</div>
+            </div>
             <div class="index-card-text">
               <h2>${escapeHtml(d.name)}</h2>
               <span>${escapeHtml(d.state)}</span>
               <p>${escapeHtml(d.description).substring(0, 120)}...</p>
             </div>
-          </a>`).join('\n');
+          </a>`;
+  }).join('\n');
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -647,7 +657,9 @@ function generateIndex() {
       .index-card { display: block; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); transition: transform 0.3s, opacity 0.3s; text-decoration: none; color: inherit; }
       .index-card:hover { transform: translateY(-4px); }
       .index-card.hidden { display: none; }
-      .index-card img { width: 100%; height: 180px; object-fit: cover; }
+      .card-carousel { position: relative; overflow: hidden; aspect-ratio: 1; background: #f5f0eb; }
+      .card-strip { display: flex; height: 100%; will-change: transform; }
+      .card-strip img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; }
       .index-card-text { padding: 20px; }
       .index-card-text h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
       .index-card-text span { font-size: 13px; color: #888; }
@@ -770,6 +782,32 @@ ${cards}
           filterCards();
         });
       });
+      // Scroll-driven carousel animation
+      var carousels = document.querySelectorAll('.card-carousel');
+      var ticking = false;
+      function animateCarousels() {
+        var vh = window.innerHeight;
+        for (var i = 0; i < carousels.length; i++) {
+          var carousel = carousels[i];
+          var count = parseInt(carousel.dataset.count) || 1;
+          if (count <= 1) continue;
+          var rect = carousel.getBoundingClientRect();
+          var progress = (vh - rect.top) / (vh + rect.height);
+          progress = Math.max(0, Math.min(1, progress));
+          var shift = progress * (count - 1) * 100 / count;
+          carousel.querySelector('.card-strip').style.transform = 'translateX(-' + shift + '%)';
+        }
+      }
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          requestAnimationFrame(function() {
+            animateCarousels();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+      animateCarousels();
     })();
     </script>
 </body>
