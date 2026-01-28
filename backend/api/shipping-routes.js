@@ -1899,91 +1899,75 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
     console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
 
-    // Strategy: Skydropx multi-package quotes are inconsistent — they sometimes
-    // omit carriers (e.g. FedEx) that DO support multi-package. To get accurate
-    // bulk pricing, we:
-    // 1. Get single-package quote (reliable, returns all carriers)
-    // 2. Retry multi-package quote up to 3 times, merging results across attempts
-    //    to capture as many carriers as possible at bulk rates
-    // 3. For each carrier, use the LOWEST price between multi (bulk) and single × N
+    // Strategy: Skydropx multi-package quotes are INCONSISTENT — they randomly
+    // omit carriers (e.g. FedEx) even though they support multi-package.
+    // Fix: Fire 1 single + 3 multi quotes in PARALLEL to maximize the chance of
+    // capturing every carrier at bulk rate. Merge all results.
 
-    // Fetch quotes with top-level retry (Skydropx is flaky, sometimes returns nothing)
     let singlePackageQuote = null;
     const multiRatesMap = new Map(); // carrier-service → best multi rate
     let bestMultiQuotationId = null;
-    const TOP_LEVEL_RETRIES = 3;
 
-    for (let topAttempt = 1; topAttempt <= TOP_LEVEL_RETRIES; topAttempt++) {
-      if (topAttempt > 1) {
-        console.log(`   🔄 Top-level retry ${topAttempt}/${TOP_LEVEL_RETRIES}...`);
-        await new Promise(r => setTimeout(r, 1500));
-      }
+    // Fire all quote requests in parallel: 1 single + 3 multi
+    const quotePromises = [
+      skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1).catch(err => {
+        console.log(`   ⚠️ Single quote error: ${err.message}`);
+        return null;
+      })
+    ];
 
-      // Step 1: Fetch single + multi quotes in parallel
-      try {
-        const [single, multi] = await Promise.all([
-          skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1).catch(err => {
-            console.log(`   ⚠️ Single quote error: ${err.message}`);
+    if (packagesCount > 1) {
+      // Fire 3 multi-package quotes in parallel to maximize carrier coverage
+      for (let i = 0; i < 3; i++) {
+        quotePromises.push(
+          skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount).catch(err => {
+            console.log(`   ⚠️ Multi quote ${i + 1} error: ${err.message}`);
             return null;
-          }),
-          packagesCount > 1
-            ? skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount).catch(err => {
-                console.log(`   ⚠️ Multi quote error: ${err.message}`);
-                return null;
-              })
-            : Promise.resolve(null)
-        ]);
-
-        if (single?.rates?.length > 0) singlePackageQuote = single;
-        if (multi?.rates?.length > 0) {
-          if (!bestMultiQuotationId) bestMultiQuotationId = multi.quotation_id;
-          multi.rates.forEach(rate => {
-            const key = `${rate.carrier}-${rate.service}`;
-            const existing = multiRatesMap.get(key);
-            if (!existing || rate.total_price < existing.total_price) {
-              multiRatesMap.set(key, { ...rate, quotation_id: multi.quotation_id });
-            }
-          });
-        }
-        console.log(`   ✅ Attempt ${topAttempt}: ${singlePackageQuote?.rates?.length || 0} single, ${multiRatesMap.size} multi`);
-      } catch (err) {
-        console.log(`   ⚠️ Quote error: ${err.message}`);
+          })
+        );
       }
-
-      // If we got rates from at least one source, proceed
-      if (singlePackageQuote?.rates?.length > 0 || multiRatesMap.size > 0) break;
     }
 
-    // Step 2: If multi-package quote is missing carriers that single has, retry multi only
-    if (packagesCount > 1 && singlePackageQuote?.rates?.length > 0) {
-      const singleCarriers = new Set(singlePackageQuote.rates.map(r => r.carrier));
-      const multiCarriers = new Set([...multiRatesMap.keys()].map(k => k.split('-')[0]));
-      const missingCarriers = [...singleCarriers].filter(c => !multiCarriers.has(c));
+    const quoteResults = await Promise.all(quotePromises);
+    const singleResult = quoteResults[0];
+    const multiResults = quoteResults.slice(1);
 
-      if (missingCarriers.length > 0) {
-        console.log(`   ⏳ Missing in multi: ${missingCarriers.join(', ')} — retrying multi...`);
-        for (let attempt = 1; attempt <= 2; attempt++) {
-          try {
-            await new Promise(r => setTimeout(r, 800));
-            const multiQuote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
-            if (multiQuote?.rates?.length > 0) {
-              if (!bestMultiQuotationId) bestMultiQuotationId = multiQuote.quotation_id;
-              multiQuote.rates.forEach(rate => {
-                const key = `${rate.carrier}-${rate.service}`;
-                const existing = multiRatesMap.get(key);
-                if (!existing || rate.total_price < existing.total_price) {
-                  multiRatesMap.set(key, { ...rate, quotation_id: multiQuote.quotation_id });
-                }
-              });
-              const nowMulti = new Set([...multiRatesMap.keys()].map(k => k.split('-')[0]));
-              const stillMissing = [...singleCarriers].filter(c => !nowMulti.has(c));
-              console.log(`   ✅ Multi retry ${attempt}: +${multiQuote.rates.length} rates (total: ${multiRatesMap.size})`);
-              if (stillMissing.length === 0) break;
-            }
-          } catch (err) {
-            console.log(`   ⚠️ Multi retry ${attempt} error: ${err.message}`);
+    if (singleResult?.rates?.length > 0) singlePackageQuote = singleResult;
+
+    // Merge all multi-package results — keep cheapest rate per carrier-service
+    for (const multi of multiResults) {
+      if (multi?.rates?.length > 0) {
+        if (!bestMultiQuotationId) bestMultiQuotationId = multi.quotation_id;
+        multi.rates.forEach(rate => {
+          const key = `${rate.carrier}-${rate.service}`;
+          const existing = multiRatesMap.get(key);
+          if (!existing || rate.total_price < existing.total_price) {
+            multiRatesMap.set(key, { ...rate, quotation_id: multi.quotation_id });
+          }
+        });
+      }
+    }
+
+    console.log(`   ✅ Quotes: ${singlePackageQuote?.rates?.length || 0} single carriers, ${multiRatesMap.size} multi carriers (from ${multiResults.filter(r => r?.rates?.length > 0).length}/3 successful multi quotes)`);
+
+    // If everything failed, retry once more
+    if ((!singlePackageQuote?.rates?.length) && multiRatesMap.size === 0) {
+      console.log(`   🔄 No rates from any quote, retrying...`);
+      await new Promise(r => setTimeout(r, 1500));
+      try {
+        const retry = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount > 1 ? packagesCount : 1);
+        if (retry?.rates?.length > 0) {
+          if (packagesCount > 1) {
+            bestMultiQuotationId = retry.quotation_id;
+            retry.rates.forEach(rate => {
+              multiRatesMap.set(`${rate.carrier}-${rate.service}`, { ...rate, quotation_id: retry.quotation_id });
+            });
+          } else {
+            singlePackageQuote = retry;
           }
         }
+      } catch (err) {
+        console.log(`   ⚠️ Retry error: ${err.message}`);
       }
     }
 
