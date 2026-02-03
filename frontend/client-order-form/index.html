@@ -4,14 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AXKAN - Souvenirs Personalizados</title>
-    <link rel="icon" type="image/png" href="/assets/images/LOGO-01.png">
-    <link rel="stylesheet" href="/client-order-form/styles.css">
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="stylesheet" href="./styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Mobile Hamburger Menu -->
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
+
+    <nav class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-header">
+            <img src="./logo.png" alt="AXKAN" class="mobile-menu-logo">
+            <button class="mobile-menu-close" onclick="closeMobileMenu()" aria-label="Cerrar menú">✕</button>
+        </div>
+
+        <div class="mobile-menu-content">
+            <a href="#" class="mobile-menu-item" onclick="closeMobileMenu(); document.getElementById('btn-lookup-orders').click();">
+                <span class="mobile-menu-icon">📦</span>
+                <span>Rastrear mi Pedido</span>
+            </a>
+
+            <a href="https://wa.me/5215538253251" target="_blank" class="mobile-menu-item">
+                <span class="mobile-menu-icon">💬</span>
+                <span>WhatsApp Iván</span>
+            </a>
+
+            <a href="https://wa.me/5215518942408" target="_blank" class="mobile-menu-item">
+                <span class="mobile-menu-icon">💬</span>
+                <span>WhatsApp Daniel</span>
+            </a>
+
+            <a href="https://vtanunciando.com" target="_blank" class="mobile-menu-item">
+                <span class="mobile-menu-icon">🛒</span>
+                <span>Ver Catálogo Completo</span>
+            </a>
+
+            <div class="mobile-menu-divider"></div>
+
+            <a href="#" class="mobile-menu-item" onclick="closeMobileMenu(); showTutorial();">
+                <span class="mobile-menu-icon">🎬</span>
+                <span>Ver Tutorial</span>
+            </a>
+
+            <a href="mailto:contacto@axkan.mx" class="mobile-menu-item">
+                <span class="mobile-menu-icon">✉️</span>
+                <span>Contacto por Email</span>
+            </a>
+        </div>
+
+        <div class="mobile-menu-footer">
+            <p>AXKAN - Souvenirs Personalizados</p>
+            <div class="mobile-menu-social">
+                <a href="https://instagram.com/axkan.mx" target="_blank" aria-label="Instagram">📸</a>
+                <a href="https://facebook.com/axkan.mx" target="_blank" aria-label="Facebook">👍</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="app-container">
+        <!-- Hamburger Button (mobile only) -->
+        <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Abrir menú">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
 
         <!-- STEP 1: Login/Account -->
         <section id="step-login" class="step active">
@@ -22,7 +80,7 @@
 
             <div class="header">
                 <div class="logo">
-                    <img src="/assets/images/LOGO-03.png" alt="AXKAN Logo">
+                    <img src="./logo.png" alt="AXKAN Logo">
                 </div>
                 <h1>Souvenirs Personalizados</h1>
                 <p class="subtitle">Imanes, Llaveros, Destapadores, Botones y más</p>
@@ -546,7 +604,7 @@
         <section id="step-success" class="step">
             <div class="success-container">
                 <div class="logo" style="margin-bottom: 24px;">
-                    <img src="/assets/images/LOGO-03.png" alt="AXKAN Logo" style="height: 100px;">
+                    <img src="./logo.png" alt="AXKAN Logo" style="height: 100px;">
                 </div>
                 <div class="success-icon">✅</div>
                 <h2>¡Pedido Enviado!</h2>
@@ -627,7 +685,196 @@
         </div>
     </div>
 
-    <script src="/client-order-form/order-form.js"></script>
+    <!-- Tutorial Video Popup -->
+    <div id="tutorial-popup" class="tutorial-overlay">
+        <div class="tutorial-modal">
+            <button class="tutorial-close" id="tutorial-close-btn" aria-label="Cerrar tutorial">✕</button>
+            <div class="tutorial-header">
+                <span class="tutorial-badge">Tutorial</span>
+                <h3 class="tutorial-title">¿Cómo hacer tu pedido?</h3>
+                <p class="tutorial-subtitle">Mira este video antes de empezar</p>
+            </div>
+            <div class="tutorial-video-wrap">
+                <video id="tutorial-video"
+                       controls
+                       playsinline
+                       autoplay
+                       muted
+                       preload="auto"
+                       poster="./logo.png">
+                    <source src="./tutorial.mp4" type="video/mp4">
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .tutorial-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            animation: tutorialFadeIn 0.3s ease;
+        }
+        .tutorial-overlay.hidden {
+            display: none;
+        }
+        @keyframes tutorialFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .tutorial-modal {
+            background: #fff;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 320px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            animation: tutorialSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes tutorialSlideUp {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .tutorial-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.08);
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+        .tutorial-close:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+        .tutorial-header {
+            padding: 14px 14px 8px;
+            text-align: center;
+        }
+        .tutorial-badge {
+            display: inline-block;
+            background: #e72a88;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 100px;
+            margin-bottom: 6px;
+        }
+        .tutorial-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #111;
+            margin: 0 0 2px;
+        }
+        .tutorial-subtitle {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+        }
+        .tutorial-video-wrap {
+            padding: 0 10px 10px;
+        }
+        .tutorial-video-wrap video {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+            background: #000;
+        }
+    </style>
+
+    <script>
+    (function() {
+        var popup = document.getElementById('tutorial-popup');
+        var closeBtn = document.getElementById('tutorial-close-btn');
+        var video = document.getElementById('tutorial-video');
+
+        function closePopup() {
+            if (video) { video.pause(); }
+            popup.classList.add('hidden');
+        }
+
+        closeBtn.addEventListener('click', closePopup);
+
+        popup.addEventListener('click', function(e) {
+            if (e.target === popup) closePopup();
+        });
+    })();
+    </script>
+
+    <script src="./order-form.js"></script>
+
+    <!-- Mobile Menu Script -->
+    <script>
+    function toggleMobileMenu() {
+        const menu = document.getElementById('mobile-menu');
+        const overlay = document.getElementById('mobile-menu-overlay');
+        const hamburger = document.getElementById('hamburger-btn');
+
+        menu.classList.toggle('active');
+        overlay.classList.toggle('active');
+        hamburger.classList.toggle('active');
+
+        // Prevent body scroll when menu is open
+        if (menu.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+
+    function closeMobileMenu() {
+        const menu = document.getElementById('mobile-menu');
+        const overlay = document.getElementById('mobile-menu-overlay');
+        const hamburger = document.getElementById('hamburger-btn');
+
+        menu.classList.remove('active');
+        overlay.classList.remove('active');
+        hamburger.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function showTutorial() {
+        const popup = document.getElementById('tutorial-popup');
+        const video = document.getElementById('tutorial-video');
+        popup.classList.remove('hidden');
+        if (video) {
+            video.currentTime = 0;
+            video.play().catch(() => {}); // Ignore autoplay errors
+        }
+    }
+
+    // Close menu on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeMobileMenu();
+        }
+    });
+
+    // Close menu on window resize if switching to desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            closeMobileMenu();
+        }
+    });
+    </script>
 </body>
 </html>
 <!-- Trigger Vercel redeploy Sun Dec  7 22:38:36 CST 2025 -->

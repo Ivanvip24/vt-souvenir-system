@@ -107,9 +107,10 @@ body {
     text-align: center;
     border-bottom: 1px solid var(--border-light);
     position: relative;
+    overflow: hidden;
 }
 
-/* Colorful top border accent */
+/* Colorful top border accent - animated */
 .header::before {
     content: '';
     position: absolute;
@@ -122,12 +123,35 @@ body {
         var(--axkan-green),
         var(--axkan-orange),
         var(--axkan-turquoise),
-        var(--axkan-red)
+        var(--axkan-red),
+        var(--axkan-pink)
     );
+    background-size: 200% 100%;
+    animation: headerGradient 8s linear infinite;
+}
+
+@keyframes headerGradient {
+    0% { background-position: 0% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Subtle background pattern for header */
+.header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 80%, rgba(233, 30, 99, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 152, 0, 0.03) 0%, transparent 50%);
+    pointer-events: none;
 }
 
 .logo {
     margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
 }
 
 .logo img {
@@ -135,6 +159,12 @@ body {
     width: auto;
     display: block;
     margin: 0 auto;
+    filter: drop-shadow(0 4px 8px rgba(233, 30, 99, 0.15));
+    transition: transform 0.3s ease;
+}
+
+.logo img:hover {
+    transform: scale(1.05);
 }
 
 /* Legacy emoji logo fallback */
@@ -1033,7 +1063,263 @@ body {
 }
 
 /* ==========================================
-   RESPONSIVE (Mobile)
+   MOBILE HAMBURGER MENU
+   ========================================== */
+
+/* Hamburger button - hidden on desktop */
+.hamburger-btn {
+    display: none;
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1001;
+    width: 44px;
+    height: 44px;
+    background: white;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-btn:active {
+    transform: scale(0.95);
+}
+
+.hamburger-line {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--gray-700);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* Menu overlay */
+.mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1002;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+.mobile-menu-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* Mobile slide-out menu */
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 280px;
+    max-width: 85vw;
+    height: 100%;
+    background: white;
+    z-index: 1003;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-menu.active {
+    right: 0;
+}
+
+.mobile-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid var(--gray-200);
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.05), rgba(255, 152, 0, 0.05));
+}
+
+.mobile-menu-logo {
+    height: 40px;
+    width: auto;
+}
+
+.mobile-menu-close {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--gray-100);
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.mobile-menu-close:hover {
+    background: var(--gray-200);
+}
+
+.mobile-menu-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 0;
+}
+
+.mobile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    color: var(--gray-700);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.mobile-menu-item:hover,
+.mobile-menu-item:active {
+    background: var(--gray-50);
+    border-left-color: var(--axkan-pink);
+    color: var(--axkan-pink);
+}
+
+.mobile-menu-icon {
+    font-size: 20px;
+    width: 28px;
+    text-align: center;
+}
+
+.mobile-menu-divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 12px 20px;
+}
+
+.mobile-menu-footer {
+    padding: 20px;
+    border-top: 1px solid var(--gray-200);
+    text-align: center;
+    background: var(--gray-50);
+}
+
+.mobile-menu-footer p {
+    font-size: 12px;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+}
+
+.mobile-menu-social {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+.mobile-menu-social a {
+    font-size: 24px;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.mobile-menu-social a:hover {
+    transform: scale(1.1);
+}
+
+/* Show hamburger on mobile */
+@media (max-width: 768px) {
+    .hamburger-btn {
+        display: flex;
+    }
+
+    /* Adjust header padding to account for hamburger */
+    .header {
+        padding-right: 70px;
+    }
+}
+
+/* Dark mode support for menu */
+@media (prefers-color-scheme: dark) {
+    .hamburger-btn {
+        background: var(--bg-secondary);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .hamburger-line {
+        background: #f1f5f9;
+    }
+
+    .mobile-menu {
+        background: var(--bg-secondary);
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .mobile-menu-header {
+        border-bottom-color: var(--border-light);
+        background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1));
+    }
+
+    .mobile-menu-close {
+        background: var(--bg-tertiary);
+        color: #f1f5f9;
+    }
+
+    .mobile-menu-close:hover {
+        background: #475569;
+    }
+
+    .mobile-menu-item {
+        color: #cbd5e1;
+    }
+
+    .mobile-menu-item:hover,
+    .mobile-menu-item:active {
+        background: var(--bg-tertiary);
+        color: var(--axkan-pink);
+    }
+
+    .mobile-menu-divider {
+        background: var(--border-light);
+    }
+
+    .mobile-menu-footer {
+        border-top-color: var(--border-light);
+        background: var(--bg-tertiary);
+    }
+
+    .mobile-menu-footer p {
+        color: #94a3b8;
+    }
+}
+
+/* ==========================================
+   RESPONSIVE (Tablet)
    ========================================== */
 
 @media (max-width: 768px) {
@@ -1060,6 +1346,7 @@ body {
     .products-grid {
         padding: 20px;
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 
     .product-image {
@@ -1069,6 +1356,351 @@ body {
 
     .form-row {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================
+   RESPONSIVE (Mobile - Small Screens)
+   ========================================== */
+
+@media (max-width: 480px) {
+    /* Reduce overall padding */
+    .header {
+        padding: 20px 16px;
+    }
+
+    .header h1 {
+        font-size: 20px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+    }
+
+    .logo img {
+        height: 50px;
+    }
+
+    .card {
+        padding: 20px 16px;
+    }
+
+    .card h2 {
+        font-size: 19px;
+    }
+
+    .help-text {
+        font-size: 13px;
+    }
+
+    /* Form elements - larger touch targets */
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        padding: 16px;
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+
+    .form-group label {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    /* Buttons - minimum 48px height for touch */
+    .btn {
+        padding: 16px 20px;
+        font-size: 15px;
+        min-height: 48px;
+    }
+
+    .btn-large {
+        padding: 18px;
+        font-size: 16px;
+    }
+
+    .btn-back {
+        min-height: 48px;
+        padding: 12px 16px;
+    }
+
+    /* Product grid - full width with compact cards */
+    .products-grid {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .product-card {
+        padding: 16px;
+        border-radius: var(--radius-md);
+    }
+
+    .product-header {
+        gap: 12px;
+    }
+
+    .product-image {
+        width: 70px;
+        height: 70px;
+        border-radius: var(--radius-sm);
+    }
+
+    .product-info h3 {
+        font-size: 14px;
+    }
+
+    .product-category {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .product-price {
+        font-size: 18px;
+    }
+
+    .product-price span {
+        font-size: 12px;
+    }
+
+    /* Quantity controls - larger for touch */
+    .quantity-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 26px;
+    }
+
+    .quantity-input {
+        width: 80px;
+        font-size: 20px;
+        padding: 14px 8px;
+    }
+
+    .product-quantity {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .quantity-controls {
+        justify-content: center;
+    }
+
+    /* Sticky header - compact */
+    .sticky-header {
+        padding: 12px 16px;
+    }
+
+    .sticky-header h2 {
+        font-size: 16px;
+    }
+
+    /* Sticky footer - more compact */
+    .sticky-footer {
+        padding: 14px 16px;
+        padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    }
+
+    .summary-row {
+        font-size: 14px;
+    }
+
+    .summary-row.deposit {
+        font-size: 15px;
+    }
+
+    /* Info boxes */
+    .info-box {
+        padding: 14px;
+        font-size: 13px;
+    }
+
+    .info-box .icon {
+        font-size: 20px;
+    }
+
+    .deposit-info-banner {
+        margin: 0 16px 16px;
+        padding: 12px 14px;
+    }
+
+    .deposit-info-icon {
+        font-size: 24px;
+    }
+
+    .deposit-info-text strong {
+        font-size: 13px;
+    }
+
+    .deposit-info-text p {
+        font-size: 12px;
+    }
+
+    /* Payment section */
+    .payment-card {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .payment-icon {
+        font-size: 28px;
+    }
+
+    .payment-info strong {
+        font-size: 14px;
+    }
+
+    .payment-info p {
+        font-size: 12px;
+    }
+
+    /* Bank details */
+    .bank-details {
+        padding: 16px;
+    }
+
+    .bank-info {
+        padding: 14px;
+    }
+
+    .info-row {
+        padding: 8px 0;
+        font-size: 13px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Order summary */
+    .order-summary-card {
+        padding: 16px;
+    }
+
+    .order-item-name {
+        font-size: 14px;
+    }
+
+    .order-item-details {
+        font-size: 12px;
+    }
+
+    /* File upload */
+    .file-upload-area {
+        padding: 20px;
+    }
+
+    .upload-icon {
+        font-size: 32px;
+    }
+
+    /* Success screen */
+    .success-container {
+        padding: 40px 16px;
+    }
+
+    .success-icon {
+        font-size: 60px;
+    }
+
+    .success-container h2 {
+        font-size: 24px;
+    }
+
+    /* Search container */
+    .product-search-container {
+        padding: 0 12px 12px;
+    }
+
+    .product-search {
+        padding: 12px;
+    }
+
+    .product-search input {
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+
+    /* Promo code */
+    .promo-code-section {
+        padding: 8px 12px;
+    }
+
+    .promo-code-input-group input {
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    .btn-apply-promo {
+        padding: 12px 14px;
+    }
+
+    /* Size selector - larger buttons */
+    .size-btn {
+        width: 56px;
+        height: 56px;
+        font-size: 18px;
+    }
+
+    /* Step indicator */
+    .step-indicator {
+        font-size: 12px;
+    }
+}
+
+/* ==========================================
+   RESPONSIVE (Extra Small - 320px phones)
+   ========================================== */
+
+@media (max-width: 360px) {
+    .header h1 {
+        font-size: 18px;
+    }
+
+    .logo img {
+        height: 45px;
+    }
+
+    .card h2 {
+        font-size: 17px;
+    }
+
+    .quantity-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
+    }
+
+    .quantity-input {
+        width: 70px;
+        font-size: 18px;
+    }
+
+    .product-image {
+        width: 60px;
+        height: 60px;
+    }
+
+    .product-info h3 {
+        font-size: 13px;
+    }
+
+    .product-price {
+        font-size: 16px;
+    }
+
+    .btn-large {
+        font-size: 15px;
+        padding: 16px;
+    }
+}
+
+/* ==========================================
+   SAFE AREA INSETS (iPhone notch/home bar)
+   ========================================== */
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .sticky-footer {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+
+    .success-container {
+        padding-bottom: calc(40px + env(safe-area-inset-bottom));
     }
 }
 
@@ -1609,6 +2241,23 @@ details[open] .notes-summary {
     .header {
         background: var(--bg-secondary);
         border-bottom-color: var(--border-light);
+    }
+
+    .header::after {
+        background: radial-gradient(circle at 20% 80%, rgba(233, 30, 99, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(255, 152, 0, 0.08) 0%, transparent 50%);
+    }
+
+    .logo img {
+        filter: drop-shadow(0 4px 12px rgba(233, 30, 99, 0.3));
+    }
+
+    /* Enhanced card text for dark mode */
+    .card h2 {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .card {
@@ -2302,6 +2951,257 @@ details[open] .notes-summary {
     .size-btn.selected {
         background: transparent;
         color: var(--axkan-pink);
+    }
+}
+
+/* ==========================================
+   ENHANCED VISUAL POLISH & MICRO-INTERACTIONS
+   ========================================== */
+
+/* Smooth page transitions */
+.step {
+    animation: stepFadeIn 0.4s ease-out;
+}
+
+@keyframes stepFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Enhanced button press feedback */
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary:active {
+    transform: scale(0.97);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Input focus glow animation */
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    animation: inputFocusGlow 0.3s ease;
+}
+
+@keyframes inputFocusGlow {
+    0% { box-shadow: 0 0 0 0 rgba(233, 30, 99, 0.3); }
+    100% { box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1); }
+}
+
+/* Product card hover lift - smoother */
+.product-card {
+    transform: translateY(0);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.2s ease;
+}
+
+.product-card:active {
+    transform: scale(0.98);
+}
+
+/* Quantity button bounce */
+.quantity-btn:active {
+    transform: scale(0.9);
+    transition: transform 0.1s;
+}
+
+/* Enhanced progress bar animation */
+.progress {
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(90deg, #E91E63, #FF4081, #E91E63);
+    background-size: 200% 100%;
+    animation: progressShimmer 2s linear infinite;
+}
+
+@keyframes progressShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Floating labels effect on focus */
+.form-group {
+    position: relative;
+}
+
+/* Enhanced card shadows on scroll */
+.sticky-header {
+    transition: box-shadow 0.2s ease;
+}
+
+.sticky-header.scrolled {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Payment option selection animation */
+.payment-option input[type="radio"]:checked + .payment-card {
+    animation: paymentSelect 0.3s ease;
+}
+
+@keyframes paymentSelect {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Success checkmark bounce */
+.success-icon {
+    animation: successBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes successBounce {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Deposit banner subtle pulse */
+.deposit-info-banner {
+    animation: depositPulse 3s ease-in-out infinite;
+}
+
+@keyframes depositPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(233, 30, 99, 0.1); }
+    50% { box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.05); }
+}
+
+/* Loading spinner enhanced */
+.spinner {
+    border-width: 3px;
+    animation: spin 0.7s linear infinite;
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Better tap highlight removal */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Enhanced focus visible for accessibility */
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--axkan-pink);
+    outline-offset: 2px;
+}
+
+/* Subtle gradient text for headers */
+.card h2 {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Enhanced sticky footer gradient border */
+.sticky-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        var(--axkan-pink),
+        var(--axkan-orange),
+        var(--axkan-turquoise),
+        transparent
+    );
+}
+
+.sticky-footer {
+    position: relative;
+}
+
+/* Product selected checkmark */
+.product-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    background: var(--axkan-pink);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    animation: checkPop 0.2s ease;
+}
+
+@keyframes checkPop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Enhanced WhatsApp button glow */
+.success-actions a[href*="wa.me"]:hover {
+    box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Form validation success state */
+.form-group input.valid {
+    border-color: var(--success);
+}
+
+/* Returning client banner animation */
+.returning-client-banner {
+    animation: slideInBanner 0.4s ease-out;
+}
+
+@keyframes slideInBanner {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Promo applied celebration */
+.promo-applied-banner {
+    animation: promoSuccess 0.4s ease-out;
+}
+
+@keyframes promoSuccess {
+    0% { transform: scale(0.95); opacity: 0; }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Touch-friendly scrollbar for mobile */
+@media (max-width: 768px) {
+    ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
     }
 }
 

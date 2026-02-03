@@ -393,6 +393,74 @@ const BANK_ACCOUNTS = {
 /**
  * Update bank information displayed based on sales rep
  */
+/**
+ * Show visual indicator that a referral link was used
+ */
+function showReferralIndicator(salesRep) {
+  // Create referral badge container
+  const badge = document.createElement('div');
+  badge.id = 'referral-badge';
+
+  // Create inner badge
+  const inner = document.createElement('div');
+  inner.style.cssText = `
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1000;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: slideInLeft 0.4s ease-out;
+  `;
+
+  // Create icon
+  const icon = document.createElement('span');
+  icon.style.fontSize = '14px';
+  icon.textContent = '🎯';
+
+  // Create text
+  const text = document.createElement('span');
+  text.textContent = 'Referido por ' + capitalizeFirst(salesRep);
+
+  inner.appendChild(icon);
+  inner.appendChild(text);
+  badge.appendChild(inner);
+
+  // Add animation keyframes if not already present
+  if (!document.getElementById('referral-animations')) {
+    const style = document.createElement('style');
+    style.id = 'referral-animations';
+    style.textContent = `
+      @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(badge);
+  console.log('🎯 Referral indicator shown for: ' + salesRep);
+}
+
+/**
+ * Capitalize first letter of string
+ */
+function capitalizeFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+/**
+ * Update bank information displayed based on sales rep
+ */
 function updateBankInfoForSalesRep(salesRep) {
   const account = BANK_ACCOUNTS[salesRep] || BANK_ACCOUNTS.default;
   const isAlternateAccount = salesRep === 'daniel' || salesRep === 'sarahi';
@@ -455,6 +523,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update bank info based on sales rep
     updateBankInfoForSalesRep(salesRep.trim().toLowerCase());
+
+    // Show referral indicator
+    showReferralIndicator(salesRep.trim());
   }
 
   initializeEventListeners();
