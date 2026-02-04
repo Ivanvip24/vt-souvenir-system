@@ -816,7 +816,12 @@ function showShippingLabelModal(action) {
         const postalCode = client.postal || client.postal_code || '';
         modalHtml += `
             <div class="ai-action-section">
-                <label>Cliente</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="margin-bottom: 0;">Cliente</label>
+                    <button onclick="changeShippingClient()" class="ai-change-client-btn">
+                        ✏️ Cambiar
+                    </button>
+                </div>
                 <div class="ai-action-info-box">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
@@ -1178,6 +1183,35 @@ function closeAiActionModal(event) {
     }
     currentAction = null;
     selectedQuoteData = null;
+}
+
+/**
+ * Change client - go back to client search
+ */
+function changeShippingClient() {
+    if (!currentAction) return;
+
+    // Clear the client from current action
+    currentAction.data.client = null;
+    currentAction.data.order = null;
+    currentAction.data.suggestedOrder = null;
+    currentAction.data.recentOrders = null;
+    selectedQuoteData = null;
+
+    // Remove current modal
+    const modal = document.getElementById('ai-action-modal');
+    if (modal) {
+        modal.remove();
+    }
+
+    // Re-show modal with search box (no client)
+    showShippingLabelModal(currentAction);
+
+    // Focus on search input
+    setTimeout(() => {
+        const searchInput = document.getElementById('ai-client-search');
+        if (searchInput) searchInput.focus();
+    }, 100);
 }
 
 /**

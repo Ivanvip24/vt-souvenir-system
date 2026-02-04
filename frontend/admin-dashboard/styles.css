@@ -5396,6 +5396,23 @@ textarea:disabled {
   border-color: #f59e0b;
 }
 
+.ai-change-client-btn {
+  background: transparent;
+  border: 1px solid var(--gray-300);
+  color: var(--gray-600);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ai-change-client-btn:hover {
+  background: var(--gray-100);
+  border-color: var(--gray-400);
+  color: var(--gray-800);
+}
+
 .ai-action-select {
   width: 100%;
   padding: 12px 14px;
