@@ -7,6 +7,7 @@
     { "source": "/sitemap.xml", "destination": "/landing/sitemap.xml" },
     { "source": "/robots.txt", "destination": "/landing/robots.txt" },
     { "source": "/assets/:path*", "destination": "/landing/assets/:path*" },
+    { "source": "/fonts/:path*", "destination": "/landing/fonts/:path*" },
     { "source": "/pedidos", "destination": "/client-order-form/index.html" },
     { "source": "/order-form", "destination": "/client-order-form/index.html" },
     { "source": "/admin/login", "destination": "/admin-dashboard/login.html" },
