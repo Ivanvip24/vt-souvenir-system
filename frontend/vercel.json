@@ -1,5 +1,10 @@
 {
   "rewrites": [
+    { "source": "/styles.css", "destination": "/client-order-form/styles.css" },
+    { "source": "/order-form.js", "destination": "/client-order-form/order-form.js" },
+    { "source": "/logo.png", "destination": "/client-order-form/logo.png" },
+    { "source": "/favicon.png", "destination": "/client-order-form/favicon.png" },
+    { "source": "/tutorial.mp4", "destination": "/client-order-form/tutorial.mp4" },
     { "source": "/", "destination": "/landing/index.html" },
     { "source": "/landing", "destination": "/landing/index.html" },
     { "source": "/souvenirs", "destination": "/landing/souvenirs/index.html" },
@@ -9,7 +14,9 @@
     { "source": "/assets/:path*", "destination": "/landing/assets/:path*" },
     { "source": "/fonts/:path*", "destination": "/landing/fonts/:path*" },
     { "source": "/pedidos", "destination": "/client-order-form/index.html" },
+    { "source": "/pedidos/:path*", "destination": "/client-order-form/:path*" },
     { "source": "/order-form", "destination": "/client-order-form/index.html" },
+    { "source": "/order-form/:path*", "destination": "/client-order-form/:path*" },
     { "source": "/admin/login", "destination": "/admin-dashboard/login.html" },
     { "source": "/admin", "destination": "/admin-dashboard/index.html" },
     { "source": "/admin/", "destination": "/admin-dashboard/index.html" }
