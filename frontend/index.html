@@ -58,7 +58,7 @@
             src: url('/fonts/rl-aqva-black.otf') format('opentype');
             font-weight: 900;
             font-style: normal;
-            font-display: swap;
+            font-display: optional; /* Use fallback if font doesn't load quickly */
         }
 
         @font-face {
@@ -66,7 +66,7 @@
             src: url('/fonts/objektiv-vf.otf') format('opentype');
             font-weight: 100 900;
             font-style: normal;
-            font-display: swap;
+            font-display: optional; /* Use fallback if font doesn't load quickly */
         }
 
         :root {
@@ -204,6 +204,86 @@
         .nav-cta:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(231, 42, 136, 0.4);
+        }
+
+        /* Hamburger Menu Button */
+        .nav-hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 32px;
+            height: 32px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            z-index: 110;
+        }
+
+        .nav-hamburger span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: var(--gray-800);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .nav-hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .nav-hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            z-index: 99;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .mobile-menu.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-menu a {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .mobile-menu a:hover {
+            color: var(--rosa-mexicano);
+        }
+
+        .mobile-menu .nav-cta {
+            font-size: 1.25rem;
+            padding: 1rem 2rem;
         }
 
         /* ═══════════════════════════════════════════════════════════
@@ -928,6 +1008,14 @@
                 display: none;
             }
 
+            .nav-hamburger {
+                display: flex;
+            }
+
+            .mobile-menu {
+                display: flex;
+            }
+
             .features-strip {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -1152,7 +1240,21 @@
             <li><a href="/souvenirs">Catálogo</a></li>
             <li><a href="https://axkan-pedidos.vercel.app/" class="nav-cta">Hacer Pedido</a></li>
         </ul>
+        <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu" aria-hidden="true">
+        <a href="#productos">Productos</a>
+        <a href="#calidad">Calidad</a>
+        <a href="#mayoreo">Mayoreo</a>
+        <a href="/souvenirs">Catálogo</a>
+        <a href="https://axkan-pedidos.vercel.app/" class="nav-cta">Hacer Pedido</a>
+    </div>
 
     <!-- ═══════════════════════════════════════════════════════════
          HERO SECTION — Diagonal Split
@@ -1489,6 +1591,31 @@
                 }
             });
         });
+
+        // Mobile hamburger menu
+        const hamburger = document.querySelector('.nav-hamburger');
+        const mobileMenu = document.querySelector('.mobile-menu');
+
+        if (hamburger && mobileMenu) {
+            hamburger.addEventListener('click', function() {
+                const isActive = hamburger.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                hamburger.setAttribute('aria-expanded', isActive);
+                mobileMenu.setAttribute('aria-hidden', !isActive);
+                document.body.style.overflow = isActive ? 'hidden' : '';
+            });
+
+            // Close menu when clicking a link
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', function() {
+                    hamburger.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                    hamburger.setAttribute('aria-expanded', 'false');
+                    mobileMenu.setAttribute('aria-hidden', 'true');
+                    document.body.style.overflow = '';
+                });
+            });
+        }
     </script>
 
     <!-- ═══════════════════════════════════════════════════════════
