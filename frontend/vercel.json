@@ -17,6 +17,8 @@
     { "source": "/pedidos/:path*", "destination": "/client-order-form/:path*" },
     { "source": "/order-form", "destination": "/client-order-form/index.html" },
     { "source": "/order-form/:path*", "destination": "/client-order-form/:path*" },
+    { "source": "/envio", "destination": "/shipping-form/index.html" },
+    { "source": "/envio/:path*", "destination": "/shipping-form/:path*" },
     { "source": "/admin/login", "destination": "/admin-dashboard/login.html" },
     { "source": "/admin", "destination": "/admin-dashboard/index.html" },
     { "source": "/admin/", "destination": "/admin-dashboard/index.html" }

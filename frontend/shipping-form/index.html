@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AXKAN - Datos de Envio</title>
+    <link rel="icon" type="image/png" href="/assets/LOGO-03.png">
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app">
+        <!-- Background decoration -->
+        <div class="bg-decoration">
+            <div class="bg-circle bg-circle-1"></div>
+            <div class="bg-circle bg-circle-2"></div>
+            <div class="bg-circle bg-circle-3"></div>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <img src="/assets/LOGO-03.png" alt="AXKAN" class="logo">
+            <div class="header-text">
+                <h1>Datos de Envio</h1>
+                <p>Para que tu paquete llegue perfecto</p>
+            </div>
+        </header>
+
+        <!-- Progress bar -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-steps">
+                <div class="progress-step active" data-step="1">
+                    <div class="step-dot">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <span>Contacto</span>
+                </div>
+                <div class="progress-step" data-step="2">
+                    <div class="step-dot">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                    <span>Direccion</span>
+                </div>
+                <div class="progress-step" data-step="3">
+                    <div class="step-dot">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <span>Listo</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Contact Info -->
+        <section class="step active" id="step-1">
+            <div class="card">
+                <div class="card-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <h2>Tus datos de contacto</h2>
+                <p class="card-subtitle">Necesitamos esto para coordinar la entrega</p>
+
+                <!-- Returning client banner (hidden by default) -->
+                <div class="returning-banner" id="returning-banner" style="display: none;">
+                    <div class="returning-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                    </div>
+                    <div>
+                        <strong id="returning-name">Bienvenido de nuevo!</strong>
+                        <p>Ya tenemos tus datos guardados</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-destination">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        Nombre del destino
+                    </label>
+                    <input type="text" id="input-destination" placeholder='Ej: "Oaxaca", "Cancun", "Huasteca Potosina"' required>
+                    <span class="field-hint">El lugar de donde son tus imanes</span>
+                    <span class="field-error" id="error-destination"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-name">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Nombre completo
+                    </label>
+                    <input type="text" id="input-name" placeholder="Ej: Maria Gonzalez" autocomplete="name" required>
+                    <span class="field-hint">Nombre de la persona que va a recibir el paquete</span>
+                    <span class="field-error" id="error-name"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-phone">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        Telefono
+                    </label>
+                    <input type="tel" id="input-phone" placeholder="5512345678" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" autocomplete="tel" required>
+                    <span class="field-hint">10 digitos, para contactarte sobre tu envio</span>
+                    <span class="field-error" id="error-phone"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-email">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        Correo electronico
+                    </label>
+                    <input type="email" id="input-email" placeholder="tucorreo@ejemplo.com" autocomplete="email" required>
+                    <span class="field-hint">Te enviaremos la confirmacion aqui</span>
+                    <span class="field-error" id="error-email"></span>
+                </div>
+
+                <button class="btn-primary" id="btn-step1" onclick="goToStep(2)">
+                    Continuar
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- Step 2: Address -->
+        <section class="step" id="step-2">
+            <div class="card">
+                <div class="card-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <h2>Direccion de envio</h2>
+                <p class="card-subtitle">A donde enviamos tu paquete?</p>
+
+                <div class="info-tip">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span>Empieza con tu codigo postal y llenaremos automaticamente el estado, ciudad y colonia</span>
+                </div>
+
+                <!-- Postal Code - triggers auto-fill -->
+                <div class="form-group form-group-highlight">
+                    <label for="input-postal">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                        Codigo Postal
+                    </label>
+                    <input type="text" id="input-postal" placeholder="Ej: 03100" maxlength="5" pattern="[0-9]{5}" inputmode="numeric" autocomplete="postal-code" required>
+                    <span class="field-hint" id="postal-hint">5 digitos</span>
+                    <span class="field-error" id="error-postal"></span>
+                    <div class="postal-loading" id="postal-loading" style="display: none;">
+                        <div class="spinner-small"></div>
+                        <span>Buscando...</span>
+                    </div>
+                </div>
+
+                <!-- Auto-filled row: State + City -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-state">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            Estado
+                        </label>
+                        <input type="text" id="input-state" placeholder="Se llena automaticamente" autocomplete="address-level1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-city">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="22" height="16" rx="2"/><path d="M1 10h22"/><path d="M6 6V2"/><path d="M18 6V2"/></svg>
+                            Ciudad / Municipio
+                        </label>
+                        <input type="text" id="input-city" placeholder="Se llena automaticamente" autocomplete="address-level2" required>
+                    </div>
+                </div>
+
+                <!-- Colonia -->
+                <div class="form-group">
+                    <label for="input-colonia">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        Colonia
+                    </label>
+                    <div id="colonia-container">
+                        <input type="text" id="input-colonia" placeholder="Se llena automaticamente" required>
+                    </div>
+                </div>
+
+                <!-- Street + Number -->
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label for="input-street">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                            Calle
+                        </label>
+                        <input type="text" id="input-street" placeholder="Ej: Av. Insurgentes Sur" autocomplete="address-line1" required>
+                        <span class="field-hint">Solo el nombre de la calle, avenida o privada</span>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="input-number">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                            Numero exterior
+                        </label>
+                        <input type="text" id="input-number" placeholder="Ej: 51" autocomplete="address-line2" required>
+                        <span class="field-hint">Sin numero? Escribe 00</span>
+                    </div>
+                </div>
+
+                <!-- References -->
+                <div class="form-group">
+                    <label for="input-references">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Referencias de ubicacion
+                        <span class="optional-tag">Opcional</span>
+                    </label>
+                    <input type="text" id="input-references" placeholder='Ej: "Casa naranja, al lado de una tienda, porton blanco"' maxlength="150" autocomplete="off">
+                    <span class="field-hint">Descripcion breve para que el repartidor encuentre tu domicilio</span>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn-secondary" onclick="goToStep(1)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        Atras
+                    </button>
+                    <button class="btn-primary" id="btn-step2" onclick="goToStep(3)">
+                        Confirmar
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Confirmation / Success -->
+        <section class="step" id="step-3">
+            <div class="card card-success">
+                <!-- Loading state -->
+                <div id="submit-loading" style="display: none;">
+                    <div class="spinner-large"></div>
+                    <h2>Guardando tus datos...</h2>
+                    <p class="card-subtitle">Solo un momento</p>
+                </div>
+
+                <!-- Success state -->
+                <div id="submit-success" style="display: none;">
+                    <div class="success-animation">
+                        <svg class="checkmark" viewBox="0 0 52 52">
+                            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                        </svg>
+                    </div>
+                    <h2>Datos guardados!</h2>
+                    <p class="card-subtitle">Tu direccion de envio quedo registrada correctamente</p>
+
+                    <!-- Summary card -->
+                    <div class="summary-card" id="summary-card">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="success-actions">
+                        <a href="https://axkan.art" class="btn-outline">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            Ir a axkan.art
+                        </a>
+                        <a href="https://wa.me/5215538253251" target="_blank" class="btn-outline btn-whatsapp">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            WhatsApp
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Error state -->
+                <div id="submit-error" style="display: none;">
+                    <div class="error-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    </div>
+                    <h2>Algo salio mal</h2>
+                    <p class="card-subtitle" id="error-message">No pudimos guardar tus datos. Intenta de nuevo.</p>
+                    <button class="btn-primary" onclick="goToStep(2)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Intentar de nuevo
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>AXKAN &mdash; Souvenirs Premium de Mexico</p>
+            <a href="https://axkan.art">axkan.art</a>
+        </footer>
+    </div>
+
+    <script src="./shipping-form.js"></script>
+</body>
+</html>

@@ -829,6 +829,126 @@ router.get('/orders/:orderId/status', async (req, res) => {
 });
 
 /**
+ * POST /api/client/address/save
+ * Save/update client shipping address (standalone - no order required)
+ * Used by the shipping address form at /envio
+ */
+router.post('/address/save', async (req, res) => {
+  try {
+    const {
+      destinationName,
+      clientName,
+      clientPhone,
+      clientEmail,
+      clientStreet,
+      clientStreetNumber,
+      clientColonia,
+      clientCity,
+      clientState,
+      clientPostal,
+      clientReferences,
+    } = req.body;
+
+    // Validation
+    if (!clientName || !clientPhone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nombre y telefono son requeridos'
+      });
+    }
+
+    if (!/^\d{10}$/.test(clientPhone)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Telefono debe ser de 10 digitos'
+      });
+    }
+
+    if (!clientPostal || !/^\d{5}$/.test(clientPostal)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Codigo postal debe ser de 5 digitos'
+      });
+    }
+
+    if (!clientStreet || !clientCity || !clientState) {
+      return res.status(400).json({
+        success: false,
+        error: 'Calle, ciudad y estado son requeridos'
+      });
+    }
+
+    const fullAddress = [clientStreet, clientStreetNumber].filter(Boolean).join(' ');
+
+    // Check if client exists
+    const existing = await query('SELECT id FROM clients WHERE phone = $1', [clientPhone]);
+
+    if (existing.rows.length > 0) {
+      await query(
+        `UPDATE clients SET
+         name = $1,
+         email = $2,
+         address = $3,
+         street = $4,
+         street_number = $5,
+         colonia = $6,
+         city = $7,
+         state = $8,
+         postal = $9,
+         reference_notes = $10,
+         updated_at = CURRENT_TIMESTAMP
+         WHERE phone = $11`,
+        [
+          clientName,
+          clientEmail || null,
+          fullAddress,
+          clientStreet,
+          clientStreetNumber || '',
+          clientColonia || '',
+          clientCity,
+          clientState,
+          clientPostal,
+          clientReferences ? clientReferences.substring(0, 35) : '',
+          clientPhone
+        ]
+      );
+    } else {
+      await query(
+        `INSERT INTO clients (name, phone, email, address, street, street_number, colonia, city, state, postal, reference_notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [
+          clientName,
+          clientPhone,
+          clientEmail || null,
+          fullAddress,
+          clientStreet,
+          clientStreetNumber || '',
+          clientColonia || '',
+          clientCity,
+          clientState,
+          clientPostal,
+          clientReferences ? clientReferences.substring(0, 35) : ''
+        ]
+      );
+    }
+
+    console.log(`📦 Client address saved via /envio form: ${clientName} (${clientPhone}) - Destino: ${destinationName || 'N/A'}`);
+
+    res.json({
+      success: true,
+      message: 'Direccion guardada correctamente'
+    });
+
+  } catch (error) {
+    console.error('Error saving client address:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al guardar la direccion'
+    });
+  }
+});
+
+/**
  * POST /api/client/info
  * Get client info by phone - returns saved address even if no active orders
  */
