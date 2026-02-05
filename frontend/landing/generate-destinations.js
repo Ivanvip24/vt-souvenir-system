@@ -40,7 +40,7 @@ const destinations = [
     longDescription: 'Cancún es uno de los destinos turísticos más visitados de México. Nuestros souvenirs capturan la esencia del Caribe mexicano: playas de arena blanca, el azul turquesa del mar, la zona hotelera, ruinas mayas como Tulum y Chichén Itzá, y la vibrante vida nocturna. Cada imán y llavero AXKAN de Cancún es un recuerdo premium con corte láser de precisión.',
     keywords: 'souvenirs cancun, imanes cancun, recuerdos cancun, magnets cancun mexico, llaveros cancun, regalos cancun, souvenir playa del carmen, souvenir riviera maya, recuerdos quintana roo',
     relatedDestinations: ['playa-del-carmen', 'tulum', 'merida'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'caribe'
   },
   {
@@ -51,7 +51,7 @@ const destinations = [
     longDescription: 'La Ciudad de México es el corazón cultural de todo el país. Nuestros souvenirs representan los íconos más emblemáticos de la capital: el Ángel de la Independencia, el Palacio de Bellas Artes, la Catedral Metropolitana, el Zócalo, Chapultepec, Coyoacán y la arquitectura colonial del Centro Histórico. Cada pieza AXKAN es un tributo a la grandeza de la CDMX.',
     keywords: 'souvenirs cdmx, imanes ciudad de mexico, recuerdos cdmx, souvenirs mexico city, llaveros cdmx, regalos ciudad de mexico, souvenir zocalo, souvenir bellas artes, recuerdos df',
     relatedDestinations: ['teotihuacan', 'puebla', 'guanajuato'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'centro'
   },
   {
@@ -62,7 +62,7 @@ const destinations = [
     longDescription: 'Oaxaca es tierra de colores, sabores y tradiciones milenarias. Nuestros souvenirs capturan la magia de esta región: Monte Albán, Hierve el Agua, el árbol del Tule, las cascadas petrificadas, los alebrijes, el mezcal artesanal, la Guelaguetza y la rica cultura zapoteca y mixteca. Cada souvenir AXKAN de Oaxaca es una obra de arte en MDF con corte láser.',
     keywords: 'souvenirs oaxaca, imanes oaxaca, recuerdos oaxaca, magnets oaxaca mexico, llaveros oaxaca, regalos oaxaca, souvenir monte alban, souvenir hierve el agua, recuerdos oaxaca de juarez',
     relatedDestinations: ['huatulco', 'cdmx', 'puebla'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'sur'
   },
   {
@@ -73,7 +73,7 @@ const destinations = [
     longDescription: 'Guanajuato es una de las ciudades más coloridas y románticas de México. Nuestros souvenirs representan sus callejones empedrados, el famoso Callejón del Beso, la Alhóndiga de Granaditas, el monumento al Pípila, el Teatro Juárez, las momias de Guanajuato y las casitas de colores que hacen de esta ciudad un tesoro colonial. Cada pieza AXKAN captura esa magia.',
     keywords: 'souvenirs guanajuato, imanes guanajuato, recuerdos guanajuato, llaveros guanajuato, regalos guanajuato, souvenir callejon del beso, souvenir pipila, recuerdos guanajuato capital',
     relatedDestinations: ['san-miguel-de-allende', 'leon', 'cdmx'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'colonial'
   },
   {
@@ -84,7 +84,7 @@ const destinations = [
     longDescription: 'San Miguel de Allende ha sido nombrada la mejor ciudad del mundo para visitar en múltiples ocasiones. Nuestros souvenirs capturan la icónica Parroquia de San Miguel Arcángel, sus calles empedradas, los coloridos edificios coloniales, el Jardín Principal, las galerías de arte, y esa atmósfera mágica que combina historia, cultura y modernidad. Cada imán AXKAN es un pedacito de San Miguel.',
     keywords: 'souvenirs san miguel de allende, imanes san miguel, recuerdos san miguel de allende, llaveros san miguel, regalos san miguel de allende, souvenir parroquia san miguel, recuerdos guanajuato',
     relatedDestinations: ['guanajuato', 'queretaro', 'cdmx'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'colonial'
   },
   {
@@ -95,7 +95,7 @@ const destinations = [
     longDescription: 'Guadalajara es la Perla de Occidente, cuna del mariachi y el tequila. Nuestros souvenirs celebran la Catedral de Guadalajara, el Hospicio Cabañas (Patrimonio de la Humanidad), el Teatro Degollado, Tlaquepaque, la Minerva, y toda la riqueza cultural de Jalisco. Cada pieza AXKAN con corte láser es un homenaje a la tradición tapatía.',
     keywords: 'souvenirs guadalajara, imanes guadalajara, recuerdos guadalajara, llaveros guadalajara, regalos guadalajara, souvenir jalisco, souvenir tlaquepaque, recuerdos tapatio',
     relatedDestinations: ['tequila', 'puerto-vallarta', 'cdmx'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'norte'
   },
   {
@@ -106,7 +106,7 @@ const destinations = [
     longDescription: 'Puerto Vallarta combina la belleza del Pacífico mexicano con la calidez de un pueblo con encanto. Nuestros souvenirs capturan el icónico malecón, las playas doradas, la zona romántica, la Iglesia de Nuestra Señora de Guadalupe, la Sierra Madre Occidental y los atardeceres que han hecho famoso a este destino. Cada souvenir AXKAN de Vallarta es un recuerdo del paraíso.',
     keywords: 'souvenirs puerto vallarta, imanes puerto vallarta, recuerdos vallarta, llaveros puerto vallarta, regalos vallarta, souvenir bahia de banderas, souvenir malecon vallarta',
     relatedDestinations: ['guadalajara', 'los-cabos', 'mazatlan'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'pacifico'
   },
   {
@@ -117,7 +117,7 @@ const destinations = [
     longDescription: 'Mérida, la Ciudad Blanca, es la puerta de entrada al mundo maya. Nuestros souvenirs representan su hermosa arquitectura colonial, el Paseo de Montejo, la Catedral de San Ildefonso, los cenotes sagrados, Uxmal, y la rica gastronomía yucateca. Cada pieza AXKAN de Mérida conecta al viajero con la profundidad de la cultura maya y colonial.',
     keywords: 'souvenirs merida, imanes merida yucatan, recuerdos merida, llaveros merida, regalos merida yucatan, souvenir chichen itza, souvenir cenotes, recuerdos yucatan',
     relatedDestinations: ['cancun', 'tulum', 'campeche'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'caribe'
   },
   {
@@ -128,7 +128,7 @@ const destinations = [
     longDescription: 'Los Cabos es donde el desierto se encuentra con el mar. Nuestros souvenirs capturan el icónico Arco de Cabo San Lucas, la playa El Médano, el corredor turístico, los paisajes de Baja California Sur, y esa fusión única de naturaleza salvaje y lujo. Cada souvenir AXKAN de Los Cabos es un recuerdo del fin de la tierra mexicana.',
     keywords: 'souvenirs los cabos, imanes cabo san lucas, recuerdos los cabos, llaveros cabo, regalos los cabos, souvenir baja california sur, souvenir arco cabo san lucas, recuerdos cabo',
     relatedDestinations: ['la-paz', 'puerto-vallarta', 'mazatlan'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'pacifico'
   },
   {
@@ -139,7 +139,7 @@ const destinations = [
     longDescription: 'Puebla es la ciudad de los ángeles, famosa por su talavera, su gastronomía y su historia. Nuestros souvenirs representan la majestuosa Catedral de Puebla, la pirámide de Cholula, los volcanes Popocatépetl e Iztaccíhuatl, la Biblioteca Palafoxiana, y la icónica cerámica de talavera. Cada pieza AXKAN de Puebla es un tributo a la riqueza cultural del centro de México.',
     keywords: 'souvenirs puebla, imanes puebla, recuerdos puebla, llaveros puebla, regalos puebla, souvenir cholula, souvenir talavera, recuerdos puebla de los angeles, souvenir volcanes',
     relatedDestinations: ['cdmx', 'oaxaca', 'tlaxcala'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'centro'
   },
   {
@@ -150,7 +150,7 @@ const destinations = [
     longDescription: 'La Huasteca Potosina es uno de los destinos naturales más impresionantes de México. Nuestros souvenirs capturan la Cascada de Tamul, el Sótano de las Golondrinas, el Puente de Dios, las pozas de agua turquesa, Xilitla y el Jardín Surrealista de Edward James. Cada imán AXKAN de la Huasteca es un recordatorio de la naturaleza más espectacular de México.',
     keywords: 'souvenirs huasteca potosina, imanes huasteca, recuerdos huasteca potosina, llaveros huasteca, regalos huasteca, souvenir tamul, souvenir xilitla, recuerdos san luis potosi',
     relatedDestinations: ['cdmx', 'queretaro', 'tampico'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'centro'
   },
   {
@@ -161,7 +161,7 @@ const destinations = [
     longDescription: 'Tulum es donde la historia maya se encuentra con el Caribe. Nuestros souvenirs representan las ruinas mayas frente al mar turquesa, los cenotes cristalinos, la zona de playa, la biosfera de Sian Ka\'an, y esa energía única que mezcla lo antiguo con lo moderno. Cada souvenir AXKAN de Tulum captura la magia de este destino icónico.',
     keywords: 'souvenirs tulum, imanes tulum, recuerdos tulum, llaveros tulum, regalos tulum, souvenir ruinas tulum, souvenir cenotes tulum, recuerdos riviera maya, souvenir quintana roo',
     relatedDestinations: ['cancun', 'playa-del-carmen', 'merida'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'caribe'
   },
   {
@@ -172,7 +172,7 @@ const destinations = [
     longDescription: 'Playa del Carmen es el corazón de la Riviera Maya. Nuestros souvenirs capturan la famosa Quinta Avenida, las playas de arena blanca, los parques ecológicos como Xcaret y Xel-Há, la isla de Cozumel, y la vibrante vida cosmopolita de este destino caribeño. Cada pieza AXKAN de Playa es un recuerdo premium del paraíso.',
     keywords: 'souvenirs playa del carmen, imanes playa del carmen, recuerdos playa del carmen, llaveros playa, regalos riviera maya, souvenir quinta avenida, souvenir xcaret, recuerdos caribe mexicano',
     relatedDestinations: ['cancun', 'tulum', 'cozumel'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'caribe'
   },
   {
@@ -183,7 +183,7 @@ const destinations = [
     longDescription: 'Querétaro combina historia colonial con modernidad. Nuestros souvenirs representan el icónico Acueducto, el Centro Histórico (Patrimonio de la Humanidad), el Cerro de las Campanas, la ruta del queso y el vino, y la Peña de Bernal. Cada pieza AXKAN de Querétaro celebra una de las ciudades más dinámicas y con mayor calidad de vida de México.',
     keywords: 'souvenirs queretaro, imanes queretaro, recuerdos queretaro, llaveros queretaro, regalos queretaro, souvenir acueducto queretaro, souvenir pena de bernal, recuerdos santiago de queretaro',
     relatedDestinations: ['san-miguel-de-allende', 'cdmx', 'guanajuato'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'centro'
   },
   {
@@ -194,7 +194,7 @@ const destinations = [
     longDescription: 'Mazatlán es la Perla del Pacífico, con el malecón más largo de México. Nuestros souvenirs capturan el Centro Histórico, la Plazuela Machado, el icónico Faro de Mazatlán (el más alto de América), la Zona Dorada, la Isla de la Piedra, y esa mezcla única de tradición sinaloense con destino de playa. Cada souvenir AXKAN de Mazatlán es un pedazo del Pacífico.',
     keywords: 'souvenirs mazatlan, imanes mazatlan, recuerdos mazatlan, llaveros mazatlan, regalos mazatlan, souvenir sinaloa, souvenir malecon mazatlan, recuerdos perla del pacifico',
     relatedDestinations: ['puerto-vallarta', 'los-cabos', 'guadalajara'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'pacifico'
   },
   {
@@ -205,7 +205,7 @@ const destinations = [
     longDescription: 'Morelia es la capital de Michoacán y una joya del patrimonio colonial mexicano. Nuestros souvenirs representan su majestuosa Catedral, el acueducto, el Centro Histórico (Patrimonio de la Humanidad), las mariposas monarca, Pátzcuaro, Janitzio, y la rica tradición artesanal michoacana. Cada pieza AXKAN de Morelia conecta con la esencia de México profundo.',
     keywords: 'souvenirs morelia, imanes morelia, recuerdos morelia, llaveros morelia, regalos michoacan, souvenir catedral morelia, souvenir patzcuaro, recuerdos michoacan, souvenir mariposa monarca',
     relatedDestinations: ['guanajuato', 'cdmx', 'guadalajara'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'colonial'
   },
   {
@@ -216,7 +216,7 @@ const destinations = [
     longDescription: 'Chiapas es naturaleza y cultura en estado puro. Nuestros souvenirs capturan el Cañón del Sumidero, San Cristóbal de las Casas, las ruinas de Palenque, las Cascadas de Agua Azul, los Lagos de Montebello, la Selva Lacandona, y la rica herencia de los pueblos originarios. Cada souvenir AXKAN de Chiapas es un tributo a la biodiversidad y cultura del sureste mexicano.',
     keywords: 'souvenirs chiapas, imanes chiapas, recuerdos chiapas, llaveros chiapas, regalos chiapas, souvenir san cristobal de las casas, souvenir canon del sumidero, souvenir palenque, recuerdos selva lacandona',
     relatedDestinations: ['oaxaca', 'merida', 'guatemala'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'sur'
   },
   {
@@ -227,7 +227,7 @@ const destinations = [
     longDescription: 'Acapulco es un clásico de los destinos de playa mexicanos. Nuestros souvenirs representan la icónica bahía, los clavadistas de La Quebrada, la Costera Miguel Alemán, Pie de la Cuesta, el Fuerte de San Diego, y ese espíritu de diversión y aventura que ha definido a Acapulco por décadas. Cada pieza AXKAN captura la energía del puerto guerrerense.',
     keywords: 'souvenirs acapulco, imanes acapulco, recuerdos acapulco, llaveros acapulco, regalos acapulco, souvenir la quebrada, souvenir guerrero, recuerdos acapulco diamante',
     relatedDestinations: ['cdmx', 'oaxaca', 'puerto-vallarta'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'pacifico'
   },
   {
@@ -238,7 +238,7 @@ const destinations = [
     longDescription: 'Monterrey es la capital industrial de México con paisajes naturales impresionantes. Nuestros souvenirs capturan el icónico Cerro de la Silla, el Parque Fundidora, la Macroplaza, el Museo MARCO, la Huasteca, la Cola de Caballo, y esa mezcla de modernidad con naturaleza que hace única a la Sultana del Norte. Cada souvenir AXKAN de Monterrey es un orgullo regio.',
     keywords: 'souvenirs monterrey, imanes monterrey, recuerdos monterrey, llaveros monterrey, regalos monterrey, souvenir cerro de la silla, souvenir nuevo leon, recuerdos sultana del norte',
     relatedDestinations: ['cdmx', 'guadalajara', 'saltillo'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'norte'
   },
   {
@@ -249,7 +249,7 @@ const destinations = [
     longDescription: 'Zacatecas es una ciudad minera colonial con una riqueza arquitectónica impresionante. Nuestros souvenirs representan la Catedral barroca, el teleférico sobre la ciudad, la Mina El Edén, el Cerro de la Bufa, el acueducto El Cubo, y la famosa callejoneada. Cada pieza AXKAN de Zacatecas celebra uno de los Pueblos Mágicos más espectaculares de México.',
     keywords: 'souvenirs zacatecas, imanes zacatecas, recuerdos zacatecas, llaveros zacatecas, regalos zacatecas, souvenir mina el eden, souvenir teleferico zacatecas, recuerdos bufa',
     relatedDestinations: ['guanajuato', 'san-luis-potosi', 'aguascalientes'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'colonial'
   },
   {
@@ -260,7 +260,7 @@ const destinations = [
     longDescription: 'Bacalar es la joya escondida del Caribe mexicano, famosa por la Laguna de los Siete Colores. Nuestros souvenirs capturan los tonos turquesa de la laguna, el Fuerte de San Felipe, los cenotes, el Canal de los Piratas y la exuberante vegetación tropical. Cada pieza AXKAN de Bacalar es un recuerdo de uno de los destinos más mágicos de Quintana Roo.',
     keywords: 'souvenirs bacalar, imanes bacalar, recuerdos bacalar, llaveros bacalar, laguna siete colores, recuerdos quintana roo',
     relatedDestinations: ['cancun', 'tulum', 'playa-del-carmen'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'caribe'
   },
   {
@@ -271,7 +271,7 @@ const destinations = [
     longDescription: 'Campeche es una ciudad amurallada Patrimonio de la Humanidad, con edificios coloniales de colores vibrantes. Nuestros souvenirs representan las murallas y baluartes, la catedral, las casonas coloridas del centro histórico, el malecón y la rica biodiversidad de la región. Cada souvenir AXKAN de Campeche celebra la historia y belleza de esta joya del Golfo de México.',
     keywords: 'souvenirs campeche, imanes campeche, recuerdos campeche, llaveros campeche, murallas campeche, recuerdos golfo mexico',
     relatedDestinations: ['merida', 'cancun', 'chiapas'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'sur'
   },
   {
@@ -282,7 +282,7 @@ const destinations = [
     longDescription: 'Chignahuapan es el Pueblo Mágico de las esferas navideñas, famoso por sus talleres artesanales y sus aguas termales. Nuestros souvenirs capturan la tradición esferera, la imponente Virgen Inmaculada Concepción, la laguna, las aguas termales y la arquitectura serrana de la Sierra Norte de Puebla. Cada pieza AXKAN de Chignahuapan es un recuerdo de la magia navideña mexicana.',
     keywords: 'souvenirs chignahuapan, imanes chignahuapan, recuerdos chignahuapan, esferas navideñas, pueblo magico puebla, llaveros chignahuapan',
     relatedDestinations: ['puebla', 'zacatlan', 'cuetzalan'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'centro'
   },
   {
@@ -293,7 +293,7 @@ const destinations = [
     longDescription: 'Ciudad Mier es un Pueblo Mágico en Tamaulipas con rica historia colonial y naturaleza impresionante. Nuestros souvenirs representan su arquitectura de cantera, la iglesia del Señor del Amparo, el río Álamo, la fauna silvestre y las tradiciones norteñas. Cada pieza AXKAN de Ciudad Mier celebra la identidad y orgullo de este destino tamaulipeco.',
     keywords: 'souvenirs ciudad mier, imanes mier tamaulipas, recuerdos ciudad mier, llaveros tamaulipas, pueblo magico tamaulipas',
     relatedDestinations: ['monterrey', 'huasteca-potosina'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'norte'
   },
   {
@@ -304,7 +304,7 @@ const destinations = [
     longDescription: 'Comalcalco es hogar de la única zona arqueológica maya construida con ladrillo cocido. Nuestros souvenirs capturan las pirámides de ladrillo, la Ruta del Cacao, las haciendas chocolateras, la exuberante vegetación tropical y la rica gastronomía tabasqueña. Cada souvenir AXKAN de Comalcalco conecta con las raíces más antiguas del chocolate mexicano.',
     keywords: 'souvenirs comalcalco, imanes comalcalco, recuerdos tabasco, llaveros comalcalco, ruta del cacao, zona arqueologica comalcalco',
     relatedDestinations: ['chiapas', 'campeche'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'sur'
   },
   {
@@ -315,7 +315,7 @@ const destinations = [
     longDescription: 'Cozumel es un paraíso para el buceo y el snorkel, con el segundo arrecife más grande del mundo. Nuestros souvenirs capturan las tortugas marinas, los delfines, los arrecifes de coral, las playas de arena blanca, el Parque Chankanaab y la cultura maya de la isla. Cada pieza AXKAN de Cozumel es un recuerdo del Caribe mexicano en su máxima expresión.',
     keywords: 'souvenirs cozumel, imanes cozumel, recuerdos cozumel, llaveros cozumel, regalos cozumel, souvenir arrecife cozumel, recuerdos quintana roo isla',
     relatedDestinations: ['playa-del-carmen', 'cancun', 'tulum'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'caribe'
   },
   {
@@ -326,7 +326,7 @@ const destinations = [
     longDescription: 'Cuetzalan es un Pueblo Mágico envuelto en niebla en la Sierra Norte de Puebla. Nuestros souvenirs representan sus cascadas (Las Brisas, Las Hamacas), la ceremonia de los Voladores, las grutas, la parroquia, el tianguis dominical y la cultura totonaca y nahua que vive en cada rincón. Cada souvenir AXKAN de Cuetzalan captura la mística de la sierra poblana.',
     keywords: 'souvenirs cuetzalan, imanes cuetzalan, recuerdos cuetzalan, pueblo magico puebla sierra, llaveros cuetzalan, voladores papantla',
     relatedDestinations: ['puebla', 'chignahuapan', 'zacatlan'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'centro'
   },
   {
@@ -337,7 +337,7 @@ const destinations = [
     longDescription: 'Playa Las Gatas es una de las playas más famosas de Zihuatanejo, accesible solo por lancha. Nuestros souvenirs capturan la vida marina, el arrecife de coral, los caballitos de mar, las aguas cristalinas y la atmósfera de pueblo pesquero con encanto. Cada pieza AXKAN de Las Gatas es un recuerdo del Pacífico guerrerense en su forma más pura.',
     keywords: 'souvenirs las gatas, imanes zihuatanejo, recuerdos playa las gatas, llaveros guerrero, souvenir zihuatanejo ixtapa',
     relatedDestinations: ['acapulco', 'puerto-vallarta'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'pacifico'
   },
   {
@@ -348,7 +348,7 @@ const destinations = [
     longDescription: 'Puerto Escondido es la capital mexicana del surf, con la legendaria playa Zicatela. Nuestros souvenirs representan las olas gigantes, la playa Carrizalillo, la bioluminiscencia de la laguna, los delfines, las tortugas marinas y la vibrante escena bohemia de la costa oaxaqueña. Cada souvenir AXKAN de Puerto Escondido captura la energía del Pacífico mexicano.',
     keywords: 'souvenirs puerto escondido, imanes puerto escondido, recuerdos puerto escondido, llaveros oaxaca costa, souvenir zicatela, surf mexico',
     relatedDestinations: ['oaxaca', 'acapulco', 'playa-las-gatas'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'pacifico'
   },
   {
@@ -359,7 +359,7 @@ const destinations = [
     longDescription: 'San Antonio Cuajimoloyas es un destino de ecoturismo en la Sierra Norte de Oaxaca, parte de los Pueblos Mancomunados. Nuestros souvenirs capturan los bosques de niebla, los hongos silvestres, las orquídeas, los senderos de montaña y la biodiversidad única de la sierra oaxaqueña. Cada pieza AXKAN celebra el turismo comunitario y la naturaleza en su estado más puro.',
     keywords: 'souvenirs cuajimoloyas, imanes sierra norte oaxaca, recuerdos ecoturismo oaxaca, llaveros pueblos mancomunados, hongos silvestres oaxaca',
     relatedDestinations: ['oaxaca', 'puerto-escondido'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'sur'
   },
   {
@@ -370,7 +370,7 @@ const destinations = [
     longDescription: 'San Felipe es un destino de aventura en el Mar de Cortés, famoso por sus carreras off-road y su tranquila vida costera. Nuestros souvenirs representan el faro, las playas del Mar de Cortés, los paisajes desérticos, las carreras Baja 1000, y la fusión de desierto y mar que hace único a este puerto bajacaliforniano. Cada souvenir AXKAN de San Felipe captura el espíritu aventurero de Baja.',
     keywords: 'souvenirs san felipe, imanes san felipe baja california, recuerdos san felipe, llaveros mar de cortes, off-road baja, souvenir baja california',
     relatedDestinations: ['los-cabos', 'mazatlan'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'pacifico'
   },
   {
@@ -381,7 +381,7 @@ const destinations = [
     longDescription: 'San Gabriel es un pueblo jalisciense de tradición y belleza colonial, conocido por su cercanía al Volcán de Fuego de Colima. Nuestros souvenirs capturan la arquitectura colonial, la parroquia, los paisajes volcánicos, la vegetación exuberante y la tranquilidad de la vida rural de Jalisco. Cada pieza AXKAN de San Gabriel es un recuerdo de la provincia mexicana auténtica.',
     keywords: 'souvenirs san gabriel, imanes san gabriel jalisco, recuerdos san gabriel, llaveros jalisco, pueblo jalisco volcan',
     relatedDestinations: ['guadalajara', 'puerto-vallarta'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'colonial'
   },
   {
@@ -392,7 +392,7 @@ const destinations = [
     longDescription: 'Toluca es la capital más alta de México, rodeada de montañas y volcanes. Nuestros souvenirs representan el majestuoso Nevado de Toluca, el Cosmovitral Jardín Botánico, los Portales, la Catedral, el centro histórico y la riqueza natural del Estado de México. Cada souvenir AXKAN de Toluca captura la grandeza de esta ciudad a los pies del volcán.',
     keywords: 'souvenirs toluca, imanes toluca, recuerdos toluca, llaveros estado de mexico, nevado de toluca, cosmovitral, recuerdos toluca de lerdo',
     relatedDestinations: ['cdmx', 'puebla', 'queretaro'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'centro'
   },
   {
@@ -403,7 +403,7 @@ const destinations = [
     longDescription: 'Unión Juárez es un pueblo cafetalero al pie del Volcán Tacaná, en la frontera con Guatemala. Nuestros souvenirs capturan el majestuoso volcán, los quetzales, las plantaciones de café, la biodiversidad de la selva alta y la cultura fronteriza chiapaneca. Cada pieza AXKAN de Unión Juárez celebra uno de los destinos más auténticos y naturales de Chiapas.',
     keywords: 'souvenirs union juarez, imanes union juarez chiapas, recuerdos tacana, llaveros chiapas, volcan tacana, cafe chiapas',
     relatedDestinations: ['chiapas', 'oaxaca'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'sur'
   },
   {
@@ -414,7 +414,7 @@ const destinations = [
     longDescription: 'Zacatlán de las Manzanas es un Pueblo Mágico en la Sierra Norte de Puebla, famoso por sus relojes monumentales, sidra y manzanas. Nuestros souvenirs representan el icónico Reloj Floral, la Cascada de Tulimán, las barrancas con niebla, los huertos de manzana y la arquitectura serrana. Cada souvenir AXKAN de Zacatlán captura la frescura y magia de la sierra poblana.',
     keywords: 'souvenirs zacatlan, imanes zacatlan, recuerdos zacatlan de las manzanas, llaveros pueblo magico puebla, reloj floral zacatlan, sidra zacatlan',
     relatedDestinations: ['puebla', 'chignahuapan', 'cuetzalan'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'centro'
   },
   {
@@ -425,7 +425,7 @@ const destinations = [
     longDescription: 'Cerro de San Pedro es un pueblo fantasma minero con historia de más de 400 años en San Luis Potosí. Nuestros souvenirs capturan las ruinas coloniales, la iglesia, los cactus y agaves, las montañas del altiplano y la historia minera que dio origen a la ciudad de San Luis Potosí. Cada pieza AXKAN de Cerro de San Pedro es un recuerdo de la historia minera de México.',
     keywords: 'souvenirs cerro de san pedro, imanes san luis potosi, recuerdos cerro san pedro, llaveros slp, pueblo minero mexico',
     relatedDestinations: ['huasteca-potosina', 'queretaro'],
-    image: '/assets/TEST-03.png',
+    image: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800',
     region: 'centro'
   }
 ];
@@ -737,7 +737,7 @@ ${productsHtml}
 function generateIndex() {
   // Pick a representative OG image: first destination with a Cloudinary URL, or fallback
   const firstMapped = destinations.find(d => d.image.startsWith('http'));
-  const indexOgImage = firstMapped ? firstMapped.image : 'https://axkan.art/assets/TEST-03.png';
+  const indexOgImage = firstMapped ? firstMapped.image : 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=1200';
 
   const cards = destinations.map(d => {
     const allImgs = [d.image, ...d.productImages];
