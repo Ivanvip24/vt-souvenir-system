@@ -206,7 +206,7 @@
     { name: 'México', lat: 23.6, lng: -102.5, view: 'mexico' }
   ];
   var targetScale = 1.0, currentScale = 1.0;
-  var SCALE_MIN = 1.0, SCALE_MAX = 2.8;
+  var SCALE_MIN = 1.0, SCALE_MAX = 1.35;
   var lastAppliedScale = 1.0;
   var lastTextureScale = 1.0;
   var currentEarthTexture = null;
@@ -518,7 +518,7 @@
       });
       var sprite = new THREE.Sprite(mat);
       sprite.position.copy(pos);
-      sprite.scale.set(0.14, 0.20, 1);
+      sprite.scale.set(0.07, 0.10, 1);
       sprite.userData = { type: 'country', country: country };
       countryPinGroup.add(sprite);
       countryPins.push(sprite);
