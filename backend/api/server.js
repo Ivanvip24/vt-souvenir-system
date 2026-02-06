@@ -4156,6 +4156,52 @@ app.get('/api/test/email-config', (req, res) => {
  * GET /api/clients
  * Get all clients with address information for shipping database
  */
+// Mexican postal code prefix → state mapping (first 2 digits)
+const MX_POSTAL_STATE = {
+  '01':'Ciudad de México','02':'Ciudad de México','03':'Ciudad de México','04':'Ciudad de México',
+  '05':'Ciudad de México','06':'Ciudad de México','07':'Ciudad de México','08':'Ciudad de México',
+  '09':'Ciudad de México','10':'Ciudad de México','11':'Ciudad de México','12':'Ciudad de México',
+  '13':'Ciudad de México','14':'Ciudad de México','15':'Ciudad de México','16':'Ciudad de México',
+  '20':'Aguascalientes',
+  '21':'Baja California','22':'Baja California',
+  '23':'Baja California Sur',
+  '24':'Campeche',
+  '25':'Coahuila','26':'Coahuila','27':'Coahuila',
+  '28':'Colima',
+  '29':'Chiapas','30':'Chiapas',
+  '31':'Chihuahua','32':'Chihuahua','33':'Chihuahua',
+  '34':'Durango','35':'Durango',
+  '36':'Guanajuato','37':'Guanajuato','38':'Guanajuato',
+  '39':'Guerrero','40':'Guerrero','41':'Guerrero',
+  '42':'Hidalgo','43':'Hidalgo',
+  '44':'Jalisco','45':'Jalisco','46':'Jalisco','47':'Jalisco','48':'Jalisco','49':'Jalisco',
+  '50':'Estado de México','51':'Estado de México','52':'Estado de México','53':'Estado de México',
+  '54':'Estado de México','55':'Estado de México','56':'Estado de México','57':'Estado de México',
+  '58':'Michoacán','59':'Michoacán','60':'Michoacán','61':'Michoacán',
+  '62':'Morelos','63':'Morelos',
+  '64':'Nuevo León','65':'Nuevo León','66':'Nuevo León','67':'Nuevo León',
+  '68':'Oaxaca','69':'Oaxaca','70':'Oaxaca','71':'Oaxaca',
+  '72':'Puebla','73':'Puebla','74':'Puebla','75':'Puebla',
+  '76':'Querétaro',
+  '77':'Quintana Roo',
+  '78':'San Luis Potosí','79':'San Luis Potosí',
+  '80':'Sinaloa','81':'Sinaloa','82':'Sinaloa',
+  '83':'Sonora','84':'Sonora','85':'Sonora',
+  '86':'Tabasco',
+  '87':'Tamaulipas','88':'Tamaulipas','89':'Tamaulipas',
+  '90':'Tlaxcala',
+  '91':'Veracruz','92':'Veracruz','93':'Veracruz','94':'Veracruz','95':'Veracruz','96':'Veracruz',
+  '97':'Yucatán',
+  '98':'Zacatecas','99':'Zacatecas'
+};
+
+function getStateFromPostal(postalCode) {
+  if (!postalCode) return null;
+  const code = postalCode.toString().trim();
+  if (code.length < 2) return null;
+  return MX_POSTAL_STATE[code.substring(0, 2)] || null;
+}
+
 app.get('/api/clients', async (req, res) => {
   try {
     const { search, city, state, hasAddress, recent, sort = 'recent', page = 1, limit = 50 } = req.query;
@@ -4261,9 +4307,35 @@ app.get('/api/clients', async (req, res) => {
       FROM clients
     `);
 
+    // Auto-fill missing state from postal code using local lookup
+    const clientsToFixInDB = [];
+    const enrichedData = result.rows.map(client => {
+      const postal = client.postal_code || client.postal || '';
+      if (postal && (!client.state || client.state.trim() === '')) {
+        const derivedState = getStateFromPostal(postal);
+        if (derivedState) {
+          clientsToFixInDB.push({ id: client.id, state: derivedState });
+          return { ...client, state: derivedState };
+        }
+      }
+      return client;
+    });
+
+    // Fire-and-forget: save derived states to DB so it's permanent
+    if (clientsToFixInDB.length > 0) {
+      (async () => {
+        for (const fix of clientsToFixInDB) {
+          try {
+            await query('UPDATE clients SET state = $1, updated_at = NOW() WHERE id = $2 AND (state IS NULL OR state = \'\')', [fix.state, fix.id]);
+          } catch (e) { /* ignore */ }
+        }
+        console.log(`Auto-fixed state for ${clientsToFixInDB.length} clients from postal codes`);
+      })();
+    }
+
     res.json({
       success: true,
-      data: result.rows,
+      data: enrichedData,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
