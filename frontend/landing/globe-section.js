@@ -210,6 +210,7 @@
   var lastTextureScale = 1.0;
   var currentEarthTexture = null;
   var BASE_TEX_W = 4096, BASE_TEX_H = 2048;
+  var textureRegenTimer = null;
 
   function initGlobe() {
     globeContainer = document.getElementById('globe-3d');
@@ -668,6 +669,13 @@
     // Camera zoom — smooth interpolation, no CSS transform, no clipping
     currentCamZ += (targetCamZ - currentCamZ) * 0.1;
     if (camera) camera.position.z = currentCamZ;
+
+    // Dynamic texture regeneration — sharper when zoomed in
+    var zoomScale = CAM_MAX / currentCamZ;  // 1.0 at max distance, ~1.6 at min
+    if (Math.abs(zoomScale - lastTextureScale) > 0.15) {
+      clearTimeout(textureRegenTimer);
+      textureRegenTimer = setTimeout(function () { regenerateTexture(zoomScale); }, 200);
+    }
 
     if (globe) { globe.rotation.y = currentRotationY; globe.rotation.x = currentRotationX; }
     if (gridMesh) { gridMesh.rotation.y = currentRotationY; gridMesh.rotation.x = currentRotationX; }
