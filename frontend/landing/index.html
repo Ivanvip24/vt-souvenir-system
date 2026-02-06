@@ -1152,6 +1152,363 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           3D GLOBE / DESTINOS SECTION
+           ═══════════════════════════════════════════════════════════ */
+
+        .globe-section {
+            padding: var(--space-xl) 0;
+            background: linear-gradient(180deg, var(--gray-800) 0%, #0a0a1a 50%, var(--gray-800) 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .globe-section .section-header {
+            padding: 0 var(--space-lg);
+            text-align: center;
+            margin-bottom: var(--space-md);
+            position: relative;
+            z-index: 2;
+        }
+
+        .globe-section .section-label {
+            color: var(--turquesa-caribe);
+        }
+
+        .globe-section .headline-lg {
+            color: white;
+        }
+
+        .globe-section .section-subtitle {
+            color: rgba(255,255,255,0.6);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Navigation breadcrumb */
+        .globe-nav {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: var(--space-md);
+            padding: 0 var(--space-lg);
+            position: relative;
+            z-index: 2;
+        }
+
+        .globe-nav-btn {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            padding: 0.5rem 1.25rem;
+            border-radius: 100px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .globe-nav-btn:hover {
+            border-color: rgba(255,255,255,0.4);
+            color: white;
+        }
+
+        .globe-nav-btn.active {
+            background: var(--rosa-mexicano);
+            border-color: var(--rosa-mexicano);
+            color: white;
+        }
+
+        .globe-nav-btn.hidden {
+            display: none;
+        }
+
+        .globe-nav-separator {
+            color: rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+        }
+
+        .globe-nav-separator.hidden {
+            display: none;
+        }
+
+        /* Globe container */
+        .globe-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 650px;
+            margin: 0 auto;
+            aspect-ratio: 1;
+        }
+
+        .globe-wrapper.hidden {
+            display: none;
+        }
+
+        .globe-canvas-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .globe-canvas-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            cursor: grab;
+            display: block;
+        }
+
+        .globe-canvas-container canvas:active {
+            cursor: grabbing;
+        }
+
+        .globe-cta {
+            position: absolute;
+            bottom: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 100px;
+            border: 1px solid var(--rosa-mexicano);
+            background: rgba(231, 42, 136, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .globe-cta:hover {
+            background: var(--rosa-mexicano);
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(231, 42, 136, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(231, 42, 136, 0.6); }
+        }
+
+        /* Mexico map view */
+        .mexico-map-view {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            padding: var(--space-md) var(--space-lg);
+        }
+
+        .mexico-map-view.active {
+            display: block;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .mexico-map-canvas {
+            width: 100%;
+            cursor: pointer;
+            border-radius: 16px;
+        }
+
+        .mexico-tooltip {
+            position: fixed;
+            background: rgba(10, 10, 26, 0.95);
+            border: 1px solid var(--rosa-mexicano);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            color: white;
+            font-size: 0.85rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+            max-width: 220px;
+            backdrop-filter: blur(10px);
+        }
+
+        .mexico-tooltip.visible {
+            opacity: 1;
+        }
+
+        .mexico-tooltip h4 {
+            font-family: var(--font-display);
+            color: var(--rosa-mexicano);
+            margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+        }
+
+        .mexico-tooltip p {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        /* State detail panel */
+        .state-detail-panel {
+            display: none;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 var(--space-lg);
+        }
+
+        .state-detail-panel.active {
+            display: block;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .state-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: var(--space-md);
+        }
+
+        .state-detail-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+        }
+
+        .destinations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .destination-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            color: white;
+            display: block;
+        }
+
+        .destination-card:hover {
+            background: rgba(231, 42, 136, 0.1);
+            border-color: var(--rosa-mexicano);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(231, 42, 136, 0.2);
+        }
+
+        .destination-card-image {
+            width: 100%;
+            aspect-ratio: 16/10;
+            object-fit: cover;
+        }
+
+        .destination-card-info {
+            padding: 1rem;
+        }
+
+        .destination-card-name {
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .destination-card-state {
+            font-size: 0.8rem;
+            color: var(--turquesa-caribe);
+        }
+
+        /* Stats bar */
+        .globe-stats {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-lg);
+            margin-top: var(--space-lg);
+            padding: 0 var(--space-lg);
+            position: relative;
+            z-index: 2;
+        }
+
+        .globe-stat {
+            text-align: center;
+        }
+
+        .globe-stat-number {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--rosa-mexicano);
+            display: block;
+        }
+
+        .globe-stat-label {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* Globe loading placeholder */
+        .globe-loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .globe-loading-sphere {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #1a3a5a, #0a0a1a);
+            box-shadow:
+                0 0 80px rgba(231, 42, 136, 0.15),
+                inset -20px -20px 40px rgba(0,0,0,0.5);
+            animation: float 4s ease-in-out infinite;
+            position: relative;
+        }
+
+        .globe-loading-sphere::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 60%);
+        }
+
+        /* Responsive globe */
+        @media (max-width: 1024px) {
+            .globe-wrapper {
+                max-width: 450px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .globe-wrapper {
+                max-width: 100%;
+                padding: 0 var(--space-sm);
+            }
+
+            .globe-stats {
+                flex-wrap: wrap;
+                gap: var(--space-md);
+            }
+
+            .globe-stat-number {
+                font-size: 1.5rem;
+            }
+
+            .destinations-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .globe-cta {
+                bottom: 8%;
+                font-size: 0.8rem;
+                padding: 0.6rem 1.2rem;
+            }
+        }
     </style>
 
     <!-- JSON-LD Structured Data -->
@@ -1303,6 +1660,7 @@
         <ul class="nav-links">
             <li><a href="#productos">Productos</a></li>
             <li><a href="#calidad">Calidad</a></li>
+            <li><a href="#destinos">Destinos</a></li>
             <li><a href="#mayoreo">Mayoreo</a></li>
             <li><a href="/souvenirs">Catálogo</a></li>
             <li><a href="/envio">Envío</a></li>
@@ -1319,6 +1677,7 @@
     <div class="mobile-menu" aria-hidden="true">
         <a href="#productos">Productos</a>
         <a href="#calidad">Calidad</a>
+        <a href="#destinos">Destinos</a>
         <a href="#mayoreo">Mayoreo</a>
         <a href="/souvenirs">Catálogo</a>
         <a href="/envio">Envío</a>
@@ -1496,6 +1855,64 @@
                     <span class="quality-feature-icon" data-sanity="qualityFeatures.3.icon">💪</span>
                     <span data-sanity="qualityFeatures.3.text">Durabilidad 5+ años</span>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         3D GLOBE — Destinos Souvenir
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="globe-section" id="destinos">
+        <div class="section-header">
+            <p class="section-label">Presencia en Todo M&eacute;xico</p>
+            <h2 class="headline-lg">Destinos que Llevamos al Mundo</h2>
+            <p class="section-subtitle">Cada punto representa un destino donde AXKAN crea recuerdos</p>
+        </div>
+
+        <div class="globe-nav">
+            <button class="globe-nav-btn active" data-view="globe" id="nav-globe">Mundo</button>
+            <span class="globe-nav-separator hidden" id="nav-sep1">&rsaquo;</span>
+            <button class="globe-nav-btn hidden" data-view="mexico" id="nav-mexico">M&eacute;xico</button>
+            <span class="globe-nav-separator hidden" id="nav-sep2">&rsaquo;</span>
+            <button class="globe-nav-btn hidden" data-view="state" id="nav-state"></button>
+        </div>
+
+        <!-- 3D Globe View -->
+        <div id="globe-view" class="globe-wrapper">
+            <div id="globe-3d" class="globe-canvas-container">
+                <div class="globe-loading" id="globe-loading">
+                    <div class="globe-loading-sphere"></div>
+                </div>
+            </div>
+            <button class="globe-cta" id="globe-explore-btn">Explorar M&eacute;xico &rarr;</button>
+        </div>
+
+        <!-- Mexico Map View -->
+        <div id="mexico-view" class="mexico-map-view">
+            <canvas id="mexico-canvas" class="mexico-map-canvas"></canvas>
+        </div>
+        <div id="mexico-tooltip" class="mexico-tooltip"></div>
+
+        <!-- State Detail View -->
+        <div id="state-view" class="state-detail-panel">
+            <div class="state-detail-header">
+                <h3 class="state-detail-title" id="state-name"></h3>
+            </div>
+            <div class="destinations-grid" id="state-destinations"></div>
+        </div>
+
+        <div class="globe-stats">
+            <div class="globe-stat">
+                <span class="globe-stat-number">36+</span>
+                <span class="globe-stat-label">Destinos</span>
+            </div>
+            <div class="globe-stat">
+                <span class="globe-stat-number">21</span>
+                <span class="globe-stat-label">Estados</span>
+            </div>
+            <div class="globe-stat">
+                <span class="globe-stat-number">100+</span>
+                <span class="globe-stat-label">Dise&ntilde;os</span>
             </div>
         </div>
     </section>
@@ -1688,6 +2105,44 @@
     </script>
 
     <!-- ═══════════════════════════════════════════════════════════
+         3D GLOBE — Lazy load Three.js + globe-section.js
+         Only downloads when the section approaches the viewport
+         ═══════════════════════════════════════════════════════════ -->
+    <script>
+    (function() {
+        var loaded = false;
+        var globeSection = document.getElementById('destinos');
+        if (!globeSection) return;
+
+        var observer = new IntersectionObserver(function(entries) {
+            if (entries[0].isIntersecting && !loaded) {
+                loaded = true;
+                observer.disconnect();
+                // Load Three.js from CDN
+                var threeScript = document.createElement('script');
+                threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+                threeScript.crossOrigin = 'anonymous';
+                threeScript.onload = function() {
+                    // Then load our globe code
+                    var globeScript = document.createElement('script');
+                    globeScript.src = '/globe-section.js';
+                    document.head.appendChild(globeScript);
+                };
+                threeScript.onerror = function() {
+                    // Fallback: hide loading, show static content
+                    var loading = document.getElementById('globe-loading');
+                    if (loading) loading.style.display = 'none';
+                    console.log('Three.js failed to load — globe disabled');
+                };
+                document.head.appendChild(threeScript);
+            }
+        }, { rootMargin: '300px' }); // Start loading 300px before visible
+
+        observer.observe(globeSection);
+    })();
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════
          SANITY CMS — Live Content Fetch
          Falls back to hardcoded content if fetch fails
          ═══════════════════════════════════════════════════════════ -->
@@ -1768,7 +2223,10 @@
 
                 // 4. Update product card onclick links (skip if local link is set)
                 var localProductLinks = {
-                    '0': '/productos/imanes-mdf'
+                    '0': '/productos/imanes-mdf',
+                    '1': '/souvenirs',
+                    '2': '/souvenirs',
+                    '3': '/souvenirs'
                 };
                 document.querySelectorAll('[data-sanity-product]').forEach(function(el) {
                     var idx = el.getAttribute('data-sanity-product');
