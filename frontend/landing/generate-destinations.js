@@ -630,10 +630,14 @@ function generatePage(dest) {
       .dest-product-card[data-color="rosa"] { border-top: 4px solid var(--rosa-mexicano); }
       .dest-product-card[data-color="verde"] { border-top: 4px solid var(--verde-selva); }
       .dest-product-card[data-color="naranja"] { border-top: 4px solid var(--naranja-calido); }
-      .dest-product-card[data-color="turquesa"] { border-top: 4px solid #09adc2; }
+      .dest-product-card[data-color="turquesa"] { border-top: 4px solid var(--turquesa-caribe); }
+      .dest-product-card[data-color="rosa"] h3 { color: var(--rosa-mexicano); }
+      .dest-product-card[data-color="verde"] h3 { color: var(--verde-selva); }
+      .dest-product-card[data-color="naranja"] h3 { color: var(--naranja-calido); }
+      .dest-product-card[data-color="turquesa"] h3 { color: var(--turquesa-caribe); }
       .dest-product-card[data-color="verde"] .dest-product-price { color: var(--verde-selva); }
       .dest-product-card[data-color="naranja"] .dest-product-price { color: var(--naranja-calido); }
-      .dest-product-card[data-color="turquesa"] .dest-product-price { color: #09adc2; }
+      .dest-product-card[data-color="turquesa"] .dest-product-price { color: var(--turquesa-caribe); }
 
       /* About section */
       .dest-about { padding: 60px 5%; max-width: 900px; margin: 0 auto; }
@@ -940,11 +944,33 @@ ${cards}
     </div>
 
     <footer class="index-footer">
-      <p>\u00a9 2025 AXKAN. Souvenirs Premium de M\u00e9xico. Todos los derechos reservados.</p>
+      <p>\u00a9 2026 AXKAN. Souvenirs Premium de M\u00e9xico. Todos los derechos reservados.</p>
     </footer>
 
     <script>
     (function() {
+      // Hamburger menu
+      var hamburger = document.querySelector('.nav-hamburger');
+      var mobileMenu = document.querySelector('.mobile-menu');
+      if (hamburger && mobileMenu) {
+        hamburger.addEventListener('click', function() {
+          var isActive = hamburger.classList.toggle('active');
+          mobileMenu.classList.toggle('active');
+          hamburger.setAttribute('aria-expanded', isActive);
+          mobileMenu.setAttribute('aria-hidden', !isActive);
+          document.body.style.overflow = isActive ? 'hidden' : '';
+        });
+        mobileMenu.querySelectorAll('a').forEach(function(link) {
+          link.addEventListener('click', function() {
+            hamburger.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+            mobileMenu.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+          });
+        });
+      }
+
       var searchInput = document.getElementById('searchInput');
       var pills = document.querySelectorAll('.filter-pill');
       var cards = document.querySelectorAll('.index-card');

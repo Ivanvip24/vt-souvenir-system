@@ -471,18 +471,23 @@
         .feature-icon {
             font-size: 1.5rem;
             margin-bottom: 0.5rem;
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .feature-item:nth-child(1) .feature-icon { background: rgba(231, 42, 136, 0.1); }
-        .feature-item:nth-child(2) .feature-icon { background: rgba(138, 183, 59, 0.1); }
-        .feature-item:nth-child(3) .feature-icon { background: rgba(243, 146, 35, 0.1); }
-        .feature-item:nth-child(4) .feature-icon { background: rgba(9, 173, 194, 0.1); }
+        .feature-item:nth-child(1) .feature-icon { background: rgba(231, 42, 136, 0.15); }
+        .feature-item:nth-child(2) .feature-icon { background: rgba(138, 183, 59, 0.15); }
+        .feature-item:nth-child(3) .feature-icon { background: rgba(243, 146, 35, 0.15); }
+        .feature-item:nth-child(4) .feature-icon { background: rgba(9, 173, 194, 0.15); }
+
+        .feature-item:nth-child(1) .feature-text { color: var(--rosa-mexicano); }
+        .feature-item:nth-child(2) .feature-text { color: var(--verde-selva); }
+        .feature-item:nth-child(3) .feature-text { color: var(--naranja-calido); }
+        .feature-item:nth-child(4) .feature-text { color: var(--turquesa-caribe); }
 
         .feature-text {
             font-family: var(--font-display);
@@ -578,20 +583,47 @@
         }
 
         /* ── Product Color Accents (4-color wheel) ── */
-        .product-card[data-color="rosa"] .product-image { border-top: 4px solid var(--rosa-mexicano); }
-        .product-card[data-color="verde"] .product-image { border-top: 4px solid var(--verde-selva); }
-        .product-card[data-color="naranja"] .product-image { border-top: 4px solid var(--naranja-calido); }
-        .product-card[data-color="turquesa"] .product-image { border-top: 4px solid var(--turquesa-caribe); }
+        /* Colored background on product image area */
+        .product-card[data-color="rosa"] .product-image {
+            background: linear-gradient(135deg, rgba(231, 42, 136, 0.08) 0%, rgba(231, 42, 136, 0.15) 100%);
+            border-bottom: 3px solid var(--rosa-mexicano);
+        }
+        .product-card[data-color="verde"] .product-image {
+            background: linear-gradient(135deg, rgba(138, 183, 59, 0.08) 0%, rgba(138, 183, 59, 0.15) 100%);
+            border-bottom: 3px solid var(--verde-selva);
+        }
+        .product-card[data-color="naranja"] .product-image {
+            background: linear-gradient(135deg, rgba(243, 146, 35, 0.08) 0%, rgba(243, 146, 35, 0.15) 100%);
+            border-bottom: 3px solid var(--naranja-calido);
+        }
+        .product-card[data-color="turquesa"] .product-image {
+            background: linear-gradient(135deg, rgba(9, 173, 194, 0.08) 0%, rgba(9, 173, 194, 0.15) 100%);
+            border-bottom: 3px solid var(--turquesa-caribe);
+        }
 
+        /* Colored prices */
         .product-card[data-color="rosa"] .product-price { color: var(--rosa-mexicano); }
         .product-card[data-color="verde"] .product-price { color: var(--verde-selva); }
         .product-card[data-color="naranja"] .product-price { color: var(--naranja-calido); }
         .product-card[data-color="turquesa"] .product-price { color: var(--turquesa-caribe); }
 
+        /* Colored product titles */
+        .product-card[data-color="rosa"] .product-title { color: var(--rosa-mexicano); }
+        .product-card[data-color="verde"] .product-title { color: var(--verde-selva); }
+        .product-card[data-color="naranja"] .product-title { color: var(--naranja-calido); }
+        .product-card[data-color="turquesa"] .product-title { color: var(--turquesa-caribe); }
+
+        /* Colored hover arrows */
         .product-card[data-color="rosa"]:hover .product-arrow { background: var(--rosa-mexicano); color: white; }
         .product-card[data-color="verde"]:hover .product-arrow { background: var(--verde-selva); color: white; }
         .product-card[data-color="naranja"]:hover .product-arrow { background: var(--naranja-calido); color: white; }
         .product-card[data-color="turquesa"]:hover .product-arrow { background: var(--turquesa-caribe); color: white; }
+
+        /* Colored badge per product */
+        .product-card[data-color="rosa"] .product-badge { background: var(--rosa-mexicano); }
+        .product-card[data-color="verde"] .product-badge { background: var(--verde-selva); }
+        .product-card[data-color="naranja"] .product-badge { background: var(--naranja-calido); }
+        .product-card[data-color="turquesa"] .product-badge { background: var(--turquesa-caribe); }
 
         .product-content {
             padding: var(--space-sm) var(--space-md) var(--space-md);
