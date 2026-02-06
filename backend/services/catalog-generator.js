@@ -200,7 +200,7 @@ export async function generateCatalogPDF(options = {}) {
       // SMALL NOTES
       // ==============================
       doc.fontSize(7).font('Helvetica').fillColor(C.gray);
-      textCenter(doc, 'Pedido mínimo: 50 pzas  |  Envío gratis en 300+ pzas  |  Anticipo 50%  |  Producción: 5-7 días', PAD, ROW_W, y);
+      textCenter(doc, 'Pedido mínimo: 100 pzas  |  Envío gratis en 300+ pzas  |  Anticipo 50%  |  Producción: Varía dependiendo del número de piezas', PAD, ROW_W, y);
 
       // ==============================
       // FOOTER (fixed at bottom)
@@ -220,7 +220,7 @@ export async function generateCatalogPDF(options = {}) {
       doc.text('@axkan.souvenirs', PAD, footerY + 24);
 
       doc.fontSize(7).font('Helvetica-Oblique').fillColor(C.gray);
-      textRight(doc, 'vtanunciando.com', PAD, ROW_W, footerY + 24);
+      textRight(doc, 'axkan.art', PAD, ROW_W, footerY + 24);
 
       // Finalize
       doc.end();
