@@ -205,9 +205,8 @@
   var ACTIVE_COUNTRIES = [
     { name: 'México', lat: 23.6, lng: -102.5, view: 'mexico' }
   ];
-  var targetScale = 1.0, currentScale = 1.0;
-  var SCALE_MIN = 1.0, SCALE_MAX = 1.35;
-  var lastAppliedScale = 1.0;
+  var targetCamZ = 2.8, currentCamZ = 2.8;
+  var CAM_MIN = 2.2, CAM_MAX = 3.5;
   var lastTextureScale = 1.0;
   var currentEarthTexture = null;
   var BASE_TEX_W = 4096, BASE_TEX_H = 2048;
@@ -455,7 +454,7 @@
       });
       var sprite = new THREE.Sprite(mat);
       sprite.position.copy(pos);
-      sprite.scale.set(0.08, 0.08, 1);
+      sprite.scale.set(0.04, 0.04, 1);
       sprite.userData = d;
       markerGroup.add(sprite);
       markerSprites.push(sprite);
@@ -509,7 +508,7 @@
     countryPinGroup = new THREE.Group();
     var pinTex = createPinTexture(COLORS.rosa);
     ACTIVE_COUNTRIES.forEach(function (country) {
-      var pos = latLngToVector3(country.lat, country.lng, 1.18);
+      var pos = latLngToVector3(country.lat, country.lng, 1.03);
       var mat = new THREE.SpriteMaterial({
         map: pinTex,
         transparent: true,
@@ -518,7 +517,7 @@
       });
       var sprite = new THREE.Sprite(mat);
       sprite.position.copy(pos);
-      sprite.scale.set(0.07, 0.10, 1);
+      sprite.scale.set(0.06, 0.085, 1);
       sprite.userData = { type: 'country', country: country };
       countryPinGroup.add(sprite);
       countryPins.push(sprite);
@@ -649,11 +648,11 @@
       mouseDown = false;
     }, { passive: true });
 
-    // Wheel zoom — CSS transform scale, only when hovering over the globe
+    // Wheel zoom — camera distance, only when hovering over the globe
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
-      targetScale += e.deltaY * -0.003;
-      targetScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, targetScale));
+      targetCamZ += e.deltaY * 0.003;
+      targetCamZ = Math.max(CAM_MIN, Math.min(CAM_MAX, targetCamZ));
     }, { passive: false });
   }
 
@@ -666,18 +665,9 @@
     currentRotationY += (targetRotationY - currentRotationY) * 0.05;
     currentRotationX += (targetRotationX - currentRotationX) * 0.05;
 
-    // CSS transform zoom — scales the canvas visually, no clipping
-    currentScale += (targetScale - currentScale) * 0.1;
-    if (Math.abs(currentScale - lastAppliedScale) > 0.005) {
-      renderer.domElement.style.transform = 'scale(' + currentScale.toFixed(3) + ')';
-      lastAppliedScale = currentScale;
-    }
-
-    // Regenerate earth texture at higher resolution when zoom changes
-    // GeoJSON is vector data → redrawn crisp at any resolution (up to 8192x4096)
-    if (Math.abs(currentScale - lastTextureScale) > 0.12) {
-      regenerateTexture(currentScale);
-    }
+    // Camera zoom — smooth interpolation, no CSS transform, no clipping
+    currentCamZ += (targetCamZ - currentCamZ) * 0.1;
+    if (camera) camera.position.z = currentCamZ;
 
     if (globe) { globe.rotation.y = currentRotationY; globe.rotation.x = currentRotationX; }
     if (gridMesh) { gridMesh.rotation.y = currentRotationY; gridMesh.rotation.x = currentRotationX; }
@@ -685,17 +675,8 @@
     if (countryPinGroup) { countryPinGroup.rotation.y = currentRotationY; countryPinGroup.rotation.x = currentRotationX; }
 
     pulseTime += 0.03;
-    var s = 0.035 + Math.sin(pulseTime) * 0.01;
-    markerSprites.forEach(function (sprite) { sprite.scale.set(s, s, 1); });
-
-    // Bob country pins up and down
-    countryPins.forEach(function (pin, idx) {
-      var country = ACTIVE_COUNTRIES[idx];
-      if (!country) return;
-      var bob = Math.sin(pulseTime * 1.2 + idx) * 0.015;
-      var pos = latLngToVector3(country.lat, country.lng, 1.18 + bob);
-      pin.position.copy(pos);
-    });
+    var ds = 0.02 + Math.sin(pulseTime) * 0.005;
+    markerSprites.forEach(function (sprite) { sprite.scale.set(ds, ds, 1); });
 
     renderer.render(scene, camera);
   }
