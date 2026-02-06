@@ -848,6 +848,12 @@ function generateIndex() {
       .filter-pill { padding: 8px 18px; border-radius: 24px; border: 2px solid #ddd; background: white; font-size: 14px; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.2s; color: #555; }
       .filter-pill:hover { border-color: var(--rosa-mexicano); color: var(--rosa-mexicano); }
       .filter-pill.active { background: var(--rosa-mexicano); border-color: var(--rosa-mexicano); color: white; }
+      .filter-pill[data-region="caribe"].active { background: var(--turquesa); border-color: var(--turquesa); }
+      .filter-pill[data-region="pacifico"].active { background: var(--verde-selva); border-color: var(--verde-selva); }
+      .filter-pill[data-region="centro"].active { background: var(--naranja-calido); border-color: var(--naranja-calido); }
+      .filter-pill[data-region="colonial"].active { background: #a6191d; border-color: #a6191d; }
+      .filter-pill[data-region="sur"].active { background: var(--verde-selva); border-color: var(--verde-selva); }
+      .filter-pill[data-region="norte"].active { background: var(--turquesa); border-color: var(--turquesa); }
       .index-status { text-align: center; padding: 8px 5% 0; font-size: 14px; color: #999; }
 
       /* Grid & Cards */
@@ -872,6 +878,9 @@ function generateIndex() {
       .index-footer { text-align: center; padding: 24px; font-size: 13px; color: #aaa; border-top: 1px solid #eee; }
 
       @media (max-width: 600px) {
+        .nav-links { display: none; }
+        .nav-hamburger { display: flex; }
+        .mobile-menu { display: flex; }
         .filter-pills { gap: 6px; }
         .filter-pill { padding: 6px 14px; font-size: 13px; }
         .search-input { font-size: 15px; padding: 12px 12px 12px 44px; }
@@ -887,7 +896,16 @@ function generateIndex() {
         <li><a href="/souvenirs">Destinos</a></li>
         <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
       </ul>
+      <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </nav>
+    <div class="mobile-menu" aria-hidden="true">
+      <a href="/#productos">Productos</a>
+      <a href="/#calidad">Calidad</a>
+      <a href="/souvenirs">Destinos</a>
+      <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
+    </div>
 
     <div class="index-header">
       <h1>Souvenirs por <span class="hl">Destino</span></h1>
