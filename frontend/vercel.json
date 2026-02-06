@@ -1,5 +1,40 @@
 {
   "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
+      "destination": "/client-order-form/index.html"
+    },
+    {
+      "source": "/styles.css",
+      "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
+      "destination": "/client-order-form/styles.css"
+    },
+    {
+      "source": "/order-form.js",
+      "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
+      "destination": "/client-order-form/order-form.js"
+    },
+    {
+      "source": "/logo.png",
+      "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
+      "destination": "/client-order-form/logo.png"
+    },
+    {
+      "source": "/favicon.png",
+      "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
+      "destination": "/client-order-form/favicon.png"
+    },
+    {
+      "source": "/tutorial.mp4",
+      "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
+      "destination": "/client-order-form/tutorial.mp4"
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
+      "destination": "/client-order-form/:path*"
+    },
     { "source": "/styles.css", "destination": "/client-order-form/styles.css" },
     { "source": "/order-form.js", "destination": "/client-order-form/order-form.js" },
     { "source": "/logo.png", "destination": "/client-order-form/logo.png" },
