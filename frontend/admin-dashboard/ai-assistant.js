@@ -550,6 +550,9 @@ function handleAiAction(action) {
         // Start interactive order creation wizard
         console.log('🛒 DEBUG: start_order_creation detected, calling wizard with:', action.data);
         startOrderCreationWizard(action.data);
+    } else if (action.type === 'generate_catalog') {
+        // Show catalog download in chat
+        showCatalogResult(action.data);
     } else {
         console.log('⚠️ DEBUG: Unknown action type:', action.type);
     }
@@ -643,6 +646,55 @@ function showQuoteResult(data) {
             <div class="ai-quote-error">
                 <span class="ai-quote-error-icon">❌</span>
                 <span>${escapeHtml(data.error || 'Error al generar la cotización')}</span>
+            </div>
+        `;
+    }
+
+    addMessageToChat('assistant', html, { isHtml: true });
+}
+
+/**
+ * Show catalog generation result in chat
+ */
+function showCatalogResult(data) {
+    if (!data) return;
+
+    let html = '';
+
+    if (data.success) {
+        html = `
+            <div class="ai-quote-result">
+                <div class="ai-quote-header">
+                    <span class="ai-quote-icon">📋</span>
+                    <div>
+                        <div class="ai-quote-title">Catálogo de Productos AXKAN</div>
+                        <div class="ai-quote-number">${data.productCount} productos</div>
+                    </div>
+                </div>
+
+                <div class="ai-quote-details">
+                    <div class="ai-quote-client">Incluye todos los precios actualizados y precios de mayoreo</div>
+
+                    <div class="ai-quote-validity">
+                        📅 Generado: ${new Date(data.generatedAt).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                </div>
+
+                <div class="ai-quote-actions">
+                    <a href="${data.pdfUrl}" target="_blank" class="ai-quote-download-btn">
+                        📥 Descargar Catálogo PDF
+                    </a>
+                    <button onclick="copyQuoteLink('${data.pdfUrl}')" class="ai-quote-copy-btn">
+                        📋 Copiar enlace
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        html = `
+            <div class="ai-quote-error">
+                <span class="ai-quote-error-icon">❌</span>
+                <span>${escapeHtml(data.error || 'Error al generar el catálogo')}</span>
             </div>
         `;
     }

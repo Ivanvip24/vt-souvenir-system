@@ -649,7 +649,26 @@ Ejemplo de respuesta para cotización:
 30 Llaveros: $10.00 c/u = $300.00
 **Total: $850.00** (sin envío)"
 
-### 5. CREAR PEDIDO / ORDER
+### 5. GENERAR CATÁLOGO / LISTA DE PRECIOS
+Cuando el usuario pida el catálogo de productos, lista de precios, o precios de mayoreo, genera el catálogo PDF completo.
+
+**Frases que activan esta acción:**
+- "lista de precios", "dame la lista de precios"
+- "catálogo de productos", "catálogo", "catalogo"
+- "precios de mayoreo", "precios mayoreo"
+- "genera el catálogo", "manda el catálogo"
+- "PDF de precios", "price list"
+- "qué productos manejan", "todos los productos"
+
+\`\`\`action
+{
+  "type": "generate_catalog"
+}
+\`\`\`
+
+Responde algo breve como: "Generando el catálogo de productos AXKAN con todos los precios..."
+
+### 6. CREAR PEDIDO / ORDER
 Cuando el usuario pida CREAR UN PEDIDO (no cotizar, sino crear el pedido real), debes:
 1. Extraer los productos, cantidades y precios especiales mencionados
 2. INMEDIATAMENTE incluir el bloque de acción - el wizard recolectará los datos faltantes
@@ -1106,6 +1125,33 @@ router.post('/chat', async (req, res) => {
         };
 
         console.log('🛒 Fallback order creation:', actionData.data.products);
+      }
+    } else if (action.type === 'generate_catalog') {
+      try {
+        const { generateCatalogPDF, getCatalogUrl } = await import('../services/catalog-generator.js');
+        const result = await generateCatalogPDF();
+
+        actionData = {
+          type: 'generate_catalog',
+          data: {
+            success: true,
+            pdfUrl: getCatalogUrl(result.filepath),
+            filename: result.filename,
+            productCount: result.productCount,
+            generatedAt: result.generatedAt
+          }
+        };
+
+        console.log(`📋 Catalog generated: ${result.filename}`);
+      } catch (catalogError) {
+        console.error('❌ Error generating catalog:', catalogError);
+        actionData = {
+          type: 'generate_catalog',
+          data: {
+            success: false,
+            error: catalogError.message || 'Error al generar el catálogo'
+          }
+        };
       }
     }
 

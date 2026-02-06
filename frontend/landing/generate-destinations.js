@@ -667,9 +667,9 @@ function generatePage(dest) {
       <a href="/"><img src="/assets/LOGO-03.png" alt="AXKAN - Souvenirs Premium de México" class="nav-logo"></a>
       <ul class="nav-links">
         <li><a href="/#productos">Productos</a></li>
+        <li><a href="/#calidad">Calidad</a></li>
         <li><a href="/souvenirs">Destinos</a></li>
-        <li><a href="https://vtanunciando.com" target="_blank">Catálogo</a></li>
-        <li><a href="https://axkan-pedidos.vercel.app/" class="nav-cta">Hacer Pedido</a></li>
+        <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
       </ul>
     </nav>
 
@@ -682,7 +682,7 @@ function generatePage(dest) {
         <h1>Souvenirs <span class="highlight">${escapeHtml(dest.name)}</span></h1>
         <span class="dest-state">${escapeHtml(dest.state)}, México</span>
         <p>${escapeHtml(dest.description)}</p>
-        <a href="https://vtanunciando.com" target="_blank" class="btn btn-primary">Ver Catálogo Completo →</a>
+        <a href="/pedidos" class="btn btn-primary">Hacer Pedido →</a>
         <a href="https://wa.me/5215538253251?text=${encodeURIComponent('Hola! Me interesan souvenirs de ' + dest.name)}" target="_blank" class="btn btn-secondary">Cotizar por WhatsApp</a>
       </div>
       <div class="dest-hero-img">
@@ -724,7 +724,7 @@ ${productsHtml}
     </section>
 
     <footer class="dest-footer">
-      <p>© 2025 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</p>
+      <p>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</p>
     </footer>
 </body>
 </html>`;
@@ -861,9 +861,9 @@ function generateIndex() {
       <a href="/"><img src="/assets/LOGO-03.png" alt="AXKAN" class="nav-logo"></a>
       <ul class="nav-links">
         <li><a href="/#productos">Productos</a></li>
+        <li><a href="/#calidad">Calidad</a></li>
         <li><a href="/souvenirs">Destinos</a></li>
-        <li><a href="https://vtanunciando.com" target="_blank">Catálogo</a></li>
-        <li><a href="https://axkan-pedidos.vercel.app/" class="nav-cta">Hacer Pedido</a></li>
+        <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
       </ul>
     </nav>
 

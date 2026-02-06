@@ -83,10 +83,32 @@
       .nav-logo { height: 36px; }
       .nav-links { display: flex; gap: 24px; list-style: none; }
       .nav-links a { color: #333; font-weight: 500; font-size: 14px; text-decoration: none; }
-      .nav-cta { background: var(--rosa-mexicano); color: white !important; padding: 8px 20px; border-radius: 24px; }
+      .nav-links a:hover { color: var(--rosa-mexicano); }
+      .nav-cta { background: var(--rosa-mexicano); color: white !important; padding: 8px 20px; border-radius: 24px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+      .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(231, 42, 136, 0.4); }
+
+      /* Hamburger */
+      .nav-hamburger { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 32px; height: 32px; background: none; border: none; cursor: pointer; padding: 4px; z-index: 110; }
+      .nav-hamburger span { display: block; width: 100%; height: 3px; background: #333; border-radius: 2px; transition: all 0.3s ease; }
+      .nav-hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(6px, 6px); }
+      .nav-hamburger.active span:nth-child(2) { opacity: 0; }
+      .nav-hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
+      .mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); z-index: 99; flex-direction: column; justify-content: center; align-items: center; gap: 2rem; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+      .mobile-menu.active { opacity: 1; visibility: visible; }
+      .mobile-menu a { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; color: #333; text-decoration: none; padding: 0.75rem 1.5rem; }
+      .mobile-menu a:hover { color: var(--rosa-mexicano); }
+      .mobile-menu .nav-cta { font-size: 1.25rem; padding: 1rem 2rem; }
+      @media (max-width: 600px) {
+        .nav-links { display: none; }
+        .nav-hamburger { display: flex; }
+        .mobile-menu { display: flex; }
+      }
       .index-header { text-align: center; padding: 60px 5% 24px; }
       .index-header h1 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 12px; }
       .index-header h1 .hl { color: var(--rosa-mexicano); }
+      .index-header h1 .hl-verde { color: var(--verde-selva); }
+      .index-header h1 .hl-naranja { color: var(--naranja-calido); }
+      .index-header h1 .hl-turquesa { color: var(--turquesa); }
       .index-header p { color: #666; font-size: 16px; max-width: 600px; margin: 0 auto; }
 
       /* Search & Filters */
@@ -100,6 +122,12 @@
       .filter-pill { padding: 8px 18px; border-radius: 24px; border: 2px solid #ddd; background: white; font-size: 14px; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.2s; color: #555; }
       .filter-pill:hover { border-color: var(--rosa-mexicano); color: var(--rosa-mexicano); }
       .filter-pill.active { background: var(--rosa-mexicano); border-color: var(--rosa-mexicano); color: white; }
+      .filter-pill[data-region="caribe"].active { background: var(--turquesa); border-color: var(--turquesa); }
+      .filter-pill[data-region="pacifico"].active { background: var(--verde-selva); border-color: var(--verde-selva); }
+      .filter-pill[data-region="centro"].active { background: var(--naranja-calido); border-color: var(--naranja-calido); }
+      .filter-pill[data-region="colonial"].active { background: #a6191d; border-color: #a6191d; }
+      .filter-pill[data-region="sur"].active { background: var(--verde-selva); border-color: var(--verde-selva); }
+      .filter-pill[data-region="norte"].active { background: var(--turquesa); border-color: var(--turquesa); }
       .index-status { text-align: center; padding: 8px 5% 0; font-size: 14px; color: #999; }
 
       /* Grid & Cards */
@@ -135,11 +163,23 @@
       <a href="/"><img src="/assets/LOGO-03.png" alt="AXKAN" class="nav-logo"></a>
       <ul class="nav-links">
         <li><a href="/#productos">Productos</a></li>
+        <li><a href="/#calidad">Calidad</a></li>
         <li><a href="/souvenirs">Destinos</a></li>
-        <li><a href="https://vtanunciando.com" target="_blank">Catálogo</a></li>
-        <li><a href="https://axkan-pedidos.vercel.app/" class="nav-cta">Hacer Pedido</a></li>
+        <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
       </ul>
+      <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </nav>
+
+    <div class="mobile-menu" aria-hidden="true">
+      <a href="/#productos">Productos</a>
+      <a href="/#calidad">Calidad</a>
+      <a href="/souvenirs">Destinos</a>
+      <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
+    </div>
 
     <div class="index-header">
       <h1>Souvenirs por <span class="hl">Destino</span></h1>
@@ -569,11 +609,33 @@
     </div>
 
     <footer class="index-footer">
-      <p>© 2025 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</p>
+      <p>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</p>
     </footer>
 
     <script>
     (function() {
+      // Hamburger menu
+      var hamburger = document.querySelector('.nav-hamburger');
+      var mobileMenu = document.querySelector('.mobile-menu');
+      if (hamburger && mobileMenu) {
+        hamburger.addEventListener('click', function() {
+          var isActive = hamburger.classList.toggle('active');
+          mobileMenu.classList.toggle('active');
+          hamburger.setAttribute('aria-expanded', isActive);
+          mobileMenu.setAttribute('aria-hidden', !isActive);
+          document.body.style.overflow = isActive ? 'hidden' : '';
+        });
+        mobileMenu.querySelectorAll('a').forEach(function(link) {
+          link.addEventListener('click', function() {
+            hamburger.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+            mobileMenu.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+          });
+        });
+      }
+
       var searchInput = document.getElementById('searchInput');
       var pills = document.querySelectorAll('.filter-pill');
       var cards = document.querySelectorAll('.index-card');
