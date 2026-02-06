@@ -99,6 +99,14 @@ if (!fs.existsSync(catalogsPath)) {
 app.use('/catalogs', express.static(catalogsPath));
 console.log(`📁 Serving catalogs from: ${catalogsPath}`);
 
+// Shipping Labels PDFs
+const labelsPath = path.join(__dirname, '../labels');
+if (!fs.existsSync(labelsPath)) {
+  fs.mkdirSync(labelsPath, { recursive: true });
+}
+app.use('/labels', express.static(labelsPath));
+console.log(`📁 Serving labels from: ${labelsPath}`);
+
 // ========================================
 // HEALTH CHECK
 // ========================================
@@ -4430,6 +4438,147 @@ app.post('/api/clients/autocomplete-addresses', async (req, res) => {
     });
   } catch (error) {
     console.error('Error auto-completing addresses:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/shipping/labels/bulk
+ * Generate a PDF with shipping labels for multiple clients
+ */
+app.post('/api/shipping/labels/bulk', async (req, res) => {
+  try {
+    const { clientIds } = req.body;
+
+    if (!clientIds || !Array.isArray(clientIds) || clientIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'clientIds array required' });
+    }
+
+    // Fetch all clients
+    const placeholders = clientIds.map((_, i) => `$${i + 1}`).join(',');
+    const result = await query(`
+      SELECT id, name, phone, email, street, street_number, colonia, city, state,
+             COALESCE(postal, postal_code) as postal_code, reference_notes
+      FROM clients
+      WHERE id IN (${placeholders})
+    `, clientIds);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'No clients found' });
+    }
+
+    const clients = result.rows;
+
+    // Generate PDF with pdfkit
+    const PDFDocument = (await import('pdfkit')).default;
+    const doc = new PDFDocument({ size: 'LETTER', margin: 40 });
+
+    const filename = `etiquetas_${Date.now()}.pdf`;
+    const filepath = path.join(__dirname, '../labels', filename);
+    const stream = fs.createWriteStream(filepath);
+    doc.pipe(stream);
+
+    // Layout: 2 columns x 5 rows per page = 10 labels per page
+    const labelW = 252;  // ~3.5 inches
+    const labelH = 130;  // ~1.8 inches
+    const colGap = 28;
+    const rowGap = 12;
+    const startX = 40;
+    const startY = 40;
+
+    clients.forEach((client, index) => {
+      const labelsPerPage = 10;
+      const posOnPage = index % labelsPerPage;
+
+      if (index > 0 && posOnPage === 0) {
+        doc.addPage();
+      }
+
+      const col = posOnPage % 2;
+      const row = Math.floor(posOnPage / 2);
+      const x = startX + col * (labelW + colGap);
+      const y = startY + row * (labelH + rowGap);
+
+      // Label border
+      doc.save();
+      doc.roundedRect(x, y, labelW, labelH, 6)
+         .lineWidth(1)
+         .strokeColor('#d1d5db')
+         .stroke();
+
+      // Pink left accent
+      doc.roundedRect(x, y, 5, labelH, 3)
+         .fillColor('#E91E63')
+         .fill();
+
+      // Name
+      doc.fillColor('#111827')
+         .font('Helvetica-Bold')
+         .fontSize(11)
+         .text(client.name || '', x + 14, y + 10, { width: labelW - 24, lineBreak: true });
+
+      // Phone
+      if (client.phone) {
+        doc.fillColor('#6b7280')
+           .font('Helvetica')
+           .fontSize(9)
+           .text(`Tel: ${client.phone}`, x + 14, y + 28, { width: labelW - 24 });
+      }
+
+      // Address lines
+      let addrY = y + 44;
+      const addrParts = [];
+      if (client.street) {
+        let streetLine = client.street;
+        if (client.street_number) streetLine += ` #${client.street_number}`;
+        addrParts.push(streetLine);
+      }
+      if (client.colonia) addrParts.push(`Col. ${client.colonia}`);
+
+      const cityLine = [client.city, client.state].filter(Boolean).join(', ');
+      if (cityLine) addrParts.push(cityLine);
+      if (client.postal_code) addrParts.push(`CP ${client.postal_code}`);
+
+      doc.fillColor('#374151')
+         .font('Helvetica')
+         .fontSize(9);
+
+      addrParts.forEach(line => {
+        doc.text(line, x + 14, addrY, { width: labelW - 24 });
+        addrY += 12;
+      });
+
+      // Reference notes (if fits)
+      if (client.reference_notes && addrY < y + labelH - 16) {
+        doc.fillColor('#9ca3af')
+           .fontSize(8)
+           .text(`Ref: ${client.reference_notes}`, x + 14, addrY + 2, {
+             width: labelW - 24,
+             height: y + labelH - addrY - 8,
+             ellipsis: true
+           });
+      }
+
+      doc.restore();
+    });
+
+    doc.end();
+
+    await new Promise((resolve, reject) => {
+      stream.on('finish', resolve);
+      stream.on('error', reject);
+    });
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    res.json({
+      success: true,
+      pdfUrl: `${baseUrl}/labels/${filename}`,
+      filename,
+      clientCount: clients.length
+    });
+
+  } catch (error) {
+    console.error('Error generating bulk labels:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

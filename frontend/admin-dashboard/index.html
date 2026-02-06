@@ -1128,7 +1128,10 @@
             <section id="shipping-view" class="view">
                 <div class="view-header">
                     <h2>📦 Base de Datos de Envíos</h2>
-                    <div style="display: flex; gap: 12px;">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-select" id="select-mode-btn" onclick="toggleSelectMode()">
+                            ☑ Seleccionar
+                        </button>
                         <button class="btn btn-primary" onclick="showAddClientModal()">
                             ➕ Agregar Cliente
                         </button>
@@ -1142,6 +1145,28 @@
                             🔄 Auto-completar
                         </button>
                         <input type="file" id="csv-import-input" accept=".csv" style="display: none;" onchange="handleCSVImport(event)">
+                    </div>
+                </div>
+
+                <!-- Bulk Action Bar (hidden until selection) -->
+                <div id="bulk-action-bar" class="bulk-action-bar hidden">
+                    <div class="bulk-action-left">
+                        <label class="bulk-select-all">
+                            <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll()" />
+                            Todos
+                        </label>
+                        <span class="bulk-count" id="bulk-selected-count">0 clientes</span>
+                    </div>
+                    <div class="bulk-action-right">
+                        <button class="bulk-btn" onclick="bulkGenerateLabels()" title="Generar etiquetas de envio">
+                            🏷️ Etiquetas
+                        </button>
+                        <button class="bulk-btn" onclick="bulkExportCSV()" title="Exportar seleccionados a CSV">
+                            📥 Exportar
+                        </button>
+                        <button class="bulk-btn danger" onclick="bulkDelete()" title="Eliminar seleccionados">
+                            🗑️ Eliminar
+                        </button>
                     </div>
                 </div>
 

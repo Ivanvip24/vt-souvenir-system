@@ -25,6 +25,8 @@ const shippingState = {
   totalPages: 1,
   itemsPerPage: 50,
   autoCompleteRan: false, // Only run auto-complete once per session
+  selectMode: false, // Whether multi-select mode is active
+  selectedIds: new Set(), // Set of selected client IDs
   stats: {
     total_clients: 0,
     with_address: 0,
@@ -219,8 +221,8 @@ function renderShippingTable() {
   const container = document.getElementById('shipping-cards-container');
   if (!container) return;
 
-  // No frontend sorting — backend handles order via sort param
   const clients = shippingState.filteredClients;
+  const inSelect = shippingState.selectMode;
 
   container.innerHTML = clients.map(client => {
     const hasFullAddress = client.street && client.city && client.state && (client.postal_code || client.postal);
@@ -228,9 +230,16 @@ function renderShippingTable() {
     const postal = client.postal_code || client.postal || '';
     const phone = client.phone || '';
     const missing = hasFullAddress ? [] : getMissingFields(client);
+    const isSelected = shippingState.selectedIds.has(client.id);
 
     return `
-      <div class="address-card ${hasFullAddress ? 'complete' : 'incomplete'}" onclick="showClientDetailPopup(${client.id})">
+      <div class="address-card ${hasFullAddress ? 'complete' : 'incomplete'}${isSelected ? ' selected' : ''}"
+           onclick="${inSelect ? `toggleSelectClient(${client.id})` : `showClientDetailPopup(${client.id})`}">
+        ${inSelect ? `
+          <div class="address-card-checkbox">
+            <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelectClient(${client.id})" />
+          </div>
+        ` : ''}
         <div class="address-card-header">
           <span class="address-card-name">${escapeHtml(client.name)}</span>
           ${hasFullAddress
@@ -1107,6 +1116,209 @@ async function deleteClient(clientId, clientName) {
 }
 
 // ==========================================
+// SELECT / MULTI-SELECT
+// ==========================================
+
+function toggleSelectMode() {
+  shippingState.selectMode = !shippingState.selectMode;
+  shippingState.selectedIds.clear();
+
+  const btn = document.getElementById('select-mode-btn');
+  if (btn) {
+    btn.classList.toggle('active', shippingState.selectMode);
+    btn.innerHTML = shippingState.selectMode ? '✕ Cancelar' : '☑ Seleccionar';
+  }
+
+  updateBulkActionBar();
+  renderShippingTable();
+}
+
+function toggleSelectClient(clientId) {
+  if (shippingState.selectedIds.has(clientId)) {
+    shippingState.selectedIds.delete(clientId);
+  } else {
+    shippingState.selectedIds.add(clientId);
+  }
+
+  // Update just the clicked card without full re-render
+  const cards = document.querySelectorAll('.address-card');
+  cards.forEach(card => {
+    const checkbox = card.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+      const onclickStr = card.getAttribute('onclick') || '';
+      const match = onclickStr.match(/toggleSelectClient\((\d+)\)/);
+      if (match && parseInt(match[1]) === clientId) {
+        const isNowSelected = shippingState.selectedIds.has(clientId);
+        card.classList.toggle('selected', isNowSelected);
+        checkbox.checked = isNowSelected;
+      }
+    }
+  });
+
+  updateSelectAllCheckbox();
+  updateBulkActionBar();
+}
+
+function toggleSelectAll() {
+  const allOnPage = shippingState.filteredClients.map(c => c.id);
+  const allSelected = allOnPage.every(id => shippingState.selectedIds.has(id));
+
+  if (allSelected) {
+    allOnPage.forEach(id => shippingState.selectedIds.delete(id));
+  } else {
+    allOnPage.forEach(id => shippingState.selectedIds.add(id));
+  }
+
+  updateSelectAllCheckbox();
+  updateBulkActionBar();
+  renderShippingTable();
+}
+
+function updateSelectAllCheckbox() {
+  const cb = document.getElementById('select-all-checkbox');
+  if (!cb) return;
+  const allOnPage = shippingState.filteredClients.map(c => c.id);
+  const selectedCount = allOnPage.filter(id => shippingState.selectedIds.has(id)).length;
+  cb.checked = selectedCount === allOnPage.length && allOnPage.length > 0;
+  cb.indeterminate = selectedCount > 0 && selectedCount < allOnPage.length;
+}
+
+function updateBulkActionBar() {
+  const bar = document.getElementById('bulk-action-bar');
+  if (!bar) return;
+
+  const count = shippingState.selectedIds.size;
+
+  if (shippingState.selectMode && count > 0) {
+    bar.classList.remove('hidden');
+    const countEl = document.getElementById('bulk-selected-count');
+    if (countEl) countEl.textContent = `${count} cliente${count > 1 ? 's' : ''}`;
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+function getSelectedClients() {
+  return shippingState.filteredClients.filter(c => shippingState.selectedIds.has(c.id));
+}
+
+// ---- Bulk Actions ----
+
+function bulkExportCSV() {
+  const selected = getSelectedClients();
+  if (selected.length === 0) return;
+
+  const headers = ['Nombre', 'Telefono', 'Email', 'Calle', 'Num. Ext', 'Colonia', 'Ciudad', 'Estado', 'C.P.', 'Referencias'];
+  const rows = selected.map(c => [
+    c.name || '',
+    c.phone || '',
+    c.email || '',
+    c.street || '',
+    c.street_number || '',
+    c.colonia || '',
+    c.city || '',
+    c.state || '',
+    c.postal_code || c.postal || '',
+    c.reference_notes || ''
+  ]);
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+  ].join('\n');
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `clientes_seleccionados_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+
+  showNotification(`${selected.length} clientes exportados a CSV`, 'success');
+}
+
+async function bulkDelete() {
+  const selected = getSelectedClients();
+  if (selected.length === 0) return;
+
+  const names = selected.slice(0, 3).map(c => c.name).join(', ');
+  const extra = selected.length > 3 ? ` y ${selected.length - 3} mas` : '';
+  const confirmed = confirm(`Eliminar ${selected.length} cliente${selected.length > 1 ? 's' : ''}?\n\n${names}${extra}\n\nEsta accion no se puede deshacer.`);
+
+  if (!confirmed) return;
+
+  let deleted = 0;
+  let errors = 0;
+
+  for (const client of selected) {
+    try {
+      const response = await fetch(`${API_BASE}/clients/${client.id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      if (response.ok) deleted++;
+      else errors++;
+    } catch (e) {
+      errors++;
+    }
+  }
+
+  shippingState.selectedIds.clear();
+  updateBulkActionBar();
+
+  if (errors > 0) {
+    showNotification(`${deleted} eliminados, ${errors} errores`, 'warning');
+  } else {
+    showNotification(`${deleted} clientes eliminados`, 'success');
+  }
+
+  loadShippingData();
+}
+
+async function bulkGenerateLabels() {
+  const selected = getSelectedClients();
+  if (selected.length === 0) return;
+
+  // Filter to only clients with complete addresses
+  const withAddress = selected.filter(c => c.street && c.city && c.state && (c.postal_code || c.postal));
+
+  if (withAddress.length === 0) {
+    showNotification('Ninguno de los clientes seleccionados tiene direccion completa', 'warning');
+    return;
+  }
+
+  if (withAddress.length < selected.length) {
+    const skip = selected.length - withAddress.length;
+    showNotification(`${skip} cliente${skip > 1 ? 's' : ''} sin direccion completa - se omitiran`, 'info');
+  }
+
+  // Generate labels PDF for selected clients
+  try {
+    const response = await fetch(`${API_BASE}/shipping/labels/bulk`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ clientIds: withAddress.map(c => c.id) })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Error al generar etiquetas');
+    }
+
+    const result = await response.json();
+
+    if (result.success && result.pdfUrl) {
+      window.open(result.pdfUrl, '_blank');
+      showNotification(`Etiquetas generadas para ${withAddress.length} clientes`, 'success');
+    } else {
+      throw new Error(result.error || 'Error desconocido');
+    }
+  } catch (error) {
+    console.error('Bulk labels error:', error);
+    showNotification('Error al generar etiquetas: ' + error.message, 'error');
+  }
+}
+
+// ==========================================
 // AUTO-COMPLETE ADDRESSES
 // ==========================================
 
@@ -1185,3 +1397,9 @@ window.saveClient = saveClient;
 window.setQuickFilter = setQuickFilter;
 window.setShippingSort = setShippingSort;
 window.autoCompleteAddresses = autoCompleteAddresses;
+window.toggleSelectMode = toggleSelectMode;
+window.toggleSelectClient = toggleSelectClient;
+window.toggleSelectAll = toggleSelectAll;
+window.bulkExportCSV = bulkExportCSV;
+window.bulkDelete = bulkDelete;
+window.bulkGenerateLabels = bulkGenerateLabels;
