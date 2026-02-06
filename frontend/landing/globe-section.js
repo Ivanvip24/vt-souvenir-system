@@ -191,12 +191,20 @@
 
   var scene, camera, renderer, globe, gridMesh, atmosphereMesh;
   var markerGroup, markerSprites = [];
+  var countryPinGroup, countryPins = [];
   var animationFrameId = null;
   var targetRotationY = 1.75, currentRotationY = 1.75;
   var targetRotationX = 0.15, currentRotationX = 0.15;
   var mouseDown = false, mouseX = 0, mouseY = 0;
+  var dragStartX = 0, dragStartY = 0, isDragging = false;
   var autoRotateSpeed = 0.002;
   var globeContainer = null;
+  var raycaster = null, mouseVec = null;
+
+  // Countries where AXKAN has made designs
+  var ACTIVE_COUNTRIES = [
+    { name: 'México', lat: 23.6, lng: -102.5, view: 'mexico' }
+  ];
   var targetScale = 1.0, currentScale = 1.0;
   var SCALE_MIN = 1.0, SCALE_MAX = 2.8;
   var lastAppliedScale = 1.0;
@@ -247,6 +255,10 @@
 
     createAtmosphere();
     createMarkers();
+    createCountryPins();
+
+    raycaster = new THREE.Raycaster();
+    mouseVec = new THREE.Vector2();
 
     // Lights
     scene.add(new THREE.AmbientLight(0xffffff, 1.0));
@@ -462,36 +474,180 @@
     );
   }
 
+  function createPinTexture(color) {
+    var c = document.createElement('canvas');
+    c.width = 128; c.height = 180;
+    var ctx = c.getContext('2d');
+    // Shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 4;
+    // Teardrop body
+    ctx.beginPath();
+    ctx.moveTo(64, 172);
+    ctx.bezierCurveTo(24, 115, 8, 75, 8, 52);
+    ctx.arc(64, 52, 56, Math.PI, 0, false);
+    ctx.bezierCurveTo(120, 75, 104, 115, 64, 172);
+    ctx.closePath();
+    ctx.fillStyle = color || '#e72a88';
+    ctx.fill();
+    // White inner circle
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    ctx.beginPath();
+    ctx.arc(64, 52, 22, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    // Inner dot
+    ctx.beginPath();
+    ctx.arc(64, 52, 10, 0, Math.PI * 2);
+    ctx.fillStyle = color || '#e72a88';
+    ctx.fill();
+    return new THREE.CanvasTexture(c);
+  }
+
+  function createCountryPins() {
+    countryPinGroup = new THREE.Group();
+    var pinTex = createPinTexture(COLORS.rosa);
+    ACTIVE_COUNTRIES.forEach(function (country) {
+      var pos = latLngToVector3(country.lat, country.lng, 1.18);
+      var mat = new THREE.SpriteMaterial({
+        map: pinTex,
+        transparent: true,
+        depthWrite: false,
+        sizeAttenuation: true
+      });
+      var sprite = new THREE.Sprite(mat);
+      sprite.position.copy(pos);
+      sprite.scale.set(0.14, 0.20, 1);
+      sprite.userData = { type: 'country', country: country };
+      countryPinGroup.add(sprite);
+      countryPins.push(sprite);
+    });
+    scene.add(countryPinGroup);
+  }
+
+  function vector3ToLatLng(localPoint) {
+    var r = localPoint.length();
+    var lat = 90 - Math.acos(localPoint.y / r) * (180 / Math.PI);
+    var theta = Math.atan2(localPoint.z, -localPoint.x);
+    var lng = theta * (180 / Math.PI) - 180;
+    if (lng < -180) lng += 360;
+    return { lat: lat, lng: lng };
+  }
+
+  function isPointInCountry(lat, lng, country) {
+    // Bounding box check for Mexico
+    if (country.name === 'México') {
+      return lat >= 14 && lat <= 33 && lng >= -118 && lng <= -86;
+    }
+    return false;
+  }
+
+  function onGlobeClick(e) {
+    if (isDragging) return;
+    if (!raycaster || !camera) return;
+
+    var rect = renderer.domElement.getBoundingClientRect();
+    mouseVec.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouseVec.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouseVec, camera);
+
+    // Check country pin intersections first
+    var pinHits = raycaster.intersectObjects(countryPins);
+    if (pinHits.length > 0) {
+      var hit = pinHits[0].object.userData;
+      if (hit.country && hit.country.view) {
+        showView(hit.country.view);
+        return;
+      }
+    }
+
+    // Check globe surface — convert hit to lat/lng, find country
+    var globeHits = raycaster.intersectObject(globe);
+    if (globeHits.length > 0) {
+      var local = new THREE.Vector3();
+      globe.worldToLocal(local.copy(globeHits[0].point));
+      var ll = vector3ToLatLng(local);
+      for (var i = 0; i < ACTIVE_COUNTRIES.length; i++) {
+        if (isPointInCountry(ll.lat, ll.lng, ACTIVE_COUNTRIES[i])) {
+          showView(ACTIVE_COUNTRIES[i].view);
+          return;
+        }
+      }
+    }
+  }
+
   function setupGlobeInteraction() {
     var canvas = renderer.domElement;
     canvas.addEventListener('mousedown', function (e) {
-      mouseDown = true; mouseX = e.clientX; mouseY = e.clientY;
+      mouseDown = true; isDragging = false;
+      mouseX = e.clientX; mouseY = e.clientY;
+      dragStartX = e.clientX; dragStartY = e.clientY;
     });
     canvas.addEventListener('mousemove', function (e) {
-      if (!mouseDown) return;
-      targetRotationY += (e.clientX - mouseX) * 0.005;
-      targetRotationX += (e.clientY - mouseY) * 0.003;
-      targetRotationX = Math.max(-0.8, Math.min(0.8, targetRotationX));
-      mouseX = e.clientX; mouseY = e.clientY;
+      if (mouseDown) {
+        var dx = e.clientX - mouseX, dy = e.clientY - mouseY;
+        if (Math.abs(e.clientX - dragStartX) > 4 || Math.abs(e.clientY - dragStartY) > 4) isDragging = true;
+        targetRotationY += dx * 0.005;
+        targetRotationX += dy * 0.003;
+        targetRotationX = Math.max(-0.8, Math.min(0.8, targetRotationX));
+        mouseX = e.clientX; mouseY = e.clientY;
+      }
+      // Hover cursor — check if over a clickable country/pin
+      if (raycaster && camera) {
+        var rect = canvas.getBoundingClientRect();
+        mouseVec.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouseVec.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouseVec, camera);
+        var pinHits = raycaster.intersectObjects(countryPins);
+        if (pinHits.length > 0) {
+          canvas.style.cursor = 'pointer';
+        } else {
+          var gHits = raycaster.intersectObject(globe);
+          if (gHits.length > 0) {
+            var lp = new THREE.Vector3();
+            globe.worldToLocal(lp.copy(gHits[0].point));
+            var coord = vector3ToLatLng(lp);
+            var overCountry = false;
+            for (var c = 0; c < ACTIVE_COUNTRIES.length; c++) {
+              if (isPointInCountry(coord.lat, coord.lng, ACTIVE_COUNTRIES[c])) { overCountry = true; break; }
+            }
+            canvas.style.cursor = overCountry ? 'pointer' : 'grab';
+          } else {
+            canvas.style.cursor = 'grab';
+          }
+        }
+      }
     });
-    canvas.addEventListener('mouseup', function () { mouseDown = false; });
+    canvas.addEventListener('mouseup', function (e) {
+      if (!isDragging) onGlobeClick(e);
+      mouseDown = false;
+    });
     canvas.addEventListener('mouseleave', function () { mouseDown = false; });
 
     // Touch
     canvas.addEventListener('touchstart', function (e) {
       if (e.touches.length === 1) {
-        mouseDown = true;
+        mouseDown = true; isDragging = false;
         mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY;
+        dragStartX = mouseX; dragStartY = mouseY;
       }
     }, { passive: true });
     canvas.addEventListener('touchmove', function (e) {
       if (!mouseDown || e.touches.length !== 1) return;
+      if (Math.abs(e.touches[0].clientX - dragStartX) > 4 || Math.abs(e.touches[0].clientY - dragStartY) > 4) isDragging = true;
       targetRotationY += (e.touches[0].clientX - mouseX) * 0.005;
       targetRotationX += (e.touches[0].clientY - mouseY) * 0.003;
       targetRotationX = Math.max(-0.8, Math.min(0.8, targetRotationX));
       mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY;
     }, { passive: true });
-    canvas.addEventListener('touchend', function () { mouseDown = false; }, { passive: true });
+    canvas.addEventListener('touchend', function (e) {
+      if (!isDragging && e.changedTouches.length === 1) {
+        // Simulate click from touch position
+        onGlobeClick({ clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY });
+      }
+      mouseDown = false;
+    }, { passive: true });
 
     // Wheel zoom — CSS transform scale, only when hovering over the globe
     canvas.addEventListener('wheel', function (e) {
@@ -526,10 +682,20 @@
     if (globe) { globe.rotation.y = currentRotationY; globe.rotation.x = currentRotationX; }
     if (gridMesh) { gridMesh.rotation.y = currentRotationY; gridMesh.rotation.x = currentRotationX; }
     if (markerGroup) { markerGroup.rotation.y = currentRotationY; markerGroup.rotation.x = currentRotationX; }
+    if (countryPinGroup) { countryPinGroup.rotation.y = currentRotationY; countryPinGroup.rotation.x = currentRotationX; }
 
     pulseTime += 0.03;
     var s = 0.035 + Math.sin(pulseTime) * 0.01;
     markerSprites.forEach(function (sprite) { sprite.scale.set(s, s, 1); });
+
+    // Bob country pins up and down
+    countryPins.forEach(function (pin, idx) {
+      var country = ACTIVE_COUNTRIES[idx];
+      if (!country) return;
+      var bob = Math.sin(pulseTime * 1.2 + idx) * 0.015;
+      var pos = latLngToVector3(country.lat, country.lng, 1.18 + bob);
+      pin.position.copy(pos);
+    });
 
     renderer.render(scene, camera);
   }
@@ -675,12 +841,11 @@
         });
 
         if (hasDest) {
-          ctx.fillStyle = color;
-          ctx.globalAlpha = isHovered ? 0.75 : 0.3;
+          // Pink illuminated border + subtle fill
+          ctx.fillStyle = isHovered ? 'rgba(231, 42, 136, 0.25)' : 'rgba(231, 42, 136, 0.1)';
           ctx.fill('evenodd');
-          ctx.globalAlpha = 1;
-          ctx.strokeStyle = isHovered ? '#ffffff' : color;
-          ctx.lineWidth = (isHovered ? 2.5 : 1.2) * dpr;
+          ctx.strokeStyle = isHovered ? '#ff6ab5' : COLORS.rosa;
+          ctx.lineWidth = (isHovered ? 2.5 : 1.5) * dpr;
           ctx.stroke();
         } else {
           ctx.fillStyle = isHovered ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)';
@@ -692,7 +857,7 @@
       });
     });
 
-    // Draw destination count pins and labels
+    // Draw map pin markers for states with destinations
     Object.keys(stateGroups).forEach(function (stateName) {
       var center = STATE_CENTERS[stateName];
       if (!center || !mexicoProject) return;
@@ -700,33 +865,48 @@
       var count = stateGroups[stateName].length;
       var isHovered = hoveredState === stateName;
       var color = stateColorMap[stateName];
-      var baseR = (8 + count * 3) * dpr;
-      var r = isHovered ? baseR * 1.3 : baseR;
+      var pinH = (28 + count * 4) * dpr;
+      var pinW = pinH * 0.7;
+      var scale = isHovered ? 1.2 : 1;
+      pinH *= scale; pinW *= scale;
+      var cx = pos[0], tipY = pos[1];
+      var headY = tipY - pinH;
+      var headR = pinW / 2;
 
-      // Glow
-      var glow = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], r * 2);
-      glow.addColorStop(0, color + '50');
-      glow.addColorStop(1, color + '00');
-      ctx.fillStyle = glow;
-      ctx.beginPath(); ctx.arc(pos[0], pos[1], r * 2, 0, Math.PI * 2); ctx.fill();
+      // Shadow
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.4)';
+      ctx.shadowBlur = 6 * dpr;
+      ctx.shadowOffsetY = 3 * dpr;
 
-      // Main circle
-      ctx.fillStyle = isHovered ? color : color + 'CC';
-      ctx.beginPath(); ctx.arc(pos[0], pos[1], r, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = isHovered ? '#ffffff' : color;
-      ctx.lineWidth = (isHovered ? 2.5 : 1.5) * dpr;
-      ctx.stroke();
+      // Teardrop pin
+      ctx.beginPath();
+      ctx.moveTo(cx, tipY);
+      ctx.bezierCurveTo(cx - pinW * 0.4, tipY - pinH * 0.45, cx - headR, headY + headR * 0.4, cx - headR, headY);
+      ctx.arc(cx, headY, headR, Math.PI, 0, false);
+      ctx.bezierCurveTo(cx + headR, headY + headR * 0.4, cx + pinW * 0.4, tipY - pinH * 0.45, cx, tipY);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
 
-      // Count
+      // White inner circle
+      var innerR = headR * 0.55;
+      ctx.beginPath();
+      ctx.arc(cx, headY, innerR, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold ' + (12 * dpr) + 'px Inter, sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(count, pos[0], pos[1]);
+      ctx.fill();
 
-      // Abbreviation label
+      // Count number
+      ctx.fillStyle = color;
+      ctx.font = 'bold ' + Math.round(innerR * 1.2) + 'px Inter, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(count, cx, headY);
+
+      // State abbreviation label
       ctx.fillStyle = isHovered ? '#ffffff' : 'rgba(255,255,255,0.7)';
       ctx.font = (isHovered ? 'bold ' : '') + (10 * dpr) + 'px Inter, sans-serif';
-      ctx.fillText(center.abbr, pos[0], pos[1] + r + 12 * dpr);
+      ctx.fillText(center.abbr, cx, tipY + 10 * dpr);
     });
   }
 
@@ -925,8 +1105,9 @@
   // ═══════════════════════════════════════════════════════════
 
   function bindEvents() {
+    // Hide old button — navigation is now via clicking countries/pins
     var exploreBtn = document.getElementById('globe-explore-btn');
-    if (exploreBtn) exploreBtn.addEventListener('click', function () { showView('mexico'); });
+    if (exploreBtn) exploreBtn.style.display = 'none';
 
     var navGlobe = document.getElementById('nav-globe');
     if (navGlobe) navGlobe.addEventListener('click', function () { showView('globe'); });
