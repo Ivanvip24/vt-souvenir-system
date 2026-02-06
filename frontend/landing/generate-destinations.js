@@ -683,6 +683,7 @@ function generatePage(dest) {
         <li><a href="/#productos">Productos</a></li>
         <li><a href="/#calidad">Calidad</a></li>
         <li><a href="/souvenirs">Destinos</a></li>
+        <li><a href="/envio">Envío</a></li>
         <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
       </ul>
     </nav>
@@ -898,6 +899,7 @@ function generateIndex() {
         <li><a href="/#productos">Productos</a></li>
         <li><a href="/#calidad">Calidad</a></li>
         <li><a href="/souvenirs">Destinos</a></li>
+        <li><a href="/envio">Envío</a></li>
         <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
       </ul>
       <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
@@ -908,6 +910,7 @@ function generateIndex() {
       <a href="/#productos">Productos</a>
       <a href="/#calidad">Calidad</a>
       <a href="/souvenirs">Destinos</a>
+      <a href="/envio">Envío</a>
       <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
     </div>
 
