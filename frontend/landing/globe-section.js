@@ -202,13 +202,16 @@
     // Destination markers
     createMarkers();
 
-    // Lights
-    var ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    // Lights — bright enough to make continents pop
+    var ambient = new THREE.AmbientLight(0xffffff, 1.0);
     scene.add(ambient);
-    var directional = new THREE.DirectionalLight(0xffffff, 0.8);
+    var directional = new THREE.DirectionalLight(0xffffff, 1.2);
     directional.position.set(5, 3, 5);
     scene.add(directional);
-    var backLight = new THREE.DirectionalLight(0xe72a88, 0.3);
+    var fillLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    fillLight.position.set(-5, 0, 3);
+    scene.add(fillLight);
+    var backLight = new THREE.DirectionalLight(0xe72a88, 0.5);
     backLight.position.set(-3, -2, -5);
     scene.add(backLight);
 
@@ -228,17 +231,19 @@
     canvas.height = 1024;
     var ctx = canvas.getContext('2d');
 
-    // Ocean gradient
+    // Ocean — rich deep blue, not too dark
     var gradient = ctx.createLinearGradient(0, 0, 0, 1024);
-    gradient.addColorStop(0, '#0a1525');
-    gradient.addColorStop(0.5, '#0d1a2d');
-    gradient.addColorStop(1, '#0a1525');
+    gradient.addColorStop(0, '#0f2847');
+    gradient.addColorStop(0.3, '#112d52');
+    gradient.addColorStop(0.5, '#143360');
+    gradient.addColorStop(0.7, '#112d52');
+    gradient.addColorStop(1, '#0f2847');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 2048, 1024);
 
-    // Subtle grid on ocean
-    ctx.strokeStyle = 'rgba(26, 42, 74, 0.4)';
-    ctx.lineWidth = 0.5;
+    // Grid lines on ocean
+    ctx.strokeStyle = 'rgba(40, 70, 120, 0.35)';
+    ctx.lineWidth = 0.8;
     for (var i = 0; i < 36; i++) {
       var x = (i / 36) * 2048;
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke();
@@ -301,10 +306,7 @@
       ]
     };
 
-    ctx.fillStyle = 'rgba(30, 58, 90, 0.6)';
-    ctx.strokeStyle = 'rgba(50, 80, 120, 0.5)';
-    ctx.lineWidth = 1;
-
+    // Bright, visible continents
     Object.keys(continents).forEach(function (key) {
       var pts = continents[key];
       ctx.beginPath();
@@ -314,18 +316,37 @@
         else ctx.lineTo(uv[0], uv[1]);
       }
       ctx.closePath();
+      // Solid bright fill
+      ctx.fillStyle = '#2a6e5a';
       ctx.fill();
+      // Bright edge
+      ctx.strokeStyle = '#3adfb6';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
+    });
+
+    // Second pass: inner glow on continents
+    Object.keys(continents).forEach(function (key) {
+      var pts = continents[key];
+      ctx.beginPath();
+      for (var i = 0; i < pts.length; i++) {
+        var uv = lngLatToUV(pts[i][0], pts[i][1], w, h);
+        if (i === 0) ctx.moveTo(uv[0], uv[1]);
+        else ctx.lineTo(uv[0], uv[1]);
+      }
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(58, 223, 182, 0.15)';
+      ctx.fill();
     });
   }
 
   function highlightMexicoOnTexture(ctx, w, h) {
-    // Draw Mexico outline highlighted
-    ctx.fillStyle = 'rgba(231, 42, 136, 0.25)';
-    ctx.strokeStyle = 'rgba(231, 42, 136, 0.6)';
-    ctx.lineWidth = 2;
+    // Mexico — BOLD pink highlight that pops
+    // Draw glow behind Mexico first
+    ctx.shadowColor = '#e72a88';
+    ctx.shadowBlur = 20;
 
-    // Mainland
+    // Mainland fill
     ctx.beginPath();
     for (var i = 0; i < MEXICO_OUTLINE.length; i++) {
       var uv = lngLatToUV(MEXICO_OUTLINE[i][0], MEXICO_OUTLINE[i][1], w, h);
@@ -333,10 +354,13 @@
       else ctx.lineTo(uv[0], uv[1]);
     }
     ctx.closePath();
+    ctx.fillStyle = 'rgba(231, 42, 136, 0.55)';
     ctx.fill();
+    ctx.strokeStyle = '#ff4da6';
+    ctx.lineWidth = 3;
     ctx.stroke();
 
-    // Baja
+    // Baja fill
     ctx.beginPath();
     for (var j = 0; j < BAJA_OUTLINE.length; j++) {
       var bv = lngLatToUV(BAJA_OUTLINE[j][0], BAJA_OUTLINE[j][1], w, h);
@@ -344,20 +368,35 @@
       else ctx.lineTo(bv[0], bv[1]);
     }
     ctx.closePath();
+    ctx.fillStyle = 'rgba(231, 42, 136, 0.55)';
     ctx.fill();
+    ctx.strokeStyle = '#ff4da6';
+    ctx.lineWidth = 3;
     ctx.stroke();
 
-    // Destination dots on texture
+    ctx.shadowBlur = 0;
+
+    // Destination dots — BIG and bright
     DESTINATIONS.forEach(function (d) {
       var uv = lngLatToUV(d.lng, d.lat, w, h);
-      ctx.fillStyle = 'rgba(9, 173, 194, 0.9)';
+      // Outer glow
+      var dotGrad = ctx.createRadialGradient(uv[0], uv[1], 0, uv[0], uv[1], 14);
+      dotGrad.addColorStop(0, 'rgba(9, 173, 194, 0.9)');
+      dotGrad.addColorStop(0.4, 'rgba(9, 173, 194, 0.4)');
+      dotGrad.addColorStop(1, 'rgba(9, 173, 194, 0)');
+      ctx.fillStyle = dotGrad;
+      ctx.beginPath();
+      ctx.arc(uv[0], uv[1], 14, 0, Math.PI * 2);
+      ctx.fill();
+      // Bright core
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(uv[0], uv[1], 3, 0, Math.PI * 2);
       ctx.fill();
-      // Glow
-      ctx.fillStyle = 'rgba(9, 173, 194, 0.3)';
+      // Mid ring
+      ctx.fillStyle = 'rgba(9, 220, 255, 0.9)';
       ctx.beginPath();
-      ctx.arc(uv[0], uv[1], 6, 0, Math.PI * 2);
+      ctx.arc(uv[0], uv[1], 5, 0, Math.PI * 2);
       ctx.fill();
     });
   }
@@ -374,8 +413,8 @@
     var atmosphereFrag = [
       'varying vec3 vNormal;',
       'void main() {',
-      '  float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);',
-      '  gl_FragColor = vec4(0.906, 0.165, 0.533, 1.0) * intensity * 0.6;',
+      '  float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);',
+      '  gl_FragColor = vec4(0.906, 0.165, 0.533, 1.0) * intensity * 1.2;',
       '}'
     ].join('\n');
 
@@ -394,32 +433,33 @@
   function createMarkers() {
     markerGroup = new THREE.Group();
 
-    // Create glow texture
+    // Create glow texture — bigger and brighter
     var glowCanvas = document.createElement('canvas');
-    glowCanvas.width = 64;
-    glowCanvas.height = 64;
+    glowCanvas.width = 128;
+    glowCanvas.height = 128;
     var gctx = glowCanvas.getContext('2d');
-    var grad = gctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    var grad = gctx.createRadialGradient(64, 64, 0, 64, 64, 64);
     grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    grad.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)');
-    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)');
+    grad.addColorStop(0.15, 'rgba(255, 255, 255, 0.95)');
+    grad.addColorStop(0.3, 'rgba(255, 255, 255, 0.6)');
+    grad.addColorStop(0.6, 'rgba(255, 255, 255, 0.15)');
     grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
     gctx.fillStyle = grad;
-    gctx.fillRect(0, 0, 64, 64);
+    gctx.fillRect(0, 0, 128, 128);
     var glowTexture = new THREE.CanvasTexture(glowCanvas);
 
     DESTINATIONS.forEach(function (d) {
-      var pos = latLngToVector3(d.lat, d.lng, 1.02);
+      var pos = latLngToVector3(d.lat, d.lng, 1.025);
       var spriteMat = new THREE.SpriteMaterial({
         map: glowTexture,
-        color: new THREE.Color(COLORS.turquesa),
+        color: new THREE.Color('#00e5ff'),
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false
       });
       var sprite = new THREE.Sprite(spriteMat);
       sprite.position.copy(pos);
-      sprite.scale.set(0.04, 0.04, 1);
+      sprite.scale.set(0.08, 0.08, 1);
       sprite.userData = d;
       markerGroup.add(sprite);
       markerSprites.push(sprite);
