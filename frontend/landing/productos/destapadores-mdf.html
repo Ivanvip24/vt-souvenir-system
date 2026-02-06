@@ -472,6 +472,73 @@
         .review-stars { color: #f5a623; font-size: 0.9rem; letter-spacing: 1px; margin-bottom: 8px; }
         .review-text { font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 12px; }
         .review-verified { font-size: 0.75rem; color: var(--accent); font-weight: 500; }
+        a.product-rating { text-decoration: none; color: inherit; cursor: pointer; }
+        a.product-rating:hover .rating-text { text-decoration: underline; }
+        .reviews-actions {
+            display: flex; gap: 12px; justify-content: center; margin-bottom: 32px; flex-wrap: wrap;
+        }
+        .btn-write-review {
+            display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px;
+            background: var(--accent); color: #fff; font-family: var(--font-display);
+            font-size: 0.9rem; font-weight: 600; border: none; border-radius: 100px;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-write-review:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .btn-google-review {
+            display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px;
+            background: #fff; color: #333; font-family: var(--font-display);
+            font-size: 0.9rem; font-weight: 600; border: 2px solid #e0e0e0;
+            border-radius: 100px; text-decoration: none; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .btn-google-review:hover { transform: translateY(-2px); border-color: #4285F4; box-shadow: 0 4px 15px rgba(66,133,244,0.15); }
+        .btn-google-review svg { flex-shrink: 0; }
+        .review-modal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 200; display: flex;
+            align-items: center; justify-content: center; backdrop-filter: blur(4px);
+            opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+        }
+        .review-modal.active { opacity: 1; visibility: visible; }
+        .review-modal-content {
+            background: #fff; border-radius: 20px; padding: 32px; max-width: 500px;
+            width: 90%; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            transform: translateY(20px); transition: transform 0.3s;
+        }
+        .review-modal.active .review-modal-content { transform: translateY(0); }
+        .review-modal-close {
+            position: absolute; top: 12px; right: 16px; background: none;
+            border: none; font-size: 1.5rem; cursor: pointer; color: #888; line-height: 1;
+        }
+        .review-modal-title { font-family: var(--font-display); font-size: 1.25rem; margin-bottom: 20px; text-align: center; }
+        .star-selector { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .star-selector span {
+            font-size: 2rem; color: #ddd; cursor: pointer;
+            transition: color 0.2s, transform 0.2s; user-select: none;
+        }
+        .star-selector span.active { color: #f5a623; }
+        .star-selector span:hover { transform: scale(1.15); }
+        .review-modal-content input,
+        .review-modal-content textarea {
+            width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0;
+            border-radius: 12px; font-family: var(--font-body); font-size: 0.9rem;
+            outline: none; margin-bottom: 12px; transition: border-color 0.2s;
+        }
+        .review-modal-content input:focus,
+        .review-modal-content textarea:focus { border-color: var(--accent); }
+        .review-modal-content textarea { min-height: 100px; resize: vertical; }
+        .btn-submit-review {
+            width: 100%; padding: 14px; background: var(--accent); color: #fff;
+            font-family: var(--font-display); font-size: 1rem; font-weight: 600;
+            border: none; border-radius: 100px; cursor: pointer; margin-top: 4px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-submit-review:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .review-success { display: none; text-align: center; padding: 20px 0; }
+        .review-success.show { display: block; }
+        .review-success-icon { font-size: 3rem; margin-bottom: 12px; display: block; }
+        .review-success h3 { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 8px; }
+        .review-success p { font-size: 0.9rem; color: #666; }
         @media (max-width: 768px) {
             .reviews-overview { grid-template-columns: 1fr; text-align: center; }
             .rating-summary { padding-bottom: 16px; border-bottom: 1px solid #e8e8e8; }
@@ -674,10 +741,10 @@
             <span class="product-badge">Funcional</span>
             <h1 class="product-title">Destapadores</h1>
 
-            <div class="product-rating">
+            <a href="#reviews" class="product-rating">
                 <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
                 <span class="rating-text">4.8 (45 resenas)</span>
-            </div>
+            </a>
 
             <p class="product-desc">Destapadores de MDF con corte laser de precision y acabado brillante UV. Un souvenir funcional y decorativo con iman trasero para refrigerador.</p>
 
@@ -747,8 +814,19 @@
     </div>
 
     <!-- REVIEWS -->
-    <section class="reviews-section">
+    <section class="reviews-section" id="reviews">
         <h2 class="reviews-title reveal">Lo que dicen nuestros clientes</h2>
+
+        <div class="reviews-actions reveal">
+            <button class="btn-write-review" onclick="openReviewForm()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                Escribir Resena
+            </button>
+            <a href="https://www.google.com/maps/search/AXKAN+souvenirs+personalizados" target="_blank" class="btn-google-review">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Resenar en Google
+            </a>
+        </div>
 
         <div class="reviews-overview reveal">
             <div class="rating-summary">
@@ -855,6 +933,32 @@
         </div>
     </section>
 
+    <!-- REVIEW FORM MODAL -->
+    <div class="review-modal" id="review-modal">
+        <div class="review-modal-content">
+            <button class="review-modal-close" onclick="closeReviewForm()">&times;</button>
+            <h2 class="review-modal-title">Escribe tu resena</h2>
+            <div class="review-form-fields">
+                <div class="star-selector">
+                    <span data-star="1">&#9733;</span>
+                    <span data-star="2">&#9733;</span>
+                    <span data-star="3">&#9733;</span>
+                    <span data-star="4">&#9733;</span>
+                    <span data-star="5">&#9733;</span>
+                </div>
+                <input type="text" id="review-name" placeholder="Tu nombre" maxlength="50">
+                <input type="text" id="review-city" placeholder="Ciudad, Estado" maxlength="50">
+                <textarea id="review-text" placeholder="Cuentanos tu experiencia con este producto..." maxlength="500"></textarea>
+                <button class="btn-submit-review" onclick="submitReview()">Enviar Resena</button>
+            </div>
+            <div class="review-success">
+                <span class="review-success-icon">&#10003;</span>
+                <h3>Gracias por tu resena</h3>
+                <p>Tu opinion nos ayuda a mejorar</p>
+            </div>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <footer class="footer">
         <div class="footer-content">
@@ -931,6 +1035,109 @@
         }
         window.addEventListener('scroll', revealOnScroll);
         revealOnScroll();
+
+        // -- Review form --
+        var PRODUCT_SLUG = 'destapadores-mdf';
+        var STORAGE_KEY = 'axkan-reviews-' + PRODUCT_SLUG;
+        var selectedStars = 0;
+
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function openReviewForm() {
+            document.getElementById('review-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeReviewForm() {
+            document.getElementById('review-modal').classList.remove('active');
+            document.body.style.overflow = '';
+            selectedStars = 0;
+            document.querySelectorAll('.star-selector span').forEach(function(s) { s.classList.remove('active'); });
+            document.getElementById('review-name').value = '';
+            document.getElementById('review-city').value = '';
+            document.getElementById('review-text').value = '';
+            document.querySelector('.review-form-fields').style.display = '';
+            document.querySelector('.review-success').classList.remove('show');
+        }
+
+        document.querySelectorAll('.star-selector span').forEach(function(star) {
+            star.addEventListener('click', function() {
+                selectedStars = parseInt(this.getAttribute('data-star'));
+                document.querySelectorAll('.star-selector span').forEach(function(s, i) {
+                    s.classList.toggle('active', i < selectedStars);
+                });
+            });
+            star.addEventListener('mouseenter', function() {
+                var h = parseInt(this.getAttribute('data-star'));
+                document.querySelectorAll('.star-selector span').forEach(function(s, i) {
+                    s.style.color = i < h ? '#f5a623' : '';
+                });
+            });
+        });
+        document.querySelector('.star-selector').addEventListener('mouseleave', function() {
+            document.querySelectorAll('.star-selector span').forEach(function(s) { s.style.color = ''; });
+        });
+
+        function submitReview() {
+            var name = document.getElementById('review-name').value.trim();
+            var city = document.getElementById('review-city').value.trim();
+            var text = document.getElementById('review-text').value.trim();
+            if (!name || !city || !text || selectedStars === 0) {
+                alert('Por favor completa todos los campos y selecciona una calificacion.');
+                return;
+            }
+            var review = {
+                name: name, city: city, text: text, stars: selectedStars,
+                date: new Date().toLocaleDateString('es-MX', { month: 'short', year: 'numeric' }),
+                initials: name.split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().substring(0, 2)
+            };
+            var reviews = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            reviews.unshift(review);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(reviews));
+            renderReviewCard(review, true);
+            document.querySelector('.review-form-fields').style.display = 'none';
+            document.querySelector('.review-success').classList.add('show');
+            setTimeout(closeReviewForm, 2000);
+        }
+
+        function renderReviewCard(review, prepend) {
+            var grid = document.querySelector('.reviews-grid');
+            var card = document.createElement('div');
+            card.className = 'review-card' + (prepend ? '' : ' visible');
+            var starsHtml = '';
+            for (var i = 0; i < 5; i++) starsHtml += i < review.stars ? '\u2605' : '\u2606';
+            card.innerHTML = '<div class="review-header"><div class="review-avatar">' + escapeHtml(review.initials) + '</div>' +
+                '<div class="review-info"><span class="review-name">' + escapeHtml(review.name) + '</span>' +
+                '<span class="review-location">' + escapeHtml(review.city) + '</span></div>' +
+                '<span class="review-date">' + escapeHtml(review.date) + '</span></div>' +
+                '<div class="review-stars">' + starsHtml + '</div>' +
+                '<p class="review-text">' + escapeHtml(review.text) + '</p>' +
+                '<span class="review-verified">\u2713 Resena del sitio</span>';
+            if (prepend) {
+                grid.insertBefore(card, grid.firstChild);
+                setTimeout(function() { card.classList.add('visible'); }, 50);
+            } else {
+                grid.insertBefore(card, grid.firstChild);
+            }
+        }
+
+        (function() {
+            var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            saved.reverse().forEach(function(r) { renderReviewCard(r, false); });
+        })();
+
+        document.querySelector('.product-rating').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        document.getElementById('review-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeReviewForm();
+        });
 
         // -- Animate rating bars --
         var barsAnimated = false;
