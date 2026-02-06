@@ -1,7 +1,7 @@
 /**
  * Product Price List PDF Generator
  * Clean, minimal design: soft pink background, white pill rows,
- * product name left + price right. No filler. Professional.
+ * product name left + price right. Single page. Professional.
  */
 
 import PDFDocument from 'pdfkit';
@@ -22,9 +22,9 @@ const C = {
   pink: '#E91E63',
   pinkDark: '#C2185B',
   pinkDeep: '#AD1457',
-  pinkSoft: '#F8BBD0',    // soft background
-  pinkPale: '#FCE4EC',    // lightest pink bg
-  pinkBg: '#FDF2F6',      // very subtle page bg
+  pinkSoft: '#F8BBD0',
+  pinkPale: '#FCE4EC',
+  pinkBg: '#FDF2F6',
   black: '#1a1a1a',
   darkText: '#2d2d2d',
   gray: '#777777',
@@ -35,7 +35,7 @@ const C = {
 
 const LOGO_PATH = path.join(__dirname, '../../frontend/assets/images/LOGO-01.png');
 
-// Price list data - only what matters
+// Price list data
 const PRICE_ROWS = [
   { name: 'Imanes MDF — Chico', price: '$8', mayoreo: '$6' },
   { name: 'Imanes MDF — Mediano', price: '$11', mayoreo: '$8' },
@@ -54,7 +54,7 @@ let cachedCatalog = { filepath: null, timestamp: 0 };
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 
 /**
- * Generate price list PDF
+ * Generate price list PDF - single page
  */
 export async function generateCatalogPDF(options = {}) {
   if (!options.forceRegenerate && cachedCatalog.filepath
@@ -77,31 +77,37 @@ export async function generateCatalogPDF(options = {}) {
     try {
       const doc = new PDFDocument({
         size: 'LETTER',
-        margins: { top: 0, bottom: 0, left: 0, right: 0 }
+        margins: { top: 0, bottom: 0, left: 0, right: 0 },
+        autoFirstPage: true,
+        bufferPages: true
       });
 
       const stream = fs.createWriteStream(filepath);
       doc.pipe(stream);
 
-      const W = 612;  // LETTER width
-      const H = 792;  // LETTER height
-      const PAD = 55;  // side padding
+      const W = 612;
+      const H = 792;
+      const PAD = 50;
       const ROW_W = W - PAD * 2;
+
+      // Row dimensions - compact to fit single page
+      const ROW_H = 26;
+      const ROW_GAP = 3;
 
       // ==============================
       // FULL PAGE SOFT PINK BACKGROUND
       // ==============================
       doc.rect(0, 0, W, H).fill(C.pinkBg);
 
-      // Subtle decorative circle (top-right, like the reference)
+      // Subtle decorative circle (top-right)
       doc.save();
-      doc.circle(W - 60, 120, 180).fillOpacity(0.04).fill(C.pink);
+      doc.circle(W - 50, 100, 160).fillOpacity(0.04).fill(C.pink);
       doc.restore();
       doc.fillOpacity(1);
 
       // Subtle decorative circle (bottom-left)
       doc.save();
-      doc.circle(60, H - 100, 140).fillOpacity(0.04).fill(C.pink);
+      doc.circle(50, H - 80, 120).fillOpacity(0.04).fill(C.pink);
       doc.restore();
       doc.fillOpacity(1);
 
@@ -112,7 +118,7 @@ export async function generateCatalogPDF(options = {}) {
         try {
           doc.save();
           doc.fillOpacity(0.12);
-          doc.image(LOGO_PATH, PAD - 10, 35, { height: 65 });
+          doc.image(LOGO_PATH, PAD - 10, 28, { height: 55 });
           doc.restore();
           doc.fillOpacity(1);
         } catch (err) {
@@ -123,109 +129,119 @@ export async function generateCatalogPDF(options = {}) {
       // ==============================
       // TITLE
       // ==============================
-      let y = 50;
+      let y = 35;
 
-      doc.fontSize(42)
+      doc.fontSize(34)
          .font('Helvetica-Bold')
          .fillColor(C.pinkDeep)
-         .text('AXKAN', PAD, y, { width: ROW_W, align: 'center' });
+         .text('AXKAN', PAD, y, { width: ROW_W, align: 'center', lineBreak: false });
 
-      y += 52;
+      y += 42;
 
-      doc.fontSize(16)
+      doc.fontSize(13)
          .font('Helvetica-Oblique')
          .fillColor(C.gray)
-         .text('Lista de precios', PAD, y, { width: ROW_W, align: 'center' });
+         .text('Lista de precios', PAD, y, { width: ROW_W, align: 'center', lineBreak: false });
 
-      y += 35;
+      y += 25;
 
       // Thin decorative line
       const lineInset = 180;
       doc.moveTo(lineInset, y).lineTo(W - lineInset, y).lineWidth(0.5).stroke(C.pinkSoft);
 
-      y += 20;
+      y += 14;
 
       // ==============================
       // SECTION: PRECIOS UNITARIOS
       // ==============================
-      doc.fontSize(9)
+      doc.fontSize(8)
          .font('Helvetica-Bold')
          .fillColor(C.pinkDark)
-         .text('PRECIO POR UNIDAD  (50-999 pzas)', PAD, y, { width: ROW_W, align: 'center' });
+         .text('PRECIO POR UNIDAD  (50-999 pzas)', PAD, y, { width: ROW_W, align: 'center', lineBreak: false });
 
-      y += 22;
+      y += 16;
 
       // Price rows
       for (const row of PRICE_ROWS) {
-        y = drawPriceRow(doc, row.name, row.price, row.note, PAD, y, ROW_W);
+        y = drawPriceRow(doc, row.name, row.price, row.note, PAD, y, ROW_W, ROW_H);
+        y += ROW_GAP;
       }
 
-      y += 15;
+      y += 8;
 
       // Decorative line
       doc.moveTo(lineInset, y).lineTo(W - lineInset, y).lineWidth(0.5).stroke(C.pinkSoft);
-      y += 18;
+      y += 12;
 
       // ==============================
       // SECTION: PRECIOS MAYOREO
       // ==============================
-      doc.fontSize(9)
+      doc.fontSize(8)
          .font('Helvetica-Bold')
          .fillColor(C.pinkDark)
-         .text('PRECIO MAYOREO  (1,000+ pzas)', PAD, y, { width: ROW_W, align: 'center' });
+         .text('PRECIO MAYOREO  (1,000+ pzas)', PAD, y, { width: ROW_W, align: 'center', lineBreak: false });
 
-      y += 22;
+      y += 16;
 
-      // Mayoreo rows (only products that have mayoreo price)
+      // Mayoreo rows
       const mayoreoRows = PRICE_ROWS.filter(r => r.mayoreo);
       for (const row of mayoreoRows) {
-        y = drawPriceRow(doc, row.name, row.mayoreo, null, PAD, y, ROW_W);
+        y = drawPriceRow(doc, row.name, row.mayoreo, null, PAD, y, ROW_W, ROW_H);
+        y += ROW_GAP;
       }
 
-      y += 20;
+      y += 10;
 
       // ==============================
-      // SMALL NOTES (only essential)
+      // SMALL NOTES
       // ==============================
-      doc.fontSize(7.5)
+      doc.fontSize(7)
          .font('Helvetica')
-         .fillColor(C.gray);
-
-      doc.text('Pedido mínimo: 50 pzas  |  Envío gratis en 300+ pzas  |  Anticipo 50%  |  Producción: 5-7 días', PAD, y, {
-        width: ROW_W,
-        align: 'center'
-      });
+         .fillColor(C.gray)
+         .text('Pedido mínimo: 50 pzas  |  Envío gratis en 300+ pzas  |  Anticipo 50%  |  Producción: 5-7 días', PAD, y, {
+           width: ROW_W,
+           align: 'center',
+           lineBreak: false
+         });
 
       // ==============================
       // FOOTER
       // ==============================
-      const footerY = H - 60;
+      const footerY = H - 50;
 
       // Pink accent bar
-      doc.rect(0, footerY - 5, W, 65).fill(C.pinkPale);
+      doc.rect(0, footerY - 5, W, 55).fill(C.pinkPale);
 
-      doc.fontSize(10)
-         .font('Helvetica-Bold')
-         .fillColor(C.pinkDeep);
-
-      doc.text('WhatsApp: 55 3825 3251', PAD, footerY + 10, { width: ROW_W / 2 });
-
-      doc.fontSize(10)
+      doc.fontSize(9)
          .font('Helvetica-Bold')
          .fillColor(C.pinkDeep)
-         .text('informacion@axkan.art', PAD + ROW_W / 2, footerY + 10, { width: ROW_W / 2, align: 'right' });
+         .text('WhatsApp: 55 3825 3251', PAD, footerY + 8, { width: ROW_W / 2, lineBreak: false });
 
-      doc.fontSize(8)
+      doc.fontSize(9)
+         .font('Helvetica-Bold')
+         .fillColor(C.pinkDeep)
+         .text('informacion@axkan.art', PAD + ROW_W / 2, footerY + 8, { width: ROW_W / 2, align: 'right', lineBreak: false });
+
+      doc.fontSize(7)
          .font('Helvetica-Oblique')
          .fillColor(C.gray)
-         .text('@axkan.souvenirs', PAD, footerY + 28, { width: ROW_W / 2 });
+         .text('@axkan.souvenirs', PAD, footerY + 24, { width: ROW_W / 2, lineBreak: false });
 
-      doc.fontSize(8)
+      doc.fontSize(7)
          .font('Helvetica-Oblique')
          .fillColor(C.gray)
-         .text('vtanunciando.com', PAD + ROW_W / 2, footerY + 28, { width: ROW_W / 2, align: 'right' });
+         .text('vtanunciando.com', PAD + ROW_W / 2, footerY + 24, { width: ROW_W / 2, align: 'right', lineBreak: false });
 
-      // Finalize
+      // Finalize - only keep first page
+      const range = doc.bufferedPageRange();
+      if (range.count > 1) {
+        // Remove extra pages if PDFKit auto-created them
+        for (let i = range.count - 1; i > 0; i--) {
+          doc.switchToPage(i);
+        }
+        doc.switchToPage(0);
+      }
+
       doc.end();
 
       stream.on('finish', () => {
@@ -251,10 +267,9 @@ export async function generateCatalogPDF(options = {}) {
 /**
  * Draw a single price row (white rounded pill with name left, price right)
  */
-function drawPriceRow(doc, name, price, note, x, y, width) {
-  const rowH = 34;
-  const radius = 10;
-  const innerPad = 18;
+function drawPriceRow(doc, name, price, note, x, y, width, rowH) {
+  const radius = rowH / 2;
+  const innerPad = 14;
 
   // White pill background with subtle border
   doc.save();
@@ -263,27 +278,28 @@ function drawPriceRow(doc, name, price, note, x, y, width) {
   doc.restore();
 
   // Product name (left)
-  const textY = y + 10;
-  doc.fontSize(11)
+  const textY = y + (rowH / 2) - 5;
+  doc.fontSize(10)
      .font('Helvetica')
      .fillColor(C.darkText)
-     .text(name, x + innerPad, textY, { width: width - 140 });
+     .text(name, x + innerPad, textY, { width: width - 120, lineBreak: false });
 
-  // Small note under name if present
+  // Small note next to name if present
   if (note) {
-    doc.fontSize(7)
+    const nameWidth = doc.widthOfString(name, { font: 'Helvetica', size: 10 });
+    doc.fontSize(6.5)
        .font('Helvetica-Oblique')
        .fillColor(C.gray)
-       .text(note, x + innerPad, textY + 14, { width: width - 140 });
+       .text(note, x + innerPad + nameWidth + 8, textY + 2, { width: 80, lineBreak: false });
   }
 
   // Price (right, bold, pink)
-  doc.fontSize(16)
+  doc.fontSize(14)
      .font('Helvetica-Bold')
      .fillColor(C.pinkDeep)
-     .text(price, x + width - 110, y + 8, { width: 90, align: 'right' });
+     .text(price, x + width - 95, y + (rowH / 2) - 7, { width: 80, align: 'right', lineBreak: false });
 
-  return y + rowH + 8; // return next y with spacing
+  return y + rowH;
 }
 
 /**
