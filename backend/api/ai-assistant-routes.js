@@ -650,15 +650,16 @@ Ejemplo de respuesta para cotización:
 **Total: $850.00** (sin envío)"
 
 ### 5. GENERAR CATÁLOGO / LISTA DE PRECIOS
-Cuando el usuario pida el catálogo de productos, lista de precios, o precios de mayoreo, genera el catálogo PDF completo.
+**CRÍTICO: Cuando el usuario pida catálogo, lista de precios, precios de mayoreo, o PDF de productos, SIEMPRE incluye el bloque action. NO solo describas lo que harás - INCLUYE EL BLOQUE.**
 
 **Frases que activan esta acción:**
-- "lista de precios", "dame la lista de precios"
-- "catálogo de productos", "catálogo", "catalogo"
-- "precios de mayoreo", "precios mayoreo"
-- "genera el catálogo", "manda el catálogo"
-- "PDF de precios", "price list"
+- "lista de precios", "dame la lista de precios", "precios en PDF"
+- "catálogo", "catalogo", "catálogo de productos"
+- "precios de mayoreo", "precios mayoreo", "todos los precios"
+- "genera el catálogo", "manda el catálogo", "PDF de precios"
 - "qué productos manejan", "todos los productos"
+
+**OBLIGATORIO: SIEMPRE incluye este bloque cuando detectes estas frases:**
 
 \`\`\`action
 {
@@ -666,7 +667,7 @@ Cuando el usuario pida el catálogo de productos, lista de precios, o precios de
 }
 \`\`\`
 
-Responde algo breve como: "Generando el catálogo de productos AXKAN con todos los precios..."
+Responde: "Generando el catálogo de productos AXKAN con todos los precios..." y SIEMPRE incluye el bloque action arriba.
 
 ### 6. CREAR PEDIDO / ORDER
 Cuando el usuario pida CREAR UN PEDIDO (no cotizar, sino crear el pedido real), debes:
@@ -1152,6 +1153,53 @@ router.post('/chat', async (req, res) => {
             error: catalogError.message || 'Error al generar el catálogo'
           }
         };
+      }
+    }
+
+    // =====================================================
+    // FALLBACK: Auto-detect catalog/price list requests
+    // even if AI didn't produce the action block
+    // =====================================================
+    if (!actionData && message) {
+      const msgLower = message.toLowerCase();
+      const catalogKeywords = [
+        'lista de precios', 'catálogo', 'catalogo', 'price list',
+        'precios de mayoreo', 'precios mayoreo', 'todos los precios',
+        'todos los productos en pdf', 'pdf de precios', 'genera el catálogo',
+        'manda el catálogo', 'manda el catalogo', 'dame el catálogo',
+        'dame el catalogo', 'catálogo de productos', 'catalogo de productos'
+      ];
+
+      const isCatalogRequest = catalogKeywords.some(kw => msgLower.includes(kw));
+
+      if (isCatalogRequest) {
+        console.log('📋 Fallback: Detected catalog request from user message');
+        try {
+          const { generateCatalogPDF, getCatalogUrl } = await import('../services/catalog-generator.js');
+          const result = await generateCatalogPDF();
+
+          actionData = {
+            type: 'generate_catalog',
+            data: {
+              success: true,
+              pdfUrl: getCatalogUrl(result.filepath),
+              filename: result.filename,
+              productCount: result.productCount,
+              generatedAt: result.generatedAt
+            }
+          };
+
+          console.log(`📋 Fallback catalog generated: ${result.filename}`);
+        } catch (catalogError) {
+          console.error('❌ Fallback catalog error:', catalogError);
+          actionData = {
+            type: 'generate_catalog',
+            data: {
+              success: false,
+              error: catalogError.message || 'Error al generar el catálogo'
+            }
+          };
+        }
       }
     }
 
