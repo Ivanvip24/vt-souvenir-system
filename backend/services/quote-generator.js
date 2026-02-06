@@ -226,17 +226,20 @@ export function parseQuoteRequest(text, options = {}) {
   const modifiers = '3d|foil\\s*metálico|foil\\s*metalico|foil|metálico|metalico|mdf';
   const sizes = 'chicos?|pequeños?|medianos?|normales?|grandes?|ch|m|g';
 
+  // Inline price fragment: optional "en/a/por" + $ + number + optional "c/u"
+  const inlinePrice = '(?:(?:en|a|por|precio)?\\s*\\$\\s*([\\d.]+)\\s*(?:c/?u|pza|cada\\s*uno)?)';
+
   // Pattern 1: Number (optional pzas) + product + optional modifiers + optional inline price
-  // Examples: "1050 imanes en $13", "1050pzas imanes en $13 c/u", "300 imanes en $10.5"
+  // Examples: "1050 imanes en $13", "1050pzas imanes $13 c/u", "300 imanes en $10.5"
   const pattern1 = new RegExp(
-    `(\\d+)\\s*(?:pzas?|piezas?|pz)?\\s*(?:de\\s+)?(${productNames})\\s*(${modifiers})?\\s*(${sizes})?\\s*(?:(?:en|a|por)\\s*\\$\\s*([\\d.]+))?`,
+    `(\\d+)\\s*(?:pzas?|piezas?|pz)?\\s*(?:de\\s+)?(${productNames})\\s*(${modifiers})?\\s*(${sizes})?\\s*${inlinePrice}?`,
     'gi'
   );
 
   // Pattern 2: Product + number (optional pzas) + optional inline price
-  // Examples: "imanes 1050pzas en $13", "imanes 300 en $10.5"
+  // Examples: "imanes 1050pzas en $13", "imanes 300 $10.5"
   const pattern2 = new RegExp(
-    `(${productNames})\\s*(${modifiers})?\\s*(${sizes})?\\s+(\\d+)\\s*(?:pzas?|piezas?|pz)?\\s*(?:(?:en|a|por)\\s*\\$\\s*([\\d.]+))?`,
+    `(${productNames})\\s*(${modifiers})?\\s*(${sizes})?\\s+(\\d+)\\s*(?:pzas?|piezas?|pz)?\\s*${inlinePrice}?`,
     'gi'
   );
 
@@ -362,7 +365,7 @@ export function parseQuoteRequest(text, options = {}) {
   // Pattern 3: orphan quantity + price without product name (e.g. "450 en $7")
   // Inherits product from most recently matched item
   if (items.length > 0) {
-    const orphanPattern = /(\d+)\s*(?:pzas?|piezas?|pz)?\s+(?:en|a|por)\s*\$\s*([\d.]+)/gi;
+    const orphanPattern = /(\d+)\s*(?:pzas?|piezas?|pz)?\s*(?:en|a|por|precio)?\s*\$\s*([\d.]+)/gi;
     while ((match = orphanPattern.exec(textNormalized)) !== null) {
       if (rangeOverlaps(match.index, match.index + match[0].length)) continue;
 
