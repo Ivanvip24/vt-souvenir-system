@@ -1,208 +1,76 @@
 /**
- * Product Catalog / Price List PDF Generator
- * Design inspired by bold price list flyer style:
- * - Full-color background border
- * - Stacked "LISTA DE PRECIOS" header with logo
- * - Category sections with colored bars
- * - 3-column product grids per category
- * - Clean footer with contact
+ * Product Price List PDF Generator
+ * Clean, minimal design: soft pink background, white pill rows,
+ * product name left + price right. No filler. Professional.
  */
 
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
-import https from 'https';
-import http from 'http';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure catalogs directory exists
 const CATALOGS_DIR = path.join(__dirname, '../catalogs');
 if (!fs.existsSync(CATALOGS_DIR)) {
   fs.mkdirSync(CATALOGS_DIR, { recursive: true });
 }
 
-// AXKAN Brand Colors
+// AXKAN colors
 const C = {
   pink: '#E91E63',
   pinkDark: '#C2185B',
   pinkDeep: '#AD1457',
-  pinkBg: '#880E4F',
-  pinkPale: '#FCE4EC',
-  black: '#111111',
+  pinkSoft: '#F8BBD0',    // soft background
+  pinkPale: '#FCE4EC',    // lightest pink bg
+  pinkBg: '#FDF2F6',      // very subtle page bg
+  black: '#1a1a1a',
+  darkText: '#2d2d2d',
+  gray: '#777777',
   white: '#ffffff',
-  gray: '#555555',
-  lightGray: '#999999',
-  lineGray: '#cccccc',
-  green: '#059669'
+  pillBg: '#ffffff',
+  pillStroke: '#F3D5DE'
 };
 
-// Logo path
 const LOGO_PATH = path.join(__dirname, '../../frontend/assets/images/LOGO-01.png');
 
-// Product categories with 3-column layout data
-const CATEGORIES = [
-  {
-    name: 'IMANES DE MDF',
-    columns: [
-      {
-        title: 'CHICO',
-        lines: ['MDF CON CORTE LÁSER', 'PERSONALIZADO', 'MÍN. 50 PIEZAS'],
-        price: '$8',
-        priceUnit: '/UNIDAD',
-        mayoreo: '$6/u (1,000+)'
-      },
-      {
-        title: 'MEDIANO',
-        lines: ['MDF CON CORTE LÁSER', 'PERSONALIZADO', 'MÍN. 50 PIEZAS'],
-        price: '$11',
-        priceUnit: '/UNIDAD',
-        mayoreo: '$8/u (1,000+)'
-      },
-      {
-        title: 'GRANDE',
-        lines: ['MDF CON CORTE LÁSER', 'PERSONALIZADO', 'MÍN. 50 PIEZAS'],
-        price: '$15',
-        priceUnit: '/UNIDAD',
-        mayoreo: '$12/u (1,000+)'
-      }
-    ]
-  },
-  {
-    name: 'IMANES ESPECIALIDAD',
-    columns: [
-      {
-        title: 'IMÁN 3D',
-        lines: ['MDF 3MM DE ESPESOR', 'EFECTO TRIDIMENSIONAL', 'MÍN. 100 PIEZAS'],
-        price: '$15',
-        priceUnit: '/UNIDAD',
-        mayoreo: '$12/u (1,000+)'
-      },
-      {
-        title: 'IMÁN FOIL',
-        lines: ['ACABADO METÁLICO', 'BRILLANTE PREMIUM', 'MÍN. 100 PIEZAS'],
-        price: '$15',
-        priceUnit: '/UNIDAD',
-        mayoreo: '$12/u (1,000+)'
-      },
-      {
-        title: 'BOTONES',
-        lines: ['BOTONES METÁLICOS', 'IMPRESIÓN HD', 'MÍN. 50 PIEZAS'],
-        price: '$8',
-        priceUnit: '/UNIDAD',
-        mayoreo: '$6/u (1,000+)'
-      }
-    ]
-  },
-  {
-    name: 'ACCESORIOS',
-    columns: [
-      {
-        title: 'LLAVEROS',
-        lines: ['MDF PERSONALIZADO', 'IDEAL PARA EVENTOS', 'MÍN. 50 PIEZAS'],
-        price: '$10',
-        priceUnit: '/UNIDAD',
-        mayoreo: '$8/u (1,000+)'
-      },
-      {
-        title: 'DESTAPADORES',
-        lines: ['MDF PERSONALIZADO', 'FUNCIONAL Y DECORATIVO', 'MÍN. 50 PIEZAS'],
-        price: '$20',
-        priceUnit: '/UNIDAD',
-        mayoreo: '$15/u (1,000+)'
-      },
-      {
-        title: 'PORTALLAVES',
-        lines: ['MDF PARA PARED', 'DECORATIVO', 'MÍN. 20 PIEZAS'],
-        price: '$40',
-        priceUnit: '/UNIDAD',
-        mayoreo: null
-      }
-    ]
-  },
-  {
-    name: 'PAQUETES ESPECIALES',
-    columns: [
-      {
-        title: 'SOUVENIR BOX',
-        lines: ['PAQUETE COMPLETO', 'SOUVENIRS PREMIUM', 'SIN MÍNIMO'],
-        price: '$2,250',
-        priceUnit: '/PAQUETE',
-        mayoreo: null
-      },
-      {
-        title: 'ENVÍO',
-        lines: ['GRATIS 300+ PIEZAS', 'ESTÁNDAR: $210 MXN', 'A TODO MÉXICO'],
-        price: 'GRATIS',
-        priceUnit: '300+ PZS',
-        mayoreo: null
-      },
-      {
-        title: 'PRODUCCIÓN',
-        lines: ['5-7 DÍAS HÁBILES', 'ANTICIPO 50%', 'PERSONALIZACIÓN TOTAL'],
-        price: '5-7',
-        priceUnit: 'DÍAS',
-        mayoreo: null
-      }
-    ]
-  }
+// Price list data - only what matters
+const PRICE_ROWS = [
+  { name: 'Imanes MDF — Chico', price: '$8', mayoreo: '$6' },
+  { name: 'Imanes MDF — Mediano', price: '$11', mayoreo: '$8' },
+  { name: 'Imanes MDF — Grande', price: '$15', mayoreo: '$12' },
+  { name: 'Imán 3D MDF', price: '$15', mayoreo: '$12' },
+  { name: 'Imán Foil Metálico', price: '$15', mayoreo: '$12' },
+  { name: 'Llaveros MDF', price: '$10', mayoreo: '$8' },
+  { name: 'Destapadores MDF', price: '$20', mayoreo: '$15' },
+  { name: 'Botones Metálicos', price: '$8', mayoreo: '$6' },
+  { name: 'Portallaves MDF', price: '$40', mayoreo: null, note: 'mín. 20 pzas' },
+  { name: 'Souvenir Box', price: '$2,250', mayoreo: null, note: 'paquete completo' }
 ];
 
-// Image download cache
-const imageCache = new Map();
-
-async function downloadImage(url) {
-  if (imageCache.has(url)) return imageCache.get(url);
-
-  return new Promise((resolve, reject) => {
-    const protocol = url.startsWith('https') ? https : http;
-    const request = protocol.get(url, (response) => {
-      if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-        return downloadImage(response.headers.location).then(resolve).catch(reject);
-      }
-      if (response.statusCode !== 200) {
-        reject(new Error(`Failed to download image: ${response.statusCode}`));
-        return;
-      }
-      const chunks = [];
-      response.on('data', (chunk) => chunks.push(chunk));
-      response.on('end', () => {
-        const buffer = Buffer.concat(chunks);
-        imageCache.set(url, buffer);
-        resolve(buffer);
-      });
-      response.on('error', reject);
-    });
-    request.on('error', reject);
-    request.setTimeout(10000, () => { request.destroy(); reject(new Error('Timeout')); });
-  });
-}
-
-// Simple file-level cache (24 hours)
+// Cache
 let cachedCatalog = { filepath: null, timestamp: 0 };
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 
 /**
- * Generate a product catalog/price list PDF
+ * Generate price list PDF
  */
 export async function generateCatalogPDF(options = {}) {
-  // Check cache
   if (!options.forceRegenerate && cachedCatalog.filepath
       && fs.existsSync(cachedCatalog.filepath)
       && (Date.now() - cachedCatalog.timestamp) < CACHE_TTL) {
     return {
       filepath: cachedCatalog.filepath,
       filename: path.basename(cachedCatalog.filepath),
-      productCount: 8,
+      productCount: PRICE_ROWS.length,
       generatedAt: new Date(cachedCatalog.timestamp).toISOString(),
       cached: true
     };
   }
 
   const now = new Date();
-  const filename = `catalogo-axkan-${Date.now()}.pdf`;
+  const filename = `lista-precios-axkan-${Date.now()}.pdf`;
   const filepath = path.join(CATALOGS_DIR, filename);
 
   return new Promise((resolve, reject) => {
@@ -215,256 +83,207 @@ export async function generateCatalogPDF(options = {}) {
       const stream = fs.createWriteStream(filepath);
       doc.pipe(stream);
 
-      const W = doc.page.width;   // 612
-      const H = doc.page.height;  // 792
-      const BORDER = 28;          // colored border thickness
-      const INNER_X = BORDER + 12;
-      const INNER_W = W - (BORDER * 2) - 24;
+      const W = 612;  // LETTER width
+      const H = 792;  // LETTER height
+      const PAD = 55;  // side padding
+      const ROW_W = W - PAD * 2;
 
       // ==============================
-      // COLORED BORDER (full page)
+      // FULL PAGE SOFT PINK BACKGROUND
       // ==============================
-      // Top
-      doc.rect(0, 0, W, BORDER).fill(C.pink);
-      // Bottom
-      doc.rect(0, H - BORDER, W, BORDER).fill(C.pink);
-      // Left
-      doc.rect(0, 0, BORDER, H).fill(C.pink);
-      // Right
-      doc.rect(W - BORDER, 0, BORDER, H).fill(C.pink);
+      doc.rect(0, 0, W, H).fill(C.pinkBg);
 
-      // ==============================
-      // WHITE INNER BACKGROUND
-      // ==============================
-      doc.rect(BORDER, BORDER, W - BORDER * 2, H - BORDER * 2).fill(C.white);
-
-      // ==============================
-      // HEADER: Stacked "LISTA DE PRECIOS" + Logo
-      // ==============================
-      const headerY = BORDER + 15;
-      const headerX = INNER_X + 5;
-
-      // Line 1: Bold filled white on pink background
-      const headerBgH = 120;
-      doc.rect(BORDER, BORDER, W - BORDER * 2, headerBgH).fill(C.pinkDeep);
-
-      // "LISTA DE PRECIOS" - Line 1: White filled
-      doc.fontSize(36)
-         .font('Helvetica-Bold')
-         .fillColor(C.white)
-         .text('LISTA DE PRECIOS', headerX, headerY, { width: 350 });
-
-      // "LISTA DE PRECIOS" - Line 2: Semi-transparent (outline effect)
-      const line2Y = headerY + 38;
-      doc.fontSize(36)
-         .font('Helvetica-Bold')
-         .fillOpacity(0.3)
-         .fillColor(C.white)
-         .text('LISTA DE PRECIOS', headerX, line2Y, { width: 350 });
+      // Subtle decorative circle (top-right, like the reference)
+      doc.save();
+      doc.circle(W - 60, 120, 180).fillOpacity(0.04).fill(C.pink);
+      doc.restore();
       doc.fillOpacity(1);
 
-      // "LISTA DE PRECIOS" - Line 3: Filled pink-light
-      const line3Y = headerY + 76;
-      doc.fontSize(36)
-         .font('Helvetica-Bold')
-         .fillColor(C.pink)
-         .text('LISTA DE PRECIOS', headerX, line3Y, { width: 350 });
+      // Subtle decorative circle (bottom-left)
+      doc.save();
+      doc.circle(60, H - 100, 140).fillOpacity(0.04).fill(C.pink);
+      doc.restore();
+      doc.fillOpacity(1);
 
-      // Logo on the right
-      const logoSize = 85;
-      const logoX = W - BORDER - logoSize - 20;
+      // ==============================
+      // LOGO (top-left, subtle)
+      // ==============================
       if (fs.existsSync(LOGO_PATH)) {
         try {
-          doc.image(LOGO_PATH, logoX, headerY + 15, { height: logoSize });
+          doc.save();
+          doc.fillOpacity(0.12);
+          doc.image(LOGO_PATH, PAD - 10, 35, { height: 65 });
+          doc.restore();
+          doc.fillOpacity(1);
         } catch (err) {
           console.log('Could not load logo:', err.message);
         }
       }
 
       // ==============================
-      // CATEGORY SECTIONS
+      // TITLE
       // ==============================
-      let y = BORDER + headerBgH + 15;
+      let y = 50;
 
-      for (let catIdx = 0; catIdx < CATEGORIES.length; catIdx++) {
-        const category = CATEGORIES[catIdx];
+      doc.fontSize(42)
+         .font('Helvetica-Bold')
+         .fillColor(C.pinkDeep)
+         .text('AXKAN', PAD, y, { width: ROW_W, align: 'center' });
 
-        // Check if we need a new page
-        if (y + 140 > H - BORDER - 45) {
-          // Draw footer on current page
-          drawPageFooter(doc, W, H, BORDER, INNER_X, INNER_W, now);
-          // New page
-          doc.addPage();
-          // Redraw border
-          doc.rect(0, 0, W, BORDER).fill(C.pink);
-          doc.rect(0, H - BORDER, W, BORDER).fill(C.pink);
-          doc.rect(0, 0, BORDER, H).fill(C.pink);
-          doc.rect(W - BORDER, 0, BORDER, H).fill(C.pink);
-          doc.rect(BORDER, BORDER, W - BORDER * 2, H - BORDER * 2).fill(C.white);
-          y = BORDER + 15;
-        }
+      y += 52;
 
-        // Category bar
-        const barH = 26;
-        doc.rect(INNER_X, y, INNER_W, barH).fill(C.pinkDeep);
+      doc.fontSize(16)
+         .font('Helvetica-Oblique')
+         .fillColor(C.gray)
+         .text('Lista de precios', PAD, y, { width: ROW_W, align: 'center' });
 
-        doc.fontSize(14)
-           .font('Helvetica-Bold')
-           .fillColor(C.white)
-           .text(category.name, INNER_X + 12, y + 6, { width: INNER_W - 24 });
+      y += 35;
 
-        y += barH + 2;
+      // Thin decorative line
+      const lineInset = 180;
+      doc.moveTo(lineInset, y).lineTo(W - lineInset, y).lineWidth(0.5).stroke(C.pinkSoft);
 
-        // Thin pink line under bar
-        doc.moveTo(INNER_X, y).lineTo(INNER_X + INNER_W, y).lineWidth(2).stroke(C.pink);
-        y += 8;
+      y += 20;
 
-        // 3-column grid
-        const colCount = category.columns.length;
-        const colGap = 10;
-        const colW = (INNER_W - (colGap * (colCount - 1))) / colCount;
+      // ==============================
+      // SECTION: PRECIOS UNITARIOS
+      // ==============================
+      doc.fontSize(9)
+         .font('Helvetica-Bold')
+         .fillColor(C.pinkDark)
+         .text('PRECIO POR UNIDAD  (50-999 pzas)', PAD, y, { width: ROW_W, align: 'center' });
 
-        // Track max height across columns
-        let maxColBottom = y;
+      y += 22;
 
-        for (let colIdx = 0; colIdx < colCount; colIdx++) {
-          const col = category.columns[colIdx];
-          const colX = INNER_X + (colIdx * (colW + colGap));
-          let colY = y;
-
-          // Column title (bold, large)
-          doc.fontSize(12)
-             .font('Helvetica-Bold')
-             .fillColor(C.black)
-             .text(col.title, colX, colY, { width: colW });
-          colY += 18;
-
-          // Description lines (small, gray, uppercase)
-          doc.fontSize(7.5)
-             .font('Helvetica')
-             .fillColor(C.gray);
-
-          for (const line of col.lines) {
-            doc.text(line, colX, colY, { width: colW });
-            colY += 10;
-          }
-
-          colY += 4;
-
-          // Price (bold, large)
-          doc.fontSize(18)
-             .font('Helvetica-Bold')
-             .fillColor(C.black)
-             .text(col.price, colX, colY, { width: colW });
-          colY += 22;
-
-          // Price unit (small)
-          doc.fontSize(7)
-             .font('Helvetica')
-             .fillColor(C.gray)
-             .text(col.priceUnit, colX, colY, { width: colW });
-          colY += 12;
-
-          // Mayoreo price (green, if applicable)
-          if (col.mayoreo) {
-            doc.fontSize(8)
-               .font('Helvetica-Bold')
-               .fillColor(C.green)
-               .text('MAYOREO: ' + col.mayoreo, colX, colY, { width: colW });
-            colY += 14;
-          }
-
-          if (colY > maxColBottom) maxColBottom = colY;
-        }
-
-        y = maxColBottom + 5;
-
-        // Separator line between categories
-        if (catIdx < CATEGORIES.length - 1) {
-          doc.moveTo(INNER_X, y).lineTo(INNER_X + INNER_W, y).lineWidth(0.5).stroke(C.lineGray);
-          y += 10;
-        }
+      // Price rows
+      for (const row of PRICE_ROWS) {
+        y = drawPriceRow(doc, row.name, row.price, row.note, PAD, y, ROW_W);
       }
+
+      y += 15;
+
+      // Decorative line
+      doc.moveTo(lineInset, y).lineTo(W - lineInset, y).lineWidth(0.5).stroke(C.pinkSoft);
+      y += 18;
+
+      // ==============================
+      // SECTION: PRECIOS MAYOREO
+      // ==============================
+      doc.fontSize(9)
+         .font('Helvetica-Bold')
+         .fillColor(C.pinkDark)
+         .text('PRECIO MAYOREO  (1,000+ pzas)', PAD, y, { width: ROW_W, align: 'center' });
+
+      y += 22;
+
+      // Mayoreo rows (only products that have mayoreo price)
+      const mayoreoRows = PRICE_ROWS.filter(r => r.mayoreo);
+      for (const row of mayoreoRows) {
+        y = drawPriceRow(doc, row.name, row.mayoreo, null, PAD, y, ROW_W);
+      }
+
+      y += 20;
+
+      // ==============================
+      // SMALL NOTES (only essential)
+      // ==============================
+      doc.fontSize(7.5)
+         .font('Helvetica')
+         .fillColor(C.gray);
+
+      doc.text('Pedido mínimo: 50 pzas  |  Envío gratis en 300+ pzas  |  Anticipo 50%  |  Producción: 5-7 días', PAD, y, {
+        width: ROW_W,
+        align: 'center'
+      });
 
       // ==============================
       // FOOTER
       // ==============================
-      drawPageFooter(doc, W, H, BORDER, INNER_X, INNER_W, now);
+      const footerY = H - 60;
+
+      // Pink accent bar
+      doc.rect(0, footerY - 5, W, 65).fill(C.pinkPale);
+
+      doc.fontSize(10)
+         .font('Helvetica-Bold')
+         .fillColor(C.pinkDeep);
+
+      doc.text('WhatsApp: 55 3825 3251', PAD, footerY + 10, { width: ROW_W / 2 });
+
+      doc.fontSize(10)
+         .font('Helvetica-Bold')
+         .fillColor(C.pinkDeep)
+         .text('informacion@axkan.art', PAD + ROW_W / 2, footerY + 10, { width: ROW_W / 2, align: 'right' });
+
+      doc.fontSize(8)
+         .font('Helvetica-Oblique')
+         .fillColor(C.gray)
+         .text('@axkan.souvenirs', PAD, footerY + 28, { width: ROW_W / 2 });
+
+      doc.fontSize(8)
+         .font('Helvetica-Oblique')
+         .fillColor(C.gray)
+         .text('vtanunciando.com', PAD + ROW_W / 2, footerY + 28, { width: ROW_W / 2, align: 'right' });
 
       // Finalize
       doc.end();
 
       stream.on('finish', () => {
-        console.log(`✅ Catalog PDF generated: ${filename}`);
+        console.log(`✅ Price list PDF generated: ${filename}`);
         cachedCatalog = { filepath, timestamp: Date.now() };
         resolve({
           filepath,
           filename,
-          productCount: 8,
+          productCount: PRICE_ROWS.length,
           generatedAt: now.toISOString(),
           cached: false
         });
       });
 
-      stream.on('error', (error) => {
-        console.error('❌ Error writing catalog PDF:', error);
-        reject(error);
-      });
-
+      stream.on('error', reject);
     } catch (error) {
-      console.error('❌ Error generating catalog PDF:', error);
+      console.error('❌ Error generating price list PDF:', error);
       reject(error);
     }
   });
 }
 
 /**
- * Draw footer bar at bottom of page
+ * Draw a single price row (white rounded pill with name left, price right)
  */
-function drawPageFooter(doc, W, H, BORDER, INNER_X, INNER_W, now) {
-  const footerBarY = H - BORDER - 38;
-  const footerBarH = 30;
+function drawPriceRow(doc, name, price, note, x, y, width) {
+  const rowH = 34;
+  const radius = 10;
+  const innerPad = 18;
 
-  // Pink footer bar
-  doc.rect(INNER_X, footerBarY, INNER_W, footerBarH).fill(C.pinkDeep);
+  // White pill background with subtle border
+  doc.save();
+  doc.roundedRect(x, y, width, rowH, radius)
+     .fillAndStroke(C.pillBg, C.pillStroke);
+  doc.restore();
 
-  // Left: social/contact
-  doc.fontSize(8)
-     .font('Helvetica-Bold')
-     .fillColor(C.white)
-     .text('@axkan.souvenirs', INNER_X + 12, footerBarY + 5, { width: 180 });
-
-  doc.fontSize(7)
+  // Product name (left)
+  const textY = y + 10;
+  doc.fontSize(11)
      .font('Helvetica')
-     .fillColor(C.white)
-     .text('WhatsApp: 55 3825 3251', INNER_X + 12, footerBarY + 17, { width: 180 });
+     .fillColor(C.darkText)
+     .text(name, x + innerPad, textY, { width: width - 140 });
 
-  // Center: decorative line
-  const lineY = footerBarY + 15;
-  const lineStartX = INNER_X + 195;
-  const lineEndX = INNER_X + INNER_W - 195;
-  doc.moveTo(lineStartX, lineY).lineTo(lineEndX, lineY).lineWidth(1).stroke(C.pink);
+  // Small note under name if present
+  if (note) {
+    doc.fontSize(7)
+       .font('Helvetica-Oblique')
+       .fillColor(C.gray)
+       .text(note, x + innerPad, textY + 14, { width: width - 140 });
+  }
 
-  // Right: website
-  doc.fontSize(8)
+  // Price (right, bold, pink)
+  doc.fontSize(16)
      .font('Helvetica-Bold')
-     .fillColor(C.white)
-     .text('vtanunciando.com', INNER_X + INNER_W - 180, footerBarY + 5, { width: 168, align: 'right' });
+     .fillColor(C.pinkDeep)
+     .text(price, x + width - 110, y + 8, { width: 90, align: 'right' });
 
-  doc.fontSize(7)
-     .font('Helvetica')
-     .text('informacion@axkan.art', INNER_X + INNER_W - 180, footerBarY + 17, { width: 168, align: 'right' });
-}
-
-/**
- * Format date in Spanish
- */
-function formatDate(date) {
-  return new Date(date).toLocaleDateString('es-MX', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  return y + rowH + 8; // return next y with spacing
 }
 
 /**
