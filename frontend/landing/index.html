@@ -1162,7 +1162,7 @@
             background: linear-gradient(180deg, var(--gray-800) 0%, #0a0a1a 50%, var(--gray-800) 100%);
             color: white;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .globe-section .section-header {
@@ -1242,6 +1242,7 @@
             max-width: 650px;
             margin: 0 auto;
             aspect-ratio: 1;
+            overflow: visible;
         }
 
         .globe-wrapper.hidden {
@@ -1252,6 +1253,7 @@
             width: 100%;
             height: 100%;
             position: relative;
+            overflow: visible;
         }
 
         .globe-canvas-container canvas {
@@ -1259,6 +1261,7 @@
             height: 100% !important;
             cursor: grab;
             display: block;
+            transform-origin: center center;
         }
 
         .globe-canvas-container canvas:active {

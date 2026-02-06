@@ -197,8 +197,9 @@
   var mouseDown = false, mouseX = 0, mouseY = 0;
   var autoRotateSpeed = 0.002;
   var globeContainer = null;
-  var targetZoom = 2.8, currentZoom = 2.8;
-  var ZOOM_MIN = 1.6, ZOOM_MAX = 5.0;
+  var targetScale = 1.0, currentScale = 1.0;
+  var SCALE_MIN = 1.0, SCALE_MAX = 2.8;
+  var lastAppliedScale = 1.0;
 
   function initGlobe() {
     globeContainer = document.getElementById('globe-3d');
@@ -262,7 +263,7 @@
 
   function createEarthTexture() {
     var canvas = document.createElement('canvas');
-    var w = 2048, h = 1024;
+    var w = 4096, h = 2048;
     canvas.width = w;
     canvas.height = h;
     var ctx = canvas.getContext('2d');
@@ -279,7 +280,7 @@
 
     // Grid lines
     ctx.strokeStyle = 'rgba(40, 70, 120, 0.3)';
-    ctx.lineWidth = 0.6;
+    ctx.lineWidth = 1;
     for (var i = 0; i < 36; i++) {
       var x = (i / 36) * w;
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
@@ -311,7 +312,7 @@
       drawGeoJSONFeature(ctx, feature, w, h, {
         fill: '#1a5545',
         stroke: '#2a8c6e',
-        lineWidth: 0.6
+        lineWidth: 1.2
       });
     });
     // Second pass: subtle inner highlight
@@ -326,14 +327,14 @@
     // Pink highlight with glow on Mexico states
     ctx.save();
     ctx.shadowColor = '#e72a88';
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 30;
 
     // Fill all Mexico states with pink
     mexicoGeoJSON.features.forEach(function (feature) {
       drawGeoJSONFeature(ctx, feature, w, h, {
         fill: 'rgba(231, 42, 136, 0.5)',
         stroke: '#ff4da6',
-        lineWidth: 1.2
+        lineWidth: 2
       });
     });
     ctx.restore();
@@ -351,23 +352,23 @@
     DESTINATIONS.forEach(function (d) {
       var uv = lngLatToUV(d.lng, d.lat, w, h);
       // Glow ring
-      var grad = ctx.createRadialGradient(uv[0], uv[1], 0, uv[0], uv[1], 14);
+      var grad = ctx.createRadialGradient(uv[0], uv[1], 0, uv[0], uv[1], 24);
       grad.addColorStop(0, 'rgba(9, 173, 194, 0.9)');
       grad.addColorStop(0.4, 'rgba(9, 173, 194, 0.4)');
       grad.addColorStop(1, 'rgba(9, 173, 194, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(uv[0], uv[1], 14, 0, Math.PI * 2);
+      ctx.arc(uv[0], uv[1], 24, 0, Math.PI * 2);
       ctx.fill();
       // White core
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(uv[0], uv[1], 3, 0, Math.PI * 2);
+      ctx.arc(uv[0], uv[1], 5, 0, Math.PI * 2);
       ctx.fill();
       // Cyan mid-ring
       ctx.fillStyle = 'rgba(9, 220, 255, 0.9)';
       ctx.beginPath();
-      ctx.arc(uv[0], uv[1], 5, 0, Math.PI * 2);
+      ctx.arc(uv[0], uv[1], 8, 0, Math.PI * 2);
       ctx.fill();
     });
   }
@@ -478,11 +479,11 @@
     }, { passive: true });
     canvas.addEventListener('touchend', function () { mouseDown = false; }, { passive: true });
 
-    // Wheel zoom — only when hovering over the globe canvas
+    // Wheel zoom — CSS transform scale, only when hovering over the globe
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
-      targetZoom += e.deltaY * 0.002;
-      targetZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, targetZoom));
+      targetScale += e.deltaY * -0.003;
+      targetScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, targetScale));
     }, { passive: false });
   }
 
@@ -494,8 +495,16 @@
 
     currentRotationY += (targetRotationY - currentRotationY) * 0.05;
     currentRotationX += (targetRotationX - currentRotationX) * 0.05;
-    currentZoom += (targetZoom - currentZoom) * 0.1;
-    if (camera) camera.position.z = currentZoom;
+
+    // CSS transform zoom — scales the canvas visually, no clipping
+    currentScale += (targetScale - currentScale) * 0.1;
+    if (Math.abs(currentScale - lastAppliedScale) > 0.005) {
+      renderer.domElement.style.transform = 'scale(' + currentScale.toFixed(3) + ')';
+      // Increase pixel ratio when zoomed to maintain sharpness
+      var newRatio = Math.min(window.devicePixelRatio * currentScale, 4);
+      renderer.setPixelRatio(newRatio);
+      lastAppliedScale = currentScale;
+    }
 
     if (globe) { globe.rotation.y = currentRotationY; globe.rotation.x = currentRotationX; }
     if (gridMesh) { gridMesh.rotation.y = currentRotationY; gridMesh.rotation.x = currentRotationX; }
