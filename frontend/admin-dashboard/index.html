@@ -1142,17 +1142,40 @@
                     </div>
                 </div>
 
-                <!-- Search and Filters Bar -->
-                <div class="shipping-filters-bar">
+                <!-- Search Bar + Sort Toggle -->
+                <div class="shipping-toolbar">
                     <div class="shipping-search-container">
                         <span class="search-icon">🔍</span>
                         <input type="text" id="shipping-search-input" class="shipping-search-input"
-                            placeholder="Buscar por nombre, teléfono, ciudad..."
+                            placeholder="Buscar por nombre, teléfono, ciudad, estado, CP..."
                             oninput="handleShippingSearch(this.value)" />
                         <button class="search-clear" id="shipping-search-clear" onclick="clearShippingSearch()" style="display: none;">✕</button>
                     </div>
 
-                    <!-- Filter Chips -->
+                    <div class="shipping-sort-toggle">
+                        <button class="sort-btn active" id="sort-recent-btn" onclick="setShippingSort('recent')">Recientes</button>
+                        <button class="sort-btn" id="sort-alpha-btn" onclick="setShippingSort('alpha')">A-Z</button>
+                    </div>
+                </div>
+
+                <!-- Quick Filter Tabs -->
+                <div class="shipping-quick-filters" id="shipping-quick-filters">
+                    <button class="quick-filter-tab active" data-filter="all" onclick="setQuickFilter('all')">
+                        Todos <span class="quick-filter-count" id="filter-count-all">0</span>
+                    </button>
+                    <button class="quick-filter-tab" data-filter="withAddress" onclick="setQuickFilter('withAddress')">
+                        Con Dirección <span class="quick-filter-count" id="filter-count-with">0</span>
+                    </button>
+                    <button class="quick-filter-tab" data-filter="withoutAddress" onclick="setQuickFilter('withoutAddress')">
+                        Sin Dirección <span class="quick-filter-count" id="filter-count-without">0</span>
+                    </button>
+                    <button class="quick-filter-tab" data-filter="recent" onclick="setQuickFilter('recent')">
+                        Recientes <span class="quick-filter-count" id="filter-count-recent">0</span>
+                    </button>
+                </div>
+
+                <!-- Location Filter Chips -->
+                <div class="shipping-location-filters">
                     <div class="filter-chips" id="filter-chips">
                         <button class="filter-chip" onclick="toggleFilterDropdown('city')">
                             <span>Ciudad</span>
@@ -1162,35 +1185,13 @@
                             <span>Estado</span>
                             <span class="chip-arrow">▼</span>
                         </button>
-                        <button class="filter-chip" onclick="toggleFilterDropdown('hasAddress')">
-                            <span>Con Dirección</span>
-                            <span class="chip-arrow">▼</span>
-                        </button>
                     </div>
-
-                    <!-- Active Filters Display -->
                     <div class="active-filters" id="active-filters"></div>
                 </div>
 
                 <!-- Filter Dropdown -->
                 <div id="filter-dropdown" class="filter-dropdown hidden">
                     <div class="filter-dropdown-content" id="filter-dropdown-content"></div>
-                </div>
-
-                <!-- Stats Summary -->
-                <div class="shipping-stats" id="shipping-stats">
-                    <div class="stat-item">
-                        <span class="stat-number" id="total-clients">0</span>
-                        <span class="stat-label">Total Clientes</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="clients-with-address">0</span>
-                        <span class="stat-label">Con Dirección</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="unique-cities">0</span>
-                        <span class="stat-label">Ciudades</span>
-                    </div>
                 </div>
 
                 <!-- Loading State -->

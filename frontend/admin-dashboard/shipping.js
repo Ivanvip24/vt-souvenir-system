@@ -1,6 +1,6 @@
 /**
  * Shipping / Clients Database Module
- * Notion-like database view for client addresses
+ * Clean card-based view for client addresses
  */
 
 // ==========================================
@@ -16,29 +16,79 @@ const shippingState = {
   },
   activeFilters: {
     city: null,
-    state: null,
-    hasAddress: null
+    state: null
   },
+  quickFilter: 'all', // 'all' | 'withAddress' | 'withoutAddress' | 'recent'
   searchQuery: '',
-  sortColumn: 'name',
-  sortDirection: 'asc',
+  sort: 'recent', // 'recent' | 'alpha'
   currentPage: 1,
   totalPages: 1,
   itemsPerPage: 50,
   stats: {
     total_clients: 0,
     with_address: 0,
-    unique_cities: 0
+    unique_cities: 0,
+    recent_count: 0
   }
 };
+
+// ==========================================
+// UTILITIES
+// ==========================================
+
+function stripAccents(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showNotification(message, type = 'info') {
+  if (typeof window.showToast === 'function') {
+    window.showToast(message, type);
+    return;
+  }
+
+  const colors = {
+    success: '#10B981',
+    error: '#EF4444',
+    warning: '#F59E0B',
+    info: '#3B82F6'
+  };
+
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: ${colors[type] || colors.info};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    font-weight: 600;
+    animation: slideIn 0.3s ease;
+  `;
+  notification.textContent = message;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
 
 // ==========================================
 // INITIALIZATION
 // ==========================================
 
-// Load shipping data when view is activated
 document.addEventListener('DOMContentLoaded', () => {
-  // Listen for navigation to shipping view
   const shippingNavBtn = document.querySelector('[data-view="shipping"]');
   if (shippingNavBtn) {
     shippingNavBtn.addEventListener('click', () => {
@@ -63,11 +113,14 @@ async function loadShippingData() {
   try {
     const params = new URLSearchParams({
       page: shippingState.currentPage,
-      limit: shippingState.itemsPerPage
+      limit: shippingState.itemsPerPage,
+      sort: shippingState.sort
     });
 
     if (shippingState.searchQuery) {
-      params.append('search', shippingState.searchQuery);
+      // Strip accents for accent-insensitive search
+      const normalized = stripAccents(shippingState.searchQuery).toLowerCase();
+      params.append('search', normalized);
     }
     if (shippingState.activeFilters.city) {
       params.append('city', shippingState.activeFilters.city);
@@ -75,8 +128,14 @@ async function loadShippingData() {
     if (shippingState.activeFilters.state) {
       params.append('state', shippingState.activeFilters.state);
     }
-    if (shippingState.activeFilters.hasAddress !== null) {
-      params.append('hasAddress', shippingState.activeFilters.hasAddress);
+
+    // Quick filter → backend params
+    if (shippingState.quickFilter === 'withAddress') {
+      params.append('hasAddress', 'true');
+    } else if (shippingState.quickFilter === 'withoutAddress') {
+      params.append('hasAddress', 'false');
+    } else if (shippingState.quickFilter === 'recent') {
+      params.append('recent', 'true');
     }
 
     const response = await fetch(`${API_BASE}/clients?${params}`, {
@@ -95,9 +154,10 @@ async function loadShippingData() {
       shippingState.currentPage = result.pagination.page;
       shippingState.totalPages = result.pagination.totalPages;
 
-      renderShippingStats();
+      renderQuickFilterCounts();
       renderShippingTable();
       renderPagination();
+      renderActiveFilters();
 
       if (result.data.length === 0) {
         if (emptyState) emptyState.classList.remove('hidden');
@@ -118,49 +178,49 @@ async function loadShippingData() {
 // RENDERING
 // ==========================================
 
-function renderShippingStats() {
-  const totalEl = document.getElementById('total-clients');
-  const withAddressEl = document.getElementById('clients-with-address');
-  const citiesEl = document.getElementById('unique-cities');
+function renderQuickFilterCounts() {
+  const stats = shippingState.stats;
+  const total = parseInt(stats.total_clients) || 0;
+  const withAddr = parseInt(stats.with_address) || 0;
+  const without = total - withAddr;
+  const recent = parseInt(stats.recent_count) || 0;
 
-  if (totalEl) totalEl.textContent = shippingState.stats.total_clients || 0;
-  if (withAddressEl) withAddressEl.textContent = shippingState.stats.with_address || 0;
-  if (citiesEl) citiesEl.textContent = shippingState.stats.unique_cities || 0;
+  const countAll = document.getElementById('filter-count-all');
+  const countWith = document.getElementById('filter-count-with');
+  const countWithout = document.getElementById('filter-count-without');
+  const countRecent = document.getElementById('filter-count-recent');
+
+  if (countAll) countAll.textContent = total;
+  if (countWith) countWith.textContent = withAddr;
+  if (countWithout) countWithout.textContent = without;
+  if (countRecent) countRecent.textContent = recent;
 }
 
 function renderShippingTable() {
   const container = document.getElementById('shipping-cards-container');
   if (!container) return;
 
-  // Sort clients
-  const sorted = [...shippingState.filteredClients].sort((a, b) => {
-    let aVal = a[shippingState.sortColumn] || '';
-    let bVal = b[shippingState.sortColumn] || '';
+  // No frontend sorting — backend handles order via sort param
+  const clients = shippingState.filteredClients;
 
-    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
-
-    if (aVal < bVal) return shippingState.sortDirection === 'asc' ? -1 : 1;
-    if (aVal > bVal) return shippingState.sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  container.innerHTML = sorted.map(client => {
-    const hasFullAddress = client.street && client.city && client.state && (client.postal || client.postal_code);
-    const location = [client.city, client.state].filter(Boolean).join(', ') || 'Sin ubicación';
-    const postal = client.postal || client.postal_code || '';
+  container.innerHTML = clients.map(client => {
+    const hasFullAddress = client.street && client.city && client.state && (client.postal_code || client.postal);
+    const location = [client.city, client.state].filter(Boolean).join(', ') || 'Sin ubicacion';
+    const postal = client.postal_code || client.postal || '';
+    const phone = client.phone || '';
 
     return `
-      <div class="address-card ${hasFullAddress ? '' : 'incomplete'}" onclick="showClientDetailPopup(${client.id})">
+      <div class="address-card ${hasFullAddress ? 'complete' : 'incomplete'}" onclick="showClientDetailPopup(${client.id})">
         <div class="address-card-header">
           <span class="address-card-name">${escapeHtml(client.name)}</span>
           ${hasFullAddress
-            ? '<span class="address-status complete">✓</span>'
+            ? '<span class="address-status complete">&#10003;</span>'
             : '<span class="address-status incomplete">!</span>'
           }
         </div>
+        ${phone ? `<div class="address-card-phone">${escapeHtml(phone)}</div>` : ''}
         <div class="address-card-location">
-          📍 ${escapeHtml(location)} ${postal ? `CP ${postal}` : ''}
+          ${escapeHtml(location)}${postal ? ` &middot; CP ${escapeHtml(postal)}` : ''}
         </div>
         ${client.order_count > 0
           ? `<div class="address-card-orders">${client.order_count} pedido${client.order_count > 1 ? 's' : ''}</div>`
@@ -204,7 +264,7 @@ async function showClientDetailPopup(clientId) {
       if (postal) parts.push(`CP ${postal}`);
       addressHtml = parts.join('<br>');
     } else {
-      addressHtml = '<span style="color: #f59e0b;">Sin dirección registrada</span>';
+      addressHtml = '<span style="color: #f59e0b;">Sin direccion registrada</span>';
     }
 
     // Remove existing popup
@@ -225,19 +285,19 @@ async function showClientDetailPopup(clientId) {
 
         <div class="client-popup-body">
           <div class="client-popup-section">
-            <h4>📍 Dirección</h4>
+            <h4>Direccion</h4>
             <div class="client-popup-address">${addressHtml}</div>
           </div>
 
           <div class="client-popup-section">
-            <h4>📞 Contacto</h4>
+            <h4>Contacto</h4>
             <div class="client-popup-info-grid">
               ${client.phone ? `
                 <div class="client-popup-info-item">
-                  <div class="client-popup-info-label">Teléfono</div>
+                  <div class="client-popup-info-label">Telefono</div>
                   <div class="client-popup-info-value">
                     ${escapeHtml(client.phone)}
-                    <a href="https://wa.me/52${client.phone.replace(/\D/g, '')}" target="_blank" style="margin-left: 8px; color: #25D366;">📱</a>
+                    <a href="https://wa.me/52${client.phone.replace(/\D/g, '')}" target="_blank" style="margin-left: 8px; color: #25D366;">WhatsApp</a>
                   </div>
                 </div>
               ` : ''}
@@ -260,7 +320,7 @@ async function showClientDetailPopup(clientId) {
 
           ${client.orders && client.orders.length > 0 ? `
             <div class="client-popup-section">
-              <h4>📦 Pedidos (${client.orders.length})</h4>
+              <h4>Pedidos (${client.orders.length})</h4>
               <div class="client-popup-orders">
                 ${client.orders.slice(0, 5).map(o => `
                   <div class="client-popup-order" onclick="navigateToOrder('${o.orderNumber}')">
@@ -268,12 +328,12 @@ async function showClientDetailPopup(clientId) {
                     <span class="client-popup-order-date">$${parseFloat(o.totalPrice || 0).toLocaleString('es-MX')}</span>
                   </div>
                 `).join('')}
-                ${client.orders.length > 5 ? `<div class="client-popup-no-orders">+ ${client.orders.length - 5} más</div>` : ''}
+                ${client.orders.length > 5 ? `<div class="client-popup-no-orders">+ ${client.orders.length - 5} mas</div>` : ''}
               </div>
             </div>
           ` : `
             <div class="client-popup-section">
-              <h4>📦 Pedidos</h4>
+              <h4>Pedidos</h4>
               <div class="client-popup-no-orders">Sin pedidos registrados</div>
             </div>
           `}
@@ -281,13 +341,13 @@ async function showClientDetailPopup(clientId) {
 
         <div class="client-popup-footer">
           <button class="client-popup-btn danger" onclick="deleteClient(${client.id}, '${escapeHtml(client.name).replace(/'/g, "\\'")}')">
-            🗑️ Eliminar
+            Eliminar
           </button>
           <button class="client-popup-btn secondary" onclick="document.getElementById('client-detail-popup').remove()">
             Cerrar
           </button>
           <button class="client-popup-btn primary" onclick="document.getElementById('client-detail-popup').remove(); editClient(${client.id})">
-            ✏️ Editar
+            Editar
           </button>
         </div>
       </div>
@@ -301,7 +361,6 @@ async function showClientDetailPopup(clientId) {
   }
 }
 
-// Export function globally
 window.showClientDetailPopup = showClientDetailPopup;
 
 function renderPagination() {
@@ -310,7 +369,7 @@ function renderPagination() {
   const nextBtn = document.getElementById('next-page-btn');
 
   if (paginationInfo) {
-    paginationInfo.textContent = `Página ${shippingState.currentPage} de ${shippingState.totalPages}`;
+    paginationInfo.textContent = `Pagina ${shippingState.currentPage} de ${shippingState.totalPages}`;
   }
 
   if (prevBtn) {
@@ -332,7 +391,7 @@ function renderActiveFilters() {
     filters.push(`
       <span class="active-filter-tag">
         Ciudad: ${escapeHtml(shippingState.activeFilters.city)}
-        <button onclick="removeShippingFilter('city')" class="remove-filter">×</button>
+        <button onclick="removeShippingFilter('city')" class="remove-filter">&times;</button>
       </span>
     `);
   }
@@ -341,21 +400,45 @@ function renderActiveFilters() {
     filters.push(`
       <span class="active-filter-tag">
         Estado: ${escapeHtml(shippingState.activeFilters.state)}
-        <button onclick="removeShippingFilter('state')" class="remove-filter">×</button>
-      </span>
-    `);
-  }
-
-  if (shippingState.activeFilters.hasAddress !== null) {
-    filters.push(`
-      <span class="active-filter-tag">
-        ${shippingState.activeFilters.hasAddress === 'true' ? 'Con dirección' : 'Sin dirección'}
-        <button onclick="removeShippingFilter('hasAddress')" class="remove-filter">×</button>
+        <button onclick="removeShippingFilter('state')" class="remove-filter">&times;</button>
       </span>
     `);
   }
 
   container.innerHTML = filters.join('');
+}
+
+// ==========================================
+// QUICK FILTERS
+// ==========================================
+
+function setQuickFilter(filter) {
+  shippingState.quickFilter = filter;
+  shippingState.currentPage = 1;
+
+  // Update active tab UI
+  document.querySelectorAll('.quick-filter-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.filter === filter);
+  });
+
+  loadShippingData();
+}
+
+// ==========================================
+// SORT TOGGLE
+// ==========================================
+
+function setShippingSort(sortType) {
+  shippingState.sort = sortType;
+  shippingState.currentPage = 1;
+
+  // Update button UI
+  const recentBtn = document.getElementById('sort-recent-btn');
+  const alphaBtn = document.getElementById('sort-alpha-btn');
+  if (recentBtn) recentBtn.classList.toggle('active', sortType === 'recent');
+  if (alphaBtn) alphaBtn.classList.toggle('active', sortType === 'alpha');
+
+  loadShippingData();
 }
 
 // ==========================================
@@ -366,13 +449,11 @@ function handleShippingSearch(value) {
   shippingState.searchQuery = value;
   shippingState.currentPage = 1;
 
-  // Show/hide clear button
   const clearBtn = document.getElementById('shipping-search-clear');
   if (clearBtn) {
     clearBtn.style.display = value ? 'block' : 'none';
   }
 
-  // Debounce search
   clearTimeout(window.shippingSearchTimeout);
   window.shippingSearchTimeout = setTimeout(() => {
     loadShippingData();
@@ -397,7 +478,6 @@ function toggleFilterDropdown(filterType) {
 
   if (!dropdown || !content) return;
 
-  // If already showing same filter, close it
   if (!dropdown.classList.contains('hidden') && dropdown.dataset.filterType === filterType) {
     dropdown.classList.add('hidden');
     return;
@@ -440,27 +520,6 @@ function toggleFilterDropdown(filterType) {
       </div>
       <button class="filter-clear-btn" onclick="removeShippingFilter('state')">Limpiar filtro</button>
     `;
-  } else if (filterType === 'hasAddress') {
-    html = `
-      <div class="filter-header">Filtrar por Dirección</div>
-      <div class="filter-options">
-        <label class="filter-option">
-          <input type="radio" name="address-filter" value="true"
-            ${shippingState.activeFilters.hasAddress === 'true' ? 'checked' : ''}
-            onchange="applyShippingFilter('hasAddress', 'true')"
-          >
-          Con dirección
-        </label>
-        <label class="filter-option">
-          <input type="radio" name="address-filter" value="false"
-            ${shippingState.activeFilters.hasAddress === 'false' ? 'checked' : ''}
-            onchange="applyShippingFilter('hasAddress', 'false')"
-          >
-          Sin dirección
-        </label>
-      </div>
-      <button class="filter-clear-btn" onclick="removeShippingFilter('hasAddress')">Limpiar filtro</button>
-    `;
   }
 
   content.innerHTML = html;
@@ -499,34 +558,6 @@ document.addEventListener('click', (e) => {
 });
 
 // ==========================================
-// SORTING
-// ==========================================
-
-function sortShippingTable(column) {
-  if (shippingState.sortColumn === column) {
-    shippingState.sortDirection = shippingState.sortDirection === 'asc' ? 'desc' : 'asc';
-  } else {
-    shippingState.sortColumn = column;
-    shippingState.sortDirection = 'asc';
-  }
-
-  renderShippingTable();
-}
-
-function updateSortIcons() {
-  document.querySelectorAll('.sort-icon').forEach(icon => {
-    const col = icon.dataset.col;
-    if (col === shippingState.sortColumn) {
-      icon.textContent = shippingState.sortDirection === 'asc' ? '▲' : '▼';
-      icon.classList.add('active');
-    } else {
-      icon.textContent = '';
-      icon.classList.remove('active');
-    }
-  });
-}
-
-// ==========================================
 // PAGINATION
 // ==========================================
 
@@ -551,7 +582,6 @@ function showAddClientModal() {
 
   if (!modal || !form) return;
 
-  // Reset form
   form.reset();
   document.getElementById('client_id').value = '';
 
@@ -581,7 +611,6 @@ async function editClient(clientId) {
       return;
     }
 
-    // Populate form with all address fields
     document.getElementById('client_id').value = client.id;
     document.getElementById('client_name').value = client.name || '';
     document.getElementById('client_phone').value = client.phone || '';
@@ -651,7 +680,6 @@ function closeClientModal() {
 }
 
 async function viewClientOrders(clientId) {
-  // This could open a modal or navigate to orders filtered by client
   try {
     const response = await fetch(`${API_BASE}/clients/${clientId}`, {
       headers: getAuthHeaders()
@@ -670,9 +698,8 @@ async function viewClientOrders(clientId) {
       return;
     }
 
-    // Show a simple alert with orders list (can be enhanced to a modal)
     const ordersList = orders.map(o =>
-      `• ${o.orderNumber} - $${parseFloat(o.totalPrice || 0).toFixed(2)} - ${o.status}`
+      `${o.orderNumber} - $${parseFloat(o.totalPrice || 0).toFixed(2)} - ${o.status}`
     ).join('\n');
 
     alert(`Pedidos de ${client.name}:\n\n${ordersList}`);
@@ -694,12 +721,14 @@ function exportClientsCSV() {
     return;
   }
 
-  const headers = ['Nombre', 'Teléfono', 'Email', 'Dirección', 'Ciudad', 'Estado', 'C.P.', 'Pedidos'];
+  const headers = ['Nombre', 'Telefono', 'Email', 'Calle', 'Num. Ext', 'Colonia', 'Ciudad', 'Estado', 'C.P.', 'Pedidos'];
   const rows = clients.map(c => [
     c.name || '',
     c.phone || '',
     c.email || '',
-    c.address || '',
+    c.street || '',
+    c.street_number || '',
+    c.colonia || '',
     c.city || '',
     c.state || '',
     c.postal_code || '',
@@ -721,76 +750,19 @@ function exportClientsCSV() {
 }
 
 // ==========================================
-// UTILITIES
-// ==========================================
-
-function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function showNotification(message, type = 'info') {
-  // Use existing notification system if available
-  if (typeof window.showToast === 'function') {
-    window.showToast(message, type);
-    return;
-  }
-
-  // Simple fallback
-  const colors = {
-    success: '#10B981',
-    error: '#EF4444',
-    warning: '#F59E0B',
-    info: '#3B82F6'
-  };
-
-  const notification = document.createElement('div');
-  notification.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: ${colors[type] || colors.info};
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 10000;
-    font-weight: 600;
-    animation: slideIn 0.3s ease;
-  `;
-  notification.textContent = message;
-
-  document.body.appendChild(notification);
-
-  setTimeout(() => {
-    notification.style.animation = 'slideOut 0.3s ease';
-    setTimeout(() => notification.remove(), 300);
-  }, 3000);
-}
-
-// ==========================================
 // CSV IMPORT
 // ==========================================
 
 let pendingImportClients = [];
 
-/**
- * Trigger file input for CSV import
- */
 function triggerImportCSV() {
   document.getElementById('csv-import-input').click();
 }
 
-/**
- * Handle CSV file selection and parse
- */
 async function handleCSVImport(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Reset input so same file can be selected again
   event.target.value = '';
 
   showNotification('Leyendo archivo CSV...', 'info');
@@ -800,14 +772,12 @@ async function handleCSVImport(event) {
     const lines = text.split('\n').filter(line => line.trim());
 
     if (lines.length < 2) {
-      showNotification('El archivo CSV está vacío o no tiene datos', 'error');
+      showNotification('El archivo CSV esta vacio o no tiene datos', 'error');
       return;
     }
 
-    // Parse header row
     const headers = parseCSVLine(lines[0]);
 
-    // Map headers to our expected format (Notion delivery form)
     const headerMap = {
       'Nombre Completo': 'name',
       'Calle': 'street',
@@ -824,7 +794,6 @@ async function handleCSVImport(event) {
       'Teléfono ': 'phone'
     };
 
-    // Parse data rows
     const clients = [];
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
@@ -836,14 +805,13 @@ async function handleCSVImport(event) {
         client[key] = values[index] || '';
       });
 
-      // Only add if has a name
       if (client.name && client.name.trim()) {
         clients.push(client);
       }
     }
 
     if (clients.length === 0) {
-      showNotification('No se encontraron clientes válidos en el CSV', 'error');
+      showNotification('No se encontraron clientes validos en el CSV', 'error');
       return;
     }
 
@@ -856,9 +824,6 @@ async function handleCSVImport(event) {
   }
 }
 
-/**
- * Parse a CSV line handling quoted values
- */
 function parseCSVLine(line) {
   const result = [];
   let current = '';
@@ -886,11 +851,7 @@ function parseCSVLine(line) {
   return result;
 }
 
-/**
- * Show import confirmation modal
- */
 function showImportConfirmModal(clients) {
-  // Remove existing modal if any
   const existing = document.getElementById('import-confirm-modal');
   if (existing) existing.remove();
 
@@ -900,7 +861,7 @@ function showImportConfirmModal(clients) {
   modal.innerHTML = `
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
-        <h3>📤 Importar Clientes</h3>
+        <h3>Importar Clientes</h3>
         <button class="modal-close" onclick="closeImportModal()">&times;</button>
       </div>
       <div class="modal-body">
@@ -918,7 +879,7 @@ function showImportConfirmModal(clients) {
             <thead style="background: #f9fafb; position: sticky; top: 0;">
               <tr>
                 <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Nombre</th>
-                <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Teléfono</th>
+                <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Telefono</th>
                 <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Ciudad</th>
               </tr>
             </thead>
@@ -933,7 +894,7 @@ function showImportConfirmModal(clients) {
               ${clients.length > 5 ? `
                 <tr>
                   <td colspan="3" style="padding: 8px; text-align: center; color: #6b7280;">
-                    ... y ${clients.length - 5} más
+                    ... y ${clients.length - 5} mas
                   </td>
                 </tr>
               ` : ''}
@@ -942,13 +903,13 @@ function showImportConfirmModal(clients) {
         </div>
 
         <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; font-size: 13px; color: #92400e;">
-          <strong>Nota:</strong> Los clientes duplicados (mismo teléfono o nombre+CP) serán omitidos automáticamente.
+          <strong>Nota:</strong> Los clientes duplicados (mismo telefono o nombre+CP) seran omitidos automaticamente.
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn" onclick="closeImportModal()">Cancelar</button>
         <button class="btn btn-primary" onclick="executeClientImport()">
-          🚀 Importar ${clients.length} Clientes
+          Importar ${clients.length} Clientes
         </button>
       </div>
     </div>
@@ -956,7 +917,6 @@ function showImportConfirmModal(clients) {
 
   document.body.appendChild(modal);
 
-  // Add styles if not exists
   if (!document.getElementById('import-modal-styles')) {
     const styles = document.createElement('style');
     styles.id = 'import-modal-styles';
@@ -1017,18 +977,12 @@ function showImportConfirmModal(clients) {
   }
 }
 
-/**
- * Close import modal
- */
 function closeImportModal() {
   const modal = document.getElementById('import-confirm-modal');
   if (modal) modal.remove();
   pendingImportClients = [];
 }
 
-/**
- * Execute the import via API
- */
 async function executeClientImport() {
   if (pendingImportClients.length === 0) return;
 
@@ -1037,13 +991,12 @@ async function executeClientImport() {
 
   if (importBtn) {
     importBtn.disabled = true;
-    importBtn.innerHTML = '⏳ Importando...';
+    importBtn.innerHTML = 'Importando...';
   }
 
   try {
     const token = localStorage.getItem('admin_token');
 
-    // Send in batches
     const batchSize = 50;
     let totalImported = 0;
     let totalSkipped = 0;
@@ -1071,22 +1024,19 @@ async function executeClientImport() {
         throw new Error(result.error || 'Import failed');
       }
 
-      // Update progress
       if (importBtn) {
         const progress = Math.round((i + batch.length) / pendingImportClients.length * 100);
-        importBtn.innerHTML = `⏳ ${progress}%...`;
+        importBtn.innerHTML = `${progress}%...`;
       }
     }
 
     closeImportModal();
 
-    // Show results
     showNotification(
-      `✅ Importados: ${totalImported} | Omitidos: ${totalSkipped} | Errores: ${totalErrors}`,
+      `Importados: ${totalImported} | Omitidos: ${totalSkipped} | Errores: ${totalErrors}`,
       totalErrors > 0 ? 'warning' : 'success'
     );
 
-    // Refresh the clients list
     loadShippingData();
 
   } catch (error) {
@@ -1095,7 +1045,7 @@ async function executeClientImport() {
 
     if (importBtn) {
       importBtn.disabled = false;
-      importBtn.innerHTML = `🚀 Importar ${pendingImportClients.length} Clientes`;
+      importBtn.innerHTML = `Importar ${pendingImportClients.length} Clientes`;
     }
   }
 }
@@ -1105,8 +1055,7 @@ async function executeClientImport() {
 // ==========================================
 
 async function deleteClient(clientId, clientName) {
-  // Show confirmation dialog
-  const confirmed = confirm(`¿Estás seguro que deseas eliminar a "${clientName}"?\n\nEsta acción no se puede deshacer.`);
+  const confirmed = confirm(`Estas seguro que deseas eliminar a "${clientName}"?\n\nEsta accion no se puede deshacer.`);
 
   if (!confirmed) return;
 
@@ -1121,7 +1070,6 @@ async function deleteClient(clientId, clientName) {
       throw new Error(result.error || 'Failed to delete client');
     }
 
-    // Close popup if open
     const popup = document.getElementById('client-detail-popup');
     if (popup) popup.remove();
 
@@ -1144,3 +1092,5 @@ window.deleteClient = deleteClient;
 window.showClientDetailPopup = showClientDetailPopup;
 window.closeClientModal = closeClientModal;
 window.saveClient = saveClient;
+window.setQuickFilter = setQuickFilter;
+window.setShippingSort = setShippingSort;

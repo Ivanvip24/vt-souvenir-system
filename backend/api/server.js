@@ -4108,20 +4108,24 @@ app.get('/api/test/email-config', (req, res) => {
  */
 app.get('/api/clients', async (req, res) => {
   try {
-    const { search, city, state, hasAddress, page = 1, limit = 50 } = req.query;
+    const { search, city, state, hasAddress, recent, sort = 'recent', page = 1, limit = 50 } = req.query;
 
     const conditions = [];
     const params = [];
     let paramIndex = 1;
 
-    // Search filter (name, phone, email, address)
+    // Search filter — expanded to all address fields
     if (search) {
       conditions.push(`(
-        c.name ILIKE $${paramIndex} OR
-        c.phone ILIKE $${paramIndex} OR
-        c.email ILIKE $${paramIndex} OR
-        c.address ILIKE $${paramIndex} OR
-        c.city ILIKE $${paramIndex}
+        LOWER(c.name) LIKE LOWER($${paramIndex}) OR
+        c.phone LIKE $${paramIndex} OR
+        LOWER(c.email) LIKE LOWER($${paramIndex}) OR
+        LOWER(c.street) LIKE LOWER($${paramIndex}) OR
+        LOWER(c.colonia) LIKE LOWER($${paramIndex}) OR
+        LOWER(c.city) LIKE LOWER($${paramIndex}) OR
+        LOWER(c.state) LIKE LOWER($${paramIndex}) OR
+        c.postal_code LIKE $${paramIndex} OR
+        LOWER(c.address) LIKE LOWER($${paramIndex})
       )`);
       params.push(`%${search}%`);
       paramIndex++;
@@ -4139,14 +4143,22 @@ app.get('/api/clients', async (req, res) => {
       params.push(state);
     }
 
-    // Has address filter
+    // Has address filter — check street-based fields (not legacy address field)
     if (hasAddress === 'true') {
-      conditions.push(`(c.address IS NOT NULL AND c.address != '')`);
+      conditions.push(`(c.street IS NOT NULL AND c.street != '' AND c.city IS NOT NULL AND c.city != '' AND c.state IS NOT NULL AND c.state != '')`);
     } else if (hasAddress === 'false') {
-      conditions.push(`(c.address IS NULL OR c.address = '')`);
+      conditions.push(`(c.street IS NULL OR c.street = '' OR c.city IS NULL OR c.city = '' OR c.state IS NULL OR c.state = '')`);
+    }
+
+    // Recent filter — last 7 days
+    if (recent === 'true') {
+      conditions.push(`c.updated_at >= NOW() - INTERVAL '7 days'`);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Sort order
+    const orderBy = sort === 'alpha' ? 'ORDER BY c.name ASC' : 'ORDER BY c.updated_at DESC NULLS LAST';
 
     // Get total count
     const countResult = await query(`SELECT COUNT(*) as total FROM clients c ${whereClause}`, params);
@@ -4176,7 +4188,7 @@ app.get('/api/clients', async (req, res) => {
       LEFT JOIN orders o ON c.id = o.client_id
       ${whereClause}
       GROUP BY c.id
-      ORDER BY c.name ASC
+      ${orderBy}
       LIMIT $${paramIndex++} OFFSET $${paramIndex}
     `, [...params, parseInt(limit), offset]);
 
@@ -4188,12 +4200,13 @@ app.get('/api/clients', async (req, res) => {
       SELECT DISTINCT state FROM clients WHERE state IS NOT NULL AND state != '' ORDER BY state
     `);
 
-    // Get stats
+    // Get stats — use street-based completeness check
     const statsResult = await query(`
       SELECT
         COUNT(*) as total_clients,
-        COUNT(CASE WHEN address IS NOT NULL AND address != '' THEN 1 END) as with_address,
-        COUNT(DISTINCT city) as unique_cities
+        COUNT(CASE WHEN street IS NOT NULL AND street != '' AND city IS NOT NULL AND city != '' AND state IS NOT NULL AND state != '' THEN 1 END) as with_address,
+        COUNT(DISTINCT city) as unique_cities,
+        COUNT(CASE WHEN updated_at >= NOW() - INTERVAL '7 days' THEN 1 END) as recent_count
       FROM clients
     `);
 

@@ -2346,7 +2346,7 @@ textarea:disabled {
    Notion-like database styling
    ========================================== */
 
-/* Filters Bar */
+/* Filters Bar (used by Guías tab) */
 .shipping-filters-bar {
   display: flex;
   flex-wrap: wrap;
@@ -2357,6 +2357,109 @@ textarea:disabled {
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   margin-bottom: 16px;
+}
+
+/* Toolbar: Search + Sort Toggle (Logistics tab) */
+.shipping-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 12px;
+}
+
+.shipping-sort-toggle {
+  display: flex;
+  background: var(--gray-100);
+  border-radius: 8px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.sort-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--gray-500);
+  transition: all 0.2s;
+}
+
+.sort-btn.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.sort-btn:hover:not(.active) {
+  color: var(--gray-700);
+}
+
+/* Quick Filter Tabs */
+.shipping-quick-filters {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 4px;
+  background: var(--gray-100);
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.quick-filter-tab {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--gray-500);
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quick-filter-tab:hover:not(.active) {
+  background: rgba(255,255,255,0.5);
+  color: var(--gray-700);
+}
+
+.quick-filter-tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.quick-filter-count {
+  background: var(--gray-200);
+  color: var(--gray-600);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.quick-filter-tab.active .quick-filter-count {
+  background: rgba(233, 30, 99, 0.12);
+  color: var(--primary);
+}
+
+/* Location Filter Chips Row */
+.shipping-location-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .shipping-search-container {
@@ -2544,7 +2647,7 @@ textarea:disabled {
   background: var(--gray-200);
 }
 
-/* Stats Summary */
+/* Stats Summary (used by Guías tab) */
 .shipping-stats {
   display: flex;
   gap: 16px;
@@ -2783,9 +2886,9 @@ textarea:disabled {
   font-weight: 500;
 }
 
-/* Responsive */
+/* Responsive — Shipping */
 @media (max-width: 768px) {
-  .shipping-filters-bar {
+  .shipping-toolbar {
     flex-direction: column;
     align-items: stretch;
   }
@@ -2794,17 +2897,17 @@ textarea:disabled {
     max-width: 100%;
   }
 
+  .shipping-sort-toggle {
+    align-self: flex-end;
+  }
+
+  .shipping-quick-filters {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .filter-chips {
     flex-wrap: wrap;
-  }
-
-  .shipping-stats {
-    flex-wrap: wrap;
-  }
-
-  .shipping-stats .stat-item {
-    flex: 1;
-    min-width: 100px;
   }
 
   .shipping-table {
@@ -5736,28 +5839,39 @@ textarea:disabled {
   background: white;
   border-radius: 12px;
   padding: 16px;
+  padding-left: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 2px solid transparent;
+  border: 1px solid var(--gray-200);
+  border-left: 4px solid var(--gray-300);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .address-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  border-color: var(--primary);
+}
+
+.address-card.complete {
+  border-left-color: var(--success);
+}
+
+.address-card.complete:hover {
+  border-color: var(--success);
+  border-left-color: var(--success);
 }
 
 .address-card.incomplete {
-  border-color: #fbbf24;
-  background: #fffbeb;
+  border-left-color: var(--warning);
+  background: white;
 }
 
 .address-card.incomplete:hover {
-  border-color: #f59e0b;
+  border-color: var(--warning);
+  border-left-color: var(--warning);
 }
 
 .address-card-header {
@@ -5809,9 +5923,15 @@ textarea:disabled {
 .address-card-phone {
   font-size: 13px;
   color: var(--gray-500);
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.address-card-orders {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+  margin-top: 2px;
 }
 
 /* Client Detail Popup */
