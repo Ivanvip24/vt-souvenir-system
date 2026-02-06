@@ -216,107 +216,168 @@ function parseCustomPrices(text) {
 export function parseQuoteRequest(text, options = {}) {
   const items = [];
   // Normalize text: remove commas from numbers (1,000 → 1000), then lowercase
-  const textNormalized = text.replace(/(\d),(\d)/g, '$1$2').toLowerCase();
+  let textNormalized = text.replace(/(\d),(\d)/g, '$1$2').toLowerCase();
+  // Remove $ before numbers that are followed by "en $" or "a $" (quantity, not price)
+  // e.g. "$450 en $7" → "450 en $7"
+  textNormalized = textNormalized.replace(/\$(\d+)\s*(?:en|a)\s*\$/g, '$1 en $');
 
-  // Parse custom prices from text if not provided
-  const customPrices = options.customPrices || parseCustomPrices(text);
+  // Product names regex fragment (shared across patterns)
+  const productNames = 'imanes?|imán|magnetos?|llaveros?|destapadores?|abridores?|portallaves?|porta[\\s-]?llaves|souvenir\\s*box|caja\\s*souvenir|botones?';
+  const modifiers = '3d|foil\\s*metálico|foil\\s*metalico|foil|metálico|metalico|mdf';
+  const sizes = 'chicos?|pequeños?|medianos?|normales?|grandes?|ch|m|g';
 
-  // Pattern to match: number + product name + optional modifiers (3D, Foil, size)
-  // Examples: "50 imanes", "1000 llaveros", "100 imanes 3d", "100 imanes foil metálico"
-  const patterns = [
-    // Number + product + optional modifiers (3d, foil, size, mdf)
-    /([\d,]+)\s*(imanes?|imán|magnetos?|llaveros?|destapadores?|abridores?|portallaves?|porta[\s-]?llaves|souvenir\s*box|caja\s*souvenir|botones?)\s*(3d|foil\s*metálico|foil\s*metalico|foil|metálico|metalico|mdf)?\s*(chicos?|pequeños?|medianos?|normales?|grandes?|ch|m|g)?/gi,
-  ];
+  // Pattern 1: Number (optional pzas) + product + optional modifiers + optional inline price
+  // Examples: "1050 imanes en $13", "1050pzas imanes en $13 c/u", "300 imanes en $10.5"
+  const pattern1 = new RegExp(
+    `(\\d+)\\s*(?:pzas?|piezas?|pz)?\\s*(?:de\\s+)?(${productNames})\\s*(${modifiers})?\\s*(${sizes})?\\s*(?:(?:en|a|por)\\s*\\$\\s*([\\d.]+))?`,
+    'gi'
+  );
 
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(textNormalized)) !== null) {
-      // Parse quantity (remove commas)
-      const quantity = parseInt(match[1].replace(/,/g, ''));
-      const productRaw = match[2].trim();
-      const specialType = match[3]?.trim() || null;
-      const sizeRaw = match[4]?.trim() || null;
+  // Pattern 2: Product + number (optional pzas) + optional inline price
+  // Examples: "imanes 1050pzas en $13", "imanes 300 en $10.5"
+  const pattern2 = new RegExp(
+    `(${productNames})\\s*(${modifiers})?\\s*(${sizes})?\\s+(\\d+)\\s*(?:pzas?|piezas?|pz)?\\s*(?:(?:en|a|por)\\s*\\$\\s*([\\d.]+))?`,
+    'gi'
+  );
 
-      // Normalize product name
-      let productKey = null;
-      for (const [alias, key] of Object.entries(PRODUCT_ALIASES)) {
-        if (productRaw.includes(alias) || alias.includes(productRaw)) {
-          productKey = key;
+  // Parse global custom prices as fallback (single price per product)
+  const globalCustomPrices = options.customPrices || parseCustomPrices(text);
+
+  // Track matched ranges to avoid duplicates between pattern1 and pattern2
+  const matchedRanges = [];
+
+  function rangeOverlaps(start, end) {
+    return matchedRanges.some(r => start < r.end && end > r.start);
+  }
+
+  function processItem(quantity, productRaw, specialType, sizeRaw, inlinePrice) {
+    // Normalize product name
+    let productKey = null;
+    for (const [alias, key] of Object.entries(PRODUCT_ALIASES)) {
+      if (productRaw.includes(alias) || alias.includes(productRaw)) {
+        productKey = key;
+        break;
+      }
+    }
+    if (!productKey) return null;
+
+    // Check for special product types (3D, Foil) for imanes
+    let pricingKey = productKey;
+    if (productKey === 'imanes' && specialType) {
+      for (const [alias, key] of Object.entries(SPECIAL_PRODUCT_TYPES)) {
+        if (specialType.includes(alias) || alias.includes(specialType)) {
+          pricingKey = key;
           break;
         }
       }
+    }
 
-      if (!productKey) continue;
-
-      // Check for special product types (3D, Foil) for imanes
-      let pricingKey = productKey;
-
-      if (productKey === 'imanes' && specialType) {
-        // Check for special product type
-        for (const [alias, key] of Object.entries(SPECIAL_PRODUCT_TYPES)) {
-          if (specialType.includes(alias) || alias.includes(specialType)) {
-            pricingKey = key;
-            break;
-          }
+    // Normalize size for regular magnets
+    let sizeKey = null;
+    if (productKey === 'imanes' && pricingKey === 'imanes' && sizeRaw) {
+      for (const [alias, key] of Object.entries(SIZE_ALIASES)) {
+        if (sizeRaw.includes(alias)) {
+          sizeKey = key;
+          break;
         }
       }
+      if (sizeKey) pricingKey = `imanes_${sizeKey}`;
+    }
 
-      // Normalize size for regular magnets (only if not a special type)
-      let sizeKey = null;
-      if (productKey === 'imanes' && pricingKey === 'imanes') {
-        if (sizeRaw) {
-          for (const [alias, key] of Object.entries(SIZE_ALIASES)) {
-            if (sizeRaw.includes(alias)) {
-              sizeKey = key;
-              break;
-            }
-          }
-        }
-        // Apply size to pricing key
-        if (sizeKey) {
-          pricingKey = `imanes_${sizeKey}`;
-        }
+    // Determine custom price: inline price takes priority, then global
+    const hasInlinePrice = inlinePrice !== undefined && !isNaN(inlinePrice);
+    const globalPrice = globalCustomPrices[pricingKey] || globalCustomPrices[productKey];
+    const customPrice = hasInlinePrice ? inlinePrice : globalPrice;
+    const hasCustomPrice = customPrice !== undefined;
+
+    // Get price from tiers (as fallback)
+    const tiers = PRICING_TIERS[pricingKey] || PRICING_TIERS[productKey];
+    if (!tiers) return null;
+
+    const applicableTier = tiers.find(t => quantity >= t.min && quantity <= t.max);
+    const requiresQuote = !hasCustomPrice && (applicableTier?.requiresQuote || tiers[0].requiresQuote);
+
+    let unitPrice, productName;
+    if (hasCustomPrice) {
+      unitPrice = customPrice;
+      productName = (applicableTier?.label || tiers[0].label) + (sizeKey ? ` (${sizeKey.toUpperCase()})` : '');
+    } else if (applicableTier) {
+      unitPrice = applicableTier.price;
+      productName = applicableTier.label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : '');
+    } else {
+      unitPrice = tiers[0].price;
+      productName = tiers[0].label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : '');
+    }
+
+    const belowMinimum = !hasCustomPrice && (!applicableTier && quantity < tiers[0].min);
+
+    return {
+      productKey: pricingKey,
+      productName,
+      quantity,
+      unitPrice,
+      subtotal: requiresQuote ? 0 : quantity * unitPrice,
+      minimumRequired: tiers[0].min,
+      belowMinimum,
+      requiresQuote,
+      isSpecialPrice: hasCustomPrice
+    };
+  }
+
+  // Run pattern 1: number + product
+  let match;
+  while ((match = pattern1.exec(textNormalized)) !== null) {
+    const quantity = parseInt(match[1]);
+    if (quantity <= 0 || isNaN(quantity)) continue;
+    const productRaw = match[2].trim();
+    const specialType = match[3]?.trim() || null;
+    const sizeRaw = match[4]?.trim() || null;
+    const inlinePrice = match[5] ? parseFloat(match[5]) : undefined;
+
+    const item = processItem(quantity, productRaw, specialType, sizeRaw, inlinePrice);
+    if (item) {
+      items.push(item);
+      matchedRanges.push({ start: match.index, end: match.index + match[0].length });
+    }
+  }
+
+  // Run pattern 2: product + number (only for non-overlapping matches)
+  while ((match = pattern2.exec(textNormalized)) !== null) {
+    if (rangeOverlaps(match.index, match.index + match[0].length)) continue;
+
+    const productRaw = match[1].trim();
+    const specialType = match[2]?.trim() || null;
+    const sizeRaw = match[3]?.trim() || null;
+    const quantity = parseInt(match[4]);
+    if (quantity <= 0 || isNaN(quantity)) continue;
+    const inlinePrice = match[5] ? parseFloat(match[5]) : undefined;
+
+    const item = processItem(quantity, productRaw, specialType, sizeRaw, inlinePrice);
+    if (item) {
+      items.push(item);
+      matchedRanges.push({ start: match.index, end: match.index + match[0].length });
+    }
+  }
+
+  // Pattern 3: orphan quantity + price without product name (e.g. "450 en $7")
+  // Inherits product from most recently matched item
+  if (items.length > 0) {
+    const orphanPattern = /(\d+)\s*(?:pzas?|piezas?|pz)?\s+(?:en|a|por)\s*\$\s*([\d.]+)/gi;
+    while ((match = orphanPattern.exec(textNormalized)) !== null) {
+      if (rangeOverlaps(match.index, match.index + match[0].length)) continue;
+
+      const quantity = parseInt(match[1]);
+      if (quantity <= 0 || isNaN(quantity)) continue;
+      const inlinePrice = parseFloat(match[2]);
+      if (isNaN(inlinePrice)) continue;
+
+      // Find the closest preceding item to inherit product from
+      const lastItem = items[items.length - 1];
+      const item = processItem(quantity, lastItem.productKey, null, null, inlinePrice);
+      if (item) {
+        items.push(item);
+        matchedRanges.push({ start: match.index, end: match.index + match[0].length });
       }
-
-      // Check for custom price (check both pricingKey and productKey)
-      const customPrice = customPrices[pricingKey] || customPrices[productKey];
-      const hasCustomPrice = customPrice !== undefined;
-
-      // Get price from tiers (as fallback)
-      const tiers = PRICING_TIERS[pricingKey] || PRICING_TIERS[productKey];
-      if (!tiers) continue;
-
-      const applicableTier = tiers.find(t => quantity >= t.min && quantity <= t.max);
-
-      // Check if this product requires special quote
-      const requiresQuote = !hasCustomPrice && (applicableTier?.requiresQuote || tiers[0].requiresQuote);
-
-      // Determine the price to use
-      let unitPrice, productName;
-      if (hasCustomPrice) {
-        unitPrice = customPrice;
-        productName = (applicableTier?.label || tiers[0].label) + (sizeKey ? ` (${sizeKey.toUpperCase()})` : '');
-      } else if (applicableTier) {
-        unitPrice = applicableTier.price;
-        productName = applicableTier.label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : '');
-      } else {
-        unitPrice = tiers[0].price;
-        productName = tiers[0].label + (sizeKey ? ` (${sizeKey.toUpperCase()})` : '');
-      }
-
-      const belowMinimum = !hasCustomPrice && (!applicableTier && quantity < tiers[0].min);
-
-      items.push({
-        productKey: pricingKey,
-        productName,
-        quantity,
-        unitPrice,
-        subtotal: requiresQuote ? 0 : quantity * unitPrice,
-        minimumRequired: tiers[0].min,
-        belowMinimum,
-        requiresQuote,
-        isSpecialPrice: hasCustomPrice
-      });
     }
   }
 
@@ -341,29 +402,25 @@ export async function generateQuotePDF(quoteData) {
       const quoteNumber = `COT-${Date.now().toString(36).toUpperCase()}`;
       const now = new Date();
 
-      // Deduplicate items by productKey (keep the one with valid quantity, prefer special price)
-      const itemMap = new Map();
+      // Deduplicate items: only merge if SAME product, quantity, AND price (true duplicates)
+      const seen = [];
       for (const item of quoteData.items) {
         // Skip items with invalid data
         if (!item.quantity || isNaN(item.quantity) || item.quantity <= 0) continue;
         if (item.unitPrice === undefined || isNaN(item.unitPrice)) continue;
 
-        const key = item.productKey;
-        const existing = itemMap.get(key);
-
-        if (!existing) {
-          itemMap.set(key, item);
-        } else {
-          // If new item has special price, prefer it; otherwise keep the one with higher quantity
-          if (item.isSpecialPrice && !existing.isSpecialPrice) {
-            itemMap.set(key, item);
-          } else if (item.quantity > existing.quantity && !existing.isSpecialPrice) {
-            itemMap.set(key, item);
-          }
+        // Check for true duplicate (same product + same quantity + same price)
+        const isDuplicate = seen.some(s =>
+          s.productKey === item.productKey &&
+          s.quantity === item.quantity &&
+          s.unitPrice === item.unitPrice
+        );
+        if (!isDuplicate) {
+          seen.push(item);
         }
       }
 
-      const deduplicatedItems = Array.from(itemMap.values());
+      const deduplicatedItems = seen;
 
       // Calculate totals
       let subtotal = 0;
