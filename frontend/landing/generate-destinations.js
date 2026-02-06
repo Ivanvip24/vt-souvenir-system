@@ -471,10 +471,12 @@ function generatePage(dest) {
     .filter(Boolean)
     .join('\n              ');
 
+  const productColors = ['rosa', 'verde', 'naranja', 'turquesa'];
   const productsHtml = products.map((p, i) => {
     const productImg = (dest.productImages && dest.productImages[i]) || dest.image;
+    const color = productColors[i] || 'rosa';
     return `
-            <div class="dest-product-card">
+            <div class="dest-product-card" data-color="${color}">
               <img src="${productImg}" alt="${escapeHtml(p.name)} souvenir ${escapeHtml(dest.name)} México - Corte láser AXKAN" loading="lazy">
               <h3>${escapeHtml(p.name)} — ${escapeHtml(dest.name)}</h3>
               <p>${escapeHtml(p.description)}</p>
@@ -579,6 +581,7 @@ function generatePage(dest) {
         --rosa-mexicano: #e72a88;
         --verde-selva: #8ab73b;
         --naranja-calido: #f39223;
+        --turquesa-caribe: #09adc2;
         --oro-maya: #D4A574;
         --font-display: 'RL Aqva', 'Fredoka', sans-serif;
         --font-body: 'Objektiv', 'Inter', -apple-system, sans-serif;
@@ -624,6 +627,13 @@ function generatePage(dest) {
       .dest-product-card h3 { padding: 16px 16px 8px; font-size: 16px; font-weight: 600; }
       .dest-product-card p { padding: 0 16px; font-size: 14px; color: #666; }
       .dest-product-price { display: block; padding: 12px 16px 16px; font-weight: 700; color: var(--rosa-mexicano); font-size: 15px; }
+      .dest-product-card[data-color="rosa"] { border-top: 4px solid var(--rosa-mexicano); }
+      .dest-product-card[data-color="verde"] { border-top: 4px solid var(--verde-selva); }
+      .dest-product-card[data-color="naranja"] { border-top: 4px solid var(--naranja-calido); }
+      .dest-product-card[data-color="turquesa"] { border-top: 4px solid #09adc2; }
+      .dest-product-card[data-color="verde"] .dest-product-price { color: var(--verde-selva); }
+      .dest-product-card[data-color="naranja"] .dest-product-price { color: var(--naranja-calido); }
+      .dest-product-card[data-color="turquesa"] .dest-product-price { color: #09adc2; }
 
       /* About section */
       .dest-about { padding: 60px 5%; max-width: 900px; margin: 0 auto; }
@@ -809,7 +819,19 @@ function generateIndex() {
       .nav-logo { height: 36px; }
       .nav-links { display: flex; gap: 24px; list-style: none; }
       .nav-links a { color: #333; font-weight: 500; font-size: 14px; text-decoration: none; }
-      .nav-cta { background: var(--rosa-mexicano); color: white !important; padding: 8px 20px; border-radius: 24px; }
+      .nav-links a:hover { color: var(--rosa-mexicano); }
+      .nav-cta { background: var(--rosa-mexicano); color: white !important; padding: 8px 20px; border-radius: 24px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+      .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(231, 42, 136, 0.4); }
+      .nav-hamburger { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 32px; height: 32px; background: none; border: none; cursor: pointer; padding: 4px; z-index: 110; }
+      .nav-hamburger span { display: block; width: 100%; height: 3px; background: #333; border-radius: 2px; transition: all 0.3s ease; }
+      .nav-hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(6px, 6px); }
+      .nav-hamburger.active span:nth-child(2) { opacity: 0; }
+      .nav-hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
+      .mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); z-index: 99; flex-direction: column; justify-content: center; align-items: center; gap: 2rem; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+      .mobile-menu.active { opacity: 1; visibility: visible; }
+      .mobile-menu a { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; color: #333; text-decoration: none; padding: 0.75rem 1.5rem; }
+      .mobile-menu a:hover { color: var(--rosa-mexicano); }
+      .mobile-menu .nav-cta { font-size: 1.25rem; padding: 1rem 2rem; }
       .index-header { text-align: center; padding: 60px 5% 24px; }
       .index-header h1 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 12px; }
       .index-header h1 .hl { color: var(--rosa-mexicano); }

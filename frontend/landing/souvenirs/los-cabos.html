@@ -13,7 +13,7 @@
     <!-- Open Graph -->
     <meta property="og:title" content="Souvenirs Los Cabos — Imanes y Llaveros Premium | AXKAN">
     <meta property="og:description" content="Souvenirs premium de Los Cabos con corte láser. Imanes y llaveros con diseños del Arco de Cabo San Lucas, El Médano y el desierto junto al mar.">
-    <meta property="og:image" content="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=1200">
+    <meta property="og:image" content="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800">
     <meta property="og:type" content="product">
     <meta property="og:url" content="https://axkan.art/souvenirs/los-cabos">
     <meta property="og:site_name" content="AXKAN">
@@ -23,7 +23,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Souvenirs Los Cabos — AXKAN">
     <meta name="twitter:description" content="Souvenirs premium de Los Cabos con corte láser. Imanes y llaveros con diseños del Arco de Cabo San Lucas, El Médano y el desierto junto al mar.">
-    <meta name="twitter:image" content="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=1200">
+    <meta name="twitter:image" content="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800">
 
     <!-- Geo -->
     <meta name="geo.region" content="MX">
@@ -45,7 +45,7 @@
       "name": "Souvenirs Los Cabos - AXKAN",
       "description": "Souvenirs premium de Los Cabos con corte láser. Imanes y llaveros con diseños del Arco de Cabo San Lucas, El Médano y el desierto junto al mar.",
       "brand": {"@type": "Brand", "name": "AXKAN"},
-      "image": "https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=1200",
+      "image": "https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800",
       "category": "Souvenirs > Los Cabos",
       "material": "MDF con corte láser",
       "countryOfOrigin": "México",
@@ -90,6 +90,7 @@
         --rosa-mexicano: #e72a88;
         --verde-selva: #8ab73b;
         --naranja-calido: #f39223;
+        --turquesa-caribe: #09adc2;
         --oro-maya: #D4A574;
         --font-display: 'RL Aqva', 'Fredoka', sans-serif;
         --font-body: 'Objektiv', 'Inter', -apple-system, sans-serif;
@@ -135,6 +136,13 @@
       .dest-product-card h3 { padding: 16px 16px 8px; font-size: 16px; font-weight: 600; }
       .dest-product-card p { padding: 0 16px; font-size: 14px; color: #666; }
       .dest-product-price { display: block; padding: 12px 16px 16px; font-weight: 700; color: var(--rosa-mexicano); font-size: 15px; }
+      .dest-product-card[data-color="rosa"] { border-top: 4px solid var(--rosa-mexicano); }
+      .dest-product-card[data-color="verde"] { border-top: 4px solid var(--verde-selva); }
+      .dest-product-card[data-color="naranja"] { border-top: 4px solid var(--naranja-calido); }
+      .dest-product-card[data-color="turquesa"] { border-top: 4px solid #09adc2; }
+      .dest-product-card[data-color="verde"] .dest-product-price { color: var(--verde-selva); }
+      .dest-product-card[data-color="naranja"] .dest-product-price { color: var(--naranja-calido); }
+      .dest-product-card[data-color="turquesa"] .dest-product-price { color: #09adc2; }
 
       /* About section */
       .dest-about { padding: 60px 5%; max-width: 900px; margin: 0 auto; }
@@ -178,8 +186,8 @@
       <a href="/"><img src="/assets/LOGO-03.png" alt="AXKAN - Souvenirs Premium de México" class="nav-logo"></a>
       <ul class="nav-links">
         <li><a href="/#productos">Productos</a></li>
-        <li><a href="/souvenirs">Destinos</a></li>
         <li><a href="/#calidad">Calidad</a></li>
+        <li><a href="/souvenirs">Destinos</a></li>
         <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
       </ul>
     </nav>
@@ -205,28 +213,28 @@
       <h2>Productos disponibles para Los Cabos</h2>
       <div class="dest-products-grid">
 
-            <div class="dest-product-card">
+            <div class="dest-product-card" data-color="rosa">
               <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Imanes MDF souvenir Los Cabos México - Corte láser AXKAN" loading="lazy">
               <h3>Imanes MDF — Los Cabos</h3>
               <p>Imanes decorativos con corte láser de precisión y acabado brillante UV</p>
               <span class="dest-product-price">$8-$15/pieza mayoreo</span>
             </div>
 
-            <div class="dest-product-card">
+            <div class="dest-product-card" data-color="verde">
               <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Llaveros MDF souvenir Los Cabos México - Corte láser AXKAN" loading="lazy">
               <h3>Llaveros MDF — Los Cabos</h3>
               <p>Llaveros con argolla reforzada y diseños únicos por destino</p>
               <span class="dest-product-price">$7-$10/pieza mayoreo</span>
             </div>
 
-            <div class="dest-product-card">
+            <div class="dest-product-card" data-color="naranja">
               <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Portallaves souvenir Los Cabos México - Corte láser AXKAN" loading="lazy">
               <h3>Portallaves — Los Cabos</h3>
               <p>Piezas decorativas para el hogar con diseños emblemáticos</p>
               <span class="dest-product-price">$34-$40/pieza</span>
             </div>
 
-            <div class="dest-product-card">
+            <div class="dest-product-card" data-color="turquesa">
               <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Destapadores souvenir Los Cabos México - Corte láser AXKAN" loading="lazy">
               <h3>Destapadores — Los Cabos</h3>
               <p>Funcionales y decorativos, con imán trasero y doble remache</p>

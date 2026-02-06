@@ -90,6 +90,7 @@
         --rosa-mexicano: #e72a88;
         --verde-selva: #8ab73b;
         --naranja-calido: #f39223;
+        --turquesa-caribe: #09adc2;
         --oro-maya: #D4A574;
         --font-display: 'RL Aqva', 'Fredoka', sans-serif;
         --font-body: 'Objektiv', 'Inter', -apple-system, sans-serif;
@@ -135,6 +136,13 @@
       .dest-product-card h3 { padding: 16px 16px 8px; font-size: 16px; font-weight: 600; }
       .dest-product-card p { padding: 0 16px; font-size: 14px; color: #666; }
       .dest-product-price { display: block; padding: 12px 16px 16px; font-weight: 700; color: var(--rosa-mexicano); font-size: 15px; }
+      .dest-product-card[data-color="rosa"] { border-top: 4px solid var(--rosa-mexicano); }
+      .dest-product-card[data-color="verde"] { border-top: 4px solid var(--verde-selva); }
+      .dest-product-card[data-color="naranja"] { border-top: 4px solid var(--naranja-calido); }
+      .dest-product-card[data-color="turquesa"] { border-top: 4px solid #09adc2; }
+      .dest-product-card[data-color="verde"] .dest-product-price { color: var(--verde-selva); }
+      .dest-product-card[data-color="naranja"] .dest-product-price { color: var(--naranja-calido); }
+      .dest-product-card[data-color="turquesa"] .dest-product-price { color: #09adc2; }
 
       /* About section */
       .dest-about { padding: 60px 5%; max-width: 900px; margin: 0 auto; }
@@ -178,8 +186,8 @@
       <a href="/"><img src="/assets/LOGO-03.png" alt="AXKAN - Souvenirs Premium de México" class="nav-logo"></a>
       <ul class="nav-links">
         <li><a href="/#productos">Productos</a></li>
-        <li><a href="/souvenirs">Destinos</a></li>
         <li><a href="/#calidad">Calidad</a></li>
+        <li><a href="/souvenirs">Destinos</a></li>
         <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
       </ul>
     </nav>
@@ -205,28 +213,28 @@
       <h2>Productos disponibles para San Antonio Cuajimoloyas</h2>
       <div class="dest-products-grid">
 
-            <div class="dest-product-card">
+            <div class="dest-product-card" data-color="rosa">
               <img src="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323516/design-gallery/design_San_Antonio_Cuajimoloyas_1768323515730_7.jpg" alt="Imanes MDF souvenir San Antonio Cuajimoloyas México - Corte láser AXKAN" loading="lazy">
               <h3>Imanes MDF — San Antonio Cuajimoloyas</h3>
               <p>Imanes decorativos con corte láser de precisión y acabado brillante UV</p>
               <span class="dest-product-price">$8-$15/pieza mayoreo</span>
             </div>
 
-            <div class="dest-product-card">
+            <div class="dest-product-card" data-color="verde">
               <img src="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323521/design-gallery/design_San_Antonio_Cuajimoloyas_1768323520743_8.jpg" alt="Llaveros MDF souvenir San Antonio Cuajimoloyas México - Corte láser AXKAN" loading="lazy">
               <h3>Llaveros MDF — San Antonio Cuajimoloyas</h3>
               <p>Llaveros con argolla reforzada y diseños únicos por destino</p>
               <span class="dest-product-price">$7-$10/pieza mayoreo</span>
             </div>
 
-            <div class="dest-product-card">
+            <div class="dest-product-card" data-color="naranja">
               <img src="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323521/design-gallery/design_San_Antonio_Cuajimoloyas_1768323520743_8.jpg" alt="Portallaves souvenir San Antonio Cuajimoloyas México - Corte láser AXKAN" loading="lazy">
               <h3>Portallaves — San Antonio Cuajimoloyas</h3>
               <p>Piezas decorativas para el hogar con diseños emblemáticos</p>
               <span class="dest-product-price">$34-$40/pieza</span>
             </div>
 
-            <div class="dest-product-card">
+            <div class="dest-product-card" data-color="turquesa">
               <img src="https://res.cloudinary.com/dg1owvdhw/image/upload/v1768323521/design-gallery/design_San_Antonio_Cuajimoloyas_1768323520743_8.jpg" alt="Destapadores souvenir San Antonio Cuajimoloyas México - Corte láser AXKAN" loading="lazy">
               <h3>Destapadores — San Antonio Cuajimoloyas</h3>
               <p>Funcionales y decorativos, con imán trasero y doble remache</p>
