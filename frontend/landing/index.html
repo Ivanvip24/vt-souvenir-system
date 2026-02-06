@@ -1766,12 +1766,17 @@
                     if (url) el.src = url;
                 });
 
-                // 4. Update product card onclick links
+                // 4. Update product card onclick links (skip if local link is set)
+                var localProductLinks = {
+                    '0': '/productos/imanes-mdf'
+                };
                 document.querySelectorAll('[data-sanity-product]').forEach(function(el) {
                     var idx = el.getAttribute('data-sanity-product');
                     var product = doc.products && doc.products[idx];
-                    if (product && product.link) {
-                        el.onclick = function() { window.open(product.link, '_blank'); };
+                    if (localProductLinks[idx]) {
+                        el.onclick = function() { window.location.href = localProductLinks[idx]; };
+                    } else if (product && product.link) {
+                        el.onclick = function() { window.location.href = product.link; };
                     }
                     // Hide badge if empty
                     var badge = el.querySelector('[data-sanity$=".badge"]');
