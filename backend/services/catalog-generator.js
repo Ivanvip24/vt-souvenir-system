@@ -200,7 +200,7 @@ export async function generateCatalogPDF(options = {}) {
       // SMALL NOTES
       // ==============================
       doc.fontSize(7).font('Helvetica').fillColor(C.gray);
-      textCenter(doc, 'Pedido mínimo: 100 pzas  |  Envío gratis en 300+ pzas  |  Anticipo 50%  |  Producción: Varía dependiendo del número de piezas', PAD, ROW_W, y);
+      textCenter(doc, 'Pedido mínimo: 100 pzas  |  Envío gratis en 300+ pzas  |  Anticipo 50%  |  Tiempo de Producción: Varía dependiendo del número de piezas', PAD, ROW_W, y);
 
       // ==============================
       // FOOTER (fixed at bottom)
