@@ -41,6 +41,7 @@ import * as pickupScheduler from '../services/pickup-scheduler.js';
 import * as facebookMarketplace from '../services/facebook-marketplace.js';
 import * as facebookScheduler from '../services/facebook-scheduler.js';
 import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
+import { generateCatalogPDF, getCatalogUrl } from '../services/catalog-generator.js';
 
 config();
 
@@ -89,6 +90,14 @@ if (!fs.existsSync(quotesPath)) {
 }
 app.use('/quotes', express.static(quotesPath));
 console.log(`📁 Serving quotes from: ${quotesPath}`);
+
+// Catalog PDFs
+const catalogsPath = path.join(__dirname, '../catalogs');
+if (!fs.existsSync(catalogsPath)) {
+  fs.mkdirSync(catalogsPath, { recursive: true });
+}
+app.use('/catalogs', express.static(catalogsPath));
+console.log(`📁 Serving catalogs from: ${catalogsPath}`);
 
 // ========================================
 // HEALTH CHECK
@@ -4227,6 +4236,86 @@ app.get('/api/clients', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching clients:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/clients/autocomplete-addresses
+ * Auto-fill city/state/colonia from postal codes for clients missing those fields
+ */
+app.post('/api/clients/autocomplete-addresses', async (req, res) => {
+  try {
+    // Find clients with postal_code but missing city, state, or colonia
+    const result = await query(`
+      SELECT id, postal_code, city, state, colonia
+      FROM clients
+      WHERE postal_code IS NOT NULL AND postal_code != ''
+        AND (city IS NULL OR city = '' OR state IS NULL OR state = '' OR colonia IS NULL OR colonia = '')
+    `);
+
+    if (result.rows.length === 0) {
+      return res.json({ success: true, updated: 0, message: 'No clients need auto-completion' });
+    }
+
+    let updated = 0;
+    let errors = 0;
+
+    for (const client of result.rows) {
+      try {
+        const postal = client.postal_code.trim();
+        if (!/^\d{5}$/.test(postal)) continue;
+
+        // Rate limit: small delay between API calls
+        if (updated > 0) await new Promise(r => setTimeout(r, 200));
+
+        const apiRes = await fetch(`https://api.zippopotam.us/mx/${postal}`);
+        if (!apiRes.ok) continue;
+
+        const data = await apiRes.json();
+        if (!data.places || data.places.length === 0) continue;
+
+        const place = data.places[0];
+        const updates = [];
+        const values = [];
+        let idx = 1;
+
+        if (!client.state && data.state) {
+          updates.push(`state = $${idx++}`);
+          values.push(data.state);
+        }
+        if (!client.city && place['place name']) {
+          updates.push(`city = $${idx++}`);
+          values.push(place['place name']);
+        }
+        if (!client.colonia && place['place name']) {
+          updates.push(`colonia = $${idx++}`);
+          values.push(place['place name']);
+        }
+
+        if (updates.length > 0) {
+          updates.push(`updated_at = NOW()`);
+          values.push(client.id);
+          await query(
+            `UPDATE clients SET ${updates.join(', ')} WHERE id = $${idx}`,
+            values
+          );
+          updated++;
+        }
+      } catch (e) {
+        errors++;
+      }
+    }
+
+    res.json({
+      success: true,
+      updated,
+      errors,
+      total_candidates: result.rows.length,
+      message: `${updated} clientes actualizados con datos de codigo postal`
+    });
+  } catch (error) {
+    console.error('Error auto-completing addresses:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

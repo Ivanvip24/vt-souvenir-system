@@ -196,6 +196,17 @@ function renderQuickFilterCounts() {
   if (countRecent) countRecent.textContent = recent;
 }
 
+function getMissingFields(client) {
+  const missing = [];
+  if (!client.street) missing.push('Calle');
+  if (!client.city) missing.push('Ciudad');
+  if (!client.state) missing.push('Estado');
+  if (!client.postal_code && !client.postal) missing.push('CP');
+  if (!client.phone) missing.push('Tel');
+  if (!client.colonia) missing.push('Colonia');
+  return missing;
+}
+
 function renderShippingTable() {
   const container = document.getElementById('shipping-cards-container');
   if (!container) return;
@@ -208,6 +219,7 @@ function renderShippingTable() {
     const location = [client.city, client.state].filter(Boolean).join(', ') || 'Sin ubicacion';
     const postal = client.postal_code || client.postal || '';
     const phone = client.phone || '';
+    const missing = hasFullAddress ? [] : getMissingFields(client);
 
     return `
       <div class="address-card ${hasFullAddress ? 'complete' : 'incomplete'}" onclick="showClientDetailPopup(${client.id})">
@@ -222,6 +234,10 @@ function renderShippingTable() {
         <div class="address-card-location">
           ${escapeHtml(location)}${postal ? ` &middot; CP ${escapeHtml(postal)}` : ''}
         </div>
+        ${missing.length > 0
+          ? `<div class="address-card-missing">Falta: ${missing.join(', ')}</div>`
+          : ''
+        }
         ${client.order_count > 0
           ? `<div class="address-card-orders">${client.order_count} pedido${client.order_count > 1 ? 's' : ''}</div>`
           : ''
@@ -1082,6 +1098,47 @@ async function deleteClient(clientId, clientName) {
   }
 }
 
+// ==========================================
+// AUTO-COMPLETE ADDRESSES
+// ==========================================
+
+async function autoCompleteAddresses() {
+  const btn = document.getElementById('autocomplete-btn');
+  if (!btn) return;
+
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Completando...';
+
+  try {
+    const response = await fetch(`${API_BASE}/clients/autocomplete-addresses`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) throw new Error('Failed to auto-complete');
+
+    const result = await response.json();
+
+    if (result.success) {
+      if (result.updated > 0) {
+        showNotification(`${result.updated} clientes actualizados con datos de CP`, 'success');
+        loadShippingData();
+      } else {
+        showNotification('No hay clientes para auto-completar', 'info');
+      }
+    } else {
+      throw new Error(result.error);
+    }
+  } catch (error) {
+    console.error('Auto-complete error:', error);
+    showNotification('Error al auto-completar: ' + error.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
+
 // Export functions globally
 window.triggerImportCSV = triggerImportCSV;
 window.handleCSVImport = handleCSVImport;
@@ -1094,3 +1151,4 @@ window.closeClientModal = closeClientModal;
 window.saveClient = saveClient;
 window.setQuickFilter = setQuickFilter;
 window.setShippingSort = setShippingSort;
+window.autoCompleteAddresses = autoCompleteAddresses;
