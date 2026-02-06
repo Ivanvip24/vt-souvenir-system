@@ -6077,6 +6077,151 @@ textarea:disabled {
   border-color: #dc2626;
 }
 
+/* View Toggle (Cards / List) */
+.shipping-view-toggle {
+  display: flex;
+  background: var(--gray-100);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+}
+
+.view-btn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--gray-500);
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.view-btn:hover {
+  color: var(--gray-700);
+}
+
+.view-btn.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Address List/Table View */
+.address-list-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  background: white;
+  margin-top: 12px;
+}
+
+.address-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.address-list-table thead {
+  background: var(--gray-50);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.address-list-table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
+}
+
+.address-list-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-700);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.address-list-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.address-list-table tbody tr:hover {
+  background: rgba(233, 30, 99, 0.04);
+}
+
+.address-list-table tbody tr.selected {
+  background: #fce4ec;
+}
+
+.address-list-table tbody tr.selected:hover {
+  background: #f8bbd0;
+}
+
+.address-list-table .col-checkbox {
+  width: 40px;
+  text-align: center;
+}
+
+.address-list-table .col-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.address-list-table .col-name {
+  min-width: 180px;
+}
+
+.address-list-table .col-name strong {
+  color: var(--gray-900);
+}
+
+.address-list-table .col-location {
+  min-width: 140px;
+}
+
+.address-list-table .col-email {
+  min-width: 180px;
+}
+
+.address-list-table .col-email a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.address-list-table .col-email a:hover {
+  text-decoration: underline;
+}
+
+.address-list-table .col-phone {
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.address-list-table .col-street {
+  min-width: 160px;
+}
+
+.address-list-table .col-colonia {
+  min-width: 120px;
+}
+
+.address-list-table .col-cp {
+  min-width: 60px;
+  white-space: nowrap;
+}
+
 /* Client Detail Popup */
 .client-popup-overlay {
   position: fixed;

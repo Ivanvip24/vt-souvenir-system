@@ -1184,6 +1184,11 @@
                         <button class="sort-btn active" id="sort-recent-btn" onclick="setShippingSort('recent')">Recientes</button>
                         <button class="sort-btn" id="sort-alpha-btn" onclick="setShippingSort('alpha')">A-Z</button>
                     </div>
+
+                    <div class="shipping-view-toggle">
+                        <button class="view-btn active" id="view-cards-btn" onclick="setShippingView('cards')" title="Vista tarjetas">▦</button>
+                        <button class="view-btn" id="view-list-btn" onclick="setShippingView('list')" title="Vista lista">☰</button>
+                    </div>
                 </div>
 
                 <!-- Quick Filter Tabs -->
@@ -1230,6 +1235,27 @@
 
                 <!-- Address Cards Grid -->
                 <div id="shipping-cards-container" class="address-cards-grid"></div>
+
+                <!-- Address List/Table View -->
+                <div id="shipping-list-container" class="address-list-wrapper" style="display: none;">
+                    <table class="address-list-table">
+                        <thead>
+                            <tr>
+                                <th class="col-checkbox" id="list-select-col" style="display: none;">
+                                    <input type="checkbox" id="list-select-all-checkbox" onchange="toggleSelectAll()" />
+                                </th>
+                                <th class="col-name">Nombre</th>
+                                <th class="col-location">Destino</th>
+                                <th class="col-email">Correo</th>
+                                <th class="col-phone">Teléfono</th>
+                                <th class="col-street">Calle</th>
+                                <th class="col-colonia">Colonia</th>
+                                <th class="col-cp">CP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shipping-list-body"></tbody>
+                    </table>
+                </div>
 
                 <!-- Empty State -->
                 <div id="shipping-empty-state" class="empty-state hidden">

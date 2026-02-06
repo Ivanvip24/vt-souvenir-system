@@ -25,6 +25,7 @@ const shippingState = {
   totalPages: 1,
   itemsPerPage: 50,
   autoCompleteRan: false, // Only run auto-complete once per session
+  viewMode: 'cards', // 'cards' | 'list'
   selectMode: false, // Whether multi-select mode is active
   selectedIds: new Set(), // Set of selected client IDs
   stats: {
@@ -158,15 +159,23 @@ async function loadShippingData() {
       shippingState.totalPages = result.pagination.totalPages;
 
       renderQuickFilterCounts();
-      renderShippingTable();
       renderPagination();
       renderActiveFilters();
+
+      const listContainer = document.getElementById('shipping-list-container');
 
       if (result.data.length === 0) {
         if (emptyState) emptyState.classList.remove('hidden');
         if (cardsContainer) cardsContainer.style.display = 'none';
+        if (listContainer) listContainer.style.display = 'none';
+      } else if (shippingState.viewMode === 'list') {
+        if (cardsContainer) cardsContainer.style.display = 'none';
+        if (listContainer) listContainer.style.display = '';
+        renderShippingList();
       } else {
         if (cardsContainer) cardsContainer.style.display = 'grid';
+        if (listContainer) listContainer.style.display = 'none';
+        renderShippingTable();
       }
 
       // Auto-complete missing fields from postal codes on first load
@@ -262,6 +271,65 @@ function renderShippingTable() {
       </div>
     `;
   }).join('');
+}
+
+function renderShippingList() {
+  const body = document.getElementById('shipping-list-body');
+  if (!body) return;
+
+  const clients = shippingState.filteredClients;
+  const inSelect = shippingState.selectMode;
+
+  // Show/hide select column
+  const selectCol = document.getElementById('list-select-col');
+  if (selectCol) selectCol.style.display = inSelect ? '' : 'none';
+
+  body.innerHTML = clients.map(client => {
+    const location = [client.city, client.state].filter(Boolean).join(', ') || '';
+    const postal = client.postal_code || client.postal || '';
+    const street = client.street || '';
+    const streetNum = client.street_number ? ` #${client.street_number}` : '';
+    const isSelected = shippingState.selectedIds.has(client.id);
+
+    return `
+      <tr class="${isSelected ? 'selected' : ''}" onclick="${inSelect ? `toggleSelectClient(${client.id})` : `showClientDetailPopup(${client.id})`}">
+        ${inSelect ? `
+          <td class="col-checkbox">
+            <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelectClient(${client.id})" />
+          </td>
+        ` : ''}
+        <td class="col-name"><strong>${escapeHtml(client.name)}</strong></td>
+        <td class="col-location">${escapeHtml(location)}</td>
+        <td class="col-email">${client.email ? `<a href="mailto:${escapeHtml(client.email)}" onclick="event.stopPropagation()">${escapeHtml(client.email)}</a>` : ''}</td>
+        <td class="col-phone">${escapeHtml(client.phone || '')}</td>
+        <td class="col-street">${escapeHtml(street + streetNum)}</td>
+        <td class="col-colonia">${escapeHtml(client.colonia || '')}</td>
+        <td class="col-cp">${escapeHtml(postal)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function setShippingView(mode) {
+  shippingState.viewMode = mode;
+
+  const cardsBtn = document.getElementById('view-cards-btn');
+  const listBtn = document.getElementById('view-list-btn');
+  if (cardsBtn) cardsBtn.classList.toggle('active', mode === 'cards');
+  if (listBtn) listBtn.classList.toggle('active', mode === 'list');
+
+  const cardsContainer = document.getElementById('shipping-cards-container');
+  const listContainer = document.getElementById('shipping-list-container');
+
+  if (mode === 'cards') {
+    if (cardsContainer) cardsContainer.style.display = 'grid';
+    if (listContainer) listContainer.style.display = 'none';
+    renderShippingTable();
+  } else {
+    if (cardsContainer) cardsContainer.style.display = 'none';
+    if (listContainer) listContainer.style.display = '';
+    renderShippingList();
+  }
 }
 
 /**
@@ -1129,8 +1197,17 @@ function toggleSelectMode() {
     btn.innerHTML = shippingState.selectMode ? '✕ Cancelar' : '☑ Seleccionar';
   }
 
+  // Show/hide list view select column
+  const listSelectCol = document.getElementById('list-select-col');
+  if (listSelectCol) listSelectCol.style.display = shippingState.selectMode ? '' : 'none';
+
   updateBulkActionBar();
-  renderShippingTable();
+
+  if (shippingState.viewMode === 'list') {
+    renderShippingList();
+  } else {
+    renderShippingTable();
+  }
 }
 
 function toggleSelectClient(clientId) {
@@ -1171,16 +1248,28 @@ function toggleSelectAll() {
 
   updateSelectAllCheckbox();
   updateBulkActionBar();
-  renderShippingTable();
+
+  if (shippingState.viewMode === 'list') {
+    renderShippingList();
+  } else {
+    renderShippingTable();
+  }
 }
 
 function updateSelectAllCheckbox() {
-  const cb = document.getElementById('select-all-checkbox');
-  if (!cb) return;
   const allOnPage = shippingState.filteredClients.map(c => c.id);
   const selectedCount = allOnPage.filter(id => shippingState.selectedIds.has(id)).length;
-  cb.checked = selectedCount === allOnPage.length && allOnPage.length > 0;
-  cb.indeterminate = selectedCount > 0 && selectedCount < allOnPage.length;
+  const isAll = selectedCount === allOnPage.length && allOnPage.length > 0;
+  const isPartial = selectedCount > 0 && selectedCount < allOnPage.length;
+
+  // Sync both checkboxes (bulk bar + list header)
+  ['select-all-checkbox', 'list-select-all-checkbox'].forEach(id => {
+    const cb = document.getElementById(id);
+    if (cb) {
+      cb.checked = isAll;
+      cb.indeterminate = isPartial;
+    }
+  });
 }
 
 function updateBulkActionBar() {
@@ -1403,3 +1492,4 @@ window.toggleSelectAll = toggleSelectAll;
 window.bulkExportCSV = bulkExportCSV;
 window.bulkDelete = bulkDelete;
 window.bulkGenerateLabels = bulkGenerateLabels;
+window.setShippingView = setShippingView;
