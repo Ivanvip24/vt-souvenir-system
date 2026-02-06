@@ -2,6 +2,9 @@
  * Product Price List PDF Generator
  * Clean, minimal design: soft pink background, white pill rows,
  * product name left + price right. Single page. Professional.
+ *
+ * IMPORTANT: All text is positioned manually without using PDFKit's
+ * text layout engine (no 'width' option) to prevent auto-pagination.
  */
 
 import PDFDocument from 'pdfkit';
@@ -25,7 +28,6 @@ const C = {
   pinkSoft: '#F8BBD0',
   pinkPale: '#FCE4EC',
   pinkBg: '#FDF2F6',
-  black: '#1a1a1a',
   darkText: '#2d2d2d',
   gray: '#777777',
   white: '#ffffff',
@@ -53,6 +55,18 @@ const PRICE_ROWS = [
 let cachedCatalog = { filepath: null, timestamp: 0 };
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 
+// Helper: draw text centered in a region without using 'width' option
+function textCenter(doc, str, regionX, regionW, y) {
+  const w = doc.widthOfString(str);
+  doc.text(str, regionX + (regionW - w) / 2, y);
+}
+
+// Helper: draw text right-aligned in a region without using 'width' option
+function textRight(doc, str, regionX, regionW, y) {
+  const w = doc.widthOfString(str);
+  doc.text(str, regionX + regionW - w, y);
+}
+
 /**
  * Generate price list PDF - single page
  */
@@ -77,9 +91,7 @@ export async function generateCatalogPDF(options = {}) {
     try {
       const doc = new PDFDocument({
         size: 'LETTER',
-        margins: { top: 0, bottom: 0, left: 0, right: 0 },
-        autoFirstPage: true,
-        bufferPages: true
+        margins: { top: 0, bottom: 0, left: 0, right: 0 }
       });
 
       const stream = fs.createWriteStream(filepath);
@@ -131,17 +143,13 @@ export async function generateCatalogPDF(options = {}) {
       // ==============================
       let y = 35;
 
-      doc.fontSize(34)
-         .font('Helvetica-Bold')
-         .fillColor(C.pinkDeep)
-         .text('AXKAN', PAD, y, { width: ROW_W, align: 'center', lineBreak: false });
+      doc.fontSize(34).font('Helvetica-Bold').fillColor(C.pinkDeep);
+      textCenter(doc, 'AXKAN', PAD, ROW_W, y);
 
       y += 42;
 
-      doc.fontSize(13)
-         .font('Helvetica-Oblique')
-         .fillColor(C.gray)
-         .text('Lista de precios', PAD, y, { width: ROW_W, align: 'center', lineBreak: false });
+      doc.fontSize(13).font('Helvetica-Oblique').fillColor(C.gray);
+      textCenter(doc, 'Lista de precios', PAD, ROW_W, y);
 
       y += 25;
 
@@ -154,17 +162,15 @@ export async function generateCatalogPDF(options = {}) {
       // ==============================
       // SECTION: PRECIOS UNITARIOS
       // ==============================
-      doc.fontSize(8)
-         .font('Helvetica-Bold')
-         .fillColor(C.pinkDark)
-         .text('PRECIO POR UNIDAD  (50-999 pzas)', PAD, y, { width: ROW_W, align: 'center', lineBreak: false });
+      doc.fontSize(8).font('Helvetica-Bold').fillColor(C.pinkDark);
+      textCenter(doc, 'PRECIO POR UNIDAD  (50-999 pzas)', PAD, ROW_W, y);
 
       y += 16;
 
       // Price rows
       for (const row of PRICE_ROWS) {
-        y = drawPriceRow(doc, row.name, row.price, row.note, PAD, y, ROW_W, ROW_H);
-        y += ROW_GAP;
+        drawPriceRow(doc, row.name, row.price, row.note, PAD, y, ROW_W, ROW_H);
+        y += ROW_H + ROW_GAP;
       }
 
       y += 8;
@@ -176,18 +182,16 @@ export async function generateCatalogPDF(options = {}) {
       // ==============================
       // SECTION: PRECIOS MAYOREO
       // ==============================
-      doc.fontSize(8)
-         .font('Helvetica-Bold')
-         .fillColor(C.pinkDark)
-         .text('PRECIO MAYOREO  (1,000+ pzas)', PAD, y, { width: ROW_W, align: 'center', lineBreak: false });
+      doc.fontSize(8).font('Helvetica-Bold').fillColor(C.pinkDark);
+      textCenter(doc, 'PRECIO MAYOREO  (1,000+ pzas)', PAD, ROW_W, y);
 
       y += 16;
 
       // Mayoreo rows
       const mayoreoRows = PRICE_ROWS.filter(r => r.mayoreo);
       for (const row of mayoreoRows) {
-        y = drawPriceRow(doc, row.name, row.mayoreo, null, PAD, y, ROW_W, ROW_H);
-        y += ROW_GAP;
+        drawPriceRow(doc, row.name, row.mayoreo, null, PAD, y, ROW_W, ROW_H);
+        y += ROW_H + ROW_GAP;
       }
 
       y += 10;
@@ -195,53 +199,30 @@ export async function generateCatalogPDF(options = {}) {
       // ==============================
       // SMALL NOTES
       // ==============================
-      doc.fontSize(7)
-         .font('Helvetica')
-         .fillColor(C.gray)
-         .text('Pedido mínimo: 50 pzas  |  Envío gratis en 300+ pzas  |  Anticipo 50%  |  Producción: 5-7 días', PAD, y, {
-           width: ROW_W,
-           align: 'center',
-           lineBreak: false
-         });
+      doc.fontSize(7).font('Helvetica').fillColor(C.gray);
+      textCenter(doc, 'Pedido mínimo: 50 pzas  |  Envío gratis en 300+ pzas  |  Anticipo 50%  |  Producción: 5-7 días', PAD, ROW_W, y);
 
       // ==============================
-      // FOOTER
+      // FOOTER (fixed at bottom)
       // ==============================
       const footerY = H - 50;
 
       // Pink accent bar
       doc.rect(0, footerY - 5, W, 55).fill(C.pinkPale);
 
-      doc.fontSize(9)
-         .font('Helvetica-Bold')
-         .fillColor(C.pinkDeep)
-         .text('WhatsApp: 55 3825 3251', PAD, footerY + 8, { width: ROW_W / 2, lineBreak: false });
+      doc.fontSize(9).font('Helvetica-Bold').fillColor(C.pinkDeep);
+      doc.text('WhatsApp: 55 3825 3251', PAD, footerY + 8);
 
-      doc.fontSize(9)
-         .font('Helvetica-Bold')
-         .fillColor(C.pinkDeep)
-         .text('informacion@axkan.art', PAD + ROW_W / 2, footerY + 8, { width: ROW_W / 2, align: 'right', lineBreak: false });
+      doc.fontSize(9).font('Helvetica-Bold').fillColor(C.pinkDeep);
+      textRight(doc, 'informacion@axkan.art', PAD, ROW_W, footerY + 8);
 
-      doc.fontSize(7)
-         .font('Helvetica-Oblique')
-         .fillColor(C.gray)
-         .text('@axkan.souvenirs', PAD, footerY + 24, { width: ROW_W / 2, lineBreak: false });
+      doc.fontSize(7).font('Helvetica-Oblique').fillColor(C.gray);
+      doc.text('@axkan.souvenirs', PAD, footerY + 24);
 
-      doc.fontSize(7)
-         .font('Helvetica-Oblique')
-         .fillColor(C.gray)
-         .text('vtanunciando.com', PAD + ROW_W / 2, footerY + 24, { width: ROW_W / 2, align: 'right', lineBreak: false });
+      doc.fontSize(7).font('Helvetica-Oblique').fillColor(C.gray);
+      textRight(doc, 'vtanunciando.com', PAD, ROW_W, footerY + 24);
 
-      // Finalize - only keep first page
-      const range = doc.bufferedPageRange();
-      if (range.count > 1) {
-        // Remove extra pages if PDFKit auto-created them
-        for (let i = range.count - 1; i > 0; i--) {
-          doc.switchToPage(i);
-        }
-        doc.switchToPage(0);
-      }
-
+      // Finalize
       doc.end();
 
       stream.on('finish', () => {
@@ -266,6 +247,7 @@ export async function generateCatalogPDF(options = {}) {
 
 /**
  * Draw a single price row (white rounded pill with name left, price right)
+ * Uses manual positioning only - no doc.text width/align to avoid auto-pagination
  */
 function drawPriceRow(doc, name, price, note, x, y, width, rowH) {
   const radius = rowH / 2;
@@ -279,27 +261,20 @@ function drawPriceRow(doc, name, price, note, x, y, width, rowH) {
 
   // Product name (left)
   const textY = y + (rowH / 2) - 5;
-  doc.fontSize(10)
-     .font('Helvetica')
-     .fillColor(C.darkText)
-     .text(name, x + innerPad, textY, { width: width - 120, lineBreak: false });
+  doc.fontSize(10).font('Helvetica').fillColor(C.darkText);
+  doc.text(name, x + innerPad, textY);
 
   // Small note next to name if present
   if (note) {
-    const nameWidth = doc.widthOfString(name, { font: 'Helvetica', size: 10 });
-    doc.fontSize(6.5)
-       .font('Helvetica-Oblique')
-       .fillColor(C.gray)
-       .text(note, x + innerPad + nameWidth + 8, textY + 2, { width: 80, lineBreak: false });
+    const nameWidth = doc.widthOfString(name);
+    doc.fontSize(6.5).font('Helvetica-Oblique').fillColor(C.gray);
+    doc.text(note, x + innerPad + nameWidth + 8, textY + 2);
   }
 
-  // Price (right, bold, pink)
-  doc.fontSize(14)
-     .font('Helvetica-Bold')
-     .fillColor(C.pinkDeep)
-     .text(price, x + width - 95, y + (rowH / 2) - 7, { width: 80, align: 'right', lineBreak: false });
-
-  return y + rowH;
+  // Price (right-aligned, bold, pink)
+  doc.fontSize(14).font('Helvetica-Bold').fillColor(C.pinkDeep);
+  const priceWidth = doc.widthOfString(price);
+  doc.text(price, x + width - priceWidth - innerPad, y + (rowH / 2) - 7);
 }
 
 /**
