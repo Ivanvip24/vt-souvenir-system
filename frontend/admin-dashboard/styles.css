@@ -8545,3 +8545,479 @@ body.mobile-menu-open {
         width: 100%;
     }
 }
+
+/* ==========================================
+   RECOLECCIONES (PICKUPS) TAB
+   ========================================== */
+
+/* Header actions */
+.pickups-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.pickups-date-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pickups-date-input {
+    padding: 10px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 16px;
+}
+
+/* Summary pills bar */
+.pickups-summary-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.pickups-stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    min-width: 160px;
+}
+
+.pickups-stat-pill.blue {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+.pickups-stat-pill.blue .pill-number { color: #2563eb; }
+
+.pickups-stat-pill.amber {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+}
+.pickups-stat-pill.amber .pill-number { color: #d97706; }
+
+.pickups-stat-pill.green {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+}
+.pickups-stat-pill.green .pill-number { color: #16a34a; }
+
+.pill-number {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.pill-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Section cards */
+.pickups-section-card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.pickups-section-title {
+    margin: 0 0 16px 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pickups-section-empty {
+    padding: 24px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+/* Pickup rows (scheduled pickups) */
+.pickup-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: #fafafa;
+    border-left: 4px solid #e5e7eb;
+    margin-bottom: 10px;
+    transition: background 0.15s;
+}
+
+.pickup-row:hover {
+    background: #f3f4f6;
+}
+
+.pickup-row-carrier {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px;
+}
+
+.pickup-carrier-icon {
+    font-size: 20px;
+}
+
+.pickup-carrier-name {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.pickup-row-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pickup-row-time {
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+    min-width: 110px;
+}
+
+.pickup-row-shipments {
+    font-size: 13px;
+    color: #6b7280;
+    min-width: 80px;
+}
+
+.pickup-row-actions {
+    margin-left: auto;
+}
+
+.pickup-cancel-btn {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.pickup-cancel-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.pickup-cancel-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Carrier-specific border colors for pickup rows */
+.pickup-row[data-carrier="Estafeta"] { border-left-color: #f59e0b; }
+.pickup-row[data-carrier="FedEx"] { border-left-color: #3b82f6; }
+.pickup-row[data-carrier="Paquetexpress"] { border-left-color: #10b981; }
+.pickup-row[data-carrier="DHL"] { border-left-color: #ef4444; }
+.pickup-row[data-carrier="UPS"] { border-left-color: #d97706; }
+.pickup-row[data-carrier="Redpack"] { border-left-color: #8b5cf6; }
+
+/* Pending labels - carrier groups */
+.pending-carrier-group {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.pending-carrier-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: default;
+}
+
+.pending-carrier-header .carrier-count {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    padding: 2px 10px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 12px;
+}
+
+.pending-carrier-header .pending-request-btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+    background: #374151;
+    transition: opacity 0.15s;
+}
+
+.pending-carrier-header .pending-request-btn:hover {
+    opacity: 0.85;
+}
+
+/* Carrier-specific header colors */
+.pending-carrier-header[data-carrier="Estafeta"] { background: #fef3c7; color: #92400e; }
+.pending-carrier-header[data-carrier="Estafeta"] .pending-request-btn { background: #f59e0b; }
+
+.pending-carrier-header[data-carrier="FedEx"] { background: #dbeafe; color: #1e40af; }
+.pending-carrier-header[data-carrier="FedEx"] .pending-request-btn { background: #3b82f6; }
+
+.pending-carrier-header[data-carrier="Paquetexpress"] { background: #d1fae5; color: #065f46; }
+.pending-carrier-header[data-carrier="Paquetexpress"] .pending-request-btn { background: #10b981; }
+
+.pending-carrier-header[data-carrier="DHL"] { background: #fee2e2; color: #991b1b; }
+.pending-carrier-header[data-carrier="DHL"] .pending-request-btn { background: #ef4444; }
+
+.pending-carrier-header[data-carrier="UPS"] { background: #fef3c7; color: #92400e; }
+.pending-carrier-header[data-carrier="UPS"] .pending-request-btn { background: #d97706; }
+
+.pending-carrier-header[data-carrier="Redpack"] { background: #ede9fe; color: #5b21b6; }
+.pending-carrier-header[data-carrier="Redpack"] .pending-request-btn { background: #8b5cf6; }
+
+.pending-labels-list {
+    padding: 8px 16px;
+    background: white;
+}
+
+.pending-label-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 13px;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.pending-label-item:last-child {
+    border-bottom: none;
+}
+
+.pending-label-order {
+    font-weight: 600;
+}
+
+.pending-label-tracking {
+    color: #9ca3af;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+/* Quick schedule row */
+.pickups-quick-schedule {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 0;
+}
+
+.pickups-quick-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.pickups-quick-btn {
+    padding: 6px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.pickups-quick-btn:hover {
+    border-color: #E91E63;
+    color: #E91E63;
+    background: #fce4ec;
+}
+
+/* Pickup Request Modal */
+.pickup-modal {
+    max-width: 500px;
+}
+
+.pickup-modal-carrier-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.pickup-modal-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+}
+
+.pickup-modal-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.pickup-modal-field {
+    margin-bottom: 20px;
+}
+
+.pickup-modal-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+.pickup-modal-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.pickup-modal-hint {
+    margin: 6px 0 0 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.pickup-modal-time-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.pickup-modal-pending-info {
+    background: #fef3c7;
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.pickup-modal-pending-title {
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.pickup-modal-pending-count {
+    font-size: 32px;
+    font-weight: 700;
+    color: #f59e0b;
+}
+
+.pickup-modal-pending-list {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.pickup-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.pickup-modal-cancel {
+    flex: 1;
+    padding: 14px 24px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+}
+
+.pickup-modal-submit {
+    flex: 2;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #E91E63, #C2185B);
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+}
+
+.pickup-modal-submit:hover {
+    opacity: 0.9;
+}
+
+.pickup-modal-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive pickups */
+@media (max-width: 768px) {
+    .pickups-header-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .pickups-summary-bar {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .pickups-stat-pill {
+        min-width: auto;
+    }
+
+    .pickup-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .pickup-row-carrier {
+        min-width: auto;
+    }
+
+    .pickup-row-actions {
+        margin-left: 0;
+    }
+
+    .pickup-modal-time-row {
+        grid-template-columns: 1fr;
+    }
+
+    .pickups-quick-schedule {
+        gap: 6px;
+    }
+}

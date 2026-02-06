@@ -437,15 +437,14 @@ function changePickupDate(days) {
  */
 async function loadPickupsForDate(date) {
   const loadingEl = document.getElementById('pickups-loading');
-  const listEl = document.getElementById('pickups-list');
+  const contentEl = document.getElementById('pickups-content');
   const emptyEl = document.getElementById('pickups-empty');
 
   loadingEl.classList.remove('hidden');
-  listEl.innerHTML = '';
+  contentEl.classList.add('hidden');
   emptyEl.classList.add('hidden');
 
   try {
-    // Fetch pickups and pending labels
     const [pickupsResponse, pendingResponse] = await Promise.all([
       fetch(`${GUIAS_API_URL}/pickups/history?date=${date}`),
       fetch(`${GUIAS_API_URL}/pickups/pending`)
@@ -456,7 +455,6 @@ async function loadPickupsForDate(date) {
 
     loadingEl.classList.add('hidden');
 
-    // Calculate stats
     const pickups = pickupsResult.success ? pickupsResult.pickups : [];
     const pendingLabels = pendingResult.success ? pendingResult.pending : [];
 
@@ -466,71 +464,52 @@ async function loadPickupsForDate(date) {
       return pickupDate === date;
     });
 
-    // Update stats
+    // Update summary pills
     document.getElementById('pickups-total-count').textContent = datePickups.length;
     document.getElementById('pickups-pending-count').textContent = pendingLabels.length;
-    document.getElementById('pickups-requested-count').textContent =
-      datePickups.filter(p => p.status === 'requested' || p.status === 'confirmed').length;
     document.getElementById('pickups-shipments-count').textContent =
       datePickups.reduce((sum, p) => sum + (p.shipment_count || 0), 0);
 
-    // If no pickups and no pending
+    // If nothing at all
     if (datePickups.length === 0 && pendingLabels.length === 0) {
       emptyEl.classList.remove('hidden');
       return;
     }
 
-    // Render pickups
-    let html = '';
+    contentEl.classList.remove('hidden');
 
-    // Group pickups by carrier
-    const pickupsByCarrier = {};
-    datePickups.forEach(p => {
-      const carrier = p.carrier || 'Sin Asignar';
-      if (!pickupsByCarrier[carrier]) {
-        pickupsByCarrier[carrier] = [];
-      }
-      pickupsByCarrier[carrier].push(p);
-    });
+    // --- Section A: Scheduled Pickups ---
+    const tableEl = document.getElementById('pickups-table');
+    const scheduledEmptyEl = document.getElementById('pickups-scheduled-empty');
 
-    // Render scheduled pickups
-    if (Object.keys(pickupsByCarrier).length > 0) {
-      html += `<h3 style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">📅 Recolecciones Programadas</h3>`;
-
-      for (const [carrier, carrierPickups] of Object.entries(pickupsByCarrier)) {
-        html += renderCarrierPickupCard(carrier, carrierPickups);
-      }
+    if (datePickups.length === 0) {
+      tableEl.innerHTML = '';
+      scheduledEmptyEl.classList.remove('hidden');
+    } else {
+      scheduledEmptyEl.classList.add('hidden');
+      tableEl.innerHTML = datePickups.map(pickup => renderPickupRow(pickup)).join('');
     }
 
-    // Render pending labels (grouped by carrier)
-    if (pendingLabels.length > 0) {
-      html += `
-        <div style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
-          <h3 style="margin: 0 0 16px 0; font-size: 16px; color: #f59e0b;">⏳ Guías Sin Recolección (${pendingLabels.length})</h3>
-          <div style="background: #fef3c7; padding: 16px; border-radius: 12px;">
-            <p style="margin: 0 0 12px 0; font-size: 14px; color: #92400e;">
-              Estas guías aún no tienen recolección programada. Usa el botón "Solicitar Pendientes" para programarlas.
-            </p>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-              ${pendingLabels.map(label => `
-                <div style="background: white; padding: 8px 12px; border-radius: 8px; font-size: 13px;">
-                  <strong>${label.carrier || 'N/A'}</strong>: ${label.order_number || label.order_id}
-                  <span style="color: #6b7280;">(${label.tracking_number || 'Sin tracking'})</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-      `;
-    }
+    // --- Section B: Pending Labels by Carrier ---
+    const pendingContainer = document.getElementById('pickups-pending');
+    const pendingList = document.getElementById('pending-carriers-list');
+    const pendingEmptyEl = document.getElementById('pickups-pending-empty');
 
-    listEl.innerHTML = html;
+    if (pendingLabels.length === 0) {
+      pendingList.innerHTML = '';
+      pendingEmptyEl.classList.remove('hidden');
+    } else {
+      pendingEmptyEl.classList.add('hidden');
+      pendingList.innerHTML = renderPendingLabelsSection(pendingLabels);
+    }
 
   } catch (error) {
     console.error('Error loading pickups:', error);
     loadingEl.classList.add('hidden');
-    listEl.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: #dc2626;">
+    const contentEl2 = document.getElementById('pickups-content');
+    contentEl2.classList.remove('hidden');
+    document.getElementById('pickups-table').innerHTML = `
+      <div class="pickups-section-empty" style="color: #dc2626;">
         Error al cargar recolecciones: ${error.message}
       </div>
     `;
@@ -538,78 +517,80 @@ async function loadPickupsForDate(date) {
 }
 
 /**
- * Render carrier pickup card
+ * Render a single pickup as a compact row
  */
-function renderCarrierPickupCard(carrier, pickups) {
-  const carrierColors = {
-    'Estafeta': { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
-    'FedEx': { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
-    'Paquetexpress': { bg: '#d1fae5', border: '#10b981', text: '#065f46' },
-    'DHL': { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
-    'UPS': { bg: '#fef3c7', border: '#d97706', text: '#92400e' },
-    'Redpack': { bg: '#ede9fe', border: '#8b5cf6', text: '#5b21b6' }
-  };
+function renderPickupRow(pickup) {
+  const carrier = pickup.carrier || 'Sin Asignar';
+  const statusBadge = getPickupStatusBadgeClass(pickup.status);
+  const timeFrom = pickup.pickup_time_from || '09:00';
+  const timeTo = pickup.pickup_time_to || '18:00';
+  const shipments = pickup.shipment_count || 0;
+  const isCancelled = pickup.status === 'cancelled';
 
-  const colors = carrierColors[carrier] || { bg: '#f3f4f6', border: '#9ca3af', text: '#374151' };
-
-  return pickups.map(pickup => `
-    <div style="background: ${colors.bg}; border: 2px solid ${colors.border}; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
-        <div>
-          <div style="font-size: 20px; font-weight: 700; color: ${colors.text}; margin-bottom: 4px;">
-            ${getCarrierIcon(carrier)} ${carrier}
-          </div>
-          <div style="font-size: 13px; color: #6b7280;">
-            Pickup ID: <strong style="font-family: monospace;">${pickup.pickup_id || 'N/A'}</strong>
-          </div>
-        </div>
-        <div style="text-align: right;">
-          ${getPickupStatusBadge(pickup.status)}
-          <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
-            ${pickup.shipment_count || 0} envío(s)
-          </div>
-        </div>
+  return `
+    <div class="pickup-row" data-carrier="${carrier}">
+      <div class="pickup-row-carrier">
+        <span class="pickup-carrier-icon">${getCarrierIcon(carrier)}</span>
+        <span class="pickup-carrier-name">${carrier}</span>
       </div>
-
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; background: rgba(255,255,255,0.6); padding: 12px; border-radius: 8px;">
-        <div>
-          <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Fecha</div>
-          <div style="font-weight: 600;">${formatPickupDate(pickup.pickup_date)}</div>
-        </div>
-        <div>
-          <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Horario</div>
-          <div style="font-weight: 600;">${pickup.pickup_time_from || '09:00'} - ${pickup.pickup_time_to || '18:00'}</div>
-        </div>
-        <div>
-          <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Solicitado</div>
-          <div style="font-weight: 600;">${formatPickupDateTime(pickup.requested_at)}</div>
-        </div>
-      </div>
-
-      ${pickup.shipment_ids && pickup.shipment_ids.length > 0 ? `
-        <div style="margin-top: 12px;">
-          <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">Shipment IDs:</div>
-          <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-            ${pickup.shipment_ids.slice(0, 5).map(id => `
-              <span style="background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: monospace;">
-                ${id.substring(0, 8)}...
-              </span>
-            `).join('')}
-            ${pickup.shipment_ids.length > 5 ? `
-              <span style="background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 11px;">
-                +${pickup.shipment_ids.length - 5} más
-              </span>
-            ` : ''}
-          </div>
-        </div>
-      ` : ''}
-
-      <div style="margin-top: 16px; display: flex; gap: 8px;">
-        <button onclick="cancelPickup('${pickup.pickup_id}')"
-                style="padding: 8px 16px; background: #fee2e2; color: #991b1b; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;"
-                ${pickup.status === 'cancelled' ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-          ❌ Cancelar
+      <span class="pickup-row-status" style="background: ${statusBadge.bg}; color: ${statusBadge.color};">
+        ${statusBadge.text}
+      </span>
+      <span class="pickup-row-time">${timeFrom} - ${timeTo}</span>
+      <span class="pickup-row-shipments">${shipments} envio${shipments !== 1 ? 's' : ''}</span>
+      <div class="pickup-row-actions">
+        <button class="pickup-cancel-btn" onclick="cancelPickup('${pickup.pickup_id}')"
+                title="Cancelar recoleccion" ${isCancelled ? 'disabled' : ''}>
+          ✕
         </button>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Get pickup status badge styles
+ */
+function getPickupStatusBadgeClass(status) {
+  const badges = {
+    'pending':   { bg: '#fef3c7', color: '#92400e', text: 'Pendiente' },
+    'requested': { bg: '#dbeafe', color: '#1e40af', text: 'Solicitado' },
+    'confirmed': { bg: '#d1fae5', color: '#065f46', text: 'Confirmado' },
+    'completed': { bg: '#bbf7d0', color: '#166534', text: 'Completado' },
+    'cancelled': { bg: '#fee2e2', color: '#991b1b', text: 'Cancelado' }
+  };
+  return badges[status] || { bg: '#f3f4f6', color: '#374151', text: status || 'Desconocido' };
+}
+
+/**
+ * Render pending labels grouped by carrier
+ */
+function renderPendingLabelsSection(pendingLabels) {
+  // Group by carrier
+  const byCarrier = {};
+  pendingLabels.forEach(label => {
+    const carrier = label.carrier || 'Sin Asignar';
+    if (!byCarrier[carrier]) byCarrier[carrier] = [];
+    byCarrier[carrier].push(label);
+  });
+
+  return Object.entries(byCarrier).map(([carrier, labels]) => `
+    <div class="pending-carrier-group">
+      <div class="pending-carrier-header" data-carrier="${carrier}">
+        <span>${getCarrierIcon(carrier)}</span>
+        <strong>${carrier}</strong>
+        <span class="carrier-count">${labels.length} guia${labels.length !== 1 ? 's' : ''}</span>
+        <button class="pending-request-btn" onclick="openPickupModal('${carrier}')">
+          Solicitar
+        </button>
+      </div>
+      <div class="pending-labels-list">
+        ${labels.map(label => `
+          <div class="pending-label-item">
+            <span class="pending-label-order">${label.order_number || label.order_id || 'N/A'}</span>
+            <span class="pending-label-tracking">${label.tracking_number || 'Sin tracking'}</span>
+          </div>
+        `).join('')}
       </div>
     </div>
   `).join('');
@@ -628,23 +609,6 @@ function getCarrierIcon(carrier) {
     'Redpack': '📮'
   };
   return icons[carrier] || '📦';
-}
-
-/**
- * Get pickup status badge
- */
-function getPickupStatusBadge(status) {
-  const badges = {
-    'pending': { bg: '#fef3c7', color: '#92400e', text: '⏳ Pendiente' },
-    'requested': { bg: '#dbeafe', color: '#1e40af', text: '📤 Solicitado' },
-    'confirmed': { bg: '#d1fae5', color: '#065f46', text: '✅ Confirmado' },
-    'completed': { bg: '#bbf7d0', color: '#166534', text: '🎉 Completado' },
-    'cancelled': { bg: '#fee2e2', color: '#991b1b', text: '❌ Cancelado' }
-  };
-
-  const badge = badges[status] || { bg: '#f3f4f6', color: '#374151', text: status };
-
-  return `<span style="display: inline-block; padding: 6px 12px; background: ${badge.bg}; color: ${badge.color}; font-size: 12px; font-weight: 600; border-radius: 20px;">${badge.text}</span>`;
 }
 
 /**
@@ -780,9 +744,7 @@ async function openPickupModal(carrier) {
   // Reset submit button state
   const submitBtn = document.getElementById('pickup-submit-btn');
   submitBtn.disabled = false;
-  submitBtn.style.opacity = '1';
-  submitBtn.style.cursor = 'pointer';
-  submitBtn.textContent = '🚀 Solicitar Recolección';
+  submitBtn.textContent = 'Solicitar Recoleccion';
 
   // Show modal first
   modal.classList.remove('hidden');
@@ -815,7 +777,7 @@ async function loadPendingLabelsForCarrier(carrier) {
   const submitBtn = document.getElementById('pickup-submit-btn');
 
   countEl.textContent = '...';
-  listEl.innerHTML = '<span style="color: #6b7280;">Cargando...</span>';
+  listEl.innerHTML = '<span class="pickup-modal-hint">Cargando...</span>';
 
   try {
     const response = await fetch(`${GUIAS_API_URL}/pickups/pending`);
@@ -837,26 +799,24 @@ async function loadPendingLabelsForCarrier(carrier) {
 
     // Update list
     if (carrierLabels.length === 0) {
-      listEl.innerHTML = '<span style="color: #6b7280;">📭 No hay guías pendientes para esta paquetería.<br><strong>Puedes programar la recolección de todas formas</strong> y añadir guías después.</span>';
-      submitBtn.textContent = '📅 Programar Recolección (sin guías)';
+      listEl.innerHTML = '<span class="pickup-modal-hint">No hay guias pendientes para esta paqueteria.<br><strong>Puedes programar la recoleccion de todas formas.</strong></span>';
+      submitBtn.textContent = 'Programar Recoleccion (sin guias)';
       submitBtn.disabled = false;
-      submitBtn.style.opacity = '1';
-      submitBtn.style.cursor = 'pointer';
     } else {
       const labelsList = carrierLabels.slice(0, 5).map(l =>
-        `<div style="padding: 4px 0;">• ${l.order_number || l.order_id} - ${l.tracking_number || 'Sin tracking'}</div>`
+        `<div class="pending-label-item">${l.order_number || l.order_id} — ${l.tracking_number || 'Sin tracking'}</div>`
       ).join('');
 
-      const moreCount = carrierLabels.length > 5 ? `<div style="padding: 4px 0; font-weight: 600;">+ ${carrierLabels.length - 5} más</div>` : '';
+      const moreCount = carrierLabels.length > 5 ? `<div class="pending-label-item"><strong>+ ${carrierLabels.length - 5} mas</strong></div>` : '';
 
       listEl.innerHTML = labelsList + moreCount;
-      submitBtn.textContent = `🚀 Solicitar Recolección (${carrierLabels.length} guías)`;
+      submitBtn.textContent = `Solicitar Recoleccion (${carrierLabels.length} guias)`;
     }
 
   } catch (error) {
     console.error('Error loading pending labels:', error);
     countEl.textContent = '?';
-    listEl.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
+    listEl.innerHTML = `<span class="pickup-modal-hint" style="color: #dc2626;">Error: ${error.message}</span>`;
   }
 }
 
