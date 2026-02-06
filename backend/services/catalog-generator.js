@@ -44,8 +44,8 @@ const PRICE_ROWS = [
   { name: 'Imanes MDF — Grande', price: '$15', mayoreo: '$12' },
   { name: 'Imán 3D MDF', price: '$15', mayoreo: '$12' },
   { name: 'Imán Foil Metálico', price: '$15', mayoreo: '$12' },
-  { name: 'Llaveros MDF', price: '$10', mayoreo: '$8' },
-  { name: 'Destapadores MDF', price: '$20', mayoreo: '$15' },
+  { name: 'Llaveros MDF', price: '$10', mayoreo: '$7' },
+  { name: 'Destapadores MDF', price: '$20', mayoreo: '$17', mayoreoNote: '500+' },
   { name: 'Botones Metálicos', price: '$8', mayoreo: '$6' },
   { name: 'Portallaves MDF', price: '$40', mayoreo: null, note: 'mín. 20 pzas' },
   { name: 'Souvenir Box', price: '$2,250', mayoreo: null, note: 'paquete completo' }
@@ -190,7 +190,7 @@ export async function generateCatalogPDF(options = {}) {
       // Mayoreo rows
       const mayoreoRows = PRICE_ROWS.filter(r => r.mayoreo);
       for (const row of mayoreoRows) {
-        drawPriceRow(doc, row.name, row.mayoreo, null, PAD, y, ROW_W, ROW_H);
+        drawPriceRow(doc, row.name, row.mayoreo, row.mayoreoNote || null, PAD, y, ROW_W, ROW_H);
         y += ROW_H + ROW_GAP;
       }
 
