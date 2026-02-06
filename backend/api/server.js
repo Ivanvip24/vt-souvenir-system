@@ -115,6 +115,47 @@ app.get('/health', async (req, res) => {
 });
 
 // ========================================
+// PUBLIC: PRODUCT CATALOG (no auth required)
+// ========================================
+app.get('/api/catalog', async (req, res) => {
+  try {
+    const forceRegenerate = req.query.refresh === 'true';
+    const result = await generateCatalogPDF({ forceRegenerate });
+
+    if (req.query.download === 'true') {
+      return res.download(result.filepath, 'catalogo-axkan.pdf');
+    }
+
+    res.json({
+      success: true,
+      data: {
+        pdfUrl: getCatalogUrl(result.filepath),
+        filename: result.filename,
+        productCount: result.productCount,
+        generatedAt: result.generatedAt,
+        cached: result.cached || false
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error generating catalog:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al generar el catálogo'
+    });
+  }
+});
+
+app.get('/api/catalog/download', async (req, res) => {
+  try {
+    const result = await generateCatalogPDF();
+    res.download(result.filepath, 'catalogo-axkan.pdf');
+  } catch (error) {
+    console.error('❌ Error downloading catalog:', error);
+    res.status(500).json({ success: false, error: 'Error al generar catálogo' });
+  }
+});
+
+// ========================================
 // CLIENT-FACING ROUTES
 // ========================================
 app.use('/api/client', clientRoutes);
@@ -4123,7 +4164,7 @@ app.get('/api/clients', async (req, res) => {
     const params = [];
     let paramIndex = 1;
 
-    // Search filter — expanded to all address fields
+    // Search filter — expanded to all address fields, check both postal columns
     if (search) {
       conditions.push(`(
         LOWER(c.name) LIKE LOWER($${paramIndex}) OR
@@ -4133,7 +4174,7 @@ app.get('/api/clients', async (req, res) => {
         LOWER(c.colonia) LIKE LOWER($${paramIndex}) OR
         LOWER(c.city) LIKE LOWER($${paramIndex}) OR
         LOWER(c.state) LIKE LOWER($${paramIndex}) OR
-        c.postal_code LIKE $${paramIndex} OR
+        COALESCE(c.postal, c.postal_code) LIKE $${paramIndex} OR
         LOWER(c.address) LIKE LOWER($${paramIndex})
       )`);
       params.push(`%${search}%`);
@@ -4152,11 +4193,11 @@ app.get('/api/clients', async (req, res) => {
       params.push(state);
     }
 
-    // Has address filter — check street-based fields (not legacy address field)
+    // Has address filter — check street-based fields + postal (both columns)
     if (hasAddress === 'true') {
-      conditions.push(`(c.street IS NOT NULL AND c.street != '' AND c.city IS NOT NULL AND c.city != '' AND c.state IS NOT NULL AND c.state != '')`);
+      conditions.push(`(c.street IS NOT NULL AND c.street != '' AND c.city IS NOT NULL AND c.city != '' AND c.state IS NOT NULL AND c.state != '' AND COALESCE(c.postal, c.postal_code) IS NOT NULL AND COALESCE(c.postal, c.postal_code) != '')`);
     } else if (hasAddress === 'false') {
-      conditions.push(`(c.street IS NULL OR c.street = '' OR c.city IS NULL OR c.city = '' OR c.state IS NULL OR c.state = '')`);
+      conditions.push(`(c.street IS NULL OR c.street = '' OR c.city IS NULL OR c.city = '' OR c.state IS NULL OR c.state = '' OR (c.postal IS NULL AND c.postal_code IS NULL) OR (COALESCE(c.postal, c.postal_code) = ''))`);
     }
 
     // Recent filter — last 7 days
@@ -4187,7 +4228,8 @@ app.get('/api/clients', async (req, res) => {
         c.colonia,
         c.city,
         c.state,
-        c.postal_code,
+        COALESCE(c.postal, c.postal_code) as postal_code,
+        c.postal,
         c.reference_notes,
         c.created_at,
         c.updated_at,
@@ -4209,11 +4251,11 @@ app.get('/api/clients', async (req, res) => {
       SELECT DISTINCT state FROM clients WHERE state IS NOT NULL AND state != '' ORDER BY state
     `);
 
-    // Get stats — use street-based completeness check
+    // Get stats — use street-based completeness check, check both postal columns
     const statsResult = await query(`
       SELECT
         COUNT(*) as total_clients,
-        COUNT(CASE WHEN street IS NOT NULL AND street != '' AND city IS NOT NULL AND city != '' AND state IS NOT NULL AND state != '' THEN 1 END) as with_address,
+        COUNT(CASE WHEN street IS NOT NULL AND street != '' AND city IS NOT NULL AND city != '' AND state IS NOT NULL AND state != '' AND COALESCE(postal, postal_code) IS NOT NULL AND COALESCE(postal, postal_code) != '' THEN 1 END) as with_address,
         COUNT(DISTINCT city) as unique_cities,
         COUNT(CASE WHEN updated_at >= NOW() - INTERVAL '7 days' THEN 1 END) as recent_count
       FROM clients
@@ -4246,11 +4288,11 @@ app.get('/api/clients', async (req, res) => {
  */
 app.post('/api/clients/autocomplete-addresses', async (req, res) => {
   try {
-    // Find clients with postal_code but missing city, state, or colonia
+    // Find clients with a postal code (either column) but missing city, state, or colonia
     const result = await query(`
-      SELECT id, postal_code, city, state, colonia
+      SELECT id, COALESCE(postal, postal_code) as postal_value, city, state, colonia
       FROM clients
-      WHERE postal_code IS NOT NULL AND postal_code != ''
+      WHERE COALESCE(postal, postal_code) IS NOT NULL AND COALESCE(postal, postal_code) != ''
         AND (city IS NULL OR city = '' OR state IS NULL OR state = '' OR colonia IS NULL OR colonia = '')
     `);
 
@@ -4263,7 +4305,7 @@ app.post('/api/clients/autocomplete-addresses', async (req, res) => {
 
     for (const client of result.rows) {
       try {
-        const postal = client.postal_code.trim();
+        const postal = client.postal_value.trim();
         if (!/^\d{5}$/.test(postal)) continue;
 
         // Rate limit: small delay between API calls

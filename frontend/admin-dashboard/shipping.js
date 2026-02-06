@@ -198,12 +198,13 @@ function renderQuickFilterCounts() {
 
 function getMissingFields(client) {
   const missing = [];
+  if (!client.phone) missing.push('Tel');
   if (!client.street) missing.push('Calle');
+  if (!client.colonia) missing.push('Colonia');
   if (!client.city) missing.push('Ciudad');
   if (!client.state) missing.push('Estado');
-  if (!client.postal_code && !client.postal) missing.push('CP');
-  if (!client.phone) missing.push('Tel');
-  if (!client.colonia) missing.push('Colonia');
+  const postalVal = client.postal_code || client.postal || '';
+  if (!postalVal) missing.push('CP');
   return missing;
 }
 
