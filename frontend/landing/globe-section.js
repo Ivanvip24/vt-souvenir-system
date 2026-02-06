@@ -197,6 +197,8 @@
   var mouseDown = false, mouseX = 0, mouseY = 0;
   var autoRotateSpeed = 0.002;
   var globeContainer = null;
+  var targetZoom = 2.8, currentZoom = 2.8;
+  var ZOOM_MIN = 1.6, ZOOM_MAX = 5.0;
 
   function initGlobe() {
     globeContainer = document.getElementById('globe-3d');
@@ -475,6 +477,13 @@
       mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY;
     }, { passive: true });
     canvas.addEventListener('touchend', function () { mouseDown = false; }, { passive: true });
+
+    // Wheel zoom — only when hovering over the globe canvas
+    canvas.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      targetZoom += e.deltaY * 0.002;
+      targetZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, targetZoom));
+    }, { passive: false });
   }
 
   var pulseTime = 0;
@@ -485,6 +494,8 @@
 
     currentRotationY += (targetRotationY - currentRotationY) * 0.05;
     currentRotationX += (targetRotationX - currentRotationX) * 0.05;
+    currentZoom += (targetZoom - currentZoom) * 0.1;
+    if (camera) camera.position.z = currentZoom;
 
     if (globe) { globe.rotation.y = currentRotationY; globe.rotation.x = currentRotationX; }
     if (gridMesh) { gridMesh.rotation.y = currentRotationY; gridMesh.rotation.x = currentRotationX; }
