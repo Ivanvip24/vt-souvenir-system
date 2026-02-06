@@ -921,8 +921,25 @@ router.post('/chat', async (req, res) => {
         };
       } else if (action.type === 'generate_quote') {
         // Parse the quote request text to extract items
-        const quoteText = action.text || message;
-        const items = parseQuoteRequest(quoteText);
+        // Try action.text first, then original message, pick the one with better price variety
+        const actionTextItems = action.text ? parseQuoteRequest(action.text) : [];
+        const messageItems = parseQuoteRequest(message);
+
+        // Prefer the result that has more distinct prices (custom per-item pricing)
+        let items;
+        if (actionTextItems.length === 0) {
+          items = messageItems;
+        } else if (messageItems.length === 0) {
+          items = actionTextItems;
+        } else {
+          const actionPrices = new Set(actionTextItems.map(i => i.unitPrice));
+          const messagePrices = new Set(messageItems.map(i => i.unitPrice));
+          // If action.text produced all same price but user message has varied prices, prefer message
+          items = (messagePrices.size > actionPrices.size && messageItems.length >= actionTextItems.length)
+            ? messageItems : actionTextItems;
+        }
+
+        console.log(`📝 Quote parse: action.text=${actionTextItems.length} items, message=${messageItems.length} items, using=${items === messageItems ? 'message' : 'action.text'}`);
 
         if (items.length > 0) {
           try {
