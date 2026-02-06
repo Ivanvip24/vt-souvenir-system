@@ -24,6 +24,7 @@ const shippingState = {
   currentPage: 1,
   totalPages: 1,
   itemsPerPage: 50,
+  autoCompleteRan: false, // Only run auto-complete once per session
   stats: {
     total_clients: 0,
     with_address: 0,
@@ -164,6 +165,12 @@ async function loadShippingData() {
         if (cardsContainer) cardsContainer.style.display = 'none';
       } else {
         if (cardsContainer) cardsContainer.style.display = 'grid';
+      }
+
+      // Auto-complete missing fields from postal codes on first load
+      if (!shippingState.autoCompleteRan) {
+        shippingState.autoCompleteRan = true;
+        silentAutoComplete();
       }
     }
   } catch (error) {
@@ -1102,6 +1109,31 @@ async function deleteClient(clientId, clientName) {
 // ==========================================
 // AUTO-COMPLETE ADDRESSES
 // ==========================================
+
+/**
+ * Silently auto-complete missing city/state/colonia from postal codes.
+ * Runs in background on first tab load - no UI interruption.
+ */
+async function silentAutoComplete() {
+  try {
+    const response = await fetch(`${API_BASE}/clients/autocomplete-addresses`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) return;
+
+    const result = await response.json();
+
+    if (result.success && result.updated > 0) {
+      console.log(`Auto-completed ${result.updated} clients from postal codes`);
+      // Silently reload data to reflect updates
+      loadShippingData();
+    }
+  } catch (error) {
+    console.error('Silent auto-complete error:', error);
+  }
+}
 
 async function autoCompleteAddresses() {
   const btn = document.getElementById('autocomplete-btn');

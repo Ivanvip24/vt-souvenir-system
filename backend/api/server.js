@@ -4322,15 +4322,15 @@ app.post('/api/clients/autocomplete-addresses', async (req, res) => {
         const values = [];
         let idx = 1;
 
-        if (!client.state && data.state) {
+        if ((!client.state || client.state.trim() === '') && data.state) {
           updates.push(`state = $${idx++}`);
           values.push(data.state);
         }
-        if (!client.city && place['place name']) {
+        if ((!client.city || client.city.trim() === '') && place['place name']) {
           updates.push(`city = $${idx++}`);
           values.push(place['place name']);
         }
-        if (!client.colonia && place['place name']) {
+        if ((!client.colonia || client.colonia.trim() === '') && place['place name']) {
           updates.push(`colonia = $${idx++}`);
           values.push(place['place name']);
         }
