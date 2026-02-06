@@ -1,6 +1,11 @@
 /**
  * Product Catalog / Price List PDF Generator
- * Generates a professional AXKAN-branded product catalog with all prices and wholesale tiers
+ * Design inspired by bold price list flyer style:
+ * - Full-color background border
+ * - Stacked "LISTA DE PRECIOS" header with logo
+ * - Category sections with colored bars
+ * - 3-column product grids per category
+ * - Clean footer with contact
  */
 
 import PDFDocument from 'pdfkit';
@@ -19,124 +24,148 @@ if (!fs.existsSync(CATALOGS_DIR)) {
   fs.mkdirSync(CATALOGS_DIR, { recursive: true });
 }
 
-// AXKAN Brand Colors (same as quote-generator.js)
-const COLORS = {
-  pinkLight: '#E91E63',
-  pinkMedium: '#C2185B',
-  pinkDark: '#AD1457',
-  pinkDeep: '#880E4F',
+// AXKAN Brand Colors
+const C = {
+  pink: '#E91E63',
+  pinkDark: '#C2185B',
+  pinkDeep: '#AD1457',
+  pinkBg: '#880E4F',
   pinkPale: '#FCE4EC',
-  pinkAccent: '#F8BBD9',
-  textDark: '#1f2937',
-  textGray: '#6b7280',
-  successGreen: '#059669',
-  successBg: '#d1fae5',
-  warningOrange: '#b45309',
-  warningBg: '#fef3c7',
-  infoBlueBg: '#dbeafe',
-  infoBlue: '#2563eb',
-  white: '#ffffff'
+  black: '#111111',
+  white: '#ffffff',
+  gray: '#555555',
+  lightGray: '#999999',
+  lineGray: '#cccccc',
+  green: '#059669'
 };
 
 // Logo path
 const LOGO_PATH = path.join(__dirname, '../../frontend/assets/images/LOGO-01.png');
 
-// Complete product catalog data
-const CATALOG_PRODUCTS = [
+// Product categories with 3-column layout data
+const CATEGORIES = [
   {
-    name: 'Imanes de MDF',
-    description: 'Imanes personalizados de MDF con corte láser. Disponibles en 3 tamaños.',
-    imageUrl: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?crop=center&height=600&v=1727106231&width=600',
-    category: 'Más Populares',
-    hasSizes: true,
-    sizes: [
-      { label: 'Chico', tiers: [{ range: '50-999', price: 8 }, { range: '1,000+', price: 6 }] },
-      { label: 'Mediano', tiers: [{ range: '50-999', price: 11 }, { range: '1,000+', price: 8 }] },
-      { label: 'Grande', tiers: [{ range: '50-999', price: 15 }, { range: '1,000+', price: 12 }] }
-    ],
-    moq: 50
+    name: 'IMANES DE MDF',
+    columns: [
+      {
+        title: 'CHICO',
+        lines: ['MDF CON CORTE LÁSER', 'PERSONALIZADO', 'MÍN. 50 PIEZAS'],
+        price: '$8',
+        priceUnit: '/UNIDAD',
+        mayoreo: '$6/u (1,000+)'
+      },
+      {
+        title: 'MEDIANO',
+        lines: ['MDF CON CORTE LÁSER', 'PERSONALIZADO', 'MÍN. 50 PIEZAS'],
+        price: '$11',
+        priceUnit: '/UNIDAD',
+        mayoreo: '$8/u (1,000+)'
+      },
+      {
+        title: 'GRANDE',
+        lines: ['MDF CON CORTE LÁSER', 'PERSONALIZADO', 'MÍN. 50 PIEZAS'],
+        price: '$15',
+        priceUnit: '/UNIDAD',
+        mayoreo: '$12/u (1,000+)'
+      }
+    ]
   },
   {
-    name: 'Llaveros de MDF',
-    description: 'Llaveros personalizados de MDF. Ideales para eventos y souvenirs.',
-    imageUrl: 'https://vtanunciando.com/cdn/shop/files/mockup-llavero.png?crop=center&height=600&v=1744307278&width=600',
-    category: 'Más Populares',
-    tiers: [{ range: '50-999', price: 10 }, { range: '1,000+', price: 8 }],
-    moq: 50
+    name: 'IMANES ESPECIALIDAD',
+    columns: [
+      {
+        title: 'IMÁN 3D',
+        lines: ['MDF 3MM DE ESPESOR', 'EFECTO TRIDIMENSIONAL', 'MÍN. 100 PIEZAS'],
+        price: '$15',
+        priceUnit: '/UNIDAD',
+        mayoreo: '$12/u (1,000+)'
+      },
+      {
+        title: 'IMÁN FOIL',
+        lines: ['ACABADO METÁLICO', 'BRILLANTE PREMIUM', 'MÍN. 100 PIEZAS'],
+        price: '$15',
+        priceUnit: '/UNIDAD',
+        mayoreo: '$12/u (1,000+)'
+      },
+      {
+        title: 'BOTONES',
+        lines: ['BOTONES METÁLICOS', 'IMPRESIÓN HD', 'MÍN. 50 PIEZAS'],
+        price: '$8',
+        priceUnit: '/UNIDAD',
+        mayoreo: '$6/u (1,000+)'
+      }
+    ]
   },
   {
-    name: 'Imán 3D MDF 3mm',
-    description: 'Imanes 3D de MDF de 3mm de espesor. Efecto tridimensional único.',
-    imageUrl: 'https://vtanunciando.com/cdn/shop/files/tamasopo.png?crop=center&height=600&v=1755714542&width=600',
-    category: 'Especialidad',
-    tiers: [{ range: '100-999', price: 15 }, { range: '1,000+', price: 12 }],
-    moq: 100
+    name: 'ACCESORIOS',
+    columns: [
+      {
+        title: 'LLAVEROS',
+        lines: ['MDF PERSONALIZADO', 'IDEAL PARA EVENTOS', 'MÍN. 50 PIEZAS'],
+        price: '$10',
+        priceUnit: '/UNIDAD',
+        mayoreo: '$8/u (1,000+)'
+      },
+      {
+        title: 'DESTAPADORES',
+        lines: ['MDF PERSONALIZADO', 'FUNCIONAL Y DECORATIVO', 'MÍN. 50 PIEZAS'],
+        price: '$20',
+        priceUnit: '/UNIDAD',
+        mayoreo: '$15/u (1,000+)'
+      },
+      {
+        title: 'PORTALLAVES',
+        lines: ['MDF PARA PARED', 'DECORATIVO', 'MÍN. 20 PIEZAS'],
+        price: '$40',
+        priceUnit: '/UNIDAD',
+        mayoreo: null
+      }
+    ]
   },
   {
-    name: 'Imán de MDF con Foil',
-    description: 'Imanes de MDF con acabado foil metálico brillante.',
-    imageUrl: 'https://vtanunciando.com/cdn/shop/files/IMAN-FOIL-MOCKUP---vtweb.png?crop=center&height=600&v=1744331653&width=600',
-    category: 'Especialidad',
-    tiers: [{ range: '100-999', price: 15 }, { range: '1,000+', price: 12 }],
-    moq: 100
-  },
-  {
-    name: 'Destapadores de MDF',
-    description: 'Destapadores personalizados de MDF. Funcionales y decorativos.',
-    imageUrl: 'https://vtanunciando.com/cdn/shop/files/DESTAPADOR---VTWEB.png?crop=center&height=600&v=1741044542&width=600',
-    category: 'Más Populares',
-    tiers: [{ range: '50-499', price: 20 }, { range: '500-999', price: 17 }, { range: '1,000+', price: 15 }],
-    moq: 50
-  },
-  {
-    name: 'Botones Metálicos',
-    description: 'Botones metálicos personalizados con impresión de alta resolución.',
-    imageUrl: 'https://vtanunciando.com/cdn/shop/files/fotobotones.png?crop=center&height=600&v=1741017071&width=600',
-    category: 'Más Populares',
-    tiers: [{ range: '50-999', price: 8 }, { range: '1,000+', price: 6 }],
-    moq: 50
-  },
-  {
-    name: 'Portallaves de MDF',
-    description: 'Portallaves de pared de MDF personalizado. Decorativo y funcional.',
-    imageUrl: 'https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?crop=center&height=600&v=1736017105&width=600',
-    category: 'Decoración',
-    tiers: [{ range: '20+', price: 40 }],
-    moq: 20
-  },
-  {
-    name: 'Souvenir Box',
-    description: 'Paquete completo de souvenirs personalizados. Bundle especial premium.',
-    imageUrl: 'https://vtanunciando.com/cdn/shop/files/final-bundle-vtweb2.png?crop=center&height=600&v=1740866952&width=600',
-    category: 'Paquetes',
-    tiers: [{ range: '1+', price: 2250 }],
-    moq: 1
+    name: 'PAQUETES ESPECIALES',
+    columns: [
+      {
+        title: 'SOUVENIR BOX',
+        lines: ['PAQUETE COMPLETO', 'SOUVENIRS PREMIUM', 'SIN MÍNIMO'],
+        price: '$2,250',
+        priceUnit: '/PAQUETE',
+        mayoreo: null
+      },
+      {
+        title: 'ENVÍO',
+        lines: ['GRATIS 300+ PIEZAS', 'ESTÁNDAR: $210 MXN', 'A TODO MÉXICO'],
+        price: 'GRATIS',
+        priceUnit: '300+ PZS',
+        mayoreo: null
+      },
+      {
+        title: 'PRODUCCIÓN',
+        lines: ['5-7 DÍAS HÁBILES', 'ANTICIPO 50%', 'PERSONALIZACIÓN TOTAL'],
+        price: '5-7',
+        priceUnit: 'DÍAS',
+        mayoreo: null
+      }
+    ]
   }
 ];
 
 // Image download cache
 const imageCache = new Map();
 
-/**
- * Download image from URL and return as buffer (with cache)
- */
 async function downloadImage(url) {
   if (imageCache.has(url)) return imageCache.get(url);
 
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith('https') ? https : http;
-
     const request = protocol.get(url, (response) => {
-      // Handle redirects
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
         return downloadImage(response.headers.location).then(resolve).catch(reject);
       }
-
       if (response.statusCode !== 200) {
         reject(new Error(`Failed to download image: ${response.statusCode}`));
         return;
       }
-
       const chunks = [];
       response.on('data', (chunk) => chunks.push(chunk));
       response.on('end', () => {
@@ -146,12 +175,8 @@ async function downloadImage(url) {
       });
       response.on('error', reject);
     });
-
     request.on('error', reject);
-    request.setTimeout(10000, () => {
-      request.destroy();
-      reject(new Error('Image download timeout'));
-    });
+    request.setTimeout(10000, () => { request.destroy(); reject(new Error('Timeout')); });
   });
 }
 
@@ -161,9 +186,6 @@ const CACHE_TTL = 24 * 60 * 60 * 1000;
 
 /**
  * Generate a product catalog/price list PDF
- * @param {Object} options
- * @param {boolean} options.forceRegenerate - Bypass cache and regenerate
- * @returns {Promise<{filepath, filename, productCount, generatedAt, cached}>}
  */
 export async function generateCatalogPDF(options = {}) {
   // Check cache
@@ -173,26 +195,11 @@ export async function generateCatalogPDF(options = {}) {
     return {
       filepath: cachedCatalog.filepath,
       filename: path.basename(cachedCatalog.filepath),
-      productCount: CATALOG_PRODUCTS.length,
+      productCount: 8,
       generatedAt: new Date(cachedCatalog.timestamp).toISOString(),
       cached: true
     };
   }
-
-  // Download all product images in parallel
-  console.log('📸 Downloading product images for catalog...');
-  const imageResults = await Promise.allSettled(
-    CATALOG_PRODUCTS.map(p => downloadImage(p.imageUrl))
-  );
-
-  const productImages = {};
-  CATALOG_PRODUCTS.forEach((product, i) => {
-    if (imageResults[i].status === 'fulfilled') {
-      productImages[product.name] = imageResults[i].value;
-    } else {
-      console.warn(`⚠️ Could not download image for ${product.name}: ${imageResults[i].reason?.message}`);
-    }
-  });
 
   const now = new Date();
   const filename = `catalogo-axkan-${Date.now()}.pdf`;
@@ -202,75 +209,198 @@ export async function generateCatalogPDF(options = {}) {
     try {
       const doc = new PDFDocument({
         size: 'LETTER',
-        margins: { top: 50, bottom: 50, left: 50, right: 50 }
+        margins: { top: 0, bottom: 0, left: 0, right: 0 }
       });
 
       const stream = fs.createWriteStream(filepath);
       doc.pipe(stream);
 
-      const pageWidth = doc.page.width;
-      const contentWidth = pageWidth - 100; // 50px margins each side
+      const W = doc.page.width;   // 612
+      const H = doc.page.height;  // 792
+      const BORDER = 28;          // colored border thickness
+      const INNER_X = BORDER + 12;
+      const INNER_W = W - (BORDER * 2) - 24;
 
-      // ========================================
-      // PAGE 1: COVER
-      // ========================================
-      drawCoverPage(doc, now, pageWidth);
+      // ==============================
+      // COLORED BORDER (full page)
+      // ==============================
+      // Top
+      doc.rect(0, 0, W, BORDER).fill(C.pink);
+      // Bottom
+      doc.rect(0, H - BORDER, W, BORDER).fill(C.pink);
+      // Left
+      doc.rect(0, 0, BORDER, H).fill(C.pink);
+      // Right
+      doc.rect(W - BORDER, 0, BORDER, H).fill(C.pink);
 
-      // ========================================
-      // PAGE 2+: PRODUCT LISTINGS
-      // ========================================
-      doc.addPage();
-      let yPos = 50;
+      // ==============================
+      // WHITE INNER BACKGROUND
+      // ==============================
+      doc.rect(BORDER, BORDER, W - BORDER * 2, H - BORDER * 2).fill(C.white);
 
-      // Page title
-      yPos = drawPageHeader(doc, 'NUESTROS PRODUCTOS', pageWidth);
+      // ==============================
+      // HEADER: Stacked "LISTA DE PRECIOS" + Logo
+      // ==============================
+      const headerY = BORDER + 15;
+      const headerX = INNER_X + 5;
 
-      for (let i = 0; i < CATALOG_PRODUCTS.length; i++) {
-        const product = CATALOG_PRODUCTS[i];
-        const imageBuffer = productImages[product.name] || null;
+      // Line 1: Bold filled white on pink background
+      const headerBgH = 120;
+      doc.rect(BORDER, BORDER, W - BORDER * 2, headerBgH).fill(C.pinkDeep);
 
-        // Calculate card height
-        const cardHeight = product.hasSizes ? 200 : 150;
+      // "LISTA DE PRECIOS" - Line 1: White filled
+      doc.fontSize(36)
+         .font('Helvetica-Bold')
+         .fillColor(C.white)
+         .text('LISTA DE PRECIOS', headerX, headerY, { width: 350 });
+
+      // "LISTA DE PRECIOS" - Line 2: Semi-transparent (outline effect)
+      const line2Y = headerY + 38;
+      doc.fontSize(36)
+         .font('Helvetica-Bold')
+         .fillOpacity(0.3)
+         .fillColor(C.white)
+         .text('LISTA DE PRECIOS', headerX, line2Y, { width: 350 });
+      doc.fillOpacity(1);
+
+      // "LISTA DE PRECIOS" - Line 3: Filled pink-light
+      const line3Y = headerY + 76;
+      doc.fontSize(36)
+         .font('Helvetica-Bold')
+         .fillColor(C.pink)
+         .text('LISTA DE PRECIOS', headerX, line3Y, { width: 350 });
+
+      // Logo on the right
+      const logoSize = 85;
+      const logoX = W - BORDER - logoSize - 20;
+      if (fs.existsSync(LOGO_PATH)) {
+        try {
+          doc.image(LOGO_PATH, logoX, headerY + 15, { height: logoSize });
+        } catch (err) {
+          console.log('Could not load logo:', err.message);
+        }
+      }
+
+      // ==============================
+      // CATEGORY SECTIONS
+      // ==============================
+      let y = BORDER + headerBgH + 15;
+
+      for (let catIdx = 0; catIdx < CATEGORIES.length; catIdx++) {
+        const category = CATEGORIES[catIdx];
 
         // Check if we need a new page
-        if (yPos + cardHeight > doc.page.height - 80) {
-          drawFooter(doc, pageWidth);
+        if (y + 140 > H - BORDER - 45) {
+          // Draw footer on current page
+          drawPageFooter(doc, W, H, BORDER, INNER_X, INNER_W, now);
+          // New page
           doc.addPage();
-          yPos = drawPageHeader(doc, 'NUESTROS PRODUCTOS', pageWidth);
+          // Redraw border
+          doc.rect(0, 0, W, BORDER).fill(C.pink);
+          doc.rect(0, H - BORDER, W, BORDER).fill(C.pink);
+          doc.rect(0, 0, BORDER, H).fill(C.pink);
+          doc.rect(W - BORDER, 0, BORDER, H).fill(C.pink);
+          doc.rect(BORDER, BORDER, W - BORDER * 2, H - BORDER * 2).fill(C.white);
+          y = BORDER + 15;
         }
 
-        yPos = drawProductCard(doc, product, imageBuffer, yPos, contentWidth);
-        yPos += 15; // spacing between cards
+        // Category bar
+        const barH = 26;
+        doc.rect(INNER_X, y, INNER_W, barH).fill(C.pinkDeep);
+
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .fillColor(C.white)
+           .text(category.name, INNER_X + 12, y + 6, { width: INNER_W - 24 });
+
+        y += barH + 2;
+
+        // Thin pink line under bar
+        doc.moveTo(INNER_X, y).lineTo(INNER_X + INNER_W, y).lineWidth(2).stroke(C.pink);
+        y += 8;
+
+        // 3-column grid
+        const colCount = category.columns.length;
+        const colGap = 10;
+        const colW = (INNER_W - (colGap * (colCount - 1))) / colCount;
+
+        // Track max height across columns
+        let maxColBottom = y;
+
+        for (let colIdx = 0; colIdx < colCount; colIdx++) {
+          const col = category.columns[colIdx];
+          const colX = INNER_X + (colIdx * (colW + colGap));
+          let colY = y;
+
+          // Column title (bold, large)
+          doc.fontSize(12)
+             .font('Helvetica-Bold')
+             .fillColor(C.black)
+             .text(col.title, colX, colY, { width: colW });
+          colY += 18;
+
+          // Description lines (small, gray, uppercase)
+          doc.fontSize(7.5)
+             .font('Helvetica')
+             .fillColor(C.gray);
+
+          for (const line of col.lines) {
+            doc.text(line, colX, colY, { width: colW });
+            colY += 10;
+          }
+
+          colY += 4;
+
+          // Price (bold, large)
+          doc.fontSize(18)
+             .font('Helvetica-Bold')
+             .fillColor(C.black)
+             .text(col.price, colX, colY, { width: colW });
+          colY += 22;
+
+          // Price unit (small)
+          doc.fontSize(7)
+             .font('Helvetica')
+             .fillColor(C.gray)
+             .text(col.priceUnit, colX, colY, { width: colW });
+          colY += 12;
+
+          // Mayoreo price (green, if applicable)
+          if (col.mayoreo) {
+            doc.fontSize(8)
+               .font('Helvetica-Bold')
+               .fillColor(C.green)
+               .text('MAYOREO: ' + col.mayoreo, colX, colY, { width: colW });
+            colY += 14;
+          }
+
+          if (colY > maxColBottom) maxColBottom = colY;
+        }
+
+        y = maxColBottom + 5;
+
+        // Separator line between categories
+        if (catIdx < CATEGORIES.length - 1) {
+          doc.moveTo(INNER_X, y).lineTo(INNER_X + INNER_W, y).lineWidth(0.5).stroke(C.lineGray);
+          y += 10;
+        }
       }
 
-      // ========================================
-      // FINAL SECTION: TERMS & INFO
-      // ========================================
-      // Check if enough space, otherwise new page
-      if (yPos + 280 > doc.page.height - 50) {
-        drawFooter(doc, pageWidth);
-        doc.addPage();
-        yPos = 50;
-      }
-
-      yPos = drawInfoSection(doc, yPos, contentWidth);
-      yPos = drawContactSection(doc, yPos, contentWidth, now);
-
-      drawFooter(doc, pageWidth);
+      // ==============================
+      // FOOTER
+      // ==============================
+      drawPageFooter(doc, W, H, BORDER, INNER_X, INNER_W, now);
 
       // Finalize
       doc.end();
 
       stream.on('finish', () => {
         console.log(`✅ Catalog PDF generated: ${filename}`);
-
-        // Update cache
         cachedCatalog = { filepath, timestamp: Date.now() };
-
         resolve({
           filepath,
           filename,
-          productCount: CATALOG_PRODUCTS.length,
+          productCount: 8,
           generatedAt: now.toISOString(),
           cached: false
         });
@@ -289,418 +419,41 @@ export async function generateCatalogPDF(options = {}) {
 }
 
 /**
- * Draw the cover page
+ * Draw footer bar at bottom of page
  */
-function drawCoverPage(doc, now, pageWidth) {
-  // Full pink header block
-  const headerHeight = 180;
-  doc.rect(0, 0, pageWidth, headerHeight)
-     .fillAndStroke(COLORS.pinkMedium, COLORS.pinkMedium);
+function drawPageFooter(doc, W, H, BORDER, INNER_X, INNER_W, now) {
+  const footerBarY = H - BORDER - 38;
+  const footerBarH = 30;
 
-  // Lighter overlay
-  doc.rect(0, 0, pageWidth, headerHeight / 2)
-     .fillOpacity(0.3)
-     .fill(COLORS.pinkLight);
-  doc.fillOpacity(1);
+  // Pink footer bar
+  doc.rect(INNER_X, footerBarY, INNER_W, footerBarH).fill(C.pinkDeep);
 
-  // Logo
-  const logoSize = 90;
-  const logoX = pageWidth - 50 - logoSize;
-  if (fs.existsSync(LOGO_PATH)) {
-    try {
-      doc.image(LOGO_PATH, logoX, 45, { height: logoSize });
-    } catch (err) {
-      console.log('Could not load logo:', err.message);
-    }
-  }
-
-  // Title text
-  doc.fontSize(38)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.white)
-     .text('Axkan', 50, 40, { width: 400 });
-
-  doc.fontSize(14)
-     .font('Helvetica')
-     .fillColor('#FCE4EC')
-     .text('Souvenirs Personalizados', 50, 85);
-
-  doc.fontSize(22)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.white)
-     .text('CATÁLOGO DE PRODUCTOS', 50, 120);
-
-  doc.fontSize(14)
-     .font('Helvetica')
-     .fillColor('#FCE4EC')
-     .text('Y PRECIOS DE MAYOREO', 50, 148);
-
-  // Content area below header
-  doc.fillColor(COLORS.textDark);
-  let y = headerHeight + 50;
-
-  // Date badge
-  doc.roundedRect(50, y, 250, 30, 5)
-     .fillAndStroke(COLORS.pinkPale, COLORS.pinkAccent);
-
-  doc.fontSize(11)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.pinkDark)
-     .text(`Precios vigentes: ${formatDate(now)}`, 60, y + 8);
-
-  y += 55;
-
-  // Company description
-  doc.fontSize(12)
-     .font('Helvetica')
-     .fillColor(COLORS.textDark)
-     .text('En AXKAN nos especializamos en la producción de souvenirs personalizados de alta calidad para destinos turísticos, eventos y negocios en toda la República Mexicana.', 50, y, { width: 510, lineGap: 4 });
-
-  y += 60;
-
-  doc.fontSize(11)
-     .fillColor(COLORS.textGray)
-     .text('Todos nuestros productos son personalizables con tu diseño, logo o imagen. Fabricados con materiales de primera calidad y acabados profesionales.', 50, y, { width: 510, lineGap: 3 });
-
-  y += 60;
-
-  // Highlights row
-  const highlights = [
-    { icon: '✓', text: 'Personalización total' },
-    { icon: '✓', text: 'Envío a todo México' },
-    { icon: '✓', text: 'Producción: 5-7 días' },
-    { icon: '✓', text: 'Precios de mayoreo' }
-  ];
-
-  doc.fontSize(10).font('Helvetica-Bold').fillColor(COLORS.successGreen);
-  const colWidth = 127;
-  highlights.forEach((h, i) => {
-    doc.text(`${h.icon} ${h.text}`, 50 + (i * colWidth), y, { width: colWidth });
-  });
-
-  y += 35;
-
-  // Quick summary table
-  doc.roundedRect(50, y, 510, 170, 8)
-     .fillAndStroke(COLORS.pinkPale, COLORS.pinkAccent);
-
-  y += 12;
-  doc.fontSize(13)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.pinkDark)
-     .text('RESUMEN DE PRECIOS', 70, y);
-
-  y += 25;
-  doc.fontSize(9).font('Helvetica').fillColor(COLORS.textDark);
-
-  // Quick reference table header
-  doc.font('Helvetica-Bold').fillColor(COLORS.pinkDark);
-  doc.text('Producto', 70, y);
-  doc.text('Precio Regular', 280, y);
-  doc.text('Mayoreo (1,000+)', 400, y);
-  y += 18;
-
-  // Divider
-  doc.moveTo(70, y - 3).lineTo(540, y - 3).lineWidth(0.5).stroke(COLORS.pinkAccent);
-
-  doc.font('Helvetica').fontSize(9).fillColor(COLORS.textDark);
-  const summaryRows = [
-    ['Imanes MDF (Chico)', '$8.00', '$6.00'],
-    ['Imanes MDF (Mediano)', '$11.00', '$8.00'],
-    ['Imanes MDF (Grande)', '$15.00', '$12.00'],
-    ['Llaveros MDF', '$10.00', '$8.00'],
-    ['Destapadores MDF', '$20.00', '$15.00'],
-    ['Botones Metálicos', '$8.00', '$6.00'],
-    ['Portallaves MDF', '$40.00', '—'],
-    ['Souvenir Box', '$2,250.00', '—']
-  ];
-
-  summaryRows.forEach(row => {
-    doc.fillColor(COLORS.textDark).text(row[0], 70, y, { width: 200 });
-    doc.text(row[1], 280, y, { width: 100 });
-    doc.fillColor(row[2] !== '—' ? COLORS.successGreen : COLORS.textGray);
-    doc.font(row[2] !== '—' ? 'Helvetica-Bold' : 'Helvetica');
-    doc.text(row[2], 400, y, { width: 120 });
-    doc.font('Helvetica').fillColor(COLORS.textDark);
-    y += 15;
-  });
-}
-
-/**
- * Draw page header for product pages
- */
-function drawPageHeader(doc, title, pageWidth) {
-  // Thin pink bar at top
-  doc.rect(0, 0, pageWidth, 6)
-     .fill(COLORS.pinkMedium);
-
-  doc.fontSize(16)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.pinkDark)
-     .text(title, 50, 20);
-
-  // Thin divider
-  doc.moveTo(50, 42).lineTo(pageWidth - 50, 42).lineWidth(1).stroke(COLORS.pinkAccent);
-
-  return 55; // return y position after header
-}
-
-/**
- * Draw a single product card
- */
-function drawProductCard(doc, product, imageBuffer, startY, contentWidth) {
-  const cardX = 50;
-  const imageSize = 90;
-  const textX = cardX + imageSize + 20;
-  const textWidth = contentWidth - imageSize - 20;
-
-  let y = startY;
-
-  // Light background for the card
-  const cardHeight = product.hasSizes ? 185 : 135;
-  doc.roundedRect(cardX, y - 5, contentWidth, cardHeight, 6)
-     .fillAndStroke('#fafafa', '#e5e7eb');
-
-  // Product image
-  if (imageBuffer) {
-    try {
-      doc.image(imageBuffer, cardX + 10, y + 5, { width: imageSize - 20, height: imageSize - 20, fit: [imageSize - 20, imageSize - 20] });
-    } catch (err) {
-      // Fallback: colored rectangle
-      doc.roundedRect(cardX + 10, y + 5, imageSize - 20, imageSize - 20, 4)
-         .fill(COLORS.pinkPale);
-      doc.fontSize(8).fillColor(COLORS.pinkDark).text(product.name, cardX + 12, y + 35, { width: imageSize - 24, align: 'center' });
-    }
-  } else {
-    doc.roundedRect(cardX + 10, y + 5, imageSize - 20, imageSize - 20, 4)
-       .fill(COLORS.pinkPale);
-    doc.fontSize(8).fillColor(COLORS.pinkDark).text(product.name, cardX + 12, y + 35, { width: imageSize - 24, align: 'center' });
-  }
-
-  // Product name
-  doc.fontSize(13)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.pinkDark)
-     .text(product.name, textX, y + 3, { width: textWidth });
-
-  // Category badge
-  const catBadgeX = textX + doc.widthOfString(product.name, { font: 'Helvetica-Bold', fontSize: 13 }) + 10;
-  if (catBadgeX < textX + textWidth - 80) {
-    doc.fontSize(7)
-       .font('Helvetica')
-       .fillColor(COLORS.pinkMedium)
-       .text(product.category, catBadgeX, y + 6);
-  }
-
-  // Description
-  doc.fontSize(9)
-     .font('Helvetica')
-     .fillColor(COLORS.textGray)
-     .text(product.description, textX, y + 22, { width: textWidth, lineGap: 2 });
-
-  // MOQ badge
+  // Left: social/contact
   doc.fontSize(8)
      .font('Helvetica-Bold')
-     .fillColor(COLORS.warningOrange)
-     .text(`Mín. ${product.moq} pzas`, textX, y + 42);
-
-  // Pricing table
-  let tableY = y + 58;
-
-  // Table header
-  const tableX = textX;
-  const priceTableWidth = textWidth;
-
-  if (product.hasSizes) {
-    // Multi-size table (for Imanes)
-    doc.roundedRect(tableX, tableY - 3, priceTableWidth, 18, 3)
-       .fill(COLORS.pinkPale);
-
-    doc.fontSize(8).font('Helvetica-Bold').fillColor(COLORS.pinkDark);
-    doc.text('Tamaño', tableX + 5, tableY + 2);
-    doc.text('Cantidad', tableX + 100, tableY + 2);
-    doc.text('Precio/Unidad', tableX + 200, tableY + 2);
-    doc.text('Mayoreo', tableX + 310, tableY + 2);
-
-    tableY += 20;
-    doc.fontSize(9).font('Helvetica');
-
-    product.sizes.forEach((size, sizeIdx) => {
-      if (sizeIdx > 0) {
-        doc.moveTo(tableX, tableY - 2).lineTo(tableX + priceTableWidth, tableY - 2).lineWidth(0.3).stroke('#e5e7eb');
-      }
-
-      doc.fillColor(COLORS.textDark).font('Helvetica-Bold');
-      doc.text(size.label, tableX + 5, tableY);
-
-      doc.font('Helvetica').fillColor(COLORS.textGray);
-      doc.text(size.tiers[0].range + ' pzas', tableX + 100, tableY);
-
-      doc.fillColor(COLORS.textDark);
-      doc.text(formatCurrency(size.tiers[0].price), tableX + 200, tableY);
-
-      if (size.tiers.length > 1) {
-        doc.fillColor(COLORS.successGreen).font('Helvetica-Bold');
-        doc.text(formatCurrency(size.tiers[1].price) + '/u', tableX + 310, tableY);
-      }
-
-      tableY += 17;
-    });
-
-    return tableY + 5;
-  } else {
-    // Standard single-product table
-    doc.roundedRect(tableX, tableY - 3, priceTableWidth, 18, 3)
-       .fill(COLORS.pinkPale);
-
-    doc.fontSize(8).font('Helvetica-Bold').fillColor(COLORS.pinkDark);
-    doc.text('Cantidad', tableX + 5, tableY + 2);
-    doc.text('Precio por Unidad', tableX + 150, tableY + 2);
-
-    tableY += 20;
-    doc.fontSize(9);
-
-    product.tiers.forEach((tier, tierIdx) => {
-      if (tierIdx > 0) {
-        doc.moveTo(tableX, tableY - 2).lineTo(tableX + priceTableWidth, tableY - 2).lineWidth(0.3).stroke('#e5e7eb');
-      }
-
-      doc.font('Helvetica').fillColor(COLORS.textGray);
-      doc.text(tier.range + ' pzas', tableX + 5, tableY);
-
-      const isLastTier = tierIdx === product.tiers.length - 1 && product.tiers.length > 1;
-      if (isLastTier) {
-        doc.fillColor(COLORS.successGreen).font('Helvetica-Bold');
-        doc.text(formatCurrency(tier.price) + '/u  ★ Mayoreo', tableX + 150, tableY);
-      } else {
-        doc.fillColor(COLORS.textDark).font('Helvetica');
-        doc.text(formatCurrency(tier.price) + '/u', tableX + 150, tableY);
-      }
-
-      tableY += 17;
-    });
-
-    return tableY + 5;
-  }
-}
-
-/**
- * Draw the info/terms section
- */
-function drawInfoSection(doc, startY, contentWidth) {
-  let y = startY;
-
-  // Section title
-  doc.fontSize(14)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.pinkDark)
-     .text('INFORMACIÓN IMPORTANTE', 50, y);
-
-  y += 25;
-
-  // Shipping box
-  doc.roundedRect(50, y, contentWidth, 55, 5)
-     .fillAndStroke(COLORS.successBg, COLORS.successGreen);
-
-  doc.fontSize(11)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.successGreen)
-     .text('🚚 ENVÍO', 65, y + 8);
-
-  doc.fontSize(9).font('Helvetica').fillColor(COLORS.textDark);
-  doc.text('• Envío GRATIS en pedidos de 300+ piezas', 65, y + 25);
-  doc.text('• Envío estándar: $210 MXN para pedidos menores', 65, y + 38);
-
-  y += 70;
-
-  // Production box
-  doc.roundedRect(50, y, contentWidth, 55, 5)
-     .fillAndStroke(COLORS.infoBlueBg, COLORS.infoBlue);
-
-  doc.fontSize(11)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.infoBlue)
-     .text('⏱ PRODUCCIÓN', 65, y + 8);
-
-  doc.fontSize(9).font('Helvetica').fillColor(COLORS.textDark);
-  doc.text('• Tiempo de producción: 5-7 días hábiles después del anticipo', 65, y + 25);
-  doc.text('• Todos los productos incluyen personalización con tu diseño', 65, y + 38);
-
-  y += 70;
-
-  // Payment terms box
-  doc.roundedRect(50, y, contentWidth, 55, 5)
-     .fillAndStroke(COLORS.warningBg, COLORS.warningOrange);
-
-  doc.fontSize(11)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.warningOrange)
-     .text('💰 FORMA DE PAGO', 65, y + 8);
-
-  doc.fontSize(9).font('Helvetica').fillColor(COLORS.textDark);
-  doc.text('• Anticipo del 50% para iniciar producción', 65, y + 25);
-  doc.text('• Precios en pesos mexicanos (MXN), no incluyen IVA', 65, y + 38);
-
-  y += 70;
-
-  return y;
-}
-
-/**
- * Draw the contact section
- */
-function drawContactSection(doc, startY, contentWidth, now) {
-  let y = startY;
-
-  // Contact box
-  doc.roundedRect(50, y, contentWidth, 70, 8)
-     .fillAndStroke(COLORS.pinkPale, COLORS.pinkMedium);
-
-  doc.fontSize(13)
-     .font('Helvetica-Bold')
-     .fillColor(COLORS.pinkDark)
-     .text('¿LISTO PARA HACER TU PEDIDO?', 70, y + 10);
-
-  doc.fontSize(10).font('Helvetica').fillColor(COLORS.textDark);
-  doc.text('📱 WhatsApp: 55 3825 3251', 70, y + 32);
-  doc.text('📧 Email: informacion@axkan.art', 70, y + 47);
-  doc.text('🌐 vtanunciando.com', 300, y + 32);
-
-  y += 85;
-
-  // Generated date
-  doc.fontSize(7)
-     .fillColor(COLORS.textGray)
-     .text(`Catálogo generado el ${formatDate(now)} | Precios sujetos a cambio sin previo aviso`, 50, y, { align: 'center', width: contentWidth });
-
-  return y + 15;
-}
-
-/**
- * Draw footer on current page
- */
-function drawFooter(doc, pageWidth) {
-  const footerY = doc.page.height - 35;
-
-  doc.moveTo(50, footerY).lineTo(pageWidth - 50, footerY).lineWidth(0.5).stroke(COLORS.pinkAccent);
+     .fillColor(C.white)
+     .text('@axkan.souvenirs', INNER_X + 12, footerBarY + 5, { width: 180 });
 
   doc.fontSize(7)
      .font('Helvetica')
-     .fillColor(COLORS.textGray)
-     .text('AXKAN | Souvenirs Personalizados | vtanunciando.com | WhatsApp: 55 3825 3251', 50, footerY + 5, {
-       width: pageWidth - 100,
-       align: 'center'
-     });
-}
+     .fillColor(C.white)
+     .text('WhatsApp: 55 3825 3251', INNER_X + 12, footerBarY + 17, { width: 180 });
 
-/**
- * Format currency in Mexican pesos
- */
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN'
-  }).format(amount);
+  // Center: decorative line
+  const lineY = footerBarY + 15;
+  const lineStartX = INNER_X + 195;
+  const lineEndX = INNER_X + INNER_W - 195;
+  doc.moveTo(lineStartX, lineY).lineTo(lineEndX, lineY).lineWidth(1).stroke(C.pink);
+
+  // Right: website
+  doc.fontSize(8)
+     .font('Helvetica-Bold')
+     .fillColor(C.white)
+     .text('vtanunciando.com', INNER_X + INNER_W - 180, footerBarY + 5, { width: 168, align: 'right' });
+
+  doc.fontSize(7)
+     .font('Helvetica')
+     .text('informacion@axkan.art', INNER_X + INNER_W - 180, footerBarY + 17, { width: 168, align: 'right' });
 }
 
 /**
