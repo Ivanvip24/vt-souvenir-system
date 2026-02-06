@@ -2123,10 +2123,22 @@
                 threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
                 threeScript.crossOrigin = 'anonymous';
                 threeScript.onload = function() {
-                    // Then load our globe code
-                    var globeScript = document.createElement('script');
-                    globeScript.src = '/globe-section.js';
-                    document.head.appendChild(globeScript);
+                    // Load topojson-client for world map data
+                    var topoScript = document.createElement('script');
+                    topoScript.src = 'https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js';
+                    topoScript.crossOrigin = 'anonymous';
+                    topoScript.onload = function() {
+                        var globeScript = document.createElement('script');
+                        globeScript.src = '/globe-section.js';
+                        document.head.appendChild(globeScript);
+                    };
+                    topoScript.onerror = function() {
+                        // Proceed without topojson — globe still works, just no world map
+                        var globeScript = document.createElement('script');
+                        globeScript.src = '/globe-section.js';
+                        document.head.appendChild(globeScript);
+                    };
+                    document.head.appendChild(topoScript);
                 };
                 threeScript.onerror = function() {
                     // Fallback: hide loading, show static content

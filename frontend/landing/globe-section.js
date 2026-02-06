@@ -3,10 +3,11 @@
  *
  * Three views:
  *  1. 3D rotating globe with destination markers (Three.js)
- *  2. Mexico map with state markers (Canvas 2D)
+ *  2. Mexico map with real state boundaries (Canvas 2D + GeoJSON)
  *  3. State detail with destination cards (DOM)
  *
- * Dependencies: Three.js (loaded from CDN before this file)
+ * Dependencies: Three.js, topojson-client (loaded from CDN before this file)
+ * Data: world-atlas countries-110m (CDN), mexico-states.json (local)
  */
 (function () {
   'use strict';
@@ -20,12 +21,9 @@
     naranja: '#f39223',
     turquesa: '#09adc2',
     dark: '#0a0a1a',
-    grid: '#1a2a4a',
-    land: '#1e3a5a',
     ocean: '#0a0f1e',
     highlight: '#e72a88',
-    marker: '#09adc2',
-    markerGlow: '#e72a88'
+    marker: '#09adc2'
   };
 
   // ═══════════════════════════════════════════════════════════
@@ -70,12 +68,15 @@
     { slug: 'cerro-de-san-pedro', name: 'Cerro de San Pedro', state: 'San Luis Potosí', lat: 22.21, lng: -100.80 }
   ];
 
-  // Image mapping (loaded from page if available)
+  // Map GeoJSON state names → our destination state names
+  var STATE_NAME_MAP = {
+    'México': 'Estado de México',
+    'Ciudad de México': 'CDMX'
+  };
+  function ourStateName(geoName) { return STATE_NAME_MAP[geoName] || geoName; }
+
+  // Image mapping (loaded async)
   var IMAGE_MAP = {};
-  try {
-    var script = document.querySelector('script[data-destination-images]');
-    if (script) IMAGE_MAP = JSON.parse(script.textContent);
-  } catch (e) { /* silent */ }
 
   // Group destinations by state
   var stateGroups = {};
@@ -84,7 +85,7 @@
     stateGroups[d.state].push(d);
   });
 
-  // State center coordinates for Mexico map
+  // State centers for pin labels on Mexico map
   var STATE_CENTERS = {
     'Quintana Roo': { lat: 19.60, lng: -87.43, abbr: 'Q.Roo' },
     'CDMX': { lat: 19.43, lng: -99.13, abbr: 'CDMX' },
@@ -109,25 +110,80 @@
     'Estado de México': { lat: 19.35, lng: -99.63, abbr: 'EdoMex' }
   };
 
-  // Simplified Mexico outline coordinates [lng, lat]
-  var MEXICO_OUTLINE = [
-    [-117.1,32.5],[-114.7,32.7],[-111,31.3],[-108.2,31.8],[-106.4,31.8],
-    [-104.9,30.6],[-103.3,29.0],[-101.4,29.8],[-100.0,28.2],[-99.0,26.4],
-    [-97.1,25.8],[-97.8,22.6],[-97.2,21.5],[-97.3,20.5],[-96.5,19.0],
-    [-96.0,18.5],[-94.5,18.3],[-93.5,16.1],[-92.5,15.0],[-92.2,14.5],
-    [-91.0,14.8],[-90.5,16.0],[-90.8,17.8],[-88.3,18.5],[-87.5,18.3],
-    [-87.1,18.5],[-87.4,20.5],[-87.5,21.6],[-90.4,21.5],[-91.4,18.8],
-    [-92.5,16.5],[-93.5,16.1],[-94.8,16.2],[-96.0,15.7],[-97.0,16.1],
-    [-99.0,16.5],[-100.5,17.0],[-101.6,18.0],[-103.5,18.3],[-105.2,20.0],
-    [-105.7,21.0],[-105.3,22.0],[-106.5,23.5],[-108.0,25.0],[-109.5,26.5],
-    [-111.0,27.5],[-112.5,29.0],[-114.5,31.5],[-117.1,32.5]
-  ];
+  // ═══════════════════════════════════════════════════════════
+  // GEO DATA — Loaded async
+  // ═══════════════════════════════════════════════════════════
+  var worldGeoJSON = null;
+  var mexicoGeoJSON = null;
 
-  var BAJA_OUTLINE = [
-    [-117.1,32.5],[-116.0,32.0],[-115.0,30.5],[-113.5,28.5],[-112.5,26.5],
-    [-112.0,24.5],[-110.5,23.3],[-109.5,23.0],[-110.0,24.0],[-110.5,25.0],
-    [-112.0,27.0],[-114.0,30.0],[-115.5,32.0],[-117.1,32.5]
-  ];
+  function loadGeoData() {
+    return Promise.all([loadWorldData(), loadMexicoData()]);
+  }
+
+  function loadWorldData() {
+    if (typeof topojson === 'undefined') return Promise.resolve();
+    return fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+      .then(function (r) { return r.json(); })
+      .then(function (topo) {
+        if (topo.objects && topo.objects.countries) {
+          worldGeoJSON = topojson.feature(topo, topo.objects.countries);
+        }
+      })
+      .catch(function () { /* world data optional */ });
+  }
+
+  function loadMexicoData() {
+    return fetch('/mexico-states.json')
+      .then(function (r) { return r.json(); })
+      .then(function (geo) { mexicoGeoJSON = geo; })
+      .catch(function () { /* mexico data optional */ });
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // GeoJSON DRAWING HELPERS
+  // ═══════════════════════════════════════════════════════════
+
+  function lngLatToUV(lng, lat, w, h) {
+    return [((lng + 180) / 360) * w, ((90 - lat) / 180) * h];
+  }
+
+  function drawGeoJSONFeature(ctx, feature, w, h, opts) {
+    var geom = feature.geometry;
+    if (!geom) return;
+    if (geom.type === 'Polygon') {
+      drawPolygonOnCanvas(ctx, geom.coordinates, w, h, opts);
+    } else if (geom.type === 'MultiPolygon') {
+      geom.coordinates.forEach(function (poly) {
+        drawPolygonOnCanvas(ctx, poly, w, h, opts);
+      });
+    }
+  }
+
+  function drawPolygonOnCanvas(ctx, rings, w, h, opts) {
+    ctx.beginPath();
+    rings.forEach(function (ring) {
+      for (var i = 0; i < ring.length; i++) {
+        var uv = lngLatToUV(ring[i][0], ring[i][1], w, h);
+        if (i === 0) {
+          ctx.moveTo(uv[0], uv[1]);
+        } else {
+          // Skip antimeridian crossings (huge lng jumps create artifact lines)
+          var dLng = Math.abs(ring[i][0] - ring[i - 1][0]);
+          if (dLng > 100) ctx.moveTo(uv[0], uv[1]);
+          else ctx.lineTo(uv[0], uv[1]);
+        }
+      }
+    });
+    if (opts.fill) {
+      ctx.fillStyle = opts.fill;
+      ctx.fill('evenodd');
+    }
+    if (opts.stroke) {
+      ctx.strokeStyle = opts.stroke;
+      ctx.lineWidth = opts.lineWidth || 1;
+      ctx.stroke();
+    }
+  }
 
   // ═══════════════════════════════════════════════════════════
   // GLOBE RENDERER (Three.js)
@@ -136,13 +192,8 @@
   var scene, camera, renderer, globe, gridMesh, atmosphereMesh;
   var markerGroup, markerSprites = [];
   var animationFrameId = null;
-  // Initial rotation to face Mexico (lng ~-100 => needs specific Y rotation)
-  // On equirectangular texture, Mexico is at U ≈ 0.22 (from left)
-  // Three.js sphere is oriented so 0 rotation shows U=0.5 (meridian 0)
-  // To show lng -100, we rotate Y by about +1.75 radians
   var targetRotationY = 1.75, currentRotationY = 1.75;
   var targetRotationX = 0.15, currentRotationX = 0.15;
-  var isUserDragging = false;
   var mouseDown = false, mouseX = 0, mouseY = 0;
   var autoRotateSpeed = 0.002;
   var globeContainer = null;
@@ -154,28 +205,22 @@
     var w = globeContainer.offsetWidth;
     var h = globeContainer.offsetHeight;
 
-    // Scene
     scene = new THREE.Scene();
-
-    // Camera
     camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
     camera.position.z = 2.8;
 
-    // Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(w, h);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
     globeContainer.appendChild(renderer.domElement);
 
-    // Hide loading placeholder
     var loading = document.getElementById('globe-loading');
     if (loading) loading.style.display = 'none';
 
-    // Create earth texture
+    // Earth texture from GeoJSON
     var earthTexture = createEarthTexture();
 
-    // Globe sphere
     var sphereGeo = new THREE.SphereGeometry(1, 64, 64);
     var sphereMat = new THREE.MeshPhongMaterial({
       map: earthTexture,
@@ -185,215 +230,139 @@
     globe = new THREE.Mesh(sphereGeo, sphereMat);
     scene.add(globe);
 
-    // Grid wireframe (slightly larger)
+    // Grid wireframe
     var gridGeo = new THREE.SphereGeometry(1.002, 48, 24);
     var gridMat = new THREE.MeshBasicMaterial({
-      color: 0xe72a88,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.06
+      color: 0xe72a88, wireframe: true, transparent: true, opacity: 0.06
     });
     gridMesh = new THREE.Mesh(gridGeo, gridMat);
     scene.add(gridMesh);
 
-    // Atmosphere glow
     createAtmosphere();
-
-    // Destination markers
     createMarkers();
 
-    // Lights — bright enough to make continents pop
-    var ambient = new THREE.AmbientLight(0xffffff, 1.0);
-    scene.add(ambient);
-    var directional = new THREE.DirectionalLight(0xffffff, 1.2);
-    directional.position.set(5, 3, 5);
-    scene.add(directional);
-    var fillLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    fillLight.position.set(-5, 0, 3);
-    scene.add(fillLight);
-    var backLight = new THREE.DirectionalLight(0xe72a88, 0.5);
-    backLight.position.set(-3, -2, -5);
-    scene.add(backLight);
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+    var dir = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir.position.set(5, 3, 5);
+    scene.add(dir);
+    var fill = new THREE.DirectionalLight(0xffffff, 0.6);
+    fill.position.set(-5, 0, 3);
+    scene.add(fill);
+    var back = new THREE.DirectionalLight(0xe72a88, 0.5);
+    back.position.set(-3, -2, -5);
+    scene.add(back);
 
-    // Mouse/touch interaction
     setupGlobeInteraction();
-
-    // Start animation
     animateGlobe();
-
-    // Handle resize
     window.addEventListener('resize', onGlobeResize);
   }
 
   function createEarthTexture() {
     var canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 1024;
+    var w = 2048, h = 1024;
+    canvas.width = w;
+    canvas.height = h;
     var ctx = canvas.getContext('2d');
 
-    // Ocean — rich deep blue, not too dark
-    var gradient = ctx.createLinearGradient(0, 0, 0, 1024);
+    // Ocean gradient
+    var gradient = ctx.createLinearGradient(0, 0, 0, h);
     gradient.addColorStop(0, '#0f2847');
     gradient.addColorStop(0.3, '#112d52');
     gradient.addColorStop(0.5, '#143360');
     gradient.addColorStop(0.7, '#112d52');
     gradient.addColorStop(1, '#0f2847');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 2048, 1024);
+    ctx.fillRect(0, 0, w, h);
 
-    // Grid lines on ocean
-    ctx.strokeStyle = 'rgba(40, 70, 120, 0.35)';
-    ctx.lineWidth = 0.8;
+    // Grid lines
+    ctx.strokeStyle = 'rgba(40, 70, 120, 0.3)';
+    ctx.lineWidth = 0.6;
     for (var i = 0; i < 36; i++) {
-      var x = (i / 36) * 2048;
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke();
+      var x = (i / 36) * w;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
     }
     for (var j = 0; j < 18; j++) {
-      var y = (j / 18) * 1024;
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(2048, y); ctx.stroke();
+      var y = (j / 18) * h;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
     }
 
-    // Draw continents
-    drawContinentShapes(ctx, 2048, 1024);
+    // World countries from Natural Earth data
+    if (worldGeoJSON) {
+      drawWorldCountries(ctx, w, h);
+    }
 
-    // Highlight Mexico
-    highlightMexicoOnTexture(ctx, 2048, 1024);
+    // Mexico states highlighted
+    if (mexicoGeoJSON) {
+      drawMexicoOnGlobe(ctx, w, h);
+    }
+
+    // Destination dots
+    drawDestinationDots(ctx, w, h);
 
     return new THREE.CanvasTexture(canvas);
   }
 
-  function lngLatToUV(lng, lat, w, h) {
-    var x = ((lng + 180) / 360) * w;
-    var y = ((90 - lat) / 180) * h;
-    return [x, y];
-  }
-
-  function drawContinentShapes(ctx, w, h) {
-    // Simplified continent polygons
-    var continents = {
-      northAmerica: [
-        [-168,72],[-140,70],[-130,55],[-124,48],[-125,40],[-117,33],
-        [-105,23],[-97,17],[-87,15],[-83,9],[-80,8],[-82,10],[-87,17],
-        [-97,26],[-96,40],[-82,30],[-76,35],[-70,42],[-67,44],[-55,48],
-        [-55,52],[-60,60],[-78,62],[-95,70],[-168,72]
-      ],
-      southAmerica: [
-        [-82,10],[-77,2],[-80,-5],[-70,-15],[-60,-25],[-50,-25],[-45,-12],
-        [-35,-5],[-35,-10],[-40,-18],[-48,-30],[-55,-35],[-68,-55],
-        [-75,-50],[-70,-40],[-65,-35],[-58,-30],[-60,-10],[-68,0],
-        [-77,8],[-82,10]
-      ],
-      europe: [
-        [-10,36],[0,43],[5,44],[10,46],[15,55],[12,57],[15,60],[10,63],
-        [20,65],[30,70],[45,68],[40,55],[30,47],[27,42],[25,38],[20,36],[10,36],[-10,36]
-      ],
-      africa: [
-        [-18,35],[10,37],[30,32],[37,32],[43,12],[50,12],[40,-5],[35,-25],
-        [30,-34],[20,-35],[15,-28],[12,-6],[8,5],[-5,5],[-12,5],
-        [-18,15],[-18,35]
-      ],
-      asia: [
-        [30,32],[40,42],[50,40],[55,42],[65,40],[70,45],[80,40],[90,28],
-        [100,22],[105,15],[110,20],[120,23],[130,35],[140,40],[145,45],
-        [150,60],[170,65],[180,70],[180,50],[150,48],[140,52],[130,48],
-        [120,42],[110,35],[105,25],[100,15],[95,10],[80,7],[75,15],
-        [70,25],[60,35],[50,42],[45,42],[40,55],[55,70],[70,72],
-        [100,75],[170,70],[180,72],[180,70]
-      ],
-      australia: [
-        [113,-12],[130,-12],[137,-15],[145,-15],[150,-25],[153,-28],
-        [150,-37],[140,-38],[130,-32],[115,-35],[115,-22],[120,-15],[113,-12]
-      ]
-    };
-
-    // Bright, visible continents
-    Object.keys(continents).forEach(function (key) {
-      var pts = continents[key];
-      ctx.beginPath();
-      for (var i = 0; i < pts.length; i++) {
-        var uv = lngLatToUV(pts[i][0], pts[i][1], w, h);
-        if (i === 0) ctx.moveTo(uv[0], uv[1]);
-        else ctx.lineTo(uv[0], uv[1]);
-      }
-      ctx.closePath();
-      // Solid bright fill
-      ctx.fillStyle = '#2a6e5a';
-      ctx.fill();
-      // Bright edge
-      ctx.strokeStyle = '#3adfb6';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+  function drawWorldCountries(ctx, w, h) {
+    // Fill all countries with dark green-teal
+    worldGeoJSON.features.forEach(function (feature) {
+      drawGeoJSONFeature(ctx, feature, w, h, {
+        fill: '#1a5545',
+        stroke: '#2a8c6e',
+        lineWidth: 0.6
+      });
     });
-
-    // Second pass: inner glow on continents
-    Object.keys(continents).forEach(function (key) {
-      var pts = continents[key];
-      ctx.beginPath();
-      for (var i = 0; i < pts.length; i++) {
-        var uv = lngLatToUV(pts[i][0], pts[i][1], w, h);
-        if (i === 0) ctx.moveTo(uv[0], uv[1]);
-        else ctx.lineTo(uv[0], uv[1]);
-      }
-      ctx.closePath();
-      ctx.fillStyle = 'rgba(58, 223, 182, 0.15)';
-      ctx.fill();
+    // Second pass: subtle inner highlight
+    worldGeoJSON.features.forEach(function (feature) {
+      drawGeoJSONFeature(ctx, feature, w, h, {
+        fill: 'rgba(42, 140, 110, 0.12)'
+      });
     });
   }
 
-  function highlightMexicoOnTexture(ctx, w, h) {
-    // Mexico — BOLD pink highlight that pops
-    // Draw glow behind Mexico first
+  function drawMexicoOnGlobe(ctx, w, h) {
+    // Pink highlight with glow on Mexico states
+    ctx.save();
     ctx.shadowColor = '#e72a88';
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 18;
 
-    // Mainland fill
-    ctx.beginPath();
-    for (var i = 0; i < MEXICO_OUTLINE.length; i++) {
-      var uv = lngLatToUV(MEXICO_OUTLINE[i][0], MEXICO_OUTLINE[i][1], w, h);
-      if (i === 0) ctx.moveTo(uv[0], uv[1]);
-      else ctx.lineTo(uv[0], uv[1]);
-    }
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(231, 42, 136, 0.55)';
-    ctx.fill();
-    ctx.strokeStyle = '#ff4da6';
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    // Fill all Mexico states with pink
+    mexicoGeoJSON.features.forEach(function (feature) {
+      drawGeoJSONFeature(ctx, feature, w, h, {
+        fill: 'rgba(231, 42, 136, 0.5)',
+        stroke: '#ff4da6',
+        lineWidth: 1.2
+      });
+    });
+    ctx.restore();
 
-    // Baja fill
-    ctx.beginPath();
-    for (var j = 0; j < BAJA_OUTLINE.length; j++) {
-      var bv = lngLatToUV(BAJA_OUTLINE[j][0], BAJA_OUTLINE[j][1], w, h);
-      if (j === 0) ctx.moveTo(bv[0], bv[1]);
-      else ctx.lineTo(bv[0], bv[1]);
-    }
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(231, 42, 136, 0.55)';
-    ctx.fill();
-    ctx.strokeStyle = '#ff4da6';
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    // Second pass: state borders for detail (no glow)
+    mexicoGeoJSON.features.forEach(function (feature) {
+      drawGeoJSONFeature(ctx, feature, w, h, {
+        stroke: 'rgba(255, 77, 166, 0.5)',
+        lineWidth: 0.4
+      });
+    });
+  }
 
-    ctx.shadowBlur = 0;
-
-    // Destination dots — BIG and bright
+  function drawDestinationDots(ctx, w, h) {
     DESTINATIONS.forEach(function (d) {
       var uv = lngLatToUV(d.lng, d.lat, w, h);
-      // Outer glow
-      var dotGrad = ctx.createRadialGradient(uv[0], uv[1], 0, uv[0], uv[1], 14);
-      dotGrad.addColorStop(0, 'rgba(9, 173, 194, 0.9)');
-      dotGrad.addColorStop(0.4, 'rgba(9, 173, 194, 0.4)');
-      dotGrad.addColorStop(1, 'rgba(9, 173, 194, 0)');
-      ctx.fillStyle = dotGrad;
+      // Glow ring
+      var grad = ctx.createRadialGradient(uv[0], uv[1], 0, uv[0], uv[1], 14);
+      grad.addColorStop(0, 'rgba(9, 173, 194, 0.9)');
+      grad.addColorStop(0.4, 'rgba(9, 173, 194, 0.4)');
+      grad.addColorStop(1, 'rgba(9, 173, 194, 0)');
+      ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(uv[0], uv[1], 14, 0, Math.PI * 2);
       ctx.fill();
-      // Bright core
+      // White core
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(uv[0], uv[1], 3, 0, Math.PI * 2);
       ctx.fill();
-      // Mid ring
+      // Cyan mid-ring
       ctx.fillStyle = 'rgba(9, 220, 255, 0.9)';
       ctx.beginPath();
       ctx.arc(uv[0], uv[1], 5, 0, Math.PI * 2);
@@ -402,15 +371,14 @@
   }
 
   function createAtmosphere() {
-    var atmosphereVert = [
+    var vert = [
       'varying vec3 vNormal;',
       'void main() {',
       '  vNormal = normalize(normalMatrix * normal);',
       '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
       '}'
     ].join('\n');
-
-    var atmosphereFrag = [
+    var frag = [
       'varying vec3 vNormal;',
       'void main() {',
       '  float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);',
@@ -418,46 +386,45 @@
       '}'
     ].join('\n');
 
-    var atmosphereGeo = new THREE.SphereGeometry(1.15, 64, 64);
-    var atmosphereMat = new THREE.ShaderMaterial({
-      vertexShader: atmosphereVert,
-      fragmentShader: atmosphereFrag,
+    var geo = new THREE.SphereGeometry(1.15, 64, 64);
+    var mat = new THREE.ShaderMaterial({
+      vertexShader: vert,
+      fragmentShader: frag,
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
       transparent: true
     });
-    atmosphereMesh = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+    atmosphereMesh = new THREE.Mesh(geo, mat);
     scene.add(atmosphereMesh);
   }
 
   function createMarkers() {
     markerGroup = new THREE.Group();
 
-    // Create glow texture — bigger and brighter
     var glowCanvas = document.createElement('canvas');
     glowCanvas.width = 128;
     glowCanvas.height = 128;
     var gctx = glowCanvas.getContext('2d');
     var grad = gctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    grad.addColorStop(0.15, 'rgba(255, 255, 255, 0.95)');
-    grad.addColorStop(0.3, 'rgba(255, 255, 255, 0.6)');
-    grad.addColorStop(0.6, 'rgba(255, 255, 255, 0.15)');
-    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.15, 'rgba(255,255,255,0.95)');
+    grad.addColorStop(0.3, 'rgba(255,255,255,0.6)');
+    grad.addColorStop(0.6, 'rgba(255,255,255,0.15)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
     gctx.fillStyle = grad;
     gctx.fillRect(0, 0, 128, 128);
     var glowTexture = new THREE.CanvasTexture(glowCanvas);
 
     DESTINATIONS.forEach(function (d) {
       var pos = latLngToVector3(d.lat, d.lng, 1.025);
-      var spriteMat = new THREE.SpriteMaterial({
+      var mat = new THREE.SpriteMaterial({
         map: glowTexture,
         color: new THREE.Color('#00e5ff'),
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false
       });
-      var sprite = new THREE.Sprite(spriteMat);
+      var sprite = new THREE.Sprite(mat);
       sprite.position.copy(pos);
       sprite.scale.set(0.08, 0.08, 1);
       sprite.userData = d;
@@ -480,94 +447,52 @@
 
   function setupGlobeInteraction() {
     var canvas = renderer.domElement;
-
     canvas.addEventListener('mousedown', function (e) {
-      mouseDown = true;
-      isUserDragging = false;
-      mouseX = e.clientX;
-      mouseY = e.clientY;
+      mouseDown = true; mouseX = e.clientX; mouseY = e.clientY;
     });
-
     canvas.addEventListener('mousemove', function (e) {
       if (!mouseDown) return;
-      var dx = e.clientX - mouseX;
-      var dy = e.clientY - mouseY;
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) isUserDragging = true;
-      targetRotationY += dx * 0.005;
-      targetRotationX += dy * 0.003;
+      targetRotationY += (e.clientX - mouseX) * 0.005;
+      targetRotationX += (e.clientY - mouseY) * 0.003;
       targetRotationX = Math.max(-0.8, Math.min(0.8, targetRotationX));
-      mouseX = e.clientX;
-      mouseY = e.clientY;
+      mouseX = e.clientX; mouseY = e.clientY;
     });
+    canvas.addEventListener('mouseup', function () { mouseDown = false; });
+    canvas.addEventListener('mouseleave', function () { mouseDown = false; });
 
-    canvas.addEventListener('mouseup', function () {
-      mouseDown = false;
-    });
-
-    canvas.addEventListener('mouseleave', function () {
-      mouseDown = false;
-    });
-
-    // Touch events
+    // Touch
     canvas.addEventListener('touchstart', function (e) {
       if (e.touches.length === 1) {
         mouseDown = true;
-        isUserDragging = false;
-        mouseX = e.touches[0].clientX;
-        mouseY = e.touches[0].clientY;
+        mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY;
       }
     }, { passive: true });
-
     canvas.addEventListener('touchmove', function (e) {
       if (!mouseDown || e.touches.length !== 1) return;
-      var dx = e.touches[0].clientX - mouseX;
-      var dy = e.touches[0].clientY - mouseY;
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) isUserDragging = true;
-      targetRotationY += dx * 0.005;
-      targetRotationX += dy * 0.003;
+      targetRotationY += (e.touches[0].clientX - mouseX) * 0.005;
+      targetRotationX += (e.touches[0].clientY - mouseY) * 0.003;
       targetRotationX = Math.max(-0.8, Math.min(0.8, targetRotationX));
-      mouseX = e.touches[0].clientX;
-      mouseY = e.touches[0].clientY;
+      mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY;
     }, { passive: true });
-
-    canvas.addEventListener('touchend', function () {
-      mouseDown = false;
-    }, { passive: true });
+    canvas.addEventListener('touchend', function () { mouseDown = false; }, { passive: true });
   }
 
   var pulseTime = 0;
 
   function animateGlobe() {
     animationFrameId = requestAnimationFrame(animateGlobe);
+    if (!mouseDown) targetRotationY += autoRotateSpeed;
 
-    // Auto-rotate when not dragging
-    if (!mouseDown) {
-      targetRotationY += autoRotateSpeed;
-    }
-
-    // Smooth interpolation
     currentRotationY += (targetRotationY - currentRotationY) * 0.05;
     currentRotationX += (targetRotationX - currentRotationX) * 0.05;
 
-    if (globe) {
-      globe.rotation.y = currentRotationY;
-      globe.rotation.x = currentRotationX;
-    }
-    if (gridMesh) {
-      gridMesh.rotation.y = currentRotationY;
-      gridMesh.rotation.x = currentRotationX;
-    }
-    if (markerGroup) {
-      markerGroup.rotation.y = currentRotationY;
-      markerGroup.rotation.x = currentRotationX;
-    }
+    if (globe) { globe.rotation.y = currentRotationY; globe.rotation.x = currentRotationX; }
+    if (gridMesh) { gridMesh.rotation.y = currentRotationY; gridMesh.rotation.x = currentRotationX; }
+    if (markerGroup) { markerGroup.rotation.y = currentRotationY; markerGroup.rotation.x = currentRotationX; }
 
-    // Pulse markers
     pulseTime += 0.03;
-    var pulseScale = 0.035 + Math.sin(pulseTime) * 0.01;
-    markerSprites.forEach(function (sprite) {
-      sprite.scale.set(pulseScale, pulseScale, 1);
-    });
+    var s = 0.035 + Math.sin(pulseTime) * 0.01;
+    markerSprites.forEach(function (sprite) { sprite.scale.set(s, s, 1); });
 
     renderer.render(scene, camera);
   }
@@ -582,31 +507,32 @@
   }
 
   // ═══════════════════════════════════════════════════════════
-  // MEXICO MAP (Canvas 2D)
+  // MEXICO MAP — Real GeoJSON state boundaries (Canvas 2D)
   // ═══════════════════════════════════════════════════════════
 
   var mexicoCanvas, mexicoCtx;
-  var mexicoMapData = null; // projected state positions
+  var mexicoProject = null;
   var hoveredState = null;
+  var statePathCache = [];
 
   function initMexicoMap() {
     mexicoCanvas = document.getElementById('mexico-canvas');
     if (!mexicoCanvas) return;
 
     var container = mexicoCanvas.parentElement;
-    var cw = container.offsetWidth - 64; // padding
-    var aspect = 0.65; // Mexico is wider than tall
-    mexicoCanvas.width = cw * (window.devicePixelRatio || 1);
-    mexicoCanvas.height = cw * aspect * (window.devicePixelRatio || 1);
+    var cw = container.offsetWidth - 64;
+    var aspect = 0.6;
+    var dpr = window.devicePixelRatio || 1;
+    mexicoCanvas.width = cw * dpr;
+    mexicoCanvas.height = cw * aspect * dpr;
     mexicoCanvas.style.width = cw + 'px';
     mexicoCanvas.style.height = (cw * aspect) + 'px';
     mexicoCtx = mexicoCanvas.getContext('2d');
 
-    // Project and draw
-    mexicoMapData = projectMexicoMap(mexicoCanvas.width, mexicoCanvas.height);
+    setupMexicoProjection(mexicoCanvas.width, mexicoCanvas.height);
+    buildStatePathCache();
     drawMexicoMap();
 
-    // Interaction
     mexicoCanvas.addEventListener('mousemove', onMexicoMouseMove);
     mexicoCanvas.addEventListener('click', onMexicoClick);
     mexicoCanvas.addEventListener('mouseleave', function () {
@@ -615,16 +541,12 @@
       var tip = document.getElementById('mexico-tooltip');
       if (tip) tip.classList.remove('visible');
     });
-
-    // Touch support for mobile
     mexicoCanvas.addEventListener('touchend', function (e) {
       if (e.changedTouches.length === 1) {
         var touch = e.changedTouches[0];
         var rect = mexicoCanvas.getBoundingClientRect();
-        var x = touch.clientX - rect.left;
-        var y = touch.clientY - rect.top;
-        var state = getStateAtPosition(x, y);
-        if (state) {
+        var state = getStateAtPosition(touch.clientX - rect.left, touch.clientY - rect.top);
+        if (state && stateGroups[state]) {
           e.preventDefault();
           showStateDetail(state);
         }
@@ -632,162 +554,193 @@
     }, { passive: false });
   }
 
-  function projectMexicoMap(cw, ch) {
-    // Mexico bounding box
-    var minLng = -118, maxLng = -86;
-    var minLat = 14, maxLat = 33;
-    var padding = 0.08; // 8% padding
+  function setupMexicoProjection(cw, ch) {
+    var minLng = -118.5, maxLng = -86.5, minLat = 14, maxLat = 33;
+    var pad = 0.06;
+    var pw = cw * (1 - 2 * pad);
+    var ph = ch * (1 - 2 * pad);
+    var lngR = maxLng - minLng;
+    var latR = maxLat - minLat;
+    mexicoProject = function (lng, lat) {
+      return [
+        cw * pad + ((lng - minLng) / lngR) * pw,
+        ch * pad + ((maxLat - lat) / latR) * ph
+      ];
+    };
+  }
 
-    var w = maxLng - minLng;
-    var h = maxLat - minLat;
-    var pw = cw * (1 - 2 * padding);
-    var ph = ch * (1 - 2 * padding);
+  function buildStatePathCache() {
+    statePathCache = [];
+    if (!mexicoGeoJSON || !mexicoProject) return;
 
-    function project(lng, lat) {
-      var x = cw * padding + ((lng - minLng) / w) * pw;
-      var y = ch * padding + ((maxLat - lat) / h) * ph;
-      return [x, y];
-    }
+    mexicoGeoJSON.features.forEach(function (feature) {
+      var geoName = feature.properties.name;
+      var name = ourStateName(geoName);
+      var geom = feature.geometry;
+      var coordSets = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
 
-    // Project state positions
-    var states = {};
-    Object.keys(stateGroups).forEach(function (stateName) {
-      var center = STATE_CENTERS[stateName];
-      if (!center) return;
-      var pos = project(center.lng, center.lat);
-      states[stateName] = {
-        x: pos[0],
-        y: pos[1],
-        count: stateGroups[stateName].length,
-        abbr: center.abbr,
-        destinations: stateGroups[stateName]
-      };
+      var polygons = coordSets.map(function (rings) {
+        return rings.map(function (ring) {
+          return ring.map(function (c) { return mexicoProject(c[0], c[1]); });
+        });
+      });
+
+      statePathCache.push({
+        name: name,
+        polygons: polygons,
+        hasDestinations: !!stateGroups[name]
+      });
     });
-
-    // Project outlines
-    var outline = MEXICO_OUTLINE.map(function (p) { return project(p[0], p[1]); });
-    var baja = BAJA_OUTLINE.map(function (p) { return project(p[0], p[1]); });
-
-    return { states: states, outline: outline, baja: baja, project: project };
   }
 
   function drawMexicoMap() {
-    if (!mexicoCtx || !mexicoMapData) return;
+    if (!mexicoCtx) return;
     var ctx = mexicoCtx;
     var cw = mexicoCanvas.width;
     var ch = mexicoCanvas.height;
     var dpr = window.devicePixelRatio || 1;
 
-    // Clear
     ctx.clearRect(0, 0, cw, ch);
 
-    // Background
-    var bgGrad = ctx.createRadialGradient(cw / 2, ch / 2, 0, cw / 2, ch / 2, cw * 0.6);
-    bgGrad.addColorStop(0, 'rgba(15, 15, 35, 0.3)');
-    bgGrad.addColorStop(1, 'rgba(10, 10, 26, 0)');
-    ctx.fillStyle = bgGrad;
+    // Subtle background
+    var bg = ctx.createRadialGradient(cw / 2, ch / 2, 0, cw / 2, ch / 2, cw * 0.6);
+    bg.addColorStop(0, 'rgba(15, 15, 35, 0.3)');
+    bg.addColorStop(1, 'rgba(10, 10, 26, 0)');
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, cw, ch);
 
-    // Draw Mexico outline
-    ctx.strokeStyle = 'rgba(231, 42, 136, 0.3)';
-    ctx.lineWidth = 2 * dpr;
-    ctx.fillStyle = 'rgba(231, 42, 136, 0.05)';
+    if (!statePathCache.length) return;
 
-    // Mainland
-    ctx.beginPath();
-    mexicoMapData.outline.forEach(function (p, i) {
-      if (i === 0) ctx.moveTo(p[0], p[1]);
-      else ctx.lineTo(p[0], p[1]);
-    });
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Baja
-    ctx.beginPath();
-    mexicoMapData.baja.forEach(function (p, i) {
-      if (i === 0) ctx.moveTo(p[0], p[1]);
-      else ctx.lineTo(p[0], p[1]);
-    });
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Draw state markers
     var brandColors = [COLORS.rosa, COLORS.turquesa, COLORS.naranja, COLORS.verde];
     var colorIndex = 0;
 
-    Object.keys(mexicoMapData.states).forEach(function (stateName) {
-      var state = mexicoMapData.states[stateName];
-      var isHovered = hoveredState === stateName;
-      var baseRadius = (8 + state.count * 4) * dpr;
-      var radius = isHovered ? baseRadius * 1.3 : baseRadius;
-      var color = brandColors[colorIndex % brandColors.length];
+    // Assign a consistent color to each state-with-destinations
+    var stateColorMap = {};
+    Object.keys(stateGroups).forEach(function (name) {
+      stateColorMap[name] = brandColors[colorIndex % brandColors.length];
       colorIndex++;
+    });
+
+    // Draw all state polygons
+    statePathCache.forEach(function (state) {
+      var isHovered = hoveredState === state.name;
+      var hasDest = state.hasDestinations;
+      var color = stateColorMap[state.name];
+
+      state.polygons.forEach(function (rings) {
+        ctx.beginPath();
+        rings.forEach(function (ring) {
+          for (var i = 0; i < ring.length; i++) {
+            if (i === 0) ctx.moveTo(ring[i][0], ring[i][1]);
+            else ctx.lineTo(ring[i][0], ring[i][1]);
+          }
+          ctx.closePath();
+        });
+
+        if (hasDest) {
+          ctx.fillStyle = color;
+          ctx.globalAlpha = isHovered ? 0.75 : 0.3;
+          ctx.fill('evenodd');
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = isHovered ? '#ffffff' : color;
+          ctx.lineWidth = (isHovered ? 2.5 : 1.2) * dpr;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = isHovered ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)';
+          ctx.fill('evenodd');
+          ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+          ctx.lineWidth = 0.5 * dpr;
+          ctx.stroke();
+        }
+      });
+    });
+
+    // Draw destination count pins and labels
+    Object.keys(stateGroups).forEach(function (stateName) {
+      var center = STATE_CENTERS[stateName];
+      if (!center || !mexicoProject) return;
+      var pos = mexicoProject(center.lng, center.lat);
+      var count = stateGroups[stateName].length;
+      var isHovered = hoveredState === stateName;
+      var color = stateColorMap[stateName];
+      var baseR = (8 + count * 3) * dpr;
+      var r = isHovered ? baseR * 1.3 : baseR;
 
       // Glow
-      var glowGrad = ctx.createRadialGradient(state.x, state.y, 0, state.x, state.y, radius * 2);
-      glowGrad.addColorStop(0, color + '40');
-      glowGrad.addColorStop(1, color + '00');
-      ctx.fillStyle = glowGrad;
-      ctx.beginPath();
-      ctx.arc(state.x, state.y, radius * 2, 0, Math.PI * 2);
-      ctx.fill();
+      var glow = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], r * 2);
+      glow.addColorStop(0, color + '50');
+      glow.addColorStop(1, color + '00');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(pos[0], pos[1], r * 2, 0, Math.PI * 2); ctx.fill();
 
       // Main circle
       ctx.fillStyle = isHovered ? color : color + 'CC';
-      ctx.beginPath();
-      ctx.arc(state.x, state.y, radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Border
+      ctx.beginPath(); ctx.arc(pos[0], pos[1], r, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = isHovered ? '#ffffff' : color;
       ctx.lineWidth = (isHovered ? 2.5 : 1.5) * dpr;
       ctx.stroke();
 
-      // Count text
+      // Count
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold ' + (12 * dpr) + 'px Inter, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(state.count, state.x, state.y);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(count, pos[0], pos[1]);
 
-      // State label
+      // Abbreviation label
       ctx.fillStyle = isHovered ? '#ffffff' : 'rgba(255,255,255,0.7)';
       ctx.font = (isHovered ? 'bold ' : '') + (10 * dpr) + 'px Inter, sans-serif';
-      ctx.fillText(state.abbr, state.x, state.y + radius + 12 * dpr);
+      ctx.fillText(center.abbr, pos[0], pos[1] + r + 12 * dpr);
     });
   }
 
-  function getStateAtPosition(canvasX, canvasY) {
-    if (!mexicoMapData) return null;
-    var dpr = window.devicePixelRatio || 1;
-    var cx = canvasX * dpr;
-    var cy = canvasY * dpr;
-    var closest = null;
-    var closestDist = Infinity;
-
-    Object.keys(mexicoMapData.states).forEach(function (stateName) {
-      var state = mexicoMapData.states[stateName];
-      var radius = (8 + state.count * 4) * dpr;
-      var hitRadius = radius * 1.8; // generous hit area
-      var dx = cx - state.x;
-      var dy = cy - state.y;
-      var dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < hitRadius && dist < closestDist) {
-        closest = stateName;
-        closestDist = dist;
+  // Ray-casting point-in-polygon
+  function pointInRing(px, py, ring) {
+    var inside = false;
+    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      var xi = ring[i][0], yi = ring[i][1];
+      var xj = ring[j][0], yj = ring[j][1];
+      if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) {
+        inside = !inside;
       }
-    });
+    }
+    return inside;
+  }
 
-    return closest;
+  function pointInPolygons(px, py, polygons) {
+    for (var p = 0; p < polygons.length; p++) {
+      var rings = polygons[p];
+      if (rings.length > 0 && pointInRing(px, py, rings[0])) {
+        var inHole = false;
+        for (var h = 1; h < rings.length; h++) {
+          if (pointInRing(px, py, rings[h])) { inHole = true; break; }
+        }
+        if (!inHole) return true;
+      }
+    }
+    return false;
+  }
+
+  function getStateAtPosition(canvasX, canvasY) {
+    var dpr = window.devicePixelRatio || 1;
+    var px = canvasX * dpr, py = canvasY * dpr;
+
+    // Prioritize states with destinations
+    for (var i = 0; i < statePathCache.length; i++) {
+      if (statePathCache[i].hasDestinations && pointInPolygons(px, py, statePathCache[i].polygons)) {
+        return statePathCache[i].name;
+      }
+    }
+    for (var j = 0; j < statePathCache.length; j++) {
+      if (!statePathCache[j].hasDestinations && pointInPolygons(px, py, statePathCache[j].polygons)) {
+        return statePathCache[j].name;
+      }
+    }
+    return null;
   }
 
   function onMexicoMouseMove(e) {
     var rect = mexicoCanvas.getBoundingClientRect();
-    var x = e.clientX - rect.left;
-    var y = e.clientY - rect.top;
-    var state = getStateAtPosition(x, y);
+    var state = getStateAtPosition(e.clientX - rect.left, e.clientY - rect.top);
 
     if (state !== hoveredState) {
       hoveredState = state;
@@ -798,8 +751,12 @@
     var tip = document.getElementById('mexico-tooltip');
     if (state && tip) {
       var group = stateGroups[state];
-      var names = group.map(function (d) { return d.name; }).join(', ');
-      tip.innerHTML = '<h4>' + state + '</h4><p>' + group.length + ' destino' + (group.length > 1 ? 's' : '') + ': ' + names + '</p>';
+      if (group) {
+        var names = group.map(function (d) { return d.name; }).join(', ');
+        tip.innerHTML = '<h4>' + state + '</h4><p>' + group.length + ' destino' + (group.length > 1 ? 's' : '') + ': ' + names + '</p>';
+      } else {
+        tip.innerHTML = '<h4>' + state + '</h4><p>Pr&oacute;ximamente</p>';
+      }
       tip.style.left = (e.clientX + 15) + 'px';
       tip.style.top = (e.clientY - 10) + 'px';
       tip.classList.add('visible');
@@ -810,10 +767,8 @@
 
   function onMexicoClick(e) {
     var rect = mexicoCanvas.getBoundingClientRect();
-    var x = e.clientX - rect.left;
-    var y = e.clientY - rect.top;
-    var state = getStateAtPosition(x, y);
-    if (state) {
+    var state = getStateAtPosition(e.clientX - rect.left, e.clientY - rect.top);
+    if (state && stateGroups[state]) {
       showStateDetail(state);
     }
   }
@@ -834,10 +789,7 @@
     gridEl.innerHTML = '';
 
     destinations.forEach(function (d) {
-      var imageUrl = '';
-      if (IMAGE_MAP[d.slug] && IMAGE_MAP[d.slug].hero) {
-        imageUrl = IMAGE_MAP[d.slug].hero;
-      }
+      var imageUrl = (IMAGE_MAP[d.slug] && IMAGE_MAP[d.slug].hero) || '';
 
       var card = document.createElement('a');
       card.href = '/souvenirs/' + d.slug;
@@ -851,14 +803,11 @@
       html += '<div class="destination-card-name">' + d.name + '</div>';
       html += '<div class="destination-card-state">' + d.state + '</div>';
       html += '</div>';
-
       card.innerHTML = html;
       gridEl.appendChild(card);
     });
 
     showView('state');
-
-    // Update nav state button
     var navState = document.getElementById('nav-state');
     if (navState) navState.textContent = stateName;
   }
@@ -867,60 +816,42 @@
   // VIEW MANAGEMENT
   // ═══════════════════════════════════════════════════════════
 
-  var currentView = 'globe';
-
   function showView(view) {
-    currentView = view;
-
     var globeView = document.getElementById('globe-view');
     var mexicoView = document.getElementById('mexico-view');
     var stateView = document.getElementById('state-view');
     var explorerBtn = document.getElementById('globe-explore-btn');
     var tip = document.getElementById('mexico-tooltip');
-
-    // Hide tooltip
     if (tip) tip.classList.remove('visible');
 
-    // Toggle views
     if (globeView) {
-      if (view === 'globe') {
-        globeView.classList.remove('hidden');
-        if (explorerBtn) explorerBtn.style.display = '';
-      } else {
-        globeView.classList.add('hidden');
-      }
+      if (view === 'globe') { globeView.classList.remove('hidden'); if (explorerBtn) explorerBtn.style.display = ''; }
+      else { globeView.classList.add('hidden'); }
     }
     if (mexicoView) {
       if (view === 'mexico') {
         mexicoView.classList.add('active');
-        // Initialize Mexico map if first time
-        if (!mexicoMapData) initMexicoMap();
+        if (!statePathCache.length) initMexicoMap();
         else {
-          // Redraw in case of resize
           var container = mexicoCanvas.parentElement;
           var cw = container.offsetWidth - 64;
-          var aspect = 0.65;
+          var aspect = 0.6;
           var dpr = window.devicePixelRatio || 1;
           mexicoCanvas.width = cw * dpr;
           mexicoCanvas.height = cw * aspect * dpr;
           mexicoCanvas.style.width = cw + 'px';
           mexicoCanvas.style.height = (cw * aspect) + 'px';
-          mexicoMapData = projectMexicoMap(mexicoCanvas.width, mexicoCanvas.height);
+          setupMexicoProjection(mexicoCanvas.width, mexicoCanvas.height);
+          buildStatePathCache();
           drawMexicoMap();
         }
-      } else {
-        mexicoView.classList.remove('active');
-      }
+      } else { mexicoView.classList.remove('active'); }
     }
     if (stateView) {
-      if (view === 'state') {
-        stateView.classList.add('active');
-      } else {
-        stateView.classList.remove('active');
-      }
+      if (view === 'state') stateView.classList.add('active');
+      else stateView.classList.remove('active');
     }
 
-    // Update nav buttons
     updateNav(view);
   }
 
@@ -931,10 +862,7 @@
     var sep1 = document.getElementById('nav-sep1');
     var sep2 = document.getElementById('nav-sep2');
 
-    // Reset all
-    [navGlobe, navMexico, navState].forEach(function (btn) {
-      if (btn) btn.classList.remove('active');
-    });
+    [navGlobe, navMexico, navState].forEach(function (b) { if (b) b.classList.remove('active'); });
 
     if (view === 'globe') {
       if (navGlobe) navGlobe.classList.add('active');
@@ -943,14 +871,12 @@
       if (sep1) sep1.classList.add('hidden');
       if (sep2) sep2.classList.add('hidden');
     } else if (view === 'mexico') {
-      if (navGlobe) navGlobe.classList.remove('active');
       if (navMexico) { navMexico.classList.remove('hidden'); navMexico.classList.add('active'); }
       if (navState) navState.classList.add('hidden');
       if (sep1) sep1.classList.remove('hidden');
       if (sep2) sep2.classList.add('hidden');
     } else if (view === 'state') {
-      if (navGlobe) navGlobe.classList.remove('active');
-      if (navMexico) { navMexico.classList.remove('hidden'); navMexico.classList.remove('active'); }
+      if (navMexico) { navMexico.classList.remove('hidden'); }
       if (navState) { navState.classList.remove('hidden'); navState.classList.add('active'); }
       if (sep1) sep1.classList.remove('hidden');
       if (sep2) sep2.classList.remove('hidden');
@@ -962,23 +888,14 @@
   // ═══════════════════════════════════════════════════════════
 
   function bindEvents() {
-    // Explore Mexico button
     var exploreBtn = document.getElementById('globe-explore-btn');
-    if (exploreBtn) {
-      exploreBtn.addEventListener('click', function () {
-        showView('mexico');
-      });
-    }
+    if (exploreBtn) exploreBtn.addEventListener('click', function () { showView('mexico'); });
 
-    // Nav buttons
     var navGlobe = document.getElementById('nav-globe');
-    if (navGlobe) {
-      navGlobe.addEventListener('click', function () { showView('globe'); });
-    }
+    if (navGlobe) navGlobe.addEventListener('click', function () { showView('globe'); });
+
     var navMexico = document.getElementById('nav-mexico');
-    if (navMexico) {
-      navMexico.addEventListener('click', function () { showView('mexico'); });
-    }
+    if (navMexico) navMexico.addEventListener('click', function () { showView('mexico'); });
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -986,35 +903,28 @@
   // ═══════════════════════════════════════════════════════════
 
   function init() {
-    // Load destination images data
     loadImageMapping();
-    // Initialize Three.js globe
-    initGlobe();
-    // Bind UI events
-    bindEvents();
+
+    // Load geo data first, then initialize globe with real boundaries
+    loadGeoData().then(function () {
+      initGlobe();
+      bindEvents();
+    });
   }
 
   function loadImageMapping() {
-    // Try to fetch destination images
     try {
       var xhr = new XMLHttpRequest();
       xhr.open('GET', '/destination-images.json', true);
       xhr.onload = function () {
-        if (xhr.status === 200) {
-          IMAGE_MAP = JSON.parse(xhr.responseText);
-        }
+        if (xhr.status === 200) IMAGE_MAP = JSON.parse(xhr.responseText);
       };
       xhr.send();
     } catch (e) { /* silent */ }
   }
 
-  // Expose for external access
-  window.globeSection = {
-    init: init,
-    showView: showView
-  };
+  window.globeSection = { init: init, showView: showView };
 
-  // Auto-init when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
