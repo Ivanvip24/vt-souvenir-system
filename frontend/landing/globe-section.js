@@ -200,6 +200,9 @@
   var targetScale = 1.0, currentScale = 1.0;
   var SCALE_MIN = 1.0, SCALE_MAX = 2.8;
   var lastAppliedScale = 1.0;
+  var lastTextureScale = 1.0;
+  var currentEarthTexture = null;
+  var BASE_TEX_W = 4096, BASE_TEX_H = 2048;
 
   function initGlobe() {
     globeContainer = document.getElementById('globe-3d');
@@ -221,8 +224,9 @@
     var loading = document.getElementById('globe-loading');
     if (loading) loading.style.display = 'none';
 
-    // Earth texture from GeoJSON
-    var earthTexture = createEarthTexture();
+    // Earth texture from GeoJSON — vector data redrawn at any resolution
+    currentEarthTexture = createEarthTexture(1);
+    var earthTexture = currentEarthTexture;
 
     var sphereGeo = new THREE.SphereGeometry(1, 64, 64);
     var sphereMat = new THREE.MeshPhongMaterial({
@@ -261,9 +265,15 @@
     window.addEventListener('resize', onGlobeResize);
   }
 
-  function createEarthTexture() {
+  function createEarthTexture(scale) {
+    scale = scale || 1;
+    // Cap at 8192 wide for GPU compatibility
+    var w = Math.min(Math.round(BASE_TEX_W * scale), 8192);
+    var h = w / 2;
+    // Scale factor for line widths / dot radii (relative to 4096 base)
+    var s = w / BASE_TEX_W;
+
     var canvas = document.createElement('canvas');
-    var w = 4096, h = 2048;
     canvas.width = w;
     canvas.height = h;
     var ctx = canvas.getContext('2d');
@@ -280,7 +290,7 @@
 
     // Grid lines
     ctx.strokeStyle = 'rgba(40, 70, 120, 0.3)';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1 * s;
     for (var i = 0; i < 36; i++) {
       var x = (i / 36) * w;
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
@@ -292,30 +302,41 @@
 
     // World countries from Natural Earth data
     if (worldGeoJSON) {
-      drawWorldCountries(ctx, w, h);
+      drawWorldCountries(ctx, w, h, s);
     }
 
     // Mexico states highlighted
     if (mexicoGeoJSON) {
-      drawMexicoOnGlobe(ctx, w, h);
+      drawMexicoOnGlobe(ctx, w, h, s);
     }
 
     // Destination dots
-    drawDestinationDots(ctx, w, h);
+    drawDestinationDots(ctx, w, h, s);
 
-    return new THREE.CanvasTexture(canvas);
+    var tex = new THREE.CanvasTexture(canvas);
+    tex.anisotropy = renderer ? renderer.capabilities.getMaxAnisotropy() : 1;
+    return tex;
   }
 
-  function drawWorldCountries(ctx, w, h) {
-    // Fill all countries with dark green-teal
+  // Re-render texture at current zoom level for vector-crisp quality
+  function regenerateTexture(scale) {
+    if (!globe) return;
+    var newTex = createEarthTexture(scale);
+    globe.material.map = newTex;
+    globe.material.needsUpdate = true;
+    if (currentEarthTexture) currentEarthTexture.dispose();
+    currentEarthTexture = newTex;
+    lastTextureScale = scale;
+  }
+
+  function drawWorldCountries(ctx, w, h, s) {
     worldGeoJSON.features.forEach(function (feature) {
       drawGeoJSONFeature(ctx, feature, w, h, {
         fill: '#1a5545',
         stroke: '#2a8c6e',
-        lineWidth: 1.2
+        lineWidth: 1.2 * s
       });
     });
-    // Second pass: subtle inner highlight
     worldGeoJSON.features.forEach(function (feature) {
       drawGeoJSONFeature(ctx, feature, w, h, {
         fill: 'rgba(42, 140, 110, 0.12)'
@@ -323,52 +344,45 @@
     });
   }
 
-  function drawMexicoOnGlobe(ctx, w, h) {
-    // Pink highlight with glow on Mexico states
+  function drawMexicoOnGlobe(ctx, w, h, s) {
     ctx.save();
     ctx.shadowColor = '#e72a88';
-    ctx.shadowBlur = 30;
-
-    // Fill all Mexico states with pink
+    ctx.shadowBlur = 30 * s;
     mexicoGeoJSON.features.forEach(function (feature) {
       drawGeoJSONFeature(ctx, feature, w, h, {
         fill: 'rgba(231, 42, 136, 0.5)',
         stroke: '#ff4da6',
-        lineWidth: 2
+        lineWidth: 2 * s
       });
     });
     ctx.restore();
-
-    // Second pass: state borders for detail (no glow)
     mexicoGeoJSON.features.forEach(function (feature) {
       drawGeoJSONFeature(ctx, feature, w, h, {
         stroke: 'rgba(255, 77, 166, 0.5)',
-        lineWidth: 0.4
+        lineWidth: 0.5 * s
       });
     });
   }
 
-  function drawDestinationDots(ctx, w, h) {
+  function drawDestinationDots(ctx, w, h, s) {
     DESTINATIONS.forEach(function (d) {
       var uv = lngLatToUV(d.lng, d.lat, w, h);
-      // Glow ring
-      var grad = ctx.createRadialGradient(uv[0], uv[1], 0, uv[0], uv[1], 24);
+      var glowR = 24 * s, coreR = 5 * s, midR = 8 * s;
+      var grad = ctx.createRadialGradient(uv[0], uv[1], 0, uv[0], uv[1], glowR);
       grad.addColorStop(0, 'rgba(9, 173, 194, 0.9)');
       grad.addColorStop(0.4, 'rgba(9, 173, 194, 0.4)');
       grad.addColorStop(1, 'rgba(9, 173, 194, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(uv[0], uv[1], 24, 0, Math.PI * 2);
+      ctx.arc(uv[0], uv[1], glowR, 0, Math.PI * 2);
       ctx.fill();
-      // White core
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(uv[0], uv[1], 5, 0, Math.PI * 2);
+      ctx.arc(uv[0], uv[1], coreR, 0, Math.PI * 2);
       ctx.fill();
-      // Cyan mid-ring
       ctx.fillStyle = 'rgba(9, 220, 255, 0.9)';
       ctx.beginPath();
-      ctx.arc(uv[0], uv[1], 8, 0, Math.PI * 2);
+      ctx.arc(uv[0], uv[1], midR, 0, Math.PI * 2);
       ctx.fill();
     });
   }
@@ -500,10 +514,13 @@
     currentScale += (targetScale - currentScale) * 0.1;
     if (Math.abs(currentScale - lastAppliedScale) > 0.005) {
       renderer.domElement.style.transform = 'scale(' + currentScale.toFixed(3) + ')';
-      // Increase pixel ratio when zoomed to maintain sharpness
-      var newRatio = Math.min(window.devicePixelRatio * currentScale, 4);
-      renderer.setPixelRatio(newRatio);
       lastAppliedScale = currentScale;
+    }
+
+    // Regenerate earth texture at higher resolution when zoom changes
+    // GeoJSON is vector data → redrawn crisp at any resolution (up to 8192x4096)
+    if (Math.abs(currentScale - lastTextureScale) > 0.12) {
+      regenerateTexture(currentScale);
     }
 
     if (globe) { globe.rotation.y = currentRotationY; globe.rotation.x = currentRotationX; }
