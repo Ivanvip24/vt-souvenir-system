@@ -396,6 +396,88 @@
         .models-table td:first-child { font-weight: 500; color: var(--gray-800); }
         .models-table td:last-child { text-align: right; color: var(--accent); font-weight: 600; }
 
+        /* -- REVIEWS -- */
+        .reviews-section {
+            padding: 60px 5% 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .reviews-title {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .reviews-overview {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 40px;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 32px;
+            background: var(--gray-100);
+            border-radius: 16px;
+        }
+        .rating-summary { text-align: center; }
+        .rating-big {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            line-height: 1;
+            display: block;
+        }
+        .rating-stars-big { color: #f5a623; font-size: 1.4rem; letter-spacing: 3px; margin: 8px 0; }
+        .rating-count { font-size: 0.85rem; color: #888; }
+        .rating-bars { display: flex; flex-direction: column; gap: 8px; }
+        .bar-row { display: flex; align-items: center; gap: 12px; }
+        .bar-label { font-size: 0.8rem; color: #888; width: 30px; text-align: right; }
+        .bar-track { flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--accent); border-radius: 4px; width: 0; transition: width 1s ease; }
+        .bar-count { font-size: 0.8rem; color: #888; width: 28px; }
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .review-card {
+            background: #fff;
+            border: 1px solid #f0f0f0;
+            border-radius: 16px;
+            padding: 24px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.3s;
+        }
+        .review-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s;
+        }
+        .review-card.visible:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
+        .review-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .review-avatar {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: var(--accent); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; flex-shrink: 0;
+        }
+        .review-info { flex: 1; }
+        .review-name { font-weight: 600; font-size: 0.9rem; display: block; }
+        .review-location { font-size: 0.78rem; color: #999; }
+        .review-date { margin-left: auto; font-size: 0.75rem; color: #bbb; flex-shrink: 0; }
+        .review-stars { color: #f5a623; font-size: 0.9rem; letter-spacing: 1px; margin-bottom: 8px; }
+        .review-text { font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 12px; }
+        .review-verified { font-size: 0.75rem; color: var(--accent); font-weight: 500; }
+        @media (max-width: 768px) {
+            .reviews-overview { grid-template-columns: 1fr; text-align: center; }
+            .rating-summary { padding-bottom: 16px; border-bottom: 1px solid #e8e8e8; }
+            .reviews-grid { grid-template-columns: 1fr; }
+        }
+
         /* -- RELATED PRODUCTS -- */
         .related-section {
             padding: 60px 5%;
@@ -664,6 +746,79 @@
         </div>
     </div>
 
+    <!-- REVIEWS -->
+    <section class="reviews-section">
+        <h2 class="reviews-title reveal">Lo que dicen nuestros clientes</h2>
+
+        <div class="reviews-overview reveal">
+            <div class="rating-summary">
+                <span class="rating-big">4.8</span>
+                <div class="rating-stars-big">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <span class="rating-count">45 resenas</span>
+            </div>
+            <div class="rating-bars">
+                <div class="bar-row"><span class="bar-label">5 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="82"></div></div><span class="bar-count">37</span></div>
+                <div class="bar-row"><span class="bar-label">4 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="13"></div></div><span class="bar-count">6</span></div>
+                <div class="bar-row"><span class="bar-label">3 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="5"></div></div><span class="bar-count">2</span></div>
+                <div class="bar-row"><span class="bar-label">2 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="0"></div></div><span class="bar-count">0</span></div>
+                <div class="bar-row"><span class="bar-label">1 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="0"></div></div><span class="bar-count">0</span></div>
+            </div>
+        </div>
+
+        <div class="reviews-grid">
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-avatar">RN</div>
+                    <div class="review-info"><span class="review-name">Ricardo N.</span><span class="review-location">Puerto Vallarta, JAL</span></div>
+                    <span class="review-date">Ene 2026</span>
+                </div>
+                <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p class="review-text">Un souvenir que realmente se usa. El destapador funciona perfecto y el iman lo mantiene en el refri. Diseno y funcion en uno solo.</p>
+                <span class="review-verified">&#10003; Compra verificada</span>
+            </div>
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-avatar">MG</div>
+                    <div class="review-info"><span class="review-name">Monica G.</span><span class="review-location">Cancun, QR</span></div>
+                    <span class="review-date">Dic 2025</span>
+                </div>
+                <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p class="review-text">Pedi 300 para mi tienda y son el producto que mas rapido se vende. Los turistas los aman porque son utiles y decorativos a la vez.</p>
+                <span class="review-verified">&#10003; Compra verificada</span>
+            </div>
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-avatar">AF</div>
+                    <div class="review-info"><span class="review-name">Alejandro F.</span><span class="review-location">Los Cabos, BCS</span></div>
+                    <span class="review-date">Nov 2025</span>
+                </div>
+                <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9734;</div>
+                <p class="review-text">Muy buena calidad. El mecanismo destapador es resistente y el diseno personalizado quedo genial. Buen souvenir para bares y restaurantes.</p>
+                <span class="review-verified">&#10003; Compra verificada</span>
+            </div>
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-avatar">DC</div>
+                    <div class="review-info"><span class="review-name">Daniela C.</span><span class="review-location">Playa del Carmen, QR</span></div>
+                    <span class="review-date">Oct 2025</span>
+                </div>
+                <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p class="review-text">El doble remache del destapador lo hace muy duradero. He probado otros proveedores y estos son los mejores con diferencia.</p>
+                <span class="review-verified">&#10003; Compra verificada</span>
+            </div>
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-avatar">TR</div>
+                    <div class="review-info"><span class="review-name">Tomas R.</span><span class="review-location">Mazatlan, SIN</span></div>
+                    <span class="review-date">Sep 2025</span>
+                </div>
+                <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                <p class="review-text">Excelente para regalos corporativos. Pedimos con nuestro logo de cerveceria y quedaron increibles. Repetiremos pedido seguro.</p>
+                <span class="review-verified">&#10003; Compra verificada</span>
+            </div>
+        </div>
+    </section>
+
     <!-- RELATED PRODUCTS -->
     <section class="related-section">
         <div class="related-container">
@@ -776,6 +931,37 @@
         }
         window.addEventListener('scroll', revealOnScroll);
         revealOnScroll();
+
+        // -- Animate rating bars --
+        var barsAnimated = false;
+        function animateBars() {
+            if (barsAnimated) return;
+            var bars = document.querySelector('.rating-bars');
+            if (bars && bars.getBoundingClientRect().top < window.innerHeight - 50) {
+                barsAnimated = true;
+                document.querySelectorAll('.bar-fill').forEach(function(bar) {
+                    bar.style.width = bar.getAttribute('data-width') + '%';
+                });
+            }
+        }
+        window.addEventListener('scroll', animateBars);
+        animateBars();
+
+        // -- Staggered review cards --
+        var reviewCards = document.querySelectorAll('.review-card');
+        var reviewsAnimated = false;
+        function animateReviews() {
+            if (reviewsAnimated) return;
+            var grid = document.querySelector('.reviews-grid');
+            if (grid && grid.getBoundingClientRect().top < window.innerHeight - 80) {
+                reviewsAnimated = true;
+                reviewCards.forEach(function(card, i) {
+                    setTimeout(function() { card.classList.add('visible'); }, i * 100);
+                });
+            }
+        }
+        window.addEventListener('scroll', animateReviews);
+        animateReviews();
 
         // -- Hamburger menu --
         var hamburger = document.querySelector('.nav-hamburger');
