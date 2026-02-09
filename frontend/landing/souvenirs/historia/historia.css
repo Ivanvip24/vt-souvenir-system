@@ -233,12 +233,45 @@ a {
   line-height: 0.95;
   letter-spacing: 0.02em;
   color: #FFFFFF;
-  text-shadow:
-    0 4px 30px rgba(0,0,0,0.5),
-    0 2px 10px rgba(0,0,0,0.3);
   margin-bottom: var(--space-md);
   opacity: 0;
   animation: fadeInUp 0.8s var(--ease-out) 0.5s forwards;
+
+  /* Gradient shine effect */
+  background: linear-gradient(
+    120deg,
+    #FFFFFF 0%,
+    #FFFFFF 25%,
+    #e72a88 30%,
+    #8ab73b 35%,
+    #f39223 40%,
+    #09adc2 45%,
+    #e52421 50%,
+    #FFFFFF 55%,
+    #FFFFFF 100%
+  );
+  background-size: 300% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation:
+    fadeInUp 0.8s var(--ease-out) 0.5s forwards,
+    textShine 4s ease-in-out 1.5s infinite;
+
+  /* Text shadow for depth (applied via filter since text-fill is transparent) */
+  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.4));
+}
+
+@keyframes textShine {
+  0% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
 }
 
 .hero-tagline {
