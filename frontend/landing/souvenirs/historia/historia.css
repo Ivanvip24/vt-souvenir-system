@@ -149,6 +149,30 @@ a {
   z-index: -1;
 }
 
+.hero-video {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Hide fallback image when video is playing */
+.hero-video + .hero-fallback {
+  display: none;
+}
+
+/* Show fallback if video fails to load */
+.hero-video:not([src]),
+.hero-video[src=""] {
+  display: none;
+}
+
+.hero-video:not([src]) + .hero-fallback,
+.hero-video[src=""] + .hero-fallback {
+  display: block;
+}
+
 .hero-img {
   width: 100%;
   height: 100%;
