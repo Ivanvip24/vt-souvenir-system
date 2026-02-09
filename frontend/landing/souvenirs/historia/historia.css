@@ -236,23 +236,25 @@ a {
   margin-bottom: var(--space-md);
 
   /* Vibrant AXKAN color shine effect */
-  background: linear-gradient(
-    110deg,
-    #FFFFFF 0%,
-    #FFFFFF 40%,
-    #e72a88 45%,
-    #8ab73b 50%,
-    #f39223 55%,
-    #09adc2 60%,
-    #e52421 65%,
-    #FFFFFF 70%,
-    #FFFFFF 100%
-  );
-  background-size: 300% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
+  background:
+    linear-gradient(
+      110deg,
+      transparent 0%,
+      transparent 20%,
+      #e72a88 22%,
+      #8ab73b 26%,
+      #f39223 30%,
+      #09adc2 34%,
+      #e52421 38%,
+      transparent 40%,
+      transparent 100%
+    ),
+    linear-gradient(#FFFFFF, #FFFFFF);
+  background-size: 200% 100%, 100% 100%;
+  background-clip: text, text;
+  -webkit-background-clip: text, text;
   -webkit-text-fill-color: transparent;
-  animation: metallicShine 3s linear infinite;
+  animation: metallicShine 3s ease-in-out infinite;
 
   /* Bright glow effect */
   filter: drop-shadow(0 0 25px rgba(255,255,255,0.5)) drop-shadow(0 4px 15px rgba(0,0,0,0.4));
@@ -260,10 +262,10 @@ a {
 
 @keyframes metallicShine {
   0% {
-    background-position: 100% 50%;
+    background-position: -50% 0, 0 0;
   }
   100% {
-    background-position: -100% 50%;
+    background-position: 150% 0, 0 0;
   }
 }
 
