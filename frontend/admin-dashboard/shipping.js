@@ -1856,6 +1856,12 @@ function showShippingResult(result) {
   const labels = result.labels || [];
   const firstLabel = labels[0] || {};
 
+  // Store label ID for refresh functionality
+  shippingQuoteState.generatedLabelId = firstLabel.id;
+
+  const hasLabelUrl = firstLabel.label_url && firstLabel.label_url.trim() !== '';
+  const hasTracking = firstLabel.tracking_number && firstLabel.tracking_number.trim() !== '';
+
   resultDetails.innerHTML = `
     <div class="result-detail">
       <span class="result-label">Paquetería:</span>
@@ -1865,9 +1871,13 @@ function showShippingResult(result) {
       <span class="result-label">Guías generadas:</span>
       <span class="result-value">${labels.length}</span>
     </div>
-    ${firstLabel.tracking_number ? `
     <div class="result-detail">
-      <span class="result-label">Rastreo:</span>
+      <span class="result-label">ID de etiqueta:</span>
+      <span class="result-value">#${firstLabel.id || '?'}</span>
+    </div>
+    ${hasTracking ? `
+    <div class="result-detail">
+      <span class="result-label">Número de rastreo:</span>
       <span class="result-value">${escapeHtml(firstLabel.tracking_number)}</span>
     </div>
     ` : ''}
@@ -1875,17 +1885,106 @@ function showShippingResult(result) {
       <span class="result-label">Tiempo de entrega:</span>
       <span class="result-value">${firstLabel.delivery_days || '?'} día(s)</span>
     </div>
-    ${firstLabel.label_url ? `
+    ${hasLabelUrl ? `
     <a href="${firstLabel.label_url}" target="_blank" class="shipping-quote-btn primary" style="margin-top: 16px; display: inline-block; text-decoration: none;">
       🏷️ Descargar Etiqueta
     </a>
-    ` : '<p style="margin-top: 16px; color: #f59e0b;">La etiqueta estará disponible en unos momentos.</p>'}
+    ` : `
+    <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px;">
+      <p style="color: #92400e; margin: 0 0 12px 0;">⏳ La etiqueta se está generando...</p>
+      <button class="shipping-quote-btn primary" onclick="refreshLabelStatus(${firstLabel.id})" id="refresh-label-btn">
+        🔄 Verificar Estado
+      </button>
+    </div>
+    `}
   `;
 
   resultSection.classList.remove('hidden');
 
   showNotification('¡Guía generada exitosamente!', 'success');
+
+  // Auto-refresh after 3 seconds if no label URL
+  if (!hasLabelUrl && firstLabel.id) {
+    setTimeout(() => {
+      refreshLabelStatus(firstLabel.id);
+    }, 3000);
+  }
 }
+
+/**
+ * Refresh label status to check if tracking/URL are ready
+ */
+async function refreshLabelStatus(labelId) {
+  const btn = document.getElementById('refresh-label-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Verificando...';
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/shipping/labels/${labelId}/refresh-tracking`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+
+    if (result.success && result.tracking_number) {
+      // Update the display with new tracking info
+      const resultDetails = document.getElementById('shipping-result-details');
+      const existingContent = resultDetails.innerHTML;
+
+      // Add tracking number if we got one
+      if (!existingContent.includes('Número de rastreo')) {
+        const trackingHtml = `
+          <div class="result-detail">
+            <span class="result-label">Número de rastreo:</span>
+            <span class="result-value">${escapeHtml(result.tracking_number)}</span>
+          </div>
+        `;
+        resultDetails.innerHTML = existingContent.replace(
+          '<div style="margin-top: 16px; padding: 12px; background: #fef3c7',
+          trackingHtml + '<div style="margin-top: 16px; padding: 12px; background: #fef3c7'
+        );
+      }
+
+      // If we have label URL now, replace the waiting message
+      if (result.label_url) {
+        const downloadBtn = `
+          <a href="${result.label_url}" target="_blank" class="shipping-quote-btn primary" style="margin-top: 16px; display: inline-block; text-decoration: none;">
+            🏷️ Descargar Etiqueta
+          </a>
+        `;
+        resultDetails.innerHTML = resultDetails.innerHTML.replace(
+          /<div style="margin-top: 16px; padding: 12px; background: #fef3c7.*?<\/div>\s*<\/div>/s,
+          downloadBtn
+        );
+        showNotification('¡Etiqueta lista para descargar!', 'success');
+      } else {
+        showNotification(`Rastreo: ${result.tracking_number}`, 'info');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '🔄 Verificar Estado';
+        }
+      }
+    } else {
+      showNotification('Etiqueta aún procesándose, intenta en unos segundos', 'info');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '🔄 Verificar Estado';
+      }
+    }
+  } catch (error) {
+    console.error('Error refreshing label:', error);
+    showNotification('Error al verificar estado', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🔄 Verificar Estado';
+    }
+  }
+}
+
+window.refreshLabelStatus = refreshLabelStatus;
 
 // Export functions globally
 window.triggerImportCSV = triggerImportCSV;
