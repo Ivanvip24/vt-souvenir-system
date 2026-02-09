@@ -243,12 +243,21 @@ a {
 }
 
 .hero-subtitle {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.7);
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
   opacity: 0;
   animation: fadeInUp 0.8s var(--ease-out) 1.4s forwards;
+}
+
+@media (min-width: 768px) {
+  .hero-subtitle {
+    font-size: 2.2rem;
+  }
 }
 
 .scroll-indicator {
