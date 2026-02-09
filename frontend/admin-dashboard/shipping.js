@@ -1698,8 +1698,15 @@ function selectShippingRate(index) {
   document.querySelectorAll('.carrier-option').forEach(el => el.classList.remove('selected'));
   document.querySelector(`[data-rate-index="${index}"]`)?.classList.add('selected');
 
-  // Show generate button
-  document.getElementById('shipping-generate-section')?.classList.remove('hidden');
+  // Show generate button and scroll it into view
+  const generateSection = document.getElementById('shipping-generate-section');
+  if (generateSection) {
+    generateSection.classList.remove('hidden');
+    // Scroll the generate button into view
+    setTimeout(() => {
+      generateSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  }
 }
 
 /**
