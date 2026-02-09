@@ -235,28 +235,27 @@ a {
   color: #FFFFFF;
   margin-bottom: var(--space-md);
 
-  /* Metallic bright shine effect */
+  /* Vibrant AXKAN color shine effect */
   background: linear-gradient(
     110deg,
     #FFFFFF 0%,
-    #FFFFFF 35%,
-    #ffe6f3 38%,
-    #ffd4ec 40%,
-    #FFFFFF 42%,
-    #e0ffff 44%,
-    #FFFFFF 46%,
-    #fff8e0 48%,
-    #FFFFFF 50%,
+    #FFFFFF 30%,
+    #e72a88 35%,
+    #8ab73b 40%,
+    #f39223 45%,
+    #09adc2 50%,
+    #e52421 55%,
+    #FFFFFF 60%,
     #FFFFFF 100%
   );
   background-size: 250% 100%;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: metallicShine 2.5s linear infinite;
+  animation: metallicShine 3.5s linear infinite;
 
   /* Bright glow effect */
-  filter: drop-shadow(0 0 20px rgba(255,255,255,0.4)) drop-shadow(0 4px 15px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 0 25px rgba(255,255,255,0.5)) drop-shadow(0 4px 15px rgba(0,0,0,0.4));
 }
 
 @keyframes metallicShine {
