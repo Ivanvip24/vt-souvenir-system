@@ -239,16 +239,16 @@ a {
   background: linear-gradient(
     110deg,
     #FFFFFF 0%,
-    #FFFFFF 30%,
-    #e72a88 35%,
-    #8ab73b 40%,
-    #f39223 45%,
-    #09adc2 50%,
-    #e52421 55%,
-    #FFFFFF 60%,
+    #FFFFFF 40%,
+    #e72a88 45%,
+    #8ab73b 50%,
+    #f39223 55%,
+    #09adc2 60%,
+    #e52421 65%,
+    #FFFFFF 70%,
     #FFFFFF 100%
   );
-  background-size: 250% 100%;
+  background-size: 300% 100%;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -260,10 +260,10 @@ a {
 
 @keyframes metallicShine {
   0% {
-    background-position: 200% 50%;
+    background-position: 100% 50%;
   }
   100% {
-    background-position: -50% 50%;
+    background-position: -100% 50%;
   }
 }
 
