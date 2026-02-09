@@ -1690,7 +1690,6 @@ function renderShippingRates(rates) {
 
   list.innerHTML = rates.map((rate, index) => `
     <div class="carrier-option ${index === 0 ? 'cheapest' : ''}"
-         onclick="selectShippingRate(${index})"
          data-rate-index="${index}">
       <div class="carrier-option-main">
         <div class="carrier-name">${escapeHtml(rate.carrier)}</div>
@@ -1705,6 +1704,17 @@ function renderShippingRates(rates) {
   `).join('');
 
   container.classList.remove('hidden');
+
+  // Add click event listeners to each carrier option
+  list.querySelectorAll('.carrier-option').forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const index = parseInt(this.getAttribute('data-rate-index'));
+      console.log('Carrier clicked, index:', index);
+      selectShippingRate(index);
+    });
+  });
 
   // Show generate section with hint (button disabled until selection)
   const generateSection = document.getElementById('shipping-generate-section');
@@ -1721,7 +1731,16 @@ function renderShippingRates(rates) {
  * Select a shipping rate
  */
 function selectShippingRate(index) {
+  console.log('selectShippingRate called with index:', index);
+  console.log('Available rates:', shippingQuoteState.rates);
+
   const rate = shippingQuoteState.rates[index];
+  if (!rate) {
+    console.error('No rate found at index:', index);
+    return;
+  }
+
+  console.log('Selected rate:', rate);
   shippingQuoteState.selectedRate = rate;
 
   // Update UI - highlight selected carrier

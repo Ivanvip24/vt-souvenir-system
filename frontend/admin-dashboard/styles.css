@@ -6770,6 +6770,9 @@ textarea:disabled {
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
+  z-index: 10;
+  pointer-events: auto;
+  background: white;
 }
 
 .carrier-option:hover {
@@ -6850,6 +6853,8 @@ textarea:disabled {
   padding: 20px 24px;
   margin-bottom: -24px;
   border-radius: 0 0 16px 16px;
+  position: relative;
+  z-index: 1;
 }
 
 .shipping-generate-section .generate-hint {
