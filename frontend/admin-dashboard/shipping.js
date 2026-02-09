@@ -380,7 +380,7 @@ async function showClientDetailPopup(clientId) {
     popup.innerHTML = `
       <div class="client-popup-content">
         <div class="client-popup-header">
-          <h3>${escapeHtml(client.name)}</h3>
+          <h3>${escapeHtml(client.name)} <span class="client-id-badge">#${client.id}</span></h3>
           <button class="client-popup-close" onclick="document.getElementById('client-detail-popup').remove()">&times;</button>
         </div>
 
@@ -447,6 +447,11 @@ async function showClientDetailPopup(clientId) {
           <button class="client-popup-btn secondary" onclick="document.getElementById('client-detail-popup').remove()">
             Cerrar
           </button>
+          ${hasFullAddress ? `
+          <button class="client-popup-btn shipping" onclick="showShippingQuoteModal(${client.id}, '${escapeHtml(client.name).replace(/'/g, "\\'")}', '${escapeHtml(client.city || '')}', '${escapeHtml(client.state || '')}', '${postal}')">
+            📦 Recolección
+          </button>
+          ` : ''}
           <button class="client-popup-btn primary" onclick="document.getElementById('client-detail-popup').remove(); editClient(${client.id})">
             Editar
           </button>
@@ -1473,6 +1478,307 @@ async function autoCompleteAddresses() {
   }
 }
 
+// ==========================================
+// SHIPPING QUOTE MODAL
+// ==========================================
+
+let shippingQuoteState = {
+  clientId: null,
+  clientName: '',
+  packagesCount: 1,
+  quotationId: null,
+  rates: [],
+  selectedRate: null
+};
+
+/**
+ * Show shipping quote modal for a client
+ */
+function showShippingQuoteModal(clientId, clientName, city, state, postal) {
+  // Reset state
+  shippingQuoteState = {
+    clientId,
+    clientName,
+    city,
+    state,
+    postal,
+    packagesCount: 1,
+    quotationId: null,
+    rates: [],
+    selectedRate: null
+  };
+
+  // Remove existing modal
+  const existing = document.getElementById('shipping-quote-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'shipping-quote-modal';
+  modal.className = 'shipping-quote-overlay';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+  modal.innerHTML = `
+    <div class="shipping-quote-content">
+      <div class="shipping-quote-header">
+        <h3>📦 Solicitar Recolección</h3>
+        <button class="shipping-quote-close" onclick="document.getElementById('shipping-quote-modal').remove()">&times;</button>
+      </div>
+
+      <div class="shipping-quote-body">
+        <div class="shipping-quote-client-info">
+          <div class="shipping-quote-client-name">${escapeHtml(clientName)}</div>
+          <div class="shipping-quote-client-location">📍 ${escapeHtml(city || '')}, ${escapeHtml(state || '')} CP ${escapeHtml(postal || '')}</div>
+        </div>
+
+        <div class="shipping-quote-input-section">
+          <label>¿Cuántas cajas enviarás?</label>
+          <div class="shipping-quote-counter">
+            <button type="button" class="counter-btn minus" onclick="updatePackagesCount(-1)">−</button>
+            <input type="number" id="packages-count-input" value="1" min="1" max="20" onchange="updatePackagesCountInput(this.value)">
+            <button type="button" class="counter-btn plus" onclick="updatePackagesCount(1)">+</button>
+          </div>
+        </div>
+
+        <button class="shipping-quote-btn primary" id="quote-btn" onclick="fetchShippingQuotesUI()">
+          🔍 Cotizar Envío
+        </button>
+
+        <div id="shipping-rates-container" class="shipping-rates-container hidden">
+          <div class="shipping-rates-header">Opciones de envío:</div>
+          <div id="shipping-rates-list" class="shipping-rates-list"></div>
+        </div>
+
+        <div id="shipping-generate-section" class="shipping-generate-section hidden">
+          <button class="shipping-quote-btn success" id="generate-btn" onclick="generateClientLabelUI()">
+            ✅ Generar Guía
+          </button>
+        </div>
+
+        <div id="shipping-result-section" class="shipping-result-section hidden">
+          <div class="shipping-result-success">
+            <span class="shipping-result-icon">✅</span>
+            <span class="shipping-result-text">¡Guía generada exitosamente!</span>
+          </div>
+          <div id="shipping-result-details" class="shipping-result-details"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+/**
+ * Update packages count
+ */
+function updatePackagesCount(delta) {
+  const input = document.getElementById('packages-count-input');
+  let newVal = parseInt(input.value) + delta;
+  newVal = Math.max(1, Math.min(20, newVal));
+  input.value = newVal;
+  shippingQuoteState.packagesCount = newVal;
+
+  // Clear previous quotes when count changes
+  clearQuoteResults();
+}
+
+function updatePackagesCountInput(value) {
+  let newVal = parseInt(value) || 1;
+  newVal = Math.max(1, Math.min(20, newVal));
+  document.getElementById('packages-count-input').value = newVal;
+  shippingQuoteState.packagesCount = newVal;
+  clearQuoteResults();
+}
+
+function clearQuoteResults() {
+  document.getElementById('shipping-rates-container')?.classList.add('hidden');
+  document.getElementById('shipping-generate-section')?.classList.add('hidden');
+  shippingQuoteState.rates = [];
+  shippingQuoteState.selectedRate = null;
+}
+
+/**
+ * Fetch shipping quotes from API
+ */
+async function fetchShippingQuotesUI() {
+  const btn = document.getElementById('quote-btn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '⏳ Cotizando...';
+  btn.disabled = true;
+
+  try {
+    const { clientId, packagesCount } = shippingQuoteState;
+
+    const response = await fetch(`${API_BASE}/shipping/clients/${clientId}/quotes?packagesCount=${packagesCount}`, {
+      headers: getAuthHeaders()
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Error al obtener cotizaciones');
+    }
+
+    shippingQuoteState.quotationId = result.quotation_id;
+    shippingQuoteState.rates = result.rates;
+
+    // Render rates
+    renderShippingRates(result.rates);
+
+  } catch (error) {
+    console.error('Error fetching quotes:', error);
+    showNotification(error.message || 'Error al cotizar', 'error');
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+/**
+ * Render shipping rates in the modal
+ */
+function renderShippingRates(rates) {
+  const container = document.getElementById('shipping-rates-container');
+  const list = document.getElementById('shipping-rates-list');
+
+  if (!rates || rates.length === 0) {
+    list.innerHTML = '<div class="no-rates">No hay opciones disponibles para este destino</div>';
+    container.classList.remove('hidden');
+    return;
+  }
+
+  list.innerHTML = rates.map((rate, index) => `
+    <div class="carrier-option ${index === 0 ? 'cheapest' : ''}"
+         onclick="selectShippingRate(${index})"
+         data-rate-index="${index}">
+      <div class="carrier-option-main">
+        <div class="carrier-name">${escapeHtml(rate.carrier)}</div>
+        <div class="carrier-service">${escapeHtml(rate.service)}</div>
+      </div>
+      <div class="carrier-option-details">
+        <div class="carrier-price">${rate.priceFormatted}</div>
+        <div class="carrier-days">${rate.daysText}</div>
+      </div>
+      ${index === 0 ? '<span class="cheapest-badge">Más económico</span>' : ''}
+    </div>
+  `).join('');
+
+  container.classList.remove('hidden');
+}
+
+/**
+ * Select a shipping rate
+ */
+function selectShippingRate(index) {
+  const rate = shippingQuoteState.rates[index];
+  shippingQuoteState.selectedRate = rate;
+
+  // Update UI
+  document.querySelectorAll('.carrier-option').forEach(el => el.classList.remove('selected'));
+  document.querySelector(`[data-rate-index="${index}"]`)?.classList.add('selected');
+
+  // Show generate button
+  document.getElementById('shipping-generate-section')?.classList.remove('hidden');
+}
+
+/**
+ * Generate shipping label
+ */
+async function generateClientLabelUI() {
+  const btn = document.getElementById('generate-btn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '⏳ Generando...';
+  btn.disabled = true;
+
+  try {
+    const { clientId, packagesCount, quotationId, selectedRate } = shippingQuoteState;
+
+    if (!selectedRate) {
+      throw new Error('Selecciona una opción de envío');
+    }
+
+    const response = await fetch(`${API_BASE}/shipping/clients/${clientId}/generate`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        labelsCount: packagesCount,
+        quotationId: quotationId,
+        rateId: selectedRate.rate_id,
+        selectedRate: {
+          rate_id: selectedRate.rate_id,
+          carrier: selectedRate.carrier,
+          service: selectedRate.service,
+          total_price: selectedRate.price,
+          days: selectedRate.days
+        }
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Error al generar guía');
+    }
+
+    // Show success
+    showShippingResult(result);
+
+  } catch (error) {
+    console.error('Error generating label:', error);
+    showNotification(error.message || 'Error al generar guía', 'error');
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+/**
+ * Show shipping generation result
+ */
+function showShippingResult(result) {
+  // Hide quote sections
+  document.querySelector('.shipping-quote-input-section')?.classList.add('hidden');
+  document.getElementById('quote-btn')?.classList.add('hidden');
+  document.getElementById('shipping-rates-container')?.classList.add('hidden');
+  document.getElementById('shipping-generate-section')?.classList.add('hidden');
+
+  // Show result section
+  const resultSection = document.getElementById('shipping-result-section');
+  const resultDetails = document.getElementById('shipping-result-details');
+
+  const labels = result.labels || [];
+  const firstLabel = labels[0] || {};
+
+  resultDetails.innerHTML = `
+    <div class="result-detail">
+      <span class="result-label">Paquetería:</span>
+      <span class="result-value">${escapeHtml(firstLabel.carrier || '')} - ${escapeHtml(firstLabel.service || '')}</span>
+    </div>
+    <div class="result-detail">
+      <span class="result-label">Guías generadas:</span>
+      <span class="result-value">${labels.length}</span>
+    </div>
+    ${firstLabel.tracking_number ? `
+    <div class="result-detail">
+      <span class="result-label">Rastreo:</span>
+      <span class="result-value">${escapeHtml(firstLabel.tracking_number)}</span>
+    </div>
+    ` : ''}
+    <div class="result-detail">
+      <span class="result-label">Tiempo de entrega:</span>
+      <span class="result-value">${firstLabel.delivery_days || '?'} día(s)</span>
+    </div>
+    ${firstLabel.label_url ? `
+    <a href="${firstLabel.label_url}" target="_blank" class="shipping-quote-btn primary" style="margin-top: 16px; display: inline-block; text-decoration: none;">
+      🏷️ Descargar Etiqueta
+    </a>
+    ` : '<p style="margin-top: 16px; color: #f59e0b;">La etiqueta estará disponible en unos momentos.</p>'}
+  `;
+
+  resultSection.classList.remove('hidden');
+
+  showNotification('¡Guía generada exitosamente!', 'success');
+}
+
 // Export functions globally
 window.triggerImportCSV = triggerImportCSV;
 window.handleCSVImport = handleCSVImport;
@@ -1493,3 +1799,9 @@ window.bulkExportCSV = bulkExportCSV;
 window.bulkDelete = bulkDelete;
 window.bulkGenerateLabels = bulkGenerateLabels;
 window.setShippingView = setShippingView;
+window.showShippingQuoteModal = showShippingQuoteModal;
+window.updatePackagesCount = updatePackagesCount;
+window.updatePackagesCountInput = updatePackagesCountInput;
+window.fetchShippingQuotesUI = fetchShippingQuotesUI;
+window.selectShippingRate = selectShippingRate;
+window.generateClientLabelUI = generateClientLabelUI;

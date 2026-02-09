@@ -6457,6 +6457,396 @@ textarea:disabled {
   border-color: #dc2626;
 }
 
+/* Client ID Badge */
+.client-id-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Shipping Button */
+.client-popup-btn.shipping {
+  background: linear-gradient(135deg, #0891b2, #06b6d4);
+  color: white;
+  border: none;
+  flex: 1;
+}
+
+.client-popup-btn.shipping:hover {
+  background: linear-gradient(135deg, #0e7490, #0891b2);
+  transform: translateY(-1px);
+}
+
+/* ==========================================
+   SHIPPING QUOTE MODAL
+   ========================================== */
+
+.shipping-quote-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: fadeIn 0.2s ease;
+}
+
+.shipping-quote-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.shipping-quote-header {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #0891b2, #06b6d4);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shipping-quote-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.shipping-quote-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.shipping-quote-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.shipping-quote-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.shipping-quote-client-info {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.shipping-quote-client-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #0c4a6e;
+  margin-bottom: 4px;
+}
+
+.shipping-quote-client-location {
+  font-size: 14px;
+  color: #0369a1;
+}
+
+.shipping-quote-input-section {
+  margin-bottom: 20px;
+}
+
+.shipping-quote-input-section label {
+  display: block;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.shipping-quote-counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.shipping-quote-counter input {
+  width: 60px;
+  text-align: center;
+  padding: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  -moz-appearance: textfield;
+}
+
+.shipping-quote-counter input::-webkit-outer-spin-button,
+.shipping-quote-counter input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.counter-btn {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.counter-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.counter-btn.minus:hover {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.counter-btn.plus:hover {
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.shipping-quote-btn {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shipping-quote-btn.primary {
+  background: linear-gradient(135deg, #0891b2, #06b6d4);
+  color: white;
+}
+
+.shipping-quote-btn.primary:hover {
+  background: linear-gradient(135deg, #0e7490, #0891b2);
+  transform: translateY(-1px);
+}
+
+.shipping-quote-btn.success {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: white;
+}
+
+.shipping-quote-btn.success:hover {
+  background: linear-gradient(135deg, #047857, #059669);
+  transform: translateY(-1px);
+}
+
+.shipping-quote-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Shipping Rates */
+.shipping-rates-container {
+  margin-top: 20px;
+}
+
+.shipping-rates-header {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.shipping-rates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.carrier-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.carrier-option:hover {
+  border-color: #0891b2;
+  background: #f0f9ff;
+}
+
+.carrier-option.selected {
+  border-color: #0891b2;
+  background: #ecfeff;
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
+}
+
+.carrier-option.cheapest {
+  border-color: #10b981;
+}
+
+.carrier-option-main {
+  flex: 1;
+}
+
+.carrier-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 15px;
+}
+
+.carrier-service {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.carrier-option-details {
+  text-align: right;
+}
+
+.carrier-price {
+  font-weight: 700;
+  font-size: 18px;
+  color: #0891b2;
+}
+
+.carrier-days {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.cheapest-badge {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  background: #10b981;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.no-rates {
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Shipping Generate Section */
+.shipping-generate-section {
+  margin-top: 20px;
+}
+
+/* Shipping Result */
+.shipping-result-section {
+  margin-top: 20px;
+}
+
+.shipping-result-success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.shipping-result-icon {
+  font-size: 24px;
+}
+
+.shipping-result-text {
+  font-weight: 600;
+  color: #059669;
+}
+
+.shipping-result-details {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.result-detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.result-detail:last-child {
+  border-bottom: none;
+}
+
+.result-label {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.result-value {
+  font-weight: 600;
+  color: #111827;
+  font-size: 14px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hidden utility class */
+.hidden {
+  display: none !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .address-cards-grid {
