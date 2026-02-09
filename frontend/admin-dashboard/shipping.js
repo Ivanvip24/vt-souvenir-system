@@ -368,22 +368,41 @@ async function showClientDetailPopup(clientId) {
     const hasFullAddress = client.street && client.city && client.state && (client.postal || client.postal_code);
     const postal = client.postal || client.postal_code || '';
 
-    // Build address display and plain text version for copying
+    // Build address display with individual copy buttons for each field
     let addressHtml = '';
     let addressPlain = '';
+    const addressParts = [];
+
     if (client.street || client.address) {
-      const parts = [];
-      if (client.street) {
-        parts.push(client.street + (client.street_number ? ` #${client.street_number}` : ''));
-      } else if (client.address) {
-        parts.push(client.address);
+      const streetFull = client.street
+        ? client.street + (client.street_number ? ` #${client.street_number}` : '')
+        : client.address;
+      addressParts.push(streetFull);
+
+      // Build HTML with copy button for each field
+      const addressLines = [];
+      addressLines.push(`<div class="address-line"><span>${escapeHtml(streetFull)}</span><button class="copy-btn" onclick="copyToClipboard('${escapeHtml(streetFull).replace(/'/g, "\\'")}', this)" title="Copiar">📋</button></div>`);
+
+      if (client.colonia) {
+        const coloniaText = `Col. ${client.colonia}`;
+        addressParts.push(coloniaText);
+        addressLines.push(`<div class="address-line"><span>${escapeHtml(coloniaText)}</span><button class="copy-btn" onclick="copyToClipboard('${escapeHtml(client.colonia).replace(/'/g, "\\'")}', this)" title="Copiar">📋</button></div>`);
       }
-      if (client.colonia) parts.push(`Col. ${client.colonia}`);
-      if (client.city) parts.push(client.city);
-      if (client.state) parts.push(client.state);
-      if (postal) parts.push(`CP ${postal}`);
-      addressHtml = parts.join('<br>');
-      addressPlain = parts.join(', ');
+      if (client.city) {
+        addressParts.push(client.city);
+        addressLines.push(`<div class="address-line"><span>${escapeHtml(client.city)}</span><button class="copy-btn" onclick="copyToClipboard('${escapeHtml(client.city).replace(/'/g, "\\'")}', this)" title="Copiar">📋</button></div>`);
+      }
+      if (client.state) {
+        addressParts.push(client.state);
+        addressLines.push(`<div class="address-line"><span>${escapeHtml(client.state)}</span><button class="copy-btn" onclick="copyToClipboard('${escapeHtml(client.state).replace(/'/g, "\\'")}', this)" title="Copiar">📋</button></div>`);
+      }
+      if (postal) {
+        addressParts.push(`CP ${postal}`);
+        addressLines.push(`<div class="address-line"><span>CP ${escapeHtml(postal)}</span><button class="copy-btn" onclick="copyToClipboard('${escapeHtml(postal)}', this)" title="Copiar">📋</button></div>`);
+      }
+
+      addressHtml = addressLines.join('');
+      addressPlain = addressParts.join(', ');
     } else {
       addressHtml = '<span style="color: #f59e0b;">Sin direccion registrada</span>';
       addressPlain = '';
@@ -407,7 +426,7 @@ async function showClientDetailPopup(clientId) {
 
         <div class="client-popup-body">
           <div class="client-popup-section">
-            <h4>Direccion ${addressPlain ? `<button class="copy-btn" onclick="copyToClipboard('${addressPlain.replace(/'/g, "\\'")}', this)" title="Copiar dirección">📋</button>` : ''}</h4>
+            <h4>Direccion ${addressPlain ? `<button class="copy-btn copy-all" onclick="copyToClipboard('${addressPlain.replace(/'/g, "\\'")}', this)" title="Copiar todo">📋 Todo</button>` : ''}</h4>
             <div class="client-popup-address">${addressHtml}</div>
           </div>
 

@@ -6388,6 +6388,12 @@ textarea:disabled {
   opacity: 1;
 }
 
+.copy-btn.copy-all {
+  font-size: 12px;
+  background: var(--gray-100);
+  padding: 4px 8px;
+}
+
 .client-popup-section h4 .copy-btn {
   font-size: 14px;
 }
@@ -6395,6 +6401,33 @@ textarea:disabled {
 .client-popup-info-label .copy-btn {
   font-size: 11px;
   padding: 1px 4px;
+}
+
+/* Address lines with individual copy buttons */
+.address-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.address-line:last-child {
+  border-bottom: none;
+}
+
+.address-line span {
+  flex: 1;
+}
+
+.address-line .copy-btn {
+  opacity: 0.4;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.address-line:hover .copy-btn {
+  opacity: 1;
 }
 
 .client-popup-orders {
