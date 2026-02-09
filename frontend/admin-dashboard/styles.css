@@ -6361,6 +6361,42 @@ textarea:disabled {
   text-decoration: underline;
 }
 
+/* Copy button */
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  background: var(--gray-100);
+  opacity: 1;
+}
+
+.copy-btn.copied {
+  color: var(--success);
+  opacity: 1;
+}
+
+.client-popup-section h4 .copy-btn {
+  font-size: 14px;
+}
+
+.client-popup-info-label .copy-btn {
+  font-size: 11px;
+  padding: 1px 4px;
+}
+
 .client-popup-orders {
   display: flex;
   flex-direction: column;
@@ -6769,7 +6805,17 @@ textarea:disabled {
 
 /* Shipping Generate Section */
 .shipping-generate-section {
-  margin-top: 20px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.shipping-generate-section .shipping-quote-btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 /* Shipping Result */

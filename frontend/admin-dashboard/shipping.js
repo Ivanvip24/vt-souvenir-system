@@ -51,6 +51,24 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+/**
+ * Copy text to clipboard and show visual feedback
+ */
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const originalText = btn.textContent;
+    btn.textContent = '✓';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.classList.remove('copied');
+    }, 1500);
+  }).catch(err => {
+    console.error('Copy failed:', err);
+    showNotification('Error al copiar', 'error');
+  });
+}
+
 function showNotification(message, type = 'info') {
   if (typeof window.showToast === 'function') {
     window.showToast(message, type);
@@ -350,8 +368,9 @@ async function showClientDetailPopup(clientId) {
     const hasFullAddress = client.street && client.city && client.state && (client.postal || client.postal_code);
     const postal = client.postal || client.postal_code || '';
 
-    // Build address display
+    // Build address display and plain text version for copying
     let addressHtml = '';
+    let addressPlain = '';
     if (client.street || client.address) {
       const parts = [];
       if (client.street) {
@@ -364,8 +383,10 @@ async function showClientDetailPopup(clientId) {
       if (client.state) parts.push(client.state);
       if (postal) parts.push(`CP ${postal}`);
       addressHtml = parts.join('<br>');
+      addressPlain = parts.join(', ');
     } else {
       addressHtml = '<span style="color: #f59e0b;">Sin direccion registrada</span>';
+      addressPlain = '';
     }
 
     // Remove existing popup
@@ -386,7 +407,7 @@ async function showClientDetailPopup(clientId) {
 
         <div class="client-popup-body">
           <div class="client-popup-section">
-            <h4>Direccion</h4>
+            <h4>Direccion ${addressPlain ? `<button class="copy-btn" onclick="copyToClipboard('${addressPlain.replace(/'/g, "\\'")}', this)" title="Copiar dirección">📋</button>` : ''}</h4>
             <div class="client-popup-address">${addressHtml}</div>
           </div>
 
@@ -395,7 +416,7 @@ async function showClientDetailPopup(clientId) {
             <div class="client-popup-info-grid">
               ${client.phone ? `
                 <div class="client-popup-info-item">
-                  <div class="client-popup-info-label">Telefono</div>
+                  <div class="client-popup-info-label">Telefono <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(client.phone)}', this)" title="Copiar teléfono">📋</button></div>
                   <div class="client-popup-info-value">
                     ${escapeHtml(client.phone)}
                     <a href="https://wa.me/52${client.phone.replace(/\D/g, '')}" target="_blank" style="margin-left: 8px; color: #25D366;">WhatsApp</a>
@@ -404,7 +425,7 @@ async function showClientDetailPopup(clientId) {
               ` : ''}
               ${client.email ? `
                 <div class="client-popup-info-item">
-                  <div class="client-popup-info-label">Email</div>
+                  <div class="client-popup-info-label">Email <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(client.email)}', this)" title="Copiar email">📋</button></div>
                   <div class="client-popup-info-value">
                     <a href="mailto:${escapeHtml(client.email)}">${escapeHtml(client.email)}</a>
                   </div>
@@ -412,7 +433,7 @@ async function showClientDetailPopup(clientId) {
               ` : ''}
               ${client.reference_notes ? `
                 <div class="client-popup-info-item full-width">
-                  <div class="client-popup-info-label">Referencias</div>
+                  <div class="client-popup-info-label">Referencias <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(client.reference_notes).replace(/'/g, "\\'")}', this)" title="Copiar referencias">📋</button></div>
                   <div class="client-popup-info-value">${escapeHtml(client.reference_notes)}</div>
                 </div>
               ` : ''}
@@ -449,7 +470,7 @@ async function showClientDetailPopup(clientId) {
           </button>
           ${hasFullAddress ? `
           <button class="client-popup-btn shipping" onclick="showShippingQuoteModal(${client.id}, '${escapeHtml(client.name).replace(/'/g, "\\'")}', '${escapeHtml(client.city || '')}', '${escapeHtml(client.state || '')}', '${postal}')">
-            📦 Recolección
+            📦 Generar Guías
           </button>
           ` : ''}
           <button class="client-popup-btn primary" onclick="document.getElementById('client-detail-popup').remove(); editClient(${client.id})">
@@ -1520,7 +1541,7 @@ function showShippingQuoteModal(clientId, clientName, city, state, postal) {
   modal.innerHTML = `
     <div class="shipping-quote-content">
       <div class="shipping-quote-header">
-        <h3>📦 Solicitar Recolección</h3>
+        <h3>📦 Generar Guías</h3>
         <button class="shipping-quote-close" onclick="document.getElementById('shipping-quote-modal').remove()">&times;</button>
       </div>
 
@@ -1805,3 +1826,4 @@ window.updatePackagesCountInput = updatePackagesCountInput;
 window.fetchShippingQuotesUI = fetchShippingQuotesUI;
 window.selectShippingRate = selectShippingRate;
 window.generateClientLabelUI = generateClientLabelUI;
+window.copyToClipboard = copyToClipboard;
