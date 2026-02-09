@@ -6619,6 +6619,8 @@ textarea:disabled {
 .shipping-quote-body {
   padding: 24px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .shipping-quote-client-info {
