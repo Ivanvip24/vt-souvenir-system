@@ -234,43 +234,37 @@ a {
   letter-spacing: 0.02em;
   color: #FFFFFF;
   margin-bottom: var(--space-md);
-  opacity: 0;
-  animation: fadeInUp 0.8s var(--ease-out) 0.5s forwards;
 
-  /* Gradient shine effect */
+  /* Metallic bright shine effect */
   background: linear-gradient(
-    120deg,
+    110deg,
     #FFFFFF 0%,
-    #FFFFFF 25%,
-    #e72a88 30%,
-    #8ab73b 35%,
-    #f39223 40%,
-    #09adc2 45%,
-    #e52421 50%,
-    #FFFFFF 55%,
+    #FFFFFF 35%,
+    #ffe6f3 38%,
+    #ffd4ec 40%,
+    #FFFFFF 42%,
+    #e0ffff 44%,
+    #FFFFFF 46%,
+    #fff8e0 48%,
+    #FFFFFF 50%,
     #FFFFFF 100%
   );
-  background-size: 300% 100%;
+  background-size: 250% 100%;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation:
-    fadeInUp 0.8s var(--ease-out) 0.5s forwards,
-    textShine 4s ease-in-out 1.5s infinite;
+  animation: metallicShine 2.5s linear infinite;
 
-  /* Text shadow for depth (applied via filter since text-fill is transparent) */
-  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.4));
+  /* Bright glow effect */
+  filter: drop-shadow(0 0 20px rgba(255,255,255,0.4)) drop-shadow(0 4px 15px rgba(0,0,0,0.4));
 }
 
-@keyframes textShine {
+@keyframes metallicShine {
   0% {
-    background-position: 100% 50%;
-  }
-  50% {
-    background-position: 0% 50%;
+    background-position: 200% 50%;
   }
   100% {
-    background-position: 100% 50%;
+    background-position: -50% 50%;
   }
 }
 
