@@ -6807,8 +6807,20 @@ textarea:disabled {
 .shipping-generate-section {
   margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 2px solid #10b981;
   text-align: center;
+  background: linear-gradient(to bottom, #ecfdf5, #f0fdf4);
+  margin-left: -24px;
+  margin-right: -24px;
+  padding: 20px 24px;
+  margin-bottom: -24px;
+  border-radius: 0 0 16px 16px;
+}
+
+.shipping-generate-section .generate-hint {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0 0 12px 0;
 }
 
 .shipping-generate-section .shipping-quote-btn {
@@ -6816,6 +6828,12 @@ textarea:disabled {
   padding: 16px 24px;
   font-size: 16px;
   font-weight: 600;
+}
+
+.shipping-generate-section .shipping-quote-btn:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 /* Shipping Result */

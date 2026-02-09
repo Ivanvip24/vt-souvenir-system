@@ -1570,7 +1570,8 @@ function showShippingQuoteModal(clientId, clientName, city, state, postal) {
         </div>
 
         <div id="shipping-generate-section" class="shipping-generate-section hidden">
-          <button class="shipping-quote-btn success" id="generate-btn" onclick="generateClientLabelUI()">
+          <p class="generate-hint" id="generate-hint">👆 Selecciona una opción de envío arriba</p>
+          <button class="shipping-quote-btn success" id="generate-btn" onclick="generateClientLabelUI()" disabled>
             ✅ Generar Guía
           </button>
         </div>
@@ -1685,6 +1686,16 @@ function renderShippingRates(rates) {
   `).join('');
 
   container.classList.remove('hidden');
+
+  // Show generate section with hint (button disabled until selection)
+  const generateSection = document.getElementById('shipping-generate-section');
+  const generateHint = document.getElementById('generate-hint');
+  const generateBtn = document.getElementById('generate-btn');
+  if (generateSection) {
+    generateSection.classList.remove('hidden');
+    if (generateHint) generateHint.style.display = 'block';
+    if (generateBtn) generateBtn.disabled = true;
+  }
 }
 
 /**
@@ -1694,15 +1705,19 @@ function selectShippingRate(index) {
   const rate = shippingQuoteState.rates[index];
   shippingQuoteState.selectedRate = rate;
 
-  // Update UI
+  // Update UI - highlight selected carrier
   document.querySelectorAll('.carrier-option').forEach(el => el.classList.remove('selected'));
   document.querySelector(`[data-rate-index="${index}"]`)?.classList.add('selected');
 
-  // Show generate button and scroll it into view
+  // Hide hint and enable generate button
+  const generateHint = document.getElementById('generate-hint');
+  const generateBtn = document.getElementById('generate-btn');
+  if (generateHint) generateHint.style.display = 'none';
+  if (generateBtn) generateBtn.disabled = false;
+
+  // Scroll the generate button into view
   const generateSection = document.getElementById('shipping-generate-section');
   if (generateSection) {
-    generateSection.classList.remove('hidden');
-    // Scroll the generate button into view
     setTimeout(() => {
       generateSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 100);
