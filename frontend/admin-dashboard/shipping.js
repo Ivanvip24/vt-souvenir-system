@@ -1712,7 +1712,34 @@ function renderShippingRates(rates) {
       e.stopPropagation();
       const index = parseInt(this.getAttribute('data-rate-index'));
       console.log('Carrier clicked, index:', index);
-      selectShippingRate(index);
+
+      // Get the rate directly
+      const rate = shippingQuoteState.rates[index];
+      console.log('Rate found:', rate);
+
+      if (!rate) {
+        console.error('No rate at index', index, 'rates:', shippingQuoteState.rates);
+        return;
+      }
+
+      // Store selected rate
+      shippingQuoteState.selectedRate = rate;
+
+      // Update UI - remove selected from all, add to clicked one
+      list.querySelectorAll('.carrier-option').forEach(el => el.classList.remove('selected'));
+      this.classList.add('selected');
+
+      // Hide hint and enable button
+      const hint = document.getElementById('generate-hint');
+      const btn = document.getElementById('generate-btn');
+      if (hint) hint.style.display = 'none';
+      if (btn) {
+        btn.disabled = false;
+        btn.style.background = '#10b981';
+        btn.style.cursor = 'pointer';
+      }
+
+      console.log('Selection complete, rate:', rate.carrier, rate.service);
     });
   });
 

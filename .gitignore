@@ -121,3 +121,4 @@ SYSTEM_ACTIVE.md
 # ============================================
 .vercel
 backend/quotes/*.pdf
+.env*.local

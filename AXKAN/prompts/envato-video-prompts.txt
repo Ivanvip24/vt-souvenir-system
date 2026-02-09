@@ -1,0 +1,227 @@
+================================================================================
+AXKAN ENVATO VIDEO PROMPTS - KEY HOLDERS (PORTALLAVES)
+================================================================================
+Created: December 2024
+Platform: Envato AI Video Generator
+Products: MDF Key Holders
+Duration: ~3-4 seconds each
+================================================================================
+
+NOTE: Avoid using specific location names (cities, towns) as Envato may flag
+them. Use descriptive themes instead.
+
+================================================================================
+VIDEO 1: APPLE THEME KEY HOLDER
+================================================================================
+Theme: Zacatlán / Apple orchard town
+Duration: ~3 seconds
+
+PROMPT:
+--------
+A decorative MDF key holder with red apples and custom text mounted
+on a textured white stucco wall, soft natural daylight from the left
+creating gentle shadows, a human hand enters from the right side of
+the frame reaching toward the product, the hand is holding a shiny
+red apple, keys hanging on hooks sway gently with subtle realistic
+motion, slow camera push in with slight rightward orbit, shallow
+depth of field, cinematic product showcase, warm color grading
+
+
+================================================================================
+VIDEO 2: DAY OF THE DEAD THEME KEY HOLDER
+================================================================================
+Theme: Aguascalientes / Día de Muertos
+Duration: ~3 seconds
+
+PROMPT:
+--------
+A decorative MDF key holder featuring Day of the Dead skeleton
+figures and a church mounted on a warm beige wall, magical golden
+hour lighting with soft lens flare, bright yellow marigold flower
+petals floating gently through the air around the product, keys
+hanging with subtle sway, dreamy ethereal atmosphere, particles
+of golden light floating, slow gentle camera movement, shallow
+depth of field, magical realism style, warm orange and gold color
+grading
+
+
+================================================================================
+VIDEO 3: TROPICAL THEME KEY HOLDER
+================================================================================
+Theme: Cozumel / Caribbean beach
+Duration: ~3 seconds
+
+PROMPT:
+--------
+A colorful tropical MDF key holder with custom text, palm leaves,
+hibiscus flowers and toucan mounted on a rustic textured wall,
+warm golden backlight creating a glowing rim light effect behind
+the product, a human hand enters from the right reaching to hang
+keys on the hooks, keys swinging with natural motion, lush tropical
+atmosphere, soft bokeh background, slow camera movement, cinematic
+product demonstration, vibrant saturated colors
+
+
+================================================================================
+VIDEO 4: CHURCH AND PARROT THEME KEY HOLDER
+================================================================================
+Theme: Chiapas / Colonial architecture
+Duration: ~4 seconds
+
+PROMPT:
+--------
+A decorative MDF key holder featuring colonial churches, jungle
+and parrots mounted on a clean white wall, soft natural daylight,
+two human hands reach into frame interacting with the product, a
+small green lovebird parrot lands on top of the key holder, keys
+swing naturally from the interaction, realistic shadows cast on
+wall, gentle camera orbit movement, shallow depth of field, warm
+natural lighting, lifestyle product showcase, the bird perches
+and looks around curiously
+
+
+================================================================================
+PROMPT FORMULA TEMPLATE
+================================================================================
+
+Use this template for creating prompts for other products:
+
+A decorative MDF key holder with [DESIGN DESCRIPTION] mounted on
+a [WALL TYPE] wall, [LIGHTING DESCRIPTION], [INTERACTION ELEMENT],
+keys hanging on hooks [KEY MOTION], [CAMERA MOVEMENT], shallow
+depth of field, [MOOD/STYLE], [COLOR GRADING]
+
+--------------------------------------------------------------------------------
+
+VARIABLES:
+
+[DESIGN DESCRIPTION]
+- "red apples and custom text"
+- "Day of the Dead skeleton figures and a church"
+- "tropical palm leaves, hibiscus flowers and toucan"
+- "colonial churches, jungle and parrots"
+- "beach scene with sea turtles and waves"
+- "cactus and desert landscape"
+- "monarch butterflies and pine forest"
+
+[WALL TYPE]
+- "textured white stucco"
+- "warm beige"
+- "rustic textured"
+- "clean white"
+- "exposed brick"
+- "wooden cabin"
+
+[LIGHTING DESCRIPTION]
+- "soft natural daylight from the left creating gentle shadows"
+- "magical golden hour lighting with soft lens flare"
+- "warm golden backlight creating a glowing rim light effect"
+- "soft natural daylight"
+- "dramatic side lighting"
+- "warm morning light streaming through a window"
+
+[INTERACTION ELEMENT]
+- "a human hand enters from the right side reaching toward the product"
+- "a human hand enters holding a [OBJECT]"
+- "two human hands reach into frame interacting with the product"
+- "a small bird lands on top of the key holder"
+- "a butterfly flutters near the product"
+- "flower petals float gently through the air"
+
+[KEY MOTION]
+- "sway gently with subtle realistic motion"
+- "swing naturally from the interaction"
+- "with subtle sway"
+- "swinging with natural motion"
+
+[CAMERA MOVEMENT]
+- "slow camera push in with slight rightward orbit"
+- "slow gentle camera movement"
+- "slow camera movement"
+- "gentle camera orbit movement"
+- "static camera with subtle drift"
+
+[MOOD/STYLE]
+- "cinematic product showcase"
+- "magical realism style"
+- "cinematic product demonstration"
+- "lifestyle product showcase"
+- "dreamy ethereal atmosphere"
+
+[COLOR GRADING]
+- "warm color grading"
+- "warm orange and gold color grading"
+- "vibrant saturated colors"
+- "warm natural lighting"
+- "cool blue tones with warm highlights"
+
+
+================================================================================
+ADDITIONAL PROMPT IDEAS BY DESTINATION
+================================================================================
+
+BEACH/COASTAL:
+"A decorative MDF key holder with beach scene, sea turtles and
+palm trees mounted on a light driftwood-textured wall, soft
+golden sunset lighting, gentle ocean breeze causing keys to sway,
+a seashell rolls into frame, particles of sand floating in
+sunbeams, slow camera drift, dreamy coastal atmosphere, warm
+golden tones"
+
+DESERT/CACTUS:
+"A decorative MDF key holder with cactus and desert landscape
+mounted on an adobe-textured terracotta wall, warm afternoon
+desert light creating long shadows, a hummingbird hovers near
+a cactus flower on the design, keys sway gently, dust particles
+floating in the warm air, slow camera movement, southwestern
+atmosphere, warm earthy color grading"
+
+MONARCH BUTTERFLY FOREST:
+"A decorative MDF key holder with pine forest and monarch
+butterflies mounted on a rustic wooden wall, dappled forest
+light filtering through, real monarch butterflies flutter
+around the product landing momentarily, keys hang still,
+magical forest atmosphere, soft bokeh, gentle camera orbit,
+warm amber and green tones"
+
+MEXICAN REVOLUTION/VINTAGE:
+"A decorative MDF key holder with vintage Mexican design and
+traditional patterns mounted on an aged plaster wall, warm
+sepia-toned lighting suggesting old photographs, dust particles
+floating in light beams, a human hand with vintage jewelry
+reaches to hang keys, nostalgic atmosphere, slow camera
+movement, vintage film color grading"
+
+
+================================================================================
+POST-PRODUCTION ELEMENTS (Add in Video Editor)
+================================================================================
+
+These should be added AFTER generating the AI video:
+
+1. "A AXKAN FILM" header text (top)
+2. Product title (e.g., "PORTALLAVES")
+3. Subtitle text (animated, synced to video)
+4. AXKAN logo watermark
+5. Black letterbox bars (optional, for cinematic feel)
+6. Background music
+7. Sound effects (key jingling, ambient sounds)
+
+
+================================================================================
+TIPS FOR BEST RESULTS
+================================================================================
+
+1. Upload your actual product image as the source
+2. Keep prompts under 500 characters if possible
+3. Avoid specific brand names and locations
+4. Describe motion clearly (what moves, how fast, direction)
+5. Specify camera movement explicitly
+6. Include lighting description for consistency
+7. Generate multiple versions and pick the best
+8. Stitch 3-4 clips together for a 12-15 second video
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================

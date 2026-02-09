@@ -372,6 +372,14 @@ const BANK_ACCOUNTS = {
     cardRaw: '4152313840498567',
     bank: 'BBVA'
   },
+  ivan: {
+    holder: 'Iván Valencia',
+    clabe: '012 180 01571714055 4',
+    clabeRaw: '012180015717140554',
+    card: '4152 3138 4049 8567',
+    cardRaw: '4152313840498567',
+    bank: 'BBVA'
+  },
   daniel: {
     holder: 'Eduardo Daniel Valencia Pérez',
     accountNumber: '155 881 3978',

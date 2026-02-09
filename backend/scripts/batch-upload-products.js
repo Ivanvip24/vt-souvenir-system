@@ -28,7 +28,7 @@ cloudinary.config({
 });
 
 // Configuration
-const IMAGES_FOLDER = '/Users/ivanvalenciaperez/Downloads/CLAUDE/BETA_PHASE/facebook-marketplace-bot/fotos-axkan';
+const IMAGES_FOLDER = '/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/facebook-marketplace-bot/fotos-axkan';
 const BASE_PRICE = 300; // $300 MXN
 const PRODUCTION_COST = 50; // Estimated production cost
 

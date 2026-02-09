@@ -118,8 +118,8 @@ def process_batch(input_folder, output_folder, limit=None):
 
 if __name__ == "__main__":
     # Default paths - upscale the white-bg images
-    DEFAULT_INPUT = "/Users/ivanvalenciaperez/Downloads/CLAUDE/BETA_PHASE/facebook-marketplace-bot/fotos-axkan-white-bg"
-    DEFAULT_OUTPUT = "/Users/ivanvalenciaperez/Downloads/CLAUDE/BETA_PHASE/facebook-marketplace-bot/fotos-axkan-upscaled"
+    DEFAULT_INPUT = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/facebook-marketplace-bot/fotos-axkan-white-bg"
+    DEFAULT_OUTPUT = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/facebook-marketplace-bot/fotos-axkan-upscaled"
 
     if len(sys.argv) < 2:
         print("Usage:")

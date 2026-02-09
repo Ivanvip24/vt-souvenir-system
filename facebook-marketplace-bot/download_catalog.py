@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Configuration
 CATALOG_URL = "https://vtanunciando.com/collections/catalogo/products.json"
-OUTPUT_DIR = "/Users/ivanvalenciaperez/Downloads/CLAUDE/facebook-marketplace-bot/fotos-axkan"
+OUTPUT_DIR = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/facebook-marketplace-bot/fotos-axkan"
 MAX_WORKERS = 5  # Parallel downloads
 PRODUCTS_PER_PAGE = 50  # Shopify's max per page
 
@@ -160,7 +160,7 @@ def main():
             print(f"  ✓ Downloaded {len(downloaded)} images to: {folder_name}/")
 
     # Generate CSV file for Facebook Marketplace bot
-    csv_path = "/Users/ivanvalenciaperez/Downloads/CLAUDE/facebook-marketplace-bot/csvs/items.csv"
+    csv_path = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/facebook-marketplace-bot/csvs/items.csv"
 
     print(f"\nGenerating CSV file with {len(csv_entries)} products...")
 
@@ -183,7 +183,7 @@ def main():
     print(f"Images downloaded to: {OUTPUT_DIR}")
     print(f"CSV generated: {csv_path}")
     print("\nNext step: Run the Facebook Marketplace bot")
-    print("  cd /Users/ivanvalenciaperez/Downloads/CLAUDE/facebook-marketplace-bot")
+    print("  cd /Users/ivanvalenciaperez/Desktop/CLAUDE/facebook-marketplace-bot")
     print("  python3 main.py")
 
 if __name__ == "__main__":

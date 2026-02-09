@@ -6,6 +6,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **dual-agent automation system** for managing custom souvenir production businesses. The system replaces manual Notion data entry and provides automated analytics with email reporting.
 
+The repository also contains the **AXKAN brand identity system** - a complete brand oracle for the souvenir brand including visual identity, voice, sales strategies, and decision frameworks.
+
+### AXKAN Brand System (`AXKAN/`)
+
+Use `/axkan` skill for ANY brand-related task. The skill provides:
+- Complete visual identity (colors, typography, logo rules, patterns)
+- Brand voice guidelines by channel (B2C, B2B, internal)
+- Product pricing and specifications
+- Sales scripts and objection handling
+- The "AXKAN Test" decision framework
+
+Key files:
+- `AXKAN/.claude/skills/axkan/SKILL.md` - Complete brand identity (668 lines)
+- `AXKAN/AXKAN-SALES-ASSISTANT-FB-MARKETPLACE.md` - WhatsApp/Marketplace sales templates
+- `AXKAN/brand-manual/` - Visual assets (logo system, product examples)
+- `AXKAN/prompts/` - AI generation prompts for Instagram/video content
+
 ### Two Specialized Agents
 
 1. **Notion Integration Agent** (`backend/agents/notion-agent/`)
@@ -317,3 +334,29 @@ npm start               # Full mode (requires PostgreSQL + .env config)
 - `docs/API_REFERENCE.md` - Complete REST API documentation
 - `QUICKSTART.md` - 5-minute setup for demo
 - `SYSTEM_ACTIVE.md` - Status file created when demo launches
+
+## AXKAN Quick Reference
+
+**Primary Colors:**
+| Color | Hex |
+|-------|-----|
+| Rosa Mexicano | #e72a88 |
+| Verde Selva | #8ab73b |
+| Naranja Cálido | #f39223 |
+| Turquesa Caribe | #09adc2 |
+| Rojo Mexicano | #e52421 |
+| Oro Maya (MDF Edge) | #D4A574 |
+
+**Typography:** RL AQVA (titles), Prenton RP Cond (body)
+
+**The AXKAN Test** - Apply to all brand decisions:
+1. Does it trigger pride?
+2. Is it culturally authentic?
+3. Is it premium?
+4. Is it accessible?
+5. Will it last?
+
+**External Links:**
+- Catalog: https://vtanunciando.com
+- Orders: https://axkan-pedidos.vercel.app/
+- Social: @axkan.mx

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AXKAN — Cotiza tu Proyecto de Souvenirs</title>
+    <meta name="description" content="Solicita una cotización gratuita para souvenirs personalizados con corte láser. Imanes, llaveros, portallaves y destapadores de MDF. Respuesta en menos de 24 horas.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://axkan.art/cuestionario">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="AXKAN — Cotiza Souvenirs Personalizados">
+    <meta property="og:description" content="Cotización gratuita en menos de 1 minuto. Souvenirs premium con corte láser para tu negocio o evento.">
+    <meta property="og:image" content="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=1200">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://axkan.art/cuestionario">
+    <meta property="og:locale" content="es_MX">
+
+    <link rel="icon" type="image/png" href="/assets/LOGO-01.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/cuestionario/styles.css">
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Cotiza Souvenirs AXKAN",
+        "description": "Formulario de cotización para souvenirs personalizados con corte láser",
+        "url": "https://axkan.art/cuestionario",
+        "publisher": {
+            "@type": "Organization",
+            "name": "AXKAN",
+            "url": "https://axkan.art"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="bg-scene" aria-hidden="true">
+        <div class="bg-gradient"></div>
+        <div class="bg-orb bg-orb--rosa"></div>
+        <div class="bg-orb bg-orb--turquesa"></div>
+        <div class="bg-orb bg-orb--naranja"></div>
+        <div class="bg-orb bg-orb--verde"></div>
+        <div class="bg-mesh"></div>
+    </div>
+
+    <!-- Floating particles -->
+    <canvas id="particles" aria-hidden="true"></canvas>
+
+    <div class="app">
+        <!-- Top bar -->
+        <header class="topbar">
+            <a href="https://axkan.art" class="topbar-logo" aria-label="Ir a AXKAN">
+                <img src="/assets/LOGO-03.png" alt="AXKAN" width="40" height="40">
+            </a>
+            <div class="topbar-progress" id="topbar-progress">
+                <div class="progress-ring">
+                    <svg viewBox="0 0 36 36">
+                        <circle class="progress-ring__bg" cx="18" cy="18" r="16" />
+                        <circle class="progress-ring__fill" id="progress-ring-fill" cx="18" cy="18" r="16" />
+                    </svg>
+                    <span class="progress-ring__text" id="progress-text">0%</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══════════════════════════════════════
+             SCREEN 0: WELCOME HERO
+             ═══════════════════════════════════════ -->
+        <section class="screen screen--hero active" id="screen-hero">
+            <div class="hero-content">
+                <div class="hero-badge animate-pop">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    Respuesta en menos de 24 hrs
+                </div>
+                <h1 class="hero-title">
+                    <span class="title-line animate-slide" style="--delay: 0.1s">Cotiza tu</span>
+                    <span class="title-line title-line--accent animate-slide" style="--delay: 0.25s">Proyecto</span>
+                </h1>
+                <p class="hero-subtitle animate-fade" style="--delay: 0.5s">
+                    Souvenirs personalizados con corte láser para tu negocio o evento.
+                    <strong>Sin compromiso.</strong>
+                </p>
+
+                <div class="hero-features animate-fade" style="--delay: 0.7s">
+                    <div class="hero-feature">
+                        <div class="hero-feature-icon" style="--accent: var(--rosa)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <span>Menos de 1 min</span>
+                    </div>
+                    <div class="hero-feature">
+                        <div class="hero-feature-icon" style="--accent: var(--verde)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                        <span>100% gratuito</span>
+                    </div>
+                    <div class="hero-feature">
+                        <div class="hero-feature-icon" style="--accent: var(--turquesa)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </div>
+                        <span>Te contactamos</span>
+                    </div>
+                </div>
+
+                <button class="btn-start animate-fade" style="--delay: 0.9s" id="btn-start" type="button">
+                    <span>Empezar</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+
+                <p class="hero-trust animate-fade" style="--delay: 1.1s">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Tus datos están seguros. No spam.
+                </p>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════
+             SCREEN 1: CONTACT INFO
+             ═══════════════════════════════════════ -->
+        <section class="screen screen--form" id="screen-contact">
+            <div class="form-header">
+                <div class="step-indicator">
+                    <span class="step-number">1</span>
+                    <span class="step-label">de 2</span>
+                </div>
+                <h2 class="form-title">Cuéntanos de ti</h2>
+                <p class="form-subtitle">Para poder contactarte con tu cotización</p>
+            </div>
+
+            <div class="form-card">
+                <div class="field-group" data-field="0">
+                    <label class="field-label" for="input-name">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Nombre completo
+                    </label>
+                    <div class="field-input-wrap">
+                        <input type="text" id="input-name" class="field-input" placeholder="Ej: María González" autocomplete="name" required>
+                        <div class="field-focus-ring"></div>
+                    </div>
+                    <span class="field-error" id="error-name"></span>
+                </div>
+
+                <div class="field-group" data-field="1">
+                    <label class="field-label" for="input-whatsapp">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        WhatsApp
+                    </label>
+                    <div class="field-input-wrap field-input-wrap--phone">
+                        <span class="phone-prefix">+52</span>
+                        <input type="tel" id="input-whatsapp" class="field-input" placeholder="55 1234 5678" maxlength="15" autocomplete="tel-national" required>
+                        <div class="field-focus-ring"></div>
+                    </div>
+                    <span class="field-hint">Tu número a 10 dígitos</span>
+                    <span class="field-error" id="error-whatsapp"></span>
+                </div>
+
+                <div class="field-group" data-field="2">
+                    <label class="field-label" for="input-email">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        Email
+                    </label>
+                    <div class="field-input-wrap">
+                        <input type="email" id="input-email" class="field-input" placeholder="tu@correo.com" autocomplete="email" required>
+                        <div class="field-focus-ring"></div>
+                    </div>
+                    <span class="field-error" id="error-email"></span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-back" id="btn-back-contact" type="button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    Atrás
+                </button>
+                <button class="btn-next" id="btn-next-contact" type="button">
+                    <span>Siguiente</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════
+             SCREEN 2: PROJECT INFO
+             ═══════════════════════════════════════ -->
+        <section class="screen screen--form" id="screen-project">
+            <div class="form-header">
+                <div class="step-indicator">
+                    <span class="step-number">2</span>
+                    <span class="step-label">de 2</span>
+                </div>
+                <h2 class="form-title">Tu proyecto</h2>
+                <p class="form-subtitle">Cuéntanos qué tienes en mente</p>
+            </div>
+
+            <div class="form-card">
+                <!-- Product type - visual cards -->
+                <div class="field-group" data-field="3">
+                    <label class="field-label">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        ¿Qué producto te interesa?
+                    </label>
+                    <div class="product-grid" id="product-grid">
+                        <button type="button" class="product-card" data-value="Imanes MDF">
+                            <div class="product-card-icon" style="--accent: var(--rosa)">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="3"/><path d="M12 8v8M8 12h8"/></svg>
+                            </div>
+                            <span class="product-card-name">Imanes</span>
+                            <span class="product-card-desc">MDF corte láser</span>
+                        </button>
+                        <button type="button" class="product-card" data-value="Llaveros MDF">
+                            <div class="product-card-icon" style="--accent: var(--verde)">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="10" r="6"/><path d="M12 16v5"/><path d="M10 21h4"/></svg>
+                            </div>
+                            <span class="product-card-name">Llaveros</span>
+                            <span class="product-card-desc">MDF corte láser</span>
+                        </button>
+                        <button type="button" class="product-card" data-value="Portallaves MDF">
+                            <div class="product-card-icon" style="--accent: var(--naranja)">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M7 21h10"/><path d="M12 17v4"/></svg>
+                            </div>
+                            <span class="product-card-name">Portallaves</span>
+                            <span class="product-card-desc">MDF decorativo</span>
+                        </button>
+                        <button type="button" class="product-card" data-value="Destapadores MDF">
+                            <div class="product-card-icon" style="--accent: var(--turquesa)">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M12 10v6"/><path d="M9 13h6"/></svg>
+                            </div>
+                            <span class="product-card-name">Destapadores</span>
+                            <span class="product-card-desc">MDF funcional</span>
+                        </button>
+                        <button type="button" class="product-card" data-value="Otro / Varios">
+                            <div class="product-card-icon" style="--accent: var(--gray-400)">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                            </div>
+                            <span class="product-card-name">Otro</span>
+                            <span class="product-card-desc">Cuéntanos</span>
+                        </button>
+                    </div>
+                    <span class="field-hint">Puedes seleccionar varios</span>
+                    <span class="field-error" id="error-product"></span>
+                </div>
+
+                <!-- Company / Event -->
+                <div class="field-group" data-field="4">
+                    <label class="field-label" for="input-company">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        Nombre de negocio o evento
+                    </label>
+                    <div class="field-input-wrap">
+                        <input type="text" id="input-company" class="field-input" placeholder='Ej: "Tienda Oaxaca", "Boda García"'>
+                        <div class="field-focus-ring"></div>
+                    </div>
+                    <span class="field-hint">Opcional — para personalizar tu cotización</span>
+                </div>
+
+                <!-- Quantity - quick select -->
+                <div class="field-group" data-field="5">
+                    <label class="field-label">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        ¿Cuántas piezas necesitas?
+                    </label>
+                    <div class="chip-grid" id="quantity-grid">
+                        <button type="button" class="chip" data-value="100-500">100 — 500</button>
+                        <button type="button" class="chip" data-value="500-1000">500 — 1,000</button>
+                        <button type="button" class="chip" data-value="1000-5000">1,000 — 5,000</button>
+                        <button type="button" class="chip" data-value="5000+">5,000+</button>
+                        <button type="button" class="chip" data-value="No sé aún">No sé aún</button>
+                    </div>
+                    <span class="field-error" id="error-quantity"></span>
+                </div>
+
+                <!-- Timeline - quick select -->
+                <div class="field-group" data-field="6">
+                    <label class="field-label">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        ¿Para cuándo los necesitas?
+                    </label>
+                    <div class="chip-grid" id="timeline-grid">
+                        <button type="button" class="chip" data-value="1-2 semanas">1–2 semanas</button>
+                        <button type="button" class="chip" data-value="2-4 semanas">2–4 semanas</button>
+                        <button type="button" class="chip" data-value="1-2 meses">1–2 meses</button>
+                        <button type="button" class="chip" data-value="Sin prisa">Sin prisa</button>
+                    </div>
+                    <span class="field-error" id="error-timeline"></span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-back" id="btn-back-project" type="button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    Atrás
+                </button>
+                <button class="btn-submit" id="btn-submit" type="button">
+                    <span>Enviar cotización</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════
+             SCREEN 3: SENDING (loading)
+             ═══════════════════════════════════════ -->
+        <section class="screen screen--loading" id="screen-loading">
+            <div class="loading-content">
+                <div class="loading-spinner">
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--rosa)" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </div>
+                </div>
+                <h2>Enviando tu solicitud...</h2>
+                <p>Esto toma solo un momento</p>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════
+             SCREEN 4: SUCCESS
+             ═══════════════════════════════════════ -->
+        <section class="screen screen--success" id="screen-success">
+            <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+            <div class="success-content">
+                <div class="success-check">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <h2 class="success-title">¡Listo!</h2>
+                <p class="success-subtitle">Tu solicitud fue enviada con éxito.<br>
+                <strong>Un asesor AXKAN te contactará por WhatsApp en menos de 24 horas.</strong></p>
+
+                <div class="success-actions">
+                    <a class="btn-whatsapp" id="btn-whatsapp" href="#" target="_blank">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        <span>Escríbenos por WhatsApp</span>
+                    </a>
+                    <a class="btn-catalog" href="/souvenirs">
+                        Ver catálogo completo
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════
+             SCREEN: ERROR
+             ═══════════════════════════════════════ -->
+        <section class="screen screen--error" id="screen-error">
+            <div class="error-content">
+                <div class="error-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                </div>
+                <h2>Algo salió mal</h2>
+                <p>No te preocupes, puedes intentarlo de nuevo o contactarnos directamente por WhatsApp.</p>
+                <div class="error-actions">
+                    <button class="btn-next" id="btn-retry" type="button">
+                        <span>Intentar de nuevo</span>
+                    </button>
+                    <a class="btn-whatsapp btn-whatsapp--small" href="https://wa.me/5215538253251?text=Hola!%20Me%20interesa%20cotizar%20souvenirs" target="_blank">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        WhatsApp directo
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="form-footer" id="form-footer">
+            <div class="footer-links">
+                <a href="https://axkan.art">axkan.art</a>
+                <span class="footer-dot"></span>
+                <a href="https://wa.me/5215538253251" target="_blank">WhatsApp</a>
+                <span class="footer-dot"></span>
+                <a href="https://instagram.com/axkan.mx" target="_blank">@axkan.mx</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/cuestionario/lead-form.js"></script>
+</body>
+</html>

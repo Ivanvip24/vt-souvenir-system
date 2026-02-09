@@ -198,7 +198,7 @@ If using another email provider:
 
 **Option A: Clone with Git**
 ```bash
-cd ~/Downloads/CLAUDE/GENERAL_SYSTEM
+cd ~/Desktop/CLAUDE/BETA_PHASE/vt-souvenir-system
 # If already have the folder, skip this
 ```
 

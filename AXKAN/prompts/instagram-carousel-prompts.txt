@@ -1,0 +1,477 @@
+================================================================================
+AXKAN INSTAGRAM CAROUSEL PROMPTS - "PORTAL A MÉXICO"
+================================================================================
+Created: December 2024
+Purpose: AI Image Generation (Gemini, Midjourney, DALL-E, etc.)
+Products: Magnets / Souvenirs
+================================================================================
+
+
+================================================================================
+SLIDE 1: THE HOOK - "COLISIÓN DE MUNDOS"
+================================================================================
+Format: 1080x1350 portrait (Instagram optimal)
+Purpose: Stop the scroll, create "WTF is this?" moment
+
+PROMPT:
+--------
+Epic conceptual artwork, 1080x1350 portrait format, cinematic 8K quality.
+
+DRAMATIC DIAGONAL COLLISION - two realities smashing together:
+
+LEFT SIDE (AXKAN BRAND UNIVERSE):
+- Flat hot pink (#e72a88) background with subtle noise texture
+- Bold geometric Mayan grecas patterns in cyan (#09adc2) and orange (#f39223)
+- An ILLUSTRATED jaguar in AXKAN brand style - stylized with geometric patterns inside its body, fierce pose, mid-leap toward the center
+- Flat vector monstera leaves, hibiscus flowers, and spiral motifs
+- The decorative AXKAN jaguar logo floating, glowing slightly
+- Clean, bold, graphic illustration style - like the brand manual
+
+RIGHT SIDE (REAL MEXICAN WORLD):
+- Lush REAL photograph of Yucatan cenote - crystal turquoise water, dramatic limestone walls, hanging vines, roots reaching down, dappled sunlight
+- A REAL jaguar drinking at the water's edge, photorealistic National Geographic quality, water droplets on its whiskers
+- Real tropical vegetation with morning dew
+- Volumetric light rays piercing through the jungle canopy
+- Full photographic depth and richness
+
+THE COLLISION ZONE (explosive diagonal center):
+- The two worlds VIOLENTLY MERGE with kinetic energy
+- The illustrated jaguar's front half TRANSFORMS into the real jaguar - fur materializing from flat color, muscles forming from shapes
+- Vector leaves BECOME real leaves mid-transformation, visible pixel-to-organic transition
+- Hot pink energy particles and cyan lightning bolts crackling at the collision line
+- Fragments of both worlds floating - some illustrated shapes, some real leaves
+- Motion blur streaks showing the force of collision
+- Chromatic aberration effect at the impact zone
+
+FLOATING AT THE EXACT COLLISION POINT:
+A YUCATAN souvenir magnet - containing BOTH illustration AND photography inside it, as if it captured this exact moment of fusion. The magnet has a subtle glow, implying it's the SOURCE of this collision.
+
+DYNAMIC COMPOSITION: Diagonal runs from bottom-left to top-right, 35-degree angle. Energy flows upward.
+
+TEXT (bottom, elegant):
+"DONDE LA IMAGINACIÓN SE VUELVE RECUERDO"
+Small: @axkan.mx
+
+Cinematic color grade: teals and magentas. Dramatic contrast. This is a movie poster moment.
+
+
+================================================================================
+SLIDE 2: THE REVELATION - "DESCOMPOSICIÓN CULTURAL"
+================================================================================
+Format: 1080x1350 portrait
+Purpose: Show the intelligence and craft behind the product
+
+PROMPT:
+--------
+Ultra-premium technical visualization, 1080x1350 portrait, luxury product photography style.
+
+Background: Seamless gradient - pure white at top transitioning to soft warm gray at bottom. Subtle paper texture. Clean, editorial, Apple-level aesthetic.
+
+CENTER COMPOSITION: A "COZUMEL" souvenir magnet displayed in EXPLODED ISOMETRIC VIEW - all component layers dramatically separated and floating in 3D space.
+
+THE LAYERS (from back to front, each floating 3cm apart with crisp shadows):
+
+LAYER 1 - FOUNDATION (deepest):
+Real underwater photograph of Cozumel coral reef - vibrant corals, tropical fish, light rays through water. Slightly soft focus. This is "the inspiration."
+
+LAYER 2 - ENVIRONMENT:
+Illustrated tropical foliage layer - monstera, palm fronds, jungle leaves in flat colors (greens #8ab73b). Cut to match magnet shape. Semi-transparent edges.
+
+LAYER 3 - LIFE:
+The character elements floating - realistic sea turtle on left, stylized jaguar on right, small tropical fish scattered. These float at slightly different heights for depth.
+
+LAYER 4 - IDENTITY:
+The colorful "COZUMEL" letters floating - each letter a different brand color with Mayan tribal patterns visible inside. C-O-Z-U-M-E-L spread slightly apart, casting individual shadows.
+
+LAYER 5 - HERITAGE:
+A semi-transparent layer showing Mayan geometric grecas pattern - the cultural DNA overlay. Ghost-like, sacred geometry floating.
+
+LAYER 6 - CRAFT (frontmost):
+The MDF wood frame - the physical shell/edge piece, scalloped cloud shape like a cookie cutter. Warm tan wood tone (#D4A574), visible grain texture, thickness evident.
+
+CONNECTING ELEMENTS:
+- Thin elegant GOLD LINES (0.5pt) connecting corresponding points between layers, showing assembly logic
+- Small golden circles at connection points like technical blueprints
+- Subtle golden particles floating between layers
+
+ANNOTATIONS (thin elegant sans-serif, warm gray color):
+Delicate lines pointing to each layer with text:
+- "FOTOGRAFÍA REAL" → reef photo
+- "FLORA TROPICAL" → foliage layer
+- "FAUNA EMBLEMÁTICA" → animals
+- "TIPOGRAFÍA ARTESANAL" → letters
+- "HERENCIA MAYA" → pattern layer
+- "MADERA NATURAL" → wood frame
+
+LIGHTING: Soft studio lighting from top-left. Each layer casts a crisp shadow on the layer below. The floating creates dramatic depth.
+
+BOTTOM TEXT:
+"CADA PIEZA. CADA CAPA. CADA DETALLE."
+Small AXKAN logo in gold.
+
+This feels like Dyson or Bang & Olufsen advertising - technical beauty revealed.
+
+
+================================================================================
+SLIDE 3: THE IMMERSION - "INMERSIÓN LÍQUIDA"
+================================================================================
+Format: 1080x1350 portrait
+Purpose: Emotional impact, surreal beauty
+
+PROMPT:
+--------
+Surrealist luxury photography, 1080x1350 portrait, hyperrealistic cinematic quality.
+
+THE SCENE: A "CANCÚN" souvenir magnet HALF-SUBMERGED in impossibly clear Caribbean water, creating a split-reality image.
+
+ABOVE THE WATERLINE (top 45% of image):
+
+Sky: Golden hour warmth - soft peachy clouds, that magical Mexican sunset light. Not harsh, dreamy.
+
+The magnet's top half emerges from the water:
+- Letters "CAN" crisp and vibrant above surface
+- Colors saturated and warm in the sunset light
+- Water beading on the magnet surface, droplets catching golden light
+- The illustrated toucan's head above water, beak vivid orange
+
+Atmosphere above:
+- A real hummingbird (colibrí) hovering 10cm from the magnet, wings frozen mid-beat, iridescent green
+- Soft out-of-focus palm fronds in the far background
+- A single hibiscus petal floating on the water surface
+- Lens flare from the setting sun, tasteful not overdone
+
+THE WATER SURFACE (the horizon line):
+- MIRROR-PERFECT reflection line cutting horizontally across the image
+- Gentle concentric ripples emanating from where magnet breaks the surface
+- The surface tension visible where magnet meets water - that slight meniscus curve
+- Reflection of the sky on the water - peachy gold
+
+BELOW THE WATERLINE (bottom 55% of image):
+
+The underwater world - completely different reality:
+- Deep turquoise Caribbean color (#09adc2 gradient to deeper teal)
+- The magnet's bottom half REFRACTED through water - letters "CÚN" wavering, distorted
+- Light caustics dancing across the magnet surface - those magical underwater light patterns
+- The illustrated jaguar's body underwater, legs seeming to swim
+
+Marine life:
+- A small school of sergeant major fish (yellow and black stripes) swimming past the magnet
+- A single spotted eagle ray gliding in the background, slightly out of focus
+- Delicate sea fan coral in the bottom corner
+- Tiny silver bubbles rising from below, catching light
+
+Underwater atmosphere:
+- Volumetric light rays penetrating from above, god rays effect
+- Particles floating in the water - that underwater snow effect
+- The sandy bottom barely visible in the deep background, with ripple patterns
+
+THE MAGIC:
+The magnet exists in BOTH worlds simultaneously. Above: warm, air, golden. Below: cool, water, cyan. The product is the bridge between realities.
+
+COLOR GRADE: Split - warm orange/gold tones above waterline, cool teal/cyan below. The contrast is the drama.
+
+TEXT: None on this slide. Let the image breathe. The surrealism speaks.
+
+This should feel like a Vogue editorial meets nature documentary. Impossible beauty that makes people FEEL something.
+
+
+================================================================================
+SLIDE 4: THE PORTAL - "PORTAL DIMENSIÓN" (HERO SHOT)
+================================================================================
+Format: 1080x1350 portrait
+Purpose: The money shot, maximum impact
+
+PROMPT:
+--------
+Hyper-realistic 3D cinematic composite, 1080x1350 portrait, movie poster quality.
+
+BACKGROUND:
+Deep space black with ultra-subtle gradient to dark teal (#0a2a2f) at the bottom. Not flat black - has depth, like looking into an abyss. Tiny distant stars barely visible.
+
+CENTER - THE MAGNET AS PORTAL:
+
+A "TULUM" souvenir magnet floating in the center, but it's RUPTURING OPEN - cracking like an egg, like a dimensional breach.
+
+The magnet shell:
+- The scalloped cloud shape is CRACKING - golden light bleeding through the fractures
+- Edges of the crack have golden/amber energy glow
+- The illustrated surface is fragmenting, pieces floating away
+- Some fragments frozen mid-explosion, others drifting
+- The crack runs diagonally across the magnet
+
+ERUPTING FROM INSIDE THE PORTAL (layered in 3D space):
+
+Closest to viewer (foreground):
+- Caribbean water POURING out like liquid frozen in time - turquoise splash tendrils reaching toward camera
+- Individual water droplets suspended in air, catching light
+- A realistic sea turtle swimming TOWARD the viewer, emerging from the portal, half in/half out
+- Tropical fish (blue tangs, angelfish) scattered in 3D space at various distances
+- Pink and orange hibiscus petals swirling outward
+
+Mid-ground:
+- Real palm fronds and monstera leaves BURSTING from the crack
+- A toucan mid-flight, wings spread, emerging from the magnet
+- Ancient Mayan stone fragments floating - carved glyphs visible
+- More water streams and mist
+
+Inside the portal (visible through the crack):
+- A glimpse of Tulum ruins on the cliff over turquoise sea
+- Volumetric god rays streaming out
+- The promise of an entire world inside
+
+Background elements (behind the magnet):
+- Energy wisps and particles swirling
+- Subtle sacred geometry patterns in the void (very faint)
+- More distant debris creating depth
+
+LIGHTING:
+- Primary light source: INSIDE the magnet, golden warm light blasting outward
+- Rim lighting on all emerging elements - edges glowing
+- Caustic water patterns projected onto floating elements
+- Lens flare from the portal light, cinematic quality
+
+PARTICLE EFFECTS:
+- Golden energy particles streaming outward in spiral patterns
+- Tiny water droplets everywhere, catching light
+- Dust and debris adding atmosphere
+- Subtle fog/mist at the edges
+
+THE FEELING:
+This is the MOMENT of magic - the instant where a simple souvenir cracks open and reveals it contains an ENTIRE WORLD. It's precious. It's impossible. It's Mexico captured in a magnet.
+
+COLOR GRADE:
+Teal and orange cinematic palette. Deep shadows, bright highlights. The golden light from the portal contrasts the cool dark void.
+
+TEXT (bottom, cinematic movie-poster style):
+"NO ES UN RECUERDO. ES UN PORTAL."
+Small: AXKAN logo, subtle, bottom corner
+
+This should look like concept art for a Marvel movie. Unreal Engine quality. The image that makes people SAVE the post.
+
+
+================================================================================
+SLIDE 5: THE COLLECTION - "PORTAL x3"
+================================================================================
+Format: 1080x1350 portrait
+Purpose: Show variety, "There's more to discover"
+
+PROMPT:
+--------
+Cinematic composite, 1080x1350 portrait, premium product photography.
+
+BACKGROUND:
+Rich dark gradient - deep charcoal (#1a1a1a) to dark teal (#0d3d3d). Subtle fog/atmosphere at the bottom.
+
+COMPOSITION - THREE PORTALS:
+
+Three destination magnets arranged in a triangular floating composition, each one a mini portal with elements escaping:
+
+TOP CENTER - "YUCATÁN":
+- Magnet glowing with green (#8ab73b) energy
+- A realistic jaguar HEAD emerging, snarling, powerful
+- Jungle vines and monstera leaves trailing out
+- Mayan pyramid silhouette visible inside the glow
+- Green energy particles
+
+BOTTOM LEFT - "CANCÚN":
+- Magnet glowing with cyan (#09adc2) energy
+- Turquoise water splashing outward
+- A manta ray gliding out, elegant
+- Beach sand particles and seashells floating
+- Cyan energy particles
+
+BOTTOM RIGHT - "OAXACA":
+- Magnet glowing with orange (#f39223) energy
+- Colorful alebrije (Mexican folk art creature) emerging - fantastical, painted patterns
+- Marigold flower petals (cempasúchil) floating outward
+- Mezcal agave leaves trailing
+- Orange and red energy particles
+
+INTERACTION BETWEEN PORTALS:
+- The energy streams from each magnet INTERTWINE in the center
+- Where green, cyan, and orange meet: white light, special moment
+- Particles from all three mixing in the middle space
+- Creates a sense of connected magic
+
+DEPTH:
+- Each magnet at slightly different Z-depth
+- Yucatan slightly further back, Cancun and Oaxaca forward
+- This creates dynamic tension
+
+LIGHTING:
+- Each magnet is its own light source (its brand color)
+- Dramatic rim lighting on all elements
+- The three colors illuminate the fog/atmosphere differently
+
+TEXT:
+"CADA DESTINO. SU PROPIA MAGIA."
+"Colección completa disponible"
+AXKAN logo
+
+This shows the SYSTEM - multiple destinations, same magic, coherent brand.
+
+
+================================================================================
+SLIDE 6: THE CRAFT - "DESCOMPOSICIÓN DETAIL"
+================================================================================
+Format: 1080x1350 portrait
+Purpose: Appreciation of quality, "This is premium"
+
+PROMPT:
+--------
+Extreme macro product photography, 1080x1350 portrait, luxury detail shot.
+
+TIGHT CROP: Extreme close-up on a magnet surface - we see only about 30% of the full magnet, massively enlarged.
+
+FOCUS AREA: The junction where a colorful letter meets the illustrated jungle and the wood edge - showing three materials/textures meeting.
+
+VISIBLE DETAILS AT MACRO SCALE:
+
+The letter "Y" (from YUCATAN):
+- Hot pink (#e72a88) with Mayan geometric pattern inside
+- At this scale, see the precision of the pattern lines
+- Subtle texture of the printing/paint
+- The edge where color meets background
+
+The illustrated jaguar fur (partial):
+- Brushstroke texture visible if illustrated
+- Or print dot pattern if printed
+- Individual spots have depth
+
+The MDF wood edge:
+- Dramatic wood grain texture
+- Individual fibers visible
+- The warm tan color (#D4A574)
+- Shows this is REAL material, not plastic
+
+The tropical leaf illustration:
+- Where green meets other colors
+- The layering of elements
+
+LIGHTING:
+- Dramatic RAKING LIGHT from left side
+- Creates long shadows across the surface texture
+- Every tiny imperfection and detail revealed
+- Golden warm light suggesting quality
+
+DEPTH OF FIELD:
+- Ultra shallow - only a thin band in perfect focus
+- Background and foreground fall into creamy bokeh
+- Creates that luxury product photography feel
+
+ATMOSPHERE:
+- Subtle dust particles caught in the light beam
+- Warmth and craftsmanship feeling
+
+TEXT (minimal, elegant):
+Small, bottom corner:
+"Detalle artesanal"
+"Hecho en México"
+AXKAN logo tiny
+
+This slide says: "We care about every millimeter." It's the luxury brand detail shot.
+
+
+================================================================================
+SLIDE 7: THE CALL - BRAND CLOSER
+================================================================================
+Format: 1080x1350 portrait
+Purpose: Close the loop, clear CTA, brand memory
+
+PROMPT:
+--------
+Bold brand statement, 1080x1350 portrait, clean and powerful.
+
+BACKGROUND:
+Solid hot pink (#e72a88) - the primary brand color, owning the space.
+
+Subtle texture: The AXKAN brand pattern (flowers, spirals, leaves, jaguar elements) embossed/debossed into the pink at 5% opacity - barely visible but adds depth. Like luxury wallpaper.
+
+CENTER TOP:
+The full AXKAN logo - the decorative jaguar with geometric Mayan patterns, and below it the stylized "AXKAN" letters with cultural textures inside each letter.
+
+The logo has a subtle glow effect - soft white outer glow suggesting the portal magic from previous slides.
+
+BELOW LOGO:
+"RECUERDOS HECHOS SOUVENIR"
+In white, clean condensed font (Prenton RP Cond), tracked out slightly.
+
+BELOW TAGLINE (smaller):
+"Portales a México para tu hogar"
+
+BOTTOM SECTION:
+Clean white text:
+→ www.axkan.com
+→ @axkan.mx
+"Envíos a todo México y USA"
+
+SUBTLE MAGIC:
+At the very bottom corners, barely visible:
+- Tiny hints of the portal energy (faint cyan wisps on left, faint orange wisps on right)
+- A few floating particles
+- Suggesting the magic continues beyond the frame
+
+OVERALL FEEL:
+Confident. Bold. Premium. The brand stands alone after proving itself in slides 1-6.
+
+This is the "remember us" slide. Pink burns into memory.
+
+
+================================================================================
+CAROUSEL SUMMARY
+================================================================================
+
+| Slide | Concept              | Purpose              | Dominant Color |
+|-------|----------------------|----------------------|----------------|
+| 1     | Colisión de Mundos   | HOOK - Stop scroll   | Pink + Teal    |
+| 2     | Descomposición       | EDUCATE - Show craft | White + Gold   |
+| 3     | Inmersión Líquida    | FEEL - Emotional hit | Gold + Cyan    |
+| 4     | Portal Dimensión     | HERO - Money shot    | Black + Gold   |
+| 5     | Portal x3            | VARIETY - Collection | Dark + Multi   |
+| 6     | Macro Detail         | DETAIL - Quality     | Warm neutral   |
+| 7     | Brand Closer         | CTA - Remember us    | Pink           |
+
+
+================================================================================
+SUGGESTED CAPTION
+================================================================================
+
+Abre el portal. Llévate México a casa.
+
+No vendemos souvenirs.
+Vendemos portales a los lugares que amas.
+
+Cada imán contiene:
+→ Fotografía real de tu destino
+→ Fauna emblemática de México
+→ Herencia cultural Maya
+→ Artesanía hecha en México
+
+Desliza para ver la magia
+
+Disponible: Yucatán • Cancún • Cozumel • Oaxaca • Tulum
++20 destinos en la colección completa
+
+Link en bio
+Envío a todo México y USA
+
+#AXKAN #SouvenirsMexicanos #HechoEnMéxico #MagnetsColeccionables #RecuerdosDeViaje #MéxicoMágico #TurismoMexicano #Yucatan #Cancun #Tulum #Cozumel #Oaxaca #ArtesaníaMexicana
+
+
+================================================================================
+REFERENCE IMAGES TO UPLOAD WITH PROMPTS
+================================================================================
+
+For best results, upload these reference images alongside each prompt:
+
+1. Yucatan magnet mockup (product style reference)
+2. DOT-03 from brand manual (colors + pattern reference)
+3. DOT-07 from brand manual (layout/composition reference)
+
+Add this line at the start of prompts:
+"Using the attached reference images as style guide..."
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================
