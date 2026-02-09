@@ -227,33 +227,19 @@ a {
 }
 
 .destination-name {
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 12vw, 6rem);
-  font-weight: 700;
+  font-family: 'RL AQVA', 'Fredoka', sans-serif;
+  font-size: clamp(3.5rem, 14vw, 7rem);
+  font-weight: 900;
   line-height: 0.95;
-  letter-spacing: -0.02em;
-  color: var(--white);
-  text-shadow: 0 4px 30px rgba(0,0,0,0.4);
+  letter-spacing: 0.02em;
+  color: #FFFFFF;
+  text-shadow:
+    0 4px 30px rgba(0,0,0,0.5),
+    0 2px 10px rgba(0,0,0,0.3);
   margin-bottom: var(--space-md);
+  opacity: 0;
+  animation: fadeInUp 0.8s var(--ease-out) 0.5s forwards;
 }
-
-.destination-name span {
-  display: inline-block;
-  animation: fadeInUp 0.6s var(--ease-out) both;
-}
-
-.destination-name span:nth-child(1) { animation-delay: 0.5s; }
-.destination-name span:nth-child(2) { animation-delay: 0.55s; }
-.destination-name span:nth-child(3) { animation-delay: 0.6s; }
-.destination-name span:nth-child(4) { animation-delay: 0.65s; }
-.destination-name span:nth-child(5) { animation-delay: 0.7s; }
-.destination-name span:nth-child(6) { animation-delay: 0.75s; }
-.destination-name span:nth-child(7) { animation-delay: 0.8s; }
-.destination-name span:nth-child(8) { animation-delay: 0.85s; }
-.destination-name span:nth-child(9) { animation-delay: 0.9s; }
-.destination-name span:nth-child(10) { animation-delay: 0.95s; }
-.destination-name span:nth-child(11) { animation-delay: 1s; }
-.destination-name span:nth-child(12) { animation-delay: 1.05s; }
 
 .hero-tagline {
   font-size: clamp(1.1rem, 4vw, 1.5rem);
