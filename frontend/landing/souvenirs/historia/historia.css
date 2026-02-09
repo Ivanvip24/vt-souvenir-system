@@ -3,6 +3,15 @@
    Mobile-First Design with AXKAN Brand Colors
    ============================================ */
 
+/* ---------- FONTS ---------- */
+@font-face {
+  font-family: 'RL AQVA';
+  src: url('../../fonts/rl-aqva-black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ---------- VARIABLES ---------- */
 :root {
   /* AXKAN Brand Colors */
@@ -267,20 +276,20 @@ a {
 }
 
 .hero-subtitle {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #ffffff;
+  font-family: 'RL AQVA', 'Fredoka', sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #FFFFFF !important;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
+  letter-spacing: 0.15em;
+  text-shadow: 2px 2px 12px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.3);
   opacity: 0;
   animation: fadeInUp 0.8s var(--ease-out) 1.4s forwards;
 }
 
 @media (min-width: 768px) {
   .hero-subtitle {
-    font-size: 2.2rem;
+    font-size: 2.8rem;
   }
 }
 
