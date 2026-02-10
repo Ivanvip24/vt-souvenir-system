@@ -166,6 +166,12 @@
                     <span>Marketplace</span>
                 </button>
 
+                <!-- 7. Clients (Leads from cuestionario) -->
+                <button class="nav-item" data-view="leads" tabindex="0">
+                    <i data-lucide="users" class="nav-icon"></i>
+                    <span>Clients</span>
+                </button>
+
                 <div class="nav-separator"></div>
 
                 <!-- 7. Configuración (Employees + Discounts + Settings) -->
@@ -1615,6 +1621,22 @@
                 </div>
             </section>
 
+            <!-- Clients / Leads View -->
+            <section id="leads-view" class="view">
+                <div class="view-header">
+                    <h2>Clients</h2>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span id="leads-count" style="color:#888;font-size:14px;"></span>
+                        <button class="btn btn-outline" onclick="loadLeads()">
+                            <i data-lucide="refresh-cw" class="icon-sm"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+                <div id="leads-container">
+                    <p style="color:#888;padding:40px;text-align:center;">Cargando leads...</p>
+                </div>
+            </section>
+
             <!-- Combined Employee Portal View -->
             <section id="employee-portal-view" class="view">
                 <div class="view-header">
@@ -2609,6 +2631,7 @@
     <script src="discounts.js"></script>
     <script src="ai-assistant.js"></script>
     <script src="marketplace.js"></script>
+    <script src="leads.js"></script>
     <script src="employees.js"></script>
     <script src="tasks.js?v=2"></script>
     <script src="command-palette.js"></script>

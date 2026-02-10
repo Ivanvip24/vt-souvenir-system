@@ -12,6 +12,11 @@
     // Google Apps Script Web App URL — Replace with your deployed URL
     const GOOGLE_SCRIPT_URL = '';
 
+    // Backend API URL for storing leads
+    const LEAD_API_BASE = window.location.hostname === 'localhost'
+        ? 'http://localhost:3000/api'
+        : 'https://vt-souvenir-backend.onrender.com/api';
+
     // WhatsApp number (with country code, no +)
     const WHATSAPP_NUMBER = '5215538253251';
 
@@ -58,9 +63,16 @@
         const canvas = document.getElementById('particles');
         if (!canvas) return;
 
+        // Skip particles entirely on low-power devices
+        const isMobile = window.innerWidth < 768 || 'ontouchstart' in window;
+        if (isMobile) {
+            canvas.style.display = 'none';
+            return;
+        }
+
         const ctx = canvas.getContext('2d');
+        const isLight = window.matchMedia('(prefers-color-scheme: light)').matches;
         let particles = [];
-        let animFrame;
 
         function resize() {
             canvas.width = window.innerWidth;
@@ -68,7 +80,13 @@
         }
 
         function createParticle() {
-            const colors = [
+            const colors = isLight ? [
+                'rgba(231, 42, 136, 0.15)',
+                'rgba(9, 173, 194, 0.12)',
+                'rgba(243, 146, 35, 0.1)',
+                'rgba(138, 183, 59, 0.1)',
+                'rgba(0, 0, 0, 0.04)'
+            ] : [
                 'rgba(231, 42, 136, 0.3)',
                 'rgba(9, 173, 194, 0.25)',
                 'rgba(243, 146, 35, 0.2)',
@@ -90,19 +108,20 @@
 
         function init() {
             resize();
-            const count = Math.min(60, Math.floor(canvas.width * canvas.height / 15000));
+            // Desktop: max 35 particles (down from 60)
+            const count = Math.min(35, Math.floor(canvas.width * canvas.height / 25000));
             particles = Array.from({ length: count }, createParticle);
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            particles.forEach(p => {
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
                 p.x += p.speedX;
                 p.y += p.speedY;
                 p.pulse += 0.01;
 
-                // Wrap around
                 if (p.x < -10) p.x = canvas.width + 10;
                 if (p.x > canvas.width + 10) p.x = -10;
                 if (p.y < -10) p.y = canvas.height + 10;
@@ -114,35 +133,31 @@
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fillStyle = p.color.replace(/[\d.]+\)$/, currentOpacity + ')');
                 ctx.fill();
-            });
+            }
 
-            // Draw faint connections
+            // Connection lines — only on desktop, batch into single path
+            ctx.beginPath();
+            ctx.lineWidth = 0.5;
             for (let i = 0; i < particles.length; i++) {
                 for (let j = i + 1; j < particles.length; j++) {
                     const dx = particles[i].x - particles[j].x;
                     const dy = particles[i].y - particles[j].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-
-                    if (dist < 120) {
-                        ctx.beginPath();
+                    // Skip sqrt — compare squared distance (120² = 14400)
+                    if (dx * dx + dy * dy < 14400) {
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${0.03 * (1 - dist / 120)})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
                     }
                 }
             }
+            ctx.strokeStyle = isLight ? 'rgba(0, 0, 0, 0.025)' : 'rgba(255, 255, 255, 0.025)';
+            ctx.stroke();
 
-            animFrame = requestAnimationFrame(draw);
+            requestAnimationFrame(draw);
         }
 
         init();
         draw();
-
-        window.addEventListener('resize', () => {
-            resize();
-        });
+        window.addEventListener('resize', resize);
     }
 
     // ═══════════════════════════════════════
@@ -328,6 +343,17 @@
                 console.warn('Google Script submission failed:', e);
                 // Don't show error to user — WhatsApp still works as fallback
             }
+        }
+
+        // Send to backend API for storage in admin dashboard
+        try {
+            await fetch(`${LEAD_API_BASE}/leads`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (e) {
+            console.warn('Lead API submission failed:', e);
         }
 
         // Short delay for UX (show the loading screen briefly)

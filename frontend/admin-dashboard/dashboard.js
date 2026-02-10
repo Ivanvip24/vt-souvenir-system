@@ -178,6 +178,11 @@ function switchView(viewName) {
       loadTasksData();
     }
   }
+
+  // Initialize leads when switching to leads view
+  if (viewName === 'leads' && typeof loadLeads === 'function') {
+    loadLeads();
+  }
 }
 
 // Switch between tabs in the Employee Portal
