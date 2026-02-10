@@ -924,6 +924,160 @@
     }
 
     /* ============================================
+       NAVIGATION
+       ============================================ */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: transparent;
+      transition: background 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .nav.nav--scrolled {
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-logo {
+      height: 40px;
+      width: auto;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+      align-items: center;
+    }
+
+    .nav-links a {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--turquesa);
+    }
+
+    .nav-cta {
+      background: var(--turquesa);
+      color: white !important;
+      padding: 0.6rem 1.25rem;
+      border-radius: 100px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+    }
+
+    .nav-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(9, 173, 194, 0.4);
+    }
+
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 32px;
+      height: 32px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      z-index: 110;
+    }
+
+    .nav-hamburger span {
+      display: block;
+      width: 100%;
+      height: 3px;
+      background: white;
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(6px, 6px);
+    }
+
+    .nav-hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .nav-hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(6px, -6px);
+    }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(10, 10, 10, 0.98);
+      backdrop-filter: blur(10px);
+      z-index: 99;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .mobile-menu.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .mobile-menu a {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--white);
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      transition: color 0.3s ease;
+    }
+
+    .mobile-menu a:hover {
+      color: var(--turquesa);
+    }
+
+    .mobile-menu .nav-cta {
+      font-size: 1.25rem;
+      padding: 1rem 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      .nav-hamburger {
+        display: flex;
+      }
+
+      .mobile-menu {
+        display: flex;
+      }
+    }
+
+    /* ============================================
        ANIMATIONS
        ============================================ */
     .reveal {
@@ -946,6 +1100,34 @@
   </style>
 </head>
 <body>
+
+  <!-- ============================================
+       NAVIGATION
+       ============================================ -->
+  <nav class="nav">
+    <a href="/">
+      <img src="/assets/LOGO-01.png" alt="AXKAN" class="nav-logo">
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/catalogo">Catálogo</a></li>
+      <li><a href="/#productos">Productos</a></li>
+      <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
+    </ul>
+    <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu" aria-hidden="true">
+    <a href="/">Inicio</a>
+    <a href="/catalogo">Catálogo</a>
+    <a href="/#productos">Productos</a>
+    <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
+  </div>
 
   <!-- ============================================
        HERO - SPLIT DIAGONAL
@@ -1389,6 +1571,41 @@
           }
         }
       });
+
+      // Nav scroll effect
+      const navEl = document.querySelector('.nav');
+      const heroEl = document.querySelector('.hero');
+      if (navEl && heroEl) {
+        const navObserver = new IntersectionObserver(([entry]) => {
+          navEl.classList.toggle('nav--scrolled', !entry.isIntersecting);
+        }, { threshold: 0.05 });
+        navObserver.observe(heroEl);
+      }
+
+      // Mobile hamburger menu
+      const hamburger = document.querySelector('.nav-hamburger');
+      const mobileMenu = document.querySelector('.mobile-menu');
+
+      if (hamburger && mobileMenu) {
+        hamburger.addEventListener('click', function() {
+          const isActive = hamburger.classList.toggle('active');
+          mobileMenu.classList.toggle('active');
+          hamburger.setAttribute('aria-expanded', isActive);
+          mobileMenu.setAttribute('aria-hidden', !isActive);
+          document.body.style.overflow = isActive ? 'hidden' : '';
+        });
+
+        // Close menu when clicking a link
+        mobileMenu.querySelectorAll('a').forEach(link => {
+          link.addEventListener('click', function() {
+            hamburger.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+            mobileMenu.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+          });
+        });
+      }
     });
   </script>
 
