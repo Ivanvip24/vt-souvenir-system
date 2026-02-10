@@ -444,6 +444,29 @@ ${context.recentOrders?.slice(0, 5).map(o => `- #${o.order_number}: ${o.client_n
 - Pagos finales pendientes: ${context.paymentStats?.pending_final_payments || 0}
 - Monto pendiente total: $${parseFloat(context.paymentStats?.pending_amount || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}
 
+### NÓMINA SEMANAL (EMPLEADOS):
+| Empleado | Salario Semanal |
+|----------|----------------|
+| Majo | $2,500 |
+| Chris | $2,500 |
+| Saoní | $2,500 |
+| Ahira | $2,800 |
+| Loz | $2,300 |
+| Montserrat | $2,000 |
+| Belinda | $2,000 |
+| Iván | $7,500 |
+| Alejandra | $5,000 |
+| Daniel | $5,000 |
+
+**Total nómina base semanal: $34,600**
+**Bonos disponibles por empleado:** Productividad ($500) + Puntualidad ($500) = $1,000 máx/empleado
+**Total nómina máxima con todos los bonos: $44,600** (10 empleados × $1,000 en bonos = $10,000)
+
+Cuando pregunten sobre nómina, pagos a empleados o costos de personal:
+- Responde con el desglose por empleado
+- Calcula totales según lo que pregunten (semanal, quincenal ×2, mensual ×4)
+- Menciona los bonos de productividad y puntualidad si son relevantes
+
 ## SECCIONES DEL SISTEMA:
 
 1. **Pedidos** (tab: pedidos) - Gestión de órdenes, crear nuevos pedidos, ver detalles, actualizar estados
