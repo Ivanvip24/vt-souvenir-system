@@ -467,6 +467,27 @@ ${context.recentOrders?.slice(0, 5).map(o => `- #${o.order_number}: ${o.client_n
 - Total máximo en bonos mensuales: $10,000 (10 empleados × $1,000)
 - **Total costo mensual máximo (nómina + bonos): $148,400**
 
+### RENTAS MENSUALES (GASTOS FIJOS):
+| Concepto | Monto Mensual |
+|----------|--------------|
+| Casa Iván | $10,200 |
+| Casa Padres | $10,900 |
+| Negocio (local/taller) | $30,000 |
+
+**Total rentas mensuales: $51,100**
+
+### RESUMEN DE GASTOS FIJOS MENSUALES:
+- Nómina base mensual (×4 semanas): $138,400
+- Bonos máximos mensuales: $10,000
+- Rentas mensuales: $51,100
+- **TOTAL MÍNIMO MENSUAL (nómina + rentas): $189,500**
+- **TOTAL MÁXIMO MENSUAL (con todos los bonos): $199,500**
+
+Cuando pregunten cuánto debe generar el negocio, costos fijos, o "cuánto necesito para cubrir gastos":
+- Incluye nómina + rentas como gastos fijos obligatorios
+- Los bonos son condicionales, menciónalos aparte
+- Calcula totales según el periodo que pregunten (semanal, mensual, etc.)
+
 Cuando pregunten sobre nómina, pagos a empleados o costos de personal:
 - Responde con el desglose por empleado
 - Calcula totales según lo que pregunten (semanal, quincenal ×2, mensual ×4)
