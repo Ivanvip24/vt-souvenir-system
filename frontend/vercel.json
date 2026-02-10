@@ -37,8 +37,12 @@
     { "source": "/order-form/:path*", "destination": "/client-order-form/:path*" },
     { "source": "/cuestionario", "destination": "/lead-form/index.html" },
     { "source": "/cuestionario/:path*", "destination": "/lead-form/:path*" },
+    { "source": "/configurador", "destination": "/configurador/index.html" },
+    { "source": "/configurador/:path*", "destination": "/configurador/:path*" },
     { "source": "/envio", "destination": "/shipping-form/index.html" },
     { "source": "/envio/:path*", "destination": "/shipping-form/:path*" },
+    { "source": "/seguimiento", "destination": "/order-tracking/index.html" },
+    { "source": "/seguimiento/:path*", "destination": "/order-tracking/:path*" },
     { "source": "/admin/login", "destination": "/admin-dashboard/login.html" },
     { "source": "/admin", "destination": "/admin-dashboard/index.html" },
     { "source": "/admin/", "destination": "/admin-dashboard/index.html" }
