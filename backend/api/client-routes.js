@@ -1041,13 +1041,95 @@ router.post('/info', async (req, res) => {
 
 /**
  * POST /api/client/orders/lookup
- * Lookup orders by client phone AND email (both required)
+ * Lookup orders by client phone AND email, OR by order number alone
  */
 router.post('/orders/lookup', async (req, res) => {
   try {
-    const { phone, email } = req.body;
+    const { phone, email, orderNumber } = req.body;
 
-    // Both phone and email are required
+    // Order number lookup (no phone/email required)
+    if (orderNumber && !phone && !email) {
+      const orderResult = await query(`
+        SELECT
+          o.id,
+          o.order_number,
+          o.order_date,
+          o.event_type,
+          o.event_date,
+          o.status,
+          o.approval_status,
+          o.total_price,
+          o.deposit_amount,
+          o.deposit_paid,
+          o.payment_method,
+          o.second_payment_proof_url,
+          o.is_store_pickup,
+          c.name as client_name,
+          c.phone as client_phone,
+          c.email as client_email,
+          (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as shipping_labels_count,
+          (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id AND sl.tracking_number IS NOT NULL) as labels_with_tracking,
+          json_agg(
+            json_build_object(
+              'productName', oi.product_name,
+              'quantity', oi.quantity,
+              'unitPrice', oi.unit_price
+            ) ORDER BY oi.id
+          ) FILTER (WHERE oi.id IS NOT NULL) as items
+        FROM orders o
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN clients c ON o.client_id = c.id
+        WHERE UPPER(o.order_number) = UPPER($1)
+          AND (o.archive_status IS NULL OR o.archive_status = 'active')
+          AND o.approval_status != 'rejected'
+        GROUP BY o.id, c.name, c.phone, c.email
+        ORDER BY o.created_at DESC
+      `, [orderNumber]);
+
+      if (orderResult.rows.length === 0) {
+        return res.json({ success: true, orders: [], clientInfo: null, message: 'No se encontró el pedido' });
+      }
+
+      const row = orderResult.rows[0];
+      const orders = orderResult.rows.map(order => ({
+        id: order.id,
+        orderId: order.id,
+        orderNumber: order.order_number,
+        orderDate: order.order_date,
+        eventType: order.event_type,
+        eventDate: order.event_date,
+        status: getStatusText(order.status),
+        approvalStatus: order.approval_status,
+        totalPrice: order.total_price,
+        depositAmount: order.deposit_amount,
+        depositPaid: order.deposit_paid,
+        remainingBalance: order.total_price - order.deposit_amount,
+        paymentMethod: order.payment_method,
+        totalPriceFormatted: formatCurrency(order.total_price),
+        depositAmountFormatted: formatCurrency(order.deposit_amount),
+        remainingBalanceFormatted: formatCurrency(order.total_price - order.deposit_amount),
+        items: order.items || [],
+        clientName: order.client_name,
+        secondPaymentReceipt: order.second_payment_proof_url,
+        secondPaymentReceived: !!order.second_payment_proof_url,
+        shippingLabelsCount: parseInt(order.shipping_labels_count) || 0,
+        labelsWithTracking: parseInt(order.labels_with_tracking) || 0,
+        allLabelsGenerated: parseInt(order.shipping_labels_count) > 0 && parseInt(order.labels_with_tracking) === parseInt(order.shipping_labels_count),
+        isStorePickup: order.is_store_pickup || false
+      }));
+
+      return res.json({
+        success: true,
+        orders,
+        clientInfo: {
+          name: row.client_name,
+          phone: row.client_phone,
+          email: row.client_email
+        }
+      });
+    }
+
+    // Phone + email lookup (both required)
     if (!phone || !email) {
       return res.status(400).json({
         success: false,
