@@ -18,6 +18,7 @@
     { "source": "/", "destination": "/landing/index.html" },
     { "source": "/landing", "destination": "/landing/index.html" },
     { "source": "/souvenirs", "destination": "/landing/souvenirs/index.html" },
+    { "source": "/catalogo", "destination": "/landing/souvenirs/index.html" },
     { "source": "/souvenirs/:destination/historia", "destination": "/landing/souvenirs/:destination/historia.html" },
     { "source": "/souvenirs/assets/:path*", "destination": "/landing/souvenirs/assets/:path*" },
     { "source": "/souvenirs/historia/:path*", "destination": "/landing/souvenirs/historia/:path*" },
