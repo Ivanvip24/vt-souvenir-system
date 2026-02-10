@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Huasteca Potosina - Historia | AXKAN Souvenirs</title>
-  <meta name="description" content="Descubre la magia de la Huasteca Potosina: cascadas turquesa, ríos color esmeralda y aventuras que no olvidarás. Souvenirs que despiertan el orgullo mexicano.">
+  <meta name="description" content="Descubre la magia de la Huasteca Potosina: cascadas turquesa, ríos esmeralda y aventuras extremas. Souvenirs que despiertan el orgullo mexicano.">
 
-  <!-- Preconnect for performance -->
+  <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://upload.wikimedia.org">
 
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="../../assets/LOGO-01.png">
@@ -23,332 +23,1294 @@
   <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/4/4e/Cascada_de_Tamul.jpg">
   <meta property="og:type" content="website">
 
-  <link rel="stylesheet" href="../historia/historia.css">
+  <style>
+    /* ============================================
+       HUASTECA POTOSINA - ADVENTURE LAYOUT
+       A completely different design from Chichén Itzá
+       ============================================ */
+
+    :root {
+      --turquesa: #09adc2;
+      --verde: #8ab73b;
+      --rosa: #e72a88;
+      --naranja: #f39223;
+      --rojo: #e52421;
+      --white: #ffffff;
+      --black: #0a0a0a;
+      --gray-100: #f5f5f5;
+      --gray-800: #262626;
+      --font-display: 'Bebas Neue', Impact, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--black);
+      color: var(--white);
+      overflow-x: hidden;
+    }
+
+    img { max-width: 100%; height: auto; display: block; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ============================================
+       HERO - SPLIT DIAGONAL
+       ============================================ */
+    .hero {
+      min-height: 100svh;
+      display: grid;
+      grid-template-columns: 1fr;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (min-width: 768px) {
+      .hero {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .hero-media {
+      position: relative;
+      min-height: 60vh;
+      overflow: hidden;
+    }
+
+    @media (min-width: 768px) {
+      .hero-media {
+        min-height: 100vh;
+        clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
+      }
+    }
+
+    .hero-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+    }
+
+    .hero-media::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.7));
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    @media (min-width: 768px) {
+      .hero-content {
+        padding: 4rem;
+        margin-left: -10%;
+      }
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--turquesa);
+      color: var(--white);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      width: fit-content;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 15vw, 10rem);
+      line-height: 0.85;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .hero-title span {
+      display: block;
+    }
+
+    .hero-title .outline {
+      -webkit-text-stroke: 2px var(--turquesa);
+      color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: rgba(255,255,255,0.7);
+      max-width: 400px;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--turquesa);
+      color: var(--white);
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: transform 0.3s, box-shadow 0.3s;
+      width: fit-content;
+    }
+
+    .hero-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(9,173,194,0.4);
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.75rem;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(10px); }
+    }
+
+    /* ============================================
+       STATS BAR - HORIZONTAL SCROLL
+       ============================================ */
+    .stats-bar {
+      background: var(--turquesa);
+      padding: 1.5rem 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .stats-bar::-webkit-scrollbar { display: none; }
+
+    .stats-container {
+      display: flex;
+      gap: 3rem;
+      padding: 0 2rem;
+      min-width: max-content;
+    }
+
+    .stat-item {
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .stat-number {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.8;
+    }
+
+    /* ============================================
+       INTRO - THE STORY
+       ============================================ */
+    .intro {
+      padding: 6rem 2rem;
+      background: var(--gray-100);
+      color: var(--black);
+    }
+
+    .intro-container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .intro-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--turquesa);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 1rem;
+    }
+
+    .intro-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      line-height: 1;
+      margin-bottom: 1.5rem;
+    }
+
+    .intro-text {
+      font-size: 1.125rem;
+      line-height: 1.8;
+      color: #555;
+    }
+
+    .intro-text strong {
+      color: var(--turquesa);
+    }
+
+    /* ============================================
+       BENTO GRID - ADVENTURES
+       ============================================ */
+    .bento {
+      padding: 4rem 1rem;
+      background: var(--black);
+    }
+
+    .bento-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .bento-header h2 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 6vw, 3.5rem);
+    }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 768px) {
+      .bento-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 300px);
+      }
+
+      .bento-item:nth-child(1) {
+        grid-column: span 2;
+      }
+
+      .bento-item:nth-child(4) {
+        grid-column: span 2;
+      }
+    }
+
+    .bento-item {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      min-height: 250px;
+    }
+
+    .bento-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+
+    .bento-item:hover img {
+      transform: scale(1.05);
+    }
+
+    .bento-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.5rem;
+    }
+
+    .bento-tag {
+      background: var(--turquesa);
+      color: var(--white);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-bottom: 0.5rem;
+    }
+
+    .bento-title {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .bento-desc {
+      font-size: 0.875rem;
+      opacity: 0.8;
+    }
+
+    /* ============================================
+       THE TWIST - FULL WIDTH COMPARISON
+       ============================================ */
+    .twist {
+      position: relative;
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .twist-bg {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+    }
+
+    .twist-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.4);
+    }
+
+    .twist-content {
+      width: 100%;
+      padding: 4rem 2rem;
+    }
+
+    .twist-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    @media (min-width: 768px) {
+      .twist-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .twist-main h2 {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 10vw, 6rem);
+      line-height: 0.9;
+      margin-bottom: 1rem;
+    }
+
+    .twist-main h2 span {
+      color: var(--turquesa);
+    }
+
+    .twist-main p {
+      font-size: 1.25rem;
+      opacity: 0.8;
+      max-width: 400px;
+    }
+
+    .twist-compare {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .twist-compare-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--naranja);
+      margin-bottom: 1rem;
+    }
+
+    .twist-compare-img {
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .twist-compare-img img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .twist-compare h3 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .twist-compare-stat {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      color: var(--naranja);
+    }
+
+    .twist-compare-hook {
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    /* ============================================
+       GALLERY - MASONRY STYLE
+       ============================================ */
+    .gallery {
+      padding: 6rem 2rem;
+      background: var(--white);
+      color: var(--black);
+    }
+
+    .gallery-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .gallery-header h2 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      color: var(--black);
+    }
+
+    .gallery-header p {
+      color: #666;
+      margin-top: 0.5rem;
+    }
+
+    .masonry {
+      column-count: 1;
+      column-gap: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 600px) {
+      .masonry { column-count: 2; }
+    }
+
+    @media (min-width: 900px) {
+      .masonry { column-count: 3; }
+    }
+
+    .masonry-item {
+      break-inside: avoid;
+      margin-bottom: 1rem;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .masonry-item img {
+      width: 100%;
+      display: block;
+      transition: transform 0.5s ease;
+    }
+
+    .masonry-item:hover img {
+      transform: scale(1.03);
+    }
+
+    .masonry-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 2rem 1rem 1rem;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      color: var(--white);
+    }
+
+    .masonry-caption h4 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+    }
+
+    .masonry-caption p {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    /* ============================================
+       ANIMAL - HORIZONTAL LAYOUT
+       ============================================ */
+    .animal {
+      display: grid;
+      grid-template-columns: 1fr;
+      min-height: 70vh;
+      background: var(--gray-800);
+    }
+
+    @media (min-width: 768px) {
+      .animal {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .animal-image {
+      position: relative;
+      min-height: 400px;
+    }
+
+    .animal-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+    }
+
+    .animal-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .animal-content {
+        padding: 4rem;
+      }
+    }
+
+    .animal-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--verde);
+      margin-bottom: 1rem;
+    }
+
+    .animal-name {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 10vw, 5rem);
+      line-height: 0.9;
+      margin-bottom: 1.5rem;
+    }
+
+    .animal-story {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 1.5rem;
+    }
+
+    .animal-story strong {
+      color: var(--verde);
+    }
+
+    .animal-fact {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      background: rgba(138,183,59,0.15);
+      border-radius: 12px;
+      border-left: 4px solid var(--verde);
+    }
+
+    .animal-fact-icon {
+      font-size: 2rem;
+    }
+
+    .animal-fact-text {
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* ============================================
+       MORE DESTINATIONS
+       ============================================ */
+    .destinations {
+      padding: 6rem 2rem;
+      background: var(--black);
+    }
+
+    .destinations-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .destinations-header h2 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 6vw, 3rem);
+    }
+
+    .destinations-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 768px) {
+      .destinations-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .dest-card {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 3/4;
+    }
+
+    .dest-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .dest-card:hover img {
+      transform: scale(1.1);
+    }
+
+    .dest-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.25rem;
+    }
+
+    .dest-card-badge {
+      background: var(--rosa);
+      color: var(--white);
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-bottom: 0.5rem;
+    }
+
+    .dest-card h4 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+    }
+
+    .dest-card p {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    /* ============================================
+       PRODUCTS - FLOATING CARDS
+       ============================================ */
+    .products {
+      padding: 6rem 2rem;
+      background: linear-gradient(135deg, var(--turquesa) 0%, #076d7a 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .products::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 600px;
+      height: 600px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+    }
+
+    .products-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .products-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      opacity: 0.8;
+      margin-bottom: 0.5rem;
+    }
+
+    .products-header h2 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 8vw, 4rem);
+    }
+
+    .products-header p {
+      opacity: 0.8;
+      font-style: italic;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      max-width: 1000px;
+      margin: 0 auto 3rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .product-card {
+      background: var(--white);
+      border-radius: 20px;
+      overflow: hidden;
+      color: var(--black);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .product-image {
+      aspect-ratio: 1;
+      overflow: hidden;
+      background: var(--gray-100);
+    }
+
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .product-card:hover .product-image img {
+      transform: scale(1.05);
+    }
+
+    .product-info {
+      padding: 1.5rem;
+    }
+
+    .product-info h3 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .product-info .desc {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 0.75rem;
+    }
+
+    .product-info .price {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--turquesa);
+    }
+
+    .products-cta {
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #25D366;
+      color: var(--white);
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .cta-whatsapp:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 40px rgba(37,211,102,0.4);
+    }
+
+    .cta-whatsapp svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* ============================================
+       FOOTER
+       ============================================ */
+    .footer {
+      background: var(--black);
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+
+    .footer-brand {
+      margin-bottom: 2rem;
+    }
+
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-logo span:nth-child(1) { color: var(--rosa); }
+    .footer-logo span:nth-child(2) { color: var(--verde); }
+    .footer-logo span:nth-child(3) { color: var(--naranja); }
+    .footer-logo span:nth-child(4) { color: var(--turquesa); }
+    .footer-logo span:nth-child(5) { color: var(--rojo); }
+
+    .footer-tagline {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.9rem;
+    }
+
+    .footer-social {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .footer-social a {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      transition: background 0.3s ease;
+    }
+
+    .footer-social a:hover {
+      background: var(--turquesa);
+    }
+
+    .footer-social svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .footer-legal {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .footer-nfc {
+      color: var(--turquesa);
+      margin-top: 0.5rem;
+    }
+
+    /* ============================================
+       ANIMATIONS
+       ============================================ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
 </head>
 <body>
 
   <!-- ============================================
-       SECTION 1: HERO - "The Arrival"
+       HERO - SPLIT DIAGONAL
        ============================================ -->
-  <section class="hero" id="hero">
-    <div class="hero-bg">
+  <section class="hero">
+    <div class="hero-media">
       <img
         src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Cascada_de_Tamul.jpg"
         alt="Cascada de Tamul - Huasteca Potosina"
-        class="hero-img"
         loading="eager"
       >
-      <div class="hero-overlay"></div>
     </div>
 
     <div class="hero-content">
-      <!-- Spiral watermark -->
-      <svg class="caracol-watermark" viewBox="0 0 100 100" fill="none">
-        <path d="M50 10 C70 10 90 30 90 50 C90 70 70 90 50 90 C30 90 10 70 10 50 C10 35 25 20 40 20 C55 20 70 35 70 50 C70 60 60 70 50 70 C40 70 30 60 30 50 C30 42 38 35 46 35 C54 35 60 42 60 50"
-              stroke="rgba(255,255,255,0.15)"
-              stroke-width="2"
-              fill="none"
-              class="spiral-path"/>
-      </svg>
+      <div class="hero-badge">
+        <span>🌊</span>
+        <span>San Luis Potosí, México</span>
+      </div>
 
-      <!-- Destination Name -->
-      <h1 class="destination-name">
-        HUASTECA<br>POTOSINA
+      <h1 class="hero-title">
+        <span>HUASTECA</span>
+        <span class="outline">POTOSINA</span>
       </h1>
 
-      <p class="hero-tagline">
-        <span class="tagline-main">Donde el agua</span>
-        <span class="tagline-twist">se vuelve turquesa...</span>
+      <p class="hero-subtitle">
+        Donde el agua se vuelve turquesa y las cascadas tocan el cielo.
+        La aventura más extrema de México te espera.
       </p>
 
-      <p class="hero-subtitle">San Luis Potosí, México</p>
+      <a href="#aventuras" class="hero-cta">
+        <span>Explorar Aventuras</span>
+        <span>↓</span>
+      </a>
     </div>
 
-    <a href="#twist" class="scroll-indicator">
-      <span class="scroll-text">Descubre más</span>
-      <div class="scroll-arrow">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </div>
-    </a>
+    <div class="scroll-hint">
+      <span>Scroll</span>
+      <span>↓</span>
+    </div>
   </section>
 
 
   <!-- ============================================
-       SECTION 2: THE TWIST - "¿Sabías que...?"
+       STATS BAR
        ============================================ -->
-  <section class="twist" id="twist">
-    <div class="twist-container">
-      <div class="twist-visual">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Cascada_de_Tamul.jpg/800px-Cascada_de_Tamul.jpg"
-          alt="Cascada de Tamul - 105 metros de caída"
-          loading="lazy"
-        >
-        <div class="twist-badge">
-          <span class="badge-number" data-target="105">0</span>
-          <span class="badge-unit">metros</span>
+  <div class="stats-bar">
+    <div class="stats-container">
+      <div class="stat-item">
+        <div class="stat-number">105m</div>
+        <div class="stat-label">Altura Tamul</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">376m</div>
+        <div class="stat-label">Sótano Golondrinas</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">7</div>
+        <div class="stat-label">Cascadas de Micos</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">36</div>
+        <div class="stat-label">Estructuras Xilitla</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">∞</div>
+        <div class="stat-label">Aventuras</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================
+       INTRO
+       ============================================ -->
+  <section class="intro">
+    <div class="intro-container reveal">
+      <span class="intro-label">La Joya Escondida de México</span>
+      <h2 class="intro-title">Donde la Naturaleza Hace Arte</h2>
+      <p class="intro-text">
+        La Huasteca Potosina no es solo un destino—es una experiencia que redefine
+        lo que creías posible en México. Ríos de <strong>color turquesa imposible</strong>,
+        cascadas que caen desde acantilados de vértigo, y cavernas tan profundas que
+        las nubes se forman dentro. Aquí, la aventura no es opcional: <strong>es el camino</strong>.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       BENTO GRID - ADVENTURES
+       ============================================ -->
+  <section class="bento" id="aventuras">
+    <div class="bento-header reveal">
+      <h2>Las Aventuras Te Esperan</h2>
+    </div>
+
+    <div class="bento-grid">
+      <div class="bento-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Cascada_de_Tamul.jpg" alt="Cascada de Tamul" loading="lazy">
+        <div class="bento-overlay">
+          <span class="bento-tag">Icónica</span>
+          <h3 class="bento-title">Cascada de Tamul</h3>
+          <p class="bento-desc">105 metros de caída libre sobre el río Tampaón</p>
         </div>
       </div>
 
-      <div class="twist-content">
-        <span class="twist-label reveal">¿Sabías que...?</span>
-        <h2 class="twist-title reveal">
-          La Cascada de Tamul mide <strong>105 metros</strong>
-        </h2>
-        <div class="twist-comparison reveal">
-          <p class="comparison-but">Pero...</p>
-          <div class="comparison-card">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Cascada_de_Basaseachi%2C_Chihuahua%2C_M%C3%A9xico.jpg/800px-Cascada_de_Basaseachi%2C_Chihuahua%2C_M%C3%A9xico.jpg"
-              alt="Cascada de Basaseachi - Chihuahua"
-              loading="lazy"
-            >
-            <div class="comparison-info">
-              <span class="comparison-destination">Basaseachi, Chihuahua</span>
-              <span class="comparison-stat">
-                <span class="stat-number" data-target="246">0</span>m
-              </span>
-              <span class="comparison-hook">La cascada más alta de México</span>
-            </div>
+      <div class="bento-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/S%C3%B3tano_de_las_Golondrinas.jpg/800px-S%C3%B3tano_de_las_Golondrinas.jpg" alt="Sótano de las Golondrinas" loading="lazy">
+        <div class="bento-overlay">
+          <span class="bento-tag" style="background: var(--naranja)">Extremo</span>
+          <h3 class="bento-title">Sótano de las Golondrinas</h3>
+          <p class="bento-desc">376m de profundidad—rappel al vacío</p>
+        </div>
+      </div>
+
+      <div class="bento-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Puente_de_Dios%2C_Huasteca_Potosina.jpg/800px-Puente_de_Dios%2C_Huasteca_Potosina.jpg" alt="Puente de Dios" loading="lazy">
+        <div class="bento-overlay">
+          <span class="bento-tag" style="background: var(--verde)">Mágico</span>
+          <h3 class="bento-title">Puente de Dios</h3>
+          <p class="bento-desc">Una cueva donde el agua brilla turquesa</p>
+        </div>
+      </div>
+
+      <div class="bento-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Edward_James%27_Las_Pozas.jpg/800px-Edward_James%27_Las_Pozas.jpg" alt="Las Pozas de Xilitla" loading="lazy">
+        <div class="bento-overlay">
+          <span class="bento-tag" style="background: var(--rosa)">Surrealista</span>
+          <h3 class="bento-title">Las Pozas de Xilitla</h3>
+          <p class="bento-desc">El jardín surrealista de Edward James</p>
+        </div>
+      </div>
+
+      <div class="bento-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Cascadas_de_Micos.jpg/800px-Cascadas_de_Micos.jpg" alt="Cascadas de Micos" loading="lazy">
+        <div class="bento-overlay">
+          <span class="bento-tag">Adrenalina</span>
+          <h3 class="bento-title">Cascadas de Micos</h3>
+          <p class="bento-desc">7 cascadas perfectas para saltar</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       THE TWIST
+       ============================================ -->
+  <section class="twist">
+    <div class="twist-bg">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Cascada_de_Tamul.jpg" alt="Cascada de Tamul de fondo" loading="lazy">
+    </div>
+
+    <div class="twist-content">
+      <div class="twist-container">
+        <div class="twist-main reveal">
+          <h2>
+            TAMUL TIENE<br>
+            <span>105M</span>
+          </h2>
+          <p>
+            La cascada más espectacular de San Luis Potosí,
+            solo accesible en kayak o lancha por el río Tampaón.
+          </p>
+        </div>
+
+        <div class="twist-compare reveal">
+          <div class="twist-compare-label">Pero en Chihuahua...</div>
+          <div class="twist-compare-img">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Cascada_de_Basaseachi%2C_Chihuahua%2C_M%C3%A9xico.jpg/800px-Cascada_de_Basaseachi%2C_Chihuahua%2C_M%C3%A9xico.jpg" alt="Cascada de Basaseachi" loading="lazy">
           </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ============================================
-       SECTION 3: PHOTO GALLERY - "El Viaje Visual"
-       ============================================ -->
-  <section class="gallery" id="gallery">
-    <div class="gallery-header reveal">
-      <h2>El Viaje Visual</h2>
-      <p>Desliza para explorar</p>
-    </div>
-
-    <div class="gallery-track">
-      <div class="gallery-item">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Cascada_de_Tamul.jpg" alt="Cascada de Tamul - Huasteca Potosina" loading="lazy">
-        <div class="gallery-caption">
-          <span class="caption-title">Cascada de Tamul</span>
-          <span class="caption-desc">105 metros de caída libre sobre el río Tampaón</span>
-        </div>
-      </div>
-
-      <div class="gallery-item">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Puente_de_Dios%2C_Huasteca_Potosina.jpg/800px-Puente_de_Dios%2C_Huasteca_Potosina.jpg" alt="Puente de Dios - Tamasopo" loading="lazy">
-        <div class="gallery-caption">
-          <span class="caption-title">Puente de Dios</span>
-          <span class="caption-desc">Una cueva donde el agua brilla turquesa</span>
-        </div>
-      </div>
-
-      <div class="gallery-item">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/S%C3%B3tano_de_las_Golondrinas.jpg/800px-S%C3%B3tano_de_las_Golondrinas.jpg" alt="Sótano de las Golondrinas - Aquismón" loading="lazy">
-        <div class="gallery-caption">
-          <span class="caption-title">Sótano de las Golondrinas</span>
-          <span class="caption-desc">376 metros de profundidad — hogar de miles de vencejos</span>
-        </div>
-      </div>
-
-      <div class="gallery-item">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Cascadas_de_Micos.jpg/800px-Cascadas_de_Micos.jpg" alt="Cascadas de Micos - Ciudad Valles" loading="lazy">
-        <div class="gallery-caption">
-          <span class="caption-title">Cascadas de Micos</span>
-          <span class="caption-desc">7 cascadas perfectas para lanzarte al agua</span>
-        </div>
-      </div>
-
-      <div class="gallery-item">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Edward_James%27_Las_Pozas.jpg/800px-Edward_James%27_Las_Pozas.jpg" alt="Las Pozas de Edward James - Xilitla" loading="lazy">
-        <div class="gallery-caption">
-          <span class="caption-title">Las Pozas de Xilitla</span>
-          <span class="caption-desc">El jardín surrealista de Edward James</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="gallery-progress">
-      <div class="progress-bar"></div>
-    </div>
-  </section>
-
-
-  <!-- ============================================
-       SECTION 4: COMPARISON GRID - "México Tiene Más"
-       ============================================ -->
-  <section class="comparisons" id="comparisons">
-    <div class="comparisons-header reveal">
-      <h2>La Huasteca es solo el comienzo...</h2>
-      <p>México tiene más paraísos de agua esperándote</p>
-    </div>
-
-    <div class="comparisons-grid">
-      <article class="comparison-tile reveal" style="--delay: 0.1s">
-        <div class="tile-image">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Cascada_de_Basaseachi%2C_Chihuahua%2C_M%C3%A9xico.jpg/800px-Cascada_de_Basaseachi%2C_Chihuahua%2C_M%C3%A9xico.jpg" alt="Cascada de Basaseachi" loading="lazy">
-          <span class="tile-badge" style="background: #e72a88">La más alta</span>
-        </div>
-        <div class="tile-content">
           <h3>Basaseachi</h3>
-          <p class="tile-location">Chihuahua</p>
-          <p class="tile-hook">246m de caída — la cascada permanente más alta de México</p>
+          <div class="twist-compare-stat">246M</div>
+          <p class="twist-compare-hook">La cascada permanente más alta de México</p>
         </div>
-      </article>
-
-      <article class="comparison-tile reveal" style="--delay: 0.2s">
-        <div class="tile-image">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Agua_Azul.jpg/800px-Agua_Azul.jpg" alt="Cascadas de Agua Azul - Chiapas" loading="lazy">
-          <span class="tile-badge" style="background: #09adc2">Las más azules</span>
-        </div>
-        <div class="tile-content">
-          <h3>Agua Azul</h3>
-          <p class="tile-location">Chiapas</p>
-          <p class="tile-hook">Cascadas escalonadas de un azul imposible en la selva</p>
-        </div>
-      </article>
-
-      <article class="comparison-tile reveal" style="--delay: 0.3s">
-        <div class="tile-image">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Hierve_el_Agua%2C_Oaxaca_%2832473741053%29.jpg/800px-Hierve_el_Agua%2C_Oaxaca_%2832473741053%29.jpg" alt="Hierve el Agua - Oaxaca" loading="lazy">
-          <span class="tile-badge" style="background: #f39223">Petrificadas</span>
-        </div>
-        <div class="tile-content">
-          <h3>Hierve el Agua</h3>
-          <p class="tile-location">Oaxaca</p>
-          <p class="tile-hook">Cascadas petrificadas con albercas naturales y vista infinita</p>
-        </div>
-      </article>
-
-      <article class="comparison-tile reveal" style="--delay: 0.4s">
-        <div class="tile-image">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Sumidero_Canyon.jpg/800px-Sumidero_Canyon.jpg" alt="Cañón del Sumidero - Chiapas" loading="lazy">
-          <span class="tile-badge" style="background: #8ab73b">El más profundo</span>
-        </div>
-        <div class="tile-content">
-          <h3>Cañón del Sumidero</h3>
-          <p class="tile-location">Chiapas</p>
-          <p class="tile-hook">Paredes de 1,000 metros sobre el río Grijalva</p>
-        </div>
-      </article>
+      </div>
     </div>
-
-    <p class="comparisons-cta reveal">
-      <span class="cta-question">¿Cuál será tu próximo destino?</span>
-    </p>
   </section>
 
 
   <!-- ============================================
-       SECTION 5: THE ANIMAL - "Guardián de la Huasteca"
+       GALLERY - MASONRY
        ============================================ -->
-  <section class="animal" id="animal">
-    <div class="animal-bg">
-      <img
-        src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Ara_militaris_-Tulsa_Zoo%2C_Oklahoma%2C_USA-8a_%281%29.jpg/800px-Ara_militaris_-Tulsa_Zoo%2C_Oklahoma%2C_USA-8a_%281%29.jpg"
-        alt="Guacamaya Verde - Ave de la Huasteca"
-        loading="lazy"
-      >
-      <div class="animal-overlay"></div>
+  <section class="gallery">
+    <div class="gallery-header reveal">
+      <h2>El Viaje en Imágenes</h2>
+      <p>Cada rincón es una postal</p>
     </div>
 
-    <div class="animal-content reveal">
-      <span class="animal-label">Guardián de la Huasteca</span>
-      <h2 class="animal-name">La Guacamaya Verde</h2>
-      <p class="animal-story">
-        La <strong>Guacamaya Militar</strong> es el ave emblemática de la Huasteca.
-        Sus plumas verde esmeralda reflejan los colores de la selva,
+    <div class="masonry">
+      <div class="masonry-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/R%C3%ADo_Tampa%C3%B3n.jpg/800px-R%C3%ADo_Tampa%C3%B3n.jpg" alt="Río Tampaón - Aguas turquesa" loading="lazy">
+        <div class="masonry-caption">
+          <h4>Río Tampaón</h4>
+          <p>El río turquesa más famoso de México</p>
+        </div>
+      </div>
+
+      <div class="masonry-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/S%C3%B3tano_de_las_Golondrinas.jpg/600px-S%C3%B3tano_de_las_Golondrinas.jpg" alt="Sótano de las Golondrinas vista aérea" loading="lazy">
+        <div class="masonry-caption">
+          <h4>El Abismo</h4>
+          <p>376 metros de caída vertical</p>
+        </div>
+      </div>
+
+      <div class="masonry-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Puente_de_Dios%2C_Huasteca_Potosina.jpg/600px-Puente_de_Dios%2C_Huasteca_Potosina.jpg" alt="Puente de Dios interior" loading="lazy">
+        <div class="masonry-caption">
+          <h4>Cueva Mágica</h4>
+          <p>Luz natural en Puente de Dios</p>
+        </div>
+      </div>
+
+      <div class="masonry-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Cascadas_de_Micos.jpg/600px-Cascadas_de_Micos.jpg" alt="Cascadas de Micos" loading="lazy">
+        <div class="masonry-caption">
+          <h4>Cascadas de Micos</h4>
+          <p>7 niveles de adrenalina pura</p>
+        </div>
+      </div>
+
+      <div class="masonry-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Edward_James%27_Las_Pozas.jpg/600px-Edward_James%27_Las_Pozas.jpg" alt="Las Pozas de Edward James" loading="lazy">
+        <div class="masonry-caption">
+          <h4>Sueño Surrealista</h4>
+          <p>El jardín de Edward James en Xilitla</p>
+        </div>
+      </div>
+
+      <div class="masonry-item reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Cascada_de_Tamul.jpg" alt="Cascada de Tamul panorámica" loading="lazy">
+        <div class="masonry-caption">
+          <h4>La Reina Tamul</h4>
+          <p>105 metros de majestuosidad</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       ANIMAL
+       ============================================ -->
+  <section class="animal">
+    <div class="animal-image">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Ara_militaris_-Tulsa_Zoo%2C_Oklahoma%2C_USA-8a_%281%29.jpg/800px-Ara_militaris_-Tulsa_Zoo%2C_Oklahoma%2C_USA-8a_%281%29.jpg" alt="Guacamaya Verde - Ave de la Huasteca" loading="lazy">
+    </div>
+
+    <div class="animal-content">
+      <span class="animal-label reveal">Guardián de la Huasteca</span>
+      <h2 class="animal-name reveal">La Guacamaya Verde</h2>
+      <p class="animal-story reveal">
+        La <strong>Guacamaya Militar</strong> es el ave emblema de la Huasteca.
+        Sus plumas verde esmeralda reflejan los colores de la selva y los ríos,
         mientras su vuelo libre representa el espíritu aventurero de esta tierra.
       </p>
-      <p class="animal-fact">
-        <span class="fact-icon">🦜</span>
-        En peligro de extinción, estas aves pueden vivir más de 60 años
-        y forman parejas de por vida.
-      </p>
-    </div>
-
-    <!-- Decorative pattern -->
-    <div class="animal-pattern">
-      <svg class="pattern-svg" viewBox="0 0 200 200" fill="none">
-        <circle cx="20" cy="20" r="3" fill="rgba(255,255,255,0.3)"/>
-        <circle cx="60" cy="40" r="2" fill="rgba(255,255,255,0.2)"/>
-        <circle cx="100" cy="20" r="4" fill="rgba(255,255,255,0.25)"/>
-        <circle cx="140" cy="50" r="2" fill="rgba(255,255,255,0.2)"/>
-        <circle cx="180" cy="30" r="3" fill="rgba(255,255,255,0.3)"/>
-        <!-- Spiral/Caracol -->
-        <path d="M100 80 C120 80 140 100 140 120 C140 140 120 160 100 160 C80 160 60 140 60 120 C60 105 75 90 90 90 C105 90 120 105 120 120 C120 130 110 140 100 140 C90 140 80 130 80 120"
-              stroke="rgba(138,183,59,0.4)"
-              stroke-width="2"
-              fill="none"/>
-      </svg>
+      <div class="animal-fact reveal">
+        <span class="animal-fact-icon">🦜</span>
+        <p class="animal-fact-text">
+          En peligro de extinción, estas aves pueden vivir más de 60 años
+          y forman parejas de por vida. Verlas volar sobre los cañones de
+          la Huasteca es un privilegio cada vez más raro.
+        </p>
+      </div>
     </div>
   </section>
 
 
   <!-- ============================================
-       SECTION 6: AXKAN PRODUCTS
+       MORE DESTINATIONS
        ============================================ -->
-  <section class="products" id="products">
+  <section class="destinations">
+    <div class="destinations-header reveal">
+      <h2>México Tiene Más Aventuras</h2>
+    </div>
+
+    <div class="destinations-grid">
+      <a href="#" class="dest-card reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Cascada_de_Basaseachi%2C_Chihuahua%2C_M%C3%A9xico.jpg/400px-Cascada_de_Basaseachi%2C_Chihuahua%2C_M%C3%A9xico.jpg" alt="Basaseachi" loading="lazy">
+        <div class="dest-card-overlay">
+          <span class="dest-card-badge">La más alta</span>
+          <h4>Basaseachi</h4>
+          <p>Chihuahua</p>
+        </div>
+      </a>
+
+      <a href="#" class="dest-card reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Agua_Azul.jpg/400px-Agua_Azul.jpg" alt="Agua Azul" loading="lazy">
+        <div class="dest-card-overlay">
+          <span class="dest-card-badge" style="background: var(--turquesa)">Las más azules</span>
+          <h4>Agua Azul</h4>
+          <p>Chiapas</p>
+        </div>
+      </a>
+
+      <a href="#" class="dest-card reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Hierve_el_Agua%2C_Oaxaca_%2832473741053%29.jpg/400px-Hierve_el_Agua%2C_Oaxaca_%2832473741053%29.jpg" alt="Hierve el Agua" loading="lazy">
+        <div class="dest-card-overlay">
+          <span class="dest-card-badge" style="background: var(--naranja)">Petrificadas</span>
+          <h4>Hierve el Agua</h4>
+          <p>Oaxaca</p>
+        </div>
+      </a>
+
+      <a href="#" class="dest-card reveal">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Sumidero_Canyon.jpg/400px-Sumidero_Canyon.jpg" alt="Cañón del Sumidero" loading="lazy">
+        <div class="dest-card-overlay">
+          <span class="dest-card-badge" style="background: var(--verde)">El más profundo</span>
+          <h4>Sumidero</h4>
+          <p>Chiapas</p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       PRODUCTS
+       ============================================ -->
+  <section class="products" id="productos">
     <div class="products-header reveal">
-      <span class="products-label">AXKAN Souvenirs</span>
-      <h2>Lleva la aventura contigo</h2>
+      <p class="products-label">AXKAN Souvenirs</p>
+      <h2>Lleva la Aventura Contigo</h2>
       <p>Cada vez que lo veas, volverás a sentirlo</p>
     </div>
 
-    <div class="products-carousel">
-      <div class="product-card reveal" style="--delay: 0.1s">
+    <div class="products-grid">
+      <div class="product-card reveal">
         <div class="product-image">
-          <img
-            src="../assets/product-magnet.png"
-            alt="Imán AXKAN - Corte láser en MDF con acabado brillante"
-            loading="lazy"
-          >
+          <img src="../assets/product-magnet.png" alt="Imán AXKAN Huasteca" loading="lazy">
         </div>
         <div class="product-info">
           <h3>Imán Huasteca</h3>
-          <p class="product-desc">Corte láser en MDF, acabado premium</p>
-          <span class="product-price">$49 MXN</span>
+          <p class="desc">Corte láser en MDF, acabado premium</p>
+          <span class="price">$49 MXN</span>
         </div>
       </div>
 
-      <div class="product-card reveal" style="--delay: 0.2s">
+      <div class="product-card reveal">
         <div class="product-image">
-          <img
-            src="../assets/product-keychain.png"
-            alt="Llavero AXKAN - Diseño tropical"
-            loading="lazy"
-          >
+          <img src="../assets/product-keychain.png" alt="Llavero AXKAN" loading="lazy">
         </div>
         <div class="product-info">
           <h3>Llavero Cascadas</h3>
-          <p class="product-desc">Diseño exclusivo AXKAN</p>
-          <span class="product-price">$69 MXN</span>
+          <p class="desc">Diseño exclusivo AXKAN</p>
+          <span class="price">$69 MXN</span>
         </div>
       </div>
 
-      <div class="product-card reveal" style="--delay: 0.3s">
+      <div class="product-card reveal">
         <div class="product-image">
-          <img
-            src="../assets/product-keyholder.png"
-            alt="Portallaves AXKAN - Arte mexicano"
-            loading="lazy"
-          >
+          <img src="../assets/product-keyholder.png" alt="Portallaves AXKAN" loading="lazy">
         </div>
         <div class="product-info">
           <h3>Portallaves Aventura</h3>
-          <p class="product-desc">Funcional y decorativo</p>
-          <span class="product-price">$249 MXN</span>
+          <p class="desc">Funcional y decorativo</p>
+          <span class="price">$249 MXN</span>
         </div>
       </div>
     </div>
 
     <div class="products-cta reveal">
-      <a href="https://wa.me/5215538253251?text=Hola!%20Vi%20los%20souvenirs%20de%20Huasteca%20Potosina%20y%20me%20interesan"
-         class="cta-whatsapp"
-         target="_blank">
-        <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
+      <a href="https://wa.me/5215538253251?text=Hola!%20Vi%20los%20souvenirs%20de%20Huasteca%20Potosina%20y%20me%20interesan" class="cta-whatsapp" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
         </svg>
         <span>Pedir por WhatsApp</span>
@@ -358,49 +1320,77 @@
 
 
   <!-- ============================================
-       SECTION 7: FOOTER - "El Próximo Destino"
+       FOOTER
        ============================================ -->
-  <footer class="footer" id="footer">
-    <div class="footer-next reveal">
-      <h3>¿Listo para seguir explorando?</h3>
-      <div class="next-destinations">
-        <a href="../chiapas/historia.html" class="next-card">
-          <span class="next-name">Chiapas</span>
-          <span class="next-hook">Selva y cascadas</span>
-        </a>
-        <a href="../oaxaca/historia.html" class="next-card">
-          <span class="next-name">Oaxaca</span>
-          <span class="next-hook">Hierve el Agua</span>
-        </a>
-        <a href="../queretaro/historia.html" class="next-card">
-          <span class="next-name">Querétaro</span>
-          <span class="next-hook">Peña de Bernal</span>
-        </a>
+  <footer class="footer">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <span>A</span><span>X</span><span>K</span><span>A</span><span>N</span>
       </div>
+      <p class="footer-tagline">Detonadores de Orgullo Mexicano</p>
     </div>
 
-    <div class="footer-brand">
-      <div class="brand-logo">
-        <span style="color: #e72a88">A</span><span style="color: #8ab73b">X</span><span style="color: #f39223">K</span><span style="color: #09adc2">A</span><span style="color: #e52421">N</span>
-      </div>
-      <p class="brand-tagline">Detonadores de Orgullo Mexicano</p>
-
-      <div class="footer-social">
-        <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-        </a>
-        <a href="https://facebook.com/AxkanOficial" target="_blank" aria-label="Facebook">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-        </a>
-      </div>
+    <div class="footer-social">
+      <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      </a>
+      <a href="https://facebook.com/AxkanOficial" target="_blank" aria-label="Facebook">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+      </a>
     </div>
 
     <div class="footer-legal">
-      <p>&copy; 2024 AXKAN. Todos los derechos reservados.</p>
+      <p>© 2024 AXKAN. Todos los derechos reservados.</p>
       <p class="footer-nfc">Página activada por NFC — Llévate México contigo</p>
     </div>
   </footer>
 
-  <script src="../historia/historia.js"></script>
+
+  <!-- ============================================
+       JAVASCRIPT - Reveal Animations
+       ============================================ -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Reveal on scroll
+      const reveals = document.querySelectorAll('.reveal');
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: '-50px'
+      });
+
+      reveals.forEach(el => observer.observe(el));
+
+      // Counter animation for stats
+      const statNumbers = document.querySelectorAll('.stat-number');
+      statNumbers.forEach(stat => {
+        const text = stat.textContent;
+        if (text !== '∞') {
+          const num = parseInt(text);
+          if (!isNaN(num)) {
+            stat.textContent = '0';
+            const animate = () => {
+              const current = parseInt(stat.textContent);
+              const increment = Math.ceil(num / 30);
+              if (current < num) {
+                stat.textContent = Math.min(current + increment, num);
+                requestAnimationFrame(animate);
+              } else {
+                stat.textContent = text; // Restore original with unit
+              }
+            };
+            setTimeout(animate, 500);
+          }
+        }
+      });
+    });
+  </script>
+
 </body>
 </html>
