@@ -486,7 +486,15 @@ ${context.recentOrders?.slice(0, 5).map(o => `- #${o.order_number}: ${o.client_n
 Cuando pregunten cuánto debe generar el negocio, costos fijos, o "cuánto necesito para cubrir gastos":
 - Incluye nómina + rentas como gastos fijos obligatorios
 - Los bonos son condicionales, menciónalos aparte
-- Calcula totales según el periodo que pregunten (semanal, mensual, etc.)
+- Calcula y responde en EL PERIODO QUE PIDAN usando estas conversiones:
+  - **Mensual**: $189,500 (base) / $199,500 (con bonos)
+  - **Semanal**: mensual ÷ 4 = $47,375 (base) / $49,875 (con bonos)
+  - **Diario**: mensual ÷ 30 = $6,317 (base) / $6,650 (con bonos)
+  - **Por hora**: diario ÷ 8 horas laborales = $790 (base) / $831 (con bonos)
+- Si preguntan "por hora" o "cada hora", usa jornada de 8 horas
+- Si preguntan "por día" o "diario", usa 30 días al mes
+- Si preguntan "por semana" o "semanal", usa 4 semanas al mes
+- Siempre muestra el desglose (nómina + rentas) no solo el total
 
 Cuando pregunten sobre nómina, pagos a empleados o costos de personal:
 - Responde con el desglose por empleado
