@@ -941,14 +941,21 @@
     }
 
     .nav.nav--scrolled {
-      background: rgba(10, 10, 10, 0.95);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
-      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
     }
 
     .nav-logo {
-      height: 40px;
+      height: 50px;
       width: auto;
+      filter: brightness(0) invert(1);
+      transition: filter 0.4s ease;
+    }
+
+    .nav.nav--scrolled .nav-logo {
+      filter: none;
     }
 
     .nav-links {
@@ -966,6 +973,10 @@
       text-decoration: none;
       letter-spacing: 0.05em;
       transition: color 0.3s ease;
+    }
+
+    .nav.nav--scrolled .nav-links a {
+      color: var(--black);
     }
 
     .nav-links a:hover {
@@ -1006,6 +1017,10 @@
       background: white;
       border-radius: 2px;
       transition: all 0.3s ease;
+    }
+
+    .nav.nav--scrolled .nav-hamburger span {
+      background: var(--black);
     }
 
     .nav-hamburger.active span:nth-child(1) {
@@ -1106,12 +1121,15 @@
        ============================================ -->
   <nav class="nav">
     <a href="/">
-      <img src="/assets/LOGO-01.png" alt="AXKAN" class="nav-logo">
+      <img src="/assets/LOGO-03.png" alt="AXKAN" class="nav-logo">
     </a>
     <ul class="nav-links">
-      <li><a href="/">Inicio</a></li>
-      <li><a href="/catalogo">Catálogo</a></li>
       <li><a href="/#productos">Productos</a></li>
+      <li><a href="/#calidad">Calidad</a></li>
+      <li><a href="/catalogo">Destinos</a></li>
+      <li><a href="/#mayoreo">Mayoreo</a></li>
+      <li><a href="/catalogo">Catálogo</a></li>
+      <li><a href="/envio">Envío</a></li>
       <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
     </ul>
     <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
@@ -1123,9 +1141,12 @@
 
   <!-- Mobile Menu Overlay -->
   <div class="mobile-menu" aria-hidden="true">
-    <a href="/">Inicio</a>
-    <a href="/catalogo">Catálogo</a>
     <a href="/#productos">Productos</a>
+    <a href="/#calidad">Calidad</a>
+    <a href="/catalogo">Destinos</a>
+    <a href="/#mayoreo">Mayoreo</a>
+    <a href="/catalogo">Catálogo</a>
+    <a href="/envio">Envío</a>
     <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
   </div>
 
