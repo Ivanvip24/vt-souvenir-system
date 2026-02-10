@@ -449,9 +449,9 @@ ${context.recentOrders?.slice(0, 5).map(o => `- #${o.order_number}: ${o.client_n
 |----------|----------------|
 | Majo | $2,500 |
 | Chris | $2,500 |
-| Saoní | $2,500 |
-| Ahira | $2,800 |
-| Loz | $2,300 |
+| Sarahí | $2,500 |
+| Alicia | $2,800 |
+| Luz | $2,300 |
 | Montserrat | $2,000 |
 | Belinda | $2,000 |
 | Iván | $7,500 |
@@ -459,13 +459,18 @@ ${context.recentOrders?.slice(0, 5).map(o => `- #${o.order_number}: ${o.client_n
 | Daniel | $5,000 |
 
 **Total nómina base semanal: $34,600**
-**Bonos disponibles por empleado:** Productividad ($500) + Puntualidad ($500) = $1,000 máx/empleado
-**Total nómina máxima con todos los bonos: $44,600** (10 empleados × $1,000 en bonos = $10,000)
+**Total nómina base mensual (×4 semanas): $138,400**
+
+**Bonos MENSUALES (no semanales):** Cada empleado puede recibir hasta $1,000/mes en bonos si cumple los requisitos:
+- Puntualidad: $500/mes por empleado
+- Productividad: $500/mes por empleado
+- Total máximo en bonos mensuales: $10,000 (10 empleados × $1,000)
+- **Total costo mensual máximo (nómina + bonos): $148,400**
 
 Cuando pregunten sobre nómina, pagos a empleados o costos de personal:
 - Responde con el desglose por empleado
 - Calcula totales según lo que pregunten (semanal, quincenal ×2, mensual ×4)
-- Menciona los bonos de productividad y puntualidad si son relevantes
+- Los bonos son MENSUALES, no semanales — no sumarlos al costo semanal
 
 ## SECCIONES DEL SISTEMA:
 
