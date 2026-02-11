@@ -50,16 +50,17 @@ textarea {
 
 .dashboard-main {
     grid-template-columns: 1fr !important;
-    padding: 8px !important;
+    padding: 0 !important;
     gap: 0 !important;
     min-height: auto !important;
 }
 
 .content-area {
     border-radius: 0 !important;
-    padding: 12px !important;
+    padding: 14px !important;
     box-shadow: none !important;
     min-height: auto !important;
+    background: var(--gray-50) !important;
 }
 
 /* ==========================================
@@ -113,36 +114,9 @@ textarea {
     display: none !important;
 }
 
-/* Stat cards as compact badges */
+/* Hide stat cards - not essential on mobile */
 .header-stats {
-    display: flex !important;
-    gap: 4px !important;
-    flex: 1 !important;
-    justify-content: flex-end !important;
-    overflow: hidden !important;
-}
-
-.header-stats .stat-card {
-    display: flex !important;
-    padding: 4px 8px !important;
-    border-radius: 8px !important;
-    min-width: auto !important;
-    gap: 4px !important;
-    flex-shrink: 0 !important;
-}
-
-.stat-card .stat-label {
     display: none !important;
-}
-
-.stat-card .stat-value {
-    font-size: 13px !important;
-    font-weight: 700 !important;
-}
-
-.stat-card .stat-icon {
-    width: 14px !important;
-    height: 14px !important;
 }
 
 /* Notification button */
@@ -174,7 +148,7 @@ textarea {
 }
 
 /* ==========================================
-   ORDERS VIEW - Actions bar
+   ORDERS VIEW - Actions bar hidden (FAB replaces it)
    ========================================== */
 
 .orders-actions-bar {
@@ -182,7 +156,7 @@ textarea {
 }
 
 /* ==========================================
-   FILTER BAR - Horizontal scrollable chips
+   FILTER BAR - Single row, scrollable
    ========================================== */
 
 .filters-bar {
@@ -190,9 +164,9 @@ textarea {
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    gap: 8px !important;
-    padding-bottom: 12px !important;
-    margin-bottom: 16px !important;
+    gap: 6px !important;
+    padding: 0 0 10px 0 !important;
+    margin-bottom: 12px !important;
     border-bottom: none !important;
     scrollbar-width: none !important;
     align-items: center !important;
@@ -212,55 +186,66 @@ textarea {
 .filter-btn {
     flex: none !important;
     min-width: auto !important;
-    padding: 7px 14px !important;
+    padding: 6px 12px !important;
     font-size: 13px !important;
     white-space: nowrap !important;
     border-radius: 20px !important;
+    border-width: 1.5px !important;
+}
+
+/* Hide filter text on mobile, show only badge count */
+.filter-btn span:not(.badge) {
+    display: none !important;
 }
 
 .filter-btn .badge {
-    font-size: 11px !important;
-    min-width: 18px !important;
-    height: 18px !important;
-    padding: 0 5px !important;
+    font-size: 12px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    padding: 0 6px !important;
 }
 
-/* Search compact */
+/* Show "Todos" text for the ALL filter */
+.filter-btn[data-filter="all"] span:not(.badge) {
+    display: inline !important;
+}
+
+/* Search - full width below filters */
 .search-container {
     flex-shrink: 0 !important;
     max-width: none !important;
     margin: 0 !important;
+    min-width: 120px !important;
     flex: 1 !important;
-    min-width: 140px !important;
 }
 
 .search-input {
     padding: 8px 12px !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
     border-radius: 20px !important;
+    border-width: 1.5px !important;
 }
 
 .search-input::placeholder {
     font-size: 12px !important;
 }
 
-/* Salesperson filter */
+/* Hide salesperson filter on mobile (use search instead) */
 .salesperson-filter {
-    flex-shrink: 0 !important;
-}
-
-.salesperson-filter select {
-    max-width: 120px !important;
-    font-size: 12px !important;
-    padding: 7px 8px !important;
-    border-radius: 20px !important;
+    display: none !important;
 }
 
 /* Refresh button icon only */
 .btn-refresh {
-    padding: 7px 10px !important;
+    padding: 8px !important;
     flex-shrink: 0 !important;
-    border-radius: 20px !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .btn-refresh .refresh-text {
@@ -292,147 +277,182 @@ textarea {
 }
 
 /* ==========================================
-   ORDER CARDS - Mobile optimized
+   ORDER CARDS - Minimal mobile design
+   Only essential info: #, status, client, price
    ========================================== */
 
 .orders-list {
-    gap: 10px !important;
+    gap: 8px !important;
 }
 
+/* Clean card - no border drama */
 .order-card {
-    border-radius: 12px !important;
-    border-width: 1px !important;
+    border-radius: 14px !important;
+    border: 1px solid var(--gray-200) !important;
+    box-shadow: none !important;
 }
 
 .order-card:hover {
     transform: none !important;
+    box-shadow: none !important;
+    border-color: var(--gray-200) !important;
 }
 
 .order-card:active {
     background: var(--gray-50) !important;
+    border-color: var(--gray-300) !important;
 }
 
-/* Order header - clean grid layout */
+/* ---- HEADER: Order # + Status only ---- */
 .order-header {
-    padding: 12px 14px !important;
+    padding: 14px 16px 4px !important;
     display: flex !important;
     flex-direction: row !important;
-    flex-wrap: wrap !important;
-    gap: 6px 8px !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
     align-items: center !important;
-}
-
-/* Hide checkbox on mobile */
-.order-checkbox {
-    display: none !important;
+    border-bottom: none !important;
 }
 
 .order-title {
-    gap: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
 }
 
 .order-title h3 {
-    font-size: 14px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
 }
 
 .status-badge {
-    padding: 3px 10px !important;
+    padding: 4px 10px !important;
     font-size: 10px !important;
+    flex-shrink: 0 !important;
 }
 
-.sales-rep-badge {
-    padding: 3px 10px !important;
-    font-size: 10px !important;
+/* ---- HIDE everything non-essential in header ---- */
+.order-checkbox,
+.sales-rep-badge,
+.order-date-header,
+.quick-actions,
+.archive-actions,
+.archive-status-badge {
+    display: none !important;
 }
 
-.order-date-header {
-    margin-left: auto !important;
-}
-
-.order-date-header .date-label {
-    font-size: 9px !important;
-}
-
-.order-date-header .date-value {
-    font-size: 12px !important;
-}
-
-/* Quick actions compact */
-.quick-actions {
-    margin-left: auto !important;
-}
-
-.quick-action-btn {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-}
-
-/* Order body - compact */
+/* ---- BODY: Client + Price only ---- */
 .order-body {
-    padding: 10px 14px 12px !important;
+    padding: 4px 16px 14px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     gap: 12px !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Client info - just the name */
+.order-left {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 16px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.client-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.client-info .info-label {
+    display: none !important;
+}
+
+.client-info .info-value {
+    font-size: 14px !important;
+    color: var(--gray-600) !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+}
+
+/* Hide WhatsApp button in card */
+.whatsapp-btn-card {
+    display: none !important;
+}
+
+/* Price - prominent */
+.order-totals {
+    flex-shrink: 0 !important;
+    text-align: right !important;
 }
 
 .order-totals .total-label {
-    font-size: 10px !important;
+    display: none !important;
 }
 
 .order-totals .total-value {
-    font-size: 18px !important;
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    color: var(--gray-900) !important;
 }
 
-/* Items info compact */
-.order-items-preview {
-    font-size: 12px !important;
+/* Hide payment checkboxes in card */
+.payment-checkboxes {
+    display: none !important;
 }
 
-/* Client info in body */
-.order-client-info {
-    font-size: 12px !important;
-}
-
-/* Delivery date info */
-.deadline-info,
-.delivery-info {
-    font-size: 11px !important;
-}
-
-/* Archive actions hidden on mobile */
-.archive-actions {
+/* ---- HIDE entire right column (deadlines, delivery) ---- */
+.order-right {
     display: none !important;
 }
 
 /* ==========================================
-   AI ALERTS WIDGET - Compact on mobile
+   AI ALERTS WIDGET - Minimal on mobile
    ========================================== */
 
 .ai-alerts-widget {
-    padding: 12px !important;
-    margin-bottom: 12px !important;
-    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    margin-bottom: 10px !important;
+    border-radius: 14px !important;
 }
 
 .ai-alerts-widget h3 {
-    font-size: 14px !important;
+    font-size: 13px !important;
+    margin-bottom: 8px !important;
 }
 
 .alerts-summary {
     grid-template-columns: 1fr 1fr 1fr !important;
-    gap: 8px !important;
+    gap: 6px !important;
 }
 
 .alert-summary-card {
-    padding: 8px !important;
+    padding: 8px 6px !important;
+    border-radius: 10px !important;
 }
 
 .alert-summary-card .alert-count {
-    font-size: 20px !important;
+    font-size: 18px !important;
 }
 
 .alert-summary-card .alert-type-label {
-    font-size: 10px !important;
+    font-size: 9px !important;
+}
+
+/* Hide alerts detail list - just show summary counts */
+.alerts-list {
+    display: none !important;
+}
+
+.ai-alerts-widget .alerts-footer {
+    display: none !important;
 }
 
 /* ==========================================
