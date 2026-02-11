@@ -29,6 +29,8 @@
 
     <link rel="icon" type="image/png" href="../assets/images/LOGO-01.png">
     <link rel="stylesheet" href="styles.css">
+    <!-- Mobile-only styles (loaded conditionally) -->
+    <link rel="stylesheet" href="mobile.css" media="(max-width: 768px)">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2644,6 +2646,86 @@
         <div class="modal-backdrop" onclick="closeStartupAlerts()"></div>
     </div>
 
+    <!-- ==========================================
+         MOBILE BOTTOM NAVIGATION
+         Hidden on desktop via mobile.css media query
+         ========================================== -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none">
+        <button class="bottom-tab active" data-mobile-view="orders">
+            <i data-lucide="clipboard-list" class="bottom-tab-icon"></i>
+            <span class="bottom-tab-label">Pedidos</span>
+            <span class="bottom-tab-badge" id="mobile-pending-badge" style="display:none">0</span>
+        </button>
+        <button class="bottom-tab" data-mobile-view="calendar">
+            <i data-lucide="calendar" class="bottom-tab-icon"></i>
+            <span class="bottom-tab-label">Calendario</span>
+        </button>
+        <button class="bottom-fab" id="mobile-fab" onclick="openCreateOrderModal()">
+            <i data-lucide="plus" class="bottom-fab-icon"></i>
+        </button>
+        <button class="bottom-tab" data-mobile-view="analytics">
+            <i data-lucide="bar-chart-3" class="bottom-tab-icon"></i>
+            <span class="bottom-tab-label">Dashboard</span>
+        </button>
+        <button class="bottom-tab" id="mobile-more-btn">
+            <i data-lucide="grid-2x2" class="bottom-tab-icon"></i>
+            <span class="bottom-tab-label">Mas</span>
+        </button>
+    </nav>
+
+    <!-- ==========================================
+         MOBILE "MORE" SHEET
+         ========================================== -->
+    <div class="mobile-more-sheet hidden" id="mobile-more-sheet">
+        <div class="more-sheet-backdrop" onclick="closeMobileMoreSheet()"></div>
+        <div class="more-sheet-content">
+            <div class="more-sheet-handle"></div>
+            <div class="more-sheet-title">Todas las secciones</div>
+            <div class="more-sheet-grid">
+                <button class="more-sheet-item" data-mobile-view="products">
+                    <i data-lucide="package"></i>
+                    <span>Inventario</span>
+                </button>
+                <button class="more-sheet-item" data-mobile-view="prices">
+                    <i data-lucide="wallet"></i>
+                    <span>Finanzas</span>
+                </button>
+                <button class="more-sheet-item" data-mobile-view="shipping">
+                    <i data-lucide="truck"></i>
+                    <span>Logistica</span>
+                </button>
+                <button class="more-sheet-item" data-mobile-view="guias">
+                    <i data-lucide="tag"></i>
+                    <span>Guias</span>
+                </button>
+                <button class="more-sheet-item" data-mobile-view="pickups">
+                    <i data-lucide="package-check"></i>
+                    <span>Recoleccion</span>
+                </button>
+                <button class="more-sheet-item" data-mobile-view="marketplace">
+                    <i data-lucide="globe"></i>
+                    <span>Marketplace</span>
+                </button>
+                <button class="more-sheet-item" data-mobile-view="leads">
+                    <i data-lucide="users"></i>
+                    <span>Clientes</span>
+                </button>
+                <button class="more-sheet-item" data-mobile-view="employee-portal">
+                    <i data-lucide="settings"></i>
+                    <span>Config</span>
+                </button>
+                <button class="more-sheet-item" data-mobile-view="discounts">
+                    <i data-lucide="percent"></i>
+                    <span>Descuentos</span>
+                </button>
+                <button class="more-sheet-item" data-mobile-view="comisiones">
+                    <i data-lucide="coins"></i>
+                    <span>Comisiones</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="dashboard.js"></script>
     <script src="inventory.js"></script>
     <script src="prices.js"></script>
@@ -2658,6 +2740,7 @@
     <script src="employees.js"></script>
     <script src="tasks.js?v=2"></script>
     <script src="command-palette.js"></script>
+    <script src="mobile.js"></script>
     <!-- Initialize Lucide Icons -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {

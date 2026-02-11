@@ -1,0 +1,1213 @@
+/* ==========================================
+   AXKAN ADMIN - MOBILE OPTIMIZATION
+   Only loaded at max-width: 768px
+   Overrides styles.css for phone experience
+   ========================================== */
+
+/* ==========================================
+   GLOBAL MOBILE RESETS
+   ========================================== */
+
+body {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+    padding-top: 0 !important;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent iOS zoom on input focus */
+input[type="text"],
+input[type="tel"],
+input[type="email"],
+input[type="number"],
+input[type="date"],
+input[type="password"],
+input[type="search"],
+select,
+textarea {
+    font-size: 16px !important;
+}
+
+/* ==========================================
+   HIDE SIDEBAR - Bottom nav replaces it
+   ========================================== */
+
+.sidebar {
+    display: none !important;
+}
+
+.mobile-overlay {
+    display: none !important;
+}
+
+.mobile-menu-btn {
+    display: none !important;
+}
+
+/* ==========================================
+   LAYOUT - Full width content
+   ========================================== */
+
+.dashboard-main {
+    grid-template-columns: 1fr !important;
+    padding: 8px !important;
+    gap: 0 !important;
+    min-height: auto !important;
+}
+
+.content-area {
+    border-radius: 0 !important;
+    padding: 12px !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+}
+
+/* ==========================================
+   HEADER - Compact single row
+   ========================================== */
+
+.dashboard-header {
+    padding: 8px 12px !important;
+    padding-top: calc(8px + env(safe-area-inset-top)) !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 800 !important;
+}
+
+.header-content {
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    align-items: center !important;
+}
+
+/* Logo compact */
+.logo-area {
+    gap: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+.logo-image {
+    width: 32px !important;
+    height: 32px !important;
+}
+
+.logo-text {
+    display: none !important;
+}
+
+/* Command palette as search icon only */
+.command-palette-trigger {
+    order: 0 !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+.command-palette-trigger .command-placeholder,
+.command-palette-trigger .kbd-shortcut {
+    display: none !important;
+}
+
+/* Stat cards as compact badges */
+.header-stats {
+    display: flex !important;
+    gap: 4px !important;
+    flex: 1 !important;
+    justify-content: flex-end !important;
+    overflow: hidden !important;
+}
+
+.header-stats .stat-card {
+    display: flex !important;
+    padding: 4px 8px !important;
+    border-radius: 8px !important;
+    min-width: auto !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+}
+
+.stat-card .stat-label {
+    display: none !important;
+}
+
+.stat-card .stat-value {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+}
+
+.stat-card .stat-icon {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* Notification button */
+.notification-btn {
+    flex-shrink: 0 !important;
+}
+
+/* Logout compact */
+.btn-logout {
+    padding: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+.logout-text {
+    display: none !important;
+}
+
+/* Notification panel mobile */
+.notification-panel {
+    position: fixed !important;
+    top: auto !important;
+    bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-height: 60vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.2) !important;
+}
+
+/* ==========================================
+   ORDERS VIEW - Actions bar
+   ========================================== */
+
+.orders-actions-bar {
+    display: none !important;
+}
+
+/* ==========================================
+   FILTER BAR - Horizontal scrollable chips
+   ========================================== */
+
+.filters-bar {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 8px !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 16px !important;
+    border-bottom: none !important;
+    scrollbar-width: none !important;
+    align-items: center !important;
+}
+
+.filters-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-group {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+}
+
+.filter-btn {
+    flex: none !important;
+    min-width: auto !important;
+    padding: 7px 14px !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    border-radius: 20px !important;
+}
+
+.filter-btn .badge {
+    font-size: 11px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    padding: 0 5px !important;
+}
+
+/* Search compact */
+.search-container {
+    flex-shrink: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    flex: 1 !important;
+    min-width: 140px !important;
+}
+
+.search-input {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    border-radius: 20px !important;
+}
+
+.search-input::placeholder {
+    font-size: 12px !important;
+}
+
+/* Salesperson filter */
+.salesperson-filter {
+    flex-shrink: 0 !important;
+}
+
+.salesperson-filter select {
+    max-width: 120px !important;
+    font-size: 12px !important;
+    padding: 7px 8px !important;
+    border-radius: 20px !important;
+}
+
+/* Refresh button icon only */
+.btn-refresh {
+    padding: 7px 10px !important;
+    flex-shrink: 0 !important;
+    border-radius: 20px !important;
+}
+
+.btn-refresh .refresh-text {
+    display: none !important;
+}
+
+/* Bulk actions */
+.bulk-action-bar {
+    position: fixed !important;
+    bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 850 !important;
+    border-radius: 0 !important;
+    padding: 12px 16px !important;
+}
+
+.bulk-action-bar > div {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+.bulk-action-btn {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+}
+
+/* ==========================================
+   ORDER CARDS - Mobile optimized
+   ========================================== */
+
+.orders-list {
+    gap: 10px !important;
+}
+
+.order-card {
+    border-radius: 12px !important;
+    border-width: 1px !important;
+}
+
+.order-card:hover {
+    transform: none !important;
+}
+
+.order-card:active {
+    background: var(--gray-50) !important;
+}
+
+/* Order header - clean grid layout */
+.order-header {
+    padding: 12px 14px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 6px 8px !important;
+    align-items: center !important;
+}
+
+/* Hide checkbox on mobile */
+.order-checkbox {
+    display: none !important;
+}
+
+.order-title {
+    gap: 6px !important;
+}
+
+.order-title h3 {
+    font-size: 14px !important;
+}
+
+.status-badge {
+    padding: 3px 10px !important;
+    font-size: 10px !important;
+}
+
+.sales-rep-badge {
+    padding: 3px 10px !important;
+    font-size: 10px !important;
+}
+
+.order-date-header {
+    margin-left: auto !important;
+}
+
+.order-date-header .date-label {
+    font-size: 9px !important;
+}
+
+.order-date-header .date-value {
+    font-size: 12px !important;
+}
+
+/* Quick actions compact */
+.quick-actions {
+    margin-left: auto !important;
+}
+
+.quick-action-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+}
+
+/* Order body - compact */
+.order-body {
+    padding: 10px 14px 12px !important;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+}
+
+.order-totals .total-label {
+    font-size: 10px !important;
+}
+
+.order-totals .total-value {
+    font-size: 18px !important;
+}
+
+/* Items info compact */
+.order-items-preview {
+    font-size: 12px !important;
+}
+
+/* Client info in body */
+.order-client-info {
+    font-size: 12px !important;
+}
+
+/* Delivery date info */
+.deadline-info,
+.delivery-info {
+    font-size: 11px !important;
+}
+
+/* Archive actions hidden on mobile */
+.archive-actions {
+    display: none !important;
+}
+
+/* ==========================================
+   AI ALERTS WIDGET - Compact on mobile
+   ========================================== */
+
+.ai-alerts-widget {
+    padding: 12px !important;
+    margin-bottom: 12px !important;
+    border-radius: 12px !important;
+}
+
+.ai-alerts-widget h3 {
+    font-size: 14px !important;
+}
+
+.alerts-summary {
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 8px !important;
+}
+
+.alert-summary-card {
+    padding: 8px !important;
+}
+
+.alert-summary-card .alert-count {
+    font-size: 20px !important;
+}
+
+.alert-summary-card .alert-type-label {
+    font-size: 10px !important;
+}
+
+/* ==========================================
+   MODALS - Bottom sheet style
+   ========================================== */
+
+.modal {
+    align-items: flex-end !important;
+    padding: 0 !important;
+}
+
+.modal-content {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 92vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+    animation: mobileSlideUp 0.3s ease-out !important;
+}
+
+@keyframes mobileSlideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0.5;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Drag handle on modal */
+.modal-header {
+    position: relative !important;
+    padding: 20px 20px 16px !important;
+}
+
+.modal-header::before {
+    content: '' !important;
+    display: block !important;
+    width: 40px !important;
+    height: 4px !important;
+    background: var(--gray-300) !important;
+    border-radius: 2px !important;
+    margin: 0 auto 12px auto !important;
+}
+
+.modal-header h2 {
+    font-size: 18px !important;
+}
+
+.modal-close {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 20px !important;
+}
+
+.modal-body {
+    padding: 16px 20px !important;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+}
+
+/* Order detail modal - near full screen */
+#order-detail-modal .modal-content {
+    max-height: 95vh !important;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+/* Create order modal */
+#create-order-modal .modal-content {
+    max-height: 95vh !important;
+}
+
+.create-order-step .form-group {
+    grid-column: span 2 !important;
+}
+
+/* Wizard modal */
+.order-wizard-modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 95vh !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+.wizard-header {
+    padding: 16px !important;
+}
+
+.wizard-steps {
+    width: 100% !important;
+}
+
+/* AI Chat modal - full screen */
+.ai-chat-modal {
+    align-items: flex-end !important;
+}
+
+.ai-chat-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+}
+
+.ai-chat-header {
+    padding-top: calc(12px + env(safe-area-inset-top)) !important;
+}
+
+.ai-chat-footer {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+}
+
+/* Command palette - bottom positioned */
+.command-palette-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+}
+
+.command-palette-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 70vh !important;
+}
+
+/* Reference sheet modal */
+#reference-sheet-modal .modal-content {
+    max-height: 95vh !important;
+}
+
+/* Special client modals */
+#special-client-modal .modal-content,
+#special-client-detail-modal .modal-content {
+    max-height: 90vh !important;
+}
+
+/* ==========================================
+   CALENDAR VIEW - Mobile optimized
+   ========================================== */
+
+.calendar-header {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding: 12px !important;
+}
+
+.calendar-nav {
+    gap: 8px !important;
+}
+
+.calendar-title {
+    font-size: 16px !important;
+}
+
+.calendar-grid {
+    min-width: 100% !important;
+}
+
+.calendar-day-header {
+    font-size: 10px !important;
+    padding: 8px 2px !important;
+}
+
+.calendar-cell {
+    min-height: 60px !important;
+    padding: 4px !important;
+}
+
+.calendar-cell .day-number {
+    font-size: 12px !important;
+}
+
+.calendar-cell .capacity-bar {
+    height: 3px !important;
+}
+
+.calendar-cell .cell-orders {
+    font-size: 9px !important;
+}
+
+/* Monthly stats compact */
+.calendar-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+}
+
+/* ==========================================
+   ANALYTICS VIEW - Mobile optimized
+   ========================================== */
+
+.analytics-header {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+.analytics-filters {
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+.quick-ranges {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 6px !important;
+    padding-bottom: 4px !important;
+}
+
+.quick-ranges::-webkit-scrollbar {
+    display: none;
+}
+
+.quick-range-btn {
+    flex-shrink: 0 !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+}
+
+.analytics-summary-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+}
+
+.summary-card {
+    padding: 14px !important;
+    border-radius: 12px !important;
+    gap: 10px !important;
+}
+
+.summary-card .card-icon {
+    width: 36px !important;
+    height: 36px !important;
+}
+
+.summary-card .card-value {
+    font-size: 20px !important;
+}
+
+.summary-card .card-label {
+    font-size: 11px !important;
+}
+
+.analytics-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+.analytics-section.half {
+    width: 100% !important;
+}
+
+.chart-container.large {
+    height: 250px !important;
+}
+
+.chart-container.medium {
+    height: 200px !important;
+}
+
+/* ==========================================
+   PRICES VIEW - Mobile tables
+   ========================================== */
+
+.price-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+}
+
+.price-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.price-tab-btn {
+    white-space: nowrap !important;
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+}
+
+.data-table {
+    font-size: 12px !important;
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.data-table th,
+.data-table td {
+    padding: 8px 10px !important;
+    white-space: nowrap !important;
+}
+
+/* ==========================================
+   SHIPPING VIEW - Mobile tables
+   ========================================== */
+
+.shipping-table {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.shipping-quick-filters {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+}
+
+.address-text {
+    max-width: 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* ==========================================
+   INVENTORY VIEW - Mobile grid
+   ========================================== */
+
+.products-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+}
+
+.materials-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+}
+
+/* ==========================================
+   LEADS VIEW
+   ========================================== */
+
+.leads-grid {
+    grid-template-columns: 1fr !important;
+}
+
+/* ==========================================
+   EMPLOYEE / TASKS VIEW
+   ========================================== */
+
+.portal-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.employees-grid {
+    grid-template-columns: 1fr !important;
+}
+
+.tasks-list {
+    gap: 8px !important;
+}
+
+/* ==========================================
+   MARKETPLACE VIEW
+   ========================================== */
+
+.marketplace-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+}
+
+/* ==========================================
+   COMMISSIONS VIEW
+   ========================================== */
+
+.commissions-summary-cards {
+    grid-template-columns: 1fr !important;
+}
+
+/* ==========================================
+   AI MOBILE BUTTON - Above bottom nav
+   ========================================== */
+
+.ai-mobile-btn {
+    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+    right: 16px !important;
+    width: 52px !important;
+    height: 52px !important;
+    z-index: 899 !important;
+}
+
+/* ==========================================
+   PULL TO REFRESH
+   ========================================== */
+
+.pull-refresh-indicator {
+    height: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--gray-50);
+    transition: height 0.2s ease;
+    font-size: 13px;
+    color: var(--gray-500);
+    font-weight: 600;
+    border-radius: 0 0 12px 12px;
+}
+
+.pull-refresh-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--gray-300);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+}
+
+.pull-refresh-indicator.refreshing .pull-refresh-spinner {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ==========================================
+   BOTTOM NAVIGATION BAR
+   ========================================== */
+
+.mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+    z-index: 900;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.bottom-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--gray-400);
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 8px 0;
+    min-width: 0;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+}
+
+.bottom-tab.active {
+    color: var(--primary);
+}
+
+.bottom-tab.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 0 0 3px 3px;
+}
+
+.bottom-tab-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.bottom-tab-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Center FAB */
+.bottom-fab {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7CB342 0%, #558B2F 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 16px rgba(124, 179, 66, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-top: -18px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+}
+
+.bottom-fab:active {
+    transform: scale(0.92);
+    box-shadow: 0 2px 8px rgba(124, 179, 66, 0.3);
+}
+
+.bottom-fab-icon {
+    width: 26px;
+    height: 26px;
+}
+
+/* Pending badge on bottom tab */
+.bottom-tab-badge {
+    position: absolute;
+    top: 4px;
+    right: 50%;
+    transform: translateX(14px);
+    background: #ef4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ==========================================
+   MORE SHEET (Bottom drawer for extra tabs)
+   ========================================== */
+
+.mobile-more-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+}
+
+.mobile-more-sheet.hidden {
+    display: none;
+}
+
+.more-sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.more-sheet-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 12px 20px calc(20px + env(safe-area-inset-bottom));
+    z-index: 1;
+    animation: mobileSlideUp 0.25s ease-out;
+    max-height: 65vh;
+    overflow-y: auto;
+}
+
+.more-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--gray-300);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+}
+
+.more-sheet-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 16px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+}
+
+.more-sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.more-sheet-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px 6px;
+    border: none;
+    background: var(--gray-50);
+    border-radius: 14px;
+    color: var(--gray-700);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.more-sheet-item:active {
+    background: var(--gray-200);
+    transform: scale(0.96);
+}
+
+.more-sheet-item i,
+.more-sheet-item svg {
+    width: 24px;
+    height: 24px;
+    color: var(--primary);
+}
+
+/* ==========================================
+   SCROLL LOCK when sheets are open
+   ========================================== */
+
+body.more-sheet-open {
+    overflow: hidden !important;
+}
+
+/* ==========================================
+   EMPTY STATE - Mobile
+   ========================================== */
+
+.empty-state {
+    padding: 40px 20px !important;
+}
+
+.empty-state .empty-icon {
+    width: 48px !important;
+    height: 48px !important;
+}
+
+.empty-state h3 {
+    font-size: 16px !important;
+}
+
+.empty-state p {
+    font-size: 13px !important;
+}
+
+/* ==========================================
+   LOADING STATE - Mobile
+   ========================================== */
+
+.loading {
+    padding: 40px 20px !important;
+}
+
+.loading p {
+    font-size: 14px !important;
+}
+
+/* ==========================================
+   STARTUP ALERTS MODAL - Mobile
+   ========================================== */
+
+.startup-alerts-modal {
+    padding: 0 !important;
+    align-items: flex-end !important;
+}
+
+.startup-alerts-content {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 85vh !important;
+}
+
+/* ==========================================
+   FORM ELEMENTS - Touch friendly
+   ========================================== */
+
+.form-group label {
+    font-size: 13px !important;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    min-height: 44px !important;
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+}
+
+/* Form rows single column on mobile */
+.form-row {
+    grid-template-columns: 1fr !important;
+}
+
+/* ==========================================
+   DESKTOP BOTTOM NAV HIDDEN
+   ========================================== */
+
+/* Bottom nav is hidden on desktop via HTML media query loading,
+   but we also add this as safety */
+@media (min-width: 769px) {
+    .mobile-bottom-nav,
+    .mobile-more-sheet {
+        display: none !important;
+    }
+}
+
+/* ==========================================
+   MISC MOBILE FIXES
+   ========================================== */
+
+/* Prevent horizontal overflow */
+.view {
+    overflow-x: hidden !important;
+}
+
+/* Deposit confirmation compact */
+.deposit-info-grid {
+    grid-template-columns: 1fr !important;
+}
+
+/* Tabs horizontal scroll */
+.tabs,
+.sub-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+}
+
+.tabs::-webkit-scrollbar,
+.sub-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+/* Section headers */
+.section-header {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+.section-header h2 {
+    font-size: 16px !important;
+}
+
+/* Cards general */
+.card, .info-card {
+    border-radius: 12px !important;
+    padding: 14px !important;
+}
+
+/* Pickup cards */
+.pickup-card {
+    border-radius: 12px !important;
+}
+
+/* Guias cards */
+.guia-card {
+    border-radius: 12px !important;
+}

@@ -1,9 +1,11 @@
-const CACHE_NAME = 'axkan-admin-v1';
+const CACHE_NAME = 'axkan-admin-v2';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './login.html',
   './styles.css',
+  './mobile.css',
+  './mobile.js',
   './dashboard.js',
   './inventory.js',
   './prices.js',
