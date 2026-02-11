@@ -37,10 +37,11 @@
 
     <link rel="icon" type="image/png" href="/assets/LOGO-01.png">
 
-    <!-- Fonts - Using system fonts that match RL AQVA and Prenton RP Cond aesthetics -->
+    <!-- Fonts — preload RL Aqva so it renders on first paint -->
+    <link rel="preload" href="/fonts/rl-aqva-black.otf" as="font" type="font/otf" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
         /* ═══════════════════════════════════════════════════════════
@@ -58,7 +59,7 @@
             src: url('/fonts/rl-aqva-black.otf') format('opentype');
             font-weight: 900;
             font-style: normal;
-            font-display: optional; /* Use fallback if font doesn't load quickly */
+            font-display: swap;
         }
 
         @font-face {
@@ -66,7 +67,7 @@
             src: url('/fonts/objektiv-vf.otf') format('opentype');
             font-weight: 100 900;
             font-style: normal;
-            font-display: optional; /* Use fallback if font doesn't load quickly */
+            font-display: swap;
         }
 
         :root {
@@ -94,7 +95,7 @@
             --black: #0a0a0a;
 
             /* Typography - Official AXKAN brand fonts */
-            --font-display: 'RL Aqva', 'Fredoka', sans-serif; /* RL AQVA Black */
+            --font-display: 'RL Aqva', sans-serif; /* RL AQVA Black */
             --font-body: 'Objektiv', 'Inter', -apple-system, sans-serif;
 
             /* Spacing */
@@ -164,14 +165,27 @@
             justify-content: space-between;
             align-items: center;
             padding: var(--space-sm) var(--space-md);
+            background: transparent;
+            border-bottom: none;
+            transition: background 0.4s ease, border-bottom 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .nav.nav--scrolled {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
         }
 
         .nav-logo {
             height: 50px;
             width: auto;
+            filter: brightness(0) invert(1);
+            transition: filter 0.4s ease;
+        }
+
+        .nav.nav--scrolled .nav-logo {
+            filter: none;
         }
 
         .nav-links {
@@ -184,9 +198,13 @@
             font-family: var(--font-display);
             font-size: 0.95rem;
             font-weight: 500;
-            color: var(--gray-800);
+            color: rgba(255, 255, 255, 0.9);
             text-decoration: none;
-            transition: color 0.3s ease;
+            transition: color 0.4s ease;
+        }
+
+        .nav.nav--scrolled .nav-links a {
+            color: var(--gray-800);
         }
 
         .nav-links a:hover {
@@ -225,9 +243,13 @@
             display: block;
             width: 100%;
             height: 3px;
-            background: var(--gray-800);
+            background: white;
             border-radius: 2px;
             transition: all 0.3s ease;
+        }
+
+        .nav.nav--scrolled .nav-hamburger span {
+            background: var(--gray-800);
         }
 
         .nav-hamburger.active span:nth-child(1) {
@@ -287,78 +309,131 @@
         }
 
         /* ═══════════════════════════════════════════════════════════
-           HERO SECTION — Diagonal Split Composition
-           Based on brand manual TEST-01.png style
+           HERO SECTION — Full-Screen Background Image
+           Mobile-first luxurious layout
            ═══════════════════════════════════════════════════════════ */
 
         .hero {
-            min-height: 100vh;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
             position: relative;
-            padding-top: 80px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: flex-end;
             overflow: hidden;
         }
 
-        /* Left side - Content */
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 3px;
+            background: #0a0a0f;
+        }
+
+        .hero-bg picture {
+            display: block;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .hero-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+        }
+
+        /* Mobile: Full-viewport 2x3 grid with portrait images */
+        @media (max-width: 768px) {
+            .hero-bg {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 1fr 1fr 1fr;
+                gap: 3px;
+            }
+
+            /* picture elements must fill their grid cells */
+            .hero-bg picture {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(
+                    to top,
+                    rgba(10, 10, 15, 0.85) 0%,
+                    rgba(10, 10, 15, 0.5) 25%,
+                    rgba(10, 10, 15, 0.08) 50%,
+                    transparent 70%
+                );
+            z-index: 1;
+        }
+
         .hero-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: var(--space-xl) var(--space-lg);
             position: relative;
             z-index: 2;
+            width: 100%;
+            padding: 0 24px 48px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero-logo {
+            width: 72px;
+            height: auto;
+            margin-bottom: 16px;
+            filter: brightness(0) invert(1);
+            opacity: 0.9;
         }
 
         .hero-tagline {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
+            display: inline-block;
             font-family: var(--font-body);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.2em;
             text-transform: uppercase;
-            color: var(--rosa-mexicano);
-            margin-bottom: var(--space-sm);
-        }
-
-        .hero-tagline::before {
-            content: '';
-            width: 30px;
-            height: 2px;
-            background: var(--rosa-mexicano);
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
         }
 
         .hero-title {
-            margin-bottom: var(--space-md);
-            color: var(--gray-800);
+            margin-bottom: 28px;
+            color: white;
+            text-shadow: 0 2px 30px rgba(0, 0, 0, 0.3);
         }
 
         .hero-title .highlight {
             color: var(--rosa-mexicano);
+            text-shadow: 0 2px 30px rgba(231, 42, 136, 0.3);
         }
 
-        .hero-description {
-            font-size: 1.15rem;
-            color: #666;
-            max-width: 480px;
-            margin-bottom: var(--space-md);
-            line-height: 1.7;
-        }
-
-        /* CTA Buttons */
+        /* CTA Buttons — Stacked pills on mobile */
         .cta-group {
             display: flex;
-            gap: var(--space-sm);
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 320px;
         }
 
         .btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
-            padding: 1rem 2rem;
+            padding: 16px 32px;
             font-family: var(--font-display);
             font-size: 1rem;
             font-weight: 600;
@@ -367,80 +442,60 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
             cursor: pointer;
+            width: 100%;
         }
 
         .btn-primary {
             background: var(--rosa-mexicano);
             color: white;
-            box-shadow: 0 4px 15px rgba(231, 42, 136, 0.3);
+            box-shadow: 0 4px 20px rgba(231, 42, 136, 0.4);
         }
 
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(231, 42, 136, 0.4);
+            box-shadow: 0 8px 30px rgba(231, 42, 136, 0.5);
         }
 
         .btn-secondary {
-            background: white;
-            color: var(--gray-800);
-            border: 2px solid var(--gray-800);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .btn-secondary:hover {
-            background: var(--gray-800);
-            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
         }
 
-        /* Right side - Diagonal Pink with Product */
-        .hero-visual {
-            position: relative;
-            background: var(--rosa-mexicano);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
+        /* Desktop: buttons side by side, larger hero content */
+        @media (min-width: 769px) {
+            .hero-content {
+                padding: 0 48px 80px;
+            }
 
-        /* Diagonal cut effect */
-        .hero-visual::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100px;
-            width: 200px;
-            height: 100%;
-            background: white;
-            transform: skewX(-8deg);
-            z-index: 1;
-        }
+            .hero-logo {
+                width: 90px;
+                margin-bottom: 20px;
+            }
 
-        .hero-product {
-            position: relative;
-            z-index: 2;
-            max-width: 85%;
-            animation: float 6s ease-in-out infinite;
-        }
+            .hero-tagline {
+                font-size: 0.9rem;
+            }
 
-        .hero-product img {
-            width: 100%;
-            height: auto;
-            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
-        }
+            .cta-group {
+                flex-direction: row;
+                max-width: none;
+                width: auto;
+                gap: 16px;
+            }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-
-        /* Jaguar watermark in corner */
-        .hero-jaguar {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            width: 80px;
-            height: 80px;
-            opacity: 0.2;
-            z-index: 3;
+            .btn {
+                width: auto;
+                padding: 16px 36px;
+            }
         }
 
         /* ═══════════════════════════════════════════════════════════
@@ -1020,33 +1075,6 @@
            ═══════════════════════════════════════════════════════════ */
 
         @media (max-width: 1024px) {
-            .hero {
-                grid-template-columns: 1fr;
-                min-height: auto;
-            }
-
-            .hero-content {
-                padding: var(--space-lg) var(--space-md);
-                text-align: center;
-                align-items: center;
-            }
-
-            .hero-tagline::before {
-                display: none;
-            }
-
-            .hero-visual {
-                min-height: 400px;
-            }
-
-            .hero-visual::before {
-                top: -50px;
-                left: 0;
-                width: 100%;
-                height: 100px;
-                transform: skewY(-3deg);
-            }
-
             .quality {
                 grid-template-columns: 1fr;
             }
@@ -1129,17 +1157,18 @@
             }
         }
 
+        .hero-logo,
         .hero-tagline,
         .hero-title,
-        .hero-description,
         .cta-group {
             animation: fadeInUp 0.8s ease forwards;
+            opacity: 0;
         }
 
-        .hero-tagline { animation-delay: 0.1s; }
-        .hero-title { animation-delay: 0.2s; }
-        .hero-description { animation-delay: 0.3s; }
-        .cta-group { animation-delay: 0.4s; }
+        .hero-logo { animation-delay: 0.1s; }
+        .hero-tagline { animation-delay: 0.2s; }
+        .hero-title { animation-delay: 0.3s; }
+        .cta-group { animation-delay: 0.5s; }
 
         /* Scroll reveal */
         .reveal {
@@ -1153,364 +1182,6 @@
             transform: translateY(0);
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           3D GLOBE / DESTINOS SECTION
-           ═══════════════════════════════════════════════════════════ */
-
-        .globe-section {
-            padding: var(--space-xl) 0;
-            background: linear-gradient(180deg, var(--gray-800) 0%, #0a0a1a 50%, var(--gray-800) 100%);
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .globe-section .section-header {
-            padding: 0 var(--space-lg);
-            text-align: center;
-            margin-bottom: var(--space-md);
-            position: relative;
-            z-index: 2;
-        }
-
-        .globe-section .section-label {
-            color: var(--turquesa-caribe);
-        }
-
-        .globe-section .headline-lg {
-            color: white;
-        }
-
-        .globe-section .section-subtitle {
-            color: rgba(255,255,255,0.6);
-            margin-top: 0.5rem;
-            font-size: 1rem;
-        }
-
-        /* Navigation breadcrumb */
-        .globe-nav {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-bottom: var(--space-md);
-            padding: 0 var(--space-lg);
-            position: relative;
-            z-index: 2;
-        }
-
-        .globe-nav-btn {
-            font-family: var(--font-display);
-            font-size: 0.85rem;
-            padding: 0.5rem 1.25rem;
-            border-radius: 100px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.05);
-            color: rgba(255,255,255,0.6);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .globe-nav-btn:hover {
-            border-color: rgba(255,255,255,0.4);
-            color: white;
-        }
-
-        .globe-nav-btn.active {
-            background: var(--rosa-mexicano);
-            border-color: var(--rosa-mexicano);
-            color: white;
-        }
-
-        .globe-nav-btn.hidden {
-            display: none;
-        }
-
-        .globe-nav-separator {
-            color: rgba(255,255,255,0.3);
-            display: flex;
-            align-items: center;
-        }
-
-        .globe-nav-separator.hidden {
-            display: none;
-        }
-
-        /* Globe container */
-        .globe-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 650px;
-            margin: 0 auto;
-            aspect-ratio: 1;
-            overflow: visible;
-        }
-
-        .globe-wrapper.hidden {
-            display: none;
-        }
-
-        .globe-canvas-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: visible;
-        }
-
-        .globe-canvas-container canvas {
-            width: 100% !important;
-            height: 100% !important;
-            cursor: grab;
-            display: block;
-        }
-
-        .globe-canvas-container canvas:active {
-            cursor: grabbing;
-        }
-
-        .globe-cta {
-            position: absolute;
-            bottom: 12%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 5;
-            font-family: var(--font-display);
-            font-size: 0.9rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 100px;
-            border: 1px solid var(--rosa-mexicano);
-            background: rgba(231, 42, 136, 0.2);
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            animation: pulse-glow 2s ease-in-out infinite;
-        }
-
-        .globe-cta:hover {
-            background: var(--rosa-mexicano);
-            transform: translateX(-50%) scale(1.05);
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(231, 42, 136, 0.3); }
-            50% { box-shadow: 0 0 40px rgba(231, 42, 136, 0.6); }
-        }
-
-        /* Mexico map view */
-        .mexico-map-view {
-            display: none;
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-            position: relative;
-            padding: var(--space-md) var(--space-lg);
-        }
-
-        .mexico-map-view.active {
-            display: block;
-            animation: fadeInUp 0.6s ease forwards;
-        }
-
-        .mexico-map-canvas {
-            width: 100%;
-            cursor: pointer;
-            border-radius: 16px;
-        }
-
-        .mexico-tooltip {
-            position: fixed;
-            background: rgba(10, 10, 26, 0.95);
-            border: 1px solid var(--rosa-mexicano);
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
-            color: white;
-            font-size: 0.85rem;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            z-index: 100;
-            max-width: 220px;
-            backdrop-filter: blur(10px);
-        }
-
-        .mexico-tooltip.visible {
-            opacity: 1;
-        }
-
-        .mexico-tooltip h4 {
-            font-family: var(--font-display);
-            color: var(--rosa-mexicano);
-            margin-bottom: 0.25rem;
-            font-size: 0.95rem;
-        }
-
-        .mexico-tooltip p {
-            color: rgba(255,255,255,0.7);
-            font-size: 0.8rem;
-            line-height: 1.4;
-        }
-
-        /* State detail panel */
-        .state-detail-panel {
-            display: none;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 var(--space-lg);
-        }
-
-        .state-detail-panel.active {
-            display: block;
-            animation: fadeInUp 0.6s ease forwards;
-        }
-
-        .state-detail-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: var(--space-md);
-        }
-
-        .state-detail-title {
-            font-family: var(--font-display);
-            font-size: 1.5rem;
-        }
-
-        .destinations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 1rem;
-        }
-
-        .destination-card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            color: white;
-            display: block;
-        }
-
-        .destination-card:hover {
-            background: rgba(231, 42, 136, 0.1);
-            border-color: var(--rosa-mexicano);
-            transform: translateY(-6px);
-            box-shadow: 0 12px 30px rgba(231, 42, 136, 0.2);
-        }
-
-        .destination-card-image {
-            width: 100%;
-            aspect-ratio: 16/10;
-            object-fit: cover;
-        }
-
-        .destination-card-info {
-            padding: 1rem;
-        }
-
-        .destination-card-name {
-            font-family: var(--font-display);
-            font-size: 1.05rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .destination-card-state {
-            font-size: 0.8rem;
-            color: var(--turquesa-caribe);
-        }
-
-        /* Stats bar */
-        .globe-stats {
-            display: flex;
-            justify-content: center;
-            gap: var(--space-lg);
-            margin-top: var(--space-lg);
-            padding: 0 var(--space-lg);
-            position: relative;
-            z-index: 2;
-        }
-
-        .globe-stat {
-            text-align: center;
-        }
-
-        .globe-stat-number {
-            font-family: var(--font-display);
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--rosa-mexicano);
-            display: block;
-        }
-
-        .globe-stat-label {
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.6);
-        }
-
-        /* Globe loading placeholder */
-        .globe-loading {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-        }
-
-        .globe-loading-sphere {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 35%, #1a3a5a, #0a0a1a);
-            box-shadow:
-                0 0 80px rgba(231, 42, 136, 0.15),
-                inset -20px -20px 40px rgba(0,0,0,0.5);
-            animation: float 4s ease-in-out infinite;
-            position: relative;
-        }
-
-        .globe-loading-sphere::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 60%);
-        }
-
-        /* Responsive globe */
-        @media (max-width: 1024px) {
-            .globe-wrapper {
-                max-width: 450px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .globe-wrapper {
-                max-width: 100%;
-                padding: 0 var(--space-sm);
-            }
-
-            .globe-stats {
-                flex-wrap: wrap;
-                gap: var(--space-md);
-            }
-
-            .globe-stat-number {
-                font-size: 1.5rem;
-            }
-
-            .destinations-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            }
-
-            .globe-cta {
-                bottom: 8%;
-                font-size: 0.8rem;
-                padding: 0.6rem 1.2rem;
-            }
-        }
     </style>
 
     <!-- JSON-LD Structured Data -->
@@ -1662,7 +1333,7 @@
         <ul class="nav-links">
             <li><a href="#productos">Productos</a></li>
             <li><a href="#calidad">Calidad</a></li>
-            <li><a href="#destinos">Destinos</a></li>
+            <li><a href="/catalogo">Destinos</a></li>
             <li><a href="#mayoreo">Mayoreo</a></li>
             <li><a href="/catalogo">Catálogo</a></li>
             <li><a href="/envio">Envío</a></li>
@@ -1679,7 +1350,7 @@
     <div class="mobile-menu" aria-hidden="true">
         <a href="#productos">Productos</a>
         <a href="#calidad">Calidad</a>
-        <a href="#destinos">Destinos</a>
+        <a href="/catalogo">Destinos</a>
         <a href="#mayoreo">Mayoreo</a>
         <a href="/catalogo">Catálogo</a>
         <a href="/envio">Envío</a>
@@ -1687,35 +1358,32 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
-         HERO SECTION — Diagonal Split
+         HERO SECTION — Full-Screen Background Image
          ═══════════════════════════════════════════════════════════ -->
     <section class="hero">
+        <div class="hero-bg">
+            <picture><source media="(max-width: 768px)" srcset="/assets/mexico-1-p.jpg"><img src="/assets/mexico-1.jpg" alt="Chichen Itza, Mexico" loading="eager"></picture>
+            <picture><source media="(max-width: 768px)" srcset="/assets/mexico-3-p.jpg"><img src="/assets/mexico-3.jpg" alt="Cancun, Mexico" loading="eager"></picture>
+            <picture><source media="(max-width: 768px)" srcset="/assets/mexico-4-p.jpg"><img src="/assets/mexico-4.jpg" alt="Guanajuato, Mexico" loading="eager"></picture>
+            <picture><source media="(max-width: 768px)" srcset="/assets/mexico-6-p.jpg"><img src="/assets/mexico-6.jpg" alt="Playa del Carmen, Mexico" loading="eager"></picture>
+            <picture><source media="(max-width: 768px)" srcset="/assets/mexico-5-p.jpg"><img src="/assets/mexico-5.jpg" alt="Ciudad de Mexico" loading="eager"></picture>
+            <picture><source media="(max-width: 768px)" srcset="/assets/mexico-2-p.jpg"><img src="/assets/mexico-2.jpg" alt="Papel Picado, Mexico" loading="eager"></picture>
+        </div>
+        <div class="hero-overlay"></div>
         <div class="hero-content">
+            <img src="/assets/LOGO-01.png" alt="AXKAN" class="hero-logo">
             <span class="hero-tagline" data-sanity="heroTagline">Recuerdos Hechos Souvenir</span>
             <h1 class="headline-xl hero-title" data-sanity="heroTitle">
                 <span data-sanity="heroTitleLine1">Llévate</span> <span class="highlight" data-sanity="heroHighlight">México</span><br><span data-sanity="heroTitleLine2">Contigo</span>
             </h1>
-            <p class="hero-description" data-sanity="heroDescription">
-                Souvenirs con corte láser que capturan la esencia de cada destino mexicano.
-            </p>
             <div class="cta-group">
                 <a href="/pedidos" class="btn btn-primary" data-sanity-href="heroCtaPrimaryUrl" data-sanity="heroCtaPrimaryText">
-                    Hacer Pedido →
+                    Hacer Pedido
                 </a>
-                <a href="/catalogo" class="btn btn-secondary" data-sanity-href="heroCtaSecondaryUrl" data-sanity="heroCtaSecondaryText">
-                    Ver Catálogo
+                <a href="/seguimiento" class="btn btn-secondary">
+                    Seguimiento de Pedido
                 </a>
             </div>
-        </div>
-
-        <div class="hero-visual">
-            <div class="hero-product">
-                <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Imán souvenir Huasteca Potosina México - Corte láser MDF premium AXKAN - Recuerdo turístico">
-            </div>
-            <svg class="hero-jaguar" viewBox="0 0 100 100" fill="rgba(255,255,255,0.3)">
-                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2"/>
-                <text x="50" y="55" text-anchor="middle" font-size="12" fill="currentColor">AXKAN</text>
-            </svg>
         </div>
     </section>
 
@@ -1857,64 +1525,6 @@
                     <span class="quality-feature-icon" data-sanity="qualityFeatures.3.icon">💪</span>
                     <span data-sanity="qualityFeatures.3.text">Durabilidad 5+ años</span>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════
-         3D GLOBE — Destinos Souvenir
-         ═══════════════════════════════════════════════════════════ -->
-    <section class="globe-section" id="destinos">
-        <div class="section-header">
-            <p class="section-label">Presencia en Todo M&eacute;xico</p>
-            <h2 class="headline-lg">Destinos que Llevamos al Mundo</h2>
-            <p class="section-subtitle">Cada punto representa un destino donde AXKAN crea recuerdos</p>
-        </div>
-
-        <div class="globe-nav">
-            <button class="globe-nav-btn active" data-view="globe" id="nav-globe">Mundo</button>
-            <span class="globe-nav-separator hidden" id="nav-sep1">&rsaquo;</span>
-            <button class="globe-nav-btn hidden" data-view="mexico" id="nav-mexico">M&eacute;xico</button>
-            <span class="globe-nav-separator hidden" id="nav-sep2">&rsaquo;</span>
-            <button class="globe-nav-btn hidden" data-view="state" id="nav-state"></button>
-        </div>
-
-        <!-- 3D Globe View -->
-        <div id="globe-view" class="globe-wrapper">
-            <div id="globe-3d" class="globe-canvas-container">
-                <div class="globe-loading" id="globe-loading">
-                    <div class="globe-loading-sphere"></div>
-                </div>
-            </div>
-            <button class="globe-cta" id="globe-explore-btn">Explorar M&eacute;xico &rarr;</button>
-        </div>
-
-        <!-- Mexico Map View -->
-        <div id="mexico-view" class="mexico-map-view">
-            <canvas id="mexico-canvas" class="mexico-map-canvas"></canvas>
-        </div>
-        <div id="mexico-tooltip" class="mexico-tooltip"></div>
-
-        <!-- State Detail View -->
-        <div id="state-view" class="state-detail-panel">
-            <div class="state-detail-header">
-                <h3 class="state-detail-title" id="state-name"></h3>
-            </div>
-            <div class="destinations-grid" id="state-destinations"></div>
-        </div>
-
-        <div class="globe-stats">
-            <div class="globe-stat">
-                <span class="globe-stat-number">36+</span>
-                <span class="globe-stat-label">Destinos</span>
-            </div>
-            <div class="globe-stat">
-                <span class="globe-stat-number">21</span>
-                <span class="globe-stat-label">Estados</span>
-            </div>
-            <div class="globe-stat">
-                <span class="globe-stat-number">100+</span>
-                <span class="globe-stat-label">Dise&ntilde;os</span>
             </div>
         </div>
     </section>
@@ -2080,6 +1690,16 @@
             });
         });
 
+        // Nav transparent → solid on scroll past hero
+        const navEl = document.querySelector('.nav');
+        const heroEl = document.querySelector('.hero');
+        if (navEl && heroEl) {
+            const navObserver = new IntersectionObserver(([entry]) => {
+                navEl.classList.toggle('nav--scrolled', !entry.isIntersecting);
+            }, { threshold: 0.05 });
+            navObserver.observe(heroEl);
+        }
+
         // Mobile hamburger menu
         const hamburger = document.querySelector('.nav-hamburger');
         const mobileMenu = document.querySelector('.mobile-menu');
@@ -2104,56 +1724,6 @@
                 });
             });
         }
-    </script>
-
-    <!-- ═══════════════════════════════════════════════════════════
-         3D GLOBE — Lazy load Three.js + globe-section.js
-         Only downloads when the section approaches the viewport
-         ═══════════════════════════════════════════════════════════ -->
-    <script>
-    (function() {
-        var loaded = false;
-        var globeSection = document.getElementById('destinos');
-        if (!globeSection) return;
-
-        var observer = new IntersectionObserver(function(entries) {
-            if (entries[0].isIntersecting && !loaded) {
-                loaded = true;
-                observer.disconnect();
-                // Load Three.js from CDN
-                var threeScript = document.createElement('script');
-                threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-                threeScript.crossOrigin = 'anonymous';
-                threeScript.onload = function() {
-                    // Load topojson-client for world map data
-                    var topoScript = document.createElement('script');
-                    topoScript.src = 'https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js';
-                    topoScript.crossOrigin = 'anonymous';
-                    topoScript.onload = function() {
-                        var globeScript = document.createElement('script');
-                        globeScript.src = '/globe-section.js';
-                        document.head.appendChild(globeScript);
-                    };
-                    topoScript.onerror = function() {
-                        // Proceed without topojson — globe still works, just no world map
-                        var globeScript = document.createElement('script');
-                        globeScript.src = '/globe-section.js';
-                        document.head.appendChild(globeScript);
-                    };
-                    document.head.appendChild(topoScript);
-                };
-                threeScript.onerror = function() {
-                    // Fallback: hide loading, show static content
-                    var loading = document.getElementById('globe-loading');
-                    if (loading) loading.style.display = 'none';
-                    console.log('Three.js failed to load — globe disabled');
-                };
-                document.head.appendChild(threeScript);
-            }
-        }, { rootMargin: '300px' }); // Start loading 300px before visible
-
-        observer.observe(globeSection);
-    })();
     </script>
 
     <!-- ═══════════════════════════════════════════════════════════
