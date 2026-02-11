@@ -35,6 +35,7 @@
     { "source": "/globe-section.js", "destination": "/landing/globe-section.js" },
     { "source": "/destination-images.json", "destination": "/landing/destination-images.json" },
     { "source": "/mexico-states.json", "destination": "/landing/mexico-states.json" },
+    { "source": "/ecuador-provinces.json", "destination": "/landing/ecuador-provinces.json" },
     { "source": "/pedidos", "destination": "/client-order-form/index.html" },
     { "source": "/pedidos/:path*", "destination": "/client-order-form/:path*" },
     { "source": "/order-form", "destination": "/client-order-form/index.html" },

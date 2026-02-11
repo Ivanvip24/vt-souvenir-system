@@ -21,9 +21,9 @@
     naranja: '#f39223',
     turquesa: '#09adc2',
     dark: '#0a0a1a',
-    ocean: '#0a0f1e',
+    ocean: '#0a6ec7',
     highlight: '#e72a88',
-    marker: '#09adc2'
+    marker: '#f39223'
   };
 
   // ═══════════════════════════════════════════════════════════
@@ -65,7 +65,8 @@
     { slug: 'toluca', name: 'Toluca', state: 'Estado de México', lat: 19.28, lng: -99.66 },
     { slug: 'union-juarez', name: 'Unión Juárez', state: 'Chiapas', lat: 15.06, lng: -92.08 },
     { slug: 'zacatlan', name: 'Zacatlán', state: 'Puebla', lat: 19.93, lng: -97.96 },
-    { slug: 'cerro-de-san-pedro', name: 'Cerro de San Pedro', state: 'San Luis Potosí', lat: 22.21, lng: -100.80 }
+    { slug: 'cerro-de-san-pedro', name: 'Cerro de San Pedro', state: 'San Luis Potosí', lat: 22.21, lng: -100.80 },
+    { slug: 'mindo', name: 'Mindo', state: 'Pichincha', lat: -0.05, lng: -78.77 }
   ];
 
   // Map GeoJSON state names → our destination state names
@@ -135,7 +136,7 @@
   function loadMexicoData() {
     return fetch('/mexico-states.json')
       .then(function (r) { return r.json(); })
-      .then(function (geo) { mexicoGeoJSON = geo; })
+      .then(function (geo) { mexicoGeoJSON = geo; countryGeoData.mexico = geo; })
       .catch(function () { /* mexico data optional */ });
   }
 
@@ -203,10 +204,59 @@
 
   // Countries where AXKAN has made designs
   var ACTIVE_COUNTRIES = [
-    { name: 'México', lat: 23.6, lng: -102.5, view: 'mexico' }
+    { name: 'México', lat: 23.6, lng: -102.5, view: 'mexico', bbox: [14, -118, 33, -86] },
+    { name: 'Ecuador', lat: -1.5, lng: -78.5, view: 'ecuador', bbox: [-5.1, -81.1, 1.5, -75.0] }
   ];
+
+  // ISO 3166 numeric IDs of countries to highlight in pink (besides Mexico which uses its own GeoJSON)
+  var HIGHLIGHTED_COUNTRY_IDS = ['218']; // 218 = Ecuador
+
+  // Country map configurations: GeoJSON URL, name property, bounding box, state centers, name mappings
+  var COUNTRY_MAP_CONFIGS = {
+    mexico: {
+      geoURL: '/mexico-states.json',
+      nameProp: 'name',
+      nameMap: { 'México': 'Estado de México', 'Ciudad de México': 'CDMX' },
+      aspect: 0.6,
+      projBbox: [14, -118.5, 33, -86.5],
+      centers: STATE_CENTERS
+    },
+    ecuador: {
+      geoURL: '/ecuador-provinces.json',
+      nameProp: 'name',
+      nameMap: {},
+      aspect: 0.9,
+      projBbox: [-5.1, -81.1, 1.5, -75.0],
+      centers: {
+        'Pichincha': { lat: -0.18, lng: -78.50, abbr: 'Pic' },
+        'Guayas': { lat: -2.19, lng: -79.88, abbr: 'Gua' },
+        'Azuay': { lat: -2.90, lng: -79.01, abbr: 'Azu' },
+        'Manabí': { lat: -1.05, lng: -80.45, abbr: 'Man' },
+        'El Oro': { lat: -3.26, lng: -79.96, abbr: 'ElO' },
+        'Esmeraldas': { lat: 0.97, lng: -79.65, abbr: 'Esm' },
+        'Imbabura': { lat: 0.35, lng: -78.12, abbr: 'Imb' },
+        'Loja': { lat: -3.99, lng: -79.20, abbr: 'Loj' },
+        'Tungurahua': { lat: -1.27, lng: -78.62, abbr: 'Tun' },
+        'Chimborazo': { lat: -1.66, lng: -78.65, abbr: 'Chi' },
+        'Cotopaxi': { lat: -0.68, lng: -78.57, abbr: 'Cot' },
+        'Bolívar': { lat: -1.75, lng: -79.05, abbr: 'Bol' },
+        'Carchi': { lat: 0.81, lng: -77.72, abbr: 'Car' },
+        'Cañar': { lat: -2.56, lng: -78.94, abbr: 'Cañ' },
+        'Los Ríos': { lat: -1.60, lng: -79.65, abbr: 'LRi' },
+        'Santa Elena': { lat: -2.23, lng: -80.86, abbr: 'StE' },
+        'Santo Domingo': { lat: -0.25, lng: -79.17, abbr: 'StD' },
+        'Napo': { lat: -0.99, lng: -77.81, abbr: 'Nap' },
+        'Pastaza': { lat: -1.49, lng: -77.50, abbr: 'Pas' },
+        'Morona Santiago': { lat: -2.31, lng: -78.11, abbr: 'MoS' },
+        'Zamora Chinchipe': { lat: -4.07, lng: -78.95, abbr: 'ZCh' },
+        'Sucumbíos': { lat: 0.09, lng: -76.89, abbr: 'Suc' },
+        'Orellana': { lat: -0.46, lng: -76.99, abbr: 'Ore' },
+        'Galápagos': { lat: -0.74, lng: -90.34, abbr: 'Gal' }
+      }
+    }
+  };
   var targetCamZ = 2.8, currentCamZ = 2.8;
-  var CAM_MIN = 2.2, CAM_MAX = 3.5;
+  var CAM_MIN = 2.6, CAM_MAX = 3.5;
   var lastTextureScale = 1.0;
   var currentEarthTexture = null;
   var BASE_TEX_W = 4096, BASE_TEX_H = 2048;
@@ -223,10 +273,10 @@
     camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
     camera.position.z = 2.8;
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(w, h);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
+    renderer.setClearColor(0xfafafa, 1);
     globeContainer.appendChild(renderer.domElement);
 
     var loading = document.getElementById('globe-loading');
@@ -290,18 +340,18 @@
     canvas.height = h;
     var ctx = canvas.getContext('2d');
 
-    // Ocean gradient
+    // Ocean gradient — royal blue water
     var gradient = ctx.createLinearGradient(0, 0, 0, h);
-    gradient.addColorStop(0, '#0f2847');
-    gradient.addColorStop(0.3, '#112d52');
-    gradient.addColorStop(0.5, '#143360');
-    gradient.addColorStop(0.7, '#112d52');
-    gradient.addColorStop(1, '#0f2847');
+    gradient.addColorStop(0, '#0860b0');
+    gradient.addColorStop(0.3, '#0a6ec7');
+    gradient.addColorStop(0.5, '#0a74d6');
+    gradient.addColorStop(0.7, '#0a6ec7');
+    gradient.addColorStop(1, '#0860b0');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, w, h);
 
     // Grid lines
-    ctx.strokeStyle = 'rgba(40, 70, 120, 0.3)';
+    ctx.strokeStyle = 'rgba(100, 170, 255, 0.2)';
     ctx.lineWidth = 1 * s;
     for (var i = 0; i < 36; i++) {
       var x = (i / 36) * w;
@@ -320,6 +370,11 @@
     // Mexico states highlighted
     if (mexicoGeoJSON) {
       drawMexicoOnGlobe(ctx, w, h, s);
+    }
+
+    // Other highlighted countries (Ecuador, etc.)
+    if (worldGeoJSON) {
+      drawHighlightedCountries(ctx, w, h, s);
     }
 
     // Destination dots
@@ -376,14 +431,39 @@
     });
   }
 
+  function drawHighlightedCountries(ctx, w, h, s) {
+    if (!worldGeoJSON || !HIGHLIGHTED_COUNTRY_IDS.length) return;
+    var highlighted = worldGeoJSON.features.filter(function (f) {
+      return HIGHLIGHTED_COUNTRY_IDS.indexOf(f.id) !== -1;
+    });
+    if (!highlighted.length) return;
+    ctx.save();
+    ctx.shadowColor = '#e72a88';
+    ctx.shadowBlur = 30 * s;
+    highlighted.forEach(function (feature) {
+      drawGeoJSONFeature(ctx, feature, w, h, {
+        fill: 'rgba(231, 42, 136, 0.5)',
+        stroke: '#ff4da6',
+        lineWidth: 2 * s
+      });
+    });
+    ctx.restore();
+    highlighted.forEach(function (feature) {
+      drawGeoJSONFeature(ctx, feature, w, h, {
+        stroke: 'rgba(255, 77, 166, 0.5)',
+        lineWidth: 0.5 * s
+      });
+    });
+  }
+
   function drawDestinationDots(ctx, w, h, s) {
     DESTINATIONS.forEach(function (d) {
       var uv = lngLatToUV(d.lng, d.lat, w, h);
-      var glowR = 24 * s, coreR = 5 * s, midR = 8 * s;
+      var glowR = 12 * s, coreR = 2.5 * s, midR = 4 * s;
       var grad = ctx.createRadialGradient(uv[0], uv[1], 0, uv[0], uv[1], glowR);
-      grad.addColorStop(0, 'rgba(9, 173, 194, 0.9)');
-      grad.addColorStop(0.4, 'rgba(9, 173, 194, 0.4)');
-      grad.addColorStop(1, 'rgba(9, 173, 194, 0)');
+      grad.addColorStop(0, 'rgba(243, 146, 35, 0.9)');
+      grad.addColorStop(0.4, 'rgba(243, 146, 35, 0.4)');
+      grad.addColorStop(1, 'rgba(243, 146, 35, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(uv[0], uv[1], glowR, 0, Math.PI * 2);
@@ -392,7 +472,7 @@
       ctx.beginPath();
       ctx.arc(uv[0], uv[1], coreR, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(9, 220, 255, 0.9)';
+      ctx.fillStyle = 'rgba(243, 146, 35, 0.9)';
       ctx.beginPath();
       ctx.arc(uv[0], uv[1], midR, 0, Math.PI * 2);
       ctx.fill();
@@ -448,14 +528,14 @@
       var pos = latLngToVector3(d.lat, d.lng, 1.025);
       var mat = new THREE.SpriteMaterial({
         map: glowTexture,
-        color: new THREE.Color('#00e5ff'),
+        color: new THREE.Color('#f39223'),
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false
       });
       var sprite = new THREE.Sprite(mat);
       sprite.position.copy(pos);
-      sprite.scale.set(0.04, 0.04, 1);
+      sprite.scale.set(0.02, 0.02, 1);
       sprite.userData = d;
       markerGroup.add(sprite);
       markerSprites.push(sprite);
@@ -536,11 +616,9 @@
   }
 
   function isPointInCountry(lat, lng, country) {
-    // Bounding box check for Mexico
-    if (country.name === 'México') {
-      return lat >= 14 && lat <= 33 && lng >= -118 && lng <= -86;
-    }
-    return false;
+    if (!country.bbox) return false;
+    return lat >= country.bbox[0] && lat <= country.bbox[2] &&
+           lng >= country.bbox[1] && lng <= country.bbox[3];
   }
 
   function onGlobeClick(e) {
@@ -699,21 +777,64 @@
   }
 
   // ═══════════════════════════════════════════════════════════
-  // MEXICO MAP — Real GeoJSON state boundaries (Canvas 2D)
+  // COUNTRY MAP — Generic state/province boundaries (Canvas 2D)
   // ═══════════════════════════════════════════════════════════
 
   var mexicoCanvas, mexicoCtx;
-  var mexicoProject = null;
+  var countryProject = null;
   var hoveredState = null;
-  var statePathCache = [];
+  var countryPathCache = [];
+  var countryGeoData = {};
+  var currentCountryKey = null;
+  var countryStateGroups = {};
 
-  function initMexicoMap() {
+  // Build per-country state groups from DESTINATIONS using bbox matching
+  (function buildCountryGroups() {
+    DESTINATIONS.forEach(function (d) {
+      for (var i = 0; i < ACTIVE_COUNTRIES.length; i++) {
+        if (isPointInCountry(d.lat, d.lng, ACTIVE_COUNTRIES[i])) {
+          var key = ACTIVE_COUNTRIES[i].view;
+          if (!countryStateGroups[key]) countryStateGroups[key] = {};
+          if (!countryStateGroups[key][d.state]) countryStateGroups[key][d.state] = [];
+          countryStateGroups[key][d.state].push(d);
+          break;
+        }
+      }
+    });
+  })();
+
+  function loadCountryGeoData(key) {
+    if (countryGeoData[key]) return Promise.resolve(countryGeoData[key]);
+    if (key === 'mexico' && mexicoGeoJSON) {
+      countryGeoData.mexico = mexicoGeoJSON;
+      return Promise.resolve(mexicoGeoJSON);
+    }
+    var config = COUNTRY_MAP_CONFIGS[key];
+    if (!config || !config.geoURL) return Promise.reject('No GeoJSON for ' + key);
+    return fetch(config.geoURL)
+      .then(function (r) { return r.json(); })
+      .then(function (geo) { countryGeoData[key] = geo; return geo; });
+  }
+
+  function getRegionName(geoName, key) {
+    var config = COUNTRY_MAP_CONFIGS[key];
+    if (config && config.nameMap && config.nameMap[geoName]) {
+      return config.nameMap[geoName];
+    }
+    return geoName;
+  }
+
+  function initCountryMap(key) {
     mexicoCanvas = document.getElementById('mexico-canvas');
     if (!mexicoCanvas) return;
 
+    currentCountryKey = key;
+    var config = COUNTRY_MAP_CONFIGS[key];
+    if (!config) return;
+
     var container = mexicoCanvas.parentElement;
     var cw = container.offsetWidth - 64;
-    var aspect = 0.6;
+    var aspect = config.aspect || 0.6;
     var dpr = window.devicePixelRatio || 1;
     mexicoCanvas.width = cw * dpr;
     mexicoCanvas.height = cw * aspect * dpr;
@@ -721,39 +842,37 @@
     mexicoCanvas.style.height = (cw * aspect) + 'px';
     mexicoCtx = mexicoCanvas.getContext('2d');
 
-    setupMexicoProjection(mexicoCanvas.width, mexicoCanvas.height);
-    buildStatePathCache();
-    drawMexicoMap();
+    setupCountryProjection(key, mexicoCanvas.width, mexicoCanvas.height);
+    buildCountryPathCache(key);
+    drawCountryMap();
 
-    mexicoCanvas.addEventListener('mousemove', onMexicoMouseMove);
-    mexicoCanvas.addEventListener('click', onMexicoClick);
-    mexicoCanvas.addEventListener('mouseleave', function () {
-      hoveredState = null;
-      drawMexicoMap();
-      var tip = document.getElementById('mexico-tooltip');
-      if (tip) tip.classList.remove('visible');
-    });
-    mexicoCanvas.addEventListener('touchend', function (e) {
+    mexicoCanvas.onmousemove = onCountryMouseMove;
+    mexicoCanvas.onclick = onCountryClick;
+    mexicoCanvas.onmouseleave = onCountryMouseLeave;
+    mexicoCanvas.ontouchend = function (e) {
       if (e.changedTouches.length === 1) {
         var touch = e.changedTouches[0];
         var rect = mexicoCanvas.getBoundingClientRect();
         var state = getStateAtPosition(touch.clientX - rect.left, touch.clientY - rect.top);
-        if (state && stateGroups[state]) {
+        var groups = countryStateGroups[currentCountryKey] || {};
+        if (state && groups[state]) {
           e.preventDefault();
           showStateDetail(state);
         }
       }
-    }, { passive: false });
+    };
   }
 
-  function setupMexicoProjection(cw, ch) {
-    var minLng = -118.5, maxLng = -86.5, minLat = 14, maxLat = 33;
+  function setupCountryProjection(key, cw, ch) {
+    var config = COUNTRY_MAP_CONFIGS[key];
+    var bbox = config.projBbox;
+    var minLng = bbox[1], maxLng = bbox[3], minLat = bbox[0], maxLat = bbox[2];
     var pad = 0.06;
     var pw = cw * (1 - 2 * pad);
     var ph = ch * (1 - 2 * pad);
     var lngR = maxLng - minLng;
     var latR = maxLat - minLat;
-    mexicoProject = function (lng, lat) {
+    countryProject = function (lng, lat) {
       return [
         cw * pad + ((lng - minLng) / lngR) * pw,
         ch * pad + ((maxLat - lat) / latR) * ph
@@ -761,36 +880,43 @@
     };
   }
 
-  function buildStatePathCache() {
-    statePathCache = [];
-    if (!mexicoGeoJSON || !mexicoProject) return;
+  function buildCountryPathCache(key) {
+    countryPathCache = [];
+    var geo = countryGeoData[key];
+    var config = COUNTRY_MAP_CONFIGS[key];
+    if (!geo || !countryProject || !config) return;
 
-    mexicoGeoJSON.features.forEach(function (feature) {
-      var geoName = feature.properties.name;
-      var name = ourStateName(geoName);
+    var groups = countryStateGroups[key] || {};
+
+    geo.features.forEach(function (feature) {
+      var geoName = feature.properties[config.nameProp || 'name'];
+      var name = getRegionName(geoName, key);
       var geom = feature.geometry;
       var coordSets = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
 
       var polygons = coordSets.map(function (rings) {
         return rings.map(function (ring) {
-          return ring.map(function (c) { return mexicoProject(c[0], c[1]); });
+          return ring.map(function (c) { return countryProject(c[0], c[1]); });
         });
       });
 
-      statePathCache.push({
+      countryPathCache.push({
         name: name,
         polygons: polygons,
-        hasDestinations: !!stateGroups[name]
+        hasDestinations: !!groups[name]
       });
     });
   }
 
-  function drawMexicoMap() {
-    if (!mexicoCtx) return;
+  function drawCountryMap() {
+    if (!mexicoCtx || !currentCountryKey) return;
     var ctx = mexicoCtx;
     var cw = mexicoCanvas.width;
     var ch = mexicoCanvas.height;
     var dpr = window.devicePixelRatio || 1;
+    var config = COUNTRY_MAP_CONFIGS[currentCountryKey];
+    var groups = countryStateGroups[currentCountryKey] || {};
+    var centers = config.centers || {};
 
     ctx.clearRect(0, 0, cw, ch);
 
@@ -801,23 +927,22 @@
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, cw, ch);
 
-    if (!statePathCache.length) return;
+    if (!countryPathCache.length) return;
 
     var brandColors = [COLORS.rosa, COLORS.turquesa, COLORS.naranja, COLORS.verde];
     var colorIndex = 0;
 
     // Assign a consistent color to each state-with-destinations
     var stateColorMap = {};
-    Object.keys(stateGroups).forEach(function (name) {
+    Object.keys(groups).forEach(function (name) {
       stateColorMap[name] = brandColors[colorIndex % brandColors.length];
       colorIndex++;
     });
 
-    // Draw all state polygons
-    statePathCache.forEach(function (state) {
+    // Draw all state/province polygons — all borders visible
+    countryPathCache.forEach(function (state) {
       var isHovered = hoveredState === state.name;
       var hasDest = state.hasDestinations;
-      var color = stateColorMap[state.name];
 
       state.polygons.forEach(function (rings) {
         ctx.beginPath();
@@ -830,72 +955,67 @@
         });
 
         if (hasDest) {
-          // Pink illuminated border + subtle fill
           ctx.fillStyle = isHovered ? 'rgba(231, 42, 136, 0.25)' : 'rgba(231, 42, 136, 0.1)';
           ctx.fill('evenodd');
           ctx.strokeStyle = isHovered ? '#ff6ab5' : COLORS.rosa;
           ctx.lineWidth = (isHovered ? 2.5 : 1.5) * dpr;
           ctx.stroke();
         } else {
-          ctx.fillStyle = isHovered ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)';
+          ctx.fillStyle = isHovered ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
           ctx.fill('evenodd');
-          ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-          ctx.lineWidth = 0.5 * dpr;
+          ctx.strokeStyle = isHovered ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = (isHovered ? 1.5 : 1) * dpr;
           ctx.stroke();
         }
       });
     });
 
-    // Draw map pin markers for states with destinations
-    Object.keys(stateGroups).forEach(function (stateName) {
-      var center = STATE_CENTERS[stateName];
-      if (!center || !mexicoProject) return;
-      var pos = mexicoProject(center.lng, center.lat);
-      var count = stateGroups[stateName].length;
+    // Draw push-pin markers for states/provinces with destinations
+    Object.keys(groups).forEach(function (stateName) {
+      var center = centers[stateName];
+      if (!center || !countryProject) return;
+      var pos = countryProject(center.lng, center.lat);
       var isHovered = hoveredState === stateName;
       var color = stateColorMap[stateName];
-      var pinH = (28 + count * 4) * dpr;
-      var pinW = pinH * 0.7;
-      var scale = isHovered ? 1.2 : 1;
-      pinH *= scale; pinW *= scale;
-      var cx = pos[0], tipY = pos[1];
-      var headY = tipY - pinH;
-      var headR = pinW / 2;
+      var scale = isHovered ? 1.15 : 1;
 
-      // Shadow
+      var cx = pos[0], cy = pos[1];
+      var needleH = 14 * dpr * scale;
+      var ballR = 5 * dpr * scale;
+
+      // Needle
       ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.4)';
-      ctx.shadowBlur = 6 * dpr;
-      ctx.shadowOffsetY = 3 * dpr;
-
-      // Teardrop pin
+      ctx.strokeStyle = 'rgba(80,80,80,0.6)';
+      ctx.lineWidth = 1 * dpr;
       ctx.beginPath();
-      ctx.moveTo(cx, tipY);
-      ctx.bezierCurveTo(cx - pinW * 0.4, tipY - pinH * 0.45, cx - headR, headY + headR * 0.4, cx - headR, headY);
-      ctx.arc(cx, headY, headR, Math.PI, 0, false);
-      ctx.bezierCurveTo(cx + headR, headY + headR * 0.4, cx + pinW * 0.4, tipY - pinH * 0.45, cx, tipY);
-      ctx.closePath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx, cy - needleH);
+      ctx.stroke();
+
+      // Ball head shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 4 * dpr;
+      ctx.shadowOffsetY = 2 * dpr;
+
+      // Ball head
+      var headCy = cy - needleH - ballR * 0.3;
+      ctx.beginPath();
+      ctx.arc(cx, headCy, ballR, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
       ctx.restore();
 
-      // White inner circle
-      var innerR = headR * 0.55;
+      // Specular highlight
       ctx.beginPath();
-      ctx.arc(cx, headY, innerR, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
+      ctx.arc(cx - ballR * 0.3, headCy - ballR * 0.3, ballR * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.fill();
 
-      // Count number
-      ctx.fillStyle = color;
-      ctx.font = 'bold ' + Math.round(innerR * 1.2) + 'px Inter, sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(count, cx, headY);
-
-      // State abbreviation label
+      // Label
       ctx.fillStyle = isHovered ? '#ffffff' : 'rgba(255,255,255,0.7)';
-      ctx.font = (isHovered ? 'bold ' : '') + (10 * dpr) + 'px Inter, sans-serif';
-      ctx.fillText(center.abbr, cx, tipY + 10 * dpr);
+      ctx.font = (isHovered ? 'bold ' : '') + (9 * dpr) + 'px Inter, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(center.abbr, cx, cy + 4 * dpr);
     });
   }
 
@@ -931,38 +1051,45 @@
     var px = canvasX * dpr, py = canvasY * dpr;
 
     // Prioritize states with destinations
-    for (var i = 0; i < statePathCache.length; i++) {
-      if (statePathCache[i].hasDestinations && pointInPolygons(px, py, statePathCache[i].polygons)) {
-        return statePathCache[i].name;
+    for (var i = 0; i < countryPathCache.length; i++) {
+      if (countryPathCache[i].hasDestinations && pointInPolygons(px, py, countryPathCache[i].polygons)) {
+        return countryPathCache[i].name;
       }
     }
-    for (var j = 0; j < statePathCache.length; j++) {
-      if (!statePathCache[j].hasDestinations && pointInPolygons(px, py, statePathCache[j].polygons)) {
-        return statePathCache[j].name;
+    for (var j = 0; j < countryPathCache.length; j++) {
+      if (!countryPathCache[j].hasDestinations && pointInPolygons(px, py, countryPathCache[j].polygons)) {
+        return countryPathCache[j].name;
       }
     }
     return null;
   }
 
-  function onMexicoMouseMove(e) {
+  function onCountryMouseMove(e) {
     var rect = mexicoCanvas.getBoundingClientRect();
     var state = getStateAtPosition(e.clientX - rect.left, e.clientY - rect.top);
 
     if (state !== hoveredState) {
       hoveredState = state;
-      drawMexicoMap();
+      drawCountryMap();
       mexicoCanvas.style.cursor = state ? 'pointer' : 'default';
     }
 
     var tip = document.getElementById('mexico-tooltip');
+    var groups = countryStateGroups[currentCountryKey] || {};
     if (state && tip) {
-      var group = stateGroups[state];
+      var group = groups[state];
+      var h4 = document.createElement('h4');
+      h4.textContent = state;
+      var p = document.createElement('p');
       if (group) {
         var names = group.map(function (d) { return d.name; }).join(', ');
-        tip.innerHTML = '<h4>' + state + '</h4><p>' + group.length + ' destino' + (group.length > 1 ? 's' : '') + ': ' + names + '</p>';
+        p.textContent = group.length + ' destino' + (group.length > 1 ? 's' : '') + ': ' + names;
       } else {
-        tip.innerHTML = '<h4>' + state + '</h4><p>Pr&oacute;ximamente</p>';
+        p.textContent = 'Pr\u00f3ximamente';
       }
+      tip.textContent = '';
+      tip.appendChild(h4);
+      tip.appendChild(p);
       tip.style.left = (e.clientX + 15) + 'px';
       tip.style.top = (e.clientY - 10) + 'px';
       tip.classList.add('visible');
@@ -971,12 +1098,20 @@
     }
   }
 
-  function onMexicoClick(e) {
+  function onCountryClick(e) {
     var rect = mexicoCanvas.getBoundingClientRect();
     var state = getStateAtPosition(e.clientX - rect.left, e.clientY - rect.top);
-    if (state && stateGroups[state]) {
+    var groups = countryStateGroups[currentCountryKey] || {};
+    if (state && groups[state]) {
       showStateDetail(state);
     }
+  }
+
+  function onCountryMouseLeave() {
+    hoveredState = null;
+    drawCountryMap();
+    var tip = document.getElementById('mexico-tooltip');
+    if (tip) tip.classList.remove('visible');
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -1024,34 +1159,25 @@
 
   function showView(view) {
     var globeView = document.getElementById('globe-view');
-    var mexicoView = document.getElementById('mexico-view');
+    var countryView = document.getElementById('mexico-view');
     var stateView = document.getElementById('state-view');
     var explorerBtn = document.getElementById('globe-explore-btn');
     var tip = document.getElementById('mexico-tooltip');
     if (tip) tip.classList.remove('visible');
 
+    var isCountryView = !!COUNTRY_MAP_CONFIGS[view];
+
     if (globeView) {
       if (view === 'globe') { globeView.classList.remove('hidden'); if (explorerBtn) explorerBtn.style.display = ''; }
       else { globeView.classList.add('hidden'); }
     }
-    if (mexicoView) {
-      if (view === 'mexico') {
-        mexicoView.classList.add('active');
-        if (!statePathCache.length) initMexicoMap();
-        else {
-          var container = mexicoCanvas.parentElement;
-          var cw = container.offsetWidth - 64;
-          var aspect = 0.6;
-          var dpr = window.devicePixelRatio || 1;
-          mexicoCanvas.width = cw * dpr;
-          mexicoCanvas.height = cw * aspect * dpr;
-          mexicoCanvas.style.width = cw + 'px';
-          mexicoCanvas.style.height = (cw * aspect) + 'px';
-          setupMexicoProjection(mexicoCanvas.width, mexicoCanvas.height);
-          buildStatePathCache();
-          drawMexicoMap();
-        }
-      } else { mexicoView.classList.remove('active'); }
+    if (countryView) {
+      if (isCountryView) {
+        countryView.classList.add('active');
+        loadCountryGeoData(view).then(function () {
+          initCountryMap(view);
+        });
+      } else { countryView.classList.remove('active'); }
     }
     if (stateView) {
       if (view === 'state') stateView.classList.add('active');
@@ -1063,26 +1189,33 @@
 
   function updateNav(view) {
     var navGlobe = document.getElementById('nav-globe');
-    var navMexico = document.getElementById('nav-mexico');
+    var navCountry = document.getElementById('nav-country');
     var navState = document.getElementById('nav-state');
     var sep1 = document.getElementById('nav-sep1');
     var sep2 = document.getElementById('nav-sep2');
 
-    [navGlobe, navMexico, navState].forEach(function (b) { if (b) b.classList.remove('active'); });
+    var isCountryView = !!COUNTRY_MAP_CONFIGS[view];
+
+    [navGlobe, navCountry, navState].forEach(function (b) { if (b) b.classList.remove('active'); });
 
     if (view === 'globe') {
       if (navGlobe) navGlobe.classList.add('active');
-      if (navMexico) navMexico.classList.add('hidden');
+      if (navCountry) navCountry.classList.add('hidden');
       if (navState) navState.classList.add('hidden');
       if (sep1) sep1.classList.add('hidden');
       if (sep2) sep2.classList.add('hidden');
-    } else if (view === 'mexico') {
-      if (navMexico) { navMexico.classList.remove('hidden'); navMexico.classList.add('active'); }
+    } else if (isCountryView) {
+      // Find the country display name from ACTIVE_COUNTRIES
+      var countryName = view;
+      for (var i = 0; i < ACTIVE_COUNTRIES.length; i++) {
+        if (ACTIVE_COUNTRIES[i].view === view) { countryName = ACTIVE_COUNTRIES[i].name; break; }
+      }
+      if (navCountry) { navCountry.classList.remove('hidden'); navCountry.classList.add('active'); navCountry.textContent = countryName; }
       if (navState) navState.classList.add('hidden');
       if (sep1) sep1.classList.remove('hidden');
       if (sep2) sep2.classList.add('hidden');
     } else if (view === 'state') {
-      if (navMexico) { navMexico.classList.remove('hidden'); }
+      if (navCountry) { navCountry.classList.remove('hidden'); }
       if (navState) { navState.classList.remove('hidden'); navState.classList.add('active'); }
       if (sep1) sep1.classList.remove('hidden');
       if (sep2) sep2.classList.remove('hidden');
@@ -1101,8 +1234,10 @@
     var navGlobe = document.getElementById('nav-globe');
     if (navGlobe) navGlobe.addEventListener('click', function () { showView('globe'); });
 
-    var navMexico = document.getElementById('nav-mexico');
-    if (navMexico) navMexico.addEventListener('click', function () { showView('mexico'); });
+    var navCountry = document.getElementById('nav-country');
+    if (navCountry) navCountry.addEventListener('click', function () {
+      if (currentCountryKey) showView(currentCountryKey);
+    });
   }
 
   // ═══════════════════════════════════════════════════════════
