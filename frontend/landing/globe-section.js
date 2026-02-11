@@ -194,8 +194,9 @@
   var markerGroup, markerSprites = [];
   var countryPinGroup, countryPins = [];
   var animationFrameId = null;
-  var targetRotationY = 1.75, currentRotationY = 1.75;
-  var targetRotationX = 0.15, currentRotationX = 0.15;
+  // Initial rotation: center on Mexico (lng ~-102°, lat ~23°)
+  var targetRotationY = -0.09, currentRotationY = -0.09;
+  var targetRotationX = 0.08, currentRotationX = 0.08;
   var mouseDown = false, mouseX = 0, mouseY = 0;
   var dragStartX = 0, dragStartY = 0, isDragging = false;
   var autoRotateSpeed = 0.002;
@@ -833,8 +834,9 @@
     if (!config) return;
 
     var container = mexicoCanvas.parentElement;
-    var cw = container.offsetWidth - 64;
-    var aspect = config.aspect || 0.6;
+    var isMobile = window.innerWidth <= 600;
+    var cw = container.offsetWidth - (isMobile ? 8 : 64);
+    var aspect = isMobile ? 0.72 : (config.aspect || 0.6);
     var dpr = window.devicePixelRatio || 1;
     mexicoCanvas.width = cw * dpr;
     mexicoCanvas.height = cw * aspect * dpr;
@@ -920,12 +922,16 @@
 
     ctx.clearRect(0, 0, cw, ch);
 
-    // Subtle background
-    var bg = ctx.createRadialGradient(cw / 2, ch / 2, 0, cw / 2, ch / 2, cw * 0.6);
-    bg.addColorStop(0, 'rgba(15, 15, 35, 0.3)');
-    bg.addColorStop(1, 'rgba(10, 10, 26, 0)');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, cw, ch);
+    // Clean light background
+    ctx.fillStyle = '#f0eff3';
+    ctx.beginPath();
+    var bgR = 12 * dpr;
+    ctx.moveTo(bgR, 0); ctx.lineTo(cw - bgR, 0);
+    ctx.quadraticCurveTo(cw, 0, cw, bgR); ctx.lineTo(cw, ch - bgR);
+    ctx.quadraticCurveTo(cw, ch, cw - bgR, ch); ctx.lineTo(bgR, ch);
+    ctx.quadraticCurveTo(0, ch, 0, ch - bgR); ctx.lineTo(0, bgR);
+    ctx.quadraticCurveTo(0, 0, bgR, 0);
+    ctx.fill();
 
     if (!countryPathCache.length) return;
 
@@ -955,15 +961,15 @@
         });
 
         if (hasDest) {
-          ctx.fillStyle = isHovered ? 'rgba(231, 42, 136, 0.25)' : 'rgba(231, 42, 136, 0.1)';
+          ctx.fillStyle = isHovered ? 'rgba(231, 42, 136, 0.22)' : 'rgba(231, 42, 136, 0.10)';
           ctx.fill('evenodd');
           ctx.strokeStyle = isHovered ? '#ff6ab5' : COLORS.rosa;
           ctx.lineWidth = (isHovered ? 2.5 : 1.5) * dpr;
           ctx.stroke();
         } else {
-          ctx.fillStyle = isHovered ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
+          ctx.fillStyle = isHovered ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.45)';
           ctx.fill('evenodd');
-          ctx.strokeStyle = isHovered ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)';
+          ctx.strokeStyle = isHovered ? 'rgba(190,190,200,0.9)' : 'rgba(200,200,210,0.6)';
           ctx.lineWidth = (isHovered ? 1.5 : 1) * dpr;
           ctx.stroke();
         }
@@ -980,8 +986,9 @@
       var scale = isHovered ? 1.15 : 1;
 
       var cx = pos[0], cy = pos[1];
-      var needleH = 14 * dpr * scale;
-      var ballR = 5 * dpr * scale;
+      var mobileScale = (window.innerWidth <= 600) ? 1.4 : 1;
+      var needleH = 14 * dpr * scale * mobileScale;
+      var ballR = 5 * dpr * scale * mobileScale;
 
       // Needle
       ctx.save();
@@ -1012,10 +1019,11 @@
       ctx.fill();
 
       // Label
-      ctx.fillStyle = isHovered ? '#ffffff' : 'rgba(255,255,255,0.7)';
-      ctx.font = (isHovered ? 'bold ' : '') + (9 * dpr) + 'px Inter, sans-serif';
+      var labelSize = (window.innerWidth <= 600) ? 11 : 9;
+      ctx.fillStyle = isHovered ? '#1f1f1f' : '#555';
+      ctx.font = (isHovered ? 'bold ' : '600 ') + (labelSize * dpr) + 'px Inter, sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText(center.abbr, cx, cy + 4 * dpr);
+      ctx.fillText(center.abbr, cx, cy + 5 * dpr);
     });
   }
 

@@ -261,6 +261,8 @@
         width: 100%;
         cursor: pointer;
         border-radius: 16px;
+        display: block;
+        margin: 0 auto;
       }
       .mexico-tooltip {
         position: fixed;
@@ -416,6 +418,45 @@
         .globe-stat-number { font-size: 1.5rem; }
         .destinations-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
         .globe-cta { display: none; }
+        .mexico-map-view { padding: 12px 3%; max-width: 100%; }
+        .mexico-map-canvas { border-radius: 14px; }
+        .globe-section { padding: 4px 0 12px; }
+        .index-header { padding: 24px 5% 0; }
+        .index-header h1 { font-size: 1.6rem; }
+
+        /* ── Mobile card redesign: compact horizontal cards ── */
+        .index-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+          padding: 16px 4% 40px;
+        }
+        .index-card {
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .index-card:hover { transform: none; }
+        .card-carousel {
+          aspect-ratio: 4/3;
+        }
+        .card-strip img {
+          object-fit: cover;
+        }
+        .index-card-text {
+          padding: 10px 12px;
+        }
+        .index-card-text h2 {
+          font-size: 14px;
+          margin-bottom: 2px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .index-card-text span {
+          font-size: 11px;
+        }
+        .index-card-text p {
+          display: none;
+        }
       }
     </style>
 </head>
@@ -1045,7 +1086,7 @@
         function onBothReady() {
             if (!threeReady) return;
             var s = document.createElement('script');
-            s.src = '/globe-section.js?v=3';
+            s.src = '/globe-section.js?v=9';
             document.head.appendChild(s);
         }
 
