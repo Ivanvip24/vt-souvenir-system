@@ -458,20 +458,17 @@ async function loadPickupsForDate(date) {
     const pickups = pickupsResult.success ? pickupsResult.pickups : [];
     const pendingLabels = pendingResult.success ? pendingResult.pending : [];
 
-    // Filter pickups for the selected date
-    const datePickups = pickups.filter(p => {
-      const pickupDate = new Date(p.pickup_date).toISOString().split('T')[0];
-      return pickupDate === date;
-    });
+    // Show all active pickups (not cancelled), sorted by date descending
+    const activePickups = pickups.filter(p => p.status !== 'cancelled');
 
     // Update summary pills
-    document.getElementById('pickups-total-count').textContent = datePickups.length;
+    document.getElementById('pickups-total-count').textContent = activePickups.length;
     document.getElementById('pickups-pending-count').textContent = pendingLabels.length;
     document.getElementById('pickups-shipments-count').textContent =
-      datePickups.reduce((sum, p) => sum + (p.shipment_count || 0), 0);
+      activePickups.reduce((sum, p) => sum + (p.shipment_count || 0), 0);
 
     // If nothing at all
-    if (datePickups.length === 0 && pendingLabels.length === 0) {
+    if (activePickups.length === 0 && pendingLabels.length === 0) {
       emptyEl.classList.remove('hidden');
       return;
     }
@@ -482,12 +479,12 @@ async function loadPickupsForDate(date) {
     const tableEl = document.getElementById('pickups-table');
     const scheduledEmptyEl = document.getElementById('pickups-scheduled-empty');
 
-    if (datePickups.length === 0) {
+    if (activePickups.length === 0) {
       tableEl.innerHTML = '';
       scheduledEmptyEl.classList.remove('hidden');
     } else {
       scheduledEmptyEl.classList.add('hidden');
-      tableEl.innerHTML = datePickups.map(pickup => renderPickupRow(pickup)).join('');
+      tableEl.innerHTML = activePickups.map(pickup => renderPickupRow(pickup)).join('');
     }
 
     // --- Section B: Pending Labels by Carrier ---
@@ -526,6 +523,9 @@ function renderPickupRow(pickup) {
   const timeTo = pickup.pickup_time_to || '18:00';
   const shipments = pickup.shipment_count || 0;
   const isCancelled = pickup.status === 'cancelled';
+  const confirmationCode = pickup.confirmation_code || '';
+  const isLocal = pickup.pickup_id && pickup.pickup_id.startsWith('local-');
+  const pickupDateStr = pickup.pickup_date ? new Date(pickup.pickup_date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) : '';
 
   return `
     <div class="pickup-row" data-carrier="${carrier}">
@@ -534,11 +534,29 @@ function renderPickupRow(pickup) {
         <span class="pickup-carrier-name">${carrier}</span>
       </div>
       <span class="pickup-row-status" style="background: ${statusBadge.bg}; color: ${statusBadge.color};">
-        ${statusBadge.text}
+        ${statusBadge.text}${isLocal && pickup.status !== 'confirmed' ? ' (local)' : ''}
       </span>
+      <span class="pickup-row-date">${pickupDateStr}</span>
       <span class="pickup-row-time">${timeFrom} - ${timeTo}</span>
       <span class="pickup-row-shipments">${shipments} envio${shipments !== 1 ? 's' : ''}</span>
+      <div class="pickup-row-confirmation">
+        ${confirmationCode
+          ? `<span class="confirmation-code" title="Codigo de confirmacion">${confirmationCode}</span>`
+          : `<input type="text" class="confirmation-code-input"
+                   placeholder="Codigo confirm."
+                   data-pickup-id="${pickup.pickup_id}"
+                   onkeydown="if(event.key==='Enter')saveConfirmationCode('${pickup.pickup_id}',this.value)"
+                   ${isCancelled ? 'disabled' : ''} />`
+        }
+      </div>
       <div class="pickup-row-actions">
+        ${!confirmationCode && !isCancelled ? `
+          <button class="pickup-confirm-btn"
+                  onclick="promptConfirmationCode('${pickup.pickup_id}')"
+                  title="Confirmar con codigo">
+            ✓
+          </button>
+        ` : ''}
         <button class="pickup-cancel-btn" onclick="cancelPickup('${pickup.pickup_id}')"
                 title="Cancelar recoleccion" ${isCancelled ? 'disabled' : ''}>
           ✕
@@ -554,6 +572,7 @@ function renderPickupRow(pickup) {
 function getPickupStatusBadgeClass(status) {
   const badges = {
     'pending':   { bg: '#fef3c7', color: '#92400e', text: 'Pendiente' },
+    'scheduled': { bg: '#e0e7ff', color: '#3730a3', text: 'Programado' },
     'requested': { bg: '#dbeafe', color: '#1e40af', text: 'Solicitado' },
     'confirmed': { bg: '#d1fae5', color: '#065f46', text: 'Confirmado' },
     'completed': { bg: '#bbf7d0', color: '#166534', text: 'Completado' },
@@ -656,7 +675,10 @@ async function triggerPendingPickups() {
     const result = await response.json();
 
     if (result.success) {
-      alert(`✅ Recolecciones solicitadas exitosamente!\n\nResultados:\n${JSON.stringify(result.results, null, 2)}`);
+      const summary = (result.results || []).map(r =>
+        `${r.carrier}: ${r.success ? '✅' : '❌'} ${r.shipment_count} guias${r.local ? ' (local)' : ''}${r.error ? ' - ' + r.error : ''}`
+      ).join('\n');
+      alert(`✅ Recolecciones procesadas!\n\n${summary || 'Sin resultados'}`);
       loadPickupsForDate(document.getElementById('pickups-date-input').value);
     } else {
       alert('Error: ' + (result.error || 'Error desconocido'));
@@ -906,6 +928,45 @@ async function submitPickupRequest(event) {
   }
 }
 
+/**
+ * Save confirmation code for a pickup
+ */
+async function saveConfirmationCode(pickupId, code) {
+  if (!code || !code.trim()) return;
+
+  try {
+    const response = await fetch(`${GUIAS_API_URL}/pickups/${encodeURIComponent(pickupId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        confirmationCode: code.trim(),
+        status: 'confirmed'
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Refresh the view
+      loadPickupsForDate(document.getElementById('pickups-date-input').value);
+    } else {
+      alert('Error: ' + (result.error || 'Error desconocido'));
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+}
+
+/**
+ * Prompt for confirmation code input
+ */
+function promptConfirmationCode(pickupId) {
+  const code = prompt('Ingresa el código de confirmación de la paquetería\n(ej: AME260204015829, MEXA3562):');
+  if (code) {
+    saveConfirmationCode(pickupId, code);
+  }
+}
+
 // Pickups exports
 window.initPickupsView = initPickupsView;
 window.changePickupDate = changePickupDate;
@@ -917,3 +978,5 @@ window.cancelPickup = cancelPickup;
 window.openPickupModal = openPickupModal;
 window.closePickupModal = closePickupModal;
 window.submitPickupRequest = submitPickupRequest;
+window.saveConfirmationCode = saveConfirmationCode;
+window.promptConfirmationCode = promptConfirmationCode;

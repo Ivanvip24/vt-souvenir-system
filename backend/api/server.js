@@ -4862,6 +4862,14 @@ async function startServer() {
       console.log('   ℹ️  Default salespeople:', defErr.message.split('\n')[0]);
     }
 
+    // Add confirmation_code column to pickups table
+    try {
+      await query(`ALTER TABLE pickups ADD COLUMN IF NOT EXISTS confirmation_code VARCHAR(100)`);
+      console.log('   ✅ pickups.confirmation_code column ready');
+    } catch (pcErr) {
+      console.log('   ℹ️  pickups confirmation_code migration:', pcErr.message.split('\n')[0]);
+    }
+
     // Load AI Knowledge Content
     console.log('🤖 Loading AI knowledge content...');
     try {

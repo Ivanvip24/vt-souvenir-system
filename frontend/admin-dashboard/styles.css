@@ -9196,6 +9196,13 @@ body.mobile-menu-open {
     white-space: nowrap;
 }
 
+.pickup-row-date {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 600;
+    min-width: 60px;
+}
+
 .pickup-row-time {
     font-size: 14px;
     color: #374151;
@@ -9209,8 +9216,64 @@ body.mobile-menu-open {
     min-width: 80px;
 }
 
+.pickup-row-confirmation {
+    min-width: 140px;
+}
+
+.confirmation-code {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #d1fae5;
+    color: #065f46;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+
+.confirmation-code-input {
+    width: 120px;
+    padding: 4px 8px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    background: #fff;
+    transition: border-color 0.15s;
+}
+
+.confirmation-code-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.confirmation-code-input:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
 .pickup-row-actions {
     margin-left: auto;
+    display: flex;
+    gap: 4px;
+}
+
+.pickup-confirm-btn {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.pickup-confirm-btn:hover {
+    background: #d1fae5;
+    color: #059669;
 }
 
 .pickup-cancel-btn {

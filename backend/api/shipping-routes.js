@@ -1217,15 +1217,45 @@ router.post('/pickups/request', async (req, res) => {
             carrier
           );
 
-          // Link remaining shipments to this pickup
-          if (pickupResult.success && shipmentIds.length > 1 && !pickupResult.alreadyScheduled) {
-            for (let i = 1; i < shipmentIds.length; i++) {
+          if (pickupResult.success) {
+            // Link remaining shipments to this pickup
+            if (shipmentIds.length > 1 && !pickupResult.alreadyScheduled) {
+              for (let i = 1; i < shipmentIds.length; i++) {
+                await query(`
+                  UPDATE shipping_labels
+                  SET pickup_id = $1, pickup_status = 'requested', pickup_date = $2
+                  WHERE shipment_id = $3
+                `, [pickupResult.pickup_id, pickupResult.pickup_date, shipmentIds[i]]);
+              }
+            }
+          } else {
+            // Skydropx failed - create local pickup and update labels
+            const localPickupId = `local-${carrier.toLowerCase()}-${Date.now()}`;
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            if (tomorrow.getDay() === 0) tomorrow.setDate(tomorrow.getDate() + 1);
+            const localPickupDate = tomorrow.toISOString().split('T')[0];
+
+            await query(`
+              INSERT INTO pickups (pickup_id, carrier, pickup_date, pickup_time_from, pickup_time_to,
+                                  shipment_ids, shipment_count, status, response_data, requested_at)
+              VALUES ($1, $2, $3, '09:00', '18:00', $4, $5, 'scheduled', $6, NOW())
+              ON CONFLICT (pickup_id) DO NOTHING
+            `, [localPickupId, carrier, localPickupDate, shipmentIds, shipmentIds.length,
+                JSON.stringify({ carrier, local: true, skydropxError: pickupResult.error })]);
+
+            for (const sid of shipmentIds) {
               await query(`
                 UPDATE shipping_labels
-                SET pickup_id = $1, pickup_status = 'requested', pickup_date = $2
+                SET pickup_id = $1, pickup_status = 'requested', pickup_date = $2, pickup_requested_at = NOW()
                 WHERE shipment_id = $3
-              `, [pickupResult.pickup_id, pickupResult.pickup_date, shipmentIds[i]]);
+              `, [localPickupId, localPickupDate, sid]);
             }
+
+            pickupResult.pickup_id = localPickupId;
+            pickupResult.pickup_date = localPickupDate;
+            pickupResult.success = true;
+            pickupResult.local = true;
           }
 
           results.push({
@@ -1234,7 +1264,8 @@ router.post('/pickups/request', async (req, res) => {
             pickup_id: pickupResult.pickup_id,
             pickup_date: pickupResult.pickup_date,
             shipment_count: shipmentIds.length,
-            message: pickupResult.message,
+            message: pickupResult.message || (pickupResult.local ? 'Programado localmente' : null),
+            local: pickupResult.local || false,
             error: pickupResult.error
           });
         } catch (error) {
@@ -1354,8 +1385,24 @@ router.post('/pickups/request/carrier', async (req, res) => {
         timeTo || '18:00',
         labelsToPickup,
         labelsToPickup.length,
-        JSON.stringify({ carrier, local: true, note: 'Pickup scheduled without Skydropx confirmation' })
+        JSON.stringify({ carrier, local: true, note: 'Pickup scheduled without Skydropx confirmation', skydropxError: pickupResult.error || null })
       ]);
+
+      // Update shipping labels so they stop showing as "pending"
+      if (labelsToPickup.length > 0) {
+        for (const shipmentId of labelsToPickup) {
+          await query(`
+            UPDATE shipping_labels
+            SET pickup_id = $1,
+                pickup_status = 'requested',
+                pickup_date = $2,
+                pickup_time_from = $3,
+                pickup_time_to = $4,
+                pickup_requested_at = NOW()
+            WHERE shipment_id = $5
+          `, [localPickupId, pickupDate, timeFrom || '09:00', timeTo || '18:00', shipmentId]);
+        }
+      }
 
       return res.json({
         success: true,
@@ -1368,6 +1415,7 @@ router.post('/pickups/request/carrier', async (req, res) => {
         shipment_count: labelsToPickup.length,
         time_window: `${timeFrom || '09:00'} - ${timeTo || '18:00'}`,
         local: true,
+        skydropx_error: pickupResult.error || null,
         note: hasLabels ? null : 'Recuerda generar guías antes de la fecha de recolección'
       });
     }
@@ -1496,6 +1544,7 @@ router.get('/pickups/history', async (req, res) => {
         shipment_ids: p.shipment_ids,
         carrier: p.carrier,
         status: p.status,
+        confirmation_code: p.confirmation_code || null,
         created_at: p.created_at,
         requested_at: p.requested_at,
         response_data: p.response_data
@@ -1574,6 +1623,72 @@ router.get('/pickups/:pickupId', async (req, res) => {
 });
 
 // ========================================
+// UPDATE PICKUP (CONFIRMATION CODE, STATUS)
+// PATCH /api/shipping/pickups/:pickupId
+// ========================================
+router.patch('/pickups/:pickupId', async (req, res) => {
+  const { pickupId } = req.params;
+  const { confirmationCode, status } = req.body;
+
+  try {
+    const pickupResult = await query(`
+      SELECT * FROM pickups WHERE pickup_id = $1
+    `, [pickupId]);
+
+    if (pickupResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Recolección no encontrada' });
+    }
+
+    const updates = [];
+    const values = [];
+    let paramIdx = 1;
+
+    if (confirmationCode !== undefined) {
+      updates.push(`confirmation_code = $${paramIdx++}`);
+      values.push(confirmationCode);
+    }
+
+    if (status) {
+      updates.push(`status = $${paramIdx++}`);
+      values.push(status);
+      if (status === 'confirmed') {
+        updates.push(`confirmed_at = NOW()`);
+      }
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, error: 'No hay datos para actualizar' });
+    }
+
+    values.push(pickupId);
+    await query(`
+      UPDATE pickups SET ${updates.join(', ')} WHERE pickup_id = $${paramIdx}
+    `, values);
+
+    // If confirming, also update shipping labels
+    if (status === 'confirmed') {
+      await query(`
+        UPDATE shipping_labels
+        SET pickup_status = 'confirmed'
+        WHERE pickup_id = $1
+      `, [pickupId]);
+    }
+
+    res.json({
+      success: true,
+      message: 'Recolección actualizada',
+      pickup_id: pickupId,
+      confirmationCode: confirmationCode || null,
+      status: status || pickupResult.rows[0].status
+    });
+
+  } catch (error) {
+    console.error('❌ Error updating pickup:', error);
+    res.status(500).json({ success: false, error: error.message || 'Error actualizando recolección' });
+  }
+});
+
+// ========================================
 // CANCEL A PICKUP
 // DELETE /api/shipping/pickups/:pickupId
 // ========================================
@@ -1590,15 +1705,22 @@ router.delete('/pickups/:pickupId', async (req, res) => {
       return res.status(404).json({ error: 'Recolección no encontrada' });
     }
 
-    // Cancel in Skydropx
-    await skydropx.cancelPickup(pickupId);
+    // Only try to cancel in Skydropx if it's not a local pickup
+    const isLocal = pickupId.startsWith('local-');
+    if (!isLocal) {
+      try {
+        await skydropx.cancelPickup(pickupId);
+      } catch (skydropxErr) {
+        console.log(`⚠️ Could not cancel in Skydropx: ${skydropxErr.message}`);
+      }
+    }
 
     // Update database
     await query(`
       UPDATE pickups SET status = 'cancelled' WHERE pickup_id = $1
     `, [pickupId]);
 
-    // Update shipping labels
+    // Update shipping labels back to pending
     await query(`
       UPDATE shipping_labels
       SET pickup_status = 'pending', pickup_id = NULL
