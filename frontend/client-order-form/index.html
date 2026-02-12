@@ -1,16 +1,42 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+<!-- Event snippet for Submit lead form conversion page -->
+<script>
+  gtag('event', 'conversion', {'send_to': 'AW-17936818900/--9jCLeg4PcbENTF-OhC'});
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AXKAN - Souvenirs Personalizados</title>
     <link rel="icon" type="image/png" href="./favicon.png">
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="preload" href="/fonts/rl-aqva-black.otf" as="font" type="font/otf" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+
+    <style>body{background:#0a0a0f;margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#f1f5f9;}@media(prefers-color-scheme:light){body{background:#fafafa;color:#1a1a1a;}}</style>
+    <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+    <!-- Animated Background -->
+    <div class="bg-scene">
+        <div class="bg-gradient"></div>
+        <div class="bg-orb bg-orb--rosa"></div>
+        <div class="bg-orb bg-orb--turquesa"></div>
+        <div class="bg-orb bg-orb--naranja"></div>
+        <div class="bg-orb bg-orb--verde"></div>
+        <div class="bg-mesh"></div>
+    </div>
+
     <!-- Mobile Hamburger Menu -->
     <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
 
@@ -438,9 +464,9 @@
                             <span style="font-size: 16px; font-weight: 600;">Total:</span>
                             <strong id="summary-total" style="font-size: 16px;">$0.00</strong>
                         </div>
-                        <div class="summary-row" style="font-size: 18px; background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1)); padding: 12px; border-radius: 8px;">
-                            <span style="font-weight: 600;">💰 Anticipo a Pagar (50%):</span>
-                            <strong id="summary-deposit" style="color: var(--primary); font-size: 20px;">$0.00</strong>
+                        <div class="summary-row" style="margin-bottom: 0;">
+                            <span style="font-size: 14px; color: var(--gray-500);">💰 Anticipo (50%):</span>
+                            <strong id="summary-deposit" style="color: var(--primary); font-size: 15px;">$0.00</strong>
                         </div>
                     </div>
                 </div>
@@ -498,33 +524,37 @@
 
                 <!-- Bank Transfer Details (hidden initially) -->
                 <div id="bank-details" class="bank-details hidden">
-                    <!-- Collapsible Header -->
-                    <div onclick="toggleBankDetails()" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 12px 16px; background: var(--gray-800); border-radius: 12px; margin-bottom: 12px;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <span style="font-size: 20px;">🏦</span>
-                            <div>
-                                <h3 style="margin: 0; font-size: 16px;">Datos Bancarios</h3>
-                                <div style="font-size: 12px; color: var(--gray-400);">Toca para ver opciones de pago</div>
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <strong id="bank-amount-preview" class="highlight-amount" style="font-size: 18px;"></strong>
-                            <span id="bank-toggle-icon" style="font-size: 16px; transition: transform 0.3s;">▼</span>
+
+                    <!-- Step 1: Amount to pay -->
+                    <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1)); border-radius: 12px; margin-bottom: 20px;">
+                        <div style="font-size: 13px; color: var(--gray-500); margin-bottom: 4px;">Monto a depositar (anticipo 50%)</div>
+                        <strong id="bank-amount-preview" class="highlight-amount" style="font-size: 28px;"></strong>
+                    </div>
+
+                    <!-- SPEI Reference tip - prominent -->
+                    <div class="spei-tip" style="margin-bottom: 20px;">
+                        <span class="spei-icon">💡</span>
+                        <div>
+                            <strong>Importante:</strong> En el concepto/referencia de tu transferencia escribe <strong>tu número de teléfono</strong> para identificar tu pago más rápido.
                         </div>
                     </div>
 
-                    <!-- Collapsible Content -->
-                    <div id="bank-details-content" style="display: none;">
-                        <!-- SPEI Reference tip -->
-                        <div class="spei-tip">
-                            <span class="spei-icon">💡</span>
-                            <div>
-                                <strong>Tip:</strong> En el concepto/referencia de tu transferencia escribe tu número de teléfono para identificar tu pago más rápido.
-                            </div>
+                    <!-- Step 2: Bank info - tabs for SPEI vs Deposit -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--gray-500);">② Elige cómo pagar:</div>
+                        <div id="bank-tabs" style="display: flex; gap: 8px; margin-bottom: 16px;">
+                            <button type="button" class="bank-tab active" onclick="switchBankTab('spei')" id="tab-spei"
+                                    style="flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--primary); background: rgba(231, 42, 136, 0.1); color: var(--primary); font-weight: 600; font-size: 13px; cursor: pointer;">
+                                📲 SPEI / App Bancaria
+                            </button>
+                            <button type="button" class="bank-tab" onclick="switchBankTab('deposit')" id="tab-deposit"
+                                    style="flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--gray-300); background: transparent; color: var(--gray-500); font-weight: 600; font-size: 13px; cursor: pointer;">
+                                🏧 Cajero / Oxxo
+                            </button>
                         </div>
 
-                        <p style="font-weight: 600; margin-bottom: 16px;">Opción 1: Transferencia Bancaria (SPEI)</p>
-                        <div class="bank-info">
+                        <!-- SPEI Tab Content -->
+                        <div id="bank-tab-spei" class="bank-info">
                             <div class="info-row">
                                 <span>Banco:</span>
                                 <strong id="bank-name">BBVA</strong>
@@ -543,13 +573,13 @@
                                 <strong id="bank-holder">Iván Valencia</strong>
                             </div>
                             <div class="info-row">
-                                <span>Monto a depositar:</span>
+                                <span>Monto:</span>
                                 <strong id="bank-amount" class="highlight-amount"></strong>
                             </div>
                         </div>
 
-                        <p style="font-weight: 600; margin: 24px 0 16px;">Opción 2: Depósito en Banco/Cajero/Oxxo</p>
-                        <div class="bank-info">
+                        <!-- Deposit Tab Content (hidden by default) -->
+                        <div id="bank-tab-deposit" class="bank-info" style="display: none;">
                             <div class="info-row">
                                 <span>Banco:</span>
                                 <strong>BBVA</strong>
@@ -568,14 +598,15 @@
                                 <strong>Iván Valencia</strong>
                             </div>
                             <div class="info-row">
-                                <span>Monto a depositar:</span>
+                                <span>Monto:</span>
                                 <strong id="card-amount" class="highlight-amount"></strong>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-top: 16px;">
-                        <label>Subir Comprobante de Pago</label>
+                    <!-- Step 3: Upload proof -->
+                    <div class="form-group">
+                        <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--gray-500);">③ Sube tu comprobante:</div>
                         <div class="file-upload-area" id="proof-upload-area">
                             <input type="file"
                                    id="payment-proof"
@@ -590,6 +621,9 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Hidden: keep for JS compatibility -->
+                <div id="bank-details-content" style="display: none;"></div>
 
                 <button id="submit-order" class="btn btn-primary btn-large" style="display: none;">
                     <span id="submit-text">✅ Enviar Pedido</span>

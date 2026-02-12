@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AXKAN — Preguntas Frecuentes</title>
+    <meta name="description" content="Encuentra respuestas sobre pedidos, envíos, pagos y diseño de souvenirs AXKAN. Términos y condiciones.">
+    <link rel="icon" type="image/png" href="/pedidos/favicon.png">
+
+    <link rel="preload" href="/fonts/rl-aqva-black.otf" as="font" type="font/otf" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+
+    <style>body{background:#0a0a0f;margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#f1f5f9;}</style>
+    <link rel="stylesheet" href="/faq/styles.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-scene">
+        <div class="bg-gradient"></div>
+        <div class="bg-orb bg-orb--rosa"></div>
+        <div class="bg-orb bg-orb--turquesa"></div>
+        <div class="bg-orb bg-orb--naranja"></div>
+        <div class="bg-orb bg-orb--verde"></div>
+        <div class="bg-mesh"></div>
+    </div>
+
+    <div class="app">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <a href="https://axkan.art" class="topbar-logo">
+                <img src="/pedidos/logo.png" alt="AXKAN" width="56" height="56">
+            </a>
+        </div>
+
+        <!-- Hero + Search -->
+        <header class="hero">
+            <h1 class="hero-title animate-in" style="--delay: 0.1s">¿Tienes preguntas?</h1>
+            <p class="hero-subtitle animate-in" style="--delay: 0.2s">Encuentra respuestas rápidas sobre pedidos, envíos, pagos y más</p>
+            <div class="search-wrap animate-in" style="--delay: 0.3s">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" class="search-input" id="search-input" placeholder="Buscar..." autocomplete="off">
+                <button class="search-clear" id="search-clear" aria-label="Limpiar búsqueda">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <div class="search-results-count" id="search-results-count"></div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tabs animate-in" style="--delay: 0.4s">
+            <button class="tab active" data-tab="proceso">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                Proceso
+            </button>
+            <button class="tab" data-tab="faq">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                FAQ
+            </button>
+            <button class="tab" data-tab="terminos">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Términos
+            </button>
+            <button class="tab" data-tab="disclaimer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Disclaimer
+            </button>
+        </nav>
+
+        <!-- ═══════════════════════════════════
+             TAB 1: PROCESO
+             ═══════════════════════════════════ -->
+        <section class="tab-content active" id="tab-proceso" data-searchable>
+            <div class="section-header">
+                <h2 class="section-title">¿Cómo funciona?</h2>
+                <p class="section-desc">Tu pedido de principio a fin — paso a paso</p>
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-line"></div>
+
+                <div class="timeline-step" data-search-text="contacto whatsapp redes sociales formulario escribir mensaje">
+                    <div class="step-marker" style="--color: var(--rosa)">
+                        <span class="step-number">1</span>
+                    </div>
+                    <div class="step-card">
+                        <h3 class="step-title">Contacto</h3>
+                        <p class="step-desc">Escríbenos por <strong>WhatsApp</strong>, redes sociales o nuestro formulario web. Cuéntanos qué necesitas: destino, cantidad y tipo de producto.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step" data-search-text="cotización precio presupuesto personalizada">
+                    <div class="step-marker" style="--color: var(--turquesa)">
+                        <span class="step-number">2</span>
+                    </div>
+                    <div class="step-card">
+                        <h3 class="step-title">Cotización</h3>
+                        <p class="step-desc">Te enviamos una <strong>cotización personalizada</strong> según la cantidad, tipo de producto y destino que elegiste.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step" data-search-text="anticipo deposito 50% pago inicial transferencia">
+                    <div class="step-marker" style="--color: var(--naranja)">
+                        <span class="step-number">3</span>
+                    </div>
+                    <div class="step-card">
+                        <h3 class="step-title">Anticipo 50%</h3>
+                        <p class="step-desc">Realizas el depósito del <strong>50% del total</strong> para que arranquemos con la producción de tu pedido.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step" data-search-text="diseño diseñar crear arte ilustración">
+                    <div class="step-marker" style="--color: var(--verde)">
+                        <span class="step-number">4</span>
+                    </div>
+                    <div class="step-card">
+                        <h3 class="step-title">Diseño</h3>
+                        <p class="step-desc">Nuestro equipo crea el <strong>diseño único</strong> de tus piezas basado en tus especificaciones y el destino turístico.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step" data-search-text="aprobación aprobar revisar modificaciones cambios rondas">
+                    <div class="step-marker" style="--color: var(--rosa)">
+                        <span class="step-number">5</span>
+                    </div>
+                    <div class="step-card">
+                        <h3 class="step-title">Aprobación</h3>
+                        <p class="step-desc">Revisas el diseño y nos das tu aprobación. Incluimos <strong>2 rondas de modificaciones</strong> sin costo adicional.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step" data-search-text="producción corte láser impresión armado fabricar">
+                    <div class="step-marker" style="--color: var(--turquesa)">
+                        <span class="step-number">6</span>
+                    </div>
+                    <div class="step-card">
+                        <h3 class="step-title">Producción</h3>
+                        <p class="step-desc">Cortamos con <strong>tecnología láser</strong>, imprimimos y armamos cada pieza con atención al detalle.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step" data-search-text="pago restante 50% completar liquidar">
+                    <div class="step-marker" style="--color: var(--naranja)">
+                        <span class="step-number">7</span>
+                    </div>
+                    <div class="step-card">
+                        <h3 class="step-title">Pago Restante</h3>
+                        <p class="step-desc">Completas el <strong>50% restante</strong> antes del envío. Te compartimos fotos de tus piezas terminadas.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step" data-search-text="envío paquetería rastreo seguimiento guía">
+                    <div class="step-marker" style="--color: var(--verde)">
+                        <span class="step-number">8</span>
+                    </div>
+                    <div class="step-card">
+                        <h3 class="step-title">Envío</h3>
+                        <p class="step-desc">Tu pedido sale por paquetería con <strong>número de rastreo</strong> para que lo sigas en todo momento.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step" data-search-text="entrega recibir souvenirs paquete llegada">
+                    <div class="step-marker" style="--color: var(--rosa)">
+                        <span class="step-number">9</span>
+                    </div>
+                    <div class="step-card">
+                        <h3 class="step-title">Entrega</h3>
+                        <p class="step-desc"><strong>¡Recibes tus souvenirs AXKAN!</strong> Piezas que capturan la esencia de México y detonan orgullo.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════
+             TAB 2: FAQ
+             ═══════════════════════════════════ -->
+        <section class="tab-content" id="tab-faq" data-searchable>
+            <div class="section-header">
+                <h2 class="section-title">Preguntas Frecuentes</h2>
+                <p class="section-desc">Lo que más nos preguntan nuestros clientes</p>
+            </div>
+
+            <!-- Category: Diseño -->
+            <div class="faq-category" data-category="diseño">
+                <button class="category-toggle">
+                    <span class="category-icon" style="--cat-color: var(--rosa)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                    </span>
+                    <span class="category-name">Diseño</span>
+                    <svg class="category-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div class="category-items">
+                    <div class="faq-item" data-search-text="propio diseño enviar archivo logo imagen">
+                        <button class="faq-question">
+                            <span>¿Puedo enviar mi propio diseño?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>¡Claro que sí! Si ya tienes un diseño listo, puedes enviárnoslo y lo adaptamos al formato de nuestros productos. Lo ideal es enviarlo en alta resolución (PNG o AI). También podemos trabajar a partir de una idea o referencia visual.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="modificaciones cambios cuántas rondas revisiones">
+                        <button class="faq-question">
+                            <span>¿Cuántas modificaciones puedo hacer al diseño?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Incluimos <strong>2 rondas de modificaciones</strong> sin costo adicional. Esto cubre ajustes de colores, texto, disposición de elementos, etc. Si necesitas más cambios después de las 2 rondas, te cotizamos un ajuste adicional.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="formato archivo enviar diseño resolución">
+                        <button class="faq-question">
+                            <span>¿En qué formato debo enviar mi diseño?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Los formatos ideales son <strong>PNG en alta resolución, AI (Adobe Illustrator) o PDF vectorial</strong>. Si solo tienes una foto o captura, no te preocupes — nuestro equipo de diseño puede trabajar a partir de eso.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="personalizado negocio hotel tienda marca personalizar">
+                        <button class="faq-question">
+                            <span>¿Pueden diseñar algo desde cero para mi negocio?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>¡Por supuesto! Nos especializamos en crear <strong>diseños únicos por destino turístico</strong>. Solo necesitamos saber el destino, el tipo de producto y cualquier elemento que quieras incluir (logos, animales, monumentos). Nosotros hacemos la magia.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category: Envíos -->
+            <div class="faq-category" data-category="envíos">
+                <button class="category-toggle">
+                    <span class="category-icon" style="--cat-color: var(--turquesa)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    </span>
+                    <span class="category-name">Envíos</span>
+                    <svg class="category-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div class="category-items">
+                    <div class="faq-item" data-search-text="envíos todo méxico república cobertura">
+                        <button class="faq-question">
+                            <span>¿Hacen envíos a todo México?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Sí, <strong>enviamos a toda la República Mexicana</strong> por paquetería. El costo de envío varía según la zona y el peso del pedido. Te damos el costo exacto al momento de cotizar.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="tiempo tarda llegar días entrega cuánto">
+                        <button class="faq-question">
+                            <span>¿Cuánto tarda en llegar mi pedido?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>El envío estándar tarda <strong>6-7 días hábiles</strong> y el envío express <strong>3-5 días hábiles</strong>. A esto se suma el tiempo de producción según la cantidad de piezas.</p>
+                            <div class="answer-table">
+                                <div class="table-row"><span>100-249 piezas</span><span>~8 días totales</span></div>
+                                <div class="table-row"><span>250-599 piezas</span><span>~9 días totales</span></div>
+                                <div class="table-row"><span>600-999 piezas</span><span>~11-12 días totales</span></div>
+                                <div class="table-row"><span>1000+ piezas</span><span>~13-14 días totales</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="internacional fuera de méxico extranjero">
+                        <button class="faq-question">
+                            <span>¿Hacen envíos internacionales?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Por el momento, <strong>solo realizamos envíos dentro de México</strong>. Si necesitas envío internacional, contáctanos directamente y evaluamos opciones caso por caso.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="rastrear seguimiento tracking guía número">
+                        <button class="faq-question">
+                            <span>¿Cómo puedo rastrear mi pedido?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Te enviamos un <strong>número de guía por WhatsApp</strong> en cuanto tu pedido sale. También puedes consultar el estado de tu pedido en <a href="https://axkan.art/seguimiento">axkan.art/seguimiento</a>.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="error datos dirección envío equivocado cambiar">
+                        <button class="faq-question">
+                            <span>¿Qué pasa si hay un error en mis datos de envío?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Los datos de envío se procesan automáticamente. Si detectas un error, <strong>avísanos de inmediato por WhatsApp</strong>. Una vez que la paquetería recoge el paquete, la responsabilidad de los datos es del cliente.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category: Pagos -->
+            <div class="faq-category" data-category="pagos">
+                <button class="category-toggle">
+                    <span class="category-icon" style="--cat-color: var(--naranja)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                    </span>
+                    <span class="category-name">Pagos</span>
+                    <svg class="category-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div class="category-items">
+                    <div class="faq-item" data-search-text="métodos pago transferencia tarjeta aceptan">
+                        <button class="faq-question">
+                            <span>¿Qué métodos de pago aceptan?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Aceptamos <strong>transferencia bancaria y depósito en OXXO</strong>. Al momento de confirmar tu pedido te compartimos los datos para el depósito.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="contra entrega pagar recibir COD efectivo">
+                        <button class="faq-question">
+                            <span>¿Puedo pagar contra entrega?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>No manejamos pago contra entrega.</strong> Todos los pedidos requieren el anticipo del 50% para iniciar y el 50% restante antes del envío. Esto nos permite garantizar la producción de cada pedido.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="anticipo 50% deposito cómo funciona mitad">
+                        <button class="faq-question">
+                            <span>¿Cómo funciona el anticipo del 50%?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>El proceso de pago es en <strong>dos partes</strong>:</p>
+                            <ol>
+                                <li><strong>50% de anticipo</strong> — para arrancar producción. Lo pagas una vez que apruebas la cotización.</li>
+                                <li><strong>50% restante</strong> — antes de que enviemos tu pedido. Te compartimos fotos de las piezas terminadas para que estés tranquilo.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="factura facturar RFC fiscal comprobante">
+                        <button class="faq-question">
+                            <span>¿Facturan?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Sí, <strong>emitimos factura</strong>. Solo necesitamos tus datos fiscales (RFC, razón social, dirección fiscal, uso de CFDI y régimen fiscal). Solicítala al momento de hacer tu pedido.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category: Pedidos -->
+            <div class="faq-category" data-category="pedidos">
+                <button class="category-toggle">
+                    <span class="category-icon" style="--cat-color: var(--verde)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                    </span>
+                    <span class="category-name">Pedidos</span>
+                    <svg class="category-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div class="category-items">
+                    <div class="faq-item" data-search-text="mínimo pedido cantidad mínima piezas cuántas">
+                        <button class="faq-question">
+                            <span>¿Cuál es el pedido mínimo?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Los pedidos mínimos varían por producto:</p>
+                            <div class="answer-table">
+                                <div class="table-row"><span>Imanes</span><span>100 piezas</span></div>
+                                <div class="table-row"><span>Llaveros</span><span>100 piezas</span></div>
+                                <div class="table-row"><span>Destapadores</span><span>100 piezas</span></div>
+                                <div class="table-row"><span>Portallaves</span><span>40 piezas</span></div>
+                                <div class="table-row"><span>Libretas</span><span>12 piezas</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="mixto diferentes productos combinar mezclar varios">
+                        <button class="faq-question">
+                            <span>¿Puedo hacer pedidos mixtos de diferentes productos?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>¡Sí! Puedes <strong>combinar diferentes tipos de productos</strong> en un solo pedido (por ejemplo, imanes + llaveros + destapadores). Cada producto debe cumplir con su pedido mínimo individual.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="cancelar pedido cancelo cambiar de opinión reembolso">
+                        <button class="faq-question">
+                            <span>¿Puedo cancelar mi pedido?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Si aún no iniciamos producción, puedes cancelar. <strong>El anticipo no es reembolsable</strong> una vez que se inicia el proceso de diseño, ya que cubre los costos de diseño y preparación. Contáctanos lo antes posible si necesitas cancelar.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="dañado roto defecto llegó mal producto dañados">
+                        <button class="faq-question">
+                            <span>¿Qué hago si mi pedido llega dañado?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Tienes <strong>7 días a partir de la entrega</strong> para reportar cualquier defecto o daño. Envíanos evidencia fotográfica por WhatsApp y evaluamos la situación. Si el daño es de fábrica, reponemos las piezas afectadas.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item" data-search-text="producción tiempo tardan fabricar cuánto días">
+                        <button class="faq-question">
+                            <span>¿Cuánto tiempo tardan en producir mi pedido?</span>
+                            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <p>El tiempo de producción depende de la cantidad:</p>
+                            <div class="answer-table">
+                                <div class="table-row"><span>100-249 piezas</span><span>~3-4 días</span></div>
+                                <div class="table-row"><span>250-599 piezas</span><span>~4-5 días</span></div>
+                                <div class="table-row"><span>600-999 piezas</span><span>~6-7 días</span></div>
+                                <div class="table-row"><span>1000+ piezas</span><span>~8-9 días</span></div>
+                            </div>
+                            <p>A esto se suma el tiempo de envío (6-7 días estándar o 3-5 express).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════
+             TAB 3: TÉRMINOS Y CONDICIONES
+             ═══════════════════════════════════ -->
+        <section class="tab-content" id="tab-terminos" data-searchable>
+            <div class="section-header">
+                <h2 class="section-title">Términos y Condiciones</h2>
+                <p class="section-desc">Políticas que aplican a todos los pedidos AXKAN</p>
+            </div>
+
+            <div class="legal-card" data-search-text="pagos anticipo 50 transferencia deposito">
+                <div class="legal-icon" style="--legal-color: var(--naranja)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                </div>
+                <h3 class="legal-title">Pagos</h3>
+                <ul class="legal-list">
+                    <li>Se requiere un <strong>anticipo del 50%</strong> del total para iniciar producción.</li>
+                    <li>El <strong>50% restante</strong> debe cubrirse antes del envío del pedido.</li>
+                    <li>Métodos aceptados: transferencia bancaria y depósito en OXXO.</li>
+                    <li>No se acepta pago contra entrega.</li>
+                    <li>Los precios están sujetos a cambio sin previo aviso en nuevas cotizaciones.</li>
+                </ul>
+            </div>
+
+            <div class="legal-card" data-search-text="diseño modificaciones rondas cambios revisiones aprobación">
+                <div class="legal-icon" style="--legal-color: var(--rosa)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                </div>
+                <h3 class="legal-title">Diseño y Modificaciones</h3>
+                <ul class="legal-list">
+                    <li>El servicio de diseño está <strong>incluido</strong> en el precio del pedido.</li>
+                    <li>Se incluyen <strong>2 rondas de modificaciones</strong> sin costo adicional.</li>
+                    <li>Modificaciones adicionales posteriores a las 2 rondas tienen un costo extra.</li>
+                    <li>El cliente tiene un plazo de <strong>7 días</strong> para responder con sus comentarios o aprobación del diseño. Pasado este plazo, se considera aprobado.</li>
+                    <li>Una vez aprobado el diseño, no se aceptan cambios durante producción.</li>
+                </ul>
+            </div>
+
+            <div class="legal-card" data-search-text="producción tiempos fabricación días hábiles capacidad">
+                <div class="legal-icon" style="--legal-color: var(--turquesa)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <h3 class="legal-title">Producción</h3>
+                <ul class="legal-list">
+                    <li>Los tiempos de producción inician una vez recibido el anticipo y aprobado el diseño.</li>
+                    <li>Los tiempos estimados varían según la cantidad: de 3 a 9 días hábiles.</li>
+                    <li>La capacidad de producción está sujeta a disponibilidad. En temporada alta los tiempos pueden extenderse.</li>
+                    <li>Nos reservamos el derecho de rechazar pedidos que excedan nuestra capacidad operativa.</li>
+                </ul>
+            </div>
+
+            <div class="legal-card" data-search-text="envíos envío paquetería datos dirección responsabilidad">
+                <div class="legal-icon" style="--legal-color: var(--verde)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </div>
+                <h3 class="legal-title">Envíos</h3>
+                <ul class="legal-list">
+                    <li>Los envíos se realizan <strong>únicamente dentro de la República Mexicana</strong>.</li>
+                    <li>El costo de envío se calcula según zona y peso, y se suma al total del pedido.</li>
+                    <li>Los datos de envío proporcionados por el cliente son procesados automáticamente. <strong>AXKAN no se hace responsable por datos incorrectos.</strong></li>
+                    <li>Cualquier corrección de datos debe solicitarse antes de la recolección del paquete.</li>
+                    <li>Envío estándar: 6-7 días hábiles. Express: 3-5 días hábiles.</li>
+                </ul>
+            </div>
+
+            <div class="legal-card" data-search-text="devoluciones garantía defectos reembolso cancelación reclamo">
+                <div class="legal-icon" style="--legal-color: var(--rojo)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </div>
+                <h3 class="legal-title">Devoluciones y Garantía</h3>
+                <ul class="legal-list">
+                    <li>Tienes <strong>7 días naturales</strong> a partir de la recepción para reportar defectos o daños de fábrica.</li>
+                    <li>Se requiere <strong>evidencia fotográfica</strong> del defecto para procesar cualquier reclamo.</li>
+                    <li>Solo se reponen piezas con defecto comprobable de fabricación, no por daños causados por el transporte o manejo del cliente.</li>
+                    <li>El anticipo <strong>no es reembolsable</strong> una vez iniciado el proceso de diseño.</li>
+                    <li>Las cancelaciones posteriores al inicio de producción no generan reembolso.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════
+             TAB 4: DISCLAIMER
+             ═══════════════════════════════════ -->
+        <section class="tab-content" id="tab-disclaimer" data-searchable>
+            <div class="section-header">
+                <h2 class="section-title">Aviso Legal</h2>
+                <p class="section-desc">Información importante sobre nuestros productos y servicios</p>
+            </div>
+
+            <div class="disclaimer-block" data-search-text="color colores variación pantalla producto final impresión">
+                <div class="disclaimer-number">01</div>
+                <h3 class="disclaimer-title">Variaciones de Color</h3>
+                <p class="disclaimer-text">Los colores que ves en pantalla pueden variar respecto al producto final. Esto se debe a diferencias entre monitores, calibración de pantallas y el proceso de impresión sobre MDF. Hacemos nuestro mejor esfuerzo para mantener la fidelidad cromática, pero <strong>no garantizamos una coincidencia exacta</strong> entre la vista digital y el producto impreso.</p>
+            </div>
+
+            <div class="disclaimer-block" data-search-text="propiedad intelectual diseños derechos autor copyright uso">
+                <div class="disclaimer-number">02</div>
+                <h3 class="disclaimer-title">Propiedad Intelectual</h3>
+                <p class="disclaimer-text">Todos los diseños creados por AXKAN son <strong>propiedad intelectual de AXKAN</strong>. El cliente adquiere el derecho de uso sobre los productos físicos comprados, pero no los derechos de reproducción del diseño. Los diseños no pueden ser copiados, reproducidos o utilizados por terceros sin autorización escrita.</p>
+            </div>
+
+            <div class="disclaimer-block" data-search-text="envío transporte daños paquetería responsabilidad">
+                <div class="disclaimer-number">03</div>
+                <h3 class="disclaimer-title">Responsabilidad en Envíos</h3>
+                <p class="disclaimer-text">Una vez que el paquete es entregado a la empresa de paquetería, <strong>AXKAN no se hace responsable por daños, pérdidas o retrasos</strong> causados por el servicio de mensajería. En caso de incidencia, apoyamos al cliente con el proceso de reclamación ante la paquetería.</p>
+            </div>
+
+            <div class="disclaimer-block" data-search-text="disponibilidad stock producción capacidad temporada">
+                <div class="disclaimer-number">04</div>
+                <h3 class="disclaimer-title">Disponibilidad</h3>
+                <p class="disclaimer-text">Todos nuestros productos están sujetos a <strong>disponibilidad de materiales y capacidad de producción</strong>. En temporada alta o por situaciones fuera de nuestro control, los tiempos de entrega pueden extenderse. Te informaremos de cualquier cambio significativo.</p>
+            </div>
+
+            <div class="disclaimer-block" data-search-text="precios cambios actualización cotización vigencia">
+                <div class="disclaimer-number">05</div>
+                <h3 class="disclaimer-title">Precios y Cotizaciones</h3>
+                <p class="disclaimer-text">Los precios publicados y cotizados son <strong>válidos al momento de la cotización</strong>. AXKAN se reserva el derecho de actualizar precios sin previo aviso. Una cotización aceptada y con anticipo depositado mantiene el precio acordado.</p>
+            </div>
+
+            <div class="disclaimer-block" data-search-text="datos personales privacidad información cliente">
+                <div class="disclaimer-number">06</div>
+                <h3 class="disclaimer-title">Uso de Datos</h3>
+                <p class="disclaimer-text">La información personal proporcionada (nombre, dirección, teléfono, correo) se utiliza <strong>exclusivamente para procesar tu pedido y envío</strong>. No compartimos ni vendemos datos personales a terceros. Al realizar un pedido, aceptas que usemos tus datos para comunicaciones relacionadas con tu compra.</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="page-footer">
+            <div class="footer-links">
+                <a href="https://axkan.art/pedidos">Hacer un pedido</a>
+                <span class="footer-dot"></span>
+                <a href="https://wa.me/5215538253251">WhatsApp</a>
+                <span class="footer-dot"></span>
+                <a href="https://axkan.art">axkan.art</a>
+            </div>
+            <p class="footer-copy">AXKAN &mdash; Recuerdos Hechos Souvenir</p>
+        </footer>
+    </div>
+
+    <script src="/faq/faq.js"></script>
+</body>
+</html>

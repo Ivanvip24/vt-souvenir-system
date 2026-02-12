@@ -1,0 +1,2625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXKAN — Manual de Marca | Brand Identity System</title>
+    <meta name="description" content="Manual de identidad de marca AXKAN. Souvenirs premium de México — Recuerdos Hechos Souvenir.">
+    <link rel="icon" type="image/png" href="./LOGO-01.png">
+
+    <!-- Fonts -->
+    <link rel="preload" href="./fonts/RLAQVA.otf" as="font" type="font/otf" crossorigin>
+    <link rel="preload" href="./fonts/Objektiv-VF.otf" as="font" type="font/otf" crossorigin>
+
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           AXKAN BRAND MANUAL — Interactive Web Experience
+           "Recuerdos Hechos Souvenir"
+
+           Built with: Vanilla HTML/CSS/JS
+           Font: RL AQVA (titles), Objektiv (body)
+           ═══════════════════════════════════════════════════════════ */
+
+        @font-face {
+            font-family: 'RL Aqva';
+            src: url('./fonts/RLAQVA.otf') format('opentype');
+            font-weight: 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Objektiv';
+            src: url('./fonts/Objektiv-VF.otf') format('opentype');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* ══ Reset & Base ══ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-snap-type: y proximity;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Objektiv', -apple-system, sans-serif;
+            color: var(--gray-800);
+            background: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        img { max-width: 100%; height: auto; display: block; }
+        a { color: inherit; text-decoration: none; }
+
+        /* ══ AXKAN Brand Variables ══ */
+        :root {
+            /* Primary Palette */
+            --rosa-mexicano: #e72a88;
+            --verde-selva: #8ab73b;
+            --naranja-calido: #f39223;
+            --turquesa-caribe: #09adc2;
+            --rojo-mexicano: #e52421;
+
+            /* Secondary Palette */
+            --guinda-profundo: #a6191d;
+            --teal-oscuro: #106c7f;
+            --durazno: #f4b266;
+            --lima-suave: #b7c54c;
+            --magenta-oscuro: #aa1e6b;
+            --oro-maya: #D4A574;
+
+            /* Neutrals */
+            --white: #ffffff;
+            --off-white: #fafaf8;
+            --cream: #f7f4f0;
+            --gray-100: #f0f0f0;
+            --gray-200: #e0e0e0;
+            --gray-300: #c0c0c0;
+            --gray-400: #999;
+            --gray-600: #555;
+            --gray-700: #333;
+            --gray-800: #1a1a1a;
+            --black: #0a0a0a;
+
+            /* Spacing */
+            --section-pad: clamp(3rem, 8vw, 7rem);
+            --container: min(1200px, 90vw);
+            --container-narrow: min(800px, 90vw);
+
+            /* Animation */
+            --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ══ Typography ══ */
+        .font-display { font-family: 'RL Aqva', 'Fredoka', sans-serif; }
+
+        h1, h2, h3, .section-title {
+            font-family: 'RL Aqva', 'Fredoka', sans-serif;
+            line-height: 1.05;
+            letter-spacing: 0.02em;
+        }
+
+        .section-number {
+            font-family: 'Objektiv', sans-serif;
+            font-size: clamp(0.7rem, 1vw, 0.85rem);
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 5vw, 3.8rem);
+            margin-bottom: 1.5rem;
+        }
+
+        .section-subtitle {
+            font-size: clamp(1rem, 1.8vw, 1.3rem);
+            font-weight: 400;
+            line-height: 1.7;
+            max-width: 680px;
+            opacity: 0.8;
+        }
+
+        .section-pad { padding: var(--section-pad) 0; }
+        .container { width: var(--container); margin: 0 auto; }
+        .container-narrow { width: var(--container-narrow); margin: 0 auto; }
+
+        /* ══ Progress Bar ══ */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, var(--rosa-mexicano), var(--turquesa-caribe));
+            z-index: 1000;
+            transition: width 0.1s linear;
+        }
+
+        /* ══ Floating Nav Dots ══ */
+        .nav-dots {
+            position: fixed;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .nav-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background: var(--gray-300);
+            cursor: pointer;
+            transition: all 0.4s var(--ease-expo);
+            position: relative;
+        }
+
+        .nav-dot:hover {
+            background: var(--rosa-mexicano);
+            transform: scale(1.3);
+        }
+
+        .nav-dot.active {
+            background: var(--rosa-mexicano);
+            width: 28px;
+        }
+
+        .nav-dot .dot-label {
+            position: absolute;
+            right: calc(100% + 12px);
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            color: var(--gray-600);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .nav-dot:hover .dot-label { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .nav-dots { display: none; }
+        }
+
+        /* ══ Scroll Reveal System ══ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s var(--ease-expo), transform 0.8s var(--ease-expo);
+        }
+
+        .reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: opacity 0.8s var(--ease-expo), transform 0.8s var(--ease-expo);
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(60px);
+            transition: opacity 0.8s var(--ease-expo), transform 0.8s var(--ease-expo);
+        }
+
+        .reveal-left.revealed, .reveal-right.revealed {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.8s var(--ease-expo), transform 0.8s var(--ease-expo);
+        }
+
+        .reveal-scale.revealed {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .stagger > * {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s var(--ease-expo), transform 0.6s var(--ease-expo);
+        }
+
+        .stagger.revealed > *:nth-child(1) { transition-delay: 0.05s; }
+        .stagger.revealed > *:nth-child(2) { transition-delay: 0.12s; }
+        .stagger.revealed > *:nth-child(3) { transition-delay: 0.19s; }
+        .stagger.revealed > *:nth-child(4) { transition-delay: 0.26s; }
+        .stagger.revealed > *:nth-child(5) { transition-delay: 0.33s; }
+        .stagger.revealed > *:nth-child(6) { transition-delay: 0.40s; }
+        .stagger.revealed > *:nth-child(7) { transition-delay: 0.47s; }
+        .stagger.revealed > *:nth-child(8) { transition-delay: 0.54s; }
+        .stagger.revealed > *:nth-child(9) { transition-delay: 0.61s; }
+        .stagger.revealed > *:nth-child(10) { transition-delay: 0.68s; }
+        .stagger.revealed > *:nth-child(11) { transition-delay: 0.75s; }
+
+        .stagger.revealed > * {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 1: HERO / COVER
+           ═══════════════════════════════════════════════════════════ */
+        .hero {
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--black);
+            position: relative;
+            overflow: hidden;
+            scroll-snap-align: start;
+            text-align: center;
+            color: var(--white);
+        }
+
+        .hero-bg-pattern {
+            position: absolute;
+            inset: 0;
+            opacity: 0.04;
+            background-image:
+                radial-gradient(circle at 20% 30%, var(--rosa-mexicano) 1px, transparent 1px),
+                radial-gradient(circle at 80% 70%, var(--turquesa-caribe) 1px, transparent 1px),
+                radial-gradient(circle at 50% 50%, var(--naranja-calido) 1px, transparent 1px);
+            background-size: 60px 60px, 80px 80px, 100px 100px;
+            animation: patternDrift 30s linear infinite;
+        }
+
+        @keyframes patternDrift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 80px); }
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(150px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .hero-glow-1 {
+            background: var(--rosa-mexicano);
+            top: -200px;
+            left: -100px;
+            animation: glowPulse 8s ease-in-out infinite;
+        }
+
+        .hero-glow-2 {
+            background: var(--turquesa-caribe);
+            bottom: -200px;
+            right: -100px;
+            animation: glowPulse 8s ease-in-out infinite 4s;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 0.2; transform: scale(1.1); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .hero-jaguar {
+            width: clamp(120px, 20vw, 200px);
+            filter: drop-shadow(0 0 60px rgba(231, 42, 136, 0.3));
+            animation: heroFadeIn 1.2s var(--ease-expo) both;
+        }
+
+        .hero-divider {
+            width: 60px;
+            height: 2px;
+            background: var(--rosa-mexicano);
+            animation: heroFadeIn 1.2s var(--ease-expo) 0.3s both;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 5.5rem);
+            letter-spacing: 0.08em;
+            animation: heroFadeIn 1.2s var(--ease-expo) 0.4s both;
+        }
+
+        .hero h1 span {
+            display: block;
+            font-family: 'Objektiv', sans-serif;
+            font-size: clamp(0.6rem, 1.2vw, 0.9rem);
+            font-weight: 500;
+            letter-spacing: 0.35em;
+            text-transform: uppercase;
+            opacity: 0.5;
+            margin-top: 0.5rem;
+        }
+
+        .hero-tagline {
+            font-size: clamp(0.85rem, 1.5vw, 1.1rem);
+            font-weight: 400;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            animation: heroFadeIn 1.2s var(--ease-expo) 0.6s both;
+        }
+
+        .hero-wordmark {
+            width: clamp(160px, 25vw, 280px);
+            margin-top: 1rem;
+            animation: heroFadeIn 1.2s var(--ease-expo) 0.8s both;
+        }
+
+        @keyframes heroFadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-scroll {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0.4;
+            animation: heroFadeIn 1.2s var(--ease-expo) 1.2s both;
+        }
+
+        .hero-scroll span {
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .hero-scroll-line {
+            width: 1px;
+            height: 40px;
+            background: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-scroll-line::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--rosa-mexicano);
+            animation: scrollLine 2s ease-in-out infinite;
+        }
+
+        @keyframes scrollLine {
+            0% { top: -100%; }
+            50% { top: 100%; }
+            100% { top: 100%; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 2: BRAND PHILOSOPHY
+           ═══════════════════════════════════════════════════════════ */
+        .philosophy {
+            background: var(--gray-800);
+            color: var(--white);
+            scroll-snap-align: start;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .philosophy::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: linear-gradient(to bottom, var(--black), transparent);
+            pointer-events: none;
+        }
+
+        .philosophy-quote {
+            font-family: 'RL Aqva', sans-serif;
+            font-size: clamp(1.6rem, 4vw, 3rem);
+            line-height: 1.2;
+            max-width: 900px;
+            margin: 0 auto 3rem;
+            text-align: center;
+        }
+
+        .philosophy-quote .highlight {
+            color: var(--rosa-mexicano);
+        }
+
+        .philosophy-source {
+            text-align: center;
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            opacity: 0.4;
+            margin-bottom: 4rem;
+        }
+
+        .commitment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 600px) {
+            .commitment-grid { grid-template-columns: 1fr; }
+        }
+
+        .commitment-col h3 {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .commitment-col.reject h3 { color: var(--rojo-mexicano); }
+        .commitment-col.embrace h3 { color: var(--verde-selva); }
+
+        .commitment-col ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .commitment-col li {
+            font-size: 0.95rem;
+            padding-left: 1.5rem;
+            position: relative;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+
+        .commitment-col.reject li::before {
+            content: '×';
+            position: absolute;
+            left: 0;
+            color: var(--rojo-mexicano);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .commitment-col.embrace li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--verde-selva);
+            font-weight: 700;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 3: LOGO SYSTEM
+           ═══════════════════════════════════════════════════════════ */
+        .logo-system {
+            background: var(--off-white);
+            scroll-snap-align: start;
+        }
+
+        .logo-showcase {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .logo-showcase { grid-template-columns: 1fr; }
+        }
+
+        .logo-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            border: 1px solid var(--gray-100);
+            transition: transform 0.4s var(--ease-expo), box-shadow 0.4s var(--ease-expo);
+        }
+
+        .logo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+        }
+
+        .logo-card img {
+            height: 100px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .logo-card h4 {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--gray-600);
+        }
+
+        .logo-card p {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .logo-full-ref {
+            margin: 3rem 0;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        .logo-full-ref img { width: 100%; }
+
+        .logo-rules {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .logo-rules { grid-template-columns: 1fr; }
+        }
+
+        .rule-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--gray-100);
+        }
+
+        .rule-card h4 {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--rosa-mexicano);
+            margin-bottom: 1rem;
+        }
+
+        .clear-space-diagram {
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .clear-space-inner {
+            border: 2px dashed var(--rosa-mexicano);
+            padding: 1.5rem 2rem;
+            position: relative;
+        }
+
+        .clear-space-inner img { height: 50px; }
+
+        .clear-space-label {
+            position: absolute;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--rosa-mexicano);
+            letter-spacing: 0.1em;
+        }
+
+        .clear-space-label.top { top: -1.2rem; left: 50%; transform: translateX(-50%); }
+        .clear-space-label.right { right: -2rem; top: 50%; transform: translateY(-50%); }
+
+        .size-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .size-table th {
+            text-align: left;
+            font-weight: 600;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--gray-400);
+        }
+
+        .size-table td {
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .critical-rule {
+            background: linear-gradient(135deg, #fff0f6, #fff5f8);
+            border: 1px solid rgba(231, 42, 136, 0.15);
+            border-left: 4px solid var(--rosa-mexicano);
+            border-radius: 0 12px 12px 0;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+        }
+
+        .critical-rule strong {
+            color: var(--rosa-mexicano);
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .critical-rule p {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--gray-700);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 4: COLOR PALETTE
+           ═══════════════════════════════════════════════════════════ */
+        .colors {
+            background: var(--white);
+            scroll-snap-align: start;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .color-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            .color-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .color-swatch {
+            cursor: pointer;
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--white);
+            border: 1px solid var(--gray-100);
+            transition: transform 0.4s var(--ease-expo), box-shadow 0.4s var(--ease-expo);
+            position: relative;
+        }
+
+        .color-swatch:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.1);
+        }
+
+        .color-swatch .swatch-fill {
+            height: 120px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .color-swatch .swatch-fill .copy-hint {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.8);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .color-swatch:hover .copy-hint { opacity: 1; }
+
+        .color-swatch .swatch-info {
+            padding: 1rem;
+        }
+
+        .color-swatch .swatch-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.25rem;
+        }
+
+        .color-swatch .swatch-hex {
+            font-size: 0.75rem;
+            font-family: 'Objektiv', monospace;
+            color: var(--gray-400);
+            letter-spacing: 0.05em;
+        }
+
+        .color-swatch .copied-toast {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: var(--black);
+            color: var(--white);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            opacity: 0;
+            transition: all 0.3s var(--ease-expo);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .color-swatch.copied .copied-toast {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .color-swatch.primary-badge .swatch-fill::after {
+            content: 'PRIMARY';
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            font-size: 0.55rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            background: rgba(0,0,0,0.25);
+            color: white;
+            padding: 0.25rem 0.6rem;
+            border-radius: 100px;
+        }
+
+        .secondary-grid {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        @media (max-width: 768px) {
+            .secondary-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        .secondary-grid .swatch-fill { height: 80px; }
+
+        /* 60/30/10 Rule Visualization */
+        .color-rule-viz {
+            display: flex;
+            height: 60px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 3rem 0 1.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .color-rule-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            transition: flex 1.5s var(--ease-expo);
+        }
+
+        .color-rule-bar.bar-60 {
+            flex: 0;
+            background: var(--off-white);
+            color: var(--gray-600);
+        }
+
+        .color-rule-bar.bar-30 {
+            flex: 0;
+            background: var(--rosa-mexicano);
+            color: white;
+        }
+
+        .color-rule-bar.bar-10 {
+            flex: 0;
+            background: linear-gradient(135deg, var(--turquesa-caribe), var(--verde-selva), var(--naranja-calido));
+            color: white;
+        }
+
+        .color-rule-viz.revealed .bar-60 { flex: 60; }
+        .color-rule-viz.revealed .bar-30 { flex: 30; }
+        .color-rule-viz.revealed .bar-10 { flex: 10; }
+
+        .combos-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 600px) {
+            .combos-grid { grid-template-columns: 1fr; }
+        }
+
+        .combo-section h4 {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .combo-section.forbidden h4 { color: var(--rojo-mexicano); }
+        .combo-section.safe h4 { color: var(--verde-selva); }
+
+        .combo-pair {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .combo-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .combo-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid var(--gray-200);
+        }
+
+        .combo-icon {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .forbidden .combo-icon { color: var(--rojo-mexicano); }
+        .safe .combo-icon { color: var(--verde-selva); }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 5: TYPOGRAPHY
+           ═══════════════════════════════════════════════════════════ */
+        .typography {
+            background: var(--rosa-mexicano);
+            color: var(--white);
+            scroll-snap-align: start;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .typography::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 10% 20%, rgba(255,255,255,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(0,0,0,0.1) 0%, transparent 50%);
+        }
+
+        .typography .container { position: relative; z-index: 1; }
+
+        .type-showcase {
+            text-align: center;
+            margin: 3rem 0;
+        }
+
+        .type-specimen {
+            margin-bottom: 4rem;
+        }
+
+        .type-specimen-label {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            margin-bottom: 1rem;
+        }
+
+        .type-specimen-large {
+            font-size: clamp(3rem, 8vw, 6rem);
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+
+        .type-specimen-chars {
+            font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+            letter-spacing: 0.15em;
+            opacity: 0.7;
+            word-break: break-all;
+            line-height: 1.8;
+        }
+
+        .body-font-specimen {
+            font-family: 'Objektiv', sans-serif;
+        }
+
+        .type-hierarchy {
+            background: rgba(0,0,0,0.15);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 3rem 0;
+            overflow-x: auto;
+        }
+
+        .type-hierarchy table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .type-hierarchy th {
+            text-align: left;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .type-hierarchy td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .type-ref-image {
+            margin-top: 3rem;
+            border-radius: 16px;
+            overflow: hidden;
+            opacity: 0.9;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 6: PATTERN SYSTEM
+           ═══════════════════════════════════════════════════════════ */
+        .patterns {
+            background: var(--white);
+            scroll-snap-align: start;
+        }
+
+        .pattern-hero {
+            text-align: center;
+            margin: 2rem 0 3rem;
+        }
+
+        .spiral-icon {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            animation: spiralSpin 20s linear infinite;
+        }
+
+        @keyframes spiralSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .density-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .density-grid { grid-template-columns: 1fr; }
+        }
+
+        .density-card {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+            transition: transform 0.4s var(--ease-expo);
+        }
+
+        .density-card:hover { transform: translateY(-4px); }
+
+        .density-card-header {
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            min-height: 160px;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .density-card-header.dense {
+            background:
+                radial-gradient(circle at 10% 20%, var(--rosa-mexicano) 3px, transparent 3px),
+                radial-gradient(circle at 30% 60%, var(--turquesa-caribe) 4px, transparent 4px),
+                radial-gradient(circle at 50% 30%, var(--verde-selva) 3px, transparent 3px),
+                radial-gradient(circle at 70% 70%, var(--naranja-calido) 4px, transparent 4px),
+                radial-gradient(circle at 90% 40%, var(--rojo-mexicano) 3px, transparent 3px),
+                radial-gradient(circle at 20% 80%, var(--rosa-mexicano) 5px, transparent 5px),
+                radial-gradient(circle at 60% 10%, var(--turquesa-caribe) 3px, transparent 3px),
+                radial-gradient(circle at 80% 90%, var(--verde-selva) 4px, transparent 4px),
+                radial-gradient(circle at 40% 50%, var(--naranja-calido) 3px, transparent 3px),
+                var(--cream);
+            background-size: 30px 30px, 35px 35px, 25px 25px, 40px 40px, 32px 32px, 28px 28px, 36px 36px, 22px 22px, 33px 33px;
+        }
+
+        .density-card-header.medium {
+            background:
+                radial-gradient(circle at 20% 30%, var(--rosa-mexicano) 4px, transparent 4px),
+                radial-gradient(circle at 60% 70%, var(--turquesa-caribe) 5px, transparent 5px),
+                radial-gradient(circle at 80% 20%, var(--verde-selva) 4px, transparent 4px),
+                radial-gradient(circle at 40% 80%, var(--naranja-calido) 5px, transparent 5px),
+                var(--cream);
+            background-size: 60px 60px, 70px 70px, 55px 55px, 65px 65px;
+        }
+
+        .density-card-header.sparse {
+            background:
+                radial-gradient(circle at 30% 40%, var(--rosa-mexicano) 5px, transparent 5px),
+                radial-gradient(circle at 70% 60%, var(--turquesa-caribe) 6px, transparent 6px),
+                var(--cream);
+            background-size: 120px 120px, 140px 140px;
+        }
+
+        .density-badge {
+            background: var(--white);
+            color: var(--gray-800);
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 0.35rem 0.75rem;
+            border-radius: 100px;
+        }
+
+        .density-card-body {
+            padding: 1.5rem;
+        }
+
+        .density-card-body h4 {
+            font-family: 'RL Aqva', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .density-card-body p {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        .density-card-body .density-usage {
+            margin-top: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            font-style: italic;
+        }
+
+        .pattern-ref {
+            margin-top: 3rem;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 7: PHOTOGRAPHY VS ILLUSTRATION
+           ═══════════════════════════════════════════════════════════ */
+        .photo-illus {
+            background: #f0f7ed;
+            scroll-snap-align: start;
+            position: relative;
+        }
+
+        .integration-statement {
+            font-family: 'RL Aqva', sans-serif;
+            font-size: clamp(1.3rem, 3vw, 2rem);
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 3rem;
+            line-height: 1.25;
+            color: var(--gray-800);
+        }
+
+        .integration-statement .em-green { color: var(--verde-selva); }
+
+        .photo-illus-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .photo-illus-grid { grid-template-columns: 1fr; }
+        }
+
+        .usage-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .usage-card h4 {
+            font-family: 'RL Aqva', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .usage-card .icon-camera { color: var(--turquesa-caribe); }
+        .usage-card .icon-pen { color: var(--rosa-mexicano); }
+
+        .usage-card ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .usage-card li {
+            font-size: 0.85rem;
+            padding-left: 1.2rem;
+            position: relative;
+            color: var(--gray-600);
+        }
+
+        .usage-card li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--gray-300);
+        }
+
+        .layer-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+
+        .layer-bar {
+            width: 100%;
+            max-width: 500px;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.05em;
+        }
+
+        .layer-bar.layer-front {
+            background: var(--gray-800);
+            color: var(--white);
+            z-index: 3;
+            transform: translateY(0);
+        }
+
+        .layer-bar.layer-mid {
+            background: rgba(231, 42, 136, 0.15);
+            color: var(--rosa-mexicano);
+            z-index: 2;
+            width: 92%;
+        }
+
+        .layer-bar.layer-back {
+            background: var(--turquesa-caribe);
+            color: var(--white);
+            z-index: 1;
+            width: 84%;
+        }
+
+        .layer-bar span:last-child {
+            font-size: 0.65rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .photo-ref-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .photo-ref-images { grid-template-columns: 1fr; }
+        }
+
+        .photo-ref-images img {
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 8: PRODUCT DESIGN
+           ═══════════════════════════════════════════════════════════ */
+        .products {
+            background: var(--cream);
+            scroll-snap-align: start;
+        }
+
+        .product-hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            margin: 3rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .product-hero { grid-template-columns: 1fr; }
+        }
+
+        .product-hero img {
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+
+        .product-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .product-layer {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--white);
+            border-radius: 10px;
+            border: 1px solid var(--gray-100);
+        }
+
+        .product-layer-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .product-layer-text {
+            font-size: 0.85rem;
+        }
+
+        .product-layer-text strong {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 0.15rem;
+        }
+
+        .product-layer-text span {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+        }
+
+        .destination-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 3rem;
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        .destination-table th {
+            text-align: left;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--white);
+            background: var(--gray-800);
+            padding: 1rem 1.25rem;
+        }
+
+        .destination-table td {
+            padding: 0.85rem 1.25rem;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .destination-table tr:last-child td { border-bottom: none; }
+
+        .destination-table tr:hover { background: var(--off-white); }
+
+        .product-gallery {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .product-gallery { grid-template-columns: 1fr 1fr; }
+        }
+
+        .product-gallery img {
+            border-radius: 12px;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border: 1px solid var(--gray-200);
+            transition: transform 0.4s var(--ease-expo);
+        }
+
+        .product-gallery img:hover { transform: scale(1.03); }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 9: BRAND VOICE
+           ═══════════════════════════════════════════════════════════ */
+        .brand-voice {
+            background: var(--gray-800);
+            color: var(--white);
+            scroll-snap-align: start;
+        }
+
+        .voice-quote {
+            font-family: 'RL Aqva', sans-serif;
+            font-size: clamp(1.4rem, 3.5vw, 2.4rem);
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 1rem;
+            line-height: 1.25;
+        }
+
+        .voice-quote .highlight { color: var(--naranja-calido); }
+
+        .voice-attribution {
+            text-align: center;
+            font-size: 0.75rem;
+            font-style: italic;
+            opacity: 0.4;
+            margin-bottom: 4rem;
+        }
+
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .pillars-grid { grid-template-columns: 1fr; }
+        }
+
+        .pillar-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: background 0.3s;
+        }
+
+        .pillar-card:hover { background: rgba(255,255,255,0.08); }
+
+        .pillar-emoji {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .pillar-card h4 {
+            font-family: 'RL Aqva', sans-serif;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .pillar-card p {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            line-height: 1.6;
+        }
+
+        /* Personality Grid */
+        .personality-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        @media (max-width: 600px) {
+            .personality-grid { grid-template-columns: 1fr; }
+        }
+
+        .personality-col h4 {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .personality-col.yes-col h4 { color: var(--verde-selva); }
+        .personality-col.no-col h4 { color: var(--rojo-mexicano); }
+
+        .personality-tag {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin: 0.25rem 0.25rem 0.25rem 0;
+        }
+
+        .yes-col .personality-tag {
+            background: rgba(138, 183, 59, 0.15);
+            color: var(--verde-selva);
+        }
+
+        .no-col .personality-tag {
+            background: rgba(229, 36, 33, 0.1);
+            color: var(--rojo-mexicano);
+            opacity: 0.7;
+        }
+
+        /* Channel Tabs */
+        .channel-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .channel-tab {
+            padding: 0.6rem 1.25rem;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+            transition: all 0.3s;
+        }
+
+        .channel-tab:hover { background: rgba(255,255,255,0.1); }
+
+        .channel-tab.active {
+            background: var(--rosa-mexicano);
+            border-color: var(--rosa-mexicano);
+            color: white;
+        }
+
+        .channel-panel {
+            display: none;
+            background: rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .channel-panel.active { display: block; }
+
+        .channel-panel h4 {
+            font-family: 'RL Aqva', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .channel-panel .tone-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--turquesa-caribe);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .channel-panel p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+
+        .copy-example {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+            border-left: 3px solid var(--rosa-mexicano);
+        }
+
+        .copy-example .label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .copy-example .label.correct { color: var(--verde-selva); }
+        .copy-example .label.incorrect { color: var(--rojo-mexicano); }
+
+        .copy-example p {
+            font-size: 0.85rem;
+            font-style: italic;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        /* AXKAN Test */
+        .axkan-test {
+            margin-top: 4rem;
+            text-align: center;
+        }
+
+        .axkan-test h3 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            margin-bottom: 2rem;
+        }
+
+        .test-items {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+
+        .test-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: background 0.3s;
+        }
+
+        .test-item:hover {
+            background: rgba(231, 42, 136, 0.1);
+            border-color: rgba(231, 42, 136, 0.3);
+        }
+
+        .test-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--rosa-mexicano);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .test-fail {
+            color: var(--naranja-calido);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 10: APPLICATIONS
+           ═══════════════════════════════════════════════════════════ */
+        .applications {
+            background: var(--white);
+            scroll-snap-align: start;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .app-grid-item {
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .app-grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .app-grid-item.large { grid-row: span 2; }
+
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+            .app-grid-item.large { grid-row: auto; }
+        }
+
+        .app-full-ref {
+            margin-top: 2rem;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECTION 11: FOOTER
+           ═══════════════════════════════════════════════════════════ */
+        .footer {
+            background: var(--black);
+            color: var(--white);
+            text-align: center;
+            padding: clamp(4rem, 10vw, 8rem) 0;
+            scroll-snap-align: start;
+        }
+
+        .footer-logo {
+            width: clamp(80px, 12vw, 120px);
+            margin: 0 auto 2rem;
+            filter: brightness(0) invert(1);
+            opacity: 0.9;
+        }
+
+        .footer-tagline {
+            font-family: 'RL Aqva', sans-serif;
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .footer-sub {
+            font-size: 0.85rem;
+            opacity: 0.4;
+            margin-bottom: 3rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .footer-link {
+            font-size: 0.8rem;
+            font-weight: 500;
+            opacity: 0.5;
+            transition: opacity 0.3s, color 0.3s;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-link:hover {
+            opacity: 1;
+            color: var(--rosa-mexicano);
+        }
+
+        .footer-divider {
+            width: 40px;
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 0 auto 2rem;
+        }
+
+        .footer-promise {
+            max-width: 600px;
+            margin: 0 auto 3rem;
+            font-size: 0.9rem;
+            font-style: italic;
+            opacity: 0.5;
+            line-height: 1.7;
+        }
+
+        .footer-copy {
+            font-size: 0.7rem;
+            opacity: 0.25;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar" aria-hidden="true"></div>
+
+    <!-- Floating Nav Dots -->
+    <nav class="nav-dots" aria-label="Section navigation">
+        <div class="nav-dot active" data-target="hero"><span class="dot-label">Cover</span></div>
+        <div class="nav-dot" data-target="philosophy"><span class="dot-label">Philosophy</span></div>
+        <div class="nav-dot" data-target="logo"><span class="dot-label">Logo</span></div>
+        <div class="nav-dot" data-target="colors"><span class="dot-label">Colors</span></div>
+        <div class="nav-dot" data-target="typography"><span class="dot-label">Typography</span></div>
+        <div class="nav-dot" data-target="patterns"><span class="dot-label">Patterns</span></div>
+        <div class="nav-dot" data-target="photo"><span class="dot-label">Photo & Illustration</span></div>
+        <div class="nav-dot" data-target="products"><span class="dot-label">Products</span></div>
+        <div class="nav-dot" data-target="voice"><span class="dot-label">Brand Voice</span></div>
+        <div class="nav-dot" data-target="applications"><span class="dot-label">Applications</span></div>
+        <div class="nav-dot" data-target="footer"><span class="dot-label">Contact</span></div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 1: HERO / COVER
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="hero" data-section="hero">
+        <div class="hero-bg-pattern"></div>
+        <div class="hero-glow hero-glow-1"></div>
+        <div class="hero-glow hero-glow-2"></div>
+
+        <div class="hero-content">
+            <img src="./LOGO-01.png" alt="AXKAN Jaguar" class="hero-jaguar">
+            <div class="hero-divider"></div>
+            <h1>MANUAL DE MARCA
+                <span>Brand Identity System</span>
+            </h1>
+            <p class="hero-tagline">Recuerdos Hechos Souvenir</p>
+            <img src="./LOGO-02.png" alt="AXKAN" class="hero-wordmark">
+        </div>
+
+        <div class="hero-scroll">
+            <span>Scroll</span>
+            <div class="hero-scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 2: BRAND PHILOSOPHY
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="philosophy section-pad" data-section="philosophy">
+        <div class="container">
+            <span class="section-number reveal">01 — Filosofia de Marca</span>
+
+            <div class="philosophy-quote reveal">
+                AXKAN existe para capturar el <span class="highlight">"Momento Mariachi"</span> — ese instante cuando escuchas mariachis por primera vez y sientes las lagrimas formarse, o cuando ves las Piramides de Teotihuacan y te conectas con algo antiguo y profundo.
+            </div>
+
+            <p class="philosophy-source reveal">The Mariachi Moment</p>
+
+            <div class="commitment-grid reveal">
+                <div class="commitment-col reject">
+                    <h3>Lo que rechazamos</h3>
+                    <ul>
+                        <li>Sombreros y bigotes como simbolos culturales principales</li>
+                        <li>Colores neon y disenos extravagantes</li>
+                        <li>Materiales de baja calidad que se rompen rapido</li>
+                        <li>Disenos que burlan o trivializan la cultura mexicana</li>
+                        <li>Estetica generica de "trampa turistica"</li>
+                    </ul>
+                </div>
+                <div class="commitment-col embrace">
+                    <h3>Lo que abrazamos</h3>
+                    <ul>
+                        <li>Simbolismo prehispanico (Azteca, Maya, Zapoteco)</li>
+                        <li>Autenticidad y diversidad regional</li>
+                        <li>Calidad de artesania</li>
+                        <li>Paletas de color sofisticadas con raices en la tradicion</li>
+                        <li>Disenos que crean conexion cultural genuina</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 3: LOGO SYSTEM
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="logo-system section-pad" data-section="logo">
+        <div class="container">
+            <span class="section-number reveal">02 — Sistema de Logo</span>
+            <h2 class="section-title reveal">El Jaguar</h2>
+            <p class="section-subtitle reveal">Poder y misterio del Mexico prehispanico. Conexion con la cultura Maya. Fuerza combinada con elegancia. Unicamente mexicano sin ser estereotipico.</p>
+
+            <div class="logo-showcase stagger reveal">
+                <div class="logo-card">
+                    <img src="./LOGO-03.png" alt="Full AXKAN Logo">
+                    <h4>Logo Completo</h4>
+                    <p>Jaguar mark + decorative AXKAN wordmark</p>
+                </div>
+                <div class="logo-card">
+                    <img src="./LOGO-01.png" alt="Jaguar Mark">
+                    <h4>Jaguar Mark</h4>
+                    <p>Para favicons, iconos de app, aplicaciones pequenas, marcas de agua</p>
+                </div>
+                <div class="logo-card">
+                    <img src="./LOGO-02.png" alt="AXKAN Wordmark">
+                    <h4>Wordmark Decorativo</h4>
+                    <p>Uso exclusivo de logo. Cada letra contiene texturas culturales.</p>
+                </div>
+            </div>
+
+            <div class="logo-full-ref reveal-scale">
+                <img src="./DOT-03.png" alt="AXKAN Logo System Complete" loading="lazy">
+            </div>
+
+            <div class="logo-rules stagger reveal">
+                <div class="rule-card">
+                    <h4>Espacio de Respeto</h4>
+                    <div class="clear-space-diagram">
+                        <div class="clear-space-inner">
+                            <span class="clear-space-label top">X-height</span>
+                            <span class="clear-space-label right">X</span>
+                            <img src="./LOGO-01.png" alt="Logo spacing">
+                        </div>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--gray-600);">Espacio minimo alrededor del logo = altura de la "X" en AXKAN en todos los lados.</p>
+                </div>
+                <div class="rule-card">
+                    <h4>Tamanos Minimos</h4>
+                    <table class="size-table">
+                        <thead>
+                            <tr><th>Aplicacion</th><th>Minimo</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Logo completo</td><td>30mm / 120px</td></tr>
+                            <tr><td>Jaguar simplificado</td><td>15mm / 60px</td></tr>
+                            <tr><td>Version 1-tinta</td><td>20mm / 80px</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="critical-rule reveal">
+                <strong>Regla Critica</strong>
+                <p>El wordmark decorativo con textura "AXKAN" es <strong>EXCLUSIVO PARA USO DE LOGO</strong>. Para nombres de destinos (YUCATAN, CANCUN, etc.) usar fuente RL AQVA plana con colores solidos diferentes por letra. NUNCA texturas dentro de las letras — eso esta reservado para el logo.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 4: COLOR PALETTE
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="colors section-pad" data-section="colors">
+        <div class="container">
+            <span class="section-number reveal">03 — Paleta de Color</span>
+            <h2 class="section-title reveal">Colores Primarios</h2>
+            <p class="section-subtitle reveal">Click en cualquier color para copiar el codigo HEX al portapapeles.</p>
+
+            <div class="color-grid stagger reveal">
+                <div class="color-swatch primary-badge" data-hex="#e72a88">
+                    <div class="swatch-fill" style="background: #e72a88;"><span class="copy-hint">Click to copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Rosa Mexicano</div><div class="swatch-hex">#e72a88</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+                <div class="color-swatch" data-hex="#8ab73b">
+                    <div class="swatch-fill" style="background: #8ab73b;"><span class="copy-hint">Click to copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Verde Selva</div><div class="swatch-hex">#8ab73b</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+                <div class="color-swatch" data-hex="#f39223">
+                    <div class="swatch-fill" style="background: #f39223;"><span class="copy-hint">Click to copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Naranja Calido</div><div class="swatch-hex">#f39223</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+                <div class="color-swatch" data-hex="#09adc2">
+                    <div class="swatch-fill" style="background: #09adc2;"><span class="copy-hint">Click to copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Turquesa Caribe</div><div class="swatch-hex">#09adc2</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+                <div class="color-swatch" data-hex="#e52421">
+                    <div class="swatch-fill" style="background: #e52421;"><span class="copy-hint">Click to copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Rojo Mexicano</div><div class="swatch-hex">#e52421</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+            </div>
+
+            <h3 class="section-title reveal" style="font-size: clamp(1.3rem, 3vw, 2rem); margin-top: 3rem;">Colores Secundarios</h3>
+
+            <div class="color-grid secondary-grid stagger reveal">
+                <div class="color-swatch" data-hex="#a6191d">
+                    <div class="swatch-fill" style="background: #a6191d;"><span class="copy-hint">Copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Guinda Profundo</div><div class="swatch-hex">#a6191d</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+                <div class="color-swatch" data-hex="#106c7f">
+                    <div class="swatch-fill" style="background: #106c7f;"><span class="copy-hint">Copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Teal Oscuro</div><div class="swatch-hex">#106c7f</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+                <div class="color-swatch" data-hex="#f4b266">
+                    <div class="swatch-fill" style="background: #f4b266;"><span class="copy-hint">Copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Durazno</div><div class="swatch-hex">#f4b266</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+                <div class="color-swatch" data-hex="#b7c54c">
+                    <div class="swatch-fill" style="background: #b7c54c;"><span class="copy-hint">Copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Lima Suave</div><div class="swatch-hex">#b7c54c</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+                <div class="color-swatch" data-hex="#aa1e6b">
+                    <div class="swatch-fill" style="background: #aa1e6b;"><span class="copy-hint">Copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Magenta Oscuro</div><div class="swatch-hex">#aa1e6b</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+                <div class="color-swatch" data-hex="#D4A574">
+                    <div class="swatch-fill" style="background: #D4A574;"><span class="copy-hint">Copy</span></div>
+                    <div class="swatch-info"><div class="swatch-name">Oro Maya</div><div class="swatch-hex">#D4A574</div></div>
+                    <div class="copied-toast">Copied!</div>
+                </div>
+            </div>
+
+            <h3 class="section-title reveal" style="font-size: clamp(1.3rem, 3vw, 2rem); margin-top: 3rem;">Regla 60 / 30 / 10</h3>
+
+            <div class="color-rule-viz reveal">
+                <div class="color-rule-bar bar-60">60% Blanco</div>
+                <div class="color-rule-bar bar-30">30% Rosa</div>
+                <div class="color-rule-bar bar-10">10%</div>
+            </div>
+
+            <div class="combos-grid reveal">
+                <div class="combo-section forbidden">
+                    <h4>Combinaciones Prohibidas</h4>
+                    <div class="combo-pair">
+                        <div class="combo-dots">
+                            <div class="combo-dot" style="background: #e72a88;"></div>
+                            <div class="combo-dot" style="background: #e52421; margin-left: -8px;"></div>
+                        </div>
+                        <span class="combo-icon">&#10005;</span>
+                        <span>Rosa + Rojo tocandose</span>
+                    </div>
+                    <div class="combo-pair">
+                        <div class="combo-dots">
+                            <div class="combo-dot" style="background: #f39223;"></div>
+                            <div class="combo-dot" style="background: #e72a88; margin-left: -8px;"></div>
+                        </div>
+                        <span class="combo-icon">&#10005;</span>
+                        <span>Naranja texto en fondo Rosa</span>
+                    </div>
+                    <div class="combo-pair">
+                        <div class="combo-dots">
+                            <div class="combo-dot" style="background: linear-gradient(135deg, #e72a88, #8ab73b, #f39223, #09adc2, #e52421);"></div>
+                        </div>
+                        <span class="combo-icon">&#10005;</span>
+                        <span>5 colores a peso igual</span>
+                    </div>
+                </div>
+                <div class="combo-section safe">
+                    <h4>Combinaciones Seguras</h4>
+                    <div class="combo-pair">
+                        <div class="combo-dots">
+                            <div class="combo-dot" style="background: #e72a88;"></div>
+                            <div class="combo-dot" style="background: #09adc2;"></div>
+                        </div>
+                        <span class="combo-icon">&#10003;</span>
+                        <span>Rosa + Cyan — alto contraste</span>
+                    </div>
+                    <div class="combo-pair">
+                        <div class="combo-dots">
+                            <div class="combo-dot" style="background: #e72a88;"></div>
+                            <div class="combo-dot" style="background: #8ab73b;"></div>
+                        </div>
+                        <span class="combo-icon">&#10003;</span>
+                        <span>Rosa + Verde — fresco, tropical</span>
+                    </div>
+                    <div class="combo-pair">
+                        <div class="combo-dots">
+                            <div class="combo-dot" style="background: #e72a88;"></div>
+                            <div class="combo-dot" style="background: #fff; border: 1px solid #ddd;"></div>
+                            <div class="combo-dot" style="background: #09adc2;"></div>
+                        </div>
+                        <span class="combo-icon">&#10003;</span>
+                        <span>Rosa + Blanco + 1 acento</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 5: TYPOGRAPHY
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="typography section-pad" data-section="typography">
+        <div class="container">
+            <span class="section-number reveal" style="color: rgba(255,255,255,0.4);">04 — Tipografia</span>
+
+            <div class="type-showcase">
+                <div class="type-specimen reveal">
+                    <div class="type-specimen-label">Titulos y Headlines</div>
+                    <div class="type-specimen-large font-display">RL AQVA</div>
+                    <div class="type-specimen-chars font-display">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 !@#$%&*</div>
+                </div>
+
+                <div class="type-specimen reveal">
+                    <div class="type-specimen-label">Cuerpo de Texto</div>
+                    <div class="type-specimen-large body-font-specimen" style="font-weight: 700;">Objektiv</div>
+                    <div class="type-specimen-chars body-font-specimen">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 !@#$%&*()</div>
+                </div>
+            </div>
+
+            <div class="type-hierarchy reveal">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Elemento</th>
+                            <th>Fuente</th>
+                            <th>Peso</th>
+                            <th>Digital</th>
+                            <th>Impreso</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-family: 'RL Aqva'; font-size: 1.2rem;">Headlines</td>
+                            <td>RL AQVA</td>
+                            <td>Bold / Black</td>
+                            <td>24–72pt</td>
+                            <td>8mm+</td>
+                        </tr>
+                        <tr>
+                            <td style="font-family: 'RL Aqva'; font-size: 1rem;">Sub-headlines</td>
+                            <td>RL AQVA</td>
+                            <td>Regular</td>
+                            <td>16–24pt</td>
+                            <td>5–8mm</td>
+                        </tr>
+                        <tr>
+                            <td>Body Copy</td>
+                            <td>Objektiv</td>
+                            <td>Regular</td>
+                            <td>10–14pt</td>
+                            <td>2.5–4mm</td>
+                        </tr>
+                        <tr>
+                            <td style="font-size: 0.8rem;">Captions / Legal</td>
+                            <td>Objektiv</td>
+                            <td>Light</td>
+                            <td>8–10pt</td>
+                            <td>2mm min</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="type-ref-image reveal-scale">
+                <img src="./DOT-02.jpg" alt="AXKAN Typography Reference" loading="lazy">
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 6: PATTERN SYSTEM
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="patterns section-pad" data-section="patterns">
+        <div class="container">
+            <span class="section-number reveal">05 — Sistema de Patrones</span>
+            <h2 class="section-title reveal">Composiciones Fijas</h2>
+
+            <div class="pattern-hero reveal">
+                <!-- CSS spiral icon -->
+                <svg class="spiral-icon" viewBox="0 0 100 100" fill="none">
+                    <path d="M50 10 C70 10, 90 30, 90 50 C90 70, 70 90, 50 90 C30 90, 15 75, 15 55 C15 40, 28 28, 45 28 C58 28, 68 38, 68 50 C68 60, 60 68, 50 68 C42 68, 38 62, 38 55 C38 48, 44 44, 50 44"
+                        stroke="var(--rosa-mexicano)" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+                <h3 class="font-display" style="font-size: clamp(1.2rem, 2.5vw, 1.6rem); margin-bottom: 0.5rem;">El Caracol — Firma Obligatoria</h3>
+                <p style="font-size: 0.9rem; color: var(--gray-600); max-width: 500px; margin: 0 auto;">El espiral (caracol) debe aparecer en cada composicion de patron — es la firma de la marca.</p>
+            </div>
+
+            <div class="density-grid stagger reveal">
+                <div class="density-card">
+                    <div class="density-card-header dense">
+                        <span class="density-badge">80%+ Cobertura</span>
+                    </div>
+                    <div class="density-card-body">
+                        <h4>Denso</h4>
+                        <p>Elementos pequenos, alta saturacion visual.</p>
+                        <p class="density-usage">Textiles, bolsas, envolturas completas, fondos</p>
+                    </div>
+                </div>
+                <div class="density-card">
+                    <div class="density-card-header medium">
+                        <span class="density-badge">40–60% Cobertura</span>
+                    </div>
+                    <div class="density-card-body">
+                        <h4>Medio</h4>
+                        <p>Elementos medianos, balance visual.</p>
+                        <p class="density-usage">Empaque, cajas, bordes, marcos</p>
+                    </div>
+                </div>
+                <div class="density-card">
+                    <div class="density-card-header sparse">
+                        <span class="density-badge">10–20% Cobertura</span>
+                    </div>
+                    <div class="density-card-body">
+                        <h4>Disperso</h4>
+                        <p>Elementos grandes, mucho espacio blanco.</p>
+                        <p class="density-usage">Tarjetas, tags, marcas de agua, digital</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="critical-rule reveal">
+                <strong>Regla de Patron</strong>
+                <p>Solo composiciones pre-aprobadas. No se permiten arreglos personalizados. Los elementos incluyen: flores tropicales (estilo hibisco), motivos espirales (caracol), hojas tropicales (monstera, palma), mini jaguares, y grecas geometricas mayas.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 7: PHOTOGRAPHY VS ILLUSTRATION
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="photo-illus section-pad" data-section="photo">
+        <div class="container">
+            <span class="section-number reveal">06 — Fotografia vs. Ilustracion</span>
+
+            <div class="integration-statement reveal">
+                La fotografia y la ilustracion pueden coexistir, pero la ilustracion debe <span class="em-green">ENMARCAR o ACENTUAR</span> la fotografia, nunca competir con ella.
+            </div>
+
+            <div class="photo-illus-grid stagger reveal">
+                <div class="usage-card">
+                    <h4><span class="icon-camera">&#9673;</span> Fotografia</h4>
+                    <ul>
+                        <li>Imagenes hero de destinos (playas, ruinas, ciudades)</li>
+                        <li>Fotografia de producto mostrando souvenirs reales</li>
+                        <li>Tomas lifestyle (personas disfrutando Mexico)</li>
+                        <li>Fondos para materiales promocionales</li>
+                        <li>Elementos realistas: flamingos, tucanes, jaguares, piramides</li>
+                    </ul>
+                </div>
+                <div class="usage-card">
+                    <h4><span class="icon-pen">&#9998;</span> Ilustracion</h4>
+                    <ul>
+                        <li>El logo del jaguar (siempre)</li>
+                        <li>El logotipo AXKAN (siempre)</li>
+                        <li>Elementos de patron (flores, espirales, hojas)</li>
+                        <li>Iconos y elementos de UI</li>
+                        <li>Marcos y bordes decorativos</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 class="font-display reveal" style="font-size: clamp(1.2rem, 2.5vw, 1.6rem); text-align: center; margin: 2rem 0 1rem;">Jerarquia de Capas</h3>
+
+            <div class="layer-diagram stagger reveal">
+                <div class="layer-bar layer-front">
+                    <span>Logo, Texto, Acentos Ilustrados</span>
+                    <span>Capa 3 — Frente</span>
+                </div>
+                <div class="layer-bar layer-mid">
+                    <span>Patron Sutil al 10-20% Opacidad</span>
+                    <span>Capa 2 — Medio</span>
+                </div>
+                <div class="layer-bar layer-back">
+                    <span>Fotografia</span>
+                    <span>Capa 1 — Fondo</span>
+                </div>
+            </div>
+
+            <div class="photo-ref-images reveal">
+                <img src="./DOT-04.jpg" alt="AXKAN Realistic Elements" loading="lazy">
+                <img src="./DOT-07.jpg" alt="AXKAN Photo Applications" loading="lazy">
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 8: PRODUCT DESIGN
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="products section-pad" data-section="products">
+        <div class="container">
+            <span class="section-number reveal">07 — Diseno de Producto</span>
+            <h2 class="section-title reveal">Pensados Hasta El Ultimo Detalle</h2>
+
+            <div class="product-hero reveal">
+                <img src="./TEST-04.jpg" alt="AXKAN Product Exploded View" loading="lazy">
+                <div class="product-layers">
+                    <div class="product-layer">
+                        <div class="product-layer-num" style="background: var(--oro-maya);">1</div>
+                        <div class="product-layer-text">
+                            <strong>Marco de MDF</strong>
+                            <span>Borde visible de madera (#D4A574)</span>
+                        </div>
+                    </div>
+                    <div class="product-layer">
+                        <div class="product-layer-num" style="background: var(--verde-selva);">2</div>
+                        <div class="product-layer-text">
+                            <strong>Follaje Tropical Ilustrado</strong>
+                            <span>Base de vegetacion del destino</span>
+                        </div>
+                    </div>
+                    <div class="product-layer">
+                        <div class="product-layer-num" style="background: var(--turquesa-caribe);">3</div>
+                        <div class="product-layer-text">
+                            <strong>Elementos Animales Realistas</strong>
+                            <span>Fauna especifica del destino</span>
+                        </div>
+                    </div>
+                    <div class="product-layer">
+                        <div class="product-layer-num" style="background: var(--rosa-mexicano);">4</div>
+                        <div class="product-layer-text">
+                            <strong>Nombre del Destino</strong>
+                            <span>RL AQVA, colores solidos por letra</span>
+                        </div>
+                    </div>
+                    <div class="product-layer">
+                        <div class="product-layer-num" style="background: var(--naranja-calido);">5</div>
+                        <div class="product-layer-text">
+                            <strong>Acabado Brillante</strong>
+                            <span>Capa protectora premium</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <table class="destination-table reveal">
+                <thead>
+                    <tr>
+                        <th>Destino</th>
+                        <th>Animal Principal</th>
+                        <th>Secundario</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Yucatan</td><td>Jaguar</td><td>Tucan</td></tr>
+                    <tr><td>Cancun</td><td>Tortuga marina</td><td>Peces tropicales</td></tr>
+                    <tr><td>Cozumel</td><td>Tortuga marina</td><td>Jaguar</td></tr>
+                    <tr><td>Oaxaca</td><td>Alebrije</td><td>Colibri</td></tr>
+                    <tr><td>Tulum</td><td>Iguana</td><td>Tortuga marina</td></tr>
+                </tbody>
+            </table>
+
+            <div class="product-gallery stagger reveal">
+                <img src="./TEST-01.jpg" alt="AXKAN Product - Huasteca Potosina" loading="lazy">
+                <img src="./TEST-02.jpg" alt="AXKAN Product - Detail Close-up" loading="lazy">
+                <img src="./TEST-03.jpg" alt="AXKAN Product - Lifestyle" loading="lazy">
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 9: BRAND VOICE
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="brand-voice section-pad" data-section="voice">
+        <div class="container">
+            <span class="section-number reveal" style="color: rgba(255,255,255,0.3);">08 — Voz de Marca</span>
+
+            <div class="voice-quote reveal">
+                AXKAN es como una <span class="highlight">pina en un dia caluroso</span>. Fresca, colorida, dulce y que te hace sentir bien.
+            </div>
+            <p class="voice-attribution reveal">La Personalidad "Pina"</p>
+
+            <div class="pillars-grid stagger reveal">
+                <div class="pillar-card">
+                    <div class="pillar-emoji">&#127881;</div>
+                    <h4>Divertida y Festiva</h4>
+                    <p>Conectamos mediante alegria, jubilo y hasta humor. La marca se siente viva.</p>
+                </div>
+                <div class="pillar-card">
+                    <div class="pillar-emoji">&#127758;</div>
+                    <h4>Aventurera y Libre</h4>
+                    <p>Arquetipo del Explorador. Invitamos a descubrir el "Mexico autentico" con libertad y pasion.</p>
+                </div>
+                <div class="pillar-card">
+                    <div class="pillar-emoji">&#10024;</div>
+                    <h4>Respetuosa pero Moderna</h4>
+                    <p>Respetamos la cultura local sin ser anticuados. No educamos como noticiero — compartimos belleza para disfrutar.</p>
+                </div>
+            </div>
+
+            <div class="personality-grid reveal">
+                <div class="personality-col yes-col">
+                    <h4>Lo que SI somos</h4>
+                    <span class="personality-tag">Aventureros</span>
+                    <span class="personality-tag">Frescos</span>
+                    <span class="personality-tag">Tecnologicos</span>
+                    <span class="personality-tag">Apasionados</span>
+                    <span class="personality-tag">Coloridos</span>
+                    <span class="personality-tag">Vibrantes</span>
+                </div>
+                <div class="personality-col no-col">
+                    <h4>Lo que NO somos</h4>
+                    <span class="personality-tag">Educativos</span>
+                    <span class="personality-tag">Serios</span>
+                    <span class="personality-tag">Tradicionales</span>
+                    <span class="personality-tag">Formales</span>
+                    <span class="personality-tag">Solemnes</span>
+                    <span class="personality-tag">Aburridos</span>
+                </div>
+            </div>
+
+            <h3 class="font-display reveal" style="font-size: clamp(1.2rem, 2.5vw, 1.6rem); margin: 3rem 0 1.5rem;">Tono por Canal</h3>
+
+            <div class="channel-tabs reveal">
+                <button class="channel-tab active" data-channel="b2c">Instagram / TikTok</button>
+                <button class="channel-tab" data-channel="b2b">LinkedIn / B2B</button>
+                <button class="channel-tab" data-channel="internal">Comunicacion Interna</button>
+            </div>
+
+            <div class="channel-panel active" id="channel-b2c">
+                <div class="tone-label">Tono: Juvenil, Casual, Explorador</div>
+                <p>Que la persona vea el producto y diga "Wow, que hermoso, esto me trae memorias". Transmitir la energia de los mariachis entrando al lobby. Visual, emocional, vibrante.</p>
+                <div class="copy-example">
+                    <span class="label correct">Correcto</span>
+                    <p>"Te acuerdas de ese atardecer en Oaxaca? Ese momento cuando todo se pinto de naranja y sentiste que Mexico te abrazaba. Ese momento merece vivir para siempre. #LlevateMexicoContigo"</p>
+                </div>
+                <div class="copy-example" style="border-left-color: var(--rojo-mexicano); margin-top: 0.75rem;">
+                    <span class="label incorrect">Incorrecto</span>
+                    <p>"Vendemos imanes de alta calidad con disenos de diferentes destinos turisticos de Mexico. Contactanos para mas informacion."</p>
+                </div>
+            </div>
+
+            <div class="channel-panel" id="channel-b2b">
+                <div class="tone-label">Tono: Apasionado, Tecnologico, Confiable</div>
+                <p>Crear un vinculo SEGURO con el minorista. Mostrar que somos empresa seria pero no aburrida. "Pasion y Eficiencia". Enfoque en confiabilidad, calidad por volumen y stock seguro.</p>
+                <div class="copy-example">
+                    <span class="label correct">Correcto</span>
+                    <p>"En AXKAN combinamos tecnologia laser con diseno autentico para crear souvenirs que tus huespedes realmente valoran. Produccion escalable (5,000+ piezas/semana). Disenos unicos para tu destino. Reposicion garantizada con misma calidad."</p>
+                </div>
+            </div>
+
+            <div class="channel-panel" id="channel-internal">
+                <div class="tone-label">Tono: Exigente, Directo, de Crecimiento</div>
+                <p>Comunicacion interna clara y orientada a resultados. Cultura de responsabilidad y solucion proactiva.</p>
+                <div class="copy-example">
+                    <span class="label correct">Frases Clave</span>
+                    <p>"No tengo que estar detras de ti persiguiendote" — "Busca siempre una solucion positiva" — "Somos diferentes, actuamos diferente" — "Si hay un problema, traeme la solucion, no solo el problema"</p>
+                </div>
+            </div>
+
+            <div class="axkan-test reveal">
+                <h3>The AXKAN Test</h3>
+                <p style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 2rem;">Aplica a CUALQUIER decision de marca:</p>
+                <div class="test-items stagger reveal">
+                    <div class="test-item">
+                        <span class="test-num">1</span>
+                        <span>Detona orgullo?</span>
+                    </div>
+                    <div class="test-item">
+                        <span class="test-num">2</span>
+                        <span>Es culturalmente autentico?</span>
+                    </div>
+                    <div class="test-item">
+                        <span class="test-num">3</span>
+                        <span>Es premium?</span>
+                    </div>
+                    <div class="test-item">
+                        <span class="test-num">4</span>
+                        <span>Es accesible?</span>
+                    </div>
+                    <div class="test-item">
+                        <span class="test-num">5</span>
+                        <span>Perdurara?</span>
+                    </div>
+                </div>
+                <p class="test-fail">Si cualquier respuesta es "no", la decision falla.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 10: APPLICATIONS
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="applications section-pad" data-section="applications">
+        <div class="container">
+            <span class="section-number reveal">09 — Aplicaciones</span>
+            <h2 class="section-title reveal">La Marca en Accion</h2>
+            <p class="section-subtitle reveal">Ejemplos reales de como la identidad AXKAN cobra vida en productos, social media y materiales de venta.</p>
+
+            <div class="app-grid stagger reveal">
+                <div class="app-grid-item large">
+                    <img src="./TEST-03.jpg" alt="AXKAN Product Lifestyle" loading="lazy">
+                </div>
+                <div class="app-grid-item">
+                    <img src="./TEST-01.jpg" alt="AXKAN Social Media Layout" loading="lazy">
+                </div>
+                <div class="app-grid-item">
+                    <img src="./TEST-02.jpg" alt="AXKAN Product Detail" loading="lazy">
+                </div>
+            </div>
+
+            <div class="app-full-ref reveal-scale">
+                <img src="./DOT-07.jpg" alt="AXKAN Application Examples" loading="lazy">
+            </div>
+
+            <div class="app-full-ref reveal-scale" style="margin-top: 1.5rem;">
+                <img src="./DOT-01.png" alt="AXKAN Brand Manual Cover" loading="lazy">
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECTION 11: FOOTER
+         ═══════════════════════════════════════════════════════════ -->
+    <footer class="footer" data-section="footer">
+        <div class="container">
+            <img src="./LOGO-01.png" alt="AXKAN Jaguar" class="footer-logo reveal">
+
+            <div class="footer-tagline reveal">Recuerdos Hechos Souvenir</div>
+            <div class="footer-sub reveal">AXKAN — Manual de Marca</div>
+
+            <div class="footer-links reveal">
+                <a href="https://vtanunciando.com" target="_blank" class="footer-link">Catalogo</a>
+                <a href="https://axkan-pedidos.vercel.app/" target="_blank" class="footer-link">Pedidos</a>
+                <a href="mailto:hola@axkan.mx" class="footer-link">hola@axkan.mx</a>
+                <a href="https://instagram.com/axkan.mx" target="_blank" class="footer-link">@axkan.mx</a>
+            </div>
+
+            <div class="footer-divider"></div>
+
+            <p class="footer-promise reveal">"Cuando llevas un producto AXKAN, no llevas un souvenir — llevas un detonador. Un objeto que, cada vez que lo veas, te regrese a ese momento exacto cuando Mexico te hizo sentir algo real."</p>
+
+            <p class="footer-copy">&copy; 2026 AXKAN. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         JAVASCRIPT
+         ═══════════════════════════════════════════════════════════ -->
+    <script>
+        // === Scroll Progress Bar ===
+        const progressBar = document.querySelector('.progress-bar');
+
+        function updateProgress() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            progressBar.style.width = progress + '%';
+        }
+
+        window.addEventListener('scroll', updateProgress, { passive: true });
+
+        // === Scroll Reveal (IntersectionObserver) ===
+        const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger');
+
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                }
+            });
+        }, {
+            threshold: 0.12,
+            rootMargin: '0px 0px -40px 0px'
+        });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // === Nav Dots — Active Section Tracking ===
+        const sections = document.querySelectorAll('[data-section]');
+        const navDots = document.querySelectorAll('.nav-dot');
+
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionId = entry.target.dataset.section;
+                    navDots.forEach(dot => {
+                        dot.classList.toggle('active', dot.dataset.target === sectionId);
+                    });
+                }
+            });
+        }, {
+            threshold: 0.25,
+            rootMargin: '-10% 0px -10% 0px'
+        });
+
+        sections.forEach(s => sectionObserver.observe(s));
+
+        // === Nav Dots — Click to Scroll ===
+        navDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const target = document.querySelector(`[data-section="${dot.dataset.target}"]`);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        // === Color Swatch — Copy to Clipboard ===
+        document.querySelectorAll('.color-swatch').forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                const hex = this.dataset.hex;
+                if (!hex) return;
+
+                navigator.clipboard.writeText(hex).then(() => {
+                    this.classList.add('copied');
+                    setTimeout(() => this.classList.remove('copied'), 1800);
+                }).catch(() => {
+                    // Fallback: select text
+                    const hexEl = this.querySelector('.swatch-hex');
+                    if (hexEl) {
+                        const range = document.createRange();
+                        range.selectNodeContents(hexEl);
+                        const sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }
+                });
+            });
+        });
+
+        // === Channel Tabs (Brand Voice) ===
+        document.querySelectorAll('.channel-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const target = this.dataset.channel;
+
+                document.querySelectorAll('.channel-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                document.querySelectorAll('.channel-panel').forEach(p => p.classList.remove('active'));
+                const panel = document.getElementById('channel-' + target);
+                if (panel) panel.classList.add('active');
+            });
+        });
+
+        // === 60/30/10 Rule Bar Animation ===
+        const ruleViz = document.querySelector('.color-rule-viz');
+        if (ruleViz) {
+            const ruleObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                    }
+                });
+            }, { threshold: 0.5 });
+            ruleObserver.observe(ruleViz);
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AXKAN — Souvenirs Premium de México | Imanes, Llaveros y Portallaves Corte Láser</title>
@@ -1182,6 +1191,168 @@
             transform: translateY(0);
         }
 
+        /* ═══════════════════════════════════════════════════════════
+           LOCATION MAP SECTION
+           ═══════════════════════════════════════════════════════════ */
+        .location-section {
+            padding: var(--space-xl) var(--space-lg) var(--space-lg);
+            background: var(--gray-100);
+        }
+        .location-header {
+            text-align: center;
+            margin-bottom: var(--space-md);
+        }
+        .location-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: var(--space-md);
+            max-width: 1200px;
+            margin: 0 auto;
+            align-items: stretch;
+        }
+        .location-map {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+            min-height: 400px;
+            position: relative;
+        }
+        .location-map gmpx-store-locator {
+            width: 100%;
+            height: 100%;
+            --gmpx-color-surface: #fff;
+            --gmpx-color-on-surface: #1f1f1f;
+            --gmpx-color-on-surface-variant: #757575;
+            --gmpx-color-primary: #e72a88;
+            --gmpx-color-outline: #e0e0e0;
+            --gmpx-fixed-panel-width-row-layout: 0;
+            --gmpx-font-family-base: 'Objektiv', 'Inter', sans-serif;
+            --gmpx-font-family-headings: 'RL Aqva', sans-serif;
+            --gmpx-font-size-base: 0.875rem;
+            --gmpx-hours-color-open: #8ab73b;
+            --gmpx-hours-color-closed: #e52421;
+            --gmpx-rating-color: #f39223;
+            --gmpx-rating-color-empty: #e0e0e0;
+        }
+        .location-info {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .location-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        .location-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            margin-bottom: 10px;
+        }
+        .location-card p {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.6;
+        }
+        .location-card a {
+            color: var(--rosa-mexicano);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .location-card a:hover { text-decoration: underline; }
+        .location-card:nth-child(1) h3 { color: var(--rosa-mexicano); }
+        .location-card:nth-child(2) h3 { color: var(--verde-selva); }
+        .location-card:nth-child(3) h3 { color: var(--turquesa-caribe); }
+        .location-btn {
+            display: block;
+            text-align: center;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #e72a88, #c91e73);
+            color: #fff;
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .location-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(231,42,136,0.4);
+        }
+
+        /* Mobile: compact card with static map instead of heavy embed */
+        .location-mobile {
+            display: none;
+        }
+        .location-mobile-card {
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .location-mobile-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+        .location-mobile-body {
+            padding: 24px;
+            text-align: center;
+        }
+        .location-mobile-body h3 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--rosa-mexicano);
+            margin-bottom: 8px;
+        }
+        .location-mobile-body p {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 6px;
+        }
+        .location-mobile-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .location-mobile-actions a {
+            flex: 1;
+            display: block;
+            text-align: center;
+            padding: 12px 16px;
+            border-radius: 100px;
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .location-mobile-actions a:hover {
+            transform: translateY(-2px);
+        }
+        .btn-directions {
+            background: linear-gradient(135deg, #e72a88, #c91e73);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(231,42,136,0.3);
+        }
+        .btn-wa-location {
+            background: #25D366;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(37,211,102,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .location-section { padding: var(--space-lg) var(--space-sm); }
+            .location-layout { display: none; }
+            .location-mobile { display: block; }
+        }
+
     </style>
 
     <!-- JSON-LD Structured Data -->
@@ -1323,8 +1494,29 @@
       ]
     }
     </script>
+    <!-- Google Maps Store Locator -->
+    <script>
+        const CONFIGURATION = {
+            "locations": [
+                {"title":"AXKAN — Souvenirs Premium","address1":"Avenida Morelos 26","address2":"Ciudad de México, CDMX, Mexico","coords":{"lat":19.409143,"lng":-99.1262922},"placeId":"ChIJdV4XEBr_0YURaG4tHzRSuFA"}
+            ],
+            "mapOptions": {"center":{"lat":19.409143,"lng":-99.1262922},"fullscreenControl":true,"mapTypeControl":false,"streetViewControl":false,"zoom":15,"zoomControl":true,"maxZoom":17,"mapId":""},
+            "mapsApiKey": "AIzaSyBDcF4shWxblOwlHwdXbWD7nAx7ILc1M4g",
+            "capabilities": {"input":false,"autocomplete":false,"directions":false,"distanceMatrix":false,"details":false,"actions":false}
+        };
+    </script>
+    <script type="module">
+        document.addEventListener('DOMContentLoaded', async () => {
+            const locator = document.querySelector('gmpx-store-locator');
+            if (locator) {
+                await customElements.whenDefined('gmpx-store-locator');
+                locator.configureFromQuickBuilder(CONFIGURATION);
+            }
+        });
+    </script>
 </head>
 <body>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js"></script>
     <!-- ═══════════════════════════════════════════════════════════
          NAVIGATION
          ═══════════════════════════════════════════════════════════ -->
@@ -1601,6 +1793,55 @@
            data-sanity="ctaButtonText" data-sanity-href="ctaWhatsappUrl">
             💬 Escríbenos por WhatsApp
         </a>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         LOCATION MAP SECTION
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="location-section" id="ubicacion">
+        <div class="location-header">
+            <p class="section-label">Encuéntranos</p>
+            <h2 class="headline-lg">Nuestra Ubicación</h2>
+        </div>
+
+        <!-- Desktop: interactive map + info cards -->
+        <div class="location-layout">
+            <div class="location-map">
+                <gmpx-api-loader key="AIzaSyBDcF4shWxblOwlHwdXbWD7nAx7ILc1M4g" solution-channel="GMP_QB_locatorplus_v11_c"></gmpx-api-loader>
+                <gmpx-store-locator map-id="DEMO_MAP_ID"></gmpx-store-locator>
+            </div>
+            <div class="location-info">
+                <div class="location-card">
+                    <h3>Dirección</h3>
+                    <p>Avenida Morelos 26<br>Ciudad de México, CDMX<br>México</p>
+                </div>
+                <div class="location-card">
+                    <h3>Contacto</h3>
+                    <p><a href="https://wa.me/525538253251">WhatsApp: 55 3825 3251</a><br><a href="mailto:informacion@axkan.art">informacion@axkan.art</a></p>
+                </div>
+                <div class="location-card">
+                    <h3>En Línea</h3>
+                    <p><a href="https://instagram.com/axkanoficial" target="_blank">@axkanoficial</a><br><a href="/pedidos">Hacer pedido en línea</a></p>
+                </div>
+                <a href="https://www.google.com/maps/place/AXKAN/@19.409143,-99.1262922,17z/" target="_blank" class="location-btn">Cómo Llegar</a>
+            </div>
+        </div>
+
+        <!-- Mobile: lightweight card with static map -->
+        <div class="location-mobile">
+            <div class="location-mobile-card reveal">
+                <img src="https://maps.googleapis.com/maps/api/staticmap?center=19.409143,-99.1262922&zoom=15&size=600x200&scale=2&markers=color:0xe72a88%7C19.409143,-99.1262922&style=feature:poi%7Cvisibility:simplified&key=AIzaSyBDcF4shWxblOwlHwdXbWD7nAx7ILc1M4g" alt="Ubicación AXKAN - Av. Morelos 26, CDMX">
+                <div class="location-mobile-body">
+                    <h3>AXKAN</h3>
+                    <p>Av. Morelos 26, Ciudad de México</p>
+                    <p style="font-size:0.8rem;color:#888;">informacion@axkan.art</p>
+                    <div class="location-mobile-actions">
+                        <a href="https://www.google.com/maps/place/AXKAN/@19.409143,-99.1262922,17z/" target="_blank" class="btn-directions">Cómo Llegar</a>
+                        <a href="https://wa.me/525538253251" target="_blank" class="btn-wa-location">WhatsApp</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════

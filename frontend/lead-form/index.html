@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+<!-- Event snippet for Submit lead form conversion page -->
+<script>
+  gtag('event', 'conversion', {'send_to': 'AW-17936818900/--9jCLeg4PcbENTF-OhC'});
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AXKAN — Cotiza tu Proyecto de Souvenirs</title>
@@ -16,13 +29,34 @@
     <meta property="og:url" content="https://axkan.art/cuestionario">
     <meta property="og:locale" content="es_MX">
 
-    <link rel="icon" type="image/png" href="/assets/LOGO-01.png">
+    <link rel="icon" type="image/png" href="/assets/LOGO-03.png" sizes="32x32">
 
-    <!-- Fonts -->
+    <!-- Critical CSS inlined for instant first paint -->
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a0f;color:#333;min-height:100vh;overflow-x:hidden}
+        .app{position:relative;z-index:2;max-width:540px;margin:0 auto;padding:0 20px;min-height:100vh;display:flex;flex-direction:column}
+        .topbar{display:flex;flex-direction:column;align-items:center;padding:24px 0 8px}
+        .topbar-logo img{width:64px;height:64px;object-fit:contain}
+        .screen{display:none;flex:1;flex-direction:column;justify-content:center;padding:20px 0 40px}
+        .screen.active{display:flex;opacity:1}
+        .screen--hero{min-height:calc(100vh - 80px);text-align:center}
+        .hero-content{display:flex;flex-direction:column;align-items:center;gap:1.25rem}
+        .title-line{font-size:clamp(3rem,12vw,4.5rem);font-weight:700;color:#fff;display:block}
+        .title-line--accent{color:#e72a88}
+        @media(prefers-color-scheme:light){body{background:#fafafa}.title-line{color:#1a1a1a}}
+    </style>
+
+    <!-- Fonts: non-render-blocking (fewer weights) -->
+    <link rel="preload" href="/fonts/rl-aqva-black.otf" as="font" type="font/otf" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 
+    <!-- Main CSS: non-blocking -->
+    <link rel="preload" as="style" href="/cuestionario/styles.css">
     <link rel="stylesheet" href="/cuestionario/styles.css">
 
     <!-- JSON-LD -->
@@ -382,6 +416,6 @@
         </footer>
     </div>
 
-    <script src="/cuestionario/lead-form.js"></script>
+    <script src="/cuestionario/lead-form.js" defer></script>
 </body>
 </html>

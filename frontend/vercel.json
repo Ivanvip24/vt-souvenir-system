@@ -2,6 +2,16 @@
   "rewrites": [
     {
       "source": "/",
+      "has": [{ "type": "host", "value": "brand.axkan.art" }],
+      "destination": "/brand-manual-web/index.html"
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "brand.axkan.art" }],
+      "destination": "/brand-manual-web/:path*"
+    },
+    {
+      "source": "/",
       "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
       "destination": "/client-order-form/index.html"
     },
@@ -27,7 +37,8 @@
     { "source": "/souvenirs/historia/:path*", "destination": "/landing/souvenirs/historia/:path*" },
     { "source": "/souvenirs/:slug", "destination": "/landing/souvenirs/:slug.html" },
     { "source": "/productos/:slug", "destination": "/landing/productos/:slug.html" },
-    { "source": "/productos", "destination": "/landing/productos/imanes-mdf.html" },
+    { "source": "/productos", "destination": "/landing/productos/index.html" },
+    { "source": "/ubicacion", "destination": "/landing/ubicacion.html" },
     { "source": "/sitemap.xml", "destination": "/landing/sitemap.xml" },
     { "source": "/robots.txt", "destination": "/landing/robots.txt" },
     { "source": "/assets/:path*", "destination": "/landing/assets/:path*" },
@@ -52,6 +63,8 @@
     { "source": "/envio/:path*", "destination": "/shipping-form/:path*" },
     { "source": "/seguimiento", "destination": "/order-tracking/index.html" },
     { "source": "/seguimiento/:path*", "destination": "/order-tracking/:path*" },
+    { "source": "/faq", "destination": "/faq/index.html" },
+    { "source": "/faq/:path*", "destination": "/faq/:path*" },
     { "source": "/admin/login", "destination": "/admin-dashboard/login.html" },
     { "source": "/admin", "destination": "/admin-dashboard/index.html" },
     { "source": "/admin/", "destination": "/admin-dashboard/index.html" }
