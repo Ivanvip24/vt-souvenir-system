@@ -1437,15 +1437,17 @@ router.post('/pickups/request/carrier', async (req, res) => {
         }
       }
 
-      // Save pickup record
+      // Save pickup record (with confirmation_number if returned by Skydropx)
+      const confirmationNumber = pickupResult.confirmation_number || null;
       await query(`
         INSERT INTO pickups (pickup_id, carrier, pickup_date, pickup_time_from, pickup_time_to,
-                            shipment_ids, shipment_count, status, response_data, requested_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'requested', $8, NOW())
+                            shipment_ids, shipment_count, status, confirmation_code, response_data, requested_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'requested', $8, $9, NOW())
         ON CONFLICT (pickup_id) DO UPDATE SET
           carrier = COALESCE(pickups.carrier, EXCLUDED.carrier),
           shipment_ids = ARRAY(SELECT DISTINCT unnest(pickups.shipment_ids || EXCLUDED.shipment_ids)),
           shipment_count = pickups.shipment_count + EXCLUDED.shipment_count,
+          confirmation_code = COALESCE(EXCLUDED.confirmation_code, pickups.confirmation_code),
           response_data = EXCLUDED.response_data
       `, [
         pickupResult.pickup_id,
@@ -1455,6 +1457,7 @@ router.post('/pickups/request/carrier', async (req, res) => {
         timeTo || '18:00',
         labelsToPickup,
         labelsToPickup.length,
+        confirmationNumber,
         JSON.stringify(pickupResult)
       ]);
 
@@ -1462,6 +1465,7 @@ router.post('/pickups/request/carrier', async (req, res) => {
         success: true,
         message: `Recolección de ${carrier} solicitada exitosamente`,
         pickup_id: pickupResult.pickup_id,
+        confirmation_number: confirmationNumber,
         pickup_date: pickupDate,
         carrier: carrier,
         shipment_count: labelsToPickup.length,

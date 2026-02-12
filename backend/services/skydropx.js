@@ -592,7 +592,6 @@ export async function requestPickup(shipmentIds, options = {}) {
     if (!allowEmpty) {
       throw new Error('No shipment IDs provided for pickup');
     }
-    // Allow empty pickup - will try to create without shipments
     shipmentIds = [];
   }
 
@@ -610,20 +609,19 @@ export async function requestPickup(shipmentIds, options = {}) {
   console.log(`   Time: ${timeFrom} - ${timeTo}`);
   console.log(`   Shipment IDs: ${shipmentIds.join(', ')}`);
 
+  // Build pickup payload with correct Skydropx field names
   const pickupPayload = {
     pickup: {
-      date: pickupDate,
-      time_from: timeFrom,
-      time_to: timeTo,
+      pickup_date: pickupDate,
+      pickup_time_from: timeFrom,
+      pickup_time_to: timeTo,
+      total_packages: shipmentIds.length || 1,
+      total_weight: (shipmentIds.length || 1) * DEFAULT_PACKAGE.weight,
       address: {
         name: truncate(ORIGIN_ADDRESS.name, MAX_NAME_LENGTH),
         company: truncate(ORIGIN_ADDRESS.company, MAX_NAME_LENGTH),
         street1: truncate(`${ORIGIN_ADDRESS.street} ${ORIGIN_ADDRESS.number}`, MAX_STREET_LENGTH),
-        neighborhood: truncate(ORIGIN_ADDRESS.neighborhood, MAX_NAME_LENGTH),
-        postal_code: ORIGIN_ADDRESS.zip,
-        area_level1: ORIGIN_ADDRESS.state,
-        area_level2: ORIGIN_ADDRESS.city,
-        area_level3: truncate(ORIGIN_ADDRESS.neighborhood, MAX_NAME_LENGTH),
+        zip: ORIGIN_ADDRESS.zip,
         country_code: 'MX',
         phone: ORIGIN_ADDRESS.phone,
         email: ORIGIN_ADDRESS.email,
@@ -632,66 +630,94 @@ export async function requestPickup(shipmentIds, options = {}) {
     }
   };
 
-  // Only include shipment_ids if there are shipments
+  // Include shipment_ids if there are shipments
   if (shipmentIds.length > 0) {
     pickupPayload.pickup.shipment_ids = shipmentIds;
   }
 
   console.log('📬 Skydropx Pickup Request:', JSON.stringify(pickupPayload, null, 2));
 
-  const response = await skydropxFetch('/pickups', {
-    method: 'POST',
-    body: JSON.stringify(pickupPayload)
-  });
+  // Try the default API URL first, then try app.skydropx.com as fallback
+  const pickupUrls = [
+    `${SKYDROPX_API_URL}/pickups`,
+    'https://app.skydropx.com/api/v1/pickups'
+  ];
 
-  const responseText = await response.text();
-  console.log('📬 Skydropx Pickup Response Status:', response.status);
-
-  if (!response.ok) {
-    let errorMessage = 'Error requesting pickup from Skydropx';
+  let lastError = null;
+  for (const pickupUrl of pickupUrls) {
     try {
-      const errorData = JSON.parse(responseText);
-      if (errorData.errors) {
-        if (typeof errorData.errors === 'string') {
-          errorMessage = errorData.errors;
-        } else if (Array.isArray(errorData.errors)) {
-          errorMessage = errorData.errors.join(', ');
-        } else {
-          const messages = [];
-          for (const [field, msgs] of Object.entries(errorData.errors)) {
-            if (Array.isArray(msgs)) {
-              messages.push(`${field}: ${msgs.join(', ')}`);
+      console.log(`📬 Trying pickup URL: ${pickupUrl}`);
+      const token = await getAccessToken();
+
+      const response = await fetch(pickupUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(pickupPayload)
+      });
+
+      const responseText = await response.text();
+      console.log(`📬 Skydropx Pickup Response Status: ${response.status} from ${pickupUrl}`);
+
+      if (!response.ok) {
+        let errorMessage = 'Error requesting pickup from Skydropx';
+        try {
+          const errorData = JSON.parse(responseText);
+          if (errorData.errors) {
+            if (typeof errorData.errors === 'string') {
+              errorMessage = errorData.errors;
+            } else if (Array.isArray(errorData.errors)) {
+              errorMessage = errorData.errors.join(', ');
+            } else {
+              const messages = [];
+              for (const [field, msgs] of Object.entries(errorData.errors)) {
+                if (Array.isArray(msgs)) {
+                  messages.push(`${field}: ${msgs.join(', ')}`);
+                }
+              }
+              errorMessage = messages.join('; ') || errorMessage;
             }
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
           }
-          errorMessage = messages.join('; ') || errorMessage;
+        } catch (e) {
+          errorMessage = responseText || errorMessage;
         }
-      } else if (errorData.message) {
-        errorMessage = errorData.message;
+        console.error(`❌ Pickup request failed at ${pickupUrl}: ${errorMessage}`);
+        lastError = new Error(errorMessage);
+        continue; // Try next URL
       }
-    } catch (e) {
-      errorMessage = responseText || errorMessage;
+
+      const result = JSON.parse(responseText);
+      console.log('✅ Pickup requested successfully');
+
+      // Extract pickup data from response
+      const pickupData = result.data?.attributes || result.data || result;
+      const pickupId = result.data?.id || pickupData.id;
+      const confirmationNumber = pickupData.confirmation_number || null;
+
+      return {
+        success: true,
+        pickup_id: pickupId,
+        confirmation_number: confirmationNumber,
+        status: pickupData.status || 'requested',
+        pickup_date: pickupDate,
+        time_from: timeFrom,
+        time_to: timeTo,
+        shipment_count: shipmentIds.length,
+        response: result
+      };
+    } catch (fetchError) {
+      console.error(`❌ Fetch error at ${pickupUrl}: ${fetchError.message}`);
+      lastError = fetchError;
+      continue;
     }
-    console.error('❌ Pickup request failed:', errorMessage);
-    throw new Error(errorMessage);
   }
 
-  const result = JSON.parse(responseText);
-  console.log('✅ Pickup requested successfully');
-
-  // Extract pickup data from response
-  const pickupData = result.data?.attributes || result.data || result;
-  const pickupId = result.data?.id || pickupData.id;
-
-  return {
-    success: true,
-    pickup_id: pickupId,
-    status: pickupData.status || 'requested',
-    pickup_date: pickupDate,
-    time_from: timeFrom,
-    time_to: timeTo,
-    shipment_count: shipmentIds.length,
-    response: result
-  };
+  // All URLs failed
+  throw lastError || new Error('All Skydropx pickup URLs failed');
 }
 
 /**
