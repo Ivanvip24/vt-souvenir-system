@@ -1567,25 +1567,79 @@ router.get('/pickups/history', async (req, res) => {
 });
 
 // ========================================
-// DEBUG: List Skydropx pickups + coverage directly
+// DEBUG: Test Skydropx pickup creation
 // GET /api/shipping/pickups/skydropx-test
 // ========================================
 router.get('/pickups/skydropx-test', async (req, res) => {
   try {
-    const { skydropxFetch } = await import('../services/skydropx.js');
+    const { skydropxFetch, getAccessToken } = await import('../services/skydropx.js');
 
-    // 1. List pickups from Skydropx
+    // 1. List existing pickups from Skydropx
     const pickupsRes = await skydropxFetch('/pickups');
     const pickupsData = await pickupsRes.json().catch(() => pickupsRes.text());
 
-    // 2. Check coverage
-    const coverageRes = await skydropxFetch('/pickups/coverage');
-    const coverageData = await coverageRes.json().catch(() => coverageRes.text());
+    // 2. Try creating a pickup with a real shipment ID if provided
+    let createResult = null;
+    const testShipmentId = req.query.shipment_id;
+    if (testShipmentId) {
+      const token = await getAccessToken();
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const pickupDate = req.query.date || tomorrow.toISOString().split('T')[0];
+
+      const payload = {
+        pickup: {
+          address: {
+            name: 'VT Anunciando',
+            company: 'VT Anunciando',
+            street1: 'Fray Juan de Torquemada 146',
+            zip: '06800',
+            country_code: 'MX',
+            phone: '5538253251',
+            email: 'valenciaperezivan24@gmail.com',
+            reference: 'Zaguan blanco final pasillo'
+          },
+          pickup_date: pickupDate,
+          pickup_time_from: '09:00',
+          pickup_time_to: '18:00',
+          shipment_ids: [testShipmentId]
+        }
+      };
+
+      // Try both URLs
+      const urls = [
+        'https://app.skydropx.com/api/v1/pickups',
+        'https://api.skydropx.com/v1/pickups'
+      ];
+
+      const results = [];
+      for (const url of urls) {
+        try {
+          const r = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+          const text = await r.text();
+          let parsed;
+          try { parsed = JSON.parse(text); } catch { parsed = text.substring(0, 500); }
+          results.push({ url, status: r.status, response: parsed });
+        } catch (e) {
+          results.push({ url, error: e.message });
+        }
+      }
+      createResult = { payload, results };
+    }
 
     res.json({
       success: true,
-      pickups: { status: pickupsRes.status, data: pickupsData },
-      coverage: { status: coverageRes.status, data: coverageData }
+      existingPickups: pickupsData?.data?.length || 0,
+      pickups: pickupsData,
+      createTest: createResult,
+      usage: 'Add ?shipment_id=UUID to test creating a pickup. Add &date=YYYY-MM-DD for specific date.'
     });
   } catch (error) {
     res.json({ success: false, error: error.message });
