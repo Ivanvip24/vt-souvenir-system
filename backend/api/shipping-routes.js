@@ -1567,6 +1567,32 @@ router.get('/pickups/history', async (req, res) => {
 });
 
 // ========================================
+// DEBUG: List Skydropx pickups + coverage directly
+// GET /api/shipping/pickups/skydropx-test
+// ========================================
+router.get('/pickups/skydropx-test', async (req, res) => {
+  try {
+    const { skydropxFetch } = await import('../services/skydropx.js');
+
+    // 1. List pickups from Skydropx
+    const pickupsRes = await skydropxFetch('/pickups');
+    const pickupsData = await pickupsRes.json().catch(() => pickupsRes.text());
+
+    // 2. Check coverage
+    const coverageRes = await skydropxFetch('/pickups/coverage');
+    const coverageData = await coverageRes.json().catch(() => coverageRes.text());
+
+    res.json({
+      success: true,
+      pickups: { status: pickupsRes.status, data: pickupsData },
+      coverage: { status: coverageRes.status, data: coverageData }
+    });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// ========================================
 // GET SINGLE PICKUP DETAILS
 // GET /api/shipping/pickups/:pickupId
 // ========================================
