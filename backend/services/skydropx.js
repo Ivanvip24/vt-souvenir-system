@@ -637,10 +637,11 @@ export async function requestPickup(shipmentIds, options = {}) {
 
   console.log('📬 Skydropx Pickup Request:', JSON.stringify(pickupPayload, null, 2));
 
-  // Try app.skydropx.com first (where dashboard creates pickups), then api.skydropx.com
+  // Try pro.skydropx.com first (documented pickup endpoint), then api, then app
   const pickupUrls = [
-    'https://app.skydropx.com/api/v1/pickups',
-    `${SKYDROPX_API_URL}/pickups`
+    'https://pro.skydropx.com/api/v1/pickups',
+    `${SKYDROPX_API_URL}/pickups`,
+    'https://app.skydropx.com/api/v1/pickups'
   ];
 
   let lastError = null;

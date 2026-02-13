@@ -1606,10 +1606,11 @@ router.get('/pickups/skydropx-test', async (req, res) => {
         }
       };
 
-      // Try both URLs
+      // Try all known Skydropx URLs
       const urls = [
-        'https://app.skydropx.com/api/v1/pickups',
-        'https://api.skydropx.com/v1/pickups'
+        'https://pro.skydropx.com/api/v1/pickups',
+        'https://api.skydropx.com/v1/pickups',
+        'https://app.skydropx.com/api/v1/pickups'
       ];
 
       const results = [];
