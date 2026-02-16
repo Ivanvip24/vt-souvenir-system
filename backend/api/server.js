@@ -2606,6 +2606,77 @@ app.post('/api/orders/:orderId/items/add', async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/orders/:orderId/items/:itemId
+ * Remove a product from an existing order
+ */
+app.delete('/api/orders/:orderId/items/:itemId', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const itemId = parseInt(req.params.itemId);
+
+    // Get the item details before deleting
+    const itemResult = await query(`
+      SELECT oi.*, o.order_number, o.internal_notes, o.shipping_cost
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE oi.id = $1 AND oi.order_id = $2
+    `, [itemId, orderId]);
+
+    if (itemResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Item not found' });
+    }
+
+    const item = itemResult.rows[0];
+    console.log(`🗑️ Removing item ${itemId} (${item.product_name}) from order ${orderId}`);
+
+    // Delete the item
+    await query('DELETE FROM order_items WHERE id = $1', [itemId]);
+
+    // Recalculate order total
+    const totalsResult = await query(`
+      SELECT COALESCE(SUM(quantity * unit_price), 0) as new_total
+      FROM order_items
+      WHERE order_id = $1
+    `, [orderId]);
+
+    const newOrderTotal = parseFloat(totalsResult.rows[0].new_total);
+    const shippingCost = parseFloat(item.shipping_cost || 0);
+    const finalTotal = newOrderTotal + shippingCost;
+
+    // Update order total
+    await query(`
+      UPDATE orders
+      SET total_price = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+    `, [finalTotal, orderId]);
+
+    // Add change log
+    const timestamp = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+    const changeLog = `\n🗑️ PRODUCTO ELIMINADO (${timestamp})\n` +
+      `Producto: ${item.product_name}\n` +
+      `Cantidad: ${item.quantity} pzas\n` +
+      `Precio: $${parseFloat(item.unit_price).toFixed(2)}/pza\n` +
+      `Subtotal removido: $${(item.quantity * parseFloat(item.unit_price)).toFixed(2)}\n` +
+      `Nuevo total: $${finalTotal.toFixed(2)}`;
+
+    const newNotes = (item.internal_notes || '') + changeLog;
+    await query('UPDATE orders SET internal_notes = $1 WHERE id = $2', [newNotes, orderId]);
+
+    console.log('✅ Item removed successfully');
+
+    res.json({
+      success: true,
+      message: 'Item removed successfully',
+      newTotal: finalTotal
+    });
+
+  } catch (error) {
+    console.error('Error removing order item:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ========================================
 // ORDER-LEVEL NOTES AND ATTACHMENTS
 // ========================================

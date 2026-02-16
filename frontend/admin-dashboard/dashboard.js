@@ -1308,7 +1308,7 @@ async function showOrderDetail(orderId) {
             <th style="text-align: center; padding: 8px 0; color: var(--gray-600);">Cantidad</th>
             <th style="text-align: right; padding: 8px 0; color: var(--gray-600);">P. Unit.</th>
             <th style="text-align: right; padding: 8px 0; color: var(--gray-600);">Subtotal</th>
-            <th style="text-align: center; padding: 8px 0; color: var(--gray-600); width: 60px;">Editar</th>
+            <th style="text-align: center; padding: 8px 0; color: var(--gray-600); width: 80px;">Acciones</th>
           </tr>
           ${order.items.map(item => `
             <tr>
@@ -1316,10 +1316,16 @@ async function showOrderDetail(orderId) {
               <td style="text-align: center; padding: 6px 0;">${item.quantity} pzas</td>
               <td style="text-align: right; padding: 6px 0;">${formatCurrency(item.unitPrice)}</td>
               <td style="text-align: right; padding: 6px 0; font-weight: 600;">${formatCurrency(item.lineTotal)}</td>
-              <td style="text-align: center; padding: 6px 0;">
+              <td style="text-align: center; padding: 6px 0; white-space: nowrap;">
                 <button onclick="openEditProductModal(${order.id}, ${item.id}, '${item.productName.replace(/'/g, "\\'")}', ${item.quantity}, ${item.unitPrice})"
-                        style="background: var(--primary); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        style="background: var(--primary); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;"
+                        title="Editar">
                   ✏️
+                </button>
+                <button onclick="deleteOrderItem(${order.id}, ${item.id}, '${item.productName.replace(/'/g, "\\'")}', ${item.quantity}, ${item.unitPrice})"
+                        style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 4px;"
+                        title="Eliminar">
+                  🗑️
                 </button>
               </td>
             </tr>
@@ -3840,6 +3846,39 @@ async function addNewProduct(orderId) {
   }
 }
 
+async function deleteOrderItem(orderId, itemId, productName, quantity, unitPrice) {
+  const subtotal = (quantity * unitPrice).toFixed(2);
+  const confirmed = confirm(
+    `¿Eliminar "${productName}" del pedido?\n\n` +
+    `Cantidad: ${quantity} pzas\n` +
+    `Precio: $${unitPrice.toFixed(2)}/pza\n` +
+    `Subtotal: $${subtotal}\n\n` +
+    `Esta acción no se puede deshacer.`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/${orderId}/items/${itemId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert('Producto eliminado correctamente.');
+      showOrderDetail(orderId);
+      loadOrders();
+    } else {
+      alert('Error: ' + (data.error || 'No se pudo eliminar el producto'));
+    }
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    alert('Error al eliminar el producto');
+  }
+}
+
 // Make functions globally accessible for onclick handlers
 window.loadOrders = loadOrders;
 window.closeOrderDetail = closeOrderDetail;
@@ -3873,6 +3912,7 @@ window.addNewProduct = addNewProduct;
 window.updateAddProductPrice = updateAddProductPrice;
 window.updateAddProductTotal = updateAddProductTotal;
 window.updateAddMagnetPrice = updateAddMagnetPrice;
+window.deleteOrderItem = deleteOrderItem;
 
 // ==========================================
 // CREATE ORDER MODAL
