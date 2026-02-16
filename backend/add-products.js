@@ -42,7 +42,7 @@ const products = [
     name: 'Imán de MDF con Foil',
     description: 'Imanes de MDF con acabado foil metálico brillante.',
     category: 'magnets',
-    base_price: 13.00,
+    base_price: 15.00,
     production_cost: 6.50,
     image_url: 'https://vtanunciando.com/cdn/shop/files/IMAN-FOIL-MOCKUP---vtweb.png?crop=center&height=600&v=1744331653&width=600',
     dimensions: 'Con acabado foil'

@@ -2491,12 +2491,20 @@ app.post('/api/orders/:orderId/items/add', async (req, res) => {
     const order = orderResult.rows[0];
     const lineTotal = quantity * unitPrice;
 
+    // Get the product's production cost
+    const productResult = await query(`
+      SELECT production_cost FROM products WHERE id = $1
+    `, [productId]);
+    const unitCost = productResult.rows.length > 0
+      ? parseFloat(productResult.rows[0].production_cost)
+      : 0;
+
     // Insert the new order item
     const insertResult = await query(`
-      INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, unit_cost)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id
-    `, [orderId, productId, productName, quantity, unitPrice]);
+    `, [orderId, productId, productName, quantity, unitPrice, unitCost]);
 
     const newItemId = insertResult.rows[0].id;
 
@@ -4692,8 +4700,11 @@ app.delete('/api/clients/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // First, unlink any orders from this client (set client_id to NULL)
+    // Unlink any orders from this client
     await query('UPDATE orders SET client_id = NULL WHERE client_id = $1', [id]);
+
+    // Unlink any shipping labels from this client
+    await query('UPDATE shipping_labels SET client_id = NULL WHERE client_id = $1', [id]);
 
     // Then delete the client
     const result = await query('DELETE FROM clients WHERE id = $1 RETURNING *', [id]);

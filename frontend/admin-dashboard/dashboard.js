@@ -3637,9 +3637,36 @@ async function openAddProductModal(orderId) {
         </select>
       </div>
 
+      <div id="add-product-size-selector" style="display: none; margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Tamaño del Imán</label>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <label id="add-size-chico-label" style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid var(--gray-200); border-radius: 8px; cursor: pointer; background: white;">
+            <input type="radio" name="add-magnet-size" value="chico" onchange="updateAddMagnetPrice()" style="margin-right: 8px;">
+            <div>
+              <div style="font-weight: 600; font-size: 14px;">Chico</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$8 (50-999) · $6 (1000+)</div>
+            </div>
+          </label>
+          <label id="add-size-mediano-label" style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid var(--primary); border-radius: 8px; cursor: pointer; background: rgba(231, 42, 136, 0.05);">
+            <input type="radio" name="add-magnet-size" value="mediano" checked onchange="updateAddMagnetPrice()" style="margin-right: 8px;">
+            <div>
+              <div style="font-weight: 600; font-size: 14px;">Mediano</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$11 (50-999) · $8 (1000+)</div>
+            </div>
+          </label>
+          <label id="add-size-grande-label" style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid var(--gray-200); border-radius: 8px; cursor: pointer; background: white;">
+            <input type="radio" name="add-magnet-size" value="grande" onchange="updateAddMagnetPrice()" style="margin-right: 8px;">
+            <div>
+              <div style="font-weight: 600; font-size: 14px;">Grande</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$15 (50-999) · $12 (1000+)</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
       <div style="margin-bottom: 16px;">
         <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Cantidad</label>
-        <input type="number" id="add-product-quantity" value="50" min="1" onchange="updateAddProductTotal()"
+        <input type="number" id="add-product-quantity" value="50" min="1" onchange="updateAddProductTotal(); updateAddMagnetPrice()"
                style="width: 100%; padding: 10px; border: 2px solid var(--gray-200); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
       </div>
 
@@ -3681,9 +3708,22 @@ async function openAddProductModal(orderId) {
 function updateAddProductPrice() {
   const select = document.getElementById('add-product-select');
   const option = select.options[select.selectedIndex];
-  const price = option.dataset.price || 0;
-  document.getElementById('add-product-price').value = price;
-  updateAddProductTotal();
+  const productName = (option.dataset.name || '').toLowerCase();
+  const sizeSelector = document.getElementById('add-product-size-selector');
+
+  // Check if selected product is a magnet (exclude 3D and Foil)
+  const isMagnet = (productName.includes('iman') || productName.includes('imán') || productName.includes('imanes'))
+                   && !productName.includes('3d') && !productName.includes('foil');
+
+  if (isMagnet && sizeSelector) {
+    sizeSelector.style.display = 'block';
+    updateAddMagnetPrice();
+  } else {
+    if (sizeSelector) sizeSelector.style.display = 'none';
+    const price = option.dataset.price || 0;
+    document.getElementById('add-product-price').value = price;
+    updateAddProductTotal();
+  }
 }
 
 function updateAddProductTotal() {
@@ -3691,6 +3731,37 @@ function updateAddProductTotal() {
   const price = parseFloat(document.getElementById('add-product-price').value) || 0;
   const total = quantity * price;
   document.getElementById('add-product-total').textContent = formatCurrency(total);
+}
+
+function updateAddMagnetPrice() {
+  const sizeSelector = document.getElementById('add-product-size-selector');
+  if (!sizeSelector || sizeSelector.style.display === 'none') return;
+
+  const selected = document.querySelector('input[name="add-magnet-size"]:checked');
+  if (!selected) return;
+
+  const size = selected.value;
+  const quantity = parseInt(document.getElementById('add-product-quantity').value) || 50;
+  const highVol = quantity >= 1000;
+
+  const prices = {
+    chico: highVol ? 6 : 8,
+    mediano: highVol ? 8 : 11,
+    grande: highVol ? 12 : 15
+  };
+
+  document.getElementById('add-product-price').value = prices[size];
+
+  // Update visual styling on size labels
+  ['chico', 'mediano', 'grande'].forEach(s => {
+    const label = document.getElementById(`add-size-${s}-label`);
+    if (label) {
+      label.style.borderColor = s === size ? 'var(--primary)' : 'var(--gray-200)';
+      label.style.background = s === size ? 'rgba(231, 42, 136, 0.05)' : 'white';
+    }
+  });
+
+  updateAddProductTotal();
 }
 
 function closeAddProductModal() {
@@ -3702,10 +3773,20 @@ async function addNewProduct(orderId) {
   const select = document.getElementById('add-product-select');
   const option = select.options[select.selectedIndex];
   const productId = select.value;
-  const productName = option.dataset.name;
+  let productName = option.dataset.name;
   const quantity = parseInt(document.getElementById('add-product-quantity').value);
   const unitPrice = parseFloat(document.getElementById('add-product-price').value);
   const reason = document.getElementById('add-product-reason').value.trim();
+
+  // Append size to product name for magnets
+  const sizeSelector = document.getElementById('add-product-size-selector');
+  if (sizeSelector && sizeSelector.style.display !== 'none') {
+    const selected = document.querySelector('input[name="add-magnet-size"]:checked');
+    if (selected) {
+      const sizeLabels = { chico: 'Chico', mediano: 'Mediano', grande: 'Grande' };
+      productName = productName + ' ' + sizeLabels[selected.value];
+    }
+  }
 
   if (!productId) {
     alert('Por favor selecciona un producto');
@@ -3791,6 +3872,7 @@ window.closeAddProductModal = closeAddProductModal;
 window.addNewProduct = addNewProduct;
 window.updateAddProductPrice = updateAddProductPrice;
 window.updateAddProductTotal = updateAddProductTotal;
+window.updateAddMagnetPrice = updateAddMagnetPrice;
 
 // ==========================================
 // CREATE ORDER MODAL
