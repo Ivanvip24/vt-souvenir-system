@@ -9585,6 +9585,140 @@ body.mobile-menu-open {
     }
 }
 
+/* ==========================================
+   INTERMEDIATE RESPONSIVE (Half-screen width)
+   ========================================== */
+@media (max-width: 900px) {
+    /* --- Header --- */
+    .header-content {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .command-palette-trigger {
+        min-width: 0;
+        order: 3;
+        flex-basis: 100%;
+    }
+
+    .logo-text .subtitle {
+        display: none;
+    }
+
+    /* --- Filter Bar --- */
+    .filters-bar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .filter-group {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .filter-btn {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .search-container {
+        max-width: none;
+        width: 100%;
+        order: -1;
+    }
+
+    /* --- Order Cards --- */
+    .order-body {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .order-right {
+        text-align: left;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .order-date-header {
+        margin-left: 0;
+    }
+
+    .order-header {
+        gap: 6px;
+    }
+
+    /* --- Modal Content --- */
+    .modal-content {
+        margin: 12px;
+        max-width: calc(100vw - 24px) !important;
+    }
+
+    .modal-header {
+        padding: 14px 16px;
+    }
+
+    .modal-body {
+        padding: 14px 16px;
+    }
+
+    /* --- Override inline 2-column grids to single column --- */
+    div[style*="grid-template-columns: 1fr 1fr"],
+    div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* --- Product Tables --- */
+    .detail-section table,
+    table[style*="width: 100%"] {
+        font-size: 12px !important;
+    }
+
+    .detail-section table th,
+    .detail-section table td,
+    table[style*="width: 100%"] th,
+    table[style*="width: 100%"] td {
+        padding: 5px 4px !important;
+    }
+
+    /* --- Notification Panel --- */
+    .notification-panel {
+        width: calc(100vw - 32px);
+        max-width: 380px;
+        right: -40px;
+    }
+
+    /* --- AI Alerts --- */
+    .ai-alerts-container {
+        flex-direction: column;
+    }
+
+    .ai-alert {
+        width: 100%;
+    }
+
+    /* --- Create Order / Large Modals --- */
+    .create-order-modal-content {
+        max-width: calc(100vw - 24px) !important;
+        margin: 12px;
+    }
+
+    /* --- Misc --- */
+    .salesperson-filter select {
+        min-width: 120px;
+    }
+
+    .quick-actions {
+        gap: 4px;
+    }
+
+    .quick-actions button {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+}
+
 /* Lead Detail Card */
 @keyframes leadCardIn {
     from { opacity: 0; transform: scale(0.95) translateY(10px); }
