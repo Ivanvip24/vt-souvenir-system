@@ -162,7 +162,7 @@ function parseCustomPrices(text) {
   const pricePatterns = [
     // Product + optional (3d/foil/size words) + optional (en/a/precio/de) + $ + price
     // Note: iman(es)? matches both "iman" and "imanes", llavero(s)? matches "llavero" and "llaveros", etc.
-    /(iman(?:es)?|imán|magneto(?:s)?|llavero(?:s)?|destapador(?:es)?|abridor(?:es)?|portallaves?|porta[\s-]?llaves|souvenir\s*box|boto(?:n|nes))\s*(?:3d|foil\s*metálico|foil\s*metalico|foil|mdf|chicos?|pequeños?|medianos?|normales?|grandes?)?\s*(?:en|a|precio|de|\s)*\$\s*([\d.]+)/gi,
+    /(iman(?:es)?|imán|magneto(?:s)?|llavero(?:s)?|destapador(?:es)?|abridor(?:es)?|portallaves?|porta[\s-]?llaves|portarretratos?|portaretratos?|porta[\s-]?retratos|marcos?|souvenir\s*box|boto(?:n|nes))\s*(?:3d|foil\s*metálico|foil\s*metalico|foil|mdf|chicos?|pequeños?|medianos?|normales?|grandes?)?\s*(?:en|a|precio|de|\s)*\$\s*([\d.]+)/gi,
   ];
 
   // Pattern 2: standalone special types with price (e.g., "3D $25", "foil $25")
@@ -233,7 +233,7 @@ export function parseQuoteRequest(text, options = {}) {
   textNormalized = textNormalized.replace(/\$(\d+)\s*(?:en|a)\s*\$/g, '$1 en $');
 
   // Product names regex fragment (shared across patterns)
-  const productNames = 'imanes?|imán|magnetos?|llaveros?|destapadores?|abridores?|portallaves?|porta[\\s-]?llaves|souvenir\\s*box|caja\\s*souvenir|botones?';
+  const productNames = 'imanes?|imán|magnetos?|llaveros?|destapadores?|abridores?|portallaves?|porta[\\s-]?llaves|portarretratos?|portaretratos?|porta[\\s-]?retratos|marcos?|souvenir\\s*box|caja\\s*souvenir|botones?';
   const modifiers = '3d|foil\\s*metálico|foil\\s*metalico|foil|metálico|metalico|mdf';
   const sizes = 'chicos?|pequeños?|medianos?|normales?|grandes?|ch|m|g';
 
@@ -725,7 +725,8 @@ export async function generateQuotePDF(quoteData) {
       doc.text('• Llaveros MDF: $10/u (50-999 pzas) → $8/u (1000+ pzas)', 60, itemY + 33);
       doc.text('• Destapadores MDF: $20/u (50-999 pzas) → $17/u (1000+ pzas)', 60, itemY + 44);
       doc.text('• Portallaves MDF: $40/u (mín. 20 pzas)', 300, itemY + 22);
-      doc.text('• Souvenir Box: $2,250/u (sin mínimo)', 300, itemY + 33);
+      doc.text('• Portarretratos MDF: $40/u (mín. 20 pzas)', 300, itemY + 33);
+      doc.text('• Souvenir Box: $2,250/u (sin mínimo)', 300, itemY + 44);
 
       itemY += 75;
 
@@ -914,6 +915,7 @@ export function getPricingInfo() {
       { name: 'Llaveros MDF', minQty: 50, prices: [{ qty: '50-999', price: 10 }, { qty: '1000+', price: 8 }] },
       { name: 'Destapadores MDF', minQty: 50, prices: [{ qty: '50-499', price: 20 }, { qty: '500-999', price: 17 }, { qty: '1000+', price: 15 }] },
       { name: 'Portallaves MDF', minQty: 20, prices: [{ qty: '20+', price: 40 }] },
+      { name: 'Portarretratos MDF', minQty: 20, prices: [{ qty: '20+', price: 40 }] },
       { name: 'Souvenir Box', minQty: 1, prices: [{ qty: '1+', price: 2250 }] },
       { name: 'Botones Metálicos', minQty: 50, prices: [{ qty: '50-999', price: 8 }, { qty: '1000+', price: 6 }] }
     ],
