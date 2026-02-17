@@ -80,7 +80,7 @@ const products = [
     category: 'photo_frames',
     base_price: 40.00,
     production_cost: 20.00,
-    image_url: 'https://res.cloudinary.com/dg1owvdhw/image/upload/v1771358269/products/portarretratos-mdf-axkan.png',
+    image_url: 'https://res.cloudinary.com/dg1owvdhw/image/upload/v1771364794/products/portarretratos-mdf-axkan.png',
     dimensions: 'Tamaño estándar para foto'
   },
   {
