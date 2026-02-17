@@ -688,7 +688,7 @@ Cuando el usuario pida crear una cotización o "cotizar" productos, debes:
 - **Llaveros MDF**: $10/u (100-999 pzas) → $8/u (1000+ pzas)
 - **Destapadores MDF**: $20/u (100-499 pzas) → $17/u (500-999 pzas) → $15/u (1000+ pzas)
 - **Portallaves MDF**: $40/u (mín. 50 pzas)
-- **Portaretratos MDF**: (mín. 50 pzas)
+- **Portarretratos MDF**: $40/u (mín. 20 pzas)
 - **Souvenir Box**: $2,250/u (sin mínimo)
 - **Botones Metálicos**: $8/u (100-999 pzas) → $6/u (1000+ pzas)
 
@@ -1223,13 +1223,14 @@ router.post('/chat', async (req, res) => {
         console.log('🔧 Fallback: Detecting order creation intent from message');
 
         // Extract quantity
-        const qtyMatch = lowerMsg.match(/(\d+)\s*(imanes?|llaveros?|destapadores?|portallaves?)/i);
+        const qtyMatch = lowerMsg.match(/(\d+)\s*(imanes?|llaveros?|destapadores?|portallaves?|portarretratos?|portaretratos?|marcos?)/i);
         const quantity = qtyMatch ? parseInt(qtyMatch[1]) : 100;
 
         // Extract product
         let productName = 'Imán MDF Mediano';
         if (lowerMsg.includes('llavero')) productName = 'Llavero MDF';
         else if (lowerMsg.includes('destapador')) productName = 'Destapador MDF';
+        else if (lowerMsg.includes('portarretrato') || lowerMsg.includes('portaretrato') || lowerMsg.includes('marco')) productName = 'Portarretratos MDF';
         else if (lowerMsg.includes('portallaves') || lowerMsg.includes('porta llaves')) productName = 'Portallaves MDF';
         else if (lowerMsg.includes('3d') || lowerMsg.includes('imanes 3d')) productName = 'Imán 3D';
         else if (lowerMsg.includes('chico') || lowerMsg.includes('pequeño')) productName = 'Imán MDF Chico';
@@ -1258,6 +1259,7 @@ router.post('/chat', async (req, res) => {
           if (productName.includes('Llavero')) unitPrice = quantity >= 1000 ? 8 : 10;
           else if (productName.includes('Destapador')) unitPrice = quantity >= 1000 ? 15 : quantity >= 500 ? 17 : 20;
           else if (productName.includes('Portallaves')) unitPrice = 40;
+          else if (productName.includes('Portarretratos')) unitPrice = 40;
           else if (productName.includes('3D')) unitPrice = quantity >= 1000 ? 12 : 15;
           else if (productName.includes('Chico')) unitPrice = quantity >= 1000 ? 6 : 8;
           else if (productName.includes('Grande')) unitPrice = quantity >= 1000 ? 12 : 15;

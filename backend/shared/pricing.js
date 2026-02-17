@@ -35,7 +35,7 @@ export const PRICING_TIERS = {
   'portallaves de mdf': [
     { min: 20, max: Infinity, price: 40.00 }
   ],
-  'portaretratos de mdf': [
+  'portarretratos de mdf': [
     { min: 20, max: Infinity, price: 40.00 }
   ],
   'souvenir box': [
@@ -48,7 +48,7 @@ export const PRICING_TIERS = {
 export const MOQ = {
   default: 50,
   'portallaves de mdf': 20,
-  'portaretratos de mdf': 20,
+  'portarretratos de mdf': 20,
   'souvenir box': 1
 };
 

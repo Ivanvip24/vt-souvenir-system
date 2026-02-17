@@ -196,6 +196,7 @@ Entregamos en 8-9 días desde que confirmas pedido 🚀 Es una de nuestras venta
 | Destapadores MDF | $20 | $17 |
 | Botones Metálicos | $8 | $6 |
 | Portallaves MDF | $45 | $45 |
+| Portarretratos MDF | $40 | $40 |
 
 ---
 

@@ -77,6 +77,9 @@ const PRICING_TIERS = {
   'portallaves': [
     { min: 20, max: Infinity, price: 40.00, label: 'Portallaves MDF' }
   ],
+  'portarretratos': [
+    { min: 20, max: Infinity, price: 40.00, label: 'Portarretratos MDF' }
+  ],
   'souvenir_box': [
     { min: 1, max: Infinity, price: 2250.00, label: 'Souvenir Box' }
   ],
@@ -102,6 +105,14 @@ const PRODUCT_ALIASES = {
   'portallaves': 'portallaves',
   'porta llaves': 'portallaves',
   'porta-llaves': 'portallaves',
+  'portarretratos': 'portarretratos',
+  'portaretratos': 'portarretratos',
+  'porta retratos': 'portarretratos',
+  'porta-retratos': 'portarretratos',
+  'portaretrato': 'portarretratos',
+  'portarretrato': 'portarretratos',
+  'marco': 'portarretratos',
+  'marcos': 'portarretratos',
   'souvenir box': 'souvenir_box',
   'souvenirbox': 'souvenir_box',
   'caja souvenir': 'souvenir_box',

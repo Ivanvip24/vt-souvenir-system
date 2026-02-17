@@ -231,6 +231,18 @@ const demoProducts = [
   },
   {
     id: 8,
+    name: 'Portarretratos de MDF',
+    description: 'Portarretratos de MDF con corte láser personalizado. Marco decorativo para fotos con soporte trasero.',
+    category: 'general',
+    base_price: 40.00,
+    production_cost: 20.00,
+    image_url: 'https://res.cloudinary.com/dtj6coqnr/image/upload/v1739836800/portarretratos-mdf-axkan.png',
+    thumbnail_url: 'https://res.cloudinary.com/dtj6coqnr/image/upload/v1739836800/portarretratos-mdf-axkan.png',
+    is_active: true,
+    display_order: 8
+  },
+  {
+    id: 9,
     name: 'Souvenir Box',
     description: 'Paquete completo de souvenirs personalizados. Innovación y precisión en cada detalle.',
     category: 'general',
@@ -239,7 +251,7 @@ const demoProducts = [
     image_url: 'https://vtanunciando.com/cdn/shop/files/final-bundle-vtweb2.png?v=1234',
     thumbnail_url: 'https://vtanunciando.com/cdn/shop/files/final-bundle-vtweb2.png?v=1234&width=80',
     is_active: true,
-    display_order: 8
+    display_order: 9
   }
 ];
 

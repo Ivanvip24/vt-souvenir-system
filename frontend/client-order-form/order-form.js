@@ -95,7 +95,7 @@ const PRICING_TIERS = {
   'portallaves de mdf': [
     { min: 20, max: Infinity, price: 40.00 }
   ],
-  'portaretratos de mdf': [
+  'portarretratos de mdf': [
     { min: 20, max: Infinity, price: 40.00 }
   ],
   'souvenir box': [

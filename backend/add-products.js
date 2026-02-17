@@ -75,13 +75,13 @@ const products = [
     dimensions: 'Para colgar en pared'
   },
   {
-    name: 'Portaretratos de MDF',
-    description: 'Portaretratos personalizados de MDF cortados con láser. Ideal para recuerdos y eventos.',
-    category: 'decoration',
+    name: 'Portarretratos de MDF',
+    description: 'Portarretratos de MDF con corte láser personalizado. Marco decorativo para fotos con soporte trasero.',
+    category: 'photo_frames',
     base_price: 40.00,
-    production_cost: 12.00,
-    image_url: '',
-    dimensions: 'Tamaño estándar portaretratos'
+    production_cost: 20.00,
+    image_url: 'https://res.cloudinary.com/dtj6coqnr/image/upload/v1739836800/portarretratos-mdf-axkan.png',
+    dimensions: 'Tamaño estándar para foto'
   },
   {
     name: 'Souvenir Box',

@@ -476,6 +476,11 @@ para crear souvenirs que tus huéspedes realmente valoran.
 |----------|---------------|-------------|
 | MDF 4.5mm | $40 | $34 |
 
+#### 🖼️ Portarretratos (Photo Frames)
+| Material | 20+ piezas |
+|----------|-----------|
+| MDF con soporte trasero | $40 |
+
 #### 📓 Libretas (Notebooks)
 | Minimum | Price |
 |---------|-------|
@@ -486,6 +491,7 @@ para crear souvenirs que tus huéspedes realmente valoran.
 - Llaveros: 100 piezas
 - Destapadores: 100 piezas
 - Portallaves: 40 piezas
+- Portarretratos: 20 piezas
 - Libretas: 12 piezas
 
 ### Service & Operations

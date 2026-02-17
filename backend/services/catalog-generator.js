@@ -48,6 +48,7 @@ const PRICE_ROWS = [
   { name: 'Destapadores MDF', price: '$20', mayoreo: '$17', mayoreoNote: '500+' },
   { name: 'Botones Metálicos', price: '$8', mayoreo: '$6', mayoreoNote: '300+' },
   { name: 'Portallaves MDF', price: '$40', mayoreo: null, note: 'mín. 20 pzas' },
+  { name: 'Portarretratos MDF', price: '$40', mayoreo: null, note: 'mín. 20 pzas' },
   { name: 'Souvenir Box', price: '$2,250', mayoreo: null, note: 'paquete completo' }
 ];
 
