@@ -45,6 +45,7 @@
     <link rel="alternate" hreflang="x-default" href="https://axkan.art/">
 
     <link rel="icon" type="image/png" href="/assets/LOGO-01.png">
+    <link rel="stylesheet" href="/shared-nav-footer.css">
 
     <!-- Fonts — preload RL Aqva so it renders on first paint -->
     <link rel="preload" href="/fonts/rl-aqva-black.otf" as="font" type="font/otf" crossorigin>
@@ -646,7 +647,7 @@
             text-transform: uppercase;
         }
 
-        /* ── Product Color Accents (4-color wheel) ── */
+        /* ── Product Color Accents (6-color wheel) ── */
         /* Colored background on product image area */
         .product-card[data-color="rosa"] .product-image {
             background: linear-gradient(135deg, rgba(231, 42, 136, 0.08) 0%, rgba(231, 42, 136, 0.15) 100%);
@@ -664,30 +665,67 @@
             background: linear-gradient(135deg, rgba(9, 173, 194, 0.08) 0%, rgba(9, 173, 194, 0.15) 100%);
             border-bottom: 3px solid var(--turquesa-caribe);
         }
+        .product-card[data-color="rojo"] .product-image {
+            background: linear-gradient(135deg, rgba(229, 36, 33, 0.08) 0%, rgba(229, 36, 33, 0.15) 100%);
+            border-bottom: 3px solid var(--rojo-mexicano);
+        }
+        .product-card[data-color="oro"] .product-image {
+            background: linear-gradient(135deg, rgba(212, 165, 116, 0.08) 0%, rgba(212, 165, 116, 0.15) 100%);
+            border-bottom: 3px solid var(--oro-maya);
+        }
 
         /* Colored prices */
         .product-card[data-color="rosa"] .product-price { color: var(--rosa-mexicano); }
         .product-card[data-color="verde"] .product-price { color: var(--verde-selva); }
         .product-card[data-color="naranja"] .product-price { color: var(--naranja-calido); }
         .product-card[data-color="turquesa"] .product-price { color: var(--turquesa-caribe); }
+        .product-card[data-color="rojo"] .product-price { color: var(--rojo-mexicano); }
+        .product-card[data-color="oro"] .product-price { color: var(--oro-maya); }
 
         /* Colored product titles */
         .product-card[data-color="rosa"] .product-title { color: var(--rosa-mexicano); }
         .product-card[data-color="verde"] .product-title { color: var(--verde-selva); }
         .product-card[data-color="naranja"] .product-title { color: var(--naranja-calido); }
         .product-card[data-color="turquesa"] .product-title { color: var(--turquesa-caribe); }
+        .product-card[data-color="rojo"] .product-title { color: var(--rojo-mexicano); }
+        .product-card[data-color="oro"] .product-title { color: var(--oro-maya); }
 
         /* Colored hover arrows */
         .product-card[data-color="rosa"]:hover .product-arrow { background: var(--rosa-mexicano); color: white; }
         .product-card[data-color="verde"]:hover .product-arrow { background: var(--verde-selva); color: white; }
         .product-card[data-color="naranja"]:hover .product-arrow { background: var(--naranja-calido); color: white; }
         .product-card[data-color="turquesa"]:hover .product-arrow { background: var(--turquesa-caribe); color: white; }
+        .product-card[data-color="rojo"]:hover .product-arrow { background: var(--rojo-mexicano); color: white; }
+        .product-card[data-color="oro"]:hover .product-arrow { background: var(--oro-maya); color: white; }
 
         /* Colored badge per product */
         .product-card[data-color="rosa"] .product-badge { background: var(--rosa-mexicano); }
         .product-card[data-color="verde"] .product-badge { background: var(--verde-selva); }
         .product-card[data-color="naranja"] .product-badge { background: var(--naranja-calido); }
         .product-card[data-color="turquesa"] .product-badge { background: var(--turquesa-caribe); }
+        .product-card[data-color="rojo"] .product-badge { background: var(--rojo-mexicano); }
+        .product-card[data-color="oro"] .product-badge { background: var(--oro-maya); }
+
+        .products-cta {
+            text-align: center;
+            margin-top: var(--space-md);
+        }
+        .products-cta a {
+            display: inline-block;
+            padding: 14px 40px;
+            background: linear-gradient(135deg, #e72a88, #c91e73);
+            color: #fff;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .products-cta a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(231,42,136,0.4);
+        }
 
         .product-content {
             padding: var(--space-sm) var(--space-md) var(--space-md);
@@ -1000,7 +1038,7 @@
             max-width: 1200px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
+            grid-template-columns: 1.5fr 3fr;
             gap: var(--space-lg);
         }
 
@@ -1015,33 +1053,87 @@
             line-height: 1.6;
         }
 
-        .footer-column h4 {
+        .footer-social-inline {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .footer-social-inline a {
+            color: rgba(255, 255, 255, 0.5);
+            transition: color 0.3s, transform 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .footer-social-inline a:hover {
+            color: var(--rosa-mexicano);
+            transform: translateY(-2px);
+        }
+
+        .footer-mega {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-md);
+        }
+
+        .footer-mega-section h4 {
             font-family: var(--font-display);
             font-size: 1rem;
             margin-bottom: var(--space-sm);
         }
 
-        .footer-column:nth-child(2) h4 { color: var(--rosa-mexicano); }
-        .footer-column:nth-child(3) h4 { color: var(--verde-selva); }
-        .footer-column:nth-child(4) h4 { color: var(--naranja-calido); }
+        .footer-mega-section:nth-child(1) h4 { color: var(--rosa-mexicano); }
+        .footer-mega-section:nth-child(2) h4 { color: var(--verde-selva); }
+        .footer-mega-section:nth-child(3) h4 { color: var(--naranja-calido); }
+        .footer-mega-section:nth-child(4) h4 { color: var(--turquesa-caribe); }
 
-        .footer-column ul {
+        .footer-mega-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            color: inherit;
+        }
+
+        .footer-mega-chevron {
+            display: none;
+            color: rgba(255, 255, 255, 0.4);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .footer-mega-section.open .footer-mega-chevron {
+            transform: rotate(180deg);
+        }
+
+        .footer-mega-list {
             list-style: none;
         }
 
-        .footer-column li {
+        .footer-mega-list li {
             margin-bottom: 0.5rem;
         }
 
-        .footer-column a {
+        .footer-mega-list a {
             color: rgba(255, 255, 255, 0.6);
             text-decoration: none;
             font-size: 0.9rem;
             transition: color 0.3s ease;
         }
 
-        .footer-column a:hover {
+        .footer-mega-list a:hover {
             color: var(--rosa-mexicano);
+        }
+
+        .footer-see-all {
+            color: var(--rosa-mexicano) !important;
+            font-weight: 600;
+            font-size: 0.85rem !important;
         }
 
         .footer-bottom {
@@ -1059,6 +1151,18 @@
         .social-links {
             display: flex;
             gap: var(--space-sm);
+            align-items: center;
+        }
+
+        .social-links a {
+            color: rgba(255, 255, 255, 0.5);
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .social-links a:hover {
+            color: var(--rosa-mexicano);
         }
 
         .social-links a {
@@ -1098,7 +1202,11 @@
             }
 
             .footer-content {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr 2fr;
+            }
+
+            .footer-mega {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -1143,6 +1251,52 @@
             .footer-content {
                 grid-template-columns: 1fr;
                 text-align: center;
+            }
+
+            .footer-brand {
+                margin-bottom: var(--space-sm);
+            }
+
+            .footer-social-inline {
+                justify-content: center;
+            }
+
+            .footer-mega {
+                grid-template-columns: 1fr;
+                gap: 0;
+                text-align: left;
+            }
+
+            .footer-mega-section {
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .footer-mega-section:last-child {
+                border-bottom: none;
+            }
+
+            .footer-mega-toggle {
+                padding: 14px 0;
+            }
+
+            .footer-mega-section h4 {
+                margin-bottom: 0;
+            }
+
+            .footer-mega-chevron {
+                display: block;
+            }
+
+            .footer-mega-list {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.35s ease, padding 0.35s ease;
+                padding: 0;
+            }
+
+            .footer-mega-section.open .footer-mega-list {
+                max-height: 300px;
+                padding-bottom: 12px;
             }
 
             .footer-bottom {
@@ -1294,11 +1448,13 @@
             max-width: 500px;
             margin: 0 auto;
         }
-        .location-mobile-card img {
+        .location-mobile-card img,
+        .location-mobile-card iframe {
             width: 100%;
             height: 200px;
             object-fit: cover;
             display: block;
+            border: none;
         }
         .location-mobile-body {
             padding: 24px;
@@ -1523,11 +1679,11 @@
     <nav class="nav">
         <img src="/assets/LOGO-03.png" alt="AXKAN" class="nav-logo">
         <ul class="nav-links">
-            <li><a href="#productos">Productos</a></li>
+            <li><a href="/productos">Productos</a></li>
             <li><a href="#calidad">Calidad</a></li>
-            <li><a href="/catalogo">Destinos</a></li>
+            <li><a href="/diseños">Destinos</a></li>
             <li><a href="#mayoreo">Mayoreo</a></li>
-            <li><a href="/catalogo">Catálogo</a></li>
+            <li><a href="/diseños">Diseños</a></li>
             <li><a href="/envio">Envío</a></li>
             <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
         </ul>
@@ -1540,11 +1696,11 @@
 
     <!-- Mobile Menu Overlay -->
     <div class="mobile-menu" aria-hidden="true">
-        <a href="#productos">Productos</a>
+        <a href="/productos">Productos</a>
         <a href="#calidad">Calidad</a>
-        <a href="/catalogo">Destinos</a>
+        <a href="/diseños">Destinos</a>
         <a href="#mayoreo">Mayoreo</a>
-        <a href="/catalogo">Catálogo</a>
+        <a href="/diseños">Diseños</a>
         <a href="/envio">Envío</a>
         <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
     </div>
@@ -1615,70 +1771,125 @@
         </div>
 
         <div class="products-grid">
-            <article class="product-card reveal" data-sanity-product="0" data-color="rosa" onclick="window.location.href='/productos/imanes-mdf'">
+            <article class="product-card reveal" data-color="rosa" onclick="window.location.href='/productos/imanes-mdf'">
                 <div class="product-image">
-                    <span class="product-badge" data-sanity="products.0.badge">Más Vendido</span>
-                    <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Imanes MDF souvenir México - Cancún, CDMX, Oaxaca, Guanajuato - Corte láser AXKAN" data-sanity-img="products.0.image">
+                    <span class="product-badge">Más Vendido</span>
+                    <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Imanes MDF souvenir México - Corte láser AXKAN">
                 </div>
                 <div class="product-content">
-                    <h3 class="product-title" data-sanity="products.0.title">Imanes MDF</h3>
-                    <p class="product-description" data-sanity="products.0.description">
-                        Pequeños detonadores de recuerdos que transforman tu refrigerador en un mapa de aventuras.
-                    </p>
+                    <h3 class="product-title">Imanes MDF</h3>
+                    <p class="product-description">Corte láser de precisión, acabado brillante, borde Oro Maya que revela la calidad artesanal.</p>
                     <div class="product-footer">
-                        <span class="product-price"><span data-sanity="products.0.price">$8-$15</span> <span data-sanity="products.0.priceLabel">/ pieza mayoreo</span></span>
+                        <span class="product-price">Desde $8 / pieza</span>
                         <span class="product-arrow">→</span>
                     </div>
                 </div>
             </article>
 
-            <article class="product-card reveal" data-sanity-product="1" data-color="verde" onclick="window.location.href='/souvenirs'">
+            <article class="product-card reveal" data-color="verde" onclick="window.location.href='/productos/llaveros-mdf'">
                 <div class="product-image">
-                    <img src="https://vtanunciando.com/cdn/shop/files/mockup-llavero.png?v=1744307278&width=600" alt="Llaveros MDF souvenir México - Recuerdos turísticos corte láser AXKAN" data-sanity-img="products.1.image">
+                    <img src="https://vtanunciando.com/cdn/shop/files/mockup-llavero.png?v=1744307278&width=600" alt="Llaveros MDF souvenir corte láser AXKAN">
                 </div>
                 <div class="product-content">
-                    <h3 class="product-title" data-sanity="products.1.title">Llaveros MDF</h3>
-                    <p class="product-description" data-sanity="products.1.description">
-                        Compañeros diarios que cuentan historias de mil años con cada llave que cargas.
-                    </p>
+                    <h3 class="product-title">Llaveros MDF</h3>
+                    <p class="product-description">Compañeros diarios con argolla reforzada. Diseños que cuentan historias de mil años.</p>
                     <div class="product-footer">
-                        <span class="product-price"><span data-sanity="products.1.price">$7-$10</span> <span data-sanity="products.1.priceLabel">/ pieza mayoreo</span></span>
+                        <span class="product-price">Desde $7 / pieza</span>
                         <span class="product-arrow">→</span>
                     </div>
                 </div>
             </article>
 
-            <article class="product-card reveal" data-sanity-product="2" data-color="naranja" onclick="window.location.href='/souvenirs'">
+            <article class="product-card reveal" data-color="turquesa" onclick="window.location.href='/productos/imanes-3d'">
                 <div class="product-image">
-                    <img src="https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?v=1736017105&width=600" alt="Portallaves MDF souvenir México - Organizador llaves decorativo corte láser AXKAN" data-sanity-img="products.2.image">
+                    <span class="product-badge">3D</span>
+                    <img src="https://vtanunciando.com/cdn/shop/files/tamasopo.png?v=1738361050&width=600" alt="Imán 3D MDF souvenir relieve AXKAN">
                 </div>
                 <div class="product-content">
-                    <h3 class="product-title" data-sanity="products.2.title">Portallaves</h3>
-                    <p class="product-description" data-sanity="products.2.description">
-                        Transforman cualquier pared de tu hogar en un tributo a México.
-                    </p>
+                    <h3 class="product-title">Imán 3D</h3>
+                    <p class="product-description">Efecto tridimensional que hace que cada destino cobre vida en tu refrigerador.</p>
                     <div class="product-footer">
-                        <span class="product-price"><span data-sanity="products.2.price">$34-$40</span> <span data-sanity="products.2.priceLabel">/ pieza</span></span>
+                        <span class="product-price">$15 / pieza</span>
                         <span class="product-arrow">→</span>
                     </div>
                 </div>
             </article>
 
-            <article class="product-card reveal" data-sanity-product="3" data-color="turquesa" onclick="window.location.href='/souvenirs'">
+            <article class="product-card reveal" data-color="oro" onclick="window.location.href='/productos/imanes-foil'">
                 <div class="product-image">
-                    <img src="https://vtanunciando.com/cdn/shop/files/DESTAPADOR---VTWEB.png?v=1741044542&width=600" alt="Destapadores MDF souvenir México - Abridor imán recuerdo turístico corte láser AXKAN" data-sanity-img="products.3.image">
+                    <span class="product-badge">Premium</span>
+                    <img src="https://vtanunciando.com/cdn/shop/files/IMAN-FOIL-MOCKUP---vtweb.png?v=1738362023&width=600" alt="Imán MDF con Foil dorado souvenir AXKAN">
                 </div>
                 <div class="product-content">
-                    <h3 class="product-title" data-sanity="products.3.title">Destapadores</h3>
-                    <p class="product-description" data-sanity="products.3.description">
-                        Abren botellas, abren conversaciones, abren recuerdos de México.
-                    </p>
+                    <h3 class="product-title">Imán con Foil</h3>
+                    <p class="product-description">Acabado metálico dorado que añade un toque de lujo a cada recuerdo.</p>
                     <div class="product-footer">
-                        <span class="product-price"><span data-sanity="products.3.price">$16-$20</span> <span data-sanity="products.3.priceLabel">/ pieza mayoreo</span></span>
+                        <span class="product-price">Desde $13 / pieza</span>
                         <span class="product-arrow">→</span>
                     </div>
                 </div>
             </article>
+
+            <article class="product-card reveal" data-color="naranja" onclick="window.location.href='/productos/destapadores-mdf'">
+                <div class="product-image">
+                    <img src="https://vtanunciando.com/cdn/shop/files/DESTAPADOR---VTWEB.png?v=1741044542&width=600" alt="Destapador MDF souvenir corte láser AXKAN">
+                </div>
+                <div class="product-content">
+                    <h3 class="product-title">Destapadores</h3>
+                    <p class="product-description">Abren botellas, abren conversaciones, abren recuerdos de México.</p>
+                    <div class="product-footer">
+                        <span class="product-price">Desde $17 / pieza</span>
+                        <span class="product-arrow">→</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="product-card reveal" data-color="rojo" onclick="window.location.href='/productos/botones'">
+                <div class="product-image">
+                    <img src="https://vtanunciando.com/cdn/shop/files/fotobotones.png?v=1738362415&width=600" alt="Botones metálicos personalizados AXKAN">
+                </div>
+                <div class="product-content">
+                    <h3 class="product-title">Botones Metálicos</h3>
+                    <p class="product-description">Pines coleccionables con diseños vibrantes de cada destino turístico.</p>
+                    <div class="product-footer">
+                        <span class="product-price">$8 / pieza</span>
+                        <span class="product-arrow">→</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="product-card reveal" data-color="rosa" onclick="window.location.href='/productos/portallaves-mdf'">
+                <div class="product-image">
+                    <img src="https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?v=1736017105&width=600" alt="Portallaves MDF souvenir decorativo AXKAN">
+                </div>
+                <div class="product-content">
+                    <h3 class="product-title">Portallaves</h3>
+                    <p class="product-description">Piezas decorativas para el hogar. Transforman cualquier espacio en un tributo a México.</p>
+                    <div class="product-footer">
+                        <span class="product-price">$34-$40 / pieza</span>
+                        <span class="product-arrow">→</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="product-card reveal" data-color="turquesa" onclick="window.location.href='/productos/souvenir-box'">
+                <div class="product-image">
+                    <span class="product-badge">Paquete</span>
+                    <img src="https://vtanunciando.com/cdn/shop/files/final-bundle-vtweb2.png?v=1738361702&width=600" alt="Souvenir Box paquete completo AXKAN">
+                </div>
+                <div class="product-content">
+                    <h3 class="product-title">Souvenir Box</h3>
+                    <p class="product-description">Paquete completo con la mejor selección de souvenirs para iniciar tu negocio.</p>
+                    <div class="product-footer">
+                        <span class="product-price">$2,250 / caja</span>
+                        <span class="product-arrow">→</span>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <div class="products-cta">
+            <a href="/productos">Ver Todos los Productos →</a>
         </div>
     </section>
 
@@ -1830,7 +2041,7 @@
         <!-- Mobile: lightweight card with static map -->
         <div class="location-mobile">
             <div class="location-mobile-card reveal">
-                <img src="https://maps.googleapis.com/maps/api/staticmap?center=19.409143,-99.1262922&zoom=15&size=600x200&scale=2&markers=color:0xe72a88%7C19.409143,-99.1262922&style=feature:poi%7Cvisibility:simplified&key=AIzaSyBDcF4shWxblOwlHwdXbWD7nAx7ILc1M4g" alt="Ubicación AXKAN - Av. Morelos 26, CDMX">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1881.5!2d-99.1262922!3d19.409143!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1fe1a12175e75%3A0x50b8523437142e68!2sAXKAN!5e0!3m2!1ses!2smx!4v1707000000000!5m2!1ses!2smx" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Ubicación AXKAN - Av. Morelos 26, CDMX"></iframe>
                 <div class="location-mobile-body">
                     <h3>AXKAN</h3>
                     <p>Av. Morelos 26, Ciudad de México</p>
@@ -1844,65 +2055,79 @@
         </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         FOOTER
-         ═══════════════════════════════════════════════════════════ -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-brand">
-                <img src="/assets/LOGO-03.png" alt="AXKAN">
-                <p data-sanity="footerDescription">
-                    Souvenirs premium que capturan la esencia de México.
-                    Imanes, llaveros, portallaves y destapadores con corte láser de precisión.
-                    Diseñado y producido con orgullo en México.
-                </p>
-            </div>
-
-            <div class="footer-column">
-                <h4>Productos</h4>
-                <ul>
-                    <li><a href="/souvenirs">Imanes MDF</a></li>
-                    <li><a href="/souvenirs">Llaveros MDF</a></li>
-                    <li><a href="/souvenirs">Portallaves</a></li>
-                    <li><a href="/souvenirs">Destapadores</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h4>Destinos</h4>
-                <ul>
-                    <li><a href="/souvenirs/cancun">Cancún</a></li>
-                    <li><a href="/souvenirs/cdmx">CDMX</a></li>
-                    <li><a href="/souvenirs/oaxaca">Oaxaca</a></li>
-                    <li><a href="/souvenirs/guanajuato">Guanajuato</a></li>
-                    <li><a href="/souvenirs/san-miguel-de-allende">San Miguel de Allende</a></li>
-                    <li><a href="/souvenirs/huasteca-potosina">Huasteca Potosina</a></li>
-                    <li><a href="/souvenirs/guadalajara">Guadalajara</a></li>
-                    <li><a href="/souvenirs/los-cabos">Los Cabos</a></li>
-                    <li><a href="/souvenirs/puerto-vallarta">Puerto Vallarta</a></li>
-                    <li><a href="/souvenirs/merida">Mérida</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h4>Empresa</h4>
-                <ul>
-                    <li><a href="#mayoreo">Mayoreo Souvenirs</a></li>
-                    <li><a href="/pedidos">Hacer Pedido</a></li>
-                    <li><a href="/envio">Datos de Envío</a></li>
-                    <li><a href="mailto:hola@axkanoficial">hola@axkanoficial</a></li>
-                    <li><a href="https://instagram.com/axkanoficial" target="_blank">@axkanoficial</a></li>
-                </ul>
-            </div>
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="site-footer-content">
+        <div class="site-footer-brand">
+          <img src="/assets/LETTERS.png" alt="AXKAN" style="height:40px;width:auto;">
+          <p>Souvenirs premium que capturan la esencia de México. Diseñado y producido con orgullo en México.</p>
+          <div class="site-footer-social">
+            <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
+            <a href="https://www.tiktok.com/@axkan_oficial" target="_blank" aria-label="TikTok"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.98a8.18 8.18 0 004.76 1.52V7.05a4.84 4.84 0 01-1-.36z"/></svg></a>
+            <a href="https://www.facebook.com/AxkanOficial" target="_blank" aria-label="Facebook"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+            <a href="https://wa.me/525538253251" target="_blank" aria-label="WhatsApp"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+            <a href="https://www.youtube.com/@AxkanOficial" target="_blank" aria-label="YouTube"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+          </div>
         </div>
-
-        <div class="footer-bottom">
-            <span>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</span>
-            <div class="social-links">
-                <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram">📸</a>
-                <a href="https://wa.me/5215538253251" target="_blank" aria-label="WhatsApp">💬</a>
-            </div>
+        <div class="site-footer-mega">
+          <div class="site-footer-mega-section">
+            <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+              <h4>Productos</h4>
+              <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <ul class="site-footer-mega-list">
+              <li><a href="/productos/imanes-mdf">Imanes MDF</a></li>
+              <li><a href="/productos/llaveros-mdf">Llaveros MDF</a></li>
+              <li><a href="/productos/portallaves-mdf">Portallaves</a></li>
+              <li><a href="/productos/destapadores-mdf">Destapadores</a></li>
+              <li><a href="/productos" class="site-footer-see-all">Ver Todos →</a></li>
+            </ul>
+          </div>
+          <div class="site-footer-mega-section">
+            <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+              <h4>Diseños</h4>
+              <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <ul class="site-footer-mega-list">
+              <li><a href="/diseños">Catálogo de Diseños</a></li>
+              <li><a href="/diseños/huasteca-potosina/historia">Huasteca Potosina</a></li>
+              <li><a href="/diseños/chichen-itza/historia">Chichén Itzá</a></li>
+            </ul>
+          </div>
+          <div class="site-footer-mega-section">
+            <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+              <h4>Formularios</h4>
+              <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <ul class="site-footer-mega-list">
+              <li><a href="/cuestionario">Cuestionario Inicial</a></li>
+              <li><a href="/pedidos">Hacer Pedido</a></li>
+              <li><a href="/envio">Datos de Envío</a></li>
+              <li><a href="/midiseño">Mi Diseño</a></li>
+              <li><a href="/seguimiento">Seguimiento de Pedido</a></li>
+            </ul>
+          </div>
+          <div class="site-footer-mega-section">
+            <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+              <h4>Recursos</h4>
+              <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <ul class="site-footer-mega-list">
+              <li><a href="/faq">Preguntas Frecuentes</a></li>
+              <li><a href="/ubicacion">Ubicación</a></li>
+              <li><a href="/brand">Manual de Marca</a></li>
+              <li><a href="mailto:informacion@axkan.art">informacion@axkan.art</a></li>
+            </ul>
+          </div>
         </div>
+      </div>
+      <div class="site-footer-bottom">
+        <span>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</span>
+        <div class="site-footer-bottom-social">
+          <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
+          <a href="https://wa.me/525538253251" target="_blank" aria-label="WhatsApp"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+        </div>
+      </div>
     </footer>
 
     <script>

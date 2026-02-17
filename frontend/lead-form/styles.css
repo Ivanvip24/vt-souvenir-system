@@ -6,6 +6,13 @@
    Flow: Hero → Contact (Step 1) → Project (Step 2) → Success
    ═══════════════════════════════════════════════════════════ */
 
+@font-face {
+    font-family: 'RL Aqva';
+    src: url('/fonts/rl-aqva-black.otf') format('opentype');
+    font-weight: 900;
+    font-display: swap;
+}
+
 :root {
     --rosa: #e72a88;
     --rosa-light: #fce4ef;
@@ -33,7 +40,7 @@
     --success: #10b981;
     --error: #ef4444;
 
-    --font-display: 'Fredoka', sans-serif;
+    --font-display: 'RL Aqva', sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
     --radius-sm: 10px;
@@ -97,6 +104,7 @@ body {
     filter: blur(80px);
     opacity: 0.15;
     will-change: transform;
+    contain: strict;
 }
 
 .bg-orb--rosa {
@@ -1202,9 +1210,26 @@ body {
         padding: 0 16px;
     }
 
+    /* PERFORMANCE: Simplify background on mobile */
+    .bg-orb {
+        filter: blur(60px);
+        opacity: 0.08;
+        animation: none !important;
+    }
+
+    /* Hide 2 of 4 orbs on mobile */
+    .bg-orb--naranja,
+    .bg-orb--verde {
+        display: none;
+    }
+
     .form-card {
         padding: 22px 18px;
         border-radius: var(--radius-lg);
+        /* PERFORMANCE: Replace backdrop-filter with solid bg on mobile */
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(18, 18, 28, 0.92);
     }
 
     .product-grid {
@@ -1312,4 +1337,213 @@ button:focus:not(:focus-visible),
 a:focus:not(:focus-visible),
 input:focus:not(:focus-visible) {
     outline: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LIGHT MODE — Auto-switches based on device preference
+   ═══════════════════════════════════════════════════════════ */
+
+@media (prefers-color-scheme: light) {
+
+    body {
+        background: #fafafa;
+    }
+
+    /* Background scene — softer, lighter orbs */
+    .bg-gradient {
+        background: linear-gradient(135deg,
+            #fafafa 0%,
+            #f5f0f8 25%,
+            #fafafa 50%,
+            #f0f7fa 75%,
+            #fafafa 100%
+        );
+    }
+
+    .bg-orb { opacity: 0.08; filter: blur(100px); }
+    .bg-mesh {
+        background-image:
+            radial-gradient(circle at 20% 50%, rgba(231, 42, 136, 0.04) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(9, 173, 194, 0.04) 0%, transparent 50%),
+            radial-gradient(circle at 50% 80%, rgba(243, 146, 35, 0.03) 0%, transparent 50%);
+    }
+
+    /* Top bar */
+    .topbar-logo img {
+        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08));
+    }
+
+    /* Progress ring */
+    .progress-ring__bg { stroke: rgba(0, 0, 0, 0.08); }
+    .progress-ring__text { color: var(--gray-600); }
+
+    /* Hero text */
+    .title-line { color: var(--gray-900); }
+    .title-line--accent { color: var(--rosa); text-shadow: none; }
+
+    .hero-badge {
+        background: rgba(231, 42, 136, 0.08);
+        border-color: rgba(231, 42, 136, 0.15);
+    }
+
+    .hero-subtitle { color: var(--gray-500); }
+    .hero-subtitle strong { color: var(--gray-800); }
+
+    .hero-feature { color: var(--gray-500); }
+    .hero-feature-icon {
+        background: rgba(0, 0, 0, 0.04);
+        border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .hero-trust { color: var(--gray-400); }
+
+    /* Buttons */
+    .btn-start {
+        box-shadow: 0 4px 20px rgba(231, 42, 136, 0.25);
+    }
+    .btn-start:hover {
+        box-shadow: 0 8px 32px rgba(231, 42, 136, 0.35),
+                    0 0 0 4px rgba(231, 42, 136, 0.1);
+    }
+
+    /* Form headers */
+    .step-label { color: var(--gray-400); }
+    .form-title { color: var(--gray-900); }
+    .form-subtitle { color: var(--gray-500); }
+
+    /* Form card — light glassmorphism */
+    .form-card {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Field labels & hints */
+    .field-label { color: var(--gray-700); }
+    .field-label svg { color: var(--gray-400); }
+    .field-hint { color: var(--gray-400); }
+
+    /* Inputs */
+    .field-input {
+        color: var(--gray-900);
+        background: rgba(0, 0, 0, 0.03);
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+    .field-input::placeholder { color: var(--gray-400); }
+    .field-input:hover {
+        border-color: rgba(0, 0, 0, 0.18);
+        background: rgba(0, 0, 0, 0.04);
+    }
+    .field-input:focus {
+        border-color: var(--rosa);
+        background: rgba(231, 42, 136, 0.03);
+        box-shadow: 0 0 0 3px rgba(231, 42, 136, 0.08), 0 0 16px rgba(231, 42, 136, 0.05);
+    }
+    .field-input.valid {
+        border-color: var(--verde);
+        background: rgba(138, 183, 59, 0.04);
+    }
+    .field-input.invalid {
+        border-color: var(--error);
+        background: rgba(239, 68, 68, 0.03);
+    }
+
+    .phone-prefix { color: var(--gray-500); }
+
+    /* Product cards */
+    .product-card {
+        background: rgba(0, 0, 0, 0.02);
+        border-color: rgba(0, 0, 0, 0.08);
+        color: var(--gray-800);
+    }
+    .product-card:hover {
+        background: rgba(0, 0, 0, 0.04);
+        border-color: rgba(0, 0, 0, 0.12);
+    }
+    .product-card.selected {
+        background: rgba(231, 42, 136, 0.06);
+        border-color: var(--rosa);
+        box-shadow: 0 0 16px rgba(231, 42, 136, 0.1);
+    }
+    .product-card-icon {
+        background: rgba(0, 0, 0, 0.04);
+    }
+    .product-card-desc { color: var(--gray-400); }
+
+    /* Chips */
+    .chip {
+        background: rgba(0, 0, 0, 0.03);
+        border-color: rgba(0, 0, 0, 0.1);
+        color: var(--gray-600);
+    }
+    .chip:hover {
+        background: rgba(0, 0, 0, 0.05);
+        border-color: rgba(0, 0, 0, 0.15);
+        color: var(--gray-800);
+    }
+    .chip.selected {
+        background: rgba(231, 42, 136, 0.07);
+        border-color: var(--rosa);
+        color: var(--rosa);
+        box-shadow: 0 0 12px rgba(231, 42, 136, 0.08);
+    }
+
+    /* Back button */
+    .btn-back {
+        border-color: rgba(0, 0, 0, 0.1);
+        color: var(--gray-500);
+    }
+    .btn-back:hover {
+        border-color: rgba(0, 0, 0, 0.2);
+        color: var(--gray-800);
+    }
+
+    /* Next / Submit buttons */
+    .btn-next, .btn-submit {
+        box-shadow: 0 4px 16px rgba(231, 42, 136, 0.2);
+    }
+    .btn-next:hover, .btn-submit:hover {
+        box-shadow: 0 8px 28px rgba(231, 42, 136, 0.3);
+    }
+
+    /* Loading screen */
+    .loading-content h2 { color: var(--gray-900); }
+    .loading-content p { color: var(--gray-500); }
+    .spinner-ring {
+        border-color: rgba(0, 0, 0, 0.06);
+        border-top-color: var(--rosa);
+    }
+
+    /* Success screen */
+    .success-title { color: var(--gray-900); }
+    .success-subtitle { color: var(--gray-500); }
+    .success-subtitle strong { color: var(--gray-800); }
+
+    .btn-catalog {
+        border-color: rgba(0, 0, 0, 0.1);
+        color: var(--gray-500);
+    }
+    .btn-catalog:hover {
+        border-color: rgba(0, 0, 0, 0.2);
+        color: var(--gray-800);
+    }
+
+    /* Error screen */
+    .error-content h2 { color: var(--gray-900); }
+    .error-content p { color: var(--gray-500); }
+
+    /* Footer */
+    .footer-links a { color: var(--gray-400); }
+    .footer-dot { background: rgba(0, 0, 0, 0.12); }
+}
+
+/* Light mode + mobile: solid form card bg */
+@media (prefers-color-scheme: light) and (max-width: 480px) {
+    .form-card {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(255, 255, 255, 0.95);
+    }
 }

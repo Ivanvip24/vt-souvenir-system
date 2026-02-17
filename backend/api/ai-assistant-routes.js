@@ -22,6 +22,43 @@ query('CREATE EXTENSION IF NOT EXISTS pg_trgm').catch(err => {
 });
 
 // =====================================================
+// PRODUCT COST LOOKUP HELPER
+// =====================================================
+/**
+ * Look up actual production_cost from products table.
+ * Handles name mismatches between AI names ("Imán MDF Mediano") and DB names ("Imanes de MDF").
+ */
+async function lookupProductionCost(productName) {
+  const lower = (productName || '').toLowerCase();
+  // Build search terms from most specific to least specific
+  const searchTerms = [];
+  if (lower.includes('3d')) searchTerms.push('%3d%');
+  else if (lower.includes('foil')) searchTerms.push('%foil%');
+  else if (lower.includes('chico') || lower.includes('pequeño')) searchTerms.push('%imanes%', '%imán%');
+  else if (lower.includes('grande')) searchTerms.push('%imanes%', '%imán%');
+  else if (lower.includes('imán') || lower.includes('iman') || lower.includes('imanes')) searchTerms.push('%imanes de mdf%', '%imán%');
+  else if (lower.includes('llavero')) searchTerms.push('%llavero%');
+  else if (lower.includes('destapador')) searchTerms.push('%destapador%');
+  else if (lower.includes('portallaves')) searchTerms.push('%portallaves%');
+  else if (lower.includes('botón') || lower.includes('boton')) searchTerms.push('%boton%');
+  else if (lower.includes('souvenir box')) searchTerms.push('%souvenir box%');
+  else searchTerms.push(`%${lower}%`);
+
+  for (const term of searchTerms) {
+    try {
+      const result = await query(
+        'SELECT production_cost FROM products WHERE LOWER(name) LIKE $1 AND is_active = true LIMIT 1',
+        [term]
+      );
+      if (result.rows[0]?.production_cost) {
+        return parseFloat(result.rows[0].production_cost);
+      }
+    } catch (e) { /* continue */ }
+  }
+  return null;
+}
+
+// =====================================================
 // PIECES PER BOX CONFIGURATION
 // =====================================================
 const PIECES_PER_BOX = {
@@ -380,6 +417,31 @@ async function getBusinessContext() {
     `).catch(() => ({ rows: [{ pending_final_payments: 0, pending_amount: 0 }] }));
     context.paymentStats = paymentStats.rows[0];
 
+    // Get production costs from products table with BOM component counts
+    const productCosts = await query(`
+      SELECT
+        p.name AS product_name,
+        p.base_price AS current_price,
+        p.production_cost AS current_cost,
+        COALESCE(p.material_cost, 0) AS material_cost,
+        COALESCE(p.labor_cost, 0) AS labor_cost,
+        (p.base_price - p.production_cost) AS profit_per_unit,
+        CASE WHEN p.base_price > 0
+          THEN ROUND(((p.base_price - p.production_cost) / p.base_price * 100)::numeric, 1)
+          ELSE 0
+        END AS margin_pct,
+        COALESCE(bom.component_count, 0) AS component_count
+      FROM products p
+      LEFT JOIN (
+        SELECT product_id, COUNT(*) AS component_count
+        FROM product_components
+        GROUP BY product_id
+      ) bom ON p.id = bom.product_id
+      WHERE p.is_active = true
+      ORDER BY p.name
+    `).catch(() => ({ rows: [] }));
+    context.productCosts = productCosts.rows;
+
     return context;
   } catch (error) {
     console.error('Error fetching business context:', error);
@@ -427,6 +489,16 @@ ${context.topClients?.map((c, i) => `${i+1}. ${c.name}: $${parseFloat(c.total_sp
 
 ### TOP 5 PRODUCTOS:
 ${context.topProducts?.map((p, i) => `${i+1}. ${p.product_name}: ${p.total_quantity} unidades, $${parseFloat(p.total_revenue).toLocaleString('es-MX', {minimumFractionDigits: 2})}`).join('\n') || 'Sin datos'}
+
+### COSTOS DE PRODUCCIÓN (BOM):
+${context.productCosts?.length > 0 ? `| Producto | Precio Venta | Costo Producción | Materiales | Mano de Obra | Ganancia/u | Margen % | Componentes |
+|----------|-------------|-------------------|------------|--------------|------------|----------|-------------|
+${context.productCosts.map(p => `| ${p.product_name} | $${parseFloat(p.current_price || 0).toFixed(2)} | $${parseFloat(p.current_cost || 0).toFixed(2)} | $${parseFloat(p.material_cost || 0).toFixed(2)} | $${parseFloat(p.labor_cost || 0).toFixed(2)} | $${parseFloat(p.profit_per_unit || 0).toFixed(2)} | ${parseFloat(p.margin_pct || 0).toFixed(1)}% | ${p.component_count} |`).join('\n')}` : 'Sin datos de BOM configurados'}
+
+Cuando pregunten sobre costos de producción, cuánto cuesta HACER/PRODUCIR un producto, o márgenes:
+- Usa la tabla de COSTOS DE PRODUCCIÓN (BOM) - estos son los costos REALES calculados del sistema
+- Distingue entre PRECIO DE VENTA (lo que cobra el cliente) y COSTO DE PRODUCCIÓN (lo que cuesta hacerlo)
+- Si el costo es $0.00 o tiene 0 componentes BOM, menciona que el costo aún no está registrado en el sistema
 
 ### PEDIDOS RECIENTES:
 ${context.recentOrders?.slice(0, 5).map(o => `- #${o.order_number}: ${o.client_name} - $${parseFloat(o.total_price).toLocaleString('es-MX', {minimumFractionDigits: 2})} (${o.status})`).join('\n') || 'Sin datos'}
@@ -1116,15 +1188,20 @@ router.post('/chat', async (req, res) => {
           }
         };
       } else if (action.type === 'start_order_creation') {
-        // Pass the product information to frontend for interactive wizard
+        // Enrich products with actual production costs from DB
+        const enrichedProducts = [];
+        for (const p of (action.products || [])) {
+          const dbCost = await lookupProductionCost(p.name);
+          enrichedProducts.push({ ...p, productionCost: dbCost || (p.unitPrice || 0) * 0.4 });
+        }
         actionData = {
           type: 'start_order_creation',
           data: {
-            products: action.products || [],
+            products: enrichedProducts,
             needsClientInfo: true
           }
         };
-        console.log('🛒 Starting order creation wizard with products:', action.products);
+        console.log('🛒 Starting order creation wizard with products:', enrichedProducts);
       }
 
       // Remove the action block from displayed message
@@ -1187,13 +1264,18 @@ router.post('/chat', async (req, res) => {
           else unitPrice = quantity >= 1000 ? 8 : 11; // Mediano default
         }
 
+        // Look up actual production cost from DB
+        const dbCost = await lookupProductionCost(productName);
+        const productionCost = dbCost || unitPrice * 0.4;
+
         actionData = {
           type: 'start_order_creation',
           data: {
             products: [{
               name: productName,
               quantity: quantity,
-              unitPrice: unitPrice
+              unitPrice: unitPrice,
+              productionCost: productionCost
             }],
             needsClientInfo: true
           }

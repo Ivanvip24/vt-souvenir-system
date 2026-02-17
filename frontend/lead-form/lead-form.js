@@ -359,10 +359,8 @@
         // Short delay for UX (show the loading screen briefly)
         await new Promise(r => setTimeout(r, 1200));
 
-        navigateTo('success');
-
-        // Trigger confetti
-        setTimeout(launchConfetti, 300);
+        // Redirect to thank-you page (Google Ads conversion fires on that page)
+        window.location.href = '/cuestionario/gracias';
     }
 
     function buildWhatsAppMessage(data) {

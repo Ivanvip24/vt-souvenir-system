@@ -479,16 +479,16 @@ function updateBankInfoForSalesRep(salesRep) {
   const holderElements = document.querySelectorAll('#bank-holder');
   holderElements.forEach(el => el.textContent = account.holder);
 
-  // Update card holder (Option 2)
-  const cardHolderRow = document.querySelector('#bank-details .bank-info:last-of-type .info-row:nth-child(3) strong');
+  // Update card holder (deposit tab)
+  const cardHolderRow = document.querySelector('#bank-tab-deposit .info-row:nth-child(3) strong');
   if (cardHolderRow) cardHolderRow.textContent = account.holder;
 
   // Update card number
-  const cardNumberEl = document.querySelector('#bank-details .bank-info:last-of-type .info-row:nth-child(2) strong');
+  const cardNumberEl = document.querySelector('#bank-tab-deposit .info-row:nth-child(2) strong');
   if (cardNumberEl) cardNumberEl.textContent = account.card;
 
   // Update copy button for card
-  const cardCopyBtn = document.querySelector('#bank-details .bank-info:last-of-type .info-row:nth-child(2) .copy-btn');
+  const cardCopyBtn = document.querySelector('#bank-tab-deposit .info-row:nth-child(2) .copy-btn');
   if (cardCopyBtn) {
     cardCopyBtn.setAttribute('onclick', `event.stopPropagation(); copyToClipboard('${account.cardRaw}', this)`);
   }
@@ -496,7 +496,7 @@ function updateBankInfoForSalesRep(salesRep) {
   // For Daniel/Sarahi: Change CLABE section to Account Number
   if (isAlternateAccount) {
     // Update Option 1 label from "Cuenta CLABE" to "Núm de Cuenta"
-    const clabeLabel = document.querySelector('#bank-details .bank-info:first-of-type .info-row:nth-child(2) span');
+    const clabeLabel = document.querySelector('#bank-tab-spei .info-row:nth-child(2) span');
     if (clabeLabel) clabeLabel.textContent = 'Núm de Cuenta:';
 
     // Update account number
@@ -504,14 +504,14 @@ function updateBankInfoForSalesRep(salesRep) {
     if (clabeEl) clabeEl.textContent = account.accountNumber;
 
     // Update copy button for account
-    const clabeCopyBtn = document.querySelector('#bank-details .bank-info:first-of-type .info-row:nth-child(2) .copy-btn');
+    const clabeCopyBtn = document.querySelector('#bank-tab-spei .info-row:nth-child(2) .copy-btn');
     if (clabeCopyBtn) {
       clabeCopyBtn.setAttribute('onclick', `event.stopPropagation(); copyToClipboard('${account.accountNumberRaw}', this)`);
     }
 
-    // Update Option 1 title
-    const option1Title = document.querySelector('#bank-details-content p:first-of-type');
-    if (option1Title) option1Title.textContent = 'Opción 1: Transferencia Bancaria (BBVA Débito)';
+    // Update SPEI tab label for alternate accounts
+    const tabSpei = document.getElementById('tab-spei');
+    if (tabSpei) tabSpei.textContent = '📲 BBVA Débito';
   }
 }
 
@@ -2193,15 +2193,33 @@ function removeFile(type, index) {
  * Toggle bank details collapsible section
  */
 window.toggleBankDetails = function() {
-  const content = document.getElementById('bank-details-content');
-  const icon = document.getElementById('bank-toggle-icon');
+  // No-op: bank details are now always visible
+};
 
-  if (content.style.display === 'none') {
-    content.style.display = 'block';
-    icon.style.transform = 'rotate(180deg)';
+window.switchBankTab = function(tab) {
+  const speiContent = document.getElementById('bank-tab-spei');
+  const depositContent = document.getElementById('bank-tab-deposit');
+  const tabSpei = document.getElementById('tab-spei');
+  const tabDeposit = document.getElementById('tab-deposit');
+
+  if (tab === 'spei') {
+    speiContent.style.display = '';
+    depositContent.style.display = 'none';
+    tabSpei.style.borderColor = 'var(--primary)';
+    tabSpei.style.background = 'rgba(231, 42, 136, 0.1)';
+    tabSpei.style.color = 'var(--primary)';
+    tabDeposit.style.borderColor = 'var(--gray-300)';
+    tabDeposit.style.background = 'transparent';
+    tabDeposit.style.color = 'var(--gray-500)';
   } else {
-    content.style.display = 'none';
-    icon.style.transform = 'rotate(0deg)';
+    speiContent.style.display = 'none';
+    depositContent.style.display = '';
+    tabDeposit.style.borderColor = 'var(--primary)';
+    tabDeposit.style.background = 'rgba(231, 42, 136, 0.1)';
+    tabDeposit.style.color = 'var(--primary)';
+    tabSpei.style.borderColor = 'var(--gray-300)';
+    tabSpei.style.background = 'transparent';
+    tabSpei.style.color = 'var(--gray-500)';
   }
 };
 
@@ -2564,6 +2582,11 @@ function showSuccessScreen(orderNumber) {
   }
 
   showStep(5);
+
+  // Track Google Ads conversion
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'conversion', {'send_to': 'AW-17936818900/--9jCLeg4PcbENTF-OhC'});
+  }
 
   // Clear cart for next order
   state.cart = {};

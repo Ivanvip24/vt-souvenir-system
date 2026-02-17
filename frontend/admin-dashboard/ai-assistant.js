@@ -1981,7 +1981,7 @@ async function executeOrderCreation() {
                 productName: p.name,
                 quantity: p.quantity,
                 unitPrice: p.unitPrice,
-                productionCost: p.unitPrice * 0.4 // Estimate 40% cost
+                productionCost: p.productionCost || p.unitPrice * 0.4
             })),
             totalPrice: total,
             depositAmount: orderWizardState.depositAmount,
