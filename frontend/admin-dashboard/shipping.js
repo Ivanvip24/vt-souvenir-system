@@ -731,10 +731,105 @@ function showAddClientModal() {
   form.reset();
   document.getElementById('client_id').value = '';
 
+  // Reset Google Maps autofill section
+  const gmapsInput = document.getElementById('gmaps_url');
+  const gmapsStatus = document.getElementById('gmaps_status');
+  const gmapsSection = document.getElementById('gmaps-autofill');
+  if (gmapsInput) gmapsInput.value = '';
+  if (gmapsStatus) { gmapsStatus.style.display = 'none'; gmapsStatus.textContent = ''; }
+  if (gmapsSection) gmapsSection.style.display = '';
+
   if (title) title.textContent = 'Agregar Cliente';
 
   modal.classList.remove('hidden');
 }
+
+// Google Maps auto-fill
+async function fetchFromGoogleMaps() {
+  const urlInput = document.getElementById('gmaps_url');
+  const statusDiv = document.getElementById('gmaps_status');
+  const fetchBtn = document.getElementById('gmaps_fetch_btn');
+
+  const url = urlInput?.value?.trim();
+  if (!url) { showNotification('Pega un link de Google Maps', 'warning'); return; }
+
+  if (!url.includes('google.com/maps') && !url.includes('maps.google') && !url.includes('goo.gl') && !url.includes('maps.app')) {
+    showNotification('No parece ser un link de Google Maps', 'error');
+    return;
+  }
+
+  fetchBtn.disabled = true;
+  fetchBtn.textContent = '⏳';
+  statusDiv.style.display = 'block';
+  statusDiv.textContent = 'Extrayendo datos del negocio...';
+  statusDiv.style.color = '#6B7280';
+
+  try {
+    const response = await fetch(`${API_BASE}/clients/from-google-maps`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ url })
+    });
+
+    const result = await response.json();
+    if (!result.success) throw new Error(result.error || 'Error al extraer datos');
+
+    const data = result.data;
+    let filledCount = 0;
+
+    const fieldMap = {
+      client_name: data.name,
+      client_phone: data.phone,
+      client_street: data.street,
+      client_street_number: data.street_number,
+      client_colonia: data.colonia,
+      client_city: data.city,
+      client_state: data.state,
+      client_postal_code: data.postal_code
+    };
+
+    for (const [fieldId, value] of Object.entries(fieldMap)) {
+      if (value) {
+        const el = document.getElementById(fieldId);
+        if (el) {
+          el.value = value;
+          el.style.transition = 'background 0.3s';
+          el.style.background = '#D1FAE5';
+          setTimeout(() => { el.style.background = ''; }, 1500);
+          filledCount++;
+        }
+      }
+    }
+
+    const confLabel = result.confidence === 'high' ? 'alta' : result.confidence === 'partial' ? 'parcial' : 'baja';
+    statusDiv.style.color = '#166534';
+    statusDiv.textContent = `✅ ${filledCount} campo(s) llenado(s) — confianza ${confLabel}. Revisa antes de guardar.`;
+    showNotification(`${filledCount} campos auto-llenados desde Google Maps`, 'success');
+  } catch (error) {
+    console.error('Google Maps fetch error:', error);
+    statusDiv.style.color = '#DC2626';
+    statusDiv.textContent = `❌ ${error.message}`;
+    showNotification('Error al extraer datos de Google Maps', 'error');
+  } finally {
+    fetchBtn.disabled = false;
+    fetchBtn.textContent = 'Buscar';
+  }
+}
+
+// Auto-trigger fetch on paste
+document.addEventListener('DOMContentLoaded', () => {
+  const gmapsInput = document.getElementById('gmaps_url');
+  if (gmapsInput) {
+    gmapsInput.addEventListener('paste', () => {
+      setTimeout(() => {
+        const val = gmapsInput.value.trim();
+        if (val && (val.includes('google.com/maps') || val.includes('goo.gl') || val.includes('maps.app'))) {
+          fetchFromGoogleMaps();
+        }
+      }, 100);
+    });
+  }
+});
 
 async function editClient(clientId) {
   try {
@@ -770,6 +865,10 @@ async function editClient(clientId) {
     document.getElementById('client_reference_notes').value = client.reference_notes || '';
 
     if (title) title.textContent = 'Editar Cliente';
+
+    // Hide Google Maps autofill when editing
+    const gmapsSection = document.getElementById('gmaps-autofill');
+    if (gmapsSection) gmapsSection.style.display = 'none';
 
     modal.classList.remove('hidden');
   } catch (error) {

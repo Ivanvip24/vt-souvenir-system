@@ -4524,6 +4524,181 @@ app.post('/api/clients/autocomplete-addresses', async (req, res) => {
 });
 
 /**
+ * POST /api/clients/from-google-maps
+ * Extract client data from a Google Maps URL
+ */
+function isGoogleMapsUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return ['www.google.com', 'google.com', 'maps.google.com', 'goo.gl', 'maps.app.goo.gl'].includes(parsed.hostname);
+  } catch { return false; }
+}
+
+function parseGoogleMapsUrl(url) {
+  const result = { name: null, lat: null, lng: null };
+  try {
+    // Extract place name from /place/NAME/ segment
+    const placeMatch = url.match(/\/place\/([^/@]+)/);
+    if (placeMatch) {
+      result.name = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
+        .split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    }
+    // Extract coordinates from @lat,lng
+    const coordMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (coordMatch) {
+      result.lat = parseFloat(coordMatch[1]);
+      result.lng = parseFloat(coordMatch[2]);
+    }
+    // Fallback: extract from !3d...!4d... data params
+    if (!result.lat) {
+      const lat3d = url.match(/!3d(-?\d+\.?\d*)/);
+      const lng4d = url.match(/!4d(-?\d+\.?\d*)/);
+      if (lat3d && lng4d) {
+        result.lat = parseFloat(lat3d[1]);
+        result.lng = parseFloat(lng4d[1]);
+      }
+    }
+  } catch (e) { console.error('Error parsing Google Maps URL:', e); }
+  return result;
+}
+
+async function resolveGoogleMapsUrl(url) {
+  // Follow redirects for shortened URLs (goo.gl, maps.app.goo.gl)
+  try {
+    const parsed = new URL(url);
+    if (['goo.gl', 'maps.app.goo.gl'].includes(parsed.hostname)) {
+      const resp = await fetch(url, { redirect: 'manual', headers: { 'User-Agent': 'Mozilla/5.0' } });
+      const location = resp.headers.get('location');
+      if (location) return location;
+    }
+  } catch (e) { console.error('Error resolving shortened URL:', e); }
+  return url;
+}
+
+async function scrapeGoogleMapsPage(url) {
+  const result = { name: null, phone: null, address: null };
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'es-MX,es;q=0.9'
+      },
+      signal: AbortSignal.timeout(10000)
+    });
+    const html = await resp.text();
+
+    // Try to extract phone from embedded data - look for Mexican phone patterns
+    const phonePatterns = [
+      /\"(\+?52\s?\d{2,3}\s?\d{3,4}\s?\d{4})\"/,
+      /\"(\d{2,3}[\s-]?\d{3,4}[\s-]?\d{4})\"/,
+      /\\u0022(\+?52\s?\d[\d\s-]{8,14})\\u0022/,
+      /tel:(\+?\d[\d-]{8,15})/
+    ];
+    for (const pattern of phonePatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        const cleaned = match[1].replace(/[\s-]/g, '');
+        if (cleaned.length >= 10 && cleaned.length <= 15) {
+          result.phone = cleaned;
+          break;
+        }
+      }
+    }
+
+    // Try to extract business name from title tag
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+    if (titleMatch) {
+      const title = titleMatch[1].replace(/\s*[-–]\s*Google Maps.*$/i, '').trim();
+      if (title && title !== 'Google Maps') result.name = title;
+    }
+
+    // Try to extract address from meta description or embedded data
+    const metaDescMatch = html.match(/<meta[^>]+content="([^"]*)"[^>]*name="description"/i)
+      || html.match(/<meta[^>]+name="description"[^>]*content="([^"]*)"/i);
+    if (metaDescMatch) {
+      result.address = metaDescMatch[1].trim();
+    }
+
+  } catch (e) { console.error('Error scraping Google Maps page:', e.message); }
+  return result;
+}
+
+async function reverseGeocodeNominatim(lat, lng) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es&zoom=18`;
+    const resp = await fetch(url, {
+      headers: { 'User-Agent': 'AxkanSouvenirSystem/1.0 (admin shipping tool)' },
+      signal: AbortSignal.timeout(8000)
+    });
+    const data = await resp.json();
+    if (!data || !data.address) return null;
+
+    const addr = data.address;
+    return {
+      street: addr.road || addr.pedestrian || addr.street || null,
+      street_number: addr.house_number || null,
+      colonia: addr.suburb || addr.neighbourhood || addr.quarter || null,
+      city: addr.city || addr.town || addr.village || addr.municipality || null,
+      state: addr.state || null,
+      postal_code: addr.postcode || null
+    };
+  } catch (e) { console.error('Error reverse geocoding:', e.message); return null; }
+}
+
+app.post('/api/clients/from-google-maps', async (req, res) => {
+  try {
+    const { url: rawUrl } = req.body;
+    if (!rawUrl) return res.status(400).json({ success: false, error: 'URL is required' });
+
+    // Resolve shortened URLs
+    const url = await resolveGoogleMapsUrl(rawUrl);
+    if (!isGoogleMapsUrl(url)) {
+      return res.status(400).json({ success: false, error: 'Not a valid Google Maps URL' });
+    }
+
+    const result = { name: null, phone: null, street: null, street_number: null,
+                     colonia: null, city: null, state: null, postal_code: null };
+    const sources = {};
+
+    // Layer 1: Parse URL for name and coordinates
+    const urlData = parseGoogleMapsUrl(url);
+    if (urlData.name) { result.name = urlData.name; sources.name = 'url'; }
+
+    // Layer 2: Scrape Google Maps page for phone/name/address
+    const scrapeData = await scrapeGoogleMapsPage(url);
+    if (scrapeData.name) { result.name = scrapeData.name; sources.name = 'scrape'; }
+    if (scrapeData.phone) { result.phone = scrapeData.phone; sources.phone = 'scrape'; }
+
+    // Layer 3: Nominatim reverse geocoding for address
+    if (urlData.lat && urlData.lng) {
+      const geo = await reverseGeocodeNominatim(urlData.lat, urlData.lng);
+      if (geo) {
+        if (geo.street) { result.street = geo.street; sources.street = 'nominatim'; }
+        if (geo.street_number) { result.street_number = geo.street_number; sources.street_number = 'nominatim'; }
+        if (geo.colonia) { result.colonia = geo.colonia; sources.colonia = 'nominatim'; }
+        if (geo.city) { result.city = geo.city; sources.city = 'nominatim'; }
+        if (geo.state) { result.state = geo.state; sources.state = 'nominatim'; }
+        if (geo.postal_code) { result.postal_code = geo.postal_code; sources.postal_code = 'nominatim'; }
+      }
+    }
+
+    // Layer 4: State fallback from postal code
+    if (result.postal_code && !result.state) {
+      result.state = getStateFromPostal(result.postal_code);
+      if (result.state) sources.state = 'postal_map';
+    }
+
+    const filledFields = Object.values(result).filter(v => v !== null).length;
+    const confidence = filledFields >= 6 ? 'high' : filledFields >= 3 ? 'partial' : 'low';
+
+    res.json({ success: true, data: result, sources, confidence });
+  } catch (error) {
+    console.error('Error extracting Google Maps data:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * POST /api/shipping/labels/bulk
  * Generate a PDF with shipping labels for multiple clients
  */
@@ -4707,17 +4882,17 @@ app.get('/api/clients/:id', async (req, res) => {
  */
 app.post('/api/clients', async (req, res) => {
   try {
-    const { name, phone, email, address, city, state, postal_code } = req.body;
+    const { name, phone, email, address, street, street_number, colonia, city, state, postal_code, reference_notes } = req.body;
 
     if (!name) {
       return res.status(400).json({ success: false, error: 'Name is required' });
     }
 
     const result = await query(`
-      INSERT INTO clients (name, phone, email, address, city, state, postal_code)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO clients (name, phone, email, address, street, street_number, colonia, city, state, postal_code, reference_notes)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
-    `, [name, phone || null, email || null, address || null, city || null, state || null, postal_code || null]);
+    `, [name, phone || null, email || null, address || null, street || null, street_number || null, colonia || null, city || null, state || null, postal_code || null, reference_notes || null]);
 
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
