@@ -1223,14 +1223,14 @@ router.post('/chat', async (req, res) => {
         console.log('🔧 Fallback: Detecting order creation intent from message');
 
         // Extract quantity
-        const qtyMatch = lowerMsg.match(/(\d+)\s*(imanes?|llaveros?|destapadores?|portallaves?|portarretratos?|portaretratos?|marcos?)/i);
+        const qtyMatch = lowerMsg.match(/(\d+)\s*(imanes?|llaveros?|destapadores?|portallaves?|portarretratos?|portaretratos?|porta\s*retratos?|marcos?)/i);
         const quantity = qtyMatch ? parseInt(qtyMatch[1]) : 100;
 
         // Extract product
         let productName = 'Imán MDF Mediano';
         if (lowerMsg.includes('llavero')) productName = 'Llavero MDF';
         else if (lowerMsg.includes('destapador')) productName = 'Destapador MDF';
-        else if (lowerMsg.includes('portarretrato') || lowerMsg.includes('portaretrato') || lowerMsg.includes('marco')) productName = 'Portarretratos MDF';
+        else if (lowerMsg.includes('portarretrato') || lowerMsg.includes('portaretrato') || lowerMsg.includes('porta retrato') || lowerMsg.includes('porta retratos') || lowerMsg.includes('marco')) productName = 'Portarretratos MDF';
         else if (lowerMsg.includes('portallaves') || lowerMsg.includes('porta llaves')) productName = 'Portallaves MDF';
         else if (lowerMsg.includes('3d') || lowerMsg.includes('imanes 3d')) productName = 'Imán 3D';
         else if (lowerMsg.includes('chico') || lowerMsg.includes('pequeño')) productName = 'Imán MDF Chico';
