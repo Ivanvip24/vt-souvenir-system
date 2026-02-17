@@ -19,11 +19,12 @@ const upload = multer({
     fileSize: 15 * 1024 * 1024 // 15MB max
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-    if (allowedTypes.includes(file.mimetype)) {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+    const isHeic = file.originalname && /\.heic$/i.test(file.originalname);
+    if (allowedTypes.includes(file.mimetype) || isHeic) {
       cb(null, true);
     } else {
-      cb(new Error('Solo se permiten imágenes (JPG, PNG, GIF, WEBP) o archivos PDF'), false);
+      cb(new Error('Solo se permiten imágenes (JPG, PNG, GIF, WEBP, HEIC) o archivos PDF'), false);
     }
   }
 });

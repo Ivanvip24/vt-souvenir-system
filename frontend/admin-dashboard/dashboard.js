@@ -1783,9 +1783,10 @@ async function pasteProductionSheet(orderId) {
 
 async function uploadProductionSheet(file, orderId) {
   // Validate file type
-  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-  if (!validTypes.includes(file.type)) {
-    alert('Tipo de archivo no válido. Solo se aceptan imágenes (JPG, PNG, GIF, WebP) y PDF.');
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+  const isHeic = file.name && /\.heic$/i.test(file.name);
+  if (!validTypes.includes(file.type) && !isHeic) {
+    alert('Tipo de archivo no válido. Solo se aceptan imágenes (JPG, PNG, GIF, WebP, HEIC) y PDF.');
     return;
   }
 
@@ -2017,9 +2018,10 @@ async function pasteItemAttachment(orderId, itemId) {
 
 async function uploadItemAttachment(file, orderId, itemId) {
   // Validate file type
-  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-  if (!validTypes.includes(file.type)) {
-    alert('Tipo de archivo no válido. Solo se aceptan imágenes (JPG, PNG, GIF, WebP) y PDF.');
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+  const isHeic = file.name && /\.heic$/i.test(file.name);
+  if (!validTypes.includes(file.type) && !isHeic) {
+    alert('Tipo de archivo no válido. Solo se aceptan imágenes (JPG, PNG, GIF, WebP, HEIC) y PDF.');
     return;
   }
 

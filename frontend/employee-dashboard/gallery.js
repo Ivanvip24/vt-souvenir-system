@@ -1039,12 +1039,13 @@ function handleFileSelect(file) {
 function handleFilesSelect(files) {
     if (!files || files.length === 0) return;
 
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
     const validFiles = [];
     const errors = [];
 
     for (const file of files) {
-        if (!allowedTypes.includes(file.type)) {
+        const isHeic = file.name && /\.heic$/i.test(file.name);
+        if (!allowedTypes.includes(file.type) && !isHeic) {
             errors.push(`${file.name}: tipo no permitido`);
             continue;
         }

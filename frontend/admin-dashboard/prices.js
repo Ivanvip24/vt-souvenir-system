@@ -2313,9 +2313,10 @@ window.handleReceiptFileSelect = function(event) {
   }
 
   // Validate file type
-  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-  if (!validTypes.includes(file.type)) {
-    alert('Tipo de archivo no valido. Use JPG, PNG, GIF, WEBP o PDF.');
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+  const isHeic = file.name && /\.heic$/i.test(file.name);
+  if (!validTypes.includes(file.type) && !isHeic) {
+    alert('Tipo de archivo no valido. Use JPG, PNG, GIF, WEBP, HEIC o PDF.');
     return;
   }
 

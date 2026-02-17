@@ -1896,10 +1896,11 @@ async function handleProofUpload(files, previewEl) {
   if (files.length === 0) return;
 
   const file = files[0];
-  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp', 'application/pdf'];
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+  const isHeic = file.name && /\.heic$/i.test(file.name);
 
-  if (!validTypes.includes(file.type)) {
-    alert('Solo se permiten imágenes (JPG, PNG, GIF, WEBP) o PDF');
+  if (!validTypes.includes(file.type) && !isHeic) {
+    alert('Solo se permiten imágenes (JPG, PNG, GIF, WEBP, HEIC) o PDF');
     return;
   }
 
@@ -2851,9 +2852,10 @@ window.handleSecondPaymentSelect = async function(orderId, file) {
   if (!file) return;
 
   // Validate file type
-  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
-  if (!validTypes.includes(file.type)) {
-    alert('Solo se permiten imágenes (JPG, PNG, GIF, WEBP)');
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
+  const isHeic = file.name && /\.heic$/i.test(file.name);
+  if (!validTypes.includes(file.type) && !isHeic) {
+    alert('Solo se permiten imágenes (JPG, PNG, GIF, WEBP, HEIC)');
     return;
   }
 

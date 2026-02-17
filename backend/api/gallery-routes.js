@@ -25,11 +25,12 @@ const upload = multer({
     fileSize: 15 * 1024 * 1024, // 15MB max
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
+    const isHeic = file.originalname && /\.heic$/i.test(file.originalname);
+    if (allowedTypes.includes(file.mimetype) || isHeic) {
       cb(null, true);
     } else {
-      cb(new Error('Solo se permiten imágenes (JPG, PNG, GIF, WEBP)'), false);
+      cb(new Error('Solo se permiten imágenes (JPG, PNG, GIF, WEBP, HEIC)'), false);
     }
   }
 });
@@ -899,11 +900,12 @@ const uploadMultiple = multer({
     files: 100 // Max 100 files at once for batch analysis
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
+    const isHeic = file.originalname && /\.heic$/i.test(file.originalname);
+    if (allowedTypes.includes(file.mimetype) || isHeic) {
       cb(null, true);
     } else {
-      cb(new Error('Solo se permiten imágenes (JPG, PNG, GIF, WEBP)'), false);
+      cb(new Error('Solo se permiten imágenes (JPG, PNG, GIF, WEBP, HEIC)'), false);
     }
   }
 });
