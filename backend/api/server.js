@@ -4688,41 +4688,37 @@ app.post('/api/clients/from-google-maps', async (req, res) => {
       if (result.state) sources.state = 'postal_map';
     }
 
-    // Layer 5: Zippopotam fallback for colonia (and city/state if still missing)
-    if (result.postal_code && (!result.colonia || !result.city)) {
+    // Layer 5: SEPOMEX fallback for colonia (and city/state if still missing)
+    if (result.postal_code && (!result.colonia || !result.city || !result.state)) {
       try {
-        const zipResp = await fetch(`https://api.zippopotam.us/mx/${result.postal_code.trim()}`, {
-          signal: AbortSignal.timeout(5000)
+        const sepResp = await fetch(`https://sepomex.icalialabs.com/api/v1/zip_codes?zip_code=${result.postal_code.trim()}`, {
+          signal: AbortSignal.timeout(8000)
         });
-        if (zipResp.ok) {
-          const zipData = await zipResp.json();
-          if (zipData.places && zipData.places.length > 0) {
-            // Pick the closest place to our coordinates (if available)
-            let place = zipData.places[0];
-            if (urlData.lat && urlData.lng && zipData.places.length > 1) {
-              let minDist = Infinity;
-              for (const p of zipData.places) {
-                const dLat = parseFloat(p.latitude) - urlData.lat;
-                const dLng = parseFloat(p.longitude) - urlData.lng;
-                const dist = dLat * dLat + dLng * dLng;
-                if (dist < minDist) { minDist = dist; place = p; }
-              }
+        if (sepResp.ok) {
+          const sepData = await sepResp.json();
+          if (sepData.zip_codes && sepData.zip_codes.length > 0) {
+            const entries = sepData.zip_codes;
+            if (!result.colonia) {
+              // Prefer colonia containing "Centro" (most common for city-center businesses)
+              const centro = entries.find(e => /centro/i.test(e.d_asenta));
+              // Fallback to first Colonia-type entry, then any entry
+              const colType = entries.find(e => e.d_tipo_asenta === 'Colonia');
+              const pick = centro || colType || entries[0];
+              result.colonia = pick.d_asenta;
+              sources.colonia = 'sepomex';
             }
-            if (!result.colonia && place['place name']) {
-              result.colonia = place['place name'];
-              sources.colonia = 'zippopotam';
+            const ref = entries[0];
+            if (!result.city && ref.d_mnpio) {
+              result.city = ref.d_mnpio;
+              sources.city = 'sepomex';
             }
-            if (!result.city && place['place name']) {
-              result.city = place['place name'];
-              sources.city = 'zippopotam';
-            }
-            if (!result.state && zipData.state) {
-              result.state = zipData.state;
-              sources.state = 'zippopotam';
+            if (!result.state && ref.d_estado) {
+              result.state = ref.d_estado;
+              sources.state = 'sepomex';
             }
           }
         }
-      } catch (e) { console.error('Zippopotam fallback error:', e.message); }
+      } catch (e) { console.error('SEPOMEX fallback error:', e.message); }
     }
 
     const filledFields = Object.values(result).filter(v => v !== null).length;
