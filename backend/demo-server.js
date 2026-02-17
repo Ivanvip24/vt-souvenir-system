@@ -236,8 +236,8 @@ const demoProducts = [
     category: 'general',
     base_price: 40.00,
     production_cost: 20.00,
-    image_url: 'https://res.cloudinary.com/dtj6coqnr/image/upload/v1739836800/portarretratos-mdf-axkan.png',
-    thumbnail_url: 'https://res.cloudinary.com/dtj6coqnr/image/upload/v1739836800/portarretratos-mdf-axkan.png',
+    image_url: 'https://res.cloudinary.com/dg1owvdhw/image/upload/v1771358269/products/portarretratos-mdf-axkan.png',
+    thumbnail_url: 'https://res.cloudinary.com/dg1owvdhw/image/upload/v1771358269/products/portarretratos-mdf-axkan.png',
     is_active: true,
     display_order: 8
   },
