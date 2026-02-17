@@ -632,7 +632,7 @@ export async function generateQuotePDF(quoteData) {
       if (invalidItems.length > 0) {
         itemY += 5;
         doc.fillColor(COLORS.warningOrange).fontSize(8);
-        doc.text('⚠️ Los siguientes productos están por debajo del mínimo:', 50, itemY);
+        doc.text('AVISO: Los siguientes productos estan por debajo del minimo:', 50, itemY);
         itemY += 15;
 
         doc.fontSize(9);
@@ -648,7 +648,7 @@ export async function generateQuotePDF(quoteData) {
         itemY += 5;
         doc.fillColor(COLORS.textGray);
         doc.fontSize(9);
-        doc.text('🚚 Envío (estimado)', 50, itemY, { width: 220 });
+        doc.text('Envio (estimado)', 50, itemY, { width: 220 });
         doc.text('—', 280, itemY);
         doc.text('—', 360, itemY);
         doc.text(formatCurrency(shippingEstimate), 470, itemY);
@@ -705,7 +705,7 @@ export async function generateQuotePDF(quoteData) {
         doc.fontSize(10)
            .fillColor(COLORS.successGreen)
            .font('Helvetica-Bold')
-           .text('✓ ¡Envío GRATIS incluido! (pedido de ' + totalPieces.toLocaleString('es-MX') + ' piezas)', 50, itemY, { align: 'center', width: 510 });
+           .text('ENVIO GRATIS INCLUIDO (pedido de ' + totalPieces.toLocaleString('es-MX') + ' piezas)', 50, itemY, { align: 'center', width: 510 });
         itemY += 20;
       }
 
@@ -718,15 +718,15 @@ export async function generateQuotePDF(quoteData) {
       doc.fillColor(COLORS.infoBlue)
          .fontSize(9)
          .font('Helvetica-Bold')
-         .text('💡 PRECIOS POR VOLUMEN', 60, itemY + 8);
+         .text('PRECIOS POR VOLUMEN', 60, itemY + 8);
 
       doc.font('Helvetica').fontSize(8);
-      doc.text('• Imanes MDF: $11/u (50-999 pzas) → $8/u (1000+ pzas)', 60, itemY + 22);
-      doc.text('• Llaveros MDF: $10/u (50-999 pzas) → $8/u (1000+ pzas)', 60, itemY + 33);
-      doc.text('• Destapadores MDF: $20/u (50-999 pzas) → $17/u (1000+ pzas)', 60, itemY + 44);
-      doc.text('• Portallaves MDF: $40/u (mín. 20 pzas)', 300, itemY + 22);
-      doc.text('• Portarretratos MDF: $40/u (mín. 20 pzas)', 300, itemY + 33);
-      doc.text('• Souvenir Box: $2,250/u (sin mínimo)', 300, itemY + 44);
+      doc.text('Imanes MDF: $11/u (50-999 pzas) | $8/u (1000+ pzas)', 60, itemY + 22);
+      doc.text('Llaveros MDF: $10/u (50-999 pzas) | $8/u (1000+ pzas)', 60, itemY + 33);
+      doc.text('Destapadores MDF: $20/u (50-999 pzas) | $17/u (1000+ pzas)', 60, itemY + 44);
+      doc.text('Portallaves MDF: $40/u (min. 20 pzas)', 300, itemY + 22);
+      doc.text('Portarretratos MDF: $40/u (min. 20 pzas)', 300, itemY + 33);
+      doc.text('Souvenir Box: $2,250/u (sin minimo)', 300, itemY + 44);
 
       itemY += 75;
 
