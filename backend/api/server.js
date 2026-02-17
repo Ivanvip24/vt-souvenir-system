@@ -4697,7 +4697,17 @@ app.post('/api/clients/from-google-maps', async (req, res) => {
         if (zipResp.ok) {
           const zipData = await zipResp.json();
           if (zipData.places && zipData.places.length > 0) {
-            const place = zipData.places[0];
+            // Pick the closest place to our coordinates (if available)
+            let place = zipData.places[0];
+            if (urlData.lat && urlData.lng && zipData.places.length > 1) {
+              let minDist = Infinity;
+              for (const p of zipData.places) {
+                const dLat = parseFloat(p.latitude) - urlData.lat;
+                const dLng = parseFloat(p.longitude) - urlData.lng;
+                const dist = dLat * dLat + dLng * dLng;
+                if (dist < minDist) { minDist = dist; place = p; }
+              }
+            }
             if (!result.colonia && place['place name']) {
               result.colonia = place['place name'];
               sources.colonia = 'zippopotam';
