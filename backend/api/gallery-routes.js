@@ -8,6 +8,7 @@ import multer from 'multer';
 import archiver from 'archiver';
 import { query } from '../shared/database.js';
 import { uploadImage } from '../shared/cloudinary-config.js';
+import { isHeicFile, convertHeicToJpeg } from '../shared/heic-utils.js';
 import { analyzeDesign } from '../services/design-analyzer.js';
 import {
   employeeAuth,
@@ -694,9 +695,19 @@ router.post('/upload', employeeAuth, upload.single('design'), async (req, res) =
 
     console.log(`📤 Uploading design: ${name} (${req.file.size} bytes)`);
 
+    // Convert HEIC to JPEG if needed
+    let fileBuffer = req.file.buffer;
+    let fileMimetype = req.file.mimetype;
+    if (isHeicFile(req.file)) {
+      console.log('🔄 Converting HEIC to JPEG...');
+      const converted = await convertHeicToJpeg(fileBuffer);
+      fileBuffer = converted.buffer;
+      fileMimetype = converted.mimetype;
+    }
+
     // Convert buffer to base64 data URI for Cloudinary
-    const b64 = Buffer.from(req.file.buffer).toString('base64');
-    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+    const b64 = Buffer.from(fileBuffer).toString('base64');
+    const dataURI = `data:${fileMimetype};base64,${b64}`;
 
     // Generate custom public ID
     const timestamp = Date.now();
@@ -937,9 +948,19 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
       try {
         console.log(`  Processing ${i + 1}/${req.files.length}: ${file.originalname}`);
 
+        // Convert HEIC to JPEG if needed
+        let fileBuffer = file.buffer;
+        let fileMimetype = file.mimetype;
+        if (isHeicFile(file)) {
+          console.log(`🔄 Converting HEIC to JPEG: ${file.originalname}`);
+          const converted = await convertHeicToJpeg(fileBuffer);
+          fileBuffer = converted.buffer;
+          fileMimetype = converted.mimetype;
+        }
+
         // Convert buffer to base64 data URI for Cloudinary
-        const b64 = Buffer.from(file.buffer).toString('base64');
-        const dataURI = `data:${file.mimetype};base64,${b64}`;
+        const b64 = Buffer.from(fileBuffer).toString('base64');
+        const dataURI = `data:${fileMimetype};base64,${b64}`;
 
         // Generate initial name from filename
         const originalName = file.originalname.replace(/\.[^/.]+$/, ''); // Remove extension
@@ -950,7 +971,7 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
         // AI Analysis
         if (useAI) {
           try {
-            const analysis = await analyzeDesign(null, file.buffer, file.mimetype);
+            const analysis = await analyzeDesign(null, fileBuffer, fileMimetype);
 
             if (analysis.success) {
               designName = analysis.title || originalName;

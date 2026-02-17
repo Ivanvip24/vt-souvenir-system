@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { uploadImage, deleteImage } from '../shared/cloudinary-config.js';
+import { isHeicFile, convertHeicToJpeg } from '../shared/heic-utils.js';
 
 const router = express.Router();
 
@@ -38,9 +39,19 @@ router.post('/payment-receipt', upload.single('receipt'), async (req, res) => {
 
     console.log(`📤 Uploading payment receipt: ${req.file.originalname} (${req.file.size} bytes)`);
 
+    // Convert HEIC to JPEG if needed
+    let fileBuffer = req.file.buffer;
+    let fileMimetype = req.file.mimetype;
+    if (isHeicFile(req.file)) {
+      console.log('🔄 Converting HEIC to JPEG...');
+      const converted = await convertHeicToJpeg(fileBuffer);
+      fileBuffer = converted.buffer;
+      fileMimetype = converted.mimetype;
+    }
+
     // Convert buffer to base64 data URI for Cloudinary
-    const b64 = Buffer.from(req.file.buffer).toString('base64');
-    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+    const b64 = Buffer.from(fileBuffer).toString('base64');
+    const dataURI = `data:${fileMimetype};base64,${b64}`;
 
     // Generate custom public ID with timestamp
     const timestamp = Date.now();
@@ -104,8 +115,16 @@ router.post('/multiple', upload.array('files', 5), async (req, res) => {
     console.log(`📤 Uploading ${req.files.length} files`);
 
     const uploadPromises = req.files.map(async (file, index) => {
-      const b64 = Buffer.from(file.buffer).toString('base64');
-      const dataURI = `data:${file.mimetype};base64,${b64}`;
+      let fileBuffer = file.buffer;
+      let fileMimetype = file.mimetype;
+      if (isHeicFile(file)) {
+        console.log(`🔄 Converting HEIC to JPEG: ${file.originalname}`);
+        const converted = await convertHeicToJpeg(fileBuffer);
+        fileBuffer = converted.buffer;
+        fileMimetype = converted.mimetype;
+      }
+      const b64 = Buffer.from(fileBuffer).toString('base64');
+      const dataURI = `data:${fileMimetype};base64,${b64}`;
 
       const timestamp = Date.now();
       const publicId = `upload_${timestamp}_${index}`;

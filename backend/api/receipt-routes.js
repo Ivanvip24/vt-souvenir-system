@@ -9,6 +9,7 @@ import { query, getClient } from '../shared/database.js';
 import { uploadImage } from '../shared/cloudinary-config.js';
 import { analyzeReceiptFromBase64, matchItemsToMaterials } from '../services/claude-receipt-analyzer.js';
 import { authMiddleware } from './admin-routes.js';
+import { isHeicFile, convertHeicToJpeg } from '../shared/heic-utils.js';
 
 const router = express.Router();
 
@@ -70,11 +71,22 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
     `);
     const existingMaterials = materialsResult.rows;
 
-    let base64Data = req.file.buffer.toString('base64');
-    let mediaType = 'image/jpeg';
+    let fileBuffer = req.file.buffer;
+    let fileMimetype = req.file.mimetype;
+
+    // Convert HEIC to JPEG if needed
+    if (isHeicFile(req.file)) {
+      console.log('🔄 Converting HEIC to JPEG...');
+      const converted = await convertHeicToJpeg(fileBuffer);
+      fileBuffer = converted.buffer;
+      fileMimetype = converted.mimetype;
+    }
+
+    let base64Data = fileBuffer.toString('base64');
+    let mediaType = fileMimetype === 'application/pdf' ? 'image/jpeg' : (fileMimetype || 'image/jpeg');
 
     // Handle PDF files - upload to Cloudinary first and get image version
-    if (req.file.mimetype === 'application/pdf') {
+    if (fileMimetype === 'application/pdf') {
       console.log('📄 PDF detected - converting to image via Cloudinary...');
 
       try {
@@ -154,7 +166,7 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
     );
 
     // Upload image to Cloudinary for storage
-    const dataURI = `data:${req.file.mimetype};base64,${base64Data}`;
+    const dataURI = `data:${fileMimetype};base64,${base64Data}`;
     const timestamp = Date.now();
     const publicId = `supplier_receipt_${timestamp}`;
 
