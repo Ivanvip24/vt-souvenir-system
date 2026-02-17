@@ -34,7 +34,8 @@ async function fixProducts() {
       ('Destapador de MDF', 'Destapadores personalizados de MDF. Funcional y decorativo.', 17.00, 5.00, 3.50, 1.50, 'Souvenirs', 'https://vtanunciando.com/cdn/shop/files/DESTAPADOR---VTWEB.png', 'https://vtanunciando.com/cdn/shop/files/DESTAPADOR---VTWEB.png', 5, true),
       ('Botones Metálicos', 'Botones metálicos personalizados con pin. Perfectos para eventos.', 8.00, 2.00, 1.40, 0.60, 'Souvenirs', 'https://vtanunciando.com/cdn/shop/files/fotobotones.png', 'https://vtanunciando.com/cdn/shop/files/fotobotones.png', 6, true),
       ('Portallaves de MDF', 'Portallaves de pared de MDF con ganchos metálicos. Decorativo y útil.', 45.00, 15.00, 10.00, 5.00, 'Decoración', 'https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png', 'https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB2.png', 7, true),
-      ('Souvenir Box', 'Paquete completo de souvenirs personalizados para eventos grandes.', 2250.00, 800.00, 550.00, 250.00, 'Paquetes', 'https://vtanunciando.com/cdn/shop/files/final-bundle-vtweb2.png', 'https://vtanunciando.com/cdn/shop/files/mas-grande.png', 8, true)
+      ('Portaretratos de MDF', 'Portaretratos personalizados de MDF cortados con láser. Ideal para recuerdos y eventos.', 40.00, 12.00, 8.00, 4.00, 'Decoración', '', '', 8, true),
+      ('Souvenir Box', 'Paquete completo de souvenirs personalizados para eventos grandes.', 2250.00, 800.00, 550.00, 250.00, 'Paquetes', 'https://vtanunciando.com/cdn/shop/files/final-bundle-vtweb2.png', 'https://vtanunciando.com/cdn/shop/files/mas-grande.png', 9, true)
     `);
 
     console.log('✅ Products added successfully!\n');

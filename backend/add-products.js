@@ -75,6 +75,15 @@ const products = [
     dimensions: 'Para colgar en pared'
   },
   {
+    name: 'Portaretratos de MDF',
+    description: 'Portaretratos personalizados de MDF cortados con láser. Ideal para recuerdos y eventos.',
+    category: 'decoration',
+    base_price: 40.00,
+    production_cost: 12.00,
+    image_url: '',
+    dimensions: 'Tamaño estándar portaretratos'
+  },
+  {
     name: 'Souvenir Box',
     description: 'Paquete completo de souvenirs personalizados. Bundle especial.',
     category: 'bundles',
