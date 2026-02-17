@@ -4688,6 +4688,33 @@ app.post('/api/clients/from-google-maps', async (req, res) => {
       if (result.state) sources.state = 'postal_map';
     }
 
+    // Layer 5: Zippopotam fallback for colonia (and city/state if still missing)
+    if (result.postal_code && (!result.colonia || !result.city)) {
+      try {
+        const zipResp = await fetch(`https://api.zippopotam.us/mx/${result.postal_code.trim()}`, {
+          signal: AbortSignal.timeout(5000)
+        });
+        if (zipResp.ok) {
+          const zipData = await zipResp.json();
+          if (zipData.places && zipData.places.length > 0) {
+            const place = zipData.places[0];
+            if (!result.colonia && place['place name']) {
+              result.colonia = place['place name'];
+              sources.colonia = 'zippopotam';
+            }
+            if (!result.city && place['place name']) {
+              result.city = place['place name'];
+              sources.city = 'zippopotam';
+            }
+            if (!result.state && zipData.state) {
+              result.state = zipData.state;
+              sources.state = 'zippopotam';
+            }
+          }
+        }
+      } catch (e) { console.error('Zippopotam fallback error:', e.message); }
+    }
+
     const filledFields = Object.values(result).filter(v => v !== null).length;
     const confidence = filledFields >= 6 ? 'high' : filledFields >= 3 ? 'partial' : 'low';
 
