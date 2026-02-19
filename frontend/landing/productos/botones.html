@@ -12,16 +12,16 @@
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portallaves MDF — Souvenirs Corte Laser | AXKAN</title>
-    <meta name="description" content="Portallaves de MDF personalizados con corte laser de precision y acabado brillante UV. $40/pieza desde 20 piezas. Diseno incluido. Envio a toda la Republica Mexicana.">
-    <meta name="keywords" content="portallaves mdf, portallaves personalizados, key holder mexico, portallaves corte laser, souvenirs mayoreo, portallaves decorativos mexico">
-    <link rel="canonical" href="https://axkan.art/productos/portallaves-mdf">
+    <title>Botones Metalicos — Pines Coleccionables | AXKAN</title>
+    <meta name="description" content="Pines coleccionables con diseños vibrantes de cada destino turistico. Impresion full color sobre base metalica con broche de seguridad trasero. Perfectos para promocionales y recuerdos de eventos.">
+    <meta name="keywords" content="botones metalicos, pines personalizados, botones coleccionables, pins turisticos mexico, botones promocionales, pines eventos, botones souvenir">
+    <link rel="canonical" href="https://axkan.art/productos/botones">
 
-    <meta property="og:title" content="Portallaves MDF — Souvenirs Corte Laser | AXKAN">
-    <meta property="og:description" content="Portallaves de MDF personalizados con corte laser. $40/pieza desde 20 piezas. Diseno incluido.">
-    <meta property="og:image" content="https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?v=1736017105&width=1200">
+    <meta property="og:title" content="Botones Metalicos — Pines Coleccionables | AXKAN">
+    <meta property="og:description" content="Pines coleccionables con disenos vibrantes de cada destino turistico. Impresion full color sobre base metalica con broche de seguridad trasero.">
+    <meta property="og:image" content="https://vtanunciando.com/cdn/shop/files/fotobotones.png?v=1738362415&width=1200">
     <meta property="og:type" content="product">
-    <meta property="og:url" content="https://axkan.art/productos/portallaves-mdf">
+    <meta property="og:url" content="https://axkan.art/productos/botones">
     <meta name="twitter:card" content="summary_large_image">
 
     <link rel="icon" type="image/png" href="/assets/LOGO-01.png">
@@ -34,13 +34,14 @@
     {
         "@context": "https://schema.org",
         "@type": "Product",
-        "name": "Portallaves MDF",
-        "description": "Portallaves de MDF personalizados con corte laser de precision y acabado brillante UV.",
-        "image": "https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?v=1736017105&width=1200",
+        "name": "Botones Metalicos",
+        "description": "Pines coleccionables con disenos vibrantes de cada destino turistico. Impresion full color sobre base metalica con broche de seguridad trasero.",
+        "image": "https://vtanunciando.com/cdn/shop/files/fotobotones.png?v=1738362415&width=1200",
         "brand": { "@type": "Brand", "name": "AXKAN" },
         "offers": {
-            "@type": "Offer",
-            "price": "40",
+            "@type": "AggregateOffer",
+            "lowPrice": "8",
+            "highPrice": "8",
             "priceCurrency": "MXN",
             "availability": "https://schema.org/InStock"
         }
@@ -66,8 +67,8 @@
             --verde-selva: #8ab73b;
             --naranja-calido: #f39223;
             --turquesa-caribe: #09adc2;
-            --accent: #f39223;
-            --accent-dark: #d47d1e;
+            --accent: #e52421;
+            --accent-dark: #c91e1e;
             --gray-100: #f5f5f5;
             --gray-800: #1f1f1f;
             --font-display: 'RL Aqva', 'Fredoka', sans-serif;
@@ -116,7 +117,7 @@
         }
         .nav-cta:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(243,146,35,0.4);
+            box-shadow: 0 4px 15px rgba(229,36,33,0.4);
         }
         .nav-hamburger {
             display: none;
@@ -200,46 +201,9 @@
             object-fit: contain;
             transition: opacity 0.3s;
         }
-        .gallery-thumbnails {
-            display: flex;
-            gap: 8px;
-        }
-        .gallery-thumb {
-            flex: 1;
-            border: 2px solid transparent;
-            border-radius: 10px;
-            overflow: hidden;
-            cursor: pointer;
-            background: #f8f5f1;
-            padding: 0;
-            transition: border-color 0.2s;
-        }
-        .gallery-thumb.active,
-        .gallery-thumb:hover {
-            border-color: var(--accent);
-        }
-        .gallery-thumb img {
-            width: 100%;
-            aspect-ratio: 1;
-            object-fit: contain;
-            display: block;
-        }
 
         /* -- PRODUCT INFO -- */
         .product-info { padding-top: 8px; }
-
-        .product-badge {
-            display: inline-block;
-            background: var(--accent);
-            color: #fff;
-            padding: 4px 14px;
-            border-radius: 100px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 12px;
-        }
 
         .product-title {
             font-family: var(--font-display);
@@ -282,6 +246,36 @@
         }
         .price-per-unit { font-size: 0.9rem; color: #888; }
 
+        /* -- VARIANTS -- */
+        .variant-group { margin-bottom: 16px; }
+        .variant-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .variant-label label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--gray-800);
+        }
+        .variant-select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-family: var(--font-body);
+            font-size: 15px;
+            background: #fff;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+        }
         /* ── HOLOGRAPHIC RULER BUTTON ── */
         .size-guide-ruler {
             position: relative;
@@ -295,10 +289,7 @@
             min-width: 140px;
             transition: all 0.3s ease;
         }
-        .size-guide-ruler:hover {
-            transform: translateY(-1px);
-            filter: brightness(1.15);
-        }
+        .size-guide-ruler:hover { transform: translateY(-1px); filter: brightness(1.15); }
         .ruler-body {
             position: relative;
             display: flex;
@@ -311,70 +302,34 @@
             overflow: hidden;
         }
         .ruler-ticks {
-            position: absolute;
-            top: 0;
-            left: 8px;
-            right: 8px;
-            height: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            pointer-events: none;
+            position: absolute; top: 0; left: 8px; right: 8px; height: 100%;
+            display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none;
         }
-        .ruler-tick {
-            width: 1px;
-            background: rgba(9,173,194,0.5);
-            flex-shrink: 0;
-        }
+        .ruler-tick { width: 1px; background: rgba(9,173,194,0.5); flex-shrink: 0; }
         .ruler-tick--tall { height: 10px; background: rgba(9,173,194,0.7); }
         .ruler-tick--medium { height: 7px; }
         .ruler-tick--short { height: 4px; }
-        .ruler-ticks--bottom {
-            top: auto;
-            bottom: 0;
-            align-items: flex-end;
-        }
+        .ruler-ticks--bottom { top: auto; bottom: 0; align-items: flex-end; }
         .ruler-label {
-            position: relative;
-            z-index: 2;
-            font-family: var(--font-body);
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: #09adc2;
-            white-space: nowrap;
-            padding: 0 6px;
+            position: relative; z-index: 2; font-family: var(--font-body);
+            font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; color: #09adc2; white-space: nowrap; padding: 0 6px;
         }
         .ruler-body::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 60%;
-            height: 100%;
+            content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(9,173,194,0.2), rgba(231,42,136,0.1), transparent);
-            animation: ruler-sweep 3s ease-in-out infinite;
-            pointer-events: none;
+            animation: ruler-sweep 3s ease-in-out infinite; pointer-events: none;
         }
-        @keyframes ruler-sweep {
-            0% { left: -60%; }
-            100% { left: 100%; }
-        }
+        @keyframes ruler-sweep { 0% { left: -60%; } 100% { left: 100%; } }
         .size-guide-ruler:hover .ruler-body {
             border-color: rgba(9,173,194,0.8);
             box-shadow: 0 0 10px rgba(9,173,194,0.25), 0 0 3px rgba(231,42,136,0.12);
             background: linear-gradient(180deg, rgba(9,173,194,0.25) 0%, rgba(9,173,194,0.12) 100%);
         }
-        .size-guide-ruler:hover .ruler-label {
-            color: #fff;
-            text-shadow: 0 0 8px rgba(9,173,194,0.6);
-        }
-        .size-guide-ruler:hover .ruler-tick {
-            background: rgba(9,173,194,0.9);
-        }
+        .size-guide-ruler:hover .ruler-label { color: #fff; text-shadow: 0 0 8px rgba(9,173,194,0.6); }
+        .size-guide-ruler:hover .ruler-tick { background: rgba(9,173,194,0.9); }
 
-        /* ── SIZE GUIDE MODAL (Clean White Theme) ── */
+        /* -- SIZE GUIDE MODAL (Clean White Theme) -- */
         .holo-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -456,7 +411,7 @@
         .holo-product-name {
             font-family: var(--font-display);
             font-size: 1.3rem;
-            color: #f39223;
+            color: #e52421;
             text-shadow: none;
             margin: 0 0 2px;
         }
@@ -529,7 +484,7 @@
         }
         .holo-table td:first-child {
             font-weight: 600;
-            color: #f39223;
+            color: #e52421;
         }
 
         .holo-size-label {
@@ -541,7 +496,7 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #f39223;
+            background: #e52421;
             box-shadow: none;
         }
 
@@ -593,6 +548,11 @@
             .holo-modal::before { border-radius: 20px 20px 0 0; }
         }
 
+        .variant-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(229,36,33,0.12);
+        }
+
         /* -- CTA BUTTONS -- */
         .cta-buttons { margin: 24px 0; display: flex; flex-direction: column; gap: 12px; }
 
@@ -601,19 +561,19 @@
             width: 100%;
             text-align: center;
             padding: 16px 24px;
-            background: linear-gradient(135deg, #f39223, #d47d1e);
+            background: linear-gradient(135deg, #e52421, #c91e1e);
             color: #fff;
             font-family: var(--font-display);
             font-size: 1.05rem;
             font-weight: 600;
             border-radius: 100px;
             text-decoration: none;
-            box-shadow: 0 4px 15px rgba(243,146,35,0.3);
+            box-shadow: 0 4px 15px rgba(229,36,33,0.3);
             transition: transform 0.2s, box-shadow 0.2s;
         }
         .btn-pedido:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(243,146,35,0.4);
+            box-shadow: 0 8px 25px rgba(229,36,33,0.4);
         }
 
         .btn-whatsapp {
@@ -889,7 +849,7 @@
         }
         .related-card[data-color="rosa"] { border-top: 4px solid var(--rosa-mexicano); }
         .related-card[data-color="verde"] { border-top: 4px solid var(--verde-selva); }
-        .related-card[data-color="turquesa"] { border-top: 4px solid var(--turquesa-caribe); }
+        .related-card[data-color="naranja"] { border-top: 4px solid var(--naranja-calido); }
         .related-img {
             padding: 24px;
             background: #f8f5f1;
@@ -913,7 +873,7 @@
         }
         .related-card[data-color="rosa"] .related-price { color: var(--rosa-mexicano); }
         .related-card[data-color="verde"] .related-price { color: var(--verde-selva); }
-        .related-card[data-color="turquesa"] .related-price { color: var(--turquesa-caribe); }
+        .related-card[data-color="naranja"] .related-price { color: var(--naranja-calido); }
 
         /* -- FOOTER -- */
         .footer {
@@ -999,7 +959,6 @@
         }
 
         @media (max-width: 480px) {
-            .gallery-thumbnails { gap: 6px; }
             .price-amount { font-size: 1.75rem; }
             .footer-content { grid-template-columns: 1fr; }
         }
@@ -1033,49 +992,40 @@
 
     <!-- BREADCRUMB -->
     <div class="breadcrumb">
-        <a href="/">AXKAN</a> <span>&rsaquo;</span> <a href="/#productos">Productos</a> <span>&rsaquo;</span> Portallaves
+        <a href="/">AXKAN</a> <span>&rsaquo;</span> <a href="/#productos">Productos</a> <span>&rsaquo;</span> Botones Metalicos
     </div>
 
     <!-- PRODUCT PAGE -->
     <div class="product-page">
 
-        <!-- LEFT: IMAGE GALLERY -->
+        <!-- LEFT: IMAGE -->
         <div class="gallery reveal">
             <div class="gallery-main">
-                <img id="main-image" src="https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?v=1736017105&width=800" alt="Portallaves MDF AXKAN — Souvenirs corte laser">
-            </div>
-            <div class="gallery-thumbnails">
-                <button class="gallery-thumb active" data-img="https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?v=1736017105&width=800">
-                    <img src="https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?v=1736017105&width=160" alt="Vista 1">
-                </button>
-                <button class="gallery-thumb" data-img="https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB2.png?v=1736023725&width=800">
-                    <img src="https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB2.png?v=1736023725&width=160" alt="Vista 2">
-                </button>
+                <img id="main-image" src="https://vtanunciando.com/cdn/shop/files/fotobotones.png?v=1738362415&width=800" alt="Botones Metalicos AXKAN — Pines coleccionables">
             </div>
         </div>
 
         <!-- RIGHT: PRODUCT INFO -->
         <div class="product-info">
-            <span class="product-badge">Decorativo</span>
-            <h1 class="product-title">Portallaves</h1>
+            <h1 class="product-title">Botones Metalicos</h1>
 
             <a href="#reviews" class="product-rating">
                 <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-                <span class="rating-text">4.7 (38 resenas)</span>
+                <span class="rating-text">4.8 (42 resenas)</span>
             </a>
 
-            <p class="product-desc">Portallaves de MDF con corte laser de precision y acabado brillante UV. Perfectos como souvenir decorativo de pared, organizador de llaves y regalo personalizado.</p>
+            <p class="product-desc">Pines coleccionables con disenos vibrantes de cada destino turistico. Impresion full color sobre base metalica con broche de seguridad trasero. Perfectos para promocionales y recuerdos de eventos.</p>
 
             <!-- PRICE -->
             <div class="price-display">
-                <span class="price-amount">$40</span>
-                <span class="price-per-unit">MXN / pieza (desde 20 piezas)</span>
+                <span class="price-amount" id="price-display">$8</span>
+                <span class="price-per-unit">MXN / pieza</span>
             </div>
 
-            <!-- SIZE GUIDE -->
-            <div class="variant-group" style="margin-bottom: 16px;">
-                <div class="variant-label" style="display: flex; justify-content: space-between; align-items: center;">
-                    <label style="font-weight: 600; font-size: 0.85rem; color: var(--gray-800);">Medidas del producto</label>
+            <!-- SIZE VARIANT -->
+            <div class="variant-group">
+                <div class="variant-label">
+                    <label for="size-select">Tamano</label>
                     <button class="size-guide-ruler" id="open-size-guide" aria-label="Ver guía de tamaños">
                         <div class="ruler-body">
                             <div class="ruler-ticks">
@@ -1089,7 +1039,7 @@
                                 <span class="ruler-tick ruler-tick--short"></span>
                                 <span class="ruler-tick ruler-tick--tall"></span>
                             </div>
-                            <span class="ruler-label">Ver tamanos</span>
+                            <span class="ruler-label">Ver tamaños</span>
                             <div class="ruler-ticks ruler-ticks--bottom">
                                 <span class="ruler-tick ruler-tick--tall"></span>
                                 <span class="ruler-tick ruler-tick--short"></span>
@@ -1104,14 +1054,29 @@
                         </div>
                     </button>
                 </div>
+                <select id="size-select" class="variant-select">
+                    <option value="chico" selected>Chico (3.5 cm diam)</option>
+                    <option value="grande">Grande (5.8 cm diam)</option>
+                </select>
+            </div>
+
+            <!-- QUANTITY SELECTOR -->
+            <div class="variant-group">
+                <div class="variant-label">
+                    <label for="qty-select">Cantidad</label>
+                </div>
+                <select id="qty-select" class="variant-select">
+                    <option value="50-999" selected>50 — 999 piezas</option>
+                    <option value="1000+">1,000+ piezas</option>
+                </select>
             </div>
 
             <!-- CTA BUTTONS -->
             <div class="cta-buttons">
                 <a href="/pedidos" class="btn-pedido">
-                    Hacer Pedido — $40/pieza
+                    Hacer Pedido — <span id="cta-price">$8</span>/pieza
                 </a>
-                <a href="https://wa.me/5215538253251?text=Hola!%20Me%20interesan%20los%20Portallaves%20de%20AXKAN.%20Quiero%20cotizar." target="_blank" class="btn-whatsapp">
+                <a href="https://wa.me/5215538253251?text=Hola!%20Me%20interesan%20los%20Botones%20Metalicos%20de%20AXKAN.%20Quiero%20cotizar." target="_blank" class="btn-whatsapp">
                     Cotizar por WhatsApp
                 </a>
             </div>
@@ -1120,14 +1085,14 @@
             <div class="specs-section reveal">
                 <h3 class="specs-title">Detalles del producto</h3>
                 <ul class="specs-list">
-                    <li>MDF de 3mm de alta densidad</li>
-                    <li>Acabado brillante UV resistente</li>
-                    <li>Corte laser de precision</li>
-                    <li>Impresion full color</li>
-                    <li>Base con soporte para pared incluido</li>
-                    <li>4-6 ganchos metalicos para llaves</li>
+                    <li>Impresion full color de alta definicion</li>
+                    <li>Base metalica resistente</li>
+                    <li>Broche de seguridad trasero</li>
+                    <li>Acabado brillante protegido</li>
+                    <li>Personalizable con cualquier diseno</li>
+                    <li>Ideal para promocionales y eventos</li>
                     <li>El diseno esta incluido en el precio</li>
-                    <li>Pedido minimo: 20 piezas</li>
+                    <li>Pedido minimo: 50 piezas</li>
                 </ul>
             </div>
 
@@ -1145,10 +1110,10 @@
             <div class="models-section reveal">
                 <h3 class="specs-title">Modelos permitidos por cantidad</h3>
                 <table class="models-table">
-                    <tr><td>20 — 50 portallaves</td><td>2 modelos max</td></tr>
-                    <tr><td>51 — 100 portallaves</td><td>3 modelos max</td></tr>
-                    <tr><td>101 — 200 portallaves</td><td>4 modelos max</td></tr>
-                    <tr><td>Mas de 200 portallaves</td><td>6 modelos max</td></tr>
+                    <tr><td>50 — 100 botones</td><td>2 modelos max</td></tr>
+                    <tr><td>101 — 200 botones</td><td>3 modelos max</td></tr>
+                    <tr><td>201 — 500 botones</td><td>4 modelos max</td></tr>
+                    <tr><td>Mas de 500 botones</td><td>6 modelos max</td></tr>
                 </table>
             </div>
         </div>
@@ -1167,7 +1132,7 @@
                 <button class="holo-close" id="close-size-guide">&times;</button>
 
                 <div class="holo-header">
-                    <h2 class="holo-product-name">Portallaves</h2>
+                    <h2 class="holo-product-name">Botones Metalicos</h2>
                     <p class="holo-subtitle">Guia de tamanos</p>
                 </div>
 
@@ -1176,24 +1141,21 @@
                 <table class="holo-table">
                     <thead>
                         <tr>
-                            <th>Modelo</th>
-                            <th>Ancho</th>
-                            <th>Alto</th>
-                            <th>Ganchos</th>
+                            <th>Tamano</th>
+                            <th>Diametro</th>
+                            <th>Material</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><span class="holo-size-label"><span class="holo-size-dot"></span> Estandar</span></td>
-                            <td>20 cm</td>
-                            <td>12 cm</td>
-                            <td>4 ganchos</td>
+                            <td><span class="holo-size-label"><span class="holo-size-dot"></span> Chico</span></td>
+                            <td>3.5 cm</td>
+                            <td>Metal + Mylar</td>
                         </tr>
                         <tr>
                             <td><span class="holo-size-label"><span class="holo-size-dot"></span> Grande</span></td>
-                            <td>30 cm</td>
-                            <td>15 cm</td>
-                            <td>6 ganchos</td>
+                            <td>5.8 cm</td>
+                            <td>Metal + Mylar</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1223,14 +1185,14 @@
 
         <div class="reviews-overview reveal">
             <div class="rating-summary">
-                <span class="rating-big">4.7</span>
+                <span class="rating-big">4.8</span>
                 <div class="rating-stars-big">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-                <span class="rating-count">38 resenas</span>
+                <span class="rating-count">42 resenas</span>
             </div>
             <div class="rating-bars">
-                <div class="bar-row"><span class="bar-label">5 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="74"></div></div><span class="bar-count">28</span></div>
-                <div class="bar-row"><span class="bar-label">4 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="18"></div></div><span class="bar-count">7</span></div>
-                <div class="bar-row"><span class="bar-label">3 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="8"></div></div><span class="bar-count">3</span></div>
+                <div class="bar-row"><span class="bar-label">5 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="80"></div></div><span class="bar-count">34</span></div>
+                <div class="bar-row"><span class="bar-label">4 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="14"></div></div><span class="bar-count">6</span></div>
+                <div class="bar-row"><span class="bar-label">3 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="5"></div></div><span class="bar-count">2</span></div>
                 <div class="bar-row"><span class="bar-label">2 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="0"></div></div><span class="bar-count">0</span></div>
                 <div class="bar-row"><span class="bar-label">1 &#9733;</span><div class="bar-track"><div class="bar-fill" data-width="0"></div></div><span class="bar-count">0</span></div>
             </div>
@@ -1239,52 +1201,52 @@
         <div class="reviews-grid">
             <div class="review-card">
                 <div class="review-header">
-                    <div class="review-avatar">CR</div>
-                    <div class="review-info"><span class="review-name">Claudia R.</span><span class="review-location">Cancun, QR</span></div>
+                    <div class="review-avatar">LM</div>
+                    <div class="review-info"><span class="review-name">Laura M.</span><span class="review-location">Cancun, QR</span></div>
                     <span class="review-date">Ene 2026</span>
                 </div>
                 <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-                <p class="review-text">Los portallaves son una pieza decorativa increible. Mis huespedes del Airbnb siempre preguntan donde los compre. Funcionales y hermosos.</p>
+                <p class="review-text">Los botones quedaron increibles. Los colores son super vibrantes y el broche trasero es firme. Mis clientes los coleccionan por destino.</p>
                 <span class="review-verified">&#10003; Compra verificada</span>
             </div>
             <div class="review-card">
                 <div class="review-header">
-                    <div class="review-avatar">JL</div>
-                    <div class="review-info"><span class="review-name">Jorge L.</span><span class="review-location">Oaxaca, OAX</span></div>
+                    <div class="review-avatar">JP</div>
+                    <div class="review-info"><span class="review-name">Jorge P.</span><span class="review-location">Playa del Carmen, QR</span></div>
                     <span class="review-date">Dic 2025</span>
                 </div>
                 <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-                <p class="review-text">Pedi 50 para mi tienda de artesanias y se vendieron en una semana. El corte laser con los disenos de Oaxaca quedo espectacular.</p>
+                <p class="review-text">Excelente calidad por el precio. Pedi 500 para mi tienda de souvenirs y se venden muy rapido. El diseno personalizado es un gran plus.</p>
                 <span class="review-verified">&#10003; Compra verificada</span>
             </div>
             <div class="review-card">
                 <div class="review-header">
-                    <div class="review-avatar">RM</div>
-                    <div class="review-info"><span class="review-name">Raquel M.</span><span class="review-location">San Miguel de Allende, GTO</span></div>
+                    <div class="review-avatar">SV</div>
+                    <div class="review-info"><span class="review-name">Sandra V.</span><span class="review-location">Puerto Vallarta, JAL</span></div>
                     <span class="review-date">Nov 2025</span>
                 </div>
                 <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9734;</div>
-                <p class="review-text">Muy buen producto. Los ganchos son resistentes y el diseno personalizado le da un toque unico a cualquier entrada. Lo recomiendo.</p>
+                <p class="review-text">Muy buenos para eventos corporativos. Los usamos como gafetes de identificacion y quedaron profesionales. El acabado brillante resalta mucho.</p>
                 <span class="review-verified">&#10003; Compra verificada</span>
             </div>
             <div class="review-card">
                 <div class="review-header">
-                    <div class="review-avatar">ED</div>
-                    <div class="review-info"><span class="review-name">Ernesto D.</span><span class="review-location">Guadalajara, JAL</span></div>
+                    <div class="review-avatar">RC</div>
+                    <div class="review-info"><span class="review-name">Roberto C.</span><span class="review-location">Los Cabos, BCS</span></div>
                     <span class="review-date">Oct 2025</span>
                 </div>
                 <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-                <p class="review-text">Increible pieza decorativa. Lo tengo en mi entrada y siempre recibo cumplidos. La calidad del MDF y el acabado brillante son de primera.</p>
+                <p class="review-text">Los pines son un hit en mi negocio. Ligeros, resistentes y con un diseno que los turistas aman. Muy recomendable para tiendas de recuerdos.</p>
                 <span class="review-verified">&#10003; Compra verificada</span>
             </div>
             <div class="review-card">
                 <div class="review-header">
-                    <div class="review-avatar">VK</div>
-                    <div class="review-info"><span class="review-name">Valentina K.</span><span class="review-location">CDMX</span></div>
+                    <div class="review-avatar">MH</div>
+                    <div class="review-info"><span class="review-name">Maria H.</span><span class="review-location">Mazatlan, SIN</span></div>
                     <span class="review-date">Sep 2025</span>
                 </div>
                 <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-                <p class="review-text">Compre 30 como regalos de Navidad y todos quedaron encantados. Es un regalo util, bonito y con significado. Volveremos a pedir.</p>
+                <p class="review-text">Perfectos para regalar en convenciones. El precio por pieza es muy accesible y la calidad no decepciona. Ya hicimos segundo pedido.</p>
                 <span class="review-verified">&#10003; Compra verificada</span>
             </div>
         </div>
@@ -1313,7 +1275,7 @@
                         <span class="related-price">$7-$10/pieza</span>
                     </div>
                 </a>
-                <a href="/productos/destapadores-mdf" class="related-card reveal" data-color="turquesa">
+                <a href="/productos/destapadores-mdf" class="related-card reveal" data-color="naranja">
                     <div class="related-img">
                         <img src="https://vtanunciando.com/cdn/shop/files/DESTAPADOR---VTWEB.png?v=1741044542&width=400" alt="Destapadores AXKAN" loading="lazy">
                     </div>
@@ -1357,7 +1319,7 @@
       <div class="site-footer-content">
         <div class="site-footer-brand">
           <img src="/assets/LETTERS.png" alt="AXKAN" style="height:40px;width:auto;">
-          <p>Souvenirs premium que capturan la esencia de México. Diseñado y producido con orgullo en México.</p>
+          <p>Souvenirs premium que capturan la esencia de Mexico. Disenado y producido con orgullo en Mexico.</p>
           <div class="site-footer-social">
             <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
             <a href="https://www.tiktok.com/@axkan_oficial" target="_blank" aria-label="TikTok"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.98a8.18 8.18 0 004.76 1.52V7.05a4.84 4.84 0 01-1-.36z"/></svg></a>
@@ -1378,18 +1340,19 @@
               <li><a href="/productos/portallaves-mdf">Portallaves</a></li>
               <li><a href="/productos/destapadores-mdf">Destapadores</a></li>
               <li><a href="/productos/portarretratos-mdf">Portarretratos</a></li>
-              <li><a href="/productos" class="site-footer-see-all">Ver Todos →</a></li>
+              <li><a href="/productos/botones">Botones Metalicos</a></li>
+              <li><a href="/productos" class="site-footer-see-all">Ver Todos</a></li>
             </ul>
           </div>
           <div class="site-footer-mega-section">
             <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
-              <h4>Diseños</h4>
+              <h4>Disenos</h4>
               <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <ul class="site-footer-mega-list">
-              <li><a href="/diseños">Catálogo de Diseños</a></li>
+              <li><a href="/diseños">Catalogo de Disenos</a></li>
               <li><a href="/diseños/huasteca-potosina/historia">Huasteca Potosina</a></li>
-              <li><a href="/diseños/chichen-itza/historia">Chichén Itzá</a></li>
+              <li><a href="/diseños/chichen-itza/historia">Chichen Itza</a></li>
             </ul>
           </div>
           <div class="site-footer-mega-section">
@@ -1400,8 +1363,8 @@
             <ul class="site-footer-mega-list">
               <li><a href="/cuestionario">Cuestionario Inicial</a></li>
               <li><a href="/pedidos">Hacer Pedido</a></li>
-              <li><a href="/envio">Datos de Envío</a></li>
-              <li><a href="/midiseño">Mi Diseño</a></li>
+              <li><a href="/envio">Datos de Envio</a></li>
+              <li><a href="/midiseño">Mi Diseno</a></li>
               <li><a href="/seguimiento">Seguimiento de Pedido</a></li>
             </ul>
           </div>
@@ -1412,7 +1375,7 @@
             </button>
             <ul class="site-footer-mega-list">
               <li><a href="/faq">Preguntas Frecuentes</a></li>
-              <li><a href="/ubicacion">Ubicación</a></li>
+              <li><a href="/ubicacion">Ubicacion</a></li>
               <li><a href="/brand">Manual de Marca</a></li>
               <li><a href="mailto:informacion@axkan.art">informacion@axkan.art</a></li>
             </ul>
@@ -1420,7 +1383,7 @@
         </div>
       </div>
       <div class="site-footer-bottom">
-        <span>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</span>
+        <span>2026 AXKAN. Souvenirs Premium de Mexico. Todos los derechos reservados.</span>
         <div class="site-footer-bottom-social">
           <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
           <a href="https://wa.me/525538253251" target="_blank" aria-label="WhatsApp"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
@@ -1429,16 +1392,22 @@
     </footer>
 
     <script>
-        // -- Gallery thumbnail switcher --
-        document.querySelectorAll('.gallery-thumb').forEach(function(thumb) {
-            thumb.addEventListener('click', function() {
-                document.getElementById('main-image').src = this.getAttribute('data-img');
-                document.querySelectorAll('.gallery-thumb').forEach(function(t) { t.classList.remove('active'); });
-                this.classList.add('active');
-            });
-        });
+        // -- Dynamic pricing (fixed at $8 for botones) --
+        var prices = {
+            '50-999': 8,
+            '1000+': 8
+        };
 
-        // ── Holographic size guide modal ──
+        function updatePrice() {
+            var key = document.getElementById('qty-select').value;
+            var price = prices[key] || 8;
+            document.getElementById('price-display').textContent = '$' + price;
+            document.getElementById('cta-price').textContent = '$' + price;
+        }
+
+        document.getElementById('qty-select').addEventListener('change', updatePrice);
+
+        // -- Holographic size guide modal --
         var sizeModal = document.getElementById('size-modal');
         document.getElementById('open-size-guide').addEventListener('click', function() {
             sizeModal.classList.add('active');
@@ -1474,7 +1443,7 @@
         revealOnScroll();
 
         // -- Review form --
-        var PRODUCT_SLUG = 'portallaves-mdf';
+        var PRODUCT_SLUG = 'botones';
         var STORAGE_KEY = 'axkan-reviews-' + PRODUCT_SLUG;
         var selectedStars = 0;
 
@@ -1547,13 +1516,47 @@
             card.className = 'review-card' + (prepend ? '' : ' visible');
             var starsHtml = '';
             for (var i = 0; i < 5; i++) starsHtml += i < review.stars ? '\u2605' : '\u2606';
-            card.innerHTML = '<div class="review-header"><div class="review-avatar">' + escapeHtml(review.initials) + '</div>' +
-                '<div class="review-info"><span class="review-name">' + escapeHtml(review.name) + '</span>' +
-                '<span class="review-location">' + escapeHtml(review.city) + '</span></div>' +
-                '<span class="review-date">' + escapeHtml(review.date) + '</span></div>' +
-                '<div class="review-stars">' + starsHtml + '</div>' +
-                '<p class="review-text">' + escapeHtml(review.text) + '</p>' +
-                '<span class="review-verified">\u2713 Resena del sitio</span>';
+            var cardContent = document.createElement('div');
+            cardContent.className = 'review-card-inner';
+
+            var header = document.createElement('div');
+            header.className = 'review-header';
+            var avatar = document.createElement('div');
+            avatar.className = 'review-avatar';
+            avatar.textContent = review.initials;
+            var info = document.createElement('div');
+            info.className = 'review-info';
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'review-name';
+            nameSpan.textContent = review.name;
+            var locSpan = document.createElement('span');
+            locSpan.className = 'review-location';
+            locSpan.textContent = review.city;
+            info.appendChild(nameSpan);
+            info.appendChild(locSpan);
+            var dateSpan = document.createElement('span');
+            dateSpan.className = 'review-date';
+            dateSpan.textContent = review.date;
+            header.appendChild(avatar);
+            header.appendChild(info);
+            header.appendChild(dateSpan);
+            card.appendChild(header);
+
+            var starsDiv = document.createElement('div');
+            starsDiv.className = 'review-stars';
+            starsDiv.textContent = starsHtml;
+            card.appendChild(starsDiv);
+
+            var textP = document.createElement('p');
+            textP.className = 'review-text';
+            textP.textContent = review.text;
+            card.appendChild(textP);
+
+            var verified = document.createElement('span');
+            verified.className = 'review-verified';
+            verified.textContent = '\u2713 Resena del sitio';
+            card.appendChild(verified);
+
             if (prepend) {
                 grid.insertBefore(card, grid.firstChild);
                 setTimeout(function() { card.classList.add('visible'); }, 50);

@@ -296,15 +296,102 @@
             font-size: 0.85rem;
             color: var(--gray-800);
         }
-        .size-guide-link {
-            background: none;
-            border: none;
-            color: var(--rosa-mexicano);
-            font-size: 0.8rem;
-            font-weight: 500;
+        /* ── HOLOGRAPHIC RULER BUTTON ── */
+        .size-guide-ruler {
+            position: relative;
+            display: flex;
+            align-items: stretch;
             cursor: pointer;
-            text-decoration: underline;
+            border: none;
+            background: transparent;
             padding: 0;
+            height: 32px;
+            min-width: 140px;
+            transition: all 0.3s ease;
+        }
+        .size-guide-ruler:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.15);
+        }
+        /* Ruler body */
+        .ruler-body {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, rgba(9,173,194,0.18) 0%, rgba(9,173,194,0.08) 100%);
+            border: 1.5px solid rgba(9,173,194,0.5);
+            border-radius: 4px;
+            width: 100%;
+            overflow: hidden;
+        }
+        /* Tick marks along top edge */
+        .ruler-ticks {
+            position: absolute;
+            top: 0;
+            left: 8px;
+            right: 8px;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+        }
+        .ruler-tick {
+            width: 1px;
+            background: rgba(9,173,194,0.5);
+            flex-shrink: 0;
+        }
+        .ruler-tick--tall { height: 10px; background: rgba(9,173,194,0.7); }
+        .ruler-tick--medium { height: 7px; }
+        .ruler-tick--short { height: 4px; }
+        /* Bottom ticks mirrored */
+        .ruler-ticks--bottom {
+            top: auto;
+            bottom: 0;
+            align-items: flex-end;
+        }
+        /* Label text */
+        .ruler-label {
+            position: relative;
+            z-index: 2;
+            font-family: var(--font-body);
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #09adc2;
+            white-space: nowrap;
+            padding: 0 6px;
+        }
+        /* Holographic sweep on ruler */
+        .ruler-body::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(9,173,194,0.2), rgba(231,42,136,0.1), transparent);
+            animation: ruler-sweep 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes ruler-sweep {
+            0% { left: -60%; }
+            100% { left: 100%; }
+        }
+        /* Hover glow */
+        .size-guide-ruler:hover .ruler-body {
+            border-color: rgba(9,173,194,0.8);
+            box-shadow: 0 0 10px rgba(9,173,194,0.25), 0 0 3px rgba(231,42,136,0.12);
+            background: linear-gradient(180deg, rgba(9,173,194,0.25) 0%, rgba(9,173,194,0.12) 100%);
+        }
+        .size-guide-ruler:hover .ruler-label {
+            color: #fff;
+            text-shadow: 0 0 8px rgba(9,173,194,0.6);
+        }
+        .size-guide-ruler:hover .ruler-tick {
+            background: rgba(9,173,194,0.9);
         }
         .variant-select {
             width: 100%;
@@ -440,8 +527,8 @@
         .models-table td:first-child { font-weight: 500; color: var(--gray-800); }
         .models-table td:last-child { text-align: right; color: var(--rosa-mexicano); font-weight: 600; }
 
-        /* ── SIZE GUIDE MODAL ── */
-        .modal-overlay {
+        /* ── SIZE GUIDE MODAL (Clean White Theme) ── */
+        .holo-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5);
@@ -449,56 +536,232 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
+            transition: opacity 0.4s ease;
         }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content {
-            background: #fff;
-            border-radius: 20px;
-            padding: 32px;
-            max-width: 480px;
-            width: 90%;
+        .holo-overlay.active { opacity: 1; visibility: visible; }
+
+        /* Projector beam line - removed */
+        .holo-overlay::before { display: none; }
+        .holo-overlay.active::before { display: none; }
+
+        /* Ambient particles - removed */
+        .holo-overlay::after { display: none; }
+
+        /* Modal container */
+        .holo-modal {
             position: relative;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            transform: translateY(20px);
-            transition: transform 0.3s;
+            max-width: 520px;
+            width: 92%;
+            padding: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            transform: scaleY(0) translateY(10px);
+            transform-origin: center;
+            transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
         }
-        .modal-overlay.active .modal-content { transform: translateY(0); }
-        .modal-close {
+        .holo-overlay.active .holo-modal {
+            transform: scaleY(1) translateY(0);
+        }
+
+        /* Animated border - removed, replaced with subtle border via box-shadow on .holo-modal */
+        .holo-modal::before { display: none; }
+
+        /* Inner content area */
+        .holo-inner {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 28px 24px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Scanlines overlay - removed */
+        .holo-inner::before { display: none; }
+
+        /* Flicker effect - removed */
+        .holo-inner::after { display: none; }
+
+        /* Close button */
+        .holo-close {
             position: absolute;
-            top: 12px; right: 16px;
+            top: 12px; right: 14px;
             background: none;
-            border: none;
-            font-size: 1.5rem;
+            border: 1px solid #ddd;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
             cursor: pointer;
-            color: #888;
+            color: #999;
             line-height: 1;
+            z-index: 5;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .modal-title {
+        .holo-close:hover {
+            color: #333;
+            border-color: #bbb;
+            box-shadow: none;
+        }
+
+        /* Header */
+        .holo-header {
+            position: relative;
+            z-index: 3;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .holo-product-name {
             font-family: var(--font-display);
-            font-size: 1.25rem;
-            margin-bottom: 16px;
+            font-size: 1.3rem;
+            color: #e72a88;
+            text-shadow: none;
+            margin: 0 0 2px;
         }
-        .size-table {
+        .holo-subtitle {
+            font-family: var(--font-body);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #666;
+            margin: 0;
+        }
+
+        /* Divider line */
+        .holo-divider {
+            height: 1px;
+            background: #eee;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 3;
+        }
+
+        /* Size table */
+        .holo-table {
             width: 100%;
             border-collapse: collapse;
+            position: relative;
+            z-index: 3;
         }
-        .size-table th,
-        .size-table td {
-            padding: 10px 12px;
+        .holo-table th {
+            padding: 8px 10px;
             text-align: left;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9rem;
-        }
-        .size-table th {
+            font-family: var(--font-body);
             font-weight: 600;
-            color: var(--rosa-mexicano);
-            font-size: 0.78rem;
+            font-size: 0.68rem;
             text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #999;
+            border-bottom: 1px solid #eee;
+        }
+        .holo-table td {
+            padding: 10px 10px;
+            text-align: left;
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+        .holo-table tr {
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .holo-overlay.active .holo-table tr {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .holo-overlay.active .holo-table thead tr { transition-delay: 0.4s; }
+        .holo-overlay.active .holo-table tbody tr:nth-child(1) { transition-delay: 0.5s; }
+        .holo-overlay.active .holo-table tbody tr:nth-child(2) { transition-delay: 0.6s; }
+        .holo-overlay.active .holo-table tbody tr:nth-child(3) { transition-delay: 0.7s; }
+        .holo-overlay.active .holo-table tbody tr:nth-child(4) { transition-delay: 0.8s; }
+        .holo-overlay.active .holo-table tbody tr:nth-child(5) { transition-delay: 0.9s; }
+
+        .holo-table tbody tr:hover td {
+            color: #111;
+            text-shadow: none;
+        }
+        .holo-table tbody tr:hover {
+            background: rgba(0,0,0,0.03);
+        }
+        .holo-table td:first-child {
+            font-weight: 600;
+            color: #e72a88;
+        }
+
+        /* Size label badges */
+        .holo-size-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .holo-size-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #e72a88;
+            box-shadow: none;
+        }
+
+        /* Footer note */
+        .holo-footer {
+            position: relative;
+            z-index: 3;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: var(--font-body);
+            font-size: 0.7rem;
+            color: #aaa;
             letter-spacing: 0.05em;
+        }
+        .holo-footer svg {
+            width: 12px;
+            height: 12px;
+            opacity: 0.4;
+        }
+
+        /* Corner accents - removed */
+        .holo-corner { display: none; }
+        .holo-corner--tl, .holo-corner--tr, .holo-corner--bl, .holo-corner--br { display: none; }
+
+        /* Glow pulse behind modal - removed */
+        .holo-modal-glow { display: none; }
+
+        /* Mobile bottom sheet */
+        @media (max-width: 600px) {
+            .holo-overlay { align-items: flex-end; }
+            .holo-modal {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 20px 20px 0 0;
+                transform: translateY(100%);
+                transform-origin: bottom;
+                transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+            }
+            .holo-overlay.active .holo-modal {
+                transform: translateY(0);
+            }
+            .holo-inner {
+                border-radius: 20px 20px 0 0;
+                padding: 24px 18px 28px;
+                max-height: 75vh;
+                overflow-y: auto;
+            }
+            .holo-modal::before { border-radius: 20px 20px 0 0; }
         }
 
         /* ── REVIEWS ── */
@@ -880,7 +1143,33 @@
             <div class="variant-group">
                 <div class="variant-label">
                     <label for="size-select">Tamaño</label>
-                    <button class="size-guide-link" id="open-size-guide">Ver guía de tamaños</button>
+                    <button class="size-guide-ruler" id="open-size-guide" aria-label="Ver guía de tamaños">
+                        <div class="ruler-body">
+                            <div class="ruler-ticks">
+                                <span class="ruler-tick ruler-tick--tall"></span>
+                                <span class="ruler-tick ruler-tick--short"></span>
+                                <span class="ruler-tick ruler-tick--medium"></span>
+                                <span class="ruler-tick ruler-tick--short"></span>
+                                <span class="ruler-tick ruler-tick--tall"></span>
+                                <span class="ruler-tick ruler-tick--short"></span>
+                                <span class="ruler-tick ruler-tick--medium"></span>
+                                <span class="ruler-tick ruler-tick--short"></span>
+                                <span class="ruler-tick ruler-tick--tall"></span>
+                            </div>
+                            <span class="ruler-label">Ver tamaños</span>
+                            <div class="ruler-ticks ruler-ticks--bottom">
+                                <span class="ruler-tick ruler-tick--tall"></span>
+                                <span class="ruler-tick ruler-tick--short"></span>
+                                <span class="ruler-tick ruler-tick--medium"></span>
+                                <span class="ruler-tick ruler-tick--short"></span>
+                                <span class="ruler-tick ruler-tick--tall"></span>
+                                <span class="ruler-tick ruler-tick--short"></span>
+                                <span class="ruler-tick ruler-tick--medium"></span>
+                                <span class="ruler-tick ruler-tick--short"></span>
+                                <span class="ruler-tick ruler-tick--tall"></span>
+                            </div>
+                        </div>
+                    </button>
                 </div>
                 <select id="size-select" class="variant-select">
                     <option value="chico" selected>Chico (hasta 7.5 x 7.5 cm)</option>
@@ -929,7 +1218,7 @@
                 <p>
                     Producción: 7-8 días hábiles · Envío: 5-7 días hábiles<br>
                     Envío a toda la República Mexicana<br>
-                    <span class="shipping-highlight">Envío gratis en pedidos mayores a $2,200 MXN</span>
+                    <span class="shipping-highlight">Envio gratis en pedidos arriba de 300 pzas</span>
                 </p>
             </div>
 
@@ -948,19 +1237,56 @@
     </div>
 
     <!-- SIZE GUIDE MODAL -->
-    <div class="modal-overlay" id="size-modal">
-        <div class="modal-content">
-            <button class="modal-close" id="close-size-guide">&times;</button>
-            <h2 class="modal-title">Guía de tamaños</h2>
-            <table class="size-table">
-                <thead>
-                    <tr><th>Tamaño</th><th>Cuadrado</th><th>Circular</th><th>Alargado</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td>Chico</td><td>7.5 x 7.5 cm</td><td>7.5 cm diám</td><td>5 x 9 cm</td></tr>
-                    <tr><td>Grande</td><td>9.5 x 9.5 cm</td><td>9.5 cm diám</td><td>7 x 12 cm</td></tr>
-                </tbody>
-            </table>
+    <!-- HOLOGRAPHIC SIZE GUIDE MODAL -->
+    <div class="holo-overlay" id="size-modal">
+        <div class="holo-modal">
+            <div class="holo-modal-glow"></div>
+            <div class="holo-inner">
+                <!-- Corner accents -->
+                <div class="holo-corner holo-corner--tl"></div>
+                <div class="holo-corner holo-corner--tr"></div>
+                <div class="holo-corner holo-corner--bl"></div>
+                <div class="holo-corner holo-corner--br"></div>
+
+                <button class="holo-close" id="close-size-guide">&times;</button>
+
+                <div class="holo-header">
+                    <h2 class="holo-product-name">Imanes MDF</h2>
+                    <p class="holo-subtitle">Guía de tamaños</p>
+                </div>
+
+                <div class="holo-divider"></div>
+
+                <table class="holo-table">
+                    <thead>
+                        <tr>
+                            <th>Tamaño</th>
+                            <th>Cuadrado</th>
+                            <th>Circular</th>
+                            <th>Alargado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="holo-size-label"><span class="holo-size-dot"></span> Chico</span></td>
+                            <td>7.5 × 7.5 cm</td>
+                            <td>7.5 cm diám</td>
+                            <td>5 × 9 cm</td>
+                        </tr>
+                        <tr>
+                            <td><span class="holo-size-label"><span class="holo-size-dot"></span> Grande</span></td>
+                            <td>9.5 × 9.5 cm</td>
+                            <td>9.5 cm diám</td>
+                            <td>7 × 12 cm</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="holo-footer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    AXKAN — Medidas reales del producto
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1224,18 +1550,26 @@
         document.getElementById('size-select').addEventListener('change', updatePrice);
         document.getElementById('qty-select').addEventListener('change', updatePrice);
 
-        // ── Size guide modal ──
+        // ── Holographic size guide modal ──
+        var sizeModal = document.getElementById('size-modal');
         document.getElementById('open-size-guide').addEventListener('click', function() {
-            document.getElementById('size-modal').classList.add('active');
+            sizeModal.classList.add('active');
             document.body.style.overflow = 'hidden';
         });
         document.getElementById('close-size-guide').addEventListener('click', function() {
-            document.getElementById('size-modal').classList.remove('active');
+            sizeModal.classList.remove('active');
             document.body.style.overflow = '';
         });
-        document.getElementById('size-modal').addEventListener('click', function(e) {
+        sizeModal.addEventListener('click', function(e) {
             if (e.target === this) {
                 this.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sizeModal.classList.contains('active')) {
+                sizeModal.classList.remove('active');
                 document.body.style.overflow = '';
             }
         });
