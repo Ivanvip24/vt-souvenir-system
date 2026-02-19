@@ -635,7 +635,7 @@ function showQuoteResult(data) {
                     <a href="${data.pdfUrl}" target="_blank" class="ai-quote-download-btn">
                         📥 Descargar PDF
                     </a>
-                    <button onclick="copyQuoteImage(this)" class="ai-quote-copy-btn">
+                    <button onclick="copyQuoteImage(this, '${data.pdfUrl}')" class="ai-quote-copy-btn">
                         📷 Copiar Imagen
                     </button>
                 </div>
@@ -684,7 +684,7 @@ function showCatalogResult(data) {
                     <a href="${data.pdfUrl}" target="_blank" class="ai-quote-download-btn">
                         📥 Descargar Catálogo PDF
                     </a>
-                    <button onclick="copyQuoteImage(this)" class="ai-quote-copy-btn">
+                    <button onclick="copyQuoteImage(this, '${data.pdfUrl}')" class="ai-quote-copy-btn">
                         📷 Copiar Imagen
                     </button>
                 </div>
@@ -756,7 +756,7 @@ function showMultipleQuotesResult(data) {
 
                 <div class="ai-quote-card-actions">
                     <a href="${quote.pdfUrl}" target="_blank" class="ai-quote-card-download">📥 PDF</a>
-                    <button onclick="copyQuoteImage(this)" class="ai-quote-card-copy">📷 Imagen</button>
+                    <button onclick="copyQuoteImage(this, '${quote.pdfUrl}')" class="ai-quote-card-copy">📷 Imagen</button>
                 </div>
             </div>
         `;
@@ -779,30 +779,53 @@ function showMultipleQuotesResult(data) {
 }
 
 /**
- * Copy quote as image to clipboard using html2canvas.
- * The btn.textContent assignments below use only hardcoded UI labels (no user input),
- * and innerHTML is used solely to restore the original emoji+text content which is static.
+ * Copy the PDF quote as an image to clipboard using pdf.js.
+ * Fetches the PDF, renders page 1 to a canvas at 2x scale, then copies as PNG.
+ * The btn.textContent assignments use only hardcoded UI labels (no user input).
+ * innerHTML is used solely to restore the original static emoji+text content.
  */
-function copyQuoteImage(btn) {
-    var quoteEl = btn.closest('.ai-quote-result') || btn.closest('.ai-quote-card');
-    if (!quoteEl) return;
+function copyQuoteImage(btn, pdfUrl) {
+    if (!pdfUrl) return;
 
     var originalText = btn.innerHTML;
     btn.textContent = '\u23F3 Capturando...';
     btn.disabled = true;
 
-    // Temporarily hide the actions bar so it doesn't appear in the image
-    var actionsEl = quoteEl.querySelector('.ai-quote-actions') || quoteEl.querySelector('.ai-quote-card-actions');
-    if (actionsEl) actionsEl.style.display = 'none';
+    // Resolve relative URLs to the backend
+    var fullUrl = pdfUrl;
+    if (pdfUrl.startsWith('/')) {
+        var backendUrl = (typeof API_BASE !== 'undefined' ? API_BASE.replace('/api', '') : 'https://vt-souvenir-backend.onrender.com');
+        fullUrl = backendUrl + pdfUrl;
+    }
 
-    html2canvas(quoteEl, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        useCORS: true,
-        logging: false
-    }).then(function(canvas) {
-        if (actionsEl) actionsEl.style.display = '';
+    // Fetch PDF with auth token
+    var token = localStorage.getItem('adminToken');
+    fetch(fullUrl, {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+    })
+    .then(function(resp) {
+        if (!resp.ok) throw new Error('PDF fetch failed: ' + resp.status);
+        return resp.arrayBuffer();
+    })
+    .then(function(arrayBuffer) {
+        return pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    })
+    .then(function(pdf) {
+        return pdf.getPage(1);
+    })
+    .then(function(page) {
+        var scale = 2;
+        var viewport = page.getViewport({ scale: scale });
+        var canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        var ctx = canvas.getContext('2d');
 
+        return page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
+            return canvas;
+        });
+    })
+    .then(function(canvas) {
         canvas.toBlob(function(blob) {
             if (!blob) {
                 btn.textContent = '\u274C Error';
@@ -817,7 +840,7 @@ function copyQuoteImage(btn) {
                 btn.disabled = false;
                 setTimeout(function() { btn.innerHTML = originalText; }, 2000);
             }).catch(function(err) {
-                console.error('Error copying image:', err);
+                console.error('Clipboard write failed:', err);
                 // Fallback: download the image
                 var link = document.createElement('a');
                 link.download = 'cotizacion-axkan.png';
@@ -828,9 +851,9 @@ function copyQuoteImage(btn) {
                 setTimeout(function() { btn.innerHTML = originalText; }, 2000);
             });
         }, 'image/png');
-    }).catch(function(err) {
-        if (actionsEl) actionsEl.style.display = '';
-        console.error('Error capturing quote:', err);
+    })
+    .catch(function(err) {
+        console.error('Error capturing PDF as image:', err);
         btn.textContent = '\u274C Error';
         btn.disabled = false;
         setTimeout(function() { btn.innerHTML = originalText; }, 2000);
