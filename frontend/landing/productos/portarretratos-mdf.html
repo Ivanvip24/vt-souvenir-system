@@ -41,7 +41,7 @@
         "offers": {
             "@type": "AggregateOffer",
             "lowPrice": "40",
-            "highPrice": "45",
+            "highPrice": "40",
             "priceCurrency": "MXN",
             "availability": "https://schema.org/InStock"
         }
@@ -1036,15 +1036,12 @@
                 <span class="price-per-unit">MXN / pieza</span>
             </div>
 
-            <!-- VARIANT: SIZE -->
+            <!-- SIZE (single) -->
             <div class="variant-group">
                 <div class="variant-label">
-                    <label for="size-select">Tamano</label>
+                    <label>Tamano</label>
                 </div>
-                <select id="size-select" class="variant-select">
-                    <option value="estandar" selected>Estandar (15 x 20 cm) — $40/pieza</option>
-                    <option value="grande">Grande (20 x 25 cm) — $45/pieza</option>
-                </select>
+                <div class="variant-select" style="cursor:default; color:#333;">Unico (17.45 x 12.5 cm) — $40/pieza</div>
             </div>
 
             <!-- SIZE GUIDE -->
@@ -1091,7 +1088,7 @@
                     <li>Corte laser de precision a figura</li>
                     <li>Acabado brillante UV resistente</li>
                     <li>Soporte trasero incluido</li>
-                    <li>Espacio para foto de 10 x 15 cm (estandar) o 13 x 18 cm (grande)</li>
+                    <li>Espacio para foto de 10 x 15 cm</li>
                     <li>Personalizable con cualquier destino</li>
                 </ul>
             </div>
@@ -1149,16 +1146,10 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td><span class="holo-size-label"><span class="holo-size-dot"></span> Estandar</span></td>
-                            <td>15 cm</td>
-                            <td>20 cm</td>
+                            <td><span class="holo-size-label"><span class="holo-size-dot"></span> Unico</span></td>
+                            <td>17.45 cm</td>
+                            <td>12.5 cm</td>
                             <td>10 x 15 cm</td>
-                        </tr>
-                        <tr>
-                            <td><span class="holo-size-label"><span class="holo-size-dot"></span> Grande</span></td>
-                            <td>20 cm</td>
-                            <td>25 cm</td>
-                            <td>13 x 18 cm</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1394,20 +1385,12 @@
     </footer>
 
     <script>
-        // -- Dynamic pricing --
-        var sizePrices = {
-            'estandar': 40,
-            'grande': 45
-        };
-
+        // -- Dynamic pricing (fixed at $40 for single size) --
         function updatePrice() {
-            var sizeKey = document.getElementById('size-select').value;
-            var price = sizePrices[sizeKey] || 40;
-            document.getElementById('price-display').textContent = '$' + price;
-            document.getElementById('cta-price').textContent = '$' + price;
+            document.getElementById('price-display').textContent = '$40';
+            document.getElementById('cta-price').textContent = '$40';
         }
 
-        document.getElementById('size-select').addEventListener('change', updatePrice);
         document.getElementById('qty-select').addEventListener('change', updatePrice);
 
         // Holographic size guide modal
