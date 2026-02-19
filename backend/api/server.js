@@ -5160,6 +5160,45 @@ async function startServer() {
       console.log('   ℹ️  pickups confirmation_code migration:', pcErr.message.split('\n')[0]);
     }
 
+    // Create system_settings table for editable config (origin address, etc.)
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS system_settings (
+          key VARCHAR(100) PRIMARY KEY,
+          value JSONB NOT NULL,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      // Seed default origin address if not present
+      await query(`
+        INSERT INTO system_settings (key, value)
+        VALUES ('origin_address', $1::jsonb)
+        ON CONFLICT (key) DO NOTHING
+      `, [JSON.stringify({
+        name: 'VT Anunciando',
+        company: 'VT Anunciando',
+        street: 'Av. Morelos',
+        number: '26',
+        neighborhood: 'Artes Graficas',
+        city: 'Cuauhtemoc',
+        state: 'Ciudad de Mexico',
+        zip: '15830',
+        phone: '5538253251',
+        email: 'valenciaperezivan24@gmail.com',
+        reference: 'Interior 3'
+      })]);
+      console.log('   ✅ system_settings table ready');
+    } catch (ssErr) {
+      console.log('   ℹ️  system_settings migration:', ssErr.message.split('\n')[0]);
+    }
+
+    // Load origin address from DB into skydropx service
+    try {
+      await skydropxService.loadOriginAddress();
+    } catch (loadErr) {
+      console.log('   ℹ️  Origin address load:', loadErr.message.split('\n')[0]);
+    }
+
     // Load AI Knowledge Content
     console.log('🤖 Loading AI knowledge content...');
     try {

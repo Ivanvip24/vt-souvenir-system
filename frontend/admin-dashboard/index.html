@@ -1191,6 +1191,66 @@
                     </div>
                 </div>
 
+                <!-- Origin Address Card -->
+                <div id="origin-address-card" class="origin-address-card">
+                    <div class="origin-address-header">
+                        <div class="origin-address-title">
+                            <span style="font-size: 1.2em;">📍</span>
+                            <h3>Dirección de Origen</h3>
+                        </div>
+                        <button class="btn btn-small" id="edit-origin-btn" onclick="toggleOriginAddressEdit()">
+                            ✏️ Editar
+                        </button>
+                    </div>
+                    <div id="origin-address-display" class="origin-address-display">
+                        <div class="origin-address-loading">Cargando...</div>
+                    </div>
+                    <div id="origin-address-form" class="origin-address-form" style="display: none;">
+                        <div class="origin-form-grid">
+                            <div class="origin-form-field">
+                                <label>Calle</label>
+                                <input type="text" id="origin-street" placeholder="Av. Morelos" />
+                            </div>
+                            <div class="origin-form-field">
+                                <label>Número</label>
+                                <input type="text" id="origin-number" placeholder="26" />
+                            </div>
+                            <div class="origin-form-field">
+                                <label>Colonia</label>
+                                <input type="text" id="origin-neighborhood" placeholder="Artes Graficas" />
+                            </div>
+                            <div class="origin-form-field">
+                                <label>Ciudad / Alcaldía</label>
+                                <input type="text" id="origin-city" placeholder="Cuauhtemoc" />
+                            </div>
+                            <div class="origin-form-field">
+                                <label>Estado</label>
+                                <input type="text" id="origin-state" placeholder="Ciudad de Mexico" />
+                            </div>
+                            <div class="origin-form-field">
+                                <label>Código Postal</label>
+                                <input type="text" id="origin-zip" placeholder="15830" />
+                            </div>
+                            <div class="origin-form-field">
+                                <label>Teléfono</label>
+                                <input type="text" id="origin-phone" placeholder="5538253251" />
+                            </div>
+                            <div class="origin-form-field">
+                                <label>Email</label>
+                                <input type="text" id="origin-email" placeholder="email@example.com" />
+                            </div>
+                            <div class="origin-form-field full-width">
+                                <label>Referencia</label>
+                                <input type="text" id="origin-reference" placeholder="Interior 3" />
+                            </div>
+                        </div>
+                        <div class="origin-form-actions">
+                            <button class="btn" onclick="cancelOriginEdit()">Cancelar</button>
+                            <button class="btn btn-primary" onclick="saveOriginAddress()">💾 Guardar</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Bulk Action Bar (hidden until selection) -->
                 <div id="bulk-action-bar" class="bulk-action-bar hidden">
                     <div class="bulk-action-left">

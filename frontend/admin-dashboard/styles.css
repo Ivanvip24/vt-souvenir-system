@@ -9718,3 +9718,130 @@ body.mobile-menu-open {
     from { opacity: 0; transform: scale(0.95) translateY(10px); }
     to   { opacity: 1; transform: scale(1) translateY(0); }
 }
+
+/* ==========================================
+   ORIGIN ADDRESS CARD
+   ========================================== */
+
+.origin-address-card {
+    background: #1a1a2e;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+}
+
+.origin-address-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.origin-address-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.origin-address-title h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #fff;
+    font-weight: 600;
+}
+
+.origin-address-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.origin-address-display .origin-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.origin-address-display .origin-field .label {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.origin-address-display .origin-field .value {
+    color: #fff;
+}
+
+.origin-address-loading {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+}
+
+.btn-small {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+}
+
+.origin-address-form {
+    margin-top: 12px;
+}
+
+.origin-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.origin-form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.origin-form-field label {
+    display: block;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.origin-form-field input {
+    width: 100%;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.origin-form-field input:focus {
+    border-color: #e72a88;
+}
+
+.origin-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+    .origin-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .origin-address-display {
+        flex-direction: column;
+        gap: 4px;
+    }
+}

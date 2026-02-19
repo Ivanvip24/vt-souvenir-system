@@ -124,6 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 
 async function loadShippingData() {
+  loadOriginAddress();
+
   const loading = document.getElementById('shipping-loading');
   const cardsContainer = document.getElementById('shipping-cards-container');
   const emptyState = document.getElementById('shipping-empty-state');
@@ -2112,3 +2114,179 @@ window.fetchShippingQuotesUI = fetchShippingQuotesUI;
 window.selectShippingRate = selectShippingRate;
 window.generateClientLabelUI = generateClientLabelUI;
 window.copyToClipboard = copyToClipboard;
+
+// ==========================================
+// ORIGIN ADDRESS MANAGEMENT
+// ==========================================
+
+let originAddressData = null;
+
+/**
+ * Load and display the origin address
+ */
+async function loadOriginAddress() {
+  const displayEl = document.getElementById('origin-address-display');
+  if (!displayEl) return;
+
+  try {
+    const token = localStorage.getItem('adminToken');
+    const response = await fetch(`${API_BASE}/shipping/origin-address`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    });
+    const data = await response.json();
+
+    if (data.success && data.address) {
+      originAddressData = data.address;
+      renderOriginAddress(data.address);
+    } else {
+      displayEl.textContent = 'No se pudo cargar la dirección';
+    }
+  } catch (err) {
+    console.error('Error loading origin address:', err);
+    displayEl.textContent = 'Error al cargar dirección';
+  }
+}
+
+/**
+ * Render the origin address display (read-only view)
+ * Uses safe DOM methods (createElement/textContent) to avoid XSS.
+ */
+function renderOriginAddress(addr) {
+  const displayEl = document.getElementById('origin-address-display');
+  if (!displayEl) return;
+
+  const fullStreet = [addr.street, addr.number].filter(Boolean).join(' ');
+  const fullAddress = [fullStreet, addr.neighborhood, addr.city, addr.state, 'CP ' + addr.zip].filter(Boolean).join(', ');
+
+  // Clear existing content safely
+  while (displayEl.firstChild) displayEl.removeChild(displayEl.firstChild);
+
+  const mainLine = document.createElement('div');
+  mainLine.className = 'origin-field';
+  const addrSpan = document.createElement('span');
+  addrSpan.className = 'value';
+  addrSpan.textContent = fullAddress;
+  mainLine.appendChild(addrSpan);
+  displayEl.appendChild(mainLine);
+
+  if (addr.reference) {
+    const refLine = document.createElement('div');
+    refLine.className = 'origin-field';
+    const refLabel = document.createElement('span');
+    refLabel.className = 'label';
+    refLabel.textContent = 'Ref:';
+    const refValue = document.createElement('span');
+    refValue.className = 'value';
+    refValue.textContent = addr.reference;
+    refLine.appendChild(refLabel);
+    refLine.appendChild(refValue);
+    displayEl.appendChild(refLine);
+  }
+
+  if (addr.phone) {
+    const phoneLine = document.createElement('div');
+    phoneLine.className = 'origin-field';
+    const phoneLabel = document.createElement('span');
+    phoneLabel.className = 'label';
+    phoneLabel.textContent = 'Tel:';
+    const phoneValue = document.createElement('span');
+    phoneValue.className = 'value';
+    phoneValue.textContent = addr.phone;
+    phoneLine.appendChild(phoneLabel);
+    phoneLine.appendChild(phoneValue);
+    displayEl.appendChild(phoneLine);
+  }
+}
+
+/**
+ * Toggle between display and edit mode
+ */
+function toggleOriginAddressEdit() {
+  const displayEl = document.getElementById('origin-address-display');
+  const formEl = document.getElementById('origin-address-form');
+  const editBtn = document.getElementById('edit-origin-btn');
+
+  if (formEl.style.display === 'none') {
+    // Switch to edit mode - populate form
+    if (originAddressData) {
+      document.getElementById('origin-street').value = originAddressData.street || '';
+      document.getElementById('origin-number').value = originAddressData.number || '';
+      document.getElementById('origin-neighborhood').value = originAddressData.neighborhood || '';
+      document.getElementById('origin-city').value = originAddressData.city || '';
+      document.getElementById('origin-state').value = originAddressData.state || '';
+      document.getElementById('origin-zip').value = originAddressData.zip || '';
+      document.getElementById('origin-phone').value = originAddressData.phone || '';
+      document.getElementById('origin-email').value = originAddressData.email || '';
+      document.getElementById('origin-reference').value = originAddressData.reference || '';
+    }
+    displayEl.style.display = 'none';
+    formEl.style.display = 'block';
+    editBtn.style.display = 'none';
+  } else {
+    cancelOriginEdit();
+  }
+}
+
+/**
+ * Cancel editing and go back to display mode
+ */
+function cancelOriginEdit() {
+  document.getElementById('origin-address-display').style.display = 'flex';
+  document.getElementById('origin-address-form').style.display = 'none';
+  document.getElementById('edit-origin-btn').style.display = '';
+}
+
+/**
+ * Save the updated origin address
+ */
+async function saveOriginAddress() {
+  const addressData = {
+    name: 'VT Anunciando',
+    company: 'VT Anunciando',
+    street: document.getElementById('origin-street').value.trim(),
+    number: document.getElementById('origin-number').value.trim(),
+    neighborhood: document.getElementById('origin-neighborhood').value.trim(),
+    city: document.getElementById('origin-city').value.trim(),
+    state: document.getElementById('origin-state').value.trim(),
+    zip: document.getElementById('origin-zip').value.trim(),
+    phone: document.getElementById('origin-phone').value.trim(),
+    email: document.getElementById('origin-email').value.trim(),
+    reference: document.getElementById('origin-reference').value.trim()
+  };
+
+  if (!addressData.street || !addressData.zip || !addressData.city || !addressData.state) {
+    showNotification('Completa los campos: Calle, CP, Ciudad y Estado', 'error');
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('adminToken');
+    const response = await fetch(`${API_BASE}/shipping/origin-address`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(addressData)
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      originAddressData = data.address;
+      renderOriginAddress(data.address);
+      cancelOriginEdit();
+      showNotification('Dirección de origen actualizada', 'success');
+    } else {
+      showNotification(data.error || 'Error al guardar', 'error');
+    }
+  } catch (err) {
+    console.error('Error saving origin address:', err);
+    showNotification('Error de conexión al guardar', 'error');
+  }
+}
+
+// Make functions globally available
+window.toggleOriginAddressEdit = toggleOriginAddressEdit;
+window.cancelOriginEdit = cancelOriginEdit;
+window.saveOriginAddress = saveOriginAddress;

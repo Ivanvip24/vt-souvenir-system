@@ -73,6 +73,91 @@ function calculateBoxesForOrder(orderItems) {
 }
 
 // ========================================
+// ORIGIN ADDRESS MANAGEMENT
+// ========================================
+
+/**
+ * GET /shipping/origin-address
+ * Returns the current origin address used for all shipping labels
+ */
+router.get('/origin-address', async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT value FROM system_settings WHERE key = 'origin_address'`
+    );
+
+    if (result.rows.length === 0) {
+      // Return default from skydropx service
+      return res.json({
+        success: true,
+        address: skydropx.ORIGIN_ADDRESS
+      });
+    }
+
+    res.json({
+      success: true,
+      address: result.rows[0].value
+    });
+  } catch (error) {
+    console.error('Error fetching origin address:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * PUT /shipping/origin-address
+ * Updates the origin address used for all shipping labels
+ */
+router.put('/origin-address', async (req, res) => {
+  try {
+    const { name, company, street, number, neighborhood, city, state, zip, phone, email, reference } = req.body;
+
+    // Validate required fields
+    if (!street || !zip || !city || !state) {
+      return res.status(400).json({
+        success: false,
+        error: 'Campos requeridos: street, zip, city, state'
+      });
+    }
+
+    const addressData = {
+      name: name || 'VT Anunciando',
+      company: company || 'VT Anunciando',
+      street: street,
+      number: number || '',
+      neighborhood: neighborhood || '',
+      city: city,
+      state: state,
+      zip: zip,
+      phone: phone || '',
+      email: email || '',
+      reference: reference || ''
+    };
+
+    await query(
+      `INSERT INTO system_settings (key, value, updated_at)
+       VALUES ('origin_address', $1::jsonb, NOW())
+       ON CONFLICT (key) DO UPDATE SET value = $1::jsonb, updated_at = NOW()`,
+      [JSON.stringify(addressData)]
+    );
+
+    // Update the in-memory ORIGIN_ADDRESS in skydropx service
+    skydropx.updateOriginAddress(addressData);
+
+    console.log('✅ Origin address updated:', addressData.street, addressData.number);
+
+    res.json({
+      success: true,
+      message: 'Dirección de origen actualizada',
+      address: addressData
+    });
+  } catch (error) {
+    console.error('Error updating origin address:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ========================================
 // GENERATE SHIPPING LABEL FOR ORDER
 // POST /api/shipping/orders/:orderId/generate
 // Auto-calculates boxes based on order items and pieces per box
@@ -1590,14 +1675,14 @@ router.get('/pickups/skydropx-test', async (req, res) => {
       const payload = {
         pickup: {
           address: {
-            name: 'VT Anunciando',
-            company: 'VT Anunciando',
-            street1: 'Av. Morelos 26',
-            zip: '15830',
+            name: skydropx.ORIGIN_ADDRESS.name || 'VT Anunciando',
+            company: skydropx.ORIGIN_ADDRESS.company || 'VT Anunciando',
+            street1: `${skydropx.ORIGIN_ADDRESS.street} ${skydropx.ORIGIN_ADDRESS.number}`.trim(),
+            zip: skydropx.ORIGIN_ADDRESS.zip,
             country_code: 'MX',
-            phone: '5538253251',
-            email: 'valenciaperezivan24@gmail.com',
-            reference: 'Interior 3'
+            phone: skydropx.ORIGIN_ADDRESS.phone,
+            email: skydropx.ORIGIN_ADDRESS.email,
+            reference: skydropx.ORIGIN_ADDRESS.reference || ''
           },
           pickup_date: pickupDate,
           pickup_time_from: '09:00',

@@ -26,7 +26,7 @@ const MAX_STREET_LENGTH = 35;
 const MAX_REFERENCE_LENGTH = 30;
 
 // Fixed origin address (AXKAN office)
-const ORIGIN_ADDRESS = {
+let ORIGIN_ADDRESS = {
   name: 'VT Anunciando',
   company: 'VT Anunciando',
   street: 'Av. Morelos',
@@ -39,6 +39,32 @@ const ORIGIN_ADDRESS = {
   email: 'valenciaperezivan24@gmail.com',
   reference: 'Interior 3'
 };
+
+/**
+ * Update origin address at runtime (called when admin changes it)
+ */
+export function updateOriginAddress(newAddress) {
+  ORIGIN_ADDRESS = { ...ORIGIN_ADDRESS, ...newAddress };
+  console.log('📍 Origin address updated in memory:', ORIGIN_ADDRESS.street, ORIGIN_ADDRESS.number);
+}
+
+/**
+ * Load origin address from database on startup
+ */
+export async function loadOriginAddress() {
+  try {
+    const result = await query(
+      `SELECT value FROM system_settings WHERE key = 'origin_address'`
+    );
+    if (result.rows.length > 0) {
+      ORIGIN_ADDRESS = { ...ORIGIN_ADDRESS, ...result.rows[0].value };
+      console.log('📍 Origin address loaded from DB:', ORIGIN_ADDRESS.street, ORIGIN_ADDRESS.number);
+    }
+  } catch (err) {
+    // Table might not exist yet on first run, use default
+    console.log('📍 Using default origin address (DB not available yet)');
+  }
+}
 
 // Default package dimensions
 const DEFAULT_PACKAGE = {
@@ -1131,6 +1157,8 @@ export default {
   getPendingShipmentsForPickup,
   verifyShipmentStatus,
   requestDailyPickup,
+  updateOriginAddress,
+  loadOriginAddress,
   ORIGIN_ADDRESS,
   DEFAULT_PACKAGE
 };
