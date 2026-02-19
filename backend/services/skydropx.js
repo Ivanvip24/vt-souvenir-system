@@ -25,19 +25,19 @@ const MAX_NAME_LENGTH = 30;
 const MAX_STREET_LENGTH = 35;
 const MAX_REFERENCE_LENGTH = 30;
 
-// Fixed origin address (VT Anunciando office)
+// Fixed origin address (AXKAN office)
 const ORIGIN_ADDRESS = {
   name: 'VT Anunciando',
   company: 'VT Anunciando',
-  street: 'Fray Juan de Torquemada',
-  number: '146',
-  neighborhood: 'Obrera',
+  street: 'Av. Morelos',
+  number: '26',
+  neighborhood: 'Artes Graficas',
   city: 'Cuauhtemoc',
   state: 'Ciudad de Mexico',
-  zip: '06800',
+  zip: '15830',
   phone: '5538253251',
   email: 'valenciaperezivan24@gmail.com',
-  reference: 'Zaguan blanco final pasillo'
+  reference: 'Interior 3'
 };
 
 // Default package dimensions

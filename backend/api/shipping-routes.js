@@ -1592,12 +1592,12 @@ router.get('/pickups/skydropx-test', async (req, res) => {
           address: {
             name: 'VT Anunciando',
             company: 'VT Anunciando',
-            street1: 'Fray Juan de Torquemada 146',
-            zip: '06800',
+            street1: 'Av. Morelos 26',
+            zip: '15830',
             country_code: 'MX',
             phone: '5538253251',
             email: 'valenciaperezivan24@gmail.com',
-            reference: 'Zaguan blanco final pasillo'
+            reference: 'Interior 3'
           },
           pickup_date: pickupDate,
           pickup_time_from: '09:00',
