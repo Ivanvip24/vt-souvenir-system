@@ -1157,13 +1157,15 @@ router.post('/labels/:labelId/refresh-tracking', async (req, res) => {
 // ========================================
 router.post('/refresh-pending-tracking', async (req, res) => {
   try {
-    // Get all labels without tracking numbers
+    // Get all labels that are stuck processing OR missing tracking/label data
     const labelsResult = await query(`
-      SELECT id, order_id, shipment_id, carrier
+      SELECT id, order_id, shipment_id, carrier, status, tracking_number, label_url
       FROM shipping_labels
-      WHERE tracking_number IS NULL AND shipment_id IS NOT NULL
+      WHERE shipment_id IS NOT NULL
+        AND (status = 'processing' OR tracking_number IS NULL OR label_url IS NULL)
+        AND status NOT IN ('cancelled')
       ORDER BY label_generated_at DESC
-      LIMIT 20
+      LIMIT 30
     `);
 
     if (labelsResult.rows.length === 0) {
@@ -1183,15 +1185,22 @@ router.post('/refresh-pending-tracking', async (req, res) => {
       try {
         const shipmentDetails = await skydropx.getShipment(label.shipment_id);
 
-        if (shipmentDetails.tracking_number) {
+        if (shipmentDetails.tracking_number || shipmentDetails.label_url) {
+          // Determine new status based on what data we got
+          const newStatus = shipmentDetails.label_url ? 'label_generated' : label.status;
+
           await query(`
             UPDATE shipping_labels
-            SET tracking_number = $1, tracking_url = $2, label_url = $3
-            WHERE id = $4
+            SET tracking_number = COALESCE($1, tracking_number),
+                tracking_url = COALESCE($2, tracking_url),
+                label_url = COALESCE($3, label_url),
+                status = $4
+            WHERE id = $5
           `, [
-            shipmentDetails.tracking_number,
-            shipmentDetails.tracking_url,
-            shipmentDetails.label_url,
+            shipmentDetails.tracking_number || null,
+            shipmentDetails.tracking_url || null,
+            shipmentDetails.label_url || null,
+            newStatus,
             label.id
           ]);
 
@@ -1200,6 +1209,7 @@ router.post('/refresh-pending-tracking', async (req, res) => {
             labelId: label.id,
             orderId: label.order_id,
             tracking_number: shipmentDetails.tracking_number,
+            label_url: shipmentDetails.label_url,
             status: 'updated'
           });
         } else {

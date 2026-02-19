@@ -18,7 +18,13 @@ const GUIAS_API_URL = window.location.hostname === 'localhost'
 /**
  * Initialize guías view
  */
-function initGuiasView() {
+async function initGuiasView() {
+  // Auto-refresh stuck "processing" labels from Skydropx on view load
+  try {
+    await fetch(`${GUIAS_API_URL}/refresh-pending-tracking`, { method: 'POST' });
+  } catch (err) {
+    // Silently continue - the main load will still work
+  }
   loadGuias();
 }
 
@@ -271,7 +277,34 @@ function clearGuiasSearch() {
 /**
  * Refresh guías
  */
-function refreshGuias() {
+async function refreshGuias() {
+  const btn = document.querySelector('#guias-view .btn-refresh, [onclick="refreshGuias()"]');
+  const originalText = btn ? btn.textContent : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '🔄 Actualizando pendientes...';
+  }
+
+  try {
+    // First, refresh any stuck "processing" labels from Skydropx
+    const response = await fetch(`${API_BASE}/api/shipping/refresh-pending-tracking`, {
+      method: 'POST'
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.updated > 0) {
+        console.log(`✅ ${data.updated} etiquetas actualizadas desde Skydropx`);
+      }
+    }
+  } catch (err) {
+    console.warn('Could not refresh pending tracking:', err);
+  }
+
+  // Then reload the guías list
+  if (btn) {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
   loadGuias(guiasCurrentPage);
 }
 
