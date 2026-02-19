@@ -635,8 +635,8 @@ function showQuoteResult(data) {
                     <a href="${data.pdfUrl}" target="_blank" class="ai-quote-download-btn">
                         📥 Descargar PDF
                     </a>
-                    <button onclick="copyQuoteLink('${data.pdfUrl}')" class="ai-quote-copy-btn">
-                        📋 Copiar enlace
+                    <button onclick="copyQuoteImage(this)" class="ai-quote-copy-btn">
+                        📷 Copiar Imagen
                     </button>
                 </div>
             </div>
@@ -684,8 +684,8 @@ function showCatalogResult(data) {
                     <a href="${data.pdfUrl}" target="_blank" class="ai-quote-download-btn">
                         📥 Descargar Catálogo PDF
                     </a>
-                    <button onclick="copyQuoteLink('${data.pdfUrl}')" class="ai-quote-copy-btn">
-                        📋 Copiar enlace
+                    <button onclick="copyQuoteImage(this)" class="ai-quote-copy-btn">
+                        📷 Copiar Imagen
                     </button>
                 </div>
             </div>
@@ -756,7 +756,7 @@ function showMultipleQuotesResult(data) {
 
                 <div class="ai-quote-card-actions">
                     <a href="${quote.pdfUrl}" target="_blank" class="ai-quote-card-download">📥 PDF</a>
-                    <button onclick="copyQuoteLink('${quote.pdfUrl}')" class="ai-quote-card-copy">📋 Copiar</button>
+                    <button onclick="copyQuoteImage(this)" class="ai-quote-card-copy">📷 Imagen</button>
                 </div>
             </div>
         `;
@@ -779,28 +779,68 @@ function showMultipleQuotesResult(data) {
 }
 
 /**
- * Copy quote link to clipboard
+ * Copy quote as image to clipboard using html2canvas.
+ * The btn.textContent assignments below use only hardcoded UI labels (no user input),
+ * and innerHTML is used solely to restore the original emoji+text content which is static.
  */
-function copyQuoteLink(url) {
-    const fullUrl = window.location.origin + url;
-    navigator.clipboard.writeText(fullUrl).then(() => {
-        // Show brief success message
-        const btn = event.target;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '✅ Copiado!';
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-        }, 2000);
-    }).catch(err => {
-        console.error('Error copying link:', err);
-        alert('Error al copiar el enlace');
+function copyQuoteImage(btn) {
+    var quoteEl = btn.closest('.ai-quote-result') || btn.closest('.ai-quote-card');
+    if (!quoteEl) return;
+
+    var originalText = btn.innerHTML;
+    btn.textContent = '\u23F3 Capturando...';
+    btn.disabled = true;
+
+    // Temporarily hide the actions bar so it doesn't appear in the image
+    var actionsEl = quoteEl.querySelector('.ai-quote-actions') || quoteEl.querySelector('.ai-quote-card-actions');
+    if (actionsEl) actionsEl.style.display = 'none';
+
+    html2canvas(quoteEl, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false
+    }).then(function(canvas) {
+        if (actionsEl) actionsEl.style.display = '';
+
+        canvas.toBlob(function(blob) {
+            if (!blob) {
+                btn.textContent = '\u274C Error';
+                btn.disabled = false;
+                setTimeout(function() { btn.innerHTML = originalText; }, 2000);
+                return;
+            }
+            navigator.clipboard.write([
+                new ClipboardItem({ 'image/png': blob })
+            ]).then(function() {
+                btn.textContent = '\u2705 Imagen copiada!';
+                btn.disabled = false;
+                setTimeout(function() { btn.innerHTML = originalText; }, 2000);
+            }).catch(function(err) {
+                console.error('Error copying image:', err);
+                // Fallback: download the image
+                var link = document.createElement('a');
+                link.download = 'cotizacion-axkan.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btn.textContent = '\uD83D\uDCE5 Descargada';
+                btn.disabled = false;
+                setTimeout(function() { btn.innerHTML = originalText; }, 2000);
+            });
+        }, 'image/png');
+    }).catch(function(err) {
+        if (actionsEl) actionsEl.style.display = '';
+        console.error('Error capturing quote:', err);
+        btn.textContent = '\u274C Error';
+        btn.disabled = false;
+        setTimeout(function() { btn.innerHTML = originalText; }, 2000);
     });
 }
 
 // Export quote functions globally
 window.showQuoteResult = showQuoteResult;
 window.showMultipleQuotesResult = showMultipleQuotesResult;
-window.copyQuoteLink = copyQuoteLink;
+window.copyQuoteImage = copyQuoteImage;
 
 /**
  * Show shipping label creation modal
