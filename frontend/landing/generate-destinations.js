@@ -780,17 +780,21 @@ function generateIndex() {
     const imgTags = uniqueImgs.map(url =>
       `<img src="${url}" alt="Souvenirs ${escapeAttr(d.name)} México - AXKAN" loading="lazy">`
     ).join('');
+    const arrows = count > 1 ? `
+              <button class="carousel-arr carousel-prev" aria-label="Anterior">&lsaquo;</button>
+              <button class="carousel-arr carousel-next" aria-label="Siguiente">&rsaquo;</button>
+              <span class="carousel-counter">1 / ${count}</span>` : '';
     return `
-          <a href="/souvenirs/${d.slug}" class="index-card" data-name="${escapeAttr(d.name)}" data-state="${escapeAttr(d.state)}" data-region="${d.region}" data-desc="${escapeAttr(d.description)}">
-            <div class="card-carousel" data-count="${count}">
-              <div class="card-strip">${imgTags}</div>
+          <div class="index-card" data-href="/souvenirs/${d.slug}" data-name="${escapeAttr(d.name)}" data-state="${escapeAttr(d.state)}" data-region="${d.region}" data-desc="${escapeAttr(d.description)}">
+            <div class="card-carousel" data-count="${count}" data-index="0">
+              <div class="card-strip">${imgTags}</div>${arrows}
             </div>
             <div class="index-card-text">
               <h2>${escapeHtml(d.name)}</h2>
               <span>${escapeHtml(d.state)}</span>
               <p>${escapeHtml(d.description).substring(0, 120)}...</p>
             </div>
-          </a>`;
+          </div>`;
   }).join('\n');
 
   return `<!DOCTYPE html>
@@ -891,12 +895,19 @@ function generateIndex() {
 
       /* Grid & Cards */
       .index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; padding: 24px 5% 60px; max-width: 1200px; margin: 0 auto; }
-      .index-card { display: block; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); transition: transform 0.3s, opacity 0.3s; text-decoration: none; color: inherit; }
+      .index-card { display: block; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); transition: transform 0.3s, opacity 0.3s; cursor: pointer; color: inherit; }
       .index-card:hover { transform: translateY(-4px); }
       .index-card.hidden { display: none; }
       .card-carousel { position: relative; overflow: hidden; aspect-ratio: 1; background: #f5f0eb; }
-      .card-strip { display: flex; height: 100%; will-change: transform; }
+      .card-strip { display: flex; height: 100%; will-change: transform; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
       .card-strip img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; }
+      .carousel-arr { position: absolute; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(255,255,255,0.85); color: #333; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.25s ease, background 0.2s; z-index: 3; box-shadow: 0 2px 8px rgba(0,0,0,0.15); line-height: 1; padding: 0 0 2px; }
+      .carousel-arr:hover { background: white; }
+      .carousel-prev { left: 8px; }
+      .carousel-next { right: 8px; }
+      .index-card:hover .carousel-arr { opacity: 1; }
+      .carousel-counter { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.55); color: white; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 12px; opacity: 0; transition: opacity 0.25s ease; z-index: 3; pointer-events: none; }
+      .index-card:hover .carousel-counter { opacity: 1; }
       .index-card-text { padding: 20px; }
       .index-card-text h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
       .index-card-text span { font-size: 13px; color: #888; }
@@ -1154,28 +1165,52 @@ ${cards}
           filterCards();
         });
       });
-      // Peek animation: small nudge when card enters viewport to hint more images
-      var carousels = document.querySelectorAll('.card-carousel');
-      var peekObserver = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (!entry.isIntersecting) return;
-          var carousel = entry.target;
-          var count = parseInt(carousel.dataset.count) || 1;
-          if (count <= 1) return;
-          var strip = carousel.querySelector('.card-strip');
+      // Carousel: arrow navigation + hover peek
+      var arrowClicked = false;
+      function goToSlide(carousel, idx) {
+        var count = parseInt(carousel.dataset.count) || 1;
+        if (idx < 0) idx = count - 1;
+        if (idx >= count) idx = 0;
+        carousel.dataset.index = idx;
+        carousel.querySelector('.card-strip').style.transform = 'translateX(-' + (idx * 100) + '%)';
+        var counter = carousel.querySelector('.carousel-counter');
+        if (counter) counter.textContent = (idx + 1) + ' / ' + count;
+      }
+      document.addEventListener('click', function(e) {
+        var arrow = e.target.closest('.carousel-arr');
+        if (!arrow) return;
+        e.preventDefault();
+        e.stopPropagation();
+        arrowClicked = true;
+        var carousel = arrow.closest('.card-carousel');
+        var dir = arrow.classList.contains('carousel-next') ? 1 : -1;
+        goToSlide(carousel, parseInt(carousel.dataset.index) + dir);
+        setTimeout(function() { arrowClicked = false; }, 50);
+      }, true);
+      // Hover peek: nudge 12% on first hover to hint more images
+      document.querySelectorAll('.card-carousel').forEach(function(carousel) {
+        var count = parseInt(carousel.dataset.count) || 1;
+        if (count <= 1) return;
+        var card = carousel.closest('.index-card');
+        card.addEventListener('mouseenter', function() {
           if (carousel.dataset.peeked) return;
           carousel.dataset.peeked = '1';
-          // Small peek: slide 15% to show next image edge, then bounce back
-          strip.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-          strip.style.transform = 'translateX(-15%)';
+          if (parseInt(carousel.dataset.index) !== 0) return;
+          var strip = carousel.querySelector('.card-strip');
+          strip.style.transform = 'translateX(-12%)';
           setTimeout(function() {
-            strip.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-            strip.style.transform = 'translateX(0)';
-          }, 700);
+            if (parseInt(carousel.dataset.index) === 0) {
+              strip.style.transform = 'translateX(0)';
+            }
+          }, 600);
         });
-      }, { threshold: 0.5 });
-      carousels.forEach(function(c) {
-        if (parseInt(c.dataset.count) > 1) peekObserver.observe(c);
+      });
+      // Card click → navigate (skip if arrow was clicked)
+      document.querySelectorAll('.index-card[data-href]').forEach(function(card) {
+        card.addEventListener('click', function() {
+          if (arrowClicked) return;
+          window.location.href = card.dataset.href;
+        });
       });
     })();
     </script>
