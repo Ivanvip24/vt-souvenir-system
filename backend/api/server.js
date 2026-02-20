@@ -661,17 +661,26 @@ app.get('/api/orders/calendar', async (req, res) => {
 // CALENDAR REMINDERS API
 // =====================================================
 
+// Helper: extract YYYY-MM-DD from a date value (handles Date objects, ISO strings, etc.)
+function toDateString(val) {
+  if (!val) return null;
+  const str = typeof val === 'string' ? val : val.toISOString();
+  return str.split('T')[0];
+}
+
 // Helper: compute reminder occurrences in a date range
 function computeOccurrences(reminder, startDate, endDate) {
   const occurrences = [];
   const start = new Date(startDate + 'T12:00:00');
   const end = new Date(endDate + 'T12:00:00');
-  const reminderStart = new Date(reminder.start_date + 'T12:00:00');
-  const reminderEnd = reminder.end_date ? new Date(reminder.end_date + 'T12:00:00') : null;
+  const reminderStartStr = toDateString(reminder.start_date);
+  const reminderEndStr = reminder.end_date ? toDateString(reminder.end_date) : null;
+  const reminderStart = new Date(reminderStartStr + 'T12:00:00');
+  const reminderEnd = reminderEndStr ? new Date(reminderEndStr + 'T12:00:00') : null;
 
   if (reminder.recurrence_type === 'once') {
     if (reminderStart >= start && reminderStart <= end) {
-      occurrences.push(reminder.start_date);
+      occurrences.push(reminderStartStr);
     }
     return occurrences;
   }
