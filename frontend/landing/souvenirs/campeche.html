@@ -151,6 +151,15 @@
       .surprise-icon { font-family: var(--font-display); font-size: 3.5rem; font-weight: 900; color: var(--rosa-mexicano); line-height: 1; user-select: none; }
       .surprise-label { position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 700; color: var(--rosa-mexicano); white-space: nowrap; font-family: var(--font-body); }
       .bubble-grid { padding-bottom: 36px; }
+
+      /* Lightbox */
+      .lightbox-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; cursor: zoom-out; }
+      .lightbox-overlay.active { display: flex; }
+      .lightbox-img { max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 12px; animation: lbFadeIn 0.25s ease; }
+      .lightbox-close { position: absolute; top: 18px; right: 24px; font-size: 36px; color: white; cursor: pointer; background: none; border: none; line-height: 1; font-weight: 300; z-index: 10000; }
+      .lightbox-close:hover { color: var(--rosa-mexicano); }
+      @keyframes lbFadeIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+
       @media (max-width: 600px) {
         .bubble-grid { gap: 12px; }
         .bubble-lg { max-width: 160px; }
@@ -326,32 +335,60 @@
     <footer class="dest-footer">
       <p>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</p>
     </footer>
+    <!-- Lightbox -->
+    <div class="lightbox-overlay" id="lightbox">
+      <button class="lightbox-close" id="lightboxClose">&times;</button>
+      <img class="lightbox-img" id="lightboxImg" src="" alt="Diseño completo">
+    </div>
+
     <script>
     (function() {
+      // Surprise button
       var gallery = document.querySelector('.dest-gallery');
       if (!gallery) return;
       var images = JSON.parse(gallery.dataset.images || '[]');
       var bubble = document.getElementById('surpriseBubble');
-      var img = document.getElementById('surpriseImg');
-      if (!bubble || !img || images.length < 2) return;
-      var lastIdx = -1;
-      bubble.addEventListener('click', function() {
-        // Pick random image different from last
-        var idx;
-        do { idx = Math.floor(Math.random() * images.length); } while (idx === lastIdx && images.length > 1);
-        lastIdx = idx;
-        // If already flipped, flip back first then swap
-        if (bubble.classList.contains('flipped')) {
-          bubble.classList.remove('flipped');
-          setTimeout(function() {
-            img.src = images[idx];
-            setTimeout(function() { bubble.classList.add('flipped'); }, 50);
-          }, 350);
-        } else {
-          img.src = images[idx];
-          bubble.classList.add('flipped');
-        }
+      var surpriseImg = document.getElementById('surpriseImg');
+      if (bubble && surpriseImg && images.length >= 2) {
+        var lastIdx = -1;
+        bubble.addEventListener('click', function() {
+          var idx;
+          do { idx = Math.floor(Math.random() * images.length); } while (idx === lastIdx && images.length > 1);
+          lastIdx = idx;
+          if (bubble.classList.contains('flipped')) {
+            bubble.classList.remove('flipped');
+            setTimeout(function() {
+              surpriseImg.src = images[idx];
+              setTimeout(function() { bubble.classList.add('flipped'); }, 50);
+            }, 350);
+          } else {
+            surpriseImg.src = images[idx];
+            bubble.classList.add('flipped');
+          }
+        });
+      }
+
+      // Lightbox for design bubbles
+      var overlay = document.getElementById('lightbox');
+      var lbImg = document.getElementById('lightboxImg');
+      var lbClose = document.getElementById('lightboxClose');
+      document.querySelectorAll('.design-bubble:not(.surprise-bubble)').forEach(function(b) {
+        b.addEventListener('click', function() {
+          var img = b.querySelector('img');
+          if (img && img.src) {
+            lbImg.src = img.src;
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+          }
+        });
       });
+      function closeLightbox() {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+      overlay.addEventListener('click', closeLightbox);
+      lbClose.addEventListener('click', function(e) { e.stopPropagation(); closeLightbox(); });
+      document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLightbox(); });
     })();
     </script>
 </body>
