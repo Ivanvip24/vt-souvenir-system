@@ -279,6 +279,47 @@ CREATE TABLE IF NOT EXISTS analytics_cache (
 CREATE INDEX idx_analytics_cache_metric ON analytics_cache(metric_name, period_date);
 
 -- =====================================================
+-- WHATSAPP CONVERSATIONS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS whatsapp_conversations (
+  id SERIAL PRIMARY KEY,
+  wa_id VARCHAR(50) UNIQUE NOT NULL,
+  client_name VARCHAR(255),
+  client_id INTEGER REFERENCES clients(id),
+  status VARCHAR(30) DEFAULT 'active',
+  intent VARCHAR(50),
+  ai_summary TEXT,
+  unread_count INTEGER DEFAULT 0,
+  last_message_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_wa_conv_wa_id ON whatsapp_conversations(wa_id);
+CREATE INDEX IF NOT EXISTS idx_wa_conv_status ON whatsapp_conversations(status);
+CREATE INDEX IF NOT EXISTS idx_wa_conv_client ON whatsapp_conversations(client_id);
+
+-- =====================================================
+-- WHATSAPP MESSAGES TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS whatsapp_messages (
+  id SERIAL PRIMARY KEY,
+  conversation_id INTEGER REFERENCES whatsapp_conversations(id) ON DELETE CASCADE,
+  wa_message_id VARCHAR(100) UNIQUE,
+  direction VARCHAR(10) NOT NULL,
+  sender VARCHAR(10) NOT NULL,
+  message_type VARCHAR(20) DEFAULT 'text',
+  content TEXT,
+  media_url TEXT,
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_wa_msg_conv ON whatsapp_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_wa_msg_direction ON whatsapp_messages(direction);
+CREATE INDEX IF NOT EXISTS idx_wa_msg_created ON whatsapp_messages(created_at);
+
+-- =====================================================
 -- VIEWS FOR COMMON QUERIES
 -- =====================================================
 

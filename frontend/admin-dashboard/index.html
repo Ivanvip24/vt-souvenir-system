@@ -209,6 +209,12 @@
                     <span>Clients</span>
                 </button>
 
+                <button class="nav-item" data-view="whatsapp" tabindex="0">
+                    <i data-lucide="message-circle" class="nav-icon"></i>
+                    <span>WhatsApp</span>
+                    <span id="wa-unread-badge" style="display:none;background:#e72a88;color:#fff;border-radius:50%;min-width:20px;height:20px;font-size:11px;display:inline-flex;align-items:center;justify-content:center;margin-left:auto;padding:0 5px;"></span>
+                </button>
+
                 <div class="nav-separator"></div>
 
                 <!-- 7. Configuración (Employees + Discounts + Settings) -->
@@ -1746,6 +1752,11 @@
                 </div>
             </section>
 
+            <!-- WhatsApp Conversations View -->
+            <section id="whatsapp-view" class="view">
+                <div id="whatsapp-container"></div>
+            </section>
+
             <!-- Combined Employee Portal View -->
             <section id="employee-portal-view" class="view">
                 <div class="view-header">
@@ -2821,6 +2832,7 @@
     <script src="ai-assistant.js"></script>
     <script src="marketplace.js"></script>
     <script src="leads.js"></script>
+    <script src="whatsapp.js"></script>
     <script src="employees.js"></script>
     <script src="tasks.js?v=2"></script>
     <script src="command-palette.js"></script>

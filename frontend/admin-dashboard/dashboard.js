@@ -183,6 +183,13 @@ function switchView(viewName) {
   if (viewName === 'leads' && typeof loadLeads === 'function') {
     loadLeads();
   }
+
+  // Initialize WhatsApp conversations when switching to whatsapp view
+  if (viewName === 'whatsapp' && typeof loadWhatsAppConversations === 'function') {
+    loadWhatsAppConversations();
+  } else if (viewName !== 'whatsapp' && typeof stopWhatsAppPolling === 'function') {
+    stopWhatsAppPolling();
+  }
 }
 
 // Switch between tabs in the Employee Portal
