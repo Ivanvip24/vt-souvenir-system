@@ -1154,32 +1154,29 @@ ${cards}
           filterCards();
         });
       });
-      // Scroll-driven carousel animation
+      // Peek animation: small nudge when card enters viewport to hint more images
       var carousels = document.querySelectorAll('.card-carousel');
-      var ticking = false;
-      function animateCarousels() {
-        var vh = window.innerHeight;
-        for (var i = 0; i < carousels.length; i++) {
-          var carousel = carousels[i];
+      var peekObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (!entry.isIntersecting) return;
+          var carousel = entry.target;
           var count = parseInt(carousel.dataset.count) || 1;
-          if (count <= 1) continue;
-          var rect = carousel.getBoundingClientRect();
-          var progress = (vh - rect.top) / (vh + rect.height);
-          progress = Math.max(0, Math.min(1, progress));
-          var shift = progress * (count - 1) * 100 / count;
-          carousel.querySelector('.card-strip').style.transform = 'translateX(-' + shift + '%)';
-        }
-      }
-      window.addEventListener('scroll', function() {
-        if (!ticking) {
-          requestAnimationFrame(function() {
-            animateCarousels();
-            ticking = false;
-          });
-          ticking = true;
-        }
-      }, { passive: true });
-      animateCarousels();
+          if (count <= 1) return;
+          var strip = carousel.querySelector('.card-strip');
+          if (carousel.dataset.peeked) return;
+          carousel.dataset.peeked = '1';
+          // Small peek: slide 15% to show next image edge, then bounce back
+          strip.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+          strip.style.transform = 'translateX(-15%)';
+          setTimeout(function() {
+            strip.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            strip.style.transform = 'translateX(0)';
+          }, 700);
+        });
+      }, { threshold: 0.5 });
+      carousels.forEach(function(c) {
+        if (parseInt(c.dataset.count) > 1) peekObserver.observe(c);
+      });
     })();
     </script>
 
