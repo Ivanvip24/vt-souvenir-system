@@ -320,6 +320,46 @@ CREATE INDEX IF NOT EXISTS idx_wa_msg_direction ON whatsapp_messages(direction);
 CREATE INDEX IF NOT EXISTS idx_wa_msg_created ON whatsapp_messages(created_at);
 
 -- =====================================================
+-- CALENDAR REMINDERS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS calendar_reminders (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  category VARCHAR(50) DEFAULT 'general',
+  amount DECIMAL(10, 2),
+  color VARCHAR(20) DEFAULT '#e72a88',
+  icon VARCHAR(10) DEFAULT '🔔',
+
+  -- Recurrence
+  recurrence_type VARCHAR(20) NOT NULL DEFAULT 'once',
+  start_date DATE NOT NULL,
+  end_date DATE,
+
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_reminders_start ON calendar_reminders(start_date);
+CREATE INDEX IF NOT EXISTS idx_reminders_category ON calendar_reminders(category);
+CREATE INDEX IF NOT EXISTS idx_reminders_active ON calendar_reminders(is_active);
+
+-- =====================================================
+-- REMINDER COMPLETIONS TABLE (track which occurrences were completed)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS reminder_completions (
+  id SERIAL PRIMARY KEY,
+  reminder_id INTEGER REFERENCES calendar_reminders(id) ON DELETE CASCADE,
+  occurrence_date DATE NOT NULL,
+  completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  notes TEXT,
+  UNIQUE(reminder_id, occurrence_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_reminder_comp_date ON reminder_completions(occurrence_date);
+
+-- =====================================================
 -- VIEWS FOR COMMON QUERIES
 -- =====================================================
 

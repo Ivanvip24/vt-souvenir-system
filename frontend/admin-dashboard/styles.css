@@ -3734,6 +3734,125 @@ textarea:disabled {
   padding-left: 2px;
 }
 
+/* Calendar Reminder Indicators (in cell) */
+.calendar-cell.has-reminders {
+  border-left: 3px solid #e72a88;
+}
+
+.calendar-reminders {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.calendar-reminder-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: color-mix(in srgb, var(--reminder-color, #e72a88) 12%, white);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  line-height: 1.4;
+  border-left: 2px solid var(--reminder-color, #e72a88);
+}
+
+.calendar-reminder-badge.completed {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.reminder-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.reminder-amount {
+  font-weight: 700;
+  font-size: 10px;
+  color: var(--gray-700);
+}
+
+/* Reminder Detail Panel Styles */
+.day-reminders-section {
+  margin-bottom: 16px;
+}
+
+.reminders-section-title,
+.orders-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray-500);
+  margin: 0 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.day-reminder-item {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+  border-left: 4px solid #e72a88;
+}
+
+.day-reminder-item.completed {
+  opacity: 0.6;
+  background: var(--gray-50);
+  border-left-color: #22c55e;
+}
+
+.reminder-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reminder-item-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.reminder-item-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--gray-800);
+  flex: 1;
+}
+
+.btn-reminder-toggle {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.btn-reminder-toggle:hover {
+  background: var(--gray-100);
+}
+
+.reminder-item-desc {
+  font-size: 13px;
+  color: var(--gray-600);
+  margin: 6px 0 0 28px;
+  line-height: 1.4;
+}
+
+.reminder-item-amount {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 8px 0 0 28px;
+}
+
 /* Calendar Stats */
 .calendar-stats {
   display: grid;

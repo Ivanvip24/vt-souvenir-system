@@ -657,6 +657,197 @@ app.get('/api/orders/calendar', async (req, res) => {
   }
 });
 
+// =====================================================
+// CALENDAR REMINDERS API
+// =====================================================
+
+// Helper: compute reminder occurrences in a date range
+function computeOccurrences(reminder, startDate, endDate) {
+  const occurrences = [];
+  const start = new Date(startDate + 'T12:00:00');
+  const end = new Date(endDate + 'T12:00:00');
+  const reminderStart = new Date(reminder.start_date + 'T12:00:00');
+  const reminderEnd = reminder.end_date ? new Date(reminder.end_date + 'T12:00:00') : null;
+
+  if (reminder.recurrence_type === 'once') {
+    if (reminderStart >= start && reminderStart <= end) {
+      occurrences.push(reminder.start_date);
+    }
+    return occurrences;
+  }
+
+  let intervalDays;
+  if (reminder.recurrence_type === 'weekly') intervalDays = 7;
+  else if (reminder.recurrence_type === 'biweekly') intervalDays = 14;
+  else if (reminder.recurrence_type === 'monthly') intervalDays = null; // handled separately
+  else return occurrences;
+
+  if (intervalDays) {
+    // For weekly/biweekly: find first occurrence >= start of range
+    const daysDiff = Math.floor((start - reminderStart) / (1000 * 60 * 60 * 24));
+    let firstOffset = 0;
+    if (daysDiff > 0) {
+      firstOffset = Math.ceil(daysDiff / intervalDays) * intervalDays;
+    }
+
+    let current = new Date(reminderStart);
+    current.setDate(current.getDate() + firstOffset);
+
+    while (current <= end) {
+      if (current >= start && (!reminderEnd || current <= reminderEnd)) {
+        const y = current.getFullYear();
+        const m = String(current.getMonth() + 1).padStart(2, '0');
+        const d = String(current.getDate()).padStart(2, '0');
+        occurrences.push(`${y}-${m}-${d}`);
+      }
+      current.setDate(current.getDate() + intervalDays);
+    }
+  } else {
+    // Monthly: same day each month
+    const dayOfMonth = reminderStart.getDate();
+    let current = new Date(start.getFullYear(), start.getMonth(), dayOfMonth, 12);
+    if (current < start) current.setMonth(current.getMonth() + 1);
+
+    while (current <= end) {
+      if (current >= reminderStart && (!reminderEnd || current <= reminderEnd)) {
+        const y = current.getFullYear();
+        const m = String(current.getMonth() + 1).padStart(2, '0');
+        const d = String(current.getDate()).padStart(2, '0');
+        occurrences.push(`${y}-${m}-${d}`);
+      }
+      current.setMonth(current.getMonth() + 1);
+    }
+  }
+
+  return occurrences;
+}
+
+// Get reminders for a date range (computes recurring occurrences)
+app.get('/api/reminders', async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    const startDate = start || new Date().toISOString().split('T')[0];
+    const endDate = end || new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0];
+
+    // Get all active reminders that could have occurrences in range
+    const result = await query(`
+      SELECT r.*,
+        COALESCE(
+          json_agg(json_build_object('date', rc.occurrence_date, 'notes', rc.notes))
+          FILTER (WHERE rc.id IS NOT NULL), '[]'
+        ) as completions
+      FROM calendar_reminders r
+      LEFT JOIN reminder_completions rc ON r.id = rc.reminder_id
+        AND rc.occurrence_date >= $1 AND rc.occurrence_date <= $2
+      WHERE r.is_active = true
+        AND r.start_date <= $2
+        AND (r.end_date IS NULL OR r.end_date >= $1)
+      GROUP BY r.id
+      ORDER BY r.start_date ASC
+    `, [startDate, endDate]);
+
+    // Compute occurrences for each reminder
+    const reminders = [];
+    for (const row of result.rows) {
+      const occurrences = computeOccurrences(row, startDate, endDate);
+      const completedDates = (row.completions || [])
+        .filter(c => c.date)
+        .map(c => c.date.split ? c.date.split('T')[0] : c.date);
+
+      for (const date of occurrences) {
+        reminders.push({
+          id: row.id,
+          title: row.title,
+          description: row.description,
+          category: row.category,
+          amount: parseFloat(row.amount) || 0,
+          color: row.color,
+          icon: row.icon,
+          recurrenceType: row.recurrence_type,
+          date: date,
+          completed: completedDates.includes(date)
+        });
+      }
+    }
+
+    res.json({ success: true, data: reminders });
+  } catch (error) {
+    console.error('Reminders fetch error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Create a new reminder
+app.post('/api/reminders', async (req, res) => {
+  try {
+    const { title, description, category, amount, color, icon, recurrenceType, startDate, endDate } = req.body;
+
+    const result = await query(`
+      INSERT INTO calendar_reminders (title, description, category, amount, color, icon, recurrence_type, start_date, end_date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `, [
+      title, description || null, category || 'general',
+      amount || null, color || '#e72a88', icon || '🔔',
+      recurrenceType || 'once', startDate, endDate || null
+    ]);
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error('Reminder create error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Mark a reminder occurrence as completed
+app.post('/api/reminders/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date, notes } = req.body;
+
+    const result = await query(`
+      INSERT INTO reminder_completions (reminder_id, occurrence_date, notes)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (reminder_id, occurrence_date) DO UPDATE SET notes = $3, completed_at = CURRENT_TIMESTAMP
+      RETURNING *
+    `, [id, date, notes || null]);
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error('Reminder complete error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Uncomplete a reminder occurrence
+app.delete('/api/reminders/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date } = req.body;
+
+    await query(`
+      DELETE FROM reminder_completions WHERE reminder_id = $1 AND occurrence_date = $2
+    `, [id, date]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Reminder uncomplete error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Delete a reminder
+app.delete('/api/reminders/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await query('DELETE FROM calendar_reminders WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Reminder delete error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Get capacity info for a date range
 app.get('/api/orders/capacity', async (req, res) => {
   try {
@@ -5235,7 +5426,8 @@ async function startServer() {
       console.log('  POST /api/test/email');
       console.log('  📦 /api/inventory/* (Materials, Alerts, BOM, Forecasting)');
       console.log('  💰 /api/prices/* (Price Tracking, Trends, Margins, Insights)');
-      console.log('  🔧 /api/bom/* (Bill of Materials, Components, Cost Calculations)\n');
+      console.log('  🔧 /api/bom/* (Bill of Materials, Components, Cost Calculations)');
+      console.log('  🔔 /api/reminders (Calendar Reminders - GET, POST, Complete, Delete)\n');
     });
 
   } catch (error) {

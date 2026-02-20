@@ -16,6 +16,7 @@ let calendarState = {
   currentYear: new Date().getFullYear(),
   orders: [],
   capacityByDay: {}, // { 'YYYY-MM-DD': { pieces: number, orders: [] } }
+  remindersByDay: {}, // { 'YYYY-MM-DD': [{ id, title, description, amount, color, icon, completed }] }
 };
 
 /**
@@ -58,9 +59,13 @@ async function loadCalendarData() {
     if (result.success) {
       calendarState.orders = result.data || [];
       calculateCapacityByDay();
-      renderCalendar();
-      updateCalendarStats();
     }
+
+    // Also load reminders
+    await loadCalendarReminders(formatDateISO(startDate), formatDateISO(endDate));
+
+    renderCalendar();
+    updateCalendarStats();
   } catch (error) {
     console.error('Error loading calendar data:', error);
     // Use existing orders from state if API fails
@@ -70,6 +75,34 @@ async function loadCalendarData() {
       renderCalendar();
       updateCalendarStats();
     }
+  }
+}
+
+/**
+ * Load reminders for the current calendar view
+ */
+async function loadCalendarReminders(startDate, endDate) {
+  try {
+    const response = await fetch(`${API_BASE}/reminders?start=${startDate}&end=${endDate}`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) return;
+
+    const result = await response.json();
+    calendarState.remindersByDay = {};
+
+    if (result.success && result.data) {
+      for (const reminder of result.data) {
+        const dateKey = reminder.date;
+        if (!calendarState.remindersByDay[dateKey]) {
+          calendarState.remindersByDay[dateKey] = [];
+        }
+        calendarState.remindersByDay[dateKey].push(reminder);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading reminders:', error);
   }
 }
 
@@ -180,9 +213,11 @@ function renderCalendar() {
  */
 function renderDayCell(day, dateKey, isOtherMonth) {
   const dayData = calendarState.capacityByDay[dateKey] || { pieces: 0, orders: [] };
+  const dayReminders = calendarState.remindersByDay[dateKey] || [];
   const capacityPercent = Math.round((dayData.pieces / CALENDAR_CONFIG.dailyCapacity) * 100);
   const isWeekend = isWeekendDay(dateKey);
   const isToday = dateKey === formatDateISO(new Date());
+  const hasReminders = dayReminders.length > 0;
 
   // Determine capacity class
   let capacityClass = 'capacity-low';
@@ -192,6 +227,24 @@ function renderDayCell(day, dateKey, isOtherMonth) {
     capacityClass = 'capacity-high';
   } else if (capacityPercent >= 50) {
     capacityClass = 'capacity-medium';
+  }
+
+  // Build reminder badges HTML
+  let reminderHtml = '';
+  if (hasReminders) {
+    const allCompleted = dayReminders.every(r => r.completed);
+    reminderHtml = `<div class="calendar-reminders ${allCompleted ? 'all-completed' : ''}">`;
+    for (const reminder of dayReminders) {
+      const totalAmount = reminder.amount ? `$${reminder.amount.toLocaleString()}` : '';
+      reminderHtml += `
+        <div class="calendar-reminder-badge ${reminder.completed ? 'completed' : ''}"
+             style="--reminder-color: ${reminder.color}"
+             title="${reminder.title}${totalAmount ? ' - ' + totalAmount : ''}">
+          <span class="reminder-icon">${reminder.icon}</span>
+          ${totalAmount ? `<span class="reminder-amount">${totalAmount}</span>` : ''}
+        </div>`;
+    }
+    reminderHtml += '</div>';
   }
 
   // Build order dots HTML
@@ -210,13 +263,14 @@ function renderDayCell(day, dateKey, isOtherMonth) {
   }
 
   return `
-    <div class="calendar-cell ${isOtherMonth ? 'other-month' : ''} ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''} ${capacityClass}"
+    <div class="calendar-cell ${isOtherMonth ? 'other-month' : ''} ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''} ${hasReminders ? 'has-reminders' : ''} ${capacityClass}"
          onclick="showDayDetail('${dateKey}')"
          data-date="${dateKey}">
       <div class="cell-header">
         <span class="day-number">${day}</span>
         ${dayData.orders.length > 0 ? `<span class="order-count">${dayData.orders.length}</span>` : ''}
       </div>
+      ${reminderHtml}
       ${dayData.pieces > 0 ? `
         <div class="capacity-indicator">
           <div class="capacity-bar">
@@ -324,6 +378,7 @@ function goToToday() {
 function showDayDetail(dateKey) {
   const panel = document.getElementById('day-detail-panel');
   const dayData = calendarState.capacityByDay[dateKey] || { pieces: 0, orders: [] };
+  const dayReminders = calendarState.remindersByDay[dateKey] || [];
 
   // Format date for display
   const date = new Date(dateKey + 'T12:00:00');
@@ -352,38 +407,174 @@ function showDayDetail(dateKey) {
   document.getElementById('day-pieces-total').textContent = CALENDAR_CONFIG.dailyCapacity.toLocaleString();
   document.getElementById('day-capacity-percent').textContent = `${capacityPercent}%`;
 
-  // Render orders list
+  // Build content using safe DOM construction
   const ordersList = document.getElementById('day-orders-list');
+  ordersList.textContent = ''; // Clear safely
 
-  if (dayData.orders.length === 0) {
-    ordersList.innerHTML = `
-      <div class="no-orders">
-        <span style="font-size: 32px;">📅</span>
-        <p>No hay pedidos programados para este día</p>
-      </div>
-    `;
-  } else {
-    ordersList.innerHTML = dayData.orders.map(order => `
-      <div class="day-order-item" onclick="window.openOrderFromCalendar('${order.id}')" style="cursor: pointer;">
-        <div class="order-item-header">
-          <span class="order-number">${order.orderNumber}</span>
-          <span class="order-status status-${order.status}">${getStatusLabel(order.status)}</span>
-        </div>
-        <div class="order-item-body">
-          <span class="client-name">${order.clientName}</span>
-          <span class="pieces-count">${order.pieces.toLocaleString()} piezas</span>
-        </div>
-        ${order.eventDate ? `
-          <div class="order-event-date">
-            <span>Evento: ${formatDateDisplay(order.eventDate)}</span>
-          </div>
-        ` : ''}
-      </div>
-    `).join('');
+  // Render reminders first (if any)
+  if (dayReminders.length > 0) {
+    const section = document.createElement('div');
+    section.className = 'day-reminders-section';
+
+    const sectionTitle = document.createElement('h4');
+    sectionTitle.className = 'reminders-section-title';
+    sectionTitle.textContent = 'Recordatorios';
+    section.appendChild(sectionTitle);
+
+    for (const reminder of dayReminders) {
+      const item = document.createElement('div');
+      item.className = 'day-reminder-item' + (reminder.completed ? ' completed' : '');
+      item.dataset.reminderId = reminder.id;
+      item.dataset.date = dateKey;
+
+      const header = document.createElement('div');
+      header.className = 'reminder-item-header';
+
+      const icon = document.createElement('span');
+      icon.className = 'reminder-item-icon';
+      icon.style.color = reminder.color;
+      icon.textContent = reminder.icon;
+      header.appendChild(icon);
+
+      const title = document.createElement('span');
+      title.className = 'reminder-item-title';
+      title.textContent = reminder.title;
+      header.appendChild(title);
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'btn-reminder-toggle' + (reminder.completed ? ' is-completed' : '');
+      toggleBtn.textContent = reminder.completed ? '\u2705' : '\u2B1C';
+      toggleBtn.title = reminder.completed ? 'Marcar pendiente' : 'Marcar completado';
+      toggleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleReminderComplete(reminder.id, dateKey, !reminder.completed);
+      });
+      header.appendChild(toggleBtn);
+      item.appendChild(header);
+
+      if (reminder.description) {
+        const desc = document.createElement('p');
+        desc.className = 'reminder-item-desc';
+        desc.textContent = reminder.description;
+        item.appendChild(desc);
+      }
+
+      if (reminder.amount) {
+        const amount = document.createElement('span');
+        amount.className = 'reminder-item-amount';
+        amount.style.color = reminder.color;
+        amount.textContent = '$' + reminder.amount.toLocaleString() + ' MXN';
+        item.appendChild(amount);
+      }
+
+      section.appendChild(item);
+    }
+    ordersList.appendChild(section);
+  }
+
+  // Render orders
+  if (dayData.orders.length > 0) {
+    if (dayReminders.length > 0) {
+      const ordersTitle = document.createElement('h4');
+      ordersTitle.className = 'orders-section-title';
+      ordersTitle.textContent = 'Pedidos';
+      ordersList.appendChild(ordersTitle);
+    }
+
+    for (const order of dayData.orders) {
+      const item = document.createElement('div');
+      item.className = 'day-order-item';
+      item.style.cursor = 'pointer';
+      item.addEventListener('click', function() {
+        window.openOrderFromCalendar(order.id);
+      });
+
+      const hdr = document.createElement('div');
+      hdr.className = 'order-item-header';
+      const num = document.createElement('span');
+      num.className = 'order-number';
+      num.textContent = order.orderNumber;
+      hdr.appendChild(num);
+      const stat = document.createElement('span');
+      stat.className = 'order-status status-' + order.status;
+      stat.textContent = getStatusLabel(order.status);
+      hdr.appendChild(stat);
+      item.appendChild(hdr);
+
+      const body = document.createElement('div');
+      body.className = 'order-item-body';
+      const client = document.createElement('span');
+      client.className = 'client-name';
+      client.textContent = order.clientName;
+      body.appendChild(client);
+      const pieces = document.createElement('span');
+      pieces.className = 'pieces-count';
+      pieces.textContent = order.pieces.toLocaleString() + ' piezas';
+      body.appendChild(pieces);
+      item.appendChild(body);
+
+      if (order.eventDate) {
+        const evt = document.createElement('div');
+        evt.className = 'order-event-date';
+        const evtSpan = document.createElement('span');
+        evtSpan.textContent = 'Evento: ' + formatDateDisplay(order.eventDate);
+        evt.appendChild(evtSpan);
+        item.appendChild(evt);
+      }
+
+      ordersList.appendChild(item);
+    }
+  }
+
+  if (dayData.orders.length === 0 && dayReminders.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'no-orders';
+    const emptyIcon = document.createElement('span');
+    emptyIcon.style.fontSize = '32px';
+    emptyIcon.textContent = '\uD83D\uDCC5';
+    empty.appendChild(emptyIcon);
+    const emptyText = document.createElement('p');
+    emptyText.textContent = 'No hay pedidos ni recordatorios para este d\u00eda';
+    empty.appendChild(emptyText);
+    ordersList.appendChild(empty);
   }
 
   // Show panel
   panel.classList.remove('hidden');
+}
+
+/**
+ * Toggle reminder completion status
+ */
+async function toggleReminderComplete(reminderId, dateKey, markComplete) {
+  try {
+    if (markComplete) {
+      await fetch(`${API_BASE}/reminders/${reminderId}/complete`, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: dateKey })
+      });
+    } else {
+      await fetch(`${API_BASE}/reminders/${reminderId}/complete`, {
+        method: 'DELETE',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: dateKey })
+      });
+    }
+
+    // Update local state
+    const reminders = calendarState.remindersByDay[dateKey] || [];
+    const reminder = reminders.find(r => r.id === reminderId);
+    if (reminder) {
+      reminder.completed = markComplete;
+    }
+
+    // Re-render the cell and detail panel
+    renderCalendar();
+    showDayDetail(dateKey);
+  } catch (error) {
+    console.error('Error toggling reminder:', error);
+  }
 }
 
 /**
