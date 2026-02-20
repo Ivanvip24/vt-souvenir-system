@@ -430,6 +430,25 @@ const destinations = [
   }
 ];
 
+// ═══════════════════════════════════════════════════════════
+// MERGE NEW DESTINATIONS — from sync-shopify-images.js output
+// ═══════════════════════════════════════════════════════════
+
+const newDestsPath = path.join(__dirname, 'new-destinations-data.js');
+if (fs.existsSync(newDestsPath)) {
+  const newDests = require(newDestsPath);
+  const existingSlugs = new Set(destinations.map(d => d.slug));
+  let added = 0;
+  for (const nd of newDests) {
+    if (!existingSlugs.has(nd.slug)) {
+      destinations.push(nd);
+      existingSlugs.add(nd.slug);
+      added++;
+    }
+  }
+  console.log(`🆕 Merged ${added} new destinations from sync (total: ${destinations.length})`);
+}
+
 const products = [
   { name: 'Imanes MDF', price: '$8-$15/pieza mayoreo', description: 'Imanes decorativos con corte láser de precisión y acabado brillante UV' },
   { name: 'Llaveros MDF', price: '$7-$10/pieza mayoreo', description: 'Llaveros con argolla reforzada y diseños únicos por destino' },
