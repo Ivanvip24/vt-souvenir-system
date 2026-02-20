@@ -7,7 +7,8 @@ import {
   uploadMediaToCloudinary,
   sendWhatsAppImage,
   sendWhatsAppDocument,
-  sendWhatsAppAudio
+  sendWhatsAppAudio,
+  transcribeAudio
 } from '../services/whatsapp-media.js';
 
 const router = Router();
@@ -104,7 +105,6 @@ router.post('/webhook', (req, res) => {
           messageMetadata = { cloudinaryUrl: cloudinaryResult.url };
         }
         else if (message.type === 'audio') {
-          const { transcribeAudio } = await import('../services/whatsapp-media.js');
           const media = await downloadWhatsAppMedia(message.audio.id);
           const cloudinaryResult = await uploadMediaToCloudinary(media.buffer, media.mimeType, 'whatsapp-audio');
           const transcription = await transcribeAudio(media.buffer, media.mimeType);

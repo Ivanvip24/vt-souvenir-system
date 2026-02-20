@@ -5,7 +5,6 @@
  */
 
 import { v2 as cloudinary } from 'cloudinary';
-import speech from '@google-cloud/speech';
 
 const WHATSAPP_API_BASE = 'https://graph.facebook.com/v22.0';
 
@@ -239,7 +238,9 @@ export async function transcribeAudio(audioBuffer, mimeType) {
     }
 
     const credentials = JSON.parse(credentialsEnv);
-    const client = new speech.SpeechClient({ credentials });
+    const speech = await import('@google-cloud/speech');
+    const SpeechClient = speech.default?.SpeechClient || speech.SpeechClient;
+    const client = new SpeechClient({ credentials });
 
     const audioContent = audioBuffer.toString('base64');
 
