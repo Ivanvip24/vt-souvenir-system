@@ -24,6 +24,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
+    <!-- Preload 3D globe assets -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" as="script" crossorigin>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js" as="script" crossorigin>
+    <link rel="preload" href="/globe-section.js" as="script">
+    <link rel="prefetch" href="https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json" as="fetch" crossorigin>
+    <link rel="prefetch" href="/mexico-states.json" as="fetch">
+
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -338,6 +347,55 @@
 
       .index-footer { text-align: center; padding: 24px; font-size: 13px; color: #aaa; border-top: 1px solid #eee; }
 
+      /* ═══ 3D GLOBE / DESTINOS SECTION ═══ */
+      .globe-section { padding: 8px 0 16px; background: #fafafa; color: #1f1f1f; position: relative; overflow: hidden; }
+      .globe-nav { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 8px; padding: 0 5%; position: relative; z-index: 2; }
+      .globe-nav-btn { font-family: var(--font-display); font-size: 0.75rem; padding: 0.4rem 1rem; border-radius: 100px; border: 1px solid #ddd; background: white; color: #666; cursor: pointer; transition: all 0.3s ease; }
+      .globe-nav-btn:hover { border-color: var(--rosa-mexicano); color: var(--rosa-mexicano); }
+      .globe-nav-btn.active { background: var(--rosa-mexicano); border-color: var(--rosa-mexicano); color: white; }
+      .globe-nav-btn.hidden { display: none; }
+      .globe-nav-separator { color: #ccc; display: flex; align-items: center; }
+      .globe-nav-separator.hidden { display: none; }
+      .globe-wrapper { position: relative; width: 100%; max-width: 380px; margin: 0 auto; aspect-ratio: 1; overflow: visible; }
+      .globe-wrapper.hidden { display: none; }
+      .globe-canvas-container { width: 100%; height: 100%; position: relative; overflow: visible; }
+      .globe-canvas-container canvas { width: 100% !important; height: 100% !important; cursor: grab; display: block; }
+      .globe-canvas-container canvas:active { cursor: grabbing; }
+      .globe-cta { position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); z-index: 5; font-family: var(--font-display); font-size: 0.9rem; padding: 0.75rem 1.5rem; border-radius: 100px; border: 1px solid var(--rosa-mexicano); background: rgba(231, 42, 136, 0.2); color: white; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); animation: pulse-glow 2s ease-in-out infinite; }
+      .globe-cta:hover { background: var(--rosa-mexicano); transform: translateX(-50%) scale(1.05); }
+      @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(231, 42, 136, 0.3); } 50% { box-shadow: 0 0 40px rgba(231, 42, 136, 0.6); } }
+      .mexico-map-view { display: none; width: 100%; max-width: 900px; margin: 0 auto; position: relative; padding: 24px 5%; }
+      .mexico-map-view.active { display: block; animation: fadeInUp 0.6s ease forwards; }
+      .mexico-map-canvas { width: 100%; cursor: pointer; border-radius: 16px; display: block; margin: 0 auto; }
+      .mexico-tooltip { position: fixed; background: rgba(255, 255, 255, 0.95); border: 1px solid var(--rosa-mexicano); border-radius: 10px; padding: 0.75rem 1rem; color: #1f1f1f; font-size: 0.85rem; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 100; max-width: 220px; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+      .mexico-tooltip.visible { opacity: 1; }
+      .mexico-tooltip h4 { font-family: var(--font-display); color: var(--rosa-mexicano); margin-bottom: 0.25rem; font-size: 0.95rem; }
+      .mexico-tooltip p { color: #666; font-size: 0.8rem; line-height: 1.4; }
+      .state-detail-panel { display: none; max-width: 1000px; margin: 0 auto; padding: 0 5%; }
+      .state-detail-panel.active { display: block; animation: fadeInUp 0.6s ease forwards; }
+      .state-detail-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 24px; }
+      .state-detail-title { font-family: var(--font-display); font-size: 1.5rem; }
+      .destinations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+      .destination-card { background: white; border: 1px solid #eee; border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); text-decoration: none; color: #1f1f1f; display: block; }
+      .destination-card:hover { border-color: var(--rosa-mexicano); transform: translateY(-6px); box-shadow: 0 12px 30px rgba(231, 42, 136, 0.15); }
+      .destination-card-image { width: 100%; aspect-ratio: 16/10; object-fit: cover; }
+      .destination-card-info { padding: 1rem; }
+      .destination-card-name { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 0.25rem; }
+      .destination-card-state { font-size: 0.8rem; color: #888; }
+      .globe-stats { display: flex; justify-content: center; gap: 32px; margin-top: 8px; padding: 0 5%; position: relative; z-index: 2; }
+      .globe-stat { text-align: center; }
+      .globe-stat-number { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--rosa-mexicano); display: block; }
+      .globe-stat-label { font-size: 0.8rem; color: #888; }
+      .globe-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1; }
+      .globe-loading-sphere { width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #0a74d6, #0860b0); box-shadow: 0 0 80px rgba(10, 116, 214, 0.2); animation: float 4s ease-in-out infinite; position: relative; }
+      .globe-loading-sphere::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), transparent 60%); }
+      @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+      @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+      @media (max-width: 1024px) {
+        .globe-wrapper { max-width: 320px; }
+      }
+
       @media (max-width: 600px) {
         .nav-links { display: none; }
         .nav-hamburger { display: flex; }
@@ -345,6 +403,14 @@
         .filter-pills { gap: 6px; }
         .filter-pill { padding: 6px 14px; font-size: 13px; }
         .search-input { font-size: 15px; padding: 12px 12px 12px 44px; }
+        .globe-wrapper { max-width: 280px; padding: 0; }
+        .globe-stats { flex-wrap: wrap; gap: 16px; }
+        .globe-stat-number { font-size: 1.5rem; }
+        .destinations-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+        .globe-cta { display: none; }
+        .mexico-map-view { padding: 12px 3%; max-width: 100%; }
+        .mexico-map-canvas { border-radius: 14px; }
+        .globe-section { padding: 4px 0 12px; }
       }
     </style>
 </head>
@@ -370,7 +436,49 @@
       <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
     </div>
 
-    <div class="index-header">
+    <section class="globe-section" id="destinos">
+        <div class="globe-nav">
+            <button class="globe-nav-btn active" data-view="globe" id="nav-globe">Mundo</button>
+            <span class="globe-nav-separator hidden" id="nav-sep1">&rsaquo;</span>
+            <button class="globe-nav-btn hidden" data-view="country" id="nav-country"></button>
+            <span class="globe-nav-separator hidden" id="nav-sep2">&rsaquo;</span>
+            <button class="globe-nav-btn hidden" data-view="state" id="nav-state"></button>
+        </div>
+        <div id="globe-view" class="globe-wrapper">
+            <div id="globe-3d" class="globe-canvas-container">
+                <div class="globe-loading" id="globe-loading">
+                    <div class="globe-loading-sphere"></div>
+                </div>
+            </div>
+            <button class="globe-cta" id="globe-explore-btn">Explorar M&eacute;xico &rarr;</button>
+        </div>
+        <div id="mexico-view" class="mexico-map-view">
+            <canvas id="mexico-canvas" class="mexico-map-canvas"></canvas>
+        </div>
+        <div id="mexico-tooltip" class="mexico-tooltip"></div>
+        <div id="state-view" class="state-detail-panel">
+            <div class="state-detail-header">
+                <h3 class="state-detail-title" id="state-name"></h3>
+            </div>
+            <div class="destinations-grid" id="state-destinations"></div>
+        </div>
+        <div class="globe-stats">
+            <div class="globe-stat">
+                <span class="globe-stat-number">233+</span>
+                <span class="globe-stat-label">Destinos</span>
+            </div>
+            <div class="globe-stat">
+                <span class="globe-stat-number">2</span>
+                <span class="globe-stat-label">Pa&iacute;ses</span>
+            </div>
+            <div class="globe-stat">
+                <span class="globe-stat-number">1000+</span>
+                <span class="globe-stat-label">Dise&ntilde;os</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="index-header" style="padding-top: 24px;">
       <h1>Souvenirs por <span class="hl">Destino</span></h1>
       <p>Encuentra souvenirs premium de tu destino favorito en México. Imanes, llaveros, portallaves y destapadores con corte láser de precisión.</p>
     </div>
@@ -3071,6 +3179,35 @@
         }
       }, { passive: true });
       animateCarousels();
+    })();
+    </script>
+
+    <!-- 3D GLOBE — Load Three.js + topojson in parallel, then init -->
+    <script>
+    (function() {
+        if (!document.getElementById('destinos')) return;
+        var threeReady = false, topoReady = false;
+        function onBothReady() {
+            if (!threeReady) return;
+            var s = document.createElement('script');
+            s.src = '/globe-section.js?v=10';
+            document.head.appendChild(s);
+        }
+        var threeScript = document.createElement('script');
+        threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+        threeScript.crossOrigin = 'anonymous';
+        threeScript.onload = function() { threeReady = true; if (topoReady) onBothReady(); };
+        threeScript.onerror = function() {
+            var l = document.getElementById('globe-loading');
+            if (l) l.style.display = 'none';
+        };
+        var topoScript = document.createElement('script');
+        topoScript.src = 'https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js';
+        topoScript.crossOrigin = 'anonymous';
+        topoScript.onload = function() { topoReady = true; if (threeReady) onBothReady(); };
+        topoScript.onerror = function() { topoReady = true; if (threeReady) onBothReady(); };
+        document.head.appendChild(threeScript);
+        document.head.appendChild(topoScript);
     })();
     </script>
 </body>
