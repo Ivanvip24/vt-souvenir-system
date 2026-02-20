@@ -239,19 +239,25 @@ export async function transcribeAudio(audioBuffer, mimeType) {
 
     const credentials = JSON.parse(credentialsEnv);
     const speech = await import('@google-cloud/speech');
-    const SpeechClient = speech.default?.SpeechClient || speech.SpeechClient;
+    const SpeechClient = speech.SpeechClient || speech.default?.SpeechClient;
     const client = new SpeechClient({ credentials });
+
+    console.log('🟢 WhatsApp Media: Transcribing audio, size:', audioBuffer.length, 'mime:', mimeType);
 
     const audioContent = audioBuffer.toString('base64');
 
+    // WhatsApp voice notes use OGG Opus; let Google auto-detect sample rate
     const [response] = await client.recognize({
       audio: {
         content: audioContent,
       },
       config: {
         encoding: 'OGG_OPUS',
-        sampleRateHertz: 16000,
+        sampleRateHertz: 48000,
         languageCode: 'es-MX',
+        alternativeLanguageCodes: ['es', 'en-US'],
+        model: 'default',
+        enableAutomaticPunctuation: true,
       },
     });
 
@@ -260,6 +266,7 @@ export async function transcribeAudio(audioBuffer, mimeType) {
       .join(' ')
       .trim();
 
+    console.log('🟢 WhatsApp Media: Transcription result:', transcription || '(empty)');
     return transcription || null;
   } catch (error) {
     console.error('🟢 WhatsApp Media: Error transcribing audio', error.message);
