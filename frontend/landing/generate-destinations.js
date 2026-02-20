@@ -912,6 +912,18 @@ function generateIndex() {
       .index-card-text h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
       .index-card-text span { font-size: 13px; color: #888; }
       .index-card-text p { font-size: 14px; color: #666; margin-top: 8px; }
+      /* Mobile: 2-column grid + always-visible arrows & counter */
+      @media (max-width: 600px) {
+        .index-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px 3% 40px; }
+        .index-card-text { padding: 12px; }
+        .index-card-text h2 { font-size: 14px; }
+        .index-card-text span { font-size: 11px; }
+        .index-card-text p { font-size: 12px; margin-top: 4px; }
+        .carousel-arr { opacity: 0.85; width: 26px; height: 26px; font-size: 14px; }
+        .carousel-prev { left: 4px; }
+        .carousel-next { right: 4px; }
+        .carousel-counter { opacity: 1; font-size: 10px; padding: 2px 8px; bottom: 6px; }
+      }
 
       /* No results */
       .no-results { display: none; text-align: center; padding: 48px 5%; }
@@ -1203,6 +1215,29 @@ ${cards}
               strip.style.transform = 'translateX(0)';
             }
           }, 600);
+        });
+      });
+      // Swipe support for mobile
+      document.querySelectorAll('.card-carousel').forEach(function(carousel) {
+        if (parseInt(carousel.dataset.count) <= 1) return;
+        var startX = 0, startY = 0, swiping = false;
+        carousel.addEventListener('touchstart', function(e) {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          swiping = false;
+        }, { passive: true });
+        carousel.addEventListener('touchmove', function(e) {
+          var dx = e.touches[0].clientX - startX;
+          var dy = e.touches[0].clientY - startY;
+          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 15) swiping = true;
+        }, { passive: true });
+        carousel.addEventListener('touchend', function(e) {
+          var dx = e.changedTouches[0].clientX - startX;
+          if (swiping && Math.abs(dx) > 30) {
+            arrowClicked = true;
+            goToSlide(carousel, parseInt(carousel.dataset.index) + (dx < 0 ? 1 : -1));
+            setTimeout(function() { arrowClicked = false; }, 100);
+          }
         });
       });
       // Card click → navigate (skip if arrow was clicked)
