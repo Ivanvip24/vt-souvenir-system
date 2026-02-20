@@ -881,16 +881,8 @@ function generateIndex() {
       .search-input { width: 100%; padding: 14px 16px 14px 48px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; font-family: var(--font-body); background: white; transition: border-color 0.2s; outline: none; }
       .search-input:focus { border-color: var(--rosa-mexicano); }
       .search-input::placeholder { color: #aaa; }
-      .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-      .filter-pill { padding: 8px 18px; border-radius: 24px; border: 2px solid #ddd; background: white; font-size: 14px; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.2s; color: #555; }
-      .filter-pill:hover { border-color: var(--rosa-mexicano); color: var(--rosa-mexicano); }
-      .filter-pill.active { background: var(--rosa-mexicano); border-color: var(--rosa-mexicano); color: white; }
-      .filter-pill[data-region="caribe"].active { background: var(--turquesa); border-color: var(--turquesa); }
-      .filter-pill[data-region="pacifico"].active { background: var(--verde-selva); border-color: var(--verde-selva); }
-      .filter-pill[data-region="centro"].active { background: var(--naranja-calido); border-color: var(--naranja-calido); }
-      .filter-pill[data-region="colonial"].active { background: #a6191d; border-color: #a6191d; }
-      .filter-pill[data-region="sur"].active { background: var(--verde-selva); border-color: var(--verde-selva); }
-      .filter-pill[data-region="norte"].active { background: var(--turquesa); border-color: var(--turquesa); }
+
+
       .index-status { text-align: center; padding: 8px 5% 0; font-size: 14px; color: #999; }
 
       /* Grid & Cards */
@@ -986,8 +978,6 @@ function generateIndex() {
         .nav-links { display: none; }
         .nav-hamburger { display: flex; }
         .mobile-menu { display: flex; }
-        .filter-pills { gap: 6px; }
-        .filter-pill { padding: 6px 14px; font-size: 13px; }
         .search-input { font-size: 15px; padding: 12px 12px 12px 44px; }
         .globe-wrapper { max-width: 280px; padding: 0; }
         .globe-stats { flex-wrap: wrap; gap: 16px; }
@@ -1074,15 +1064,8 @@ function generateIndex() {
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" class="search-input" id="searchInput" placeholder="Buscar destino, estado..." autocomplete="off">
       </div>
-      <div class="filter-pills" id="filterPills">
-        <button class="filter-pill active" data-region="todos">Todos</button>
-        <button class="filter-pill" data-region="caribe">Caribe</button>
-        <button class="filter-pill" data-region="pacifico">Pac\u00edfico</button>
-        <button class="filter-pill" data-region="centro">Centro</button>
-        <button class="filter-pill" data-region="colonial">Colonial</button>
-        <button class="filter-pill" data-region="sur">Sur</button>
-        <button class="filter-pill" data-region="norte">Norte</button>
-      </div>
+
+
     </div>
 
     <div class="index-status" id="indexStatus">Mostrando ${destinations.length} de ${destinations.length} destinos</div>
@@ -1125,12 +1108,10 @@ ${cards}
       }
 
       var searchInput = document.getElementById('searchInput');
-      var pills = document.querySelectorAll('.filter-pill');
       var cards = document.querySelectorAll('.index-card');
       var statusEl = document.getElementById('indexStatus');
       var noResults = document.getElementById('noResults');
       var total = cards.length;
-      var activeRegion = 'todos';
 
       function normalize(str) {
         return str.toLowerCase()
@@ -1146,12 +1127,10 @@ ${cards}
           var name = normalize(card.dataset.name);
           var state = normalize(card.dataset.state);
           var desc = normalize(card.dataset.desc);
-          var region = card.dataset.region;
 
-          var matchesRegion = activeRegion === 'todos' || region === activeRegion;
           var matchesSearch = !query || name.indexOf(query) !== -1 || state.indexOf(query) !== -1 || desc.indexOf(query) !== -1;
 
-          if (matchesRegion && matchesSearch) {
+          if (matchesSearch) {
             card.classList.remove('hidden');
             visible++;
           } else {
@@ -1168,15 +1147,6 @@ ${cards}
       }
 
       searchInput.addEventListener('input', filterCards);
-
-      pills.forEach(function(pill) {
-        pill.addEventListener('click', function() {
-          pills.forEach(function(p) { p.classList.remove('active'); });
-          pill.classList.add('active');
-          activeRegion = pill.dataset.region;
-          filterCards();
-        });
-      });
       // Carousel: arrow navigation + hover peek
       var arrowClicked = false;
       function goToSlide(carousel, idx) {
