@@ -406,11 +406,16 @@ function sanitizeMessageHistory(messages) {
   let lastRole = null;
 
   for (const msg of messages) {
-    if (!msg.content || msg.content.trim().length === 0) continue;
+    // Skip empty messages (but allow array content for vision messages)
+    if (!msg.content) continue;
+    if (typeof msg.content === 'string' && msg.content.trim().length === 0) continue;
 
     if (msg.role === lastRole) {
-      // Merge consecutive messages of the same role
-      sanitized[sanitized.length - 1].content += '\n' + msg.content;
+      // Merge consecutive messages of the same role (only for string content)
+      if (typeof sanitized[sanitized.length - 1].content === 'string' && typeof msg.content === 'string') {
+        sanitized[sanitized.length - 1].content += '\n' + msg.content;
+      }
+      // If either is an array (vision), keep separate — don't merge
     } else {
       sanitized.push({ role: msg.role, content: msg.content });
       lastRole = msg.role;
