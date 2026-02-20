@@ -46,7 +46,7 @@
     { slug: 'queretaro', name: 'Querétaro', state: 'Querétaro', lat: 20.59, lng: -100.39 },
     { slug: 'mazatlan', name: 'Mazatlán', state: 'Sinaloa', lat: 23.25, lng: -106.41 },
     { slug: 'morelia', name: 'Morelia', state: 'Michoacán', lat: 19.71, lng: -101.20 },
-    { slug: 'chiapas', name: 'San Cristóbal', state: 'Chiapas', lat: 16.74, lng: -92.64 },
+    { slug: 'chiapas', name: 'Chiapas', state: 'Chiapas', lat: 16.74, lng: -92.64 },
     { slug: 'acapulco', name: 'Acapulco', state: 'Guerrero', lat: 16.85, lng: -99.82 },
     { slug: 'monterrey', name: 'Monterrey', state: 'Nuevo León', lat: 25.69, lng: -100.32 },
     { slug: 'zacatecas', name: 'Zacatecas', state: 'Zacatecas', lat: 22.77, lng: -102.58 },
@@ -65,8 +65,7 @@
     { slug: 'toluca', name: 'Toluca', state: 'Estado de México', lat: 19.28, lng: -99.66 },
     { slug: 'union-juarez', name: 'Unión Juárez', state: 'Chiapas', lat: 15.06, lng: -92.08 },
     { slug: 'zacatlan', name: 'Zacatlán', state: 'Puebla', lat: 19.93, lng: -97.96 },
-    { slug: 'cerro-de-san-pedro', name: 'Cerro de San Pedro', state: 'San Luis Potosí', lat: 22.21, lng: -100.80 },
-    { slug: 'mindo', name: 'Mindo', state: 'Pichincha', lat: -0.05, lng: -78.77 }
+    { slug: 'cerro-de-san-pedro', name: 'Cerro de San Pedro', state: 'San Luis Potosí', lat: 22.21, lng: -100.80 }
   ];
 
   // Map GeoJSON state names → our destination state names

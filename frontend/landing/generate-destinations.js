@@ -1054,8 +1054,8 @@ function generateIndex() {
                 <span class="globe-stat-label">Destinos</span>
             </div>
             <div class="globe-stat">
-                <span class="globe-stat-number">2</span>
-                <span class="globe-stat-label">Pa&iacute;ses</span>
+                <span class="globe-stat-number">20</span>
+                <span class="globe-stat-label">Estados</span>
             </div>
             <div class="globe-stat">
                 <span class="globe-stat-number">1000+</span>
