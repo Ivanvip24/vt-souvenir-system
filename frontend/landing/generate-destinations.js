@@ -490,18 +490,18 @@ function generatePage(dest) {
     .filter(Boolean)
     .join('\n              ');
 
-  const productColors = ['rosa', 'verde', 'naranja', 'turquesa'];
-  const productsHtml = products.map((p, i) => {
-    const productImg = (dest.productImages && dest.productImages[i]) || dest.image;
-    const color = productColors[i] || 'rosa';
-    return `
-            <div class="dest-product-card" data-color="${color}">
-              <img src="${productImg}" alt="${escapeHtml(p.name)} souvenir ${escapeHtml(dest.name)} México - Corte láser AXKAN" loading="lazy">
-              <h3>${escapeHtml(p.name)} — ${escapeHtml(dest.name)}</h3>
-              <p>${escapeHtml(p.description)}</p>
-              <span class="dest-product-price">${escapeHtml(p.price)}</span>
-            </div>`;
-  }).join('\n');
+  // Build bubble gallery from all product images
+  const allImages = dest.productImages && dest.productImages.length > 0
+    ? [...new Set(dest.productImages)]
+    : [dest.image];
+  const imgCount = allImages.length;
+  // Size class: fewer images = bigger bubbles
+  const sizeClass = imgCount <= 6 ? 'bubble-lg' : imgCount <= 12 ? 'bubble-md' : 'bubble-sm';
+  const bubblesHtml = allImages.map((img, i) => `
+            <div class="design-bubble ${sizeClass}">
+              <img src="${img}" alt="Diseño ${i + 1} souvenir ${escapeAttr(dest.name)} México - AXKAN" loading="lazy">
+            </div>`).join('\n');
+  const galleryDataAttr = escapeAttr(JSON.stringify(allImages));
 
   const allDestsHtml = destinations
     .filter(d => d.slug !== dest.slug)
@@ -636,27 +636,39 @@ function generatePage(dest) {
       .btn-primary { background: var(--rosa-mexicano); color: white; }
       .btn-secondary { border: 2px solid var(--rosa-mexicano); color: var(--rosa-mexicano); margin-left: 12px; }
 
-      /* Products */
-      .dest-products { padding: 60px 5%; max-width: 1200px; margin: 0 auto; }
-      .dest-products h2 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 32px; text-align: center; }
-      .dest-products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; }
-      .dest-product-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); transition: transform 0.3s; }
-      .dest-product-card:hover { transform: translateY(-4px); }
-      .dest-product-card img { width: 100%; height: 200px; object-fit: cover; }
-      .dest-product-card h3 { padding: 16px 16px 8px; font-size: 16px; font-weight: 600; }
-      .dest-product-card p { padding: 0 16px; font-size: 14px; color: #666; }
-      .dest-product-price { display: block; padding: 12px 16px 16px; font-weight: 700; color: var(--rosa-mexicano); font-size: 15px; }
-      .dest-product-card[data-color="rosa"] { border-top: 4px solid var(--rosa-mexicano); }
-      .dest-product-card[data-color="verde"] { border-top: 4px solid var(--verde-selva); }
-      .dest-product-card[data-color="naranja"] { border-top: 4px solid var(--naranja-calido); }
-      .dest-product-card[data-color="turquesa"] { border-top: 4px solid var(--turquesa-caribe); }
-      .dest-product-card[data-color="rosa"] h3 { color: var(--rosa-mexicano); }
-      .dest-product-card[data-color="verde"] h3 { color: var(--verde-selva); }
-      .dest-product-card[data-color="naranja"] h3 { color: var(--naranja-calido); }
-      .dest-product-card[data-color="turquesa"] h3 { color: var(--turquesa-caribe); }
-      .dest-product-card[data-color="verde"] .dest-product-price { color: var(--verde-selva); }
-      .dest-product-card[data-color="naranja"] .dest-product-price { color: var(--naranja-calido); }
-      .dest-product-card[data-color="turquesa"] .dest-product-price { color: var(--turquesa-caribe); }
+      /* Bubble Gallery */
+      .dest-gallery { padding: 60px 5%; max-width: 900px; margin: 0 auto; text-align: center; }
+      .dest-gallery h2 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 8px; }
+      .dest-gallery .highlight { color: var(--rosa-mexicano); }
+      .gallery-subtitle { font-size: 14px; color: #888; margin-bottom: 32px; }
+      .bubble-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; justify-items: center; }
+      .design-bubble { position: relative; border-radius: 50%; overflow: hidden; background: #f5f0eb; box-shadow: 0 4px 16px rgba(0,0,0,0.08); transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; aspect-ratio: 1; }
+      .design-bubble:hover { transform: scale(1.06); box-shadow: 0 8px 28px rgba(0,0,0,0.14); }
+      .design-bubble img { width: 100%; height: 100%; object-fit: contain; display: block; }
+      /* Size variants */
+      .bubble-lg { width: 85%; max-width: 240px; }
+      .bubble-md { width: 80%; max-width: 200px; }
+      .bubble-sm { width: 75%; max-width: 170px; }
+      /* Surprise bubble */
+      .surprise-bubble { background: linear-gradient(135deg, #fce4f0, #fdf0e8); border: 3px dashed var(--rosa-mexicano); perspective: 600px; overflow: visible; }
+      .surprise-bubble:hover { border-style: solid; }
+      .surprise-front, .surprise-back { position: absolute; inset: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transition: transform 0.6s ease; }
+      .surprise-front { background: linear-gradient(135deg, #fce4f0, #fdf0e8); z-index: 2; }
+      .surprise-back { transform: rotateY(180deg); overflow: hidden; }
+      .surprise-back img { width: 100%; height: 100%; object-fit: contain; }
+      .surprise-bubble.flipped .surprise-front { transform: rotateY(180deg); }
+      .surprise-bubble.flipped .surprise-back { transform: rotateY(0deg); }
+      .surprise-icon { font-family: var(--font-display); font-size: 3.5rem; font-weight: 900; color: var(--rosa-mexicano); line-height: 1; user-select: none; }
+      .surprise-label { position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 700; color: var(--rosa-mexicano); white-space: nowrap; font-family: var(--font-body); }
+      .bubble-grid { padding-bottom: 36px; }
+      @media (max-width: 600px) {
+        .bubble-grid { gap: 12px; }
+        .bubble-lg { max-width: 160px; }
+        .bubble-md { max-width: 140px; }
+        .bubble-sm { max-width: 110px; }
+        .surprise-icon { font-size: 2.5rem; }
+        .surprise-label { font-size: 11px; bottom: -22px; }
+      }
 
       /* About section */
       .dest-about { padding: 60px 5%; max-width: 900px; margin: 0 auto; }
@@ -724,10 +736,20 @@ function generatePage(dest) {
       </div>
     </section>
 
-    <section class="dest-products">
-      <h2>Productos disponibles para ${escapeHtml(dest.name)}</h2>
-      <div class="dest-products-grid">
-${productsHtml}
+    <section class="dest-gallery" data-images='${galleryDataAttr}'>
+      <h2>Nuestros Diseños — <span class="highlight">${escapeHtml(dest.name)}</span></h2>
+      <p class="gallery-subtitle">${imgCount} diseño${imgCount !== 1 ? 's' : ''} disponible${imgCount !== 1 ? 's' : ''}</p>
+      <div class="bubble-grid">
+        <div class="design-bubble surprise-bubble" id="surpriseBubble">
+          <div class="surprise-front">
+            <span class="surprise-icon">?</span>
+          </div>
+          <div class="surprise-back">
+            <img src="${allImages[0]}" alt="Diseño sorpresa ${escapeAttr(dest.name)}" id="surpriseImg">
+          </div>
+          <span class="surprise-label">Sorpréndeme</span>
+        </div>
+${bubblesHtml}
       </div>
     </section>
 
@@ -760,6 +782,34 @@ ${productsHtml}
     <footer class="dest-footer">
       <p>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</p>
     </footer>
+    <script>
+    (function() {
+      var gallery = document.querySelector('.dest-gallery');
+      if (!gallery) return;
+      var images = JSON.parse(gallery.dataset.images || '[]');
+      var bubble = document.getElementById('surpriseBubble');
+      var img = document.getElementById('surpriseImg');
+      if (!bubble || !img || images.length < 2) return;
+      var lastIdx = -1;
+      bubble.addEventListener('click', function() {
+        // Pick random image different from last
+        var idx;
+        do { idx = Math.floor(Math.random() * images.length); } while (idx === lastIdx && images.length > 1);
+        lastIdx = idx;
+        // If already flipped, flip back first then swap
+        if (bubble.classList.contains('flipped')) {
+          bubble.classList.remove('flipped');
+          setTimeout(function() {
+            img.src = images[idx];
+            setTimeout(function() { bubble.classList.add('flipped'); }, 50);
+          }, 350);
+        } else {
+          img.src = images[idx];
+          bubble.classList.add('flipped');
+        }
+      });
+    })();
+    </script>
 </body>
 </html>`;
 }

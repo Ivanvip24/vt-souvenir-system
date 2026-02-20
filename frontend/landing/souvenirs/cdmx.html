@@ -126,27 +126,39 @@
       .btn-primary { background: var(--rosa-mexicano); color: white; }
       .btn-secondary { border: 2px solid var(--rosa-mexicano); color: var(--rosa-mexicano); margin-left: 12px; }
 
-      /* Products */
-      .dest-products { padding: 60px 5%; max-width: 1200px; margin: 0 auto; }
-      .dest-products h2 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 32px; text-align: center; }
-      .dest-products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; }
-      .dest-product-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); transition: transform 0.3s; }
-      .dest-product-card:hover { transform: translateY(-4px); }
-      .dest-product-card img { width: 100%; height: 200px; object-fit: cover; }
-      .dest-product-card h3 { padding: 16px 16px 8px; font-size: 16px; font-weight: 600; }
-      .dest-product-card p { padding: 0 16px; font-size: 14px; color: #666; }
-      .dest-product-price { display: block; padding: 12px 16px 16px; font-weight: 700; color: var(--rosa-mexicano); font-size: 15px; }
-      .dest-product-card[data-color="rosa"] { border-top: 4px solid var(--rosa-mexicano); }
-      .dest-product-card[data-color="verde"] { border-top: 4px solid var(--verde-selva); }
-      .dest-product-card[data-color="naranja"] { border-top: 4px solid var(--naranja-calido); }
-      .dest-product-card[data-color="turquesa"] { border-top: 4px solid var(--turquesa-caribe); }
-      .dest-product-card[data-color="rosa"] h3 { color: var(--rosa-mexicano); }
-      .dest-product-card[data-color="verde"] h3 { color: var(--verde-selva); }
-      .dest-product-card[data-color="naranja"] h3 { color: var(--naranja-calido); }
-      .dest-product-card[data-color="turquesa"] h3 { color: var(--turquesa-caribe); }
-      .dest-product-card[data-color="verde"] .dest-product-price { color: var(--verde-selva); }
-      .dest-product-card[data-color="naranja"] .dest-product-price { color: var(--naranja-calido); }
-      .dest-product-card[data-color="turquesa"] .dest-product-price { color: var(--turquesa-caribe); }
+      /* Bubble Gallery */
+      .dest-gallery { padding: 60px 5%; max-width: 900px; margin: 0 auto; text-align: center; }
+      .dest-gallery h2 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 8px; }
+      .dest-gallery .highlight { color: var(--rosa-mexicano); }
+      .gallery-subtitle { font-size: 14px; color: #888; margin-bottom: 32px; }
+      .bubble-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; justify-items: center; }
+      .design-bubble { position: relative; border-radius: 50%; overflow: hidden; background: #f5f0eb; box-shadow: 0 4px 16px rgba(0,0,0,0.08); transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; aspect-ratio: 1; }
+      .design-bubble:hover { transform: scale(1.06); box-shadow: 0 8px 28px rgba(0,0,0,0.14); }
+      .design-bubble img { width: 100%; height: 100%; object-fit: contain; display: block; }
+      /* Size variants */
+      .bubble-lg { width: 85%; max-width: 240px; }
+      .bubble-md { width: 80%; max-width: 200px; }
+      .bubble-sm { width: 75%; max-width: 170px; }
+      /* Surprise bubble */
+      .surprise-bubble { background: linear-gradient(135deg, #fce4f0, #fdf0e8); border: 3px dashed var(--rosa-mexicano); perspective: 600px; overflow: visible; }
+      .surprise-bubble:hover { border-style: solid; }
+      .surprise-front, .surprise-back { position: absolute; inset: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; transition: transform 0.6s ease; }
+      .surprise-front { background: linear-gradient(135deg, #fce4f0, #fdf0e8); z-index: 2; }
+      .surprise-back { transform: rotateY(180deg); overflow: hidden; }
+      .surprise-back img { width: 100%; height: 100%; object-fit: contain; }
+      .surprise-bubble.flipped .surprise-front { transform: rotateY(180deg); }
+      .surprise-bubble.flipped .surprise-back { transform: rotateY(0deg); }
+      .surprise-icon { font-family: var(--font-display); font-size: 3.5rem; font-weight: 900; color: var(--rosa-mexicano); line-height: 1; user-select: none; }
+      .surprise-label { position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 700; color: var(--rosa-mexicano); white-space: nowrap; font-family: var(--font-body); }
+      .bubble-grid { padding-bottom: 36px; }
+      @media (max-width: 600px) {
+        .bubble-grid { gap: 12px; }
+        .bubble-lg { max-width: 160px; }
+        .bubble-md { max-width: 140px; }
+        .bubble-sm { max-width: 110px; }
+        .surprise-icon { font-size: 2.5rem; }
+        .surprise-label { font-size: 11px; bottom: -22px; }
+      }
 
       /* About section */
       .dest-about { padding: 60px 5%; max-width: 900px; margin: 0 auto; }
@@ -214,36 +226,22 @@
       </div>
     </section>
 
-    <section class="dest-products">
-      <h2>Productos disponibles para Ciudad de México</h2>
-      <div class="dest-products-grid">
+    <section class="dest-gallery" data-images='[&quot;https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&amp;width=800&quot;]'>
+      <h2>Nuestros Diseños — <span class="highlight">Ciudad de México</span></h2>
+      <p class="gallery-subtitle">1 diseño disponible</p>
+      <div class="bubble-grid">
+        <div class="design-bubble surprise-bubble" id="surpriseBubble">
+          <div class="surprise-front">
+            <span class="surprise-icon">?</span>
+          </div>
+          <div class="surprise-back">
+            <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Diseño sorpresa Ciudad de México" id="surpriseImg">
+          </div>
+          <span class="surprise-label">Sorpréndeme</span>
+        </div>
 
-            <div class="dest-product-card" data-color="rosa">
-              <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Imanes MDF souvenir Ciudad de México México - Corte láser AXKAN" loading="lazy">
-              <h3>Imanes MDF — Ciudad de México</h3>
-              <p>Imanes decorativos con corte láser de precisión y acabado brillante UV</p>
-              <span class="dest-product-price">$8-$15/pieza mayoreo</span>
-            </div>
-
-            <div class="dest-product-card" data-color="verde">
-              <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Llaveros MDF souvenir Ciudad de México México - Corte láser AXKAN" loading="lazy">
-              <h3>Llaveros MDF — Ciudad de México</h3>
-              <p>Llaveros con argolla reforzada y diseños únicos por destino</p>
-              <span class="dest-product-price">$7-$10/pieza mayoreo</span>
-            </div>
-
-            <div class="dest-product-card" data-color="naranja">
-              <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Portallaves souvenir Ciudad de México México - Corte láser AXKAN" loading="lazy">
-              <h3>Portallaves — Ciudad de México</h3>
-              <p>Piezas decorativas para el hogar con diseños emblemáticos</p>
-              <span class="dest-product-price">$34-$40/pieza</span>
-            </div>
-
-            <div class="dest-product-card" data-color="turquesa">
-              <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Destapadores souvenir Ciudad de México México - Corte láser AXKAN" loading="lazy">
-              <h3>Destapadores — Ciudad de México</h3>
-              <p>Funcionales y decorativos, con imán trasero y doble remache</p>
-              <span class="dest-product-price">$16-$20/pieza mayoreo</span>
+            <div class="design-bubble bubble-lg">
+              <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800" alt="Diseño 1 souvenir Ciudad de México México - AXKAN" loading="lazy">
             </div>
       </div>
     </section>
@@ -288,5 +286,33 @@
     <footer class="dest-footer">
       <p>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</p>
     </footer>
+    <script>
+    (function() {
+      var gallery = document.querySelector('.dest-gallery');
+      if (!gallery) return;
+      var images = JSON.parse(gallery.dataset.images || '[]');
+      var bubble = document.getElementById('surpriseBubble');
+      var img = document.getElementById('surpriseImg');
+      if (!bubble || !img || images.length < 2) return;
+      var lastIdx = -1;
+      bubble.addEventListener('click', function() {
+        // Pick random image different from last
+        var idx;
+        do { idx = Math.floor(Math.random() * images.length); } while (idx === lastIdx && images.length > 1);
+        lastIdx = idx;
+        // If already flipped, flip back first then swap
+        if (bubble.classList.contains('flipped')) {
+          bubble.classList.remove('flipped');
+          setTimeout(function() {
+            img.src = images[idx];
+            setTimeout(function() { bubble.classList.add('flipped'); }, 50);
+          }, 350);
+        } else {
+          img.src = images[idx];
+          bubble.classList.add('flipped');
+        }
+      });
+    })();
+    </script>
 </body>
 </html>
