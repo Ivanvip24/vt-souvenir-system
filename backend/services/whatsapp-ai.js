@@ -31,7 +31,8 @@ function getClient() {
 export function getSystemPrompt(products) {
   const catalogLines = products.map(p => {
     const price = parseFloat(p.base_price);
-    return `- ${p.name}: $${price.toFixed(2)} MXN${p.description ? ` — ${p.description}` : ''}${p.category ? ` (${p.category})` : ''}`;
+    const hasImage = p.image_url ? ' [FOTO DISPONIBLE]' : '';
+    return `- ${p.name}: $${price.toFixed(2)} MXN${p.description ? ` — ${p.description}` : ''}${p.category ? ` (${p.category})` : ''}${hasImage}`;
   }).join('\n');
 
   return `Eres el asistente de ventas de AXKAN por WhatsApp. AXKAN es una marca de souvenirs con alma mexicana, especializados en recuerdos personalizados de MDF cortados con láser.
@@ -81,6 +82,24 @@ CONSULTAS DE ESTADO DE PEDIDO:
 - Si el cliente pregunta por el estado de un pedido, responde: "Déjame revisar tu pedido, un momento por favor."
 - No inventes estados, el sistema verificará automáticamente
 
+ENVÍO DE IMÁGENES DE PRODUCTOS:
+- Cuando el cliente pregunte por un producto que tiene [FOTO DISPONIBLE], envíale la foto
+- Para enviar una foto usa este formato: [SEND_IMAGE]{"productName":"Nombre Exacto del Producto"}[/SEND_IMAGE]
+- Solo envía fotos de productos que tengan [FOTO DISPONIBLE] en el catálogo
+- Máximo 2 fotos por mensaje
+- Coloca el tag [SEND_IMAGE] al final de tu mensaje de texto, nunca al inicio
+
+CUANDO EL CLIENTE ENVÍA UNA IMAGEN:
+- Podrás ver la imagen que envió el cliente
+- Describe brevemente lo que ves y responde en contexto
+- Ejemplo: si envía una foto de un diseño, di algo como "Qué bonito diseño! Podemos reproducirlo en imanes o llaveros"
+- Si envía una foto de referencia para personalización, confírmale que la recibiste
+
+CUANDO EL CLIENTE ENVÍA UN AUDIO:
+- Recibirás la transcripción del audio como texto
+- Responde normalmente como si te hubieran escrito ese texto
+- No menciones que fue un audio, simplemente responde al contenido
+
 EJEMPLOS DE RESPUESTAS:
 - Saludo: "Hola! Bienvenido a AXKAN, souvenirs con alma mexicana. En qué te puedo ayudar?"
 - Info productos: "Tenemos imanes de MDF, llaveros, destapadores y más. Todos personalizados con el diseño que quieras. Qué te interesa?"
@@ -95,7 +114,7 @@ EJEMPLOS DE RESPUESTAS:
  */
 export async function buildConversationHistory(conversationId) {
   const result = await query(
-    `SELECT direction, sender, content
+    `SELECT direction, sender, content, message_type, media_url, metadata
      FROM whatsapp_messages
      WHERE conversation_id = $1
      ORDER BY created_at ASC
@@ -105,10 +124,22 @@ export async function buildConversationHistory(conversationId) {
 
   return result.rows
     .filter(row => row.content && row.content.trim().length > 0)
-    .map(row => ({
-      role: row.direction === 'inbound' ? 'user' : 'assistant',
-      content: row.content
-    }));
+    .map(row => {
+      let content = row.content;
+      // Add media context for image messages in history
+      if (row.message_type === 'image' && row.direction === 'inbound') {
+        content = `[Imagen recibida] ${content}`;
+      } else if (row.message_type === 'audio' && row.direction === 'inbound') {
+        const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata || '{}') : (row.metadata || {});
+        if (meta.transcription) {
+          content = meta.transcription;
+        }
+      }
+      return {
+        role: row.direction === 'inbound' ? 'user' : 'assistant',
+        content: content
+      };
+    });
 }
 
 /**
@@ -117,7 +148,7 @@ export async function buildConversationHistory(conversationId) {
  */
 async function loadProductCatalog() {
   const result = await query(
-    `SELECT name, base_price, description, category, production_cost
+    `SELECT name, base_price, description, category, production_cost, image_url
      FROM products
      WHERE is_active = true
      ORDER BY category, name`
@@ -184,7 +215,21 @@ function parseAIResponse(responseText) {
     }
   }
 
-  return { cleanReply, intent, orderJson };
+  // Extract SEND_IMAGE blocks
+  const imagesToSend = [];
+  const imageMatches = cleanReply.matchAll(/\[SEND_IMAGE\](.*?)\[\/SEND_IMAGE\]/g);
+  for (const match of imageMatches) {
+    try {
+      const imageData = JSON.parse(match[1].trim());
+      imagesToSend.push(imageData);
+    } catch (err) {
+      console.error('🟢 WhatsApp AI: Failed to parse SEND_IMAGE JSON:', err.message);
+    }
+  }
+  // Remove SEND_IMAGE blocks from clean reply
+  cleanReply = cleanReply.replace(/\[SEND_IMAGE\].*?\[\/SEND_IMAGE\]/g, '').trim();
+
+  return { cleanReply, intent, orderJson, imagesToSend };
 }
 
 /**
@@ -251,7 +296,7 @@ async function executeOrderCreation(orderJson, waId, products) {
  * @param {string} messageText - The text message from the client
  * @returns {Object} { reply, intent, orderData?, actionTaken? }
  */
-export async function processIncomingMessage(conversationId, waId, messageText) {
+export async function processIncomingMessage(conversationId, waId, messageText, mediaContext = null) {
   try {
     // Load product catalog from database
     const products = await loadProductCatalog();
@@ -262,10 +307,35 @@ export async function processIncomingMessage(conversationId, waId, messageText) 
     // Build the system prompt with current catalog
     const systemPrompt = getSystemPrompt(products);
 
+    // Build the new incoming message content based on media context
+    let userMessageContent;
+
+    if (mediaContext?.type === 'image' && mediaContext.imageBase64) {
+      // Claude Vision: send image + text
+      userMessageContent = [
+        {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: mediaContext.imageMimeType || 'image/jpeg',
+            data: mediaContext.imageBase64
+          }
+        },
+        {
+          type: 'text',
+          text: messageText || 'El cliente envió esta imagen.'
+        }
+      ];
+    } else if (mediaContext?.type === 'audio' && mediaContext.transcription) {
+      userMessageContent = messageText; // Already contains transcription
+    } else {
+      userMessageContent = messageText;
+    }
+
     // Add the new incoming message to the history for the API call
     const messages = [
       ...history,
-      { role: 'user', content: messageText }
+      { role: 'user', content: userMessageContent }
     ];
 
     // Ensure messages alternate properly (Claude requires user/assistant alternation)
@@ -275,7 +345,7 @@ export async function processIncomingMessage(conversationId, waId, messageText) 
     const client = getClient();
     const response = await client.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 300,
+      max_tokens: 500,
       system: systemPrompt,
       messages: sanitizedMessages
     });
@@ -283,7 +353,7 @@ export async function processIncomingMessage(conversationId, waId, messageText) 
     const rawReply = response.content[0].text;
 
     // Parse the response for intent and order blocks
-    const { cleanReply, intent, orderJson } = parseAIResponse(rawReply);
+    const { cleanReply, intent, orderJson, imagesToSend } = parseAIResponse(rawReply);
 
     let actionTaken = null;
     let orderData = null;
@@ -313,11 +383,23 @@ export async function processIncomingMessage(conversationId, waId, messageText) 
       }
     }
 
+    // Resolve product image URLs for SEND_IMAGE requests
+    const resolvedImages = (imagesToSend || []).map(img => {
+      const nameLower = (img.productName || '').toLowerCase();
+      const match = products.find(p => p.name.toLowerCase() === nameLower)
+        || products.find(p => nameLower.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(nameLower));
+      return {
+        productName: img.productName,
+        imageUrl: match?.image_url || null
+      };
+    }).filter(img => img.imageUrl);
+
     return {
       reply: cleanReply,
       intent: intent,
       orderData: orderData,
-      actionTaken: actionTaken
+      actionTaken: actionTaken,
+      imagesToSend: resolvedImages
     };
 
   } catch (error) {
@@ -328,7 +410,8 @@ export async function processIncomingMessage(conversationId, waId, messageText) 
       reply: 'Disculpa, tuve un problema procesando tu mensaje. Podrías repetirlo por favor?',
       intent: 'error',
       orderData: null,
-      actionTaken: null
+      actionTaken: null,
+      imagesToSend: []
     };
   }
 }

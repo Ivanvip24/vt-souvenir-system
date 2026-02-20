@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "@google-cloud/speech": "^7.2.1",
     "@google-cloud/vision": "^5.3.4",
     "@notionhq/client": "^2.2.15",
     "@sendgrid/mail": "^8.1.6",

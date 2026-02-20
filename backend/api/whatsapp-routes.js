@@ -2,6 +2,13 @@ import { Router } from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
 import { processIncomingMessage } from '../services/whatsapp-ai.js';
+import {
+  downloadWhatsAppMedia,
+  uploadMediaToCloudinary,
+  sendWhatsAppImage,
+  sendWhatsAppDocument,
+  sendWhatsAppAudio
+} from '../services/whatsapp-media.js';
 
 const router = Router();
 
@@ -75,14 +82,62 @@ router.post('/webhook', (req, res) => {
       const waMessageId = message.id;
       const clientName = contact?.profile?.name || waId;
 
-      // Only handle text messages for now
-      if (message.type !== 'text') {
-        console.log('🟢 WhatsApp non-text message from', waId, '— type:', message.type, '(skipped)');
-        return;
+      // Process message based on type
+      let messageText = '';
+      let mediaContext = null;
+      let mediaUrl = null;
+      let messageMetadata = null;
+
+      console.log('🟢 WhatsApp message from', waId, '— type:', message.type);
+
+      try {
+        if (message.type === 'text') {
+          messageText = message.text?.body || '';
+        }
+        else if (message.type === 'image') {
+          const media = await downloadWhatsAppMedia(message.image.id);
+          const cloudinaryResult = await uploadMediaToCloudinary(media.buffer, media.mimeType, 'whatsapp-media');
+          const base64 = media.buffer.toString('base64');
+          messageText = message.image.caption || '[Imagen]';
+          mediaUrl = cloudinaryResult.url;
+          mediaContext = { type: 'image', imageBase64: base64, imageMimeType: media.mimeType, mediaUrl: cloudinaryResult.url };
+          messageMetadata = { cloudinaryUrl: cloudinaryResult.url };
+        }
+        else if (message.type === 'audio') {
+          const { transcribeAudio } = await import('../services/whatsapp-media.js');
+          const media = await downloadWhatsAppMedia(message.audio.id);
+          const cloudinaryResult = await uploadMediaToCloudinary(media.buffer, media.mimeType, 'whatsapp-audio');
+          const transcription = await transcribeAudio(media.buffer, media.mimeType);
+          messageText = transcription || '[Audio no reconocido]';
+          mediaUrl = cloudinaryResult.url;
+          mediaContext = { type: 'audio', transcription, mediaUrl: cloudinaryResult.url };
+          messageMetadata = { cloudinaryUrl: cloudinaryResult.url, transcription };
+        }
+        else if (message.type === 'document') {
+          const media = await downloadWhatsAppMedia(message.document.id);
+          const cloudinaryResult = await uploadMediaToCloudinary(media.buffer, media.mimeType, 'whatsapp-docs');
+          messageText = `[Documento: ${message.document.filename || 'archivo'}]`;
+          mediaUrl = cloudinaryResult.url;
+          mediaContext = { type: 'document', mediaUrl: cloudinaryResult.url };
+          messageMetadata = { cloudinaryUrl: cloudinaryResult.url, filename: message.document.filename };
+        }
+        else if (message.type === 'video') {
+          messageText = message.video?.caption || '[Video recibido — solo procesamos texto, imágenes y audio]';
+          mediaContext = { type: 'video' };
+        }
+        else if (message.type === 'sticker') {
+          messageText = '[Sticker recibido]';
+          mediaContext = { type: 'sticker' };
+        }
+        else {
+          messageText = `[Mensaje tipo ${message.type} recibido]`;
+        }
+      } catch (mediaErr) {
+        console.error('🟢 WhatsApp media processing error:', mediaErr.message);
+        messageText = messageText || '[Error procesando media]';
       }
 
-      const messageText = message.text?.body || '';
-      console.log('🟢 WhatsApp message from', waId, ':', messageText);
+      console.log('🟢 WhatsApp content:', messageText.substring(0, 100));
 
       // Dedup: skip if we already stored this message
       const existing = await query(
@@ -120,11 +175,11 @@ router.post('/webhook', (req, res) => {
         }
       }
 
-      // Store inbound message
+      // Store inbound message (with media URL and metadata if present)
       await query(
-        `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content)
-         VALUES ($1, $2, 'inbound', 'client', $3, $4)`,
-        [conversationId, waMessageId, message.type, messageText]
+        `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, media_url, metadata)
+         VALUES ($1, $2, 'inbound', 'client', $3, $4, $5, $6)`,
+        [conversationId, waMessageId, message.type, messageText, mediaUrl, messageMetadata ? JSON.stringify(messageMetadata) : null]
       );
 
       // Increment unread count
@@ -133,21 +188,37 @@ router.post('/webhook', (req, res) => {
         [conversationId]
       );
 
-      // Get AI reply
-      const aiResult = await processIncomingMessage(conversationId, waId, messageText);
+      // Get AI reply (pass media context for vision/audio processing)
+      const aiResult = await processIncomingMessage(conversationId, waId, messageText, mediaContext);
       const replyText = aiResult.reply;
       const intent = aiResult.intent || null;
       const summary = aiResult.summary || null;
+      const imagesToSend = aiResult.imagesToSend || [];
 
-      // Send reply via Meta API
+      // Send text reply via Meta API
       await sendWhatsAppMessage(waId, replyText);
+
+      // Send product images if AI requested them
+      for (const img of imagesToSend) {
+        if (img.imageUrl) {
+          try {
+            await sendWhatsAppImage(waId, img.imageUrl, img.productName || '');
+          } catch (imgErr) {
+            console.error('🟢 WhatsApp image send error:', imgErr.message);
+          }
+        }
+      }
 
       // Store outbound AI message
       const outboundWaId = 'ai_' + Date.now();
+      const outboundMetadata = { intent };
+      if (imagesToSend.length > 0) {
+        outboundMetadata.imagesSent = imagesToSend;
+      }
       await query(
         `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, metadata)
          VALUES ($1, $2, 'outbound', 'ai', 'text', $3, $4)`,
-        [conversationId, outboundWaId, replyText, JSON.stringify({ intent })]
+        [conversationId, outboundWaId, replyText, JSON.stringify(outboundMetadata)]
       );
 
       // Update conversation intent and summary
@@ -201,9 +272,9 @@ router.get('/conversations/:id/messages', authMiddleware, async (req, res) => {
 // ---------------------------------------------------------------------------
 router.post('/conversations/:id/reply', authMiddleware, async (req, res) => {
   try {
-    const { message } = req.body;
-    if (!message) {
-      return res.status(400).json({ success: false, error: 'message is required' });
+    const { message, imageUrl } = req.body;
+    if (!message && !imageUrl) {
+      return res.status(400).json({ success: false, error: 'message or imageUrl is required' });
     }
 
     // Look up the conversation to get the wa_id
@@ -216,15 +287,21 @@ router.post('/conversations/:id/reply', authMiddleware, async (req, res) => {
     }
     const waId = convResult.rows[0].wa_id;
 
-    // Send via Meta API
-    await sendWhatsAppMessage(waId, message);
+    // Send via Meta API (text, image, or both)
+    if (message) {
+      await sendWhatsAppMessage(waId, message);
+    }
+    if (imageUrl) {
+      await sendWhatsAppImage(waId, imageUrl, message || '');
+    }
 
     // Store outbound admin message
     const outboundWaId = 'admin_' + Date.now();
+    const msgType = imageUrl ? 'image' : 'text';
     await query(
-      `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content)
-       VALUES ($1, $2, 'outbound', 'admin', 'text', $3)`,
-      [req.params.id, outboundWaId, message]
+      `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, media_url)
+       VALUES ($1, $2, 'outbound', 'admin', $3, $4, $5)`,
+      [req.params.id, outboundWaId, msgType, message || '', imageUrl || null]
     );
 
     // Update last_message_at

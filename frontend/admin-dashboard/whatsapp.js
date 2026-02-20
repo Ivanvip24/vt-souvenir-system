@@ -14,7 +14,8 @@ const waState = {
   messages: [],
   searchQuery: '',
   pollingInterval: null,
-  mobileShowChat: false
+  mobileShowChat: false,
+  pendingImageUrl: null
 };
 
 // ==========================================
@@ -487,6 +488,93 @@ function injectWhatsAppStyles() {
         max-width: 85%;
       }
     }
+
+    /* Media elements in messages */
+    .wa-msg-media-img {
+      max-width: 250px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .wa-msg-audio {
+      max-width: 250px;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .wa-msg-transcription {
+      font-size: 12px;
+      font-style: italic;
+      opacity: 0.7;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .wa-msg-doc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      background: rgba(0,0,0,0.05);
+      border-radius: 8px;
+      text-decoration: none;
+      color: inherit;
+      font-size: 13px;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+
+    .wa-msg-admin .wa-msg-doc-link {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    .wa-msg-doc-link:hover {
+      background: rgba(0,0,0,0.1);
+    }
+
+    .wa-msg-admin .wa-msg-doc-link:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    .wa-msg-thumbnails {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+
+    .wa-msg-thumbnail {
+      width: 60px;
+      height: 60px;
+      border-radius: 6px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .wa-img-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      color: #666;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .wa-img-btn:hover {
+      background: #e5e7eb;
+      border-color: #d1d5db;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -642,12 +730,16 @@ async function markConversationRead(conversationId) {
   }
 }
 
-async function sendReply(conversationId, message) {
+async function sendReply(conversationId, message, imageUrl) {
   try {
+    var payload = { message: message };
+    if (imageUrl) {
+      payload.imageUrl = imageUrl;
+    }
     const res = await fetch(API_BASE + '/whatsapp/conversations/' + conversationId + '/reply', {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ message: message })
+      body: JSON.stringify(payload)
     });
     const json = await res.json();
     return json.success;
@@ -866,7 +958,16 @@ function buildConversationListDOM(parentEl) {
 
 function buildConversationItemDOM(c) {
   var displayName = c.client_name || c.wa_id || 'Desconocido';
-  var preview = waTruncate(c.last_message || '', 50);
+  var rawPreview = c.last_message || '';
+  // Replace media placeholders with emoji indicators
+  if (rawPreview.startsWith('[Imagen]') || rawPreview === '[Imagen]') {
+    rawPreview = '\uD83D\uDCF7 Imagen';
+  } else if (rawPreview.startsWith('[Audio')) {
+    rawPreview = '\uD83C\uDFA4 Audio';
+  } else if (rawPreview.startsWith('[Documento')) {
+    rawPreview = '\uD83D\uDCC4 Documento';
+  }
+  var preview = waTruncate(rawPreview, 50);
   var time = waTimeAgo(c.last_message_at);
   var isActive = c.id === waState.selectedConversationId;
   var unread = c.unread_count || 0;
@@ -1071,12 +1172,41 @@ function buildChatViewDOM(parentEl) {
   textarea.rows = 1;
   inputArea.appendChild(textarea);
 
+  // Image attach button
+  var imgBtn = document.createElement('button');
+  imgBtn.className = 'wa-img-btn';
+  imgBtn.id = 'wa-img-btn';
+  imgBtn.title = 'Adjuntar imagen';
+  var imgBtnIcon = document.createElement('i');
+  imgBtnIcon.setAttribute('data-lucide', 'image');
+  imgBtnIcon.style.cssText = 'width:18px;height:18px;';
+  imgBtn.appendChild(imgBtnIcon);
+  inputArea.appendChild(imgBtn);
+
   var sendBtn = document.createElement('button');
   sendBtn.className = 'wa-send-btn';
   sendBtn.id = 'wa-send-btn';
   sendBtn.title = 'Enviar';
-  // SVG send icon
-  sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+  // SVG send icon - build with DOM
+  var sendSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  sendSvg.setAttribute('width', '18');
+  sendSvg.setAttribute('height', '18');
+  sendSvg.setAttribute('viewBox', '0 0 24 24');
+  sendSvg.setAttribute('fill', 'none');
+  sendSvg.setAttribute('stroke', 'currentColor');
+  sendSvg.setAttribute('stroke-width', '2');
+  sendSvg.setAttribute('stroke-linecap', 'round');
+  sendSvg.setAttribute('stroke-linejoin', 'round');
+  var sendLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  sendLine.setAttribute('x1', '22');
+  sendLine.setAttribute('y1', '2');
+  sendLine.setAttribute('x2', '11');
+  sendLine.setAttribute('y2', '13');
+  sendSvg.appendChild(sendLine);
+  var sendPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+  sendPoly.setAttribute('points', '22 2 15 22 11 13 2 9 22 2');
+  sendSvg.appendChild(sendPoly);
+  sendBtn.appendChild(sendSvg);
   inputArea.appendChild(sendBtn);
 
   parentEl.appendChild(inputArea);
@@ -1135,14 +1265,100 @@ function buildMessagesDOM(parentEl) {
       }
     }
 
-    // Content - handle newlines
+    // Content - render based on message_type
     var contentDiv = document.createElement('div');
     var contentText = m.content || '';
-    var lines = contentText.split('\n');
-    for (var j = 0; j < lines.length; j++) {
-      if (j > 0) contentDiv.appendChild(document.createElement('br'));
-      contentDiv.appendChild(document.createTextNode(lines[j]));
+    var msgType = m.message_type || 'text';
+    var meta = null;
+    if (m.metadata) {
+      try {
+        meta = typeof m.metadata === 'string' ? JSON.parse(m.metadata || '{}') : (m.metadata || {});
+      } catch (e) {
+        meta = {};
+      }
+    } else {
+      meta = {};
     }
+
+    if (msgType === 'image' && m.media_url) {
+      // Image message
+      var img = document.createElement('img');
+      img.src = m.media_url;
+      img.alt = 'Imagen';
+      img.className = 'wa-msg-media-img';
+      img.addEventListener('click', (function(url) {
+        return function() { window.open(url, '_blank'); };
+      })(m.media_url));
+      contentDiv.appendChild(img);
+      // Show caption below if it exists and isn't the placeholder
+      if (contentText && contentText !== '[Imagen]') {
+        var captionDiv = document.createElement('div');
+        var captionLines = contentText.split('\n');
+        for (var j = 0; j < captionLines.length; j++) {
+          if (j > 0) captionDiv.appendChild(document.createElement('br'));
+          captionDiv.appendChild(document.createTextNode(captionLines[j]));
+        }
+        contentDiv.appendChild(captionDiv);
+      }
+    } else if (msgType === 'audio' && m.media_url) {
+      // Audio message
+      var audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = m.media_url;
+      audio.className = 'wa-msg-audio';
+      contentDiv.appendChild(audio);
+      // Show transcription if available
+      if (meta && meta.transcription) {
+        var transSpan = document.createElement('span');
+        transSpan.className = 'wa-msg-transcription';
+        transSpan.textContent = meta.transcription;
+        contentDiv.appendChild(transSpan);
+      }
+    } else if (msgType === 'document' && m.media_url) {
+      // Document message
+      var docLink = document.createElement('a');
+      docLink.href = m.media_url;
+      docLink.target = '_blank';
+      docLink.className = 'wa-msg-doc-link';
+      var docFilename = (meta && meta.filename) ? meta.filename : 'Documento';
+      docLink.textContent = '\uD83D\uDCC4 ' + docFilename;
+      contentDiv.appendChild(docLink);
+      // Show caption below if it exists and isn't the placeholder
+      if (contentText && !contentText.startsWith('[Documento')) {
+        var docCaptionDiv = document.createElement('div');
+        var docCaptionLines = contentText.split('\n');
+        for (var j = 0; j < docCaptionLines.length; j++) {
+          if (j > 0) docCaptionDiv.appendChild(document.createElement('br'));
+          docCaptionDiv.appendChild(document.createTextNode(docCaptionLines[j]));
+        }
+        contentDiv.appendChild(docCaptionDiv);
+      }
+    } else {
+      // Text message (default) - handle newlines
+      var lines = contentText.split('\n');
+      for (var j = 0; j < lines.length; j++) {
+        if (j > 0) contentDiv.appendChild(document.createElement('br'));
+        contentDiv.appendChild(document.createTextNode(lines[j]));
+      }
+    }
+
+    // Outbound messages: show sent image thumbnails from metadata
+    if (m.direction === 'outbound' && meta && meta.imagesSent && Array.isArray(meta.imagesSent)) {
+      var thumbsDiv = document.createElement('div');
+      thumbsDiv.className = 'wa-msg-thumbnails';
+      for (var k = 0; k < meta.imagesSent.length; k++) {
+        var thumb = document.createElement('img');
+        thumb.src = meta.imagesSent[k];
+        thumb.alt = 'Imagen enviada';
+        thumb.className = 'wa-msg-thumbnail';
+        thumb.addEventListener('click', (function(url) {
+          return function() { window.open(url, '_blank'); };
+        })(meta.imagesSent[k]));
+        thumbsDiv.appendChild(thumb);
+      }
+      contentDiv.appendChild(thumbsDiv);
+    }
+
     msgDiv.appendChild(contentDiv);
 
     // Timestamp
@@ -1224,6 +1440,27 @@ function bindChatEvents() {
   var sendBtn = document.getElementById('wa-send-btn');
   if (sendBtn) {
     sendBtn.addEventListener('click', handleSendMessage);
+  }
+
+  // Image attach button
+  var imgBtn = document.getElementById('wa-img-btn');
+  if (imgBtn) {
+    imgBtn.addEventListener('click', function() {
+      var url = prompt('URL de la imagen a enviar:');
+      if (url && url.trim()) {
+        waState.pendingImageUrl = url.trim();
+        imgBtn.style.background = '#e72a88';
+        imgBtn.style.color = '#fff';
+        imgBtn.style.borderColor = '#e72a88';
+        imgBtn.title = 'Imagen adjunta (click para quitar)';
+      } else {
+        waState.pendingImageUrl = null;
+        imgBtn.style.background = '';
+        imgBtn.style.color = '';
+        imgBtn.style.borderColor = '';
+        imgBtn.title = 'Adjuntar imagen';
+      }
+    });
   }
 
   // Textarea: auto-grow + Enter to send (Shift+Enter for newline)
@@ -1308,7 +1545,8 @@ async function handleSendMessage() {
   if (!input || !waState.selectedConversationId) return;
 
   var message = input.value.trim();
-  if (!message) return;
+  var imageUrl = waState.pendingImageUrl;
+  if (!message && !imageUrl) return;
 
   // Disable controls while sending
   input.disabled = true;
@@ -1319,20 +1557,29 @@ async function handleSendMessage() {
     id: 'temp-' + Date.now(),
     direction: 'outbound',
     sender: 'admin',
-    message_type: 'text',
-    content: message,
+    message_type: imageUrl ? 'image' : 'text',
+    content: message || '',
+    media_url: imageUrl || null,
     created_at: new Date().toISOString()
   };
   waState.messages.push(tempMsg);
   renderChatMessages();
   scrollChatToBottom();
 
-  // Clear input
+  // Clear input and reset image state
   input.value = '';
   input.style.height = 'auto';
+  waState.pendingImageUrl = null;
+  var imgBtn = document.getElementById('wa-img-btn');
+  if (imgBtn) {
+    imgBtn.style.background = '';
+    imgBtn.style.color = '';
+    imgBtn.style.borderColor = '';
+    imgBtn.title = 'Adjuntar imagen';
+  }
 
   // Send to API
-  var success = await sendReply(waState.selectedConversationId, message);
+  var success = await sendReply(waState.selectedConversationId, message || '', imageUrl);
 
   // Re-enable controls
   input.disabled = false;
