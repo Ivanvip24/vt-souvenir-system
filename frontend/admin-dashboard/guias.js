@@ -1,6 +1,6 @@
 /**
- * Guías Management Module
- * Handles shipping labels/guías display and management
+ * Guias Management Module — Redesigned
+ * Card-based list with slide-in detail panel
  */
 
 // State
@@ -9,191 +9,524 @@ let guiasCurrentPage = 1;
 let guiasTotalPages = 1;
 let guiasCurrentStatus = 'all';
 let guiasSearchQuery = '';
+let guiasSelectedId = null;
+let guiasStats = {};
 
 // API URL
 const GUIAS_API_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:3000/api/shipping'
   : 'https://vt-souvenir-backend.onrender.com/api/shipping';
 
+// Carrier visual config
+const guiasCarrierStyles = {
+  'Estafeta':      { icon: '\u{1F4E6}', accent: '#f59e0b' },
+  'Paquetexpress': { icon: '\u{1F69B}', accent: '#10b981' },
+  'FedEx':         { icon: '\u2708\uFE0F', accent: '#6366f1' },
+  'DHL':           { icon: '\u{1F7E1}', accent: '#ef4444' },
+  'UPS':           { icon: '\u{1F4EC}', accent: '#d97706' },
+  'Redpack':       { icon: '\u{1F4EE}', accent: '#8b5cf6' },
+};
+
+// Status definitions
+const guiasStatusDefs = {
+  'pending':         { bg: '#fef3c7', color: '#92400e', label: 'Pendiente',  dot: '#f59e0b' },
+  'processing':      { bg: '#dbeafe', color: '#1e40af', label: 'Procesando', dot: '#3b82f6' },
+  'label_generated': { bg: '#d1fae5', color: '#065f46', label: 'Generada',   dot: '#10b981' },
+  'shipped':         { bg: '#e0e7ff', color: '#3730a3', label: 'Enviada',    dot: '#6366f1' },
+  'delivered':       { bg: '#bbf7d0', color: '#166534', label: 'Entregada',  dot: '#22c55e' },
+  'cancelled':       { bg: '#fee2e2', color: '#991b1b', label: 'Cancelada',  dot: '#ef4444' },
+};
+
 /**
- * Initialize guías view
+ * Toast notification (replaces alert)
+ * Note: uses textContent for safe rendering — no HTML injection risk
+ */
+function guiasToast(message, type) {
+  type = type || 'success';
+  var existing = document.querySelector('.guias-toast');
+  if (existing) existing.remove();
+
+  var colors = {
+    success: { bg: '#065f46', border: '#10b981' },
+    error:   { bg: '#991b1b', border: '#ef4444' },
+    info:    { bg: '#1e40af', border: '#3b82f6' },
+  };
+  var c = colors[type] || colors.info;
+
+  var toast = document.createElement('div');
+  toast.className = 'guias-toast';
+  toast.style.cssText =
+    'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);' +
+    'background:' + c.bg + ';color:white;padding:12px 24px;border-radius:10px;' +
+    'font-size:14px;font-weight:600;z-index:10000;opacity:0;' +
+    'border-left:4px solid ' + c.border + ';box-shadow:0 8px 24px rgba(0,0,0,0.25);' +
+    'transition:all 0.3s cubic-bezier(0.16,1,0.3,1);max-width:400px;text-align:center;';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(function() {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+  });
+
+  setTimeout(function() {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(20px)';
+    setTimeout(function() { toast.remove(); }, 300);
+  }, 2800);
+}
+
+/**
+ * Initialize guias view
  */
 async function initGuiasView() {
-  // Auto-refresh stuck "processing" labels from Skydropx on view load
   try {
-    await fetch(`${GUIAS_API_URL}/refresh-pending-tracking`, { method: 'POST' });
-  } catch (err) {
-    // Silently continue - the main load will still work
-  }
+    await fetch(GUIAS_API_URL + '/refresh-pending-tracking', { method: 'POST' });
+  } catch (err) { /* silent */ }
   loadGuias();
 }
 
 /**
- * Load guías from API
+ * Load guias from API
  */
-async function loadGuias(page = 1) {
+async function loadGuias(page) {
+  page = page || 1;
   guiasCurrentPage = page;
 
-  const tableBody = document.getElementById('guias-table-body');
-  tableBody.innerHTML = `
-    <tr>
-      <td colspan="8" style="text-align: center; padding: 40px; color: #6b7280;">
-        <div style="display: inline-block; width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-        <div style="margin-top: 8px;">Cargando guías...</div>
-      </td>
-    </tr>
-  `;
+  var listEl = document.getElementById('guias-card-list');
+  var emptyEl = document.getElementById('guias-empty-state');
+
+  // Loading skeleton
+  var skeletons = '';
+  for (var i = 0; i < 6; i++) {
+    skeletons += '<div class="guia-card-skeleton"><div class="skel-line skel-w60"></div><div class="skel-line skel-w40"></div></div>';
+  }
+  listEl.innerHTML = skeletons;
+  emptyEl.classList.add('hidden');
 
   try {
-    const params = new URLSearchParams({
-      page: page,
-      limit: 50
-    });
+    var params = new URLSearchParams({ page: page, limit: 50 });
+    if (guiasCurrentStatus && guiasCurrentStatus !== 'all') params.append('status', guiasCurrentStatus);
+    if (guiasSearchQuery) params.append('search', guiasSearchQuery);
 
-    if (guiasCurrentStatus && guiasCurrentStatus !== 'all') {
-      params.append('status', guiasCurrentStatus);
-    }
+    var response = await fetch(GUIAS_API_URL + '/labels?' + params);
+    var result = await response.json();
 
-    if (guiasSearchQuery) {
-      params.append('search', guiasSearchQuery);
-    }
-
-    const response = await fetch(`${GUIAS_API_URL}/labels?${params}`);
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || 'Error loading guías');
-    }
+    if (!result.success) throw new Error(result.error || 'Error loading guias');
 
     guiasData = result.labels;
     guiasTotalPages = result.pagination.totalPages;
+    guiasStats = result.stats || {};
 
-    // Update stats
-    updateGuiasStats(result.stats);
-
-    // Render table
-    renderGuiasTable();
-
-    // Update pagination
+    updateGuiasFilterCounts(result.stats);
+    renderGuiasList();
     updateGuiasPagination(result.pagination);
 
+    // If panel is open, refresh its data
+    if (guiasSelectedId) {
+      var fresh = guiasData.find(function(g) { return g.id === guiasSelectedId; });
+      if (fresh) renderGuiasPanel(fresh);
+    }
+
   } catch (error) {
-    console.error('Error loading guías:', error);
-    tableBody.innerHTML = `
-      <tr>
-        <td colspan="8" style="text-align: center; padding: 40px; color: #dc2626;">
-          Error al cargar guías: ${error.message}
-        </td>
-      </tr>
-    `;
+    console.error('Error loading guias:', error);
+    listEl.textContent = '';
+    var errDiv = document.createElement('div');
+    errDiv.style.cssText = 'text-align:center;padding:48px 20px;color:var(--danger);';
+    errDiv.textContent = 'Error al cargar guias: ' + error.message;
+    listEl.appendChild(errDiv);
   }
 }
 
 /**
- * Update stats display
+ * Update filter chip counts
  */
-function updateGuiasStats(stats) {
-  document.getElementById('guias-total').textContent = stats.total_labels || 0;
-  document.getElementById('guias-generated').textContent = stats.generated || 0;
-  document.getElementById('guias-shipped').textContent = stats.shipped || 0;
-  document.getElementById('guias-delivered').textContent = stats.delivered || 0;
+function updateGuiasFilterCounts(stats) {
+  if (!stats) return;
+  var el;
+  el = document.getElementById('guias-count-all');
+  if (el) el.textContent = stats.total_labels || 0;
+  el = document.getElementById('guias-count-generated');
+  if (el) el.textContent = stats.generated || 0;
+  el = document.getElementById('guias-count-shipped');
+  if (el) el.textContent = stats.shipped || 0;
+  el = document.getElementById('guias-count-delivered');
+  if (el) el.textContent = stats.delivered || 0;
 }
 
 /**
- * Render guías table
+ * Render the card-based list
+ * Note: All user-generated content (names, cities, etc.) is escaped via textContent
+ * in the createGuiaCard helper to prevent XSS.
  */
-function renderGuiasTable() {
-  const tableBody = document.getElementById('guias-table-body');
-  const emptyState = document.getElementById('guias-empty-state');
-  const tableContainer = document.querySelector('#guias-view .shipping-table-container');
+function renderGuiasList() {
+  var listEl = document.getElementById('guias-card-list');
+  var emptyEl = document.getElementById('guias-empty-state');
 
   if (guiasData.length === 0) {
-    tableContainer.classList.add('hidden');
-    emptyState.classList.remove('hidden');
+    listEl.textContent = '';
+    emptyEl.classList.remove('hidden');
     return;
   }
 
-  tableContainer.classList.remove('hidden');
-  emptyState.classList.add('hidden');
+  emptyEl.classList.add('hidden');
+  listEl.textContent = '';
 
-  tableBody.innerHTML = guiasData.map(guia => `
-    <tr>
-      <td>
-        <a href="#" onclick="viewOrder(${guia.order_id}); return false;" style="color: #667eea; font-weight: 600;">
-          ${guia.order_number || `#${guia.order_id}`}
-        </a>
-      </td>
-      <td>
-        <div style="font-weight: 500;">${guia.client_name || 'Sin nombre'}</div>
-        <div style="font-size: 12px; color: #6b7280;">${guia.client_city || ''}, ${guia.client_state || ''}</div>
-      </td>
-      <td>
-        ${guia.tracking_number ? `
-          <div style="font-family: monospace; font-size: 13px; font-weight: 600; color: #1f2937;">
-            ${guia.tracking_number}
-          </div>
-          ${guia.tracking_url ? `
-            <a href="${guia.tracking_url}" target="_blank" rel="noopener" style="font-size: 11px; color: #667eea;">
-              🔍 Rastrear
-            </a>
-          ` : ''}
-        ` : `
-          <span style="font-size: 12px; color: #f59e0b; font-style: italic;">Pendiente</span>
-        `}
-      </td>
-      <td>
-        <div style="font-weight: 500;">${guia.carrier || 'N/A'}</div>
-        <div style="font-size: 12px; color: #6b7280;">${guia.service || ''}</div>
-      </td>
-      <td>
-        <span style="font-weight: 600; color: ${guia.delivery_days <= 2 ? '#059669' : '#6b7280'};">
-          ${guia.delivery_days || '?'} días
-        </span>
-      </td>
-      <td>
-        ${getStatusBadge(guia.status)}
-      </td>
-      <td>
-        <div style="font-size: 13px;">${formatDateGuias(guia.created_at)}</div>
-      </td>
-      <td>
-        <div style="display: flex; gap: 8px;">
-          ${guia.label_url ? `
-            <a href="${guia.label_url}" target="_blank" rel="noopener"
-               style="padding: 6px 10px; background: #f3f4f6; border-radius: 6px; font-size: 12px; color: #374151; text-decoration: none;">
-              📄 PDF
-            </a>
-          ` : ''}
-          <button onclick="updateGuiaStatus(${guia.id})"
-                  style="padding: 6px 10px; background: #dbeafe; border: none; border-radius: 6px; font-size: 12px; color: #1e40af; cursor: pointer;">
-            ✏️ Estado
-          </button>
-          <button onclick="refreshGuiaTracking(${guia.id})"
-                  style="padding: 6px 10px; background: #dcfce7; border: none; border-radius: 6px; font-size: 12px; color: #166534; cursor: pointer;">
-            🔄
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  guiasData.forEach(function(guia) {
+    listEl.appendChild(createGuiaCard(guia));
+  });
 }
 
 /**
- * Get status badge HTML
+ * Create a single guia card element using safe DOM methods
  */
-function getStatusBadge(status) {
-  const badges = {
-    'pending': { bg: '#fef3c7', color: '#92400e', text: '⏳ Pendiente' },
-    'processing': { bg: '#dbeafe', color: '#1e40af', text: '⚙️ Procesando' },
-    'label_generated': { bg: '#d1fae5', color: '#065f46', text: '📄 Generada' },
-    'shipped': { bg: '#c7d2fe', color: '#3730a3', text: '🚚 Enviada' },
-    'delivered': { bg: '#bbf7d0', color: '#166534', text: '✅ Entregada' },
-    'cancelled': { bg: '#fee2e2', color: '#991b1b', text: '❌ Cancelada' }
+function createGuiaCard(guia) {
+  var carrier = guiasCarrierStyles[guia.carrier] || { icon: '\u{1F4E6}', accent: '#6b7280' };
+  var status = guiasStatusDefs[guia.status] || { bg: '#f3f4f6', color: '#374151', label: guia.status || '?', dot: '#9ca3af' };
+  var isSelected = guia.id === guiasSelectedId;
+  var daysNum = guia.delivery_days || 0;
+  var daysColor = daysNum <= 2 ? 'var(--success)' : (daysNum >= 7 ? 'var(--danger)' : 'var(--gray-500)');
+  var location = [guia.client_city, guia.client_state].filter(Boolean).join(', ');
+
+  var card = document.createElement('div');
+  card.className = 'guia-card' + (isSelected ? ' guia-card--active' : '');
+  card.dataset.guiaId = guia.id;
+  card.onclick = function() { openGuiaPanel(guia.id); };
+
+  // Row 1
+  var row1 = document.createElement('div');
+  row1.className = 'guia-card__row1';
+
+  var carrierDiv = document.createElement('div');
+  carrierDiv.className = 'guia-card__carrier';
+
+  var carrierIcon = document.createElement('span');
+  carrierIcon.className = 'guia-card__carrier-icon';
+  carrierIcon.style.background = carrier.accent + '15';
+  carrierIcon.style.color = carrier.accent;
+  carrierIcon.textContent = carrier.icon;
+
+  var carrierName = document.createElement('span');
+  carrierName.className = 'guia-card__carrier-name';
+  carrierName.textContent = guia.carrier || 'N/A';
+
+  carrierDiv.appendChild(carrierIcon);
+  carrierDiv.appendChild(carrierName);
+
+  var trackingDiv = document.createElement('div');
+  trackingDiv.className = 'guia-card__tracking';
+  trackingDiv.textContent = guia.tracking_number || '\u2014';
+
+  var statusDiv = document.createElement('div');
+  statusDiv.className = 'guia-card__status';
+  statusDiv.style.background = status.bg;
+  statusDiv.style.color = status.color;
+
+  var statusDot = document.createElement('span');
+  statusDot.className = 'guia-card__status-dot';
+  statusDot.style.background = status.dot;
+  statusDiv.appendChild(statusDot);
+  statusDiv.appendChild(document.createTextNode(' ' + status.label));
+
+  row1.appendChild(carrierDiv);
+  row1.appendChild(trackingDiv);
+  row1.appendChild(statusDiv);
+
+  // Row 2
+  var row2 = document.createElement('div');
+  row2.className = 'guia-card__row2';
+
+  var serviceSpan = document.createElement('span');
+  serviceSpan.className = 'guia-card__service';
+  serviceSpan.textContent = guia.service || '';
+
+  var clientSpan = document.createElement('span');
+  clientSpan.className = 'guia-card__client';
+  clientSpan.textContent = (guia.client_name || 'Sin nombre') + (location ? ' \u00B7 ' + location : '');
+
+  var daysSpan = document.createElement('span');
+  daysSpan.className = 'guia-card__days';
+  daysSpan.style.color = daysColor;
+  daysSpan.textContent = (guia.delivery_days || '?') + 'd';
+
+  row2.appendChild(serviceSpan);
+  row2.appendChild(clientSpan);
+  row2.appendChild(daysSpan);
+
+  card.appendChild(row1);
+  card.appendChild(row2);
+
+  return card;
+}
+
+/**
+ * Open the detail panel for a guia
+ */
+function openGuiaPanel(guiaId) {
+  var guia = guiasData.find(function(g) { return g.id === guiaId; });
+  if (!guia) return;
+
+  guiasSelectedId = guiaId;
+
+  // Highlight active card
+  document.querySelectorAll('.guia-card').forEach(function(el) {
+    el.classList.toggle('guia-card--active', Number(el.dataset.guiaId) === guiaId);
+  });
+
+  renderGuiasPanel(guia);
+
+  var panel = document.getElementById('guias-detail-panel');
+  panel.classList.add('guias-panel--open');
+
+  // On mobile, prevent body scroll
+  if (window.innerWidth < 768) {
+    document.body.classList.add('guias-panel-mobile-open');
+  }
+}
+
+/**
+ * Close the detail panel
+ */
+function closeGuiasPanel() {
+  guiasSelectedId = null;
+  var panel = document.getElementById('guias-detail-panel');
+  panel.classList.remove('guias-panel--open');
+  document.body.classList.remove('guias-panel-mobile-open');
+
+  document.querySelectorAll('.guia-card').forEach(function(el) {
+    el.classList.remove('guia-card--active');
+  });
+}
+
+/**
+ * Render detail panel content using safe DOM construction
+ */
+function renderGuiasPanel(guia) {
+  var panel = document.getElementById('guias-panel-content');
+  var carrier = guiasCarrierStyles[guia.carrier] || { icon: '\u{1F4E6}', accent: '#6b7280' };
+  var location = [guia.client_city, guia.client_state].filter(Boolean).join(', ');
+  var dateStr = formatDateGuias(guia.created_at);
+  var daysNum = guia.delivery_days || 0;
+  var daysColor = daysNum <= 2 ? 'var(--success)' : (daysNum >= 7 ? 'var(--danger)' : 'var(--gray-600)');
+
+  panel.textContent = '';
+
+  // --- Header ---
+  var header = document.createElement('div');
+  header.className = 'guias-panel__header';
+  header.style.borderColor = carrier.accent;
+
+  var carrierRow = document.createElement('div');
+  carrierRow.className = 'guias-panel__carrier';
+
+  var cIcon = document.createElement('span');
+  cIcon.className = 'guias-panel__carrier-icon';
+  cIcon.style.background = carrier.accent;
+  cIcon.style.color = 'white';
+  cIcon.textContent = carrier.icon;
+
+  var cInfo = document.createElement('div');
+  var cName = document.createElement('div');
+  cName.className = 'guias-panel__carrier-name';
+  cName.textContent = guia.carrier || 'N/A';
+  var cService = document.createElement('div');
+  cService.className = 'guias-panel__carrier-service';
+  cService.textContent = guia.service || 'Servicio estandar';
+  cInfo.appendChild(cName);
+  cInfo.appendChild(cService);
+
+  carrierRow.appendChild(cIcon);
+  carrierRow.appendChild(cInfo);
+  header.appendChild(carrierRow);
+  panel.appendChild(header);
+
+  // --- Tracking section ---
+  var trackSec = createPanelSection('TRACKING');
+  var trackRow = document.createElement('div');
+  trackRow.className = 'guias-panel__tracking-row';
+  var trackCode = document.createElement('code');
+  trackCode.className = 'guias-panel__tracking-code';
+  trackCode.textContent = guia.tracking_number || '\u2014';
+  trackRow.appendChild(trackCode);
+
+  if (guia.tracking_number) {
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 'guias-panel__copy-btn';
+    copyBtn.title = 'Copiar';
+    copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+    copyBtn.onclick = function(e) {
+      e.stopPropagation();
+      navigator.clipboard.writeText(guia.tracking_number);
+      guiasToast('Tracking copiado');
+    };
+    trackRow.appendChild(copyBtn);
+  }
+  trackSec.appendChild(trackRow);
+
+  if (guia.tracking_url) {
+    var trackLink = document.createElement('a');
+    trackLink.className = 'guias-panel__track-link';
+    trackLink.href = guia.tracking_url;
+    trackLink.target = '_blank';
+    trackLink.rel = 'noopener';
+    trackLink.textContent = 'Rastrear envio \u2192';
+    trackLink.onclick = function(e) { e.stopPropagation(); };
+    trackSec.appendChild(trackLink);
+  }
+  panel.appendChild(trackSec);
+
+  // --- Client section ---
+  var clientSec = createPanelSection('CLIENTE');
+  var clientName = document.createElement('div');
+  clientName.className = 'guias-panel__client-name';
+  clientName.textContent = guia.client_name || 'Sin nombre';
+  clientSec.appendChild(clientName);
+  if (location) {
+    var clientLoc = document.createElement('div');
+    clientLoc.className = 'guias-panel__client-location';
+    clientLoc.textContent = location;
+    clientSec.appendChild(clientLoc);
+  }
+  panel.appendChild(clientSec);
+
+  // --- Order section ---
+  var orderSec = createPanelSection('ORDEN');
+  var orderLink = document.createElement('a');
+  orderLink.className = 'guias-panel__order-link';
+  orderLink.href = '#';
+  orderLink.textContent = guia.order_number || '#' + guia.order_id;
+  orderLink.innerHTML = orderLink.textContent + ' <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>';
+  orderLink.onclick = function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    closeGuiasPanel();
+    viewOrder(guia.order_id);
   };
+  orderSec.appendChild(orderLink);
+  panel.appendChild(orderSec);
 
-  const badge = badges[status] || { bg: '#f3f4f6', color: '#374151', text: status };
+  // --- Date + Days grid ---
+  var grid = document.createElement('div');
+  grid.className = 'guias-panel__grid2';
 
-  return `<span style="display: inline-block; padding: 4px 10px; background: ${badge.bg}; color: ${badge.color}; font-size: 12px; font-weight: 600; border-radius: 12px;">${badge.text}</span>`;
+  var dateCol = document.createElement('div');
+  var dateLabel = document.createElement('div');
+  dateLabel.className = 'guias-panel__label';
+  dateLabel.textContent = 'FECHA';
+  var dateVal = document.createElement('div');
+  dateVal.className = 'guias-panel__value';
+  dateVal.textContent = dateStr;
+  dateCol.appendChild(dateLabel);
+  dateCol.appendChild(dateVal);
+
+  var daysCol = document.createElement('div');
+  var daysLabel = document.createElement('div');
+  daysLabel.className = 'guias-panel__label';
+  daysLabel.textContent = 'DIAS EN TRANSITO';
+  var daysVal = document.createElement('div');
+  daysVal.className = 'guias-panel__value';
+  daysVal.style.color = daysColor;
+  daysVal.style.fontWeight = '700';
+  daysVal.textContent = (guia.delivery_days || '?') + ' dias';
+  daysCol.appendChild(daysLabel);
+  daysCol.appendChild(daysVal);
+
+  grid.appendChild(dateCol);
+  grid.appendChild(daysCol);
+  panel.appendChild(grid);
+
+  // --- Status dropdown ---
+  var statusSec = createPanelSection('ESTADO');
+  var select = document.createElement('select');
+  select.className = 'guias-panel__status-select';
+  select.id = 'guias-panel-status';
+  select.onclick = function(e) { e.stopPropagation(); };
+  select.onchange = function() { handleGuiaPanelStatusChange(guia.id, select.value); };
+
+  Object.keys(guiasStatusDefs).forEach(function(key) {
+    var opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = guiasStatusDefs[key].label;
+    if (key === guia.status) opt.selected = true;
+    select.appendChild(opt);
+  });
+  statusSec.appendChild(select);
+  panel.appendChild(statusSec);
+
+  // --- Actions ---
+  var actionsDiv = document.createElement('div');
+  actionsDiv.className = 'guias-panel__actions';
+
+  if (guia.label_url) {
+    var pdfLink = document.createElement('a');
+    pdfLink.className = 'guias-panel__action-btn guias-panel__action-btn--pdf';
+    pdfLink.href = guia.label_url;
+    pdfLink.target = '_blank';
+    pdfLink.rel = 'noopener';
+    pdfLink.onclick = function(e) { e.stopPropagation(); };
+    pdfLink.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+    pdfLink.appendChild(document.createTextNode(' Descargar PDF'));
+    actionsDiv.appendChild(pdfLink);
+  }
+
+  var refreshBtn = document.createElement('button');
+  refreshBtn.className = 'guias-panel__action-btn guias-panel__action-btn--refresh';
+  refreshBtn.onclick = function(e) { e.stopPropagation(); handleGuiaPanelRefresh(guia.id); };
+  refreshBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>';
+  refreshBtn.appendChild(document.createTextNode(' Actualizar tracking'));
+  actionsDiv.appendChild(refreshBtn);
+
+  panel.appendChild(actionsDiv);
+}
+
+/** Helper: create a panel section with label */
+function createPanelSection(labelText) {
+  var sec = document.createElement('div');
+  sec.className = 'guias-panel__section';
+  var label = document.createElement('div');
+  label.className = 'guias-panel__label';
+  label.textContent = labelText;
+  sec.appendChild(label);
+  return sec;
+}
+
+/**
+ * Handle status change from panel dropdown
+ */
+async function handleGuiaPanelStatusChange(guiaId, newStatus) {
+  try {
+    var response = await fetch(GUIAS_API_URL + '/labels/' + guiaId + '/status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    var result = await response.json();
+    if (!result.success) throw new Error(result.error || 'Error');
+    guiasToast('Estado actualizado');
+    loadGuias(guiasCurrentPage);
+  } catch (error) {
+    guiasToast('Error: ' + error.message, 'error');
+  }
+}
+
+/**
+ * Handle tracking refresh from panel
+ */
+async function handleGuiaPanelRefresh(guiaId) {
+  var btn = document.querySelector('.guias-panel__action-btn--refresh');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+
+  try {
+    var response = await fetch(GUIAS_API_URL + '/labels/' + guiaId + '/refresh', { method: 'POST' });
+    var result = await response.json();
+    if (!result.success) throw new Error(result.error || 'Error');
+    guiasToast('Tracking actualizado');
+    loadGuias(guiasCurrentPage);
+  } catch (error) {
+    guiasToast('Error: ' + error.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
 }
 
 /**
@@ -201,37 +534,27 @@ function getStatusBadge(status) {
  */
 function formatDateGuias(dateStr) {
   if (!dateStr) return 'N/A';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
+  var date = new Date(dateStr);
+  return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 /**
  * Update pagination
  */
 function updateGuiasPagination(pagination) {
-  const prevBtn = document.getElementById('guias-prev-page-btn');
-  const nextBtn = document.getElementById('guias-next-page-btn');
-  const info = document.getElementById('guias-pagination-info');
+  var prevBtn = document.getElementById('guias-prev-page-btn');
+  var nextBtn = document.getElementById('guias-next-page-btn');
+  var info = document.getElementById('guias-pagination-info');
+  if (!prevBtn) return;
 
   prevBtn.disabled = pagination.page <= 1;
   nextBtn.disabled = pagination.page >= pagination.totalPages;
-
-  info.textContent = `Página ${pagination.page} de ${pagination.totalPages}`;
+  info.textContent = pagination.page + ' / ' + pagination.totalPages;
 }
 
-/**
- * Go to page
- */
 function goToGuiasPage(direction) {
-  if (direction === 'prev' && guiasCurrentPage > 1) {
-    loadGuias(guiasCurrentPage - 1);
-  } else if (direction === 'next' && guiasCurrentPage < guiasTotalPages) {
-    loadGuias(guiasCurrentPage + 1);
-  }
+  if (direction === 'prev' && guiasCurrentPage > 1) loadGuias(guiasCurrentPage - 1);
+  else if (direction === 'next' && guiasCurrentPage < guiasTotalPages) loadGuias(guiasCurrentPage + 1);
 }
 
 /**
@@ -239,268 +562,164 @@ function goToGuiasPage(direction) {
  */
 function filterGuiasByStatus(status) {
   guiasCurrentStatus = status;
-
-  // Update active button
-  document.querySelectorAll('.guias-status-filter').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.status === status);
+  document.querySelectorAll('.guias-filter-chip').forEach(function(btn) {
+    btn.classList.toggle('guias-filter-chip--active', btn.dataset.status === status);
   });
-
+  closeGuiasPanel();
   loadGuias(1);
 }
 
 /**
  * Search handler
  */
-let guiasSearchTimeout;
+var guiasSearchTimeout;
 function handleGuiasSearch(query) {
   clearTimeout(guiasSearchTimeout);
-
-  const clearBtn = document.getElementById('guias-search-clear');
-  clearBtn.style.display = query ? 'block' : 'none';
-
-  guiasSearchTimeout = setTimeout(() => {
-    guiasSearchQuery = query;
-    loadGuias(1);
-  }, 300);
+  var clearBtn = document.getElementById('guias-search-clear');
+  if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
+  guiasSearchTimeout = setTimeout(function() { guiasSearchQuery = query; loadGuias(1); }, 300);
 }
 
-/**
- * Clear search
- */
 function clearGuiasSearch() {
-  document.getElementById('guias-search-input').value = '';
-  document.getElementById('guias-search-clear').style.display = 'none';
+  var input = document.getElementById('guias-search-input');
+  if (input) input.value = '';
+  var clearBtn = document.getElementById('guias-search-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
   guiasSearchQuery = '';
   loadGuias(1);
 }
 
 /**
- * Refresh guías
+ * Refresh guias
  */
 async function refreshGuias() {
-  const btn = document.querySelector('#guias-view .btn-refresh, [onclick="refreshGuias()"]');
-  const originalText = btn ? btn.textContent : '';
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '🔄 Actualizando pendientes...';
-  }
+  var btn = document.getElementById('guias-refresh-btn');
+  if (btn) { btn.classList.add('guias-spinning'); btn.disabled = true; }
 
   try {
-    // First, refresh any stuck "processing" labels from Skydropx
-    const response = await fetch(`${API_BASE}/api/shipping/refresh-pending-tracking`, {
-      method: 'POST'
-    });
+    var response = await fetch(GUIAS_API_URL + '/refresh-pending-tracking', { method: 'POST' });
     if (response.ok) {
-      const data = await response.json();
-      if (data.updated > 0) {
-        console.log(`✅ ${data.updated} etiquetas actualizadas desde Skydropx`);
-      }
+      var data = await response.json();
+      if (data.updated > 0) guiasToast(data.updated + ' guias actualizadas', 'info');
     }
-  } catch (err) {
-    console.warn('Could not refresh pending tracking:', err);
-  }
+  } catch (err) { /* silent */ }
 
-  // Then reload the guías list
-  if (btn) {
-    btn.textContent = originalText;
-    btn.disabled = false;
-  }
   loadGuias(guiasCurrentPage);
-}
-
-/**
- * Update guía status
- */
-async function updateGuiaStatus(guiaId) {
-  const newStatus = prompt(
-    'Selecciona el nuevo estado:\n\n' +
-    '1. pending - Pendiente\n' +
-    '2. processing - Procesando\n' +
-    '3. label_generated - Generada\n' +
-    '4. shipped - Enviada\n' +
-    '5. delivered - Entregada\n' +
-    '6. cancelled - Cancelada\n\n' +
-    'Ingresa el número o nombre del estado:'
-  );
-
-  if (!newStatus) return;
-
-  const statusMap = {
-    '1': 'pending',
-    '2': 'processing',
-    '3': 'label_generated',
-    '4': 'shipped',
-    '5': 'delivered',
-    '6': 'cancelled'
-  };
-
-  const status = statusMap[newStatus] || newStatus.toLowerCase();
-
-  try {
-    const response = await fetch(`${GUIAS_API_URL}/labels/${guiaId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || 'Error updating status');
-    }
-
-    alert('Estado actualizado exitosamente');
-    loadGuias(guiasCurrentPage);
-
-  } catch (error) {
-    alert('Error: ' + error.message);
-  }
-}
-
-/**
- * Refresh tracking info from Skydropx
- */
-async function refreshGuiaTracking(guiaId) {
-  try {
-    const response = await fetch(`${GUIAS_API_URL}/labels/${guiaId}/refresh`, {
-      method: 'POST'
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || 'Error refreshing tracking');
-    }
-
-    alert('Información actualizada');
-    loadGuias(guiasCurrentPage);
-
-  } catch (error) {
-    alert('Error: ' + error.message);
-  }
+  setTimeout(function() {
+    if (btn) { btn.classList.remove('guias-spinning'); btn.disabled = false; }
+  }, 600);
 }
 
 /**
  * Export to CSV
  */
 function exportGuiasCSV() {
-  if (guiasData.length === 0) {
-    alert('No hay datos para exportar');
-    return;
-  }
+  if (guiasData.length === 0) { guiasToast('No hay datos para exportar', 'error'); return; }
 
-  const headers = ['Orden', 'Cliente', 'Tracking', 'Paquetería', 'Servicio', 'Días', 'Estado', 'Fecha', 'URL Rastreo', 'URL PDF'];
-  const rows = guiasData.map(g => [
-    g.order_number || g.order_id,
-    g.client_name || '',
-    g.tracking_number || '',
-    g.carrier || '',
-    g.service || '',
-    g.delivery_days || '',
-    g.status || '',
-    formatDateGuias(g.created_at),
-    g.tracking_url || '',
-    g.label_url || ''
-  ]);
-
-  const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
+  var headers = ['Orden', 'Cliente', 'Tracking', 'Paqueteria', 'Servicio', 'Dias', 'Estado', 'Fecha', 'URL Rastreo', 'URL PDF'];
+  var rows = guiasData.map(function(g) {
+    return [
+      g.order_number || g.order_id, g.client_name || '', g.tracking_number || '',
+      g.carrier || '', g.service || '', g.delivery_days || '', g.status || '',
+      formatDateGuias(g.created_at), g.tracking_url || '', g.label_url || ''
+    ];
+  });
+  var csv = [headers.join(',')].concat(rows.map(function(r) {
+    return r.map(function(v) { return '"' + v + '"'; }).join(',');
+  })).join('\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `guias_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = 'guias_' + new Date().toISOString().slice(0, 10) + '.csv';
   link.click();
+  guiasToast('CSV descargado');
 }
 
-// CSS for spin animation
-const styleSheet = document.createElement('style');
-styleSheet.textContent = `
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  .filter-chip.active {
-    background: #667eea !important;
-    color: white !important;
-  }
-`;
-document.head.appendChild(styleSheet);
+// Inject dynamic styles
+var guiasStyleSheet = document.createElement('style');
+guiasStyleSheet.textContent =
+  '@keyframes spin { to { transform: rotate(360deg); } }' +
+  '@keyframes guiaSkelPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }' +
+  '.guias-spinning svg, .guias-spinning { animation: spin 0.6s linear infinite; }';
+document.head.appendChild(guiasStyleSheet);
+
+// Close panel on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && guiasSelectedId) closeGuiasPanel();
+});
+
+// Export functions
+window.initGuiasView = initGuiasView;
+window.loadGuias = loadGuias;
+window.goToGuiasPage = goToGuiasPage;
+window.filterGuiasByStatus = filterGuiasByStatus;
+window.handleGuiasSearch = handleGuiasSearch;
+window.clearGuiasSearch = clearGuiasSearch;
+window.refreshGuias = refreshGuias;
+window.updateGuiaStatus = handleGuiaPanelStatusChange;
+window.refreshGuiaTracking = handleGuiaPanelRefresh;
+window.exportGuiasCSV = exportGuiasCSV;
+window.openGuiaPanel = openGuiaPanel;
+window.closeGuiasPanel = closeGuiasPanel;
+window.handleGuiaPanelStatusChange = handleGuiaPanelStatusChange;
+window.handleGuiaPanelRefresh = handleGuiaPanelRefresh;
 
 // ==========================================
 // PICKUPS MODAL FUNCTIONALITY
 // ==========================================
 
-let pickupsCurrentDate = new Date().toISOString().split('T')[0];
-let pickupsInitialized = false;
+var pickupsCurrentDate = new Date().toISOString().split('T')[0];
+var pickupsInitialized = false;
 
-/**
- * Initialize pickups view
- */
 function initPickupsView() {
   if (pickupsInitialized) {
-    // Just refresh data
     loadPickupsForDate(pickupsCurrentDate);
     return;
   }
-
-  // Set today's date
-  const dateInput = document.getElementById('pickups-date-input');
-  if (dateInput) {
-    dateInput.value = pickupsCurrentDate;
-  }
-
-  // Load pickups data
+  var dateInput = document.getElementById('pickups-date-input');
+  if (dateInput) dateInput.value = pickupsCurrentDate;
   loadPickupsForDate(pickupsCurrentDate);
   pickupsInitialized = true;
 }
 
-/**
- * Change pickup date by days
- */
 function changePickupDate(days) {
-  const dateInput = document.getElementById('pickups-date-input');
-  const currentDate = new Date(dateInput.value);
+  var dateInput = document.getElementById('pickups-date-input');
+  var currentDate = new Date(dateInput.value);
   currentDate.setDate(currentDate.getDate() + days);
   dateInput.value = currentDate.toISOString().split('T')[0];
   pickupsCurrentDate = dateInput.value;
   loadPickupsForDate(dateInput.value);
 }
 
-/**
- * Load pickups for specific date
- */
 async function loadPickupsForDate(date) {
-  const loadingEl = document.getElementById('pickups-loading');
-  const contentEl = document.getElementById('pickups-content');
-  const emptyEl = document.getElementById('pickups-empty');
+  var loadingEl = document.getElementById('pickups-loading');
+  var contentEl = document.getElementById('pickups-content');
+  var emptyEl = document.getElementById('pickups-empty');
 
   loadingEl.classList.remove('hidden');
   contentEl.classList.add('hidden');
   emptyEl.classList.add('hidden');
 
   try {
-    const [pickupsResponse, pendingResponse] = await Promise.all([
-      fetch(`${GUIAS_API_URL}/pickups/history?date=${date}`),
-      fetch(`${GUIAS_API_URL}/pickups/pending`)
+    var responses = await Promise.all([
+      fetch(GUIAS_API_URL + '/pickups/history?date=' + date),
+      fetch(GUIAS_API_URL + '/pickups/pending')
     ]);
 
-    const pickupsResult = await pickupsResponse.json();
-    const pendingResult = await pendingResponse.json();
+    var pickupsResult = await responses[0].json();
+    var pendingResult = await responses[1].json();
 
     loadingEl.classList.add('hidden');
 
-    const pickups = pickupsResult.success ? pickupsResult.pickups : [];
-    const pendingLabels = pendingResult.success ? pendingResult.pending : [];
+    var pickups = pickupsResult.success ? pickupsResult.pickups : [];
+    var pendingLabels = pendingResult.success ? pendingResult.pending : [];
+    var activePickups = pickups.filter(function(p) { return p.status !== 'cancelled'; });
 
-    // Show all active pickups (not cancelled), sorted by date descending
-    const activePickups = pickups.filter(p => p.status !== 'cancelled');
-
-    // Update summary pills
     document.getElementById('pickups-total-count').textContent = activePickups.length;
     document.getElementById('pickups-pending-count').textContent = pendingLabels.length;
     document.getElementById('pickups-shipments-count').textContent =
-      activePickups.reduce((sum, p) => sum + (p.shipment_count || 0), 0);
+      activePickups.reduce(function(sum, p) { return sum + (p.shipment_count || 0); }, 0);
 
-    // If nothing at all
     if (activePickups.length === 0 && pendingLabels.length === 0) {
       emptyEl.classList.remove('hidden');
       return;
@@ -508,22 +727,19 @@ async function loadPickupsForDate(date) {
 
     contentEl.classList.remove('hidden');
 
-    // --- Section A: Scheduled Pickups ---
-    const tableEl = document.getElementById('pickups-table');
-    const scheduledEmptyEl = document.getElementById('pickups-scheduled-empty');
+    var tableEl = document.getElementById('pickups-table');
+    var scheduledEmptyEl = document.getElementById('pickups-scheduled-empty');
 
     if (activePickups.length === 0) {
       tableEl.innerHTML = '';
       scheduledEmptyEl.classList.remove('hidden');
     } else {
       scheduledEmptyEl.classList.add('hidden');
-      tableEl.innerHTML = activePickups.map(pickup => renderPickupRow(pickup)).join('');
+      tableEl.innerHTML = activePickups.map(function(p) { return renderPickupRow(p); }).join('');
     }
 
-    // --- Section B: Pending Labels by Carrier ---
-    const pendingContainer = document.getElementById('pickups-pending');
-    const pendingList = document.getElementById('pending-carriers-list');
-    const pendingEmptyEl = document.getElementById('pickups-pending-empty');
+    var pendingList = document.getElementById('pending-carriers-list');
+    var pendingEmptyEl = document.getElementById('pickups-pending-empty');
 
     if (pendingLabels.length === 0) {
       pendingList.innerHTML = '';
@@ -536,74 +752,47 @@ async function loadPickupsForDate(date) {
   } catch (error) {
     console.error('Error loading pickups:', error);
     loadingEl.classList.add('hidden');
-    const contentEl2 = document.getElementById('pickups-content');
-    contentEl2.classList.remove('hidden');
-    document.getElementById('pickups-table').innerHTML = `
-      <div class="pickups-section-empty" style="color: #dc2626;">
-        Error al cargar recolecciones: ${error.message}
-      </div>
-    `;
+    document.getElementById('pickups-content').classList.remove('hidden');
+    document.getElementById('pickups-table').textContent = 'Error al cargar recolecciones: ' + error.message;
   }
 }
 
-/**
- * Render a single pickup as a compact row
- */
 function renderPickupRow(pickup) {
-  const carrier = pickup.carrier || 'Sin Asignar';
-  const statusBadge = getPickupStatusBadgeClass(pickup.status);
-  const timeFrom = pickup.pickup_time_from || '09:00';
-  const timeTo = pickup.pickup_time_to || '18:00';
-  const shipments = pickup.shipment_count || 0;
-  const isCancelled = pickup.status === 'cancelled';
-  const confirmationCode = pickup.confirmation_code || '';
-  const isLocal = pickup.pickup_id && pickup.pickup_id.startsWith('local-');
-  const pickupDateStr = pickup.pickup_date ? new Date(pickup.pickup_date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) : '';
+  var carrier = pickup.carrier || 'Sin Asignar';
+  var statusBadge = getPickupStatusBadgeClass(pickup.status);
+  var timeFrom = pickup.pickup_time_from || '09:00';
+  var timeTo = pickup.pickup_time_to || '18:00';
+  var shipments = pickup.shipment_count || 0;
+  var isCancelled = pickup.status === 'cancelled';
+  var confirmationCode = pickup.confirmation_code || '';
+  var isLocal = pickup.pickup_id && pickup.pickup_id.startsWith('local-');
+  var pickupDateStr = pickup.pickup_date ? new Date(pickup.pickup_date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) : '';
 
-  return `
-    <div class="pickup-row" data-carrier="${carrier}">
-      <div class="pickup-row-carrier">
-        <span class="pickup-carrier-icon">${getCarrierIcon(carrier)}</span>
-        <span class="pickup-carrier-name">${carrier}</span>
-      </div>
-      <span class="pickup-row-status" style="background: ${statusBadge.bg}; color: ${statusBadge.color};">
-        ${statusBadge.text}${isLocal && pickup.status !== 'confirmed' ? ' (local)' : ''}
-      </span>
-      <span class="pickup-row-date">${pickupDateStr}</span>
-      <span class="pickup-row-time">${timeFrom} - ${timeTo}</span>
-      <span class="pickup-row-shipments">${shipments} envio${shipments !== 1 ? 's' : ''}</span>
-      <div class="pickup-row-confirmation">
-        ${confirmationCode
-          ? `<span class="confirmation-code" title="Codigo de confirmacion">${confirmationCode}</span>`
-          : `<input type="text" class="confirmation-code-input"
-                   placeholder="Codigo confirm."
-                   data-pickup-id="${pickup.pickup_id}"
-                   onkeydown="if(event.key==='Enter')saveConfirmationCode('${pickup.pickup_id}',this.value)"
-                   ${isCancelled ? 'disabled' : ''} />`
-        }
-      </div>
-      <div class="pickup-row-actions">
-        ${!confirmationCode && !isCancelled ? `
-          <button class="pickup-confirm-btn"
-                  onclick="promptConfirmationCode('${pickup.pickup_id}')"
-                  title="Confirmar con codigo">
-            ✓
-          </button>
-        ` : ''}
-        <button class="pickup-cancel-btn" onclick="cancelPickup('${pickup.pickup_id}')"
-                title="Cancelar recoleccion" ${isCancelled ? 'disabled' : ''}>
-          ✕
-        </button>
-      </div>
-    </div>
-  `;
+  return '<div class="pickup-row" data-carrier="' + carrier + '">' +
+    '<div class="pickup-row-carrier">' +
+      '<span class="pickup-carrier-icon">' + getCarrierIcon(carrier) + '</span>' +
+      '<span class="pickup-carrier-name">' + carrier + '</span>' +
+    '</div>' +
+    '<span class="pickup-row-status" style="background:' + statusBadge.bg + ';color:' + statusBadge.color + ';">' +
+      statusBadge.text + (isLocal && pickup.status !== 'confirmed' ? ' (local)' : '') +
+    '</span>' +
+    '<span class="pickup-row-date">' + pickupDateStr + '</span>' +
+    '<span class="pickup-row-time">' + timeFrom + ' - ' + timeTo + '</span>' +
+    '<span class="pickup-row-shipments">' + shipments + ' envio' + (shipments !== 1 ? 's' : '') + '</span>' +
+    '<div class="pickup-row-confirmation">' +
+      (confirmationCode
+        ? '<span class="confirmation-code" title="Codigo de confirmacion">' + confirmationCode + '</span>'
+        : '<input type="text" class="confirmation-code-input" placeholder="Codigo confirm." data-pickup-id="' + pickup.pickup_id + '" onkeydown="if(event.key===\'Enter\')saveConfirmationCode(\'' + pickup.pickup_id + '\',this.value)" ' + (isCancelled ? 'disabled' : '') + ' />') +
+    '</div>' +
+    '<div class="pickup-row-actions">' +
+      (!confirmationCode && !isCancelled ? '<button class="pickup-confirm-btn" onclick="promptConfirmationCode(\'' + pickup.pickup_id + '\')" title="Confirmar con codigo">\u2713</button>' : '') +
+      '<button class="pickup-cancel-btn" onclick="cancelPickup(\'' + pickup.pickup_id + '\')" title="Cancelar recoleccion" ' + (isCancelled ? 'disabled' : '') + '>\u2715</button>' +
+    '</div>' +
+  '</div>';
 }
 
-/**
- * Get pickup status badge styles
- */
 function getPickupStatusBadgeClass(status) {
-  const badges = {
+  var badges = {
     'pending':   { bg: '#fef3c7', color: '#92400e', text: 'Pendiente' },
     'scheduled': { bg: '#e0e7ff', color: '#3730a3', text: 'Programado' },
     'requested': { bg: '#dbeafe', color: '#1e40af', text: 'Solicitado' },
@@ -614,104 +803,72 @@ function getPickupStatusBadgeClass(status) {
   return badges[status] || { bg: '#f3f4f6', color: '#374151', text: status || 'Desconocido' };
 }
 
-/**
- * Render pending labels grouped by carrier
- */
 function renderPendingLabelsSection(pendingLabels) {
-  // Group by carrier
-  const byCarrier = {};
-  pendingLabels.forEach(label => {
-    const carrier = label.carrier || 'Sin Asignar';
+  var byCarrier = {};
+  pendingLabels.forEach(function(label) {
+    var carrier = label.carrier || 'Sin Asignar';
     if (!byCarrier[carrier]) byCarrier[carrier] = [];
     byCarrier[carrier].push(label);
   });
 
-  return Object.entries(byCarrier).map(([carrier, labels]) => `
-    <div class="pending-carrier-group">
-      <div class="pending-carrier-header" data-carrier="${carrier}">
-        <span>${getCarrierIcon(carrier)}</span>
-        <strong>${carrier}</strong>
-        <span class="carrier-count">${labels.length} guia${labels.length !== 1 ? 's' : ''}</span>
-        <button class="pending-request-btn" onclick="openPickupModal('${carrier}')">
-          Solicitar
-        </button>
-      </div>
-      <div class="pending-labels-list">
-        ${labels.map(label => `
-          <div class="pending-label-item">
-            <span class="pending-label-order">${label.order_number || label.order_id || 'N/A'}</span>
-            <span class="pending-label-tracking">${label.tracking_number || 'Sin tracking'}</span>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
+  return Object.entries(byCarrier).map(function(entry) {
+    var carrier = entry[0];
+    var labels = entry[1];
+    return '<div class="pending-carrier-group">' +
+      '<div class="pending-carrier-header" data-carrier="' + carrier + '">' +
+        '<span>' + getCarrierIcon(carrier) + '</span>' +
+        '<strong>' + carrier + '</strong>' +
+        '<span class="carrier-count">' + labels.length + ' guia' + (labels.length !== 1 ? 's' : '') + '</span>' +
+        '<button class="pending-request-btn" onclick="openPickupModal(\'' + carrier + '\')">Solicitar</button>' +
+      '</div>' +
+      '<div class="pending-labels-list">' +
+        labels.map(function(label) {
+          return '<div class="pending-label-item">' +
+            '<span class="pending-label-order">' + (label.order_number || label.order_id || 'N/A') + '</span>' +
+            '<span class="pending-label-tracking">' + (label.tracking_number || 'Sin tracking') + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
-/**
- * Get carrier icon
- */
 function getCarrierIcon(carrier) {
-  const icons = {
-    'Estafeta': '📦',
-    'FedEx': '✈️',
-    'Paquetexpress': '🚛',
-    'DHL': '🟡',
-    'UPS': '📬',
-    'Redpack': '📮'
+  var icons = {
+    'Estafeta': '\u{1F4E6}',
+    'FedEx': '\u2708\uFE0F',
+    'Paquetexpress': '\u{1F69B}',
+    'DHL': '\u{1F7E1}',
+    'UPS': '\u{1F4EC}',
+    'Redpack': '\u{1F4EE}'
   };
-  return icons[carrier] || '📦';
+  return icons[carrier] || '\u{1F4E6}';
 }
 
-/**
- * Format pickup date
- */
 function formatPickupDate(dateStr) {
   if (!dateStr) return 'N/A';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('es-MX', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short'
-  });
+  return new Date(dateStr).toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-/**
- * Format pickup datetime
- */
 function formatPickupDateTime(dateStr) {
   if (!dateStr) return 'N/A';
-  const date = new Date(dateStr);
-  return date.toLocaleString('es-MX', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return new Date(dateStr).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-/**
- * Trigger pickups for all pending labels
- */
 async function triggerPendingPickups() {
-  if (!confirm('¿Solicitar recolección para todas las guías pendientes?')) {
-    return;
-  }
-
+  if (!confirm('\u00BFSolicitar recolecci\u00F3n para todas las gu\u00EDas pendientes?')) return;
   try {
-    const response = await fetch(`${GUIAS_API_URL}/pickups/request`, {
+    var response = await fetch(GUIAS_API_URL + '/pickups/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ triggerAll: true })
     });
-
-    const result = await response.json();
-
+    var result = await response.json();
     if (result.success) {
-      const summary = (result.results || []).map(r =>
-        `${r.carrier}: ${r.success ? '✅' : '❌'} ${r.shipment_count} guias${r.local ? ' (local)' : ''}${r.error ? ' - ' + r.error : ''}`
-      ).join('\n');
-      alert(`✅ Recolecciones procesadas!\n\n${summary || 'Sin resultados'}`);
+      var summary = (result.results || []).map(function(r) {
+        return r.carrier + ': ' + (r.success ? '\u2705' : '\u274C') + ' ' + r.shipment_count + ' guias' + (r.local ? ' (local)' : '') + (r.error ? ' - ' + r.error : '');
+      }).join('\n');
+      alert('\u2705 Recolecciones procesadas!\n\n' + (summary || 'Sin resultados'));
       loadPickupsForDate(document.getElementById('pickups-date-input').value);
     } else {
       alert('Error: ' + (result.error || 'Error desconocido'));
@@ -721,282 +878,19 @@ async function triggerPendingPickups() {
   }
 }
 
-/**
- * Cancel a pickup
- */
 async function cancelPickup(pickupId) {
-  if (!pickupId || !confirm('¿Cancelar esta recolección?')) {
-    return;
-  }
-
+  if (!pickupId || !confirm('\u00BFCancelar esta recolecci\u00F3n?')) return;
   try {
-    const response = await fetch(`${GUIAS_API_URL}/pickups/${pickupId}`, {
-      method: 'DELETE'
-    });
-
-    const result = await response.json();
-
+    var response = await fetch(GUIAS_API_URL + '/pickups/' + pickupId, { method: 'DELETE' });
+    var result = await response.json();
     if (result.success) {
-      alert('Recolección cancelada exitosamente');
+      alert('Recolecci\u00F3n cancelada exitosamente');
       loadPickupsForDate(document.getElementById('pickups-date-input').value);
     } else {
       alert('Error: ' + (result.error || 'Error desconocido'));
     }
   } catch (error) {
     alert('Error: ' + error.message);
-  }
-}
-
-// Export functions
-window.initGuiasView = initGuiasView;
-window.loadGuias = loadGuias;
-window.goToGuiasPage = goToGuiasPage;
-window.filterGuiasByStatus = filterGuiasByStatus;
-window.handleGuiasSearch = handleGuiasSearch;
-window.clearGuiasSearch = clearGuiasSearch;
-window.refreshGuias = refreshGuias;
-window.updateGuiaStatus = updateGuiaStatus;
-window.refreshGuiaTracking = refreshGuiaTracking;
-window.exportGuiasCSV = exportGuiasCSV;
-
-// ==========================================
-// CARRIER-SPECIFIC PICKUP MODAL
-// ==========================================
-
-const carrierConfig = {
-  'Estafeta': { icon: '📦', color: '#f59e0b' },
-  'Paquetexpress': { icon: '🚛', color: '#10b981' },
-  'FedEx': { icon: '✈️', color: '#3b82f6' },
-  'DHL': { icon: '🟡', color: '#ef4444' },
-  'UPS': { icon: '📬', color: '#d97706' },
-  'Redpack': { icon: '📮', color: '#8b5cf6' }
-};
-
-let pendingLabelsCache = [];
-
-/**
- * Open pickup modal for specific carrier
- */
-async function openPickupModal(carrier) {
-  const modal = document.getElementById('pickup-request-modal');
-  const config = carrierConfig[carrier] || { icon: '📦', color: '#667eea' };
-
-  // Set carrier info
-  document.getElementById('pickup-carrier').value = carrier;
-  document.getElementById('pickup-modal-carrier-icon').textContent = config.icon;
-  document.getElementById('pickup-modal-carrier-name').textContent = carrier;
-  document.getElementById('pickup-modal-title').textContent = `Solicitar Recolección - ${carrier}`;
-
-  // Set default date (next business day)
-  const tomorrow = getNextBusinessDay();
-  document.getElementById('pickup-date').value = tomorrow;
-  document.getElementById('pickup-date').min = new Date().toISOString().split('T')[0];
-
-  // Reset time fields
-  document.getElementById('pickup-time-from').value = '09:00';
-  document.getElementById('pickup-time-to').value = '18:00';
-
-  // Reset submit button state
-  const submitBtn = document.getElementById('pickup-submit-btn');
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Solicitar Recoleccion';
-
-  // Show modal first
-  modal.classList.remove('hidden');
-
-  // Load pending labels for this carrier
-  await loadPendingLabelsForCarrier(carrier);
-}
-
-/**
- * Get next business day (skip weekends)
- */
-function getNextBusinessDay() {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-
-  // Skip Saturday (6) and Sunday (0)
-  while (date.getDay() === 0 || date.getDay() === 6) {
-    date.setDate(date.getDate() + 1);
-  }
-
-  return date.toISOString().split('T')[0];
-}
-
-/**
- * Load pending labels for specific carrier
- */
-async function loadPendingLabelsForCarrier(carrier) {
-  const countEl = document.getElementById('pickup-pending-count');
-  const listEl = document.getElementById('pickup-pending-list');
-  const submitBtn = document.getElementById('pickup-submit-btn');
-
-  countEl.textContent = '...';
-  listEl.innerHTML = '<span class="pickup-modal-hint">Cargando...</span>';
-
-  try {
-    const response = await fetch(`${GUIAS_API_URL}/pickups/pending`);
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || 'Error loading pending labels');
-    }
-
-    // Filter by carrier
-    const carrierLabels = result.pending.filter(label =>
-      label.carrier && label.carrier.toLowerCase() === carrier.toLowerCase()
-    );
-
-    pendingLabelsCache = carrierLabels;
-
-    // Update count
-    countEl.textContent = carrierLabels.length;
-
-    // Update list
-    if (carrierLabels.length === 0) {
-      listEl.innerHTML = '<span class="pickup-modal-hint">No hay guias pendientes para esta paqueteria.<br><strong>Puedes programar la recoleccion de todas formas.</strong></span>';
-      submitBtn.textContent = 'Programar Recoleccion (sin guias)';
-      submitBtn.disabled = false;
-    } else {
-      const labelsList = carrierLabels.slice(0, 5).map(l =>
-        `<div class="pending-label-item">${l.order_number || l.order_id} — ${l.tracking_number || 'Sin tracking'}</div>`
-      ).join('');
-
-      const moreCount = carrierLabels.length > 5 ? `<div class="pending-label-item"><strong>+ ${carrierLabels.length - 5} mas</strong></div>` : '';
-
-      listEl.innerHTML = labelsList + moreCount;
-      submitBtn.textContent = `Solicitar Recoleccion (${carrierLabels.length} guias)`;
-    }
-
-  } catch (error) {
-    console.error('Error loading pending labels:', error);
-    countEl.textContent = '?';
-    listEl.innerHTML = `<span class="pickup-modal-hint" style="color: #dc2626;">Error: ${error.message}</span>`;
-  }
-}
-
-/**
- * Close pickup modal
- */
-function closePickupModal() {
-  const modal = document.getElementById('pickup-request-modal');
-  modal.classList.add('hidden');
-  pendingLabelsCache = [];
-}
-
-/**
- * Submit pickup request
- */
-async function submitPickupRequest(event) {
-  event.preventDefault();
-
-  const carrier = document.getElementById('pickup-carrier').value;
-  const pickupDate = document.getElementById('pickup-date').value;
-  const timeFrom = document.getElementById('pickup-time-from').value;
-  const timeTo = document.getElementById('pickup-time-to').value;
-
-  const submitBtn = document.getElementById('pickup-submit-btn');
-  const originalText = submitBtn.textContent;
-  submitBtn.textContent = '⏳ Solicitando...';
-  submitBtn.disabled = true;
-
-  try {
-    // Build request body
-    const requestBody = {
-      carrier: carrier,
-      pickupDate: pickupDate,
-      timeFrom: timeFrom,
-      timeTo: timeTo
-    };
-
-    // If there are pending labels for this carrier, include them
-    if (pendingLabelsCache.length > 0) {
-      requestBody.shipmentIds = pendingLabelsCache.map(l => l.shipment_id);
-    }
-
-    const response = await fetch(`${GUIAS_API_URL}/pickups/request/carrier`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      // Show success message
-      const pendingCount = pendingLabelsCache.length;
-      const isLocal = result.local;
-      const note = result.note;
-
-      let message = `✅ ¡Recolección ${isLocal ? 'programada' : 'solicitada'} exitosamente!\n\n` +
-        `📦 Paquetería: ${carrier}\n` +
-        `📅 Fecha: ${pickupDate}\n` +
-        `🕐 Horario: ${timeFrom} - ${timeTo}\n` +
-        `📋 Guías incluidas: ${pendingCount}\n` +
-        `🎫 Pickup ID: ${result.pickup_id || 'N/A'}`;
-
-      if (isLocal) {
-        message += `\n\n📝 Guardado localmente`;
-      }
-      if (note) {
-        message += `\n\n⚠️ ${note}`;
-      }
-
-      alert(message);
-
-      closePickupModal();
-
-      // Refresh pickups view
-      loadPickupsForDate(document.getElementById('pickups-date-input').value);
-    } else {
-      alert(`❌ Error: ${result.error || 'Error desconocido'}`);
-    }
-
-  } catch (error) {
-    console.error('Error requesting pickup:', error);
-    alert(`❌ Error: ${error.message}`);
-  } finally {
-    submitBtn.textContent = originalText;
-    submitBtn.disabled = false;
-  }
-}
-
-/**
- * Save confirmation code for a pickup
- */
-async function saveConfirmationCode(pickupId, code) {
-  if (!code || !code.trim()) return;
-
-  try {
-    const response = await fetch(`${GUIAS_API_URL}/pickups/${encodeURIComponent(pickupId)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        confirmationCode: code.trim(),
-        status: 'confirmed'
-      })
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      // Refresh the view
-      loadPickupsForDate(document.getElementById('pickups-date-input').value);
-    } else {
-      alert('Error: ' + (result.error || 'Error desconocido'));
-    }
-  } catch (error) {
-    alert('Error: ' + error.message);
-  }
-}
-
-/**
- * Prompt for confirmation code input
- */
-function promptConfirmationCode(pickupId) {
-  const code = prompt('Ingresa el código de confirmación de la paquetería\n(ej: AME260204015829, MEXA3562):');
-  if (code) {
-    saveConfirmationCode(pickupId, code);
   }
 }
 
@@ -1006,6 +900,156 @@ window.changePickupDate = changePickupDate;
 window.loadPickupsForDate = loadPickupsForDate;
 window.triggerPendingPickups = triggerPendingPickups;
 window.cancelPickup = cancelPickup;
+
+// ==========================================
+// CARRIER-SPECIFIC PICKUP MODAL
+// ==========================================
+
+var carrierConfig = {
+  'Estafeta': { icon: '\u{1F4E6}', color: '#f59e0b' },
+  'Paquetexpress': { icon: '\u{1F69B}', color: '#10b981' },
+  'FedEx': { icon: '\u2708\uFE0F', color: '#3b82f6' },
+  'DHL': { icon: '\u{1F7E1}', color: '#ef4444' },
+  'UPS': { icon: '\u{1F4EC}', color: '#d97706' },
+  'Redpack': { icon: '\u{1F4EE}', color: '#8b5cf6' }
+};
+
+var pendingLabelsCache = [];
+
+async function openPickupModal(carrier) {
+  var modal = document.getElementById('pickup-request-modal');
+  var config = carrierConfig[carrier] || { icon: '\u{1F4E6}', color: '#667eea' };
+  document.getElementById('pickup-carrier').value = carrier;
+  document.getElementById('pickup-modal-carrier-icon').textContent = config.icon;
+  document.getElementById('pickup-modal-carrier-name').textContent = carrier;
+  document.getElementById('pickup-modal-title').textContent = 'Solicitar Recolecci\u00F3n - ' + carrier;
+  var tomorrow = getNextBusinessDay();
+  document.getElementById('pickup-date').value = tomorrow;
+  document.getElementById('pickup-date').min = new Date().toISOString().split('T')[0];
+  document.getElementById('pickup-time-from').value = '09:00';
+  document.getElementById('pickup-time-to').value = '18:00';
+  var submitBtn = document.getElementById('pickup-submit-btn');
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Solicitar Recoleccion';
+  modal.classList.remove('hidden');
+  await loadPendingLabelsForCarrier(carrier);
+}
+
+function getNextBusinessDay() {
+  var date = new Date();
+  date.setDate(date.getDate() + 1);
+  while (date.getDay() === 0 || date.getDay() === 6) date.setDate(date.getDate() + 1);
+  return date.toISOString().split('T')[0];
+}
+
+async function loadPendingLabelsForCarrier(carrier) {
+  var countEl = document.getElementById('pickup-pending-count');
+  var listEl = document.getElementById('pickup-pending-list');
+  var submitBtn = document.getElementById('pickup-submit-btn');
+  countEl.textContent = '...';
+  listEl.textContent = 'Cargando...';
+
+  try {
+    var response = await fetch(GUIAS_API_URL + '/pickups/pending');
+    var result = await response.json();
+    if (!result.success) throw new Error(result.error || 'Error loading pending labels');
+
+    var carrierLabels = result.pending.filter(function(label) {
+      return label.carrier && label.carrier.toLowerCase() === carrier.toLowerCase();
+    });
+    pendingLabelsCache = carrierLabels;
+    countEl.textContent = carrierLabels.length;
+
+    if (carrierLabels.length === 0) {
+      listEl.innerHTML = '<span class="pickup-modal-hint">No hay guias pendientes para esta paqueteria.<br><strong>Puedes programar la recoleccion de todas formas.</strong></span>';
+      submitBtn.textContent = 'Programar Recoleccion (sin guias)';
+      submitBtn.disabled = false;
+    } else {
+      var labelsList = carrierLabels.slice(0, 5).map(function(l) {
+        return '<div class="pending-label-item">' + (l.order_number || l.order_id) + ' \u2014 ' + (l.tracking_number || 'Sin tracking') + '</div>';
+      }).join('');
+      var moreCount = carrierLabels.length > 5 ? '<div class="pending-label-item"><strong>+ ' + (carrierLabels.length - 5) + ' mas</strong></div>' : '';
+      listEl.innerHTML = labelsList + moreCount;
+      submitBtn.textContent = 'Solicitar Recoleccion (' + carrierLabels.length + ' guias)';
+    }
+  } catch (error) {
+    console.error('Error loading pending labels:', error);
+    countEl.textContent = '?';
+    listEl.textContent = 'Error: ' + error.message;
+  }
+}
+
+function closePickupModal() {
+  document.getElementById('pickup-request-modal').classList.add('hidden');
+  pendingLabelsCache = [];
+}
+
+async function submitPickupRequest(event) {
+  event.preventDefault();
+  var carrier = document.getElementById('pickup-carrier').value;
+  var pickupDate = document.getElementById('pickup-date').value;
+  var timeFrom = document.getElementById('pickup-time-from').value;
+  var timeTo = document.getElementById('pickup-time-to').value;
+  var submitBtn = document.getElementById('pickup-submit-btn');
+  var originalText = submitBtn.textContent;
+  submitBtn.textContent = '\u23F3 Solicitando...';
+  submitBtn.disabled = true;
+
+  try {
+    var requestBody = { carrier: carrier, pickupDate: pickupDate, timeFrom: timeFrom, timeTo: timeTo };
+    if (pendingLabelsCache.length > 0) {
+      requestBody.shipmentIds = pendingLabelsCache.map(function(l) { return l.shipment_id; });
+    }
+    var response = await fetch(GUIAS_API_URL + '/pickups/request/carrier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+    var result = await response.json();
+
+    if (result.success) {
+      var pendingCount = pendingLabelsCache.length;
+      var message = '\u2705 Recolecci\u00F3n ' + (result.local ? 'programada' : 'solicitada') + ' exitosamente!\n' +
+        'Paqueter\u00EDa: ' + carrier + '\nFecha: ' + pickupDate + '\nHorario: ' + timeFrom + ' - ' + timeTo +
+        '\nGu\u00EDas: ' + pendingCount;
+      if (result.note) message += '\n\n' + result.note;
+      alert(message);
+      closePickupModal();
+      loadPickupsForDate(document.getElementById('pickups-date-input').value);
+    } else {
+      alert('Error: ' + (result.error || 'Error desconocido'));
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  } finally {
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  }
+}
+
+async function saveConfirmationCode(pickupId, code) {
+  if (!code || !code.trim()) return;
+  try {
+    var response = await fetch(GUIAS_API_URL + '/pickups/' + encodeURIComponent(pickupId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmationCode: code.trim(), status: 'confirmed' })
+    });
+    var result = await response.json();
+    if (result.success) {
+      loadPickupsForDate(document.getElementById('pickups-date-input').value);
+    } else {
+      alert('Error: ' + (result.error || 'Error desconocido'));
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+}
+
+function promptConfirmationCode(pickupId) {
+  var code = prompt('Ingresa el c\u00F3digo de confirmaci\u00F3n de la paqueter\u00EDa\n(ej: AME260204015829, MEXA3562):');
+  if (code) saveConfirmationCode(pickupId, code);
+}
 
 // Carrier pickup modal exports
 window.openPickupModal = openPickupModal;

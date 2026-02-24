@@ -1460,102 +1460,81 @@
 
             <!-- Guías View -->
             <section id="guias-view" class="view">
-                <div class="view-header">
-                    <h2>🏷️ Gestión de Guías</h2>
-                    <div style="display: flex; gap: 12px;">
-                        <button class="btn" onclick="refreshGuias()">
-                            🔄 Actualizar
-                        </button>
-                        <button class="btn" onclick="exportGuiasCSV()">
-                            📥 Exportar CSV
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Guias Filters Bar -->
-                <div class="shipping-filters-bar">
-                    <div class="shipping-search-container">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="guias-search-input" class="shipping-search-input"
-                            placeholder="Buscar por tracking, orden, cliente..."
+                <!-- Compact top bar: search + filters + actions -->
+                <div class="guias-topbar">
+                    <div class="guias-search-box">
+                        <svg class="guias-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="guias-search-input" class="guias-search-input"
+                            placeholder="Buscar tracking, cliente..."
                             oninput="handleGuiasSearch(this.value)" />
-                        <button class="search-clear" id="guias-search-clear" onclick="clearGuiasSearch()" style="display: none;">✕</button>
+                        <button class="guias-search-clear" id="guias-search-clear" onclick="clearGuiasSearch()" style="display: none;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
                     </div>
 
-                    <!-- Status Filter Chips -->
-                    <div class="filter-chips">
-                        <button class="filter-chip guias-status-filter active" data-status="all" onclick="filterGuiasByStatus('all')">
-                            Todas
+                    <div class="guias-filters">
+                        <button class="guias-filter-chip guias-filter-chip--active" data-status="all" onclick="filterGuiasByStatus('all')">
+                            Todas <span class="guias-filter-count" id="guias-count-all">0</span>
                         </button>
-                        <button class="filter-chip guias-status-filter" data-status="label_generated" onclick="filterGuiasByStatus('label_generated')">
-                            📄 Generadas
+                        <button class="guias-filter-chip" data-status="label_generated" onclick="filterGuiasByStatus('label_generated')">
+                            Generadas <span class="guias-filter-count" id="guias-count-generated">0</span>
                         </button>
-                        <button class="filter-chip guias-status-filter" data-status="shipped" onclick="filterGuiasByStatus('shipped')">
-                            🚚 Enviadas
+                        <button class="guias-filter-chip" data-status="shipped" onclick="filterGuiasByStatus('shipped')">
+                            Enviadas <span class="guias-filter-count" id="guias-count-shipped">0</span>
                         </button>
-                        <button class="filter-chip guias-status-filter" data-status="delivered" onclick="filterGuiasByStatus('delivered')">
-                            ✅ Entregadas
+                        <button class="guias-filter-chip" data-status="delivered" onclick="filterGuiasByStatus('delivered')">
+                            Entregadas <span class="guias-filter-count" id="guias-count-delivered">0</span>
+                        </button>
+                    </div>
+
+                    <div class="guias-topbar-actions">
+                        <button class="guias-icon-btn" id="guias-refresh-btn" onclick="refreshGuias()" title="Actualizar">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                        </button>
+                        <button class="guias-icon-btn" onclick="exportGuiasCSV()" title="Exportar CSV">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         </button>
                     </div>
                 </div>
 
-                <!-- Guias Stats -->
-                <div class="shipping-stats" id="guias-stats">
-                    <div class="stat-item">
-                        <span class="stat-number" id="guias-total">0</span>
-                        <span class="stat-label">Total Guías</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="guias-generated">0</span>
-                        <span class="stat-label">Generadas</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="guias-shipped">0</span>
-                        <span class="stat-label">Enviadas</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="guias-delivered">0</span>
-                        <span class="stat-label">Entregadas</span>
-                    </div>
-                </div>
+                <!-- Card list + detail panel layout -->
+                <div class="guias-layout">
+                    <!-- Card list -->
+                    <div class="guias-list-container">
+                        <div class="guias-card-list" id="guias-card-list">
+                            <!-- Rendered by JS -->
+                        </div>
 
-                <!-- Guias Table -->
-                <div class="shipping-table-container">
-                    <table class="shipping-table" id="guias-table">
-                        <thead>
-                            <tr>
-                                <th>Orden</th>
-                                <th>Cliente</th>
-                                <th>Tracking</th>
-                                <th>Paquetería</th>
-                                <th>Días</th>
-                                <th>Estado</th>
-                                <th>Fecha</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="guias-table-body">
-                            <tr>
-                                <td colspan="8" style="text-align: center; padding: 40px; color: #6b7280;">
-                                    Cargando guías...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                        <!-- Empty State -->
+                        <div id="guias-empty-state" class="guias-empty hidden">
+                            <div class="guias-empty__icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+                            </div>
+                            <h3 class="guias-empty__title">Sin guias</h3>
+                            <p class="guias-empty__text">Las guias apareceran cuando se generen envios</p>
+                        </div>
 
-                <!-- Empty State -->
-                <div id="guias-empty-state" class="empty-state hidden">
-                    <span class="empty-icon">🏷️</span>
-                    <h3>No hay guías</h3>
-                    <p>Las guías aparecerán aquí cuando los clientes generen envíos</p>
-                </div>
+                        <!-- Pagination -->
+                        <div class="guias-pagination" id="guias-pagination">
+                            <button class="guias-page-btn" onclick="goToGuiasPage('prev')" id="guias-prev-page-btn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                            </button>
+                            <span class="guias-page-info" id="guias-pagination-info">1 / 1</span>
+                            <button class="guias-page-btn" onclick="goToGuiasPage('next')" id="guias-next-page-btn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </button>
+                        </div>
+                    </div>
 
-                <!-- Guias Pagination -->
-                <div class="shipping-pagination" id="guias-pagination">
-                    <button class="pagination-btn" onclick="goToGuiasPage('prev')" id="guias-prev-page-btn">← Anterior</button>
-                    <span class="pagination-info" id="guias-pagination-info">Página 1 de 1</span>
-                    <button class="pagination-btn" onclick="goToGuiasPage('next')" id="guias-next-page-btn">Siguiente →</button>
+                    <!-- Slide-in detail panel -->
+                    <div class="guias-detail-panel" id="guias-detail-panel">
+                        <button class="guias-panel__close" onclick="closeGuiasPanel()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                        <div class="guias-panel-content" id="guias-panel-content">
+                            <!-- Rendered by JS -->
+                        </div>
+                    </div>
                 </div>
             </section>
 
