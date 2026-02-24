@@ -318,28 +318,39 @@
         if (order.depositPaid) {
             appendTotalRow(totals, 'Anticipo:', 'Pagado', 'paid');
         }
-        if (order.remainingBalance > 0) {
-            appendTotalRow(totals, 'Saldo pendiente:', order.remainingBalanceFormatted || formatCurrency(order.remainingBalance), 'highlight');
-        }
         card.appendChild(totals);
 
-        // Payment info when there's remaining balance
+        // Payment + Upload flow when there's remaining balance
         if (order.remainingBalance > 0 && !order.secondPaymentReceived) {
+            // Prominent balance banner
+            var balanceBanner = document.createElement('div');
+            balanceBanner.className = 'balance-banner';
+            var bannerLabel = document.createElement('span');
+            bannerLabel.className = 'balance-banner-label';
+            bannerLabel.textContent = 'Saldo pendiente';
+            var bannerAmount = document.createElement('span');
+            bannerAmount.className = 'balance-banner-amount';
+            bannerAmount.textContent = order.remainingBalanceFormatted || formatCurrency(order.remainingBalance);
+            balanceBanner.appendChild(bannerLabel);
+            balanceBanner.appendChild(bannerAmount);
+            card.appendChild(balanceBanner);
+
+            // Step 1: Payment methods
             var paymentSection = createPaymentInfoSection(order);
             card.appendChild(paymentSection);
-        }
 
-        // Action: Upload second receipt
-        if (order.approvalStatus === 'approved' && order.remainingBalance > 0 && !order.secondPaymentReceived) {
-            var uploadSection = createUploadSection(order.orderId);
-            card.appendChild(uploadSection);
+            // Step 2: Upload receipt (only if approved)
+            if (order.approvalStatus === 'approved') {
+                var uploadSection = createUploadSection(order.orderId);
+                card.appendChild(uploadSection);
+            }
         }
 
         // Show if second payment already received
         if (order.secondPaymentReceived) {
             var successDiv = document.createElement('div');
-            successDiv.className = 'upload-success';
-            successDiv.textContent = '✅ Segundo comprobante recibido';
+            successDiv.className = 'payment-complete-banner';
+            successDiv.textContent = '✅ Pago completo — Comprobante recibido';
             card.appendChild(successDiv);
         }
 
@@ -402,9 +413,11 @@
             'new': { cssClass: 'new', text: 'Nuevo', icon: '🔵' },
             'pending': { cssClass: 'pending', text: 'Pendiente', icon: '⏳' },
             'design': { cssClass: 'design', text: 'En Diseno', icon: '🎨' },
+            'in_production': { cssClass: 'production', text: 'En Produccion', icon: '⚙️' },
             'printing': { cssClass: 'production', text: 'Imprimiendo', icon: '🖨' },
             'cutting': { cssClass: 'production', text: 'Cortando', icon: '✂️' },
             'counting': { cssClass: 'production', text: 'Contando', icon: '📊' },
+            'ready': { cssClass: 'approved', text: 'Listo', icon: '✅' },
             'shipping': { cssClass: 'shipping', text: 'En Envio', icon: '🚚' },
             'delivered': { cssClass: 'delivered', text: 'Entregado', icon: '✅' },
             'cancelled': { cssClass: 'cancelled', text: 'Cancelado', icon: '❌' }
@@ -434,10 +447,18 @@
         var section = document.createElement('div');
         section.className = 'order-action';
 
-        var title = document.createElement('div');
-        title.className = 'order-action-title';
-        title.textContent = '📤 Subir Segundo Comprobante';
-        section.appendChild(title);
+        // Step header
+        var stepHeader = document.createElement('div');
+        stepHeader.className = 'step-header';
+        var stepNum = document.createElement('span');
+        stepNum.className = 'step-number';
+        stepNum.textContent = '2';
+        var stepTitle = document.createElement('span');
+        stepTitle.className = 'step-title';
+        stepTitle.textContent = 'Sube tu comprobante';
+        stepHeader.appendChild(stepNum);
+        stepHeader.appendChild(stepTitle);
+        section.appendChild(stepHeader);
 
         var uploadArea = document.createElement('div');
         uploadArea.className = 'upload-area';
@@ -801,63 +822,48 @@
         var section = document.createElement('div');
         section.className = 'payment-info';
 
-        var title = document.createElement('div');
-        title.className = 'payment-info-title';
-        title.textContent = 'Metodos de Pago';
-        section.appendChild(title);
+        // Step header
+        var stepHeader = document.createElement('div');
+        stepHeader.className = 'step-header';
+        var stepNum = document.createElement('span');
+        stepNum.className = 'step-number';
+        stepNum.textContent = '1';
+        var stepTitle = document.createElement('span');
+        stepTitle.className = 'step-title';
+        stepTitle.textContent = 'Realiza tu pago';
+        stepHeader.appendChild(stepNum);
+        stepHeader.appendChild(stepTitle);
+        section.appendChild(stepHeader);
 
         var subtitle = document.createElement('div');
         subtitle.className = 'payment-info-subtitle';
-        subtitle.textContent = 'Realiza tu pago del saldo pendiente por cualquiera de estos medios:';
+        subtitle.textContent = 'Elige tu metodo de pago:';
         section.appendChild(subtitle);
 
-        var methods = document.createElement('div');
-        methods.className = 'payment-methods';
+        // Divider: "Opcion A"
+        var optionA = document.createElement('div');
+        optionA.className = 'payment-option-label';
+        optionA.textContent = 'Opcion A — Transferencia';
+        section.appendChild(optionA);
 
-        // Method 1: Bank Transfer
+        // Bank Transfer details
         var bankMethod = document.createElement('div');
         bankMethod.className = 'payment-method';
 
-        var bankHeader = document.createElement('div');
-        bankHeader.className = 'payment-method-header';
-        var bankIcon = document.createElement('span');
-        bankIcon.className = 'payment-method-icon';
-        bankIcon.textContent = '🏦';
-        var bankTitle = document.createElement('span');
-        bankTitle.className = 'payment-method-title';
-        bankTitle.textContent = 'Transferencia Bancaria';
-        bankHeader.appendChild(bankIcon);
-        bankHeader.appendChild(bankTitle);
-        bankMethod.appendChild(bankHeader);
-
         appendPaymentDetail(bankMethod, 'Banco', 'BBVA', null);
         appendPaymentDetail(bankMethod, 'CLABE', '012 180 01571714055 4', '012180015717140554');
-        appendPaymentDetail(bankMethod, 'Tarjeta de debito', '4152 3138 4049 8567', '4152313840498567');
-        appendPaymentDetail(bankMethod, 'Beneficiario', 'Ivan Valencia', null);
+        appendPaymentDetail(bankMethod, 'Tarjeta', '4152 3138 4049 8567', '4152313840498567');
+        appendPaymentDetail(bankMethod, 'A nombre de', 'Ivan Valencia', null);
 
-        methods.appendChild(bankMethod);
+        section.appendChild(bankMethod);
 
-        // Method 2: Card Payment (Stripe)
-        var cardMethod = document.createElement('div');
-        cardMethod.className = 'payment-method';
+        // Divider: "Opcion B"
+        var optionB = document.createElement('div');
+        optionB.className = 'payment-option-label';
+        optionB.textContent = 'Opcion B — Tarjeta de credito/debito';
+        section.appendChild(optionB);
 
-        var cardHeader = document.createElement('div');
-        cardHeader.className = 'payment-method-header';
-        var cardIcon = document.createElement('span');
-        cardIcon.className = 'payment-method-icon';
-        cardIcon.textContent = '💳';
-        var cardMethodTitle = document.createElement('span');
-        cardMethodTitle.className = 'payment-method-title';
-        cardMethodTitle.textContent = 'Pago con Tarjeta';
-        cardHeader.appendChild(cardIcon);
-        cardHeader.appendChild(cardMethodTitle);
-        cardMethod.appendChild(cardHeader);
-
-        var cardDesc = document.createElement('p');
-        cardDesc.className = 'payment-method-desc';
-        cardDesc.textContent = 'Paga de forma segura con tarjeta de credito o debito:';
-        cardMethod.appendChild(cardDesc);
-
+        // Card Payment (Stripe)
         var stripeBtn = document.createElement('a');
         stripeBtn.href = 'https://buy.stripe.com/00gcPP1GscTObJufYY';
         stripeBtn.target = '_blank';
@@ -873,10 +879,7 @@
 
         var stripeBtnText = document.createTextNode('Pagar con Tarjeta');
         stripeBtn.appendChild(stripeBtnText);
-        cardMethod.appendChild(stripeBtn);
-
-        methods.appendChild(cardMethod);
-        section.appendChild(methods);
+        section.appendChild(stripeBtn);
 
         return section;
     }
