@@ -323,6 +323,12 @@
         }
         card.appendChild(totals);
 
+        // Payment info when there's remaining balance
+        if (order.remainingBalance > 0 && !order.secondPaymentReceived) {
+            var paymentSection = createPaymentInfoSection(order);
+            card.appendChild(paymentSection);
+        }
+
         // Action: Upload second receipt
         if (order.approvalStatus === 'approved' && order.remainingBalance > 0 && !order.secondPaymentReceived) {
             var uploadSection = createUploadSection(order.orderId);
@@ -788,6 +794,129 @@
         } catch (err) {
             console.error('Refresh error:', err);
         }
+    }
+
+    // ── Payment Info Section ────────────────────────────────────
+    function createPaymentInfoSection(order) {
+        var section = document.createElement('div');
+        section.className = 'payment-info';
+
+        var title = document.createElement('div');
+        title.className = 'payment-info-title';
+        title.textContent = 'Metodos de Pago';
+        section.appendChild(title);
+
+        var subtitle = document.createElement('div');
+        subtitle.className = 'payment-info-subtitle';
+        subtitle.textContent = 'Realiza tu pago del saldo pendiente por cualquiera de estos medios:';
+        section.appendChild(subtitle);
+
+        var methods = document.createElement('div');
+        methods.className = 'payment-methods';
+
+        // Method 1: Bank Transfer
+        var bankMethod = document.createElement('div');
+        bankMethod.className = 'payment-method';
+
+        var bankHeader = document.createElement('div');
+        bankHeader.className = 'payment-method-header';
+        var bankIcon = document.createElement('span');
+        bankIcon.className = 'payment-method-icon';
+        bankIcon.textContent = '🏦';
+        var bankTitle = document.createElement('span');
+        bankTitle.className = 'payment-method-title';
+        bankTitle.textContent = 'Transferencia Bancaria';
+        bankHeader.appendChild(bankIcon);
+        bankHeader.appendChild(bankTitle);
+        bankMethod.appendChild(bankHeader);
+
+        appendPaymentDetail(bankMethod, 'Banco', 'BBVA', null);
+        appendPaymentDetail(bankMethod, 'CLABE', '012 180 01571714055 4', '012180015717140554');
+        appendPaymentDetail(bankMethod, 'Tarjeta de debito', '4152 3138 4049 8567', '4152313840498567');
+        appendPaymentDetail(bankMethod, 'Beneficiario', 'Ivan Valencia', null);
+
+        methods.appendChild(bankMethod);
+
+        // Method 2: Card Payment (Stripe)
+        var cardMethod = document.createElement('div');
+        cardMethod.className = 'payment-method';
+
+        var cardHeader = document.createElement('div');
+        cardHeader.className = 'payment-method-header';
+        var cardIcon = document.createElement('span');
+        cardIcon.className = 'payment-method-icon';
+        cardIcon.textContent = '💳';
+        var cardMethodTitle = document.createElement('span');
+        cardMethodTitle.className = 'payment-method-title';
+        cardMethodTitle.textContent = 'Pago con Tarjeta';
+        cardHeader.appendChild(cardIcon);
+        cardHeader.appendChild(cardMethodTitle);
+        cardMethod.appendChild(cardHeader);
+
+        var cardDesc = document.createElement('p');
+        cardDesc.className = 'payment-method-desc';
+        cardDesc.textContent = 'Paga de forma segura con tarjeta de credito o debito:';
+        cardMethod.appendChild(cardDesc);
+
+        var stripeBtn = document.createElement('a');
+        stripeBtn.href = 'https://buy.stripe.com/00gcPP1GscTObJufYY';
+        stripeBtn.target = '_blank';
+        stripeBtn.rel = 'noopener noreferrer';
+        stripeBtn.className = 'btn-stripe-pay';
+
+        // Static SVG icon (no user data — safe for insertAdjacentHTML)
+        stripeBtn.insertAdjacentHTML('afterbegin',
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>' +
+            '<line x1="1" y1="10" x2="23" y2="10"/></svg> '
+        );
+
+        var stripeBtnText = document.createTextNode('Pagar con Tarjeta');
+        stripeBtn.appendChild(stripeBtnText);
+        cardMethod.appendChild(stripeBtn);
+
+        methods.appendChild(cardMethod);
+        section.appendChild(methods);
+
+        return section;
+    }
+
+    function appendPaymentDetail(parent, label, displayValue, copyValue) {
+        var row = document.createElement('div');
+        row.className = 'payment-detail-row';
+
+        var labelEl = document.createElement('span');
+        labelEl.className = 'payment-detail-label';
+        labelEl.textContent = label;
+
+        var valueEl = document.createElement('span');
+        valueEl.className = 'payment-detail-value';
+        valueEl.textContent = displayValue;
+
+        row.appendChild(labelEl);
+        row.appendChild(valueEl);
+
+        if (copyValue) {
+            var copyBtn = document.createElement('button');
+            copyBtn.className = 'btn-copy-detail';
+            copyBtn.title = 'Copiar ' + label;
+            copyBtn.textContent = 'Copiar';
+            copyBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                navigator.clipboard.writeText(copyValue).then(function() {
+                    copyBtn.textContent = 'Copiado';
+                    copyBtn.classList.add('copied');
+                    setTimeout(function() {
+                        copyBtn.textContent = 'Copiar';
+                        copyBtn.classList.remove('copied');
+                    }, 1500);
+                    showToast(label + ' copiado al portapapeles', 'success');
+                });
+            });
+            row.appendChild(copyBtn);
+        }
+
+        parent.appendChild(row);
     }
 
     // ── Helpers ───────────────────────────────────────────────
