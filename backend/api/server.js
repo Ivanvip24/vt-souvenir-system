@@ -4290,6 +4290,9 @@ app.get('/api/commissions', async (req, res) => {
       FROM orders o
       LEFT JOIN salespeople sp ON LOWER(o.sales_rep) = LOWER(sp.name)
       WHERE o.sales_rep IS NOT NULL AND o.sales_rep != ''
+        AND o.approval_status = 'approved'
+        AND o.payment_proof_url IS NOT NULL
+        AND o.second_payment_proof_url IS NOT NULL
         ${dateFilter}
         ${salespersonFilter}
       GROUP BY o.sales_rep, sp.id, sp.commission_rate
@@ -4325,15 +4328,29 @@ app.get('/api/commissions', async (req, res) => {
  */
 app.get('/api/commissions/monthly', async (req, res) => {
   try {
-    const { salesperson, months } = req.query;
-    const monthsLimit = parseInt(months) || 6;
-
+    const { salesperson, months, start_date, end_date } = req.query;
+    const params = [];
+    let dateFilter = '';
     let salespersonFilter = '';
-    const params = [monthsLimit];
+
+    // Use explicit date range if provided, otherwise fall back to months limit
+    if (start_date) {
+      params.push(start_date);
+      dateFilter += ` AND o.created_at >= $${params.length}`;
+    }
+    if (end_date) {
+      params.push(end_date);
+      dateFilter += ` AND o.created_at <= $${params.length}`;
+    }
+    if (!start_date && !end_date) {
+      const monthsLimit = parseInt(months) || 6;
+      params.push(monthsLimit);
+      dateFilter = ` AND o.created_at >= CURRENT_DATE - INTERVAL '1 month' * $${params.length}`;
+    }
 
     if (salesperson) {
       params.push(salesperson);
-      salespersonFilter = ` AND LOWER(o.sales_rep) = LOWER($2)`;
+      salespersonFilter = ` AND LOWER(o.sales_rep) = LOWER($${params.length})`;
     }
 
     const result = await query(`
@@ -4349,8 +4366,10 @@ app.get('/api/commissions/monthly', async (req, res) => {
       FROM orders o
       LEFT JOIN salespeople sp ON LOWER(o.sales_rep) = LOWER(sp.name)
       WHERE o.sales_rep IS NOT NULL AND o.sales_rep != ''
-        AND o.created_at >= CURRENT_DATE - INTERVAL '1 month' * $1
-        AND o.approval_status IN ('approved', 'completed', 'delivered')
+        AND o.approval_status = 'approved'
+        AND o.payment_proof_url IS NOT NULL
+        AND o.second_payment_proof_url IS NOT NULL
+        ${dateFilter}
         ${salespersonFilter}
       GROUP BY o.sales_rep, sp.id, sp.commission_rate, TO_CHAR(o.created_at, 'YYYY-MM'), TO_CHAR(o.created_at, 'Mon YYYY')
       ORDER BY month DESC, sales DESC

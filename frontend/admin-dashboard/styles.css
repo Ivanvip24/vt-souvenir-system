@@ -7931,6 +7931,26 @@ textarea:disabled {
     border-radius: 6px;
 }
 
+/* Comisiones period filter buttons */
+.comisiones-period-btn {
+    background: white;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.comisiones-period-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.comisiones-period-btn.active {
+    background: #e72a88;
+    color: white;
+    border-color: #e72a88;
+}
+
 /* ==========================================
    AI ALERTS WIDGET
    ========================================== */

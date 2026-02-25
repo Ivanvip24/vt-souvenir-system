@@ -4770,6 +4770,83 @@ function filterBySalesperson(salespersonName) {
  * Note: All rendered content comes from our own backend API (trusted source),
  * not from user input, so DOM injection via innerHTML is safe here.
  */
+// Comisiones period state
+let comisionesPeriod = 'week';
+
+function setComisionesPeriod(period) {
+  comisionesPeriod = period;
+  // Update active button
+  document.querySelectorAll('.comisiones-period-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.period === period);
+  });
+  // Show/hide custom date inputs
+  const customDates = document.getElementById('comisiones-custom-dates');
+  if (customDates) {
+    customDates.style.display = period === 'custom' ? 'flex' : 'none';
+  }
+  // If not custom, reload immediately
+  if (period !== 'custom') {
+    loadComisionesView();
+  }
+}
+
+function getComisionesDateRange() {
+  const now = new Date();
+  let start = null;
+  let end = null;
+
+  switch (comisionesPeriod) {
+    case 'week': {
+      const day = now.getDay();
+      const diff = day === 0 ? 6 : day - 1; // Monday as start of week
+      start = new Date(now);
+      start.setDate(now.getDate() - diff);
+      start.setHours(0, 0, 0, 0);
+      break;
+    }
+    case 'month':
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case 'half': {
+      start = new Date(now);
+      start.setMonth(now.getMonth() - 6);
+      start.setDate(1);
+      break;
+    }
+    case 'year':
+      start = new Date(now.getFullYear(), 0, 1);
+      break;
+    case 'custom': {
+      const startInput = document.getElementById('comisiones-start-date');
+      const endInput = document.getElementById('comisiones-end-date');
+      if (startInput && startInput.value) start = new Date(startInput.value + 'T00:00:00');
+      if (endInput && endInput.value) end = new Date(endInput.value + 'T23:59:59');
+      break;
+    }
+    case 'all':
+    default:
+      // No date filter
+      break;
+  }
+
+  // Update period label
+  const label = document.getElementById('comisiones-period-label');
+  if (label) {
+    if (start && end) {
+      label.textContent = `${start.toLocaleDateString('es-MX')} — ${end.toLocaleDateString('es-MX')}`;
+    } else if (start) {
+      label.textContent = `Desde ${start.toLocaleDateString('es-MX')}`;
+    } else {
+      label.textContent = 'Todos los periodos';
+    }
+  }
+
+  return {
+    start_date: start ? start.toISOString().split('T')[0] : null,
+    end_date: end ? end.toISOString().split('T')[0] : null
+  };
+}
+
 async function loadComisionesView() {
   const loadingEl = document.getElementById('comisiones-loading');
   const summaryEl = document.getElementById('comisiones-summary-cards');
@@ -4785,9 +4862,16 @@ async function loadComisionesView() {
   if (monthlyEl) monthlyEl.textContent = '';
 
   try {
+    // Build query params from selected period
+    const { start_date, end_date } = getComisionesDateRange();
+    const params = new URLSearchParams();
+    if (start_date) params.set('start_date', start_date);
+    if (end_date) params.set('end_date', end_date);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+
     const [commissionsRes, monthlyRes] = await Promise.all([
-      fetch(`${API_BASE}/commissions`, { headers: getAuthHeaders() }),
-      fetch(`${API_BASE}/commissions/monthly`, { headers: getAuthHeaders() })
+      fetch(`${API_BASE}/commissions${qs}`, { headers: getAuthHeaders() }),
+      fetch(`${API_BASE}/commissions/monthly${qs}`, { headers: getAuthHeaders() })
     ]);
 
     const commissionsData = await commissionsRes.json();
@@ -5039,3 +5123,4 @@ window.filterBySalesperson = filterBySalesperson;
 window.showCommissionsModal = showCommissionsModal;
 window.loadComisionesView = loadComisionesView;
 window.viewSalespersonOrders = viewSalespersonOrders;
+window.setComisionesPeriod = setComisionesPeriod;

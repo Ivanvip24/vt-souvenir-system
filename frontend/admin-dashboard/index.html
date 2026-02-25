@@ -1150,6 +1150,24 @@
                     </button>
                 </div>
 
+                <!-- Period Filter Bar -->
+                <div id="comisiones-filter-bar" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:20px;padding:12px 16px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;">
+                    <span style="font-size:13px;font-weight:600;color:#6b7280;margin-right:4px;">Periodo:</span>
+                    <button class="btn btn-sm comisiones-period-btn active" data-period="week" onclick="setComisionesPeriod('week')">Esta Semana</button>
+                    <button class="btn btn-sm comisiones-period-btn" data-period="month" onclick="setComisionesPeriod('month')">Este Mes</button>
+                    <button class="btn btn-sm comisiones-period-btn" data-period="half" onclick="setComisionesPeriod('half')">6 Meses</button>
+                    <button class="btn btn-sm comisiones-period-btn" data-period="year" onclick="setComisionesPeriod('year')">Este Año</button>
+                    <button class="btn btn-sm comisiones-period-btn" data-period="all" onclick="setComisionesPeriod('all')">Todo</button>
+                    <button class="btn btn-sm comisiones-period-btn" data-period="custom" onclick="setComisionesPeriod('custom')">Personalizado</button>
+                    <div id="comisiones-custom-dates" style="display:none;align-items:center;gap:6px;margin-left:8px;">
+                        <input type="date" id="comisiones-start-date" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+                        <span style="color:#9ca3af;">—</span>
+                        <input type="date" id="comisiones-end-date" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+                        <button class="btn btn-sm btn-primary" onclick="loadComisionesView()" style="padding:4px 12px;">Aplicar</button>
+                    </div>
+                    <span id="comisiones-period-label" style="margin-left:auto;font-size:12px;color:#9ca3af;"></span>
+                </div>
+
                 <div id="comisiones-loading" class="loading hidden">
                     <div class="spinner"></div>
                     <p>Cargando datos de comisiones...</p>
