@@ -5091,20 +5091,185 @@ function showCommissionsModal() {
 }
 
 /**
- * View orders for a specific salesperson
+ * View orders for a specific salesperson in a modal popup
  */
-function viewSalespersonOrders(salespersonName) {
-  // Switch to orders view and filter
-  switchView('orders');
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  const ordersBtn = document.querySelector('.nav-item[data-view="orders"]');
-  if (ordersBtn) ordersBtn.classList.add('active');
+async function viewSalespersonOrders(salespersonName) {
+  // Build date params from current period
+  const { start_date, end_date } = getComisionesDateRange();
+  const params = new URLSearchParams();
+  if (start_date) params.set('start_date', start_date);
+  if (end_date) params.set('end_date', end_date);
+  const qs = params.toString() ? `?${params.toString()}` : '';
 
-  const dropdown = document.getElementById('salesperson-filter');
-  if (dropdown) {
-    dropdown.value = salespersonName;
+  // Remove existing modal if any
+  const existing = document.getElementById('salesperson-orders-modal');
+  if (existing) existing.remove();
+
+  // Create modal
+  const modal = document.createElement('div');
+  modal.id = 'salesperson-orders-modal';
+  modal.className = 'modal';
+  modal.style.zIndex = '1100';
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.addEventListener('click', () => modal.remove());
+
+  const content = document.createElement('div');
+  content.className = 'modal-content';
+  content.style.maxWidth = '700px';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'modal-header';
+  const title = document.createElement('h2');
+  title.style.fontSize = '18px';
+  title.textContent = `Pedidos Completados — ${salespersonName}`;
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'modal-close';
+  closeBtn.textContent = '\u00D7';
+  closeBtn.addEventListener('click', () => modal.remove());
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+
+  // Body - loading state
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  body.style.padding = '16px 24px';
+  const spinner = document.createElement('div');
+  spinner.style.cssText = 'text-align:center;padding:32px;color:#9ca3af;';
+  spinner.textContent = 'Cargando pedidos...';
+  body.appendChild(spinner);
+
+  content.appendChild(header);
+  content.appendChild(body);
+  modal.appendChild(backdrop);
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+
+  try {
+    const res = await fetch(`${API_BASE}/commissions/${encodeURIComponent(salespersonName)}/orders${qs}`, { headers: getAuthHeaders() });
+    const data = await res.json();
+    const orders = data.data || [];
+
+    body.textContent = '';
+
+    if (orders.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'text-align:center;padding:32px;color:#9ca3af;';
+      empty.textContent = 'No hay pedidos completados en este periodo.';
+      body.appendChild(empty);
+      return;
+    }
+
+    // Orders table
+    const wrapper = document.createElement('div');
+    wrapper.style.overflowX = 'auto';
+    const table = document.createElement('table');
+    table.className = 'data-table';
+    table.style.fontSize = '13px';
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['# Pedido', 'Cliente', 'Fecha', 'Total', 'Comisión'].forEach(text => {
+      const th = document.createElement('th');
+      th.textContent = text;
+      th.style.padding = '10px 12px';
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    let totalSales = 0;
+    let totalCommission = 0;
+
+    orders.forEach(order => {
+      const price = parseFloat(order.total_price || 0);
+      const comm = parseFloat(order.commission || 0);
+      totalSales += price;
+      totalCommission += comm;
+
+      const tr = document.createElement('tr');
+
+      const tdOrder = document.createElement('td');
+      tdOrder.style.cssText = 'padding:10px 12px;font-weight:600;';
+      tdOrder.textContent = order.order_number || `#${order.id}`;
+      tr.appendChild(tdOrder);
+
+      const tdClient = document.createElement('td');
+      tdClient.style.padding = '10px 12px';
+      tdClient.textContent = order.client_name || '—';
+      tr.appendChild(tdClient);
+
+      const tdDate = document.createElement('td');
+      tdDate.style.cssText = 'padding:10px 12px;color:#6b7280;';
+      tdDate.textContent = new Date(order.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+      tr.appendChild(tdDate);
+
+      const tdTotal = document.createElement('td');
+      tdTotal.style.padding = '10px 12px';
+      tdTotal.textContent = formatCurrency(price);
+      tr.appendChild(tdTotal);
+
+      const tdComm = document.createElement('td');
+      tdComm.style.cssText = 'padding:10px 12px;color:#e72a88;font-weight:600;';
+      tdComm.textContent = formatCurrency(comm);
+      tr.appendChild(tdComm);
+
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    body.appendChild(wrapper);
+
+    // Footer totals
+    const footer = document.createElement('div');
+    footer.className = 'modal-footer';
+    footer.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-top:2px solid #f3f4f6;';
+
+    const countLabel = document.createElement('span');
+    countLabel.style.cssText = 'font-size:13px;color:#6b7280;';
+    countLabel.textContent = `${orders.length} pedido${orders.length !== 1 ? 's' : ''} completado${orders.length !== 1 ? 's' : ''}`;
+
+    const totalsDiv = document.createElement('div');
+    totalsDiv.style.cssText = 'display:flex;gap:24px;align-items:center;';
+
+    const salesTotal = document.createElement('div');
+    salesTotal.style.textAlign = 'right';
+    const salesLabel = document.createElement('div');
+    salesLabel.style.cssText = 'font-size:11px;color:#9ca3af;text-transform:uppercase;';
+    salesLabel.textContent = 'Ventas';
+    const salesValue = document.createElement('div');
+    salesValue.style.cssText = 'font-size:16px;font-weight:700;';
+    salesValue.textContent = formatCurrency(totalSales);
+    salesTotal.appendChild(salesLabel);
+    salesTotal.appendChild(salesValue);
+
+    const commTotal = document.createElement('div');
+    commTotal.style.textAlign = 'right';
+    const commLabel = document.createElement('div');
+    commLabel.style.cssText = 'font-size:11px;color:#9ca3af;text-transform:uppercase;';
+    commLabel.textContent = 'Comisión';
+    const commValue = document.createElement('div');
+    commValue.style.cssText = 'font-size:16px;font-weight:700;color:#e72a88;';
+    commValue.textContent = formatCurrency(totalCommission);
+    commTotal.appendChild(commLabel);
+    commTotal.appendChild(commValue);
+
+    totalsDiv.appendChild(salesTotal);
+    totalsDiv.appendChild(commTotal);
+    footer.appendChild(countLabel);
+    footer.appendChild(totalsDiv);
+    content.appendChild(footer);
+
+  } catch (error) {
+    body.textContent = '';
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = 'text-align:center;padding:32px;color:#ef4444;';
+    errDiv.textContent = 'Error al cargar pedidos: ' + error.message;
+    body.appendChild(errDiv);
   }
-  filterBySalesperson(salespersonName);
 }
 
 /**

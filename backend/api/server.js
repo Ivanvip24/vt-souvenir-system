@@ -4394,7 +4394,10 @@ app.get('/api/commissions/:salesperson/orders', async (req, res) => {
     const { salesperson } = req.params;
     const { start_date, end_date, status } = req.query;
 
-    let filters = `WHERE LOWER(o.sales_rep) = LOWER($1)`;
+    let filters = `WHERE LOWER(o.sales_rep) = LOWER($1)
+        AND o.approval_status = 'approved'
+        AND o.payment_proof_url IS NOT NULL
+        AND o.second_payment_proof_url IS NOT NULL`;
     const params = [salesperson];
 
     if (start_date) {
@@ -4404,10 +4407,6 @@ app.get('/api/commissions/:salesperson/orders', async (req, res) => {
     if (end_date) {
       params.push(end_date);
       filters += ` AND o.created_at <= $${params.length}`;
-    }
-    if (status) {
-      params.push(status);
-      filters += ` AND o.approval_status = $${params.length}`;
     }
 
     const result = await query(`
