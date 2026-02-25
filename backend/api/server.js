@@ -4290,9 +4290,7 @@ app.get('/api/commissions', async (req, res) => {
       FROM orders o
       LEFT JOIN salespeople sp ON LOWER(o.sales_rep) = LOWER(sp.name)
       WHERE o.sales_rep IS NOT NULL AND o.sales_rep != ''
-        AND o.approval_status = 'approved'
-        AND o.payment_proof_url IS NOT NULL
-        AND o.second_payment_proof_url IS NOT NULL
+        AND o.archive_status = 'completo'
         ${dateFilter}
         ${salespersonFilter}
       GROUP BY o.sales_rep, sp.id, sp.commission_rate
@@ -4366,9 +4364,7 @@ app.get('/api/commissions/monthly', async (req, res) => {
       FROM orders o
       LEFT JOIN salespeople sp ON LOWER(o.sales_rep) = LOWER(sp.name)
       WHERE o.sales_rep IS NOT NULL AND o.sales_rep != ''
-        AND o.approval_status = 'approved'
-        AND o.payment_proof_url IS NOT NULL
-        AND o.second_payment_proof_url IS NOT NULL
+        AND o.archive_status = 'completo'
         ${dateFilter}
         ${salespersonFilter}
       GROUP BY o.sales_rep, sp.id, sp.commission_rate, TO_CHAR(o.created_at, 'YYYY-MM'), TO_CHAR(o.created_at, 'Mon YYYY')
@@ -4395,9 +4391,7 @@ app.get('/api/commissions/:salesperson/orders', async (req, res) => {
     const { start_date, end_date, status } = req.query;
 
     let filters = `WHERE LOWER(o.sales_rep) = LOWER($1)
-        AND o.approval_status = 'approved'
-        AND o.payment_proof_url IS NOT NULL
-        AND o.second_payment_proof_url IS NOT NULL`;
+        AND o.archive_status = 'completo'`;
     const params = [salesperson];
 
     if (start_date) {
