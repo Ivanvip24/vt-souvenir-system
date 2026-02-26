@@ -732,10 +732,10 @@ function showPriceCalculation(data) {
     }
 
     // Append to last assistant message
-    const messages = document.querySelectorAll('.ai-chat-message.assistant');
+    const messages = document.querySelectorAll('.ai-message.assistant');
     if (messages.length > 0) {
         const lastMessage = messages[messages.length - 1];
-        const contentDiv = lastMessage.querySelector('.ai-chat-message-content');
+        const contentDiv = lastMessage.querySelector('.ai-message-content');
         if (contentDiv) {
             contentDiv.insertAdjacentHTML('beforeend', html);
         }
