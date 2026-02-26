@@ -94,11 +94,12 @@ FORMATOS DE COMPROBANTES BANCARIOS COMUNES:
 
 DEBES EXTRAER:
 1. El MONTO de la transferencia/pago - busca campos como "Importe transferido", "Monto", "Cantidad", "$X.XX"
-2. La FECHA de la operación
+2. La FECHA de la operación (formato YYYY-MM-DD)
 3. El FOLIO o número de operación (si existe)
-4. Si el comprobante parece LEGÍTIMO o sospechoso
-5. El nombre del DESTINATARIO (si aparece)
-6. El BANCO origen y destino (si aparece)
+4. La CLAVE DE RASTREO - es un código alfanumérico que identifica la transferencia SPEI. Busca campos como "Clave de rastreo", "Clave rastreo", "No. de rastreo", "Tracking". Es DIFERENTE al folio. Generalmente tiene formato como "MBAN01202502251234" o similar.
+5. Si el comprobante parece LEGÍTIMO o sospechoso
+6. El nombre del DESTINATARIO (si aparece)
+7. El BANCO EMISOR (origen) y BANCO RECEPTOR (destino) - nombre exacto del banco (si aparece)
 
 RESPONDE SIEMPRE EN FORMATO JSON con esta estructura exacta:
 {
@@ -107,6 +108,7 @@ RESPONDE SIEMPRE EN FORMATO JSON con esta estructura exacta:
   "currency": "MXN" or other,
   "date_detected": "YYYY-MM-DD" or null,
   "folio_number": "string" or null,
+  "clave_rastreo": "string" or null,
   "recipient_name": "string" or null,
   "source_bank": "string" or null,
   "destination_bank": "string" or null,
@@ -237,6 +239,7 @@ Responde SOLO con el JSON estructurado.`;
         amount_difference: amountDifference,
         date_detected: analysisResult.date_detected,
         folio_number: analysisResult.folio_number,
+        clave_rastreo: analysisResult.clave_rastreo || analysisResult.folio_number,
         recipient_name: analysisResult.recipient_name,
         source_bank: analysisResult.source_bank,
         destination_bank: analysisResult.destination_bank,

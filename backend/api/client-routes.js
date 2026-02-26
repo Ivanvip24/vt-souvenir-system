@@ -14,6 +14,7 @@ import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
 import { calculateDeliveryDates } from '../utils/delivery-calculator.js';
 import { calculateTieredPrice, MOQ } from '../shared/pricing.js';
 import { verifyPaymentReceipt, isConfigured as isAIConfigured } from '../services/payment-receipt-verifier.js';
+import { validateTransfer, downloadCEP, resolveBankCode } from '../services/cep-service.js';
 
 const router = express.Router();
 
@@ -518,6 +519,105 @@ router.post('/orders/submit', async (req, res) => {
 
           console.log(`✅ AI verified - AUTO-APPROVING order ${orderNumber}`);
 
+          // ============================================
+          // CEP VALIDATION — Verify against Banxico
+          // ============================================
+          let cepResult = null;
+          const claveRastreo = verificationResult.analysis?.clave_rastreo;
+          const sourceBank = verificationResult.analysis?.source_bank;
+          const detectedDate = verificationResult.analysis?.date_detected;
+
+          if (claveRastreo && process.env.AXKAN_CLABE) {
+            try {
+              console.log(`🏦 Starting CEP validation for order ${orderNumber}...`);
+
+              // Resolve bank name to code
+              const emisorCode = resolveBankCode(sourceBank);
+              if (!emisorCode) {
+                console.log(`⚠️ CEP: Could not resolve bank code for "${sourceBank}", skipping CEP`);
+              } else {
+                // Format date for Banxico (DD-MM-YYYY)
+                let fechaBanxico;
+                if (detectedDate) {
+                  const parts = detectedDate.split('-'); // YYYY-MM-DD
+                  fechaBanxico = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                } else {
+                  // Fallback to today
+                  const today = new Date();
+                  fechaBanxico = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+                }
+
+                cepResult = await validateTransfer({
+                  fecha: fechaBanxico,
+                  claveRastreo,
+                  emisor: emisorCode,
+                  monto: verificationResult.analysis?.amount_detected || depositAmount,
+                });
+
+                // Store CEP verification in database
+                const cepStatus = cepResult.found ? 'found' : (cepResult.error ? 'error' : 'pending_retry');
+                const nextRetry = cepStatus === 'pending_retry'
+                  ? new Date(Date.now() + 5 * 60 * 1000).toISOString()
+                  : null;
+
+                await query(
+                  `INSERT INTO cep_verifications
+                    (order_id, clave_rastreo, fecha_operacion, emisor_code, emisor_name,
+                     receptor_code, receptor_name, monto, status, banxico_response, next_retry_at)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                  [
+                    orderId,
+                    claveRastreo,
+                    detectedDate || new Date().toISOString().split('T')[0],
+                    emisorCode,
+                    sourceBank || '',
+                    process.env.AXKAN_BANK_CODE || '40012',
+                    'BBVA',
+                    verificationResult.analysis?.amount_detected || depositAmount,
+                    cepStatus,
+                    JSON.stringify(cepResult.details || { error: cepResult.error }),
+                    nextRetry,
+                  ]
+                );
+
+                // If found, try to download CEP PDF
+                if (cepResult.found && cepResult.cookies) {
+                  try {
+                    const pdfBuffer = await downloadCEP(cepResult.cookies, 'PDF');
+
+                    if (isGoogleDriveConfigured()) {
+                      const uploadResult = await uploadToGoogleDrive({
+                        fileData: pdfBuffer,
+                        fileName: `CEP-${orderNumber}-${Date.now()}.pdf`,
+                        mimeType: 'application/pdf',
+                      });
+                      const cepPdfUrl = uploadResult.webViewLink || uploadResult.url;
+
+                      await query(
+                        `UPDATE cep_verifications SET cep_pdf_url = $1 WHERE order_id = $2 AND clave_rastreo = $3`,
+                        [cepPdfUrl, orderId, claveRastreo]
+                      );
+
+                      console.log(`📄 CEP PDF stored: ${cepPdfUrl}`);
+                    }
+                  } catch (pdfErr) {
+                    console.error(`⚠️ CEP PDF download/upload failed: ${pdfErr.message}`);
+                  }
+                }
+
+                console.log(`🏦 CEP result: ${cepStatus} for order ${orderNumber}`);
+              }
+            } catch (cepError) {
+              console.error(`⚠️ CEP validation failed (non-fatal): ${cepError.message}`);
+              // CEP failure is non-blocking — we still proceed with Vision-only approval
+            }
+          } else {
+            console.log(`ℹ️ CEP: Skipped (no clave_rastreo extracted or AXKAN_CLABE not set)`);
+          }
+          // ============================================
+          // END CEP VALIDATION
+          // ============================================
+
           // Determine the actual deposit amount from the receipt
           // Use detected amount if available, otherwise use original deposit amount
           const rawDetectedAmount = verificationResult.analysis?.amount_detected;
@@ -532,6 +632,12 @@ router.post('/orders/submit', async (req, res) => {
             console.log(`💰 Amount adjustment: Expected $${depositAmount.toFixed(2)} → Detected $${actualDepositAmount.toFixed(2)}`);
           }
 
+          const cepNote = cepResult
+            ? (cepResult.found
+              ? `\n🏦 CEP: Confirmado por Banxico`
+              : `\n🏦 CEP: Pendiente de confirmación (reintentando)`)
+            : `\n🏦 CEP: No verificado (sin clave de rastreo)`;
+
           // Update order to approved status with the actual deposit amount from receipt
           await query(
             `UPDATE orders SET
@@ -541,7 +647,7 @@ router.post('/orders/submit', async (req, res) => {
               deposit_amount = $2,
               internal_notes = COALESCE(internal_notes || E'\n\n', '') || $3
              WHERE id = $1`,
-            [orderId, actualDepositAmount, `✅ Auto-aprobado por AI (${new Date().toLocaleString('es-MX')})\nMonto detectado: $${actualDepositAmount.toFixed(2)}`]
+            [orderId, actualDepositAmount, `✅ Auto-aprobado por AI (${new Date().toLocaleString('es-MX')})\nMonto detectado: $${actualDepositAmount.toFixed(2)}${cepNote}`]
           );
 
           // Calculate remaining balance with the actual deposit amount

@@ -40,6 +40,7 @@ import { verifyPaymentReceipt, isConfigured as isClaudeConfigured } from '../ser
 import * as orderAlerts from '../agents/alerts/order-alerts.js';
 import * as skydropxService from '../services/skydropx.js';
 import * as pickupScheduler from '../services/pickup-scheduler.js';
+import { initializeCepRetryScheduler, stopCepRetryScheduler } from '../services/cep-retry-scheduler.js';
 import * as facebookMarketplace from '../services/facebook-marketplace.js';
 import * as facebookScheduler from '../services/facebook-scheduler.js';
 import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
@@ -5280,6 +5281,9 @@ async function startServer() {
     // Initialize Pickup Scheduler (daily pickup requests)
     pickupScheduler.initializePickupScheduler();
 
+    // Initialize CEP retry scheduler (every 5 min, checks failed Banxico verifications)
+    initializeCepRetryScheduler();
+
     // Initialize Facebook Marketplace Scheduler (daily at 9 AM)
     await facebookScheduler.initFacebookScheduler();
 
@@ -5461,12 +5465,14 @@ async function startServer() {
 process.on('SIGTERM', () => {
   console.log('\n🛑 Received SIGTERM signal, shutting down gracefully...');
   analyticsAgent.scheduler.stopAllJobs();
+  stopCepRetryScheduler();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   console.log('\n🛑 Received SIGINT signal, shutting down gracefully...');
   analyticsAgent.scheduler.stopAllJobs();
+  stopCepRetryScheduler();
   process.exit(0);
 });
 

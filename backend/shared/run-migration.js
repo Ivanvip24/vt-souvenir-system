@@ -37,6 +37,7 @@ async function runAllMigrations() {
   try {
     // Run migrations in order
     await runMigration('001-add-client-order-system.sql');
+    await runMigration('012-add-cep-verifications.sql');
 
     console.log('\n✨ All migrations completed successfully!');
 
