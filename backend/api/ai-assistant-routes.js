@@ -9,6 +9,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
 import { parseQuoteRequest, generateQuotePDF, getQuoteUrl, getPricingInfo } from '../services/quote-generator.js';
+import { calculateCustomPrice } from '../services/pricing-engine.js';
 
 const router = express.Router();
 
@@ -707,6 +708,37 @@ Cuando el usuario especifique precios personalizados de CUALQUIER forma, DEBES i
 - Usuario: "1200 imanes en precio $7" → text: "1200 imanes mediano, iman $7"
 - Usuario: "500 llaveros a $6" → text: "500 llaveros, llavero $6"
 
+## CALCULADORA DE PRECIOS INTELIGENTE
+
+Cuando el usuario pregunte sobre precios para cantidades FUERA de lo estándar (por debajo del mínimo, o volúmenes muy altos como 5000+ piezas), o cuando pida que CALCULES un precio justo/competitivo, usa la acción calculate_price.
+
+**Detectar solicitudes de cálculo de precio:**
+- "Cuánto debería cobrar por 30 imanes?" → calculate_price
+- "Precio justo para 30 piezas" → calculate_price
+- "Si alguien quiere 5000 imanes, a cuánto?" → calculate_price
+- "Cuánto es lo mínimo que puedo cobrar por 20 llaveros?" → calculate_price
+- "Dame un precio para un pedido especial de 15 destapadores" → calculate_price
+- "A qué precio puedo vender 10,000 imanes?" → calculate_price
+
+**REGLA:** Si la cantidad es menor al MOQ o mayor a 1000 piezas, SIEMPRE usa calculate_price en vez de generate_quote. Para cantidades estándar (50-999), puedes usar generate_quote normalmente.
+
+**Para calcular precio, incluye este bloque:**
+
+\`\`\`action
+{
+  "type": "calculate_price",
+  "productName": "nombre del producto (ej: imanes de mdf, llaveros de mdf)",
+  "quantity": 30
+}
+\`\`\`
+
+Después de recibir el resultado del cálculo, explica el desglose de forma conversacional:
+- Muestra cada paso del cálculo
+- Compara con el precio estándar
+- Si es por debajo del mínimo, sugiere la alternativa de completar al MOQ
+- Si es volumen alto, destaca el ahorro vs precio de lista
+- Sé transparente con los números — muestra costos, márgenes, y lógica
+
 **Ejemplos de solicitudes de cotización:**
 - "Cotiza 50 imanes y 30 llaveros"
 - "Crea una cotización de 100 imanes grandes para María García"
@@ -1048,6 +1080,32 @@ router.post('/chat', async (req, res) => {
           type: 'view_order',
           data: { order }
         };
+      } else if (action.type === 'calculate_price') {
+        try {
+          const result = await calculateCustomPrice({
+            productName: action.productName,
+            quantity: parseInt(action.quantity)
+          });
+
+          actionData = {
+            type: 'calculate_price',
+            data: result
+          };
+
+          if (result.error) {
+            console.log(`⚠️ Price calculation issue: ${result.error}`);
+          } else {
+            console.log(`🧮 Price calculated: ${result.productName} x${result.quantity} = $${result.finalPrice}/pza (${result.scenario})`);
+          }
+        } catch (calcError) {
+          console.error('Error calculating price:', calcError);
+          actionData = {
+            type: 'calculate_price',
+            data: {
+              error: 'Error al calcular precio: ' + (calcError.message || 'Error interno')
+            }
+          };
+        }
       } else if (action.type === 'generate_quote') {
         // Parse the quote request text to extract items
         // Try action.text first, then original message, pick the one with better price variety
