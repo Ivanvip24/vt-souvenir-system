@@ -41,9 +41,9 @@
 
   <style>
     /* ============================================
-       ACAPULCO HISTORIA v2
-       "Cinematic Pacific" — Editorial surf culture
-       Diagonal wave cuts, split hero, diver animation
+       ACAPULCO HISTORIA v3 — GSAP SCROLL CINEMA
+       Every scroll pixel = an animation frame.
+       Pinned sections, scrubbed timelines, parallax.
        ============================================ */
 
     @font-face {
@@ -89,7 +89,7 @@
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+    html { -webkit-tap-highlight-color: transparent; }
     body {
       font-family: var(--font-body);
       color: var(--gray-900);
@@ -115,16 +115,11 @@
       transition: clip-path 0.8s var(--ease-expo);
       clip-path: inset(0 0 0 0);
     }
-    .loader.done {
-      clip-path: inset(0 0 100% 0);
-    }
-    .loader-inner {
-      text-align: center;
-    }
+    .loader.done { clip-path: inset(0 0 100% 0); }
+    .loader-inner { text-align: center; }
     .loader-inner span {
       display: inline-block;
-      width: 8px;
-      height: 8px;
+      width: 8px; height: 8px;
       background: var(--turquesa);
       border-radius: 50%;
       margin: 0 4px;
@@ -139,9 +134,18 @@
 
 
     /* ============================================
-       SPLIT HERO
-       Left = image, Right = typography
-       Diagonal clip on the image side
+       NAV — Glassmorphism on scroll
+       ============================================ */
+    .site-nav.scrolled {
+      background: rgba(255,255,255,0.82) !important;
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+    }
+
+
+    /* ============================================
+       HERO — Split layout, GSAP parallax
        ============================================ */
     .hero {
       min-height: 100vh;
@@ -158,20 +162,17 @@
     }
     .hero-image img {
       width: 100%;
-      height: 100%;
+      height: 120%;
       object-fit: cover;
       filter: saturate(1.15) brightness(0.9);
-      animation: heroImgScale 20s ease-in-out infinite alternate;
-    }
-    @keyframes heroImgScale {
-      from { transform: scale(1); }
-      to { transform: scale(1.08); }
+      will-change: transform;
     }
     .hero-image::after {
       content: '';
       position: absolute;
       inset: 0;
       background: linear-gradient(160deg, transparent 40%, rgba(7,30,61,0.5));
+      pointer-events: none;
     }
 
     .hero-text {
@@ -208,13 +209,10 @@
       width: fit-content;
       margin-bottom: 24px;
       position: relative;
-      opacity: 0;
-      animation: slideUp 0.7s var(--ease-out) 0.6s forwards;
     }
     .hero-badge::before {
       content: '';
-      width: 6px;
-      height: 6px;
+      width: 6px; height: 6px;
       background: var(--turquesa);
       border-radius: 50%;
       animation: pulse 2s ease infinite;
@@ -233,8 +231,6 @@
       letter-spacing: -0.03em;
       margin-bottom: 24px;
       position: relative;
-      opacity: 0;
-      animation: slideUp 0.8s var(--ease-out) 0.8s forwards;
     }
     .hero-title .line2 {
       display: block;
@@ -250,8 +246,6 @@
       color: rgba(255,255,255,0.6);
       margin-bottom: 8px;
       position: relative;
-      opacity: 0;
-      animation: slideUp 0.7s var(--ease-out) 1s forwards;
     }
     .hero-twist {
       font-family: var(--font-heading);
@@ -261,10 +255,7 @@
       color: var(--sunset);
       margin-bottom: 28px;
       position: relative;
-      opacity: 0;
-      animation: slideUp 0.7s var(--ease-out) 1.1s forwards;
     }
-
     .hero-location {
       font-family: var(--font-display);
       font-size: 0.9rem;
@@ -272,8 +263,6 @@
       text-transform: uppercase;
       color: rgba(255,255,255,0.4);
       position: relative;
-      opacity: 0;
-      animation: slideUp 0.7s var(--ease-out) 1.3s forwards;
     }
 
     .hero-scroll {
@@ -288,8 +277,6 @@
       letter-spacing: 0.15em;
       text-transform: uppercase;
       writing-mode: vertical-rl;
-      opacity: 0;
-      animation: slideUp 0.7s var(--ease-out) 1.6s forwards;
     }
     .hero-scroll::after {
       content: '';
@@ -305,15 +292,9 @@
       100% { transform: scaleY(0); transform-origin: bottom; }
     }
 
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
 
     /* ============================================
        DIAGONAL SECTION CUT
-       A slanted divider between sections
        ============================================ */
     .diagonal-cut {
       height: 120px;
@@ -336,11 +317,11 @@
 
 
     /* ============================================
-       STATS STRIP — Horizontal ribbon
+       STATS STRIP
        ============================================ */
     .stats-strip {
       background: var(--sand);
-      padding: 60px 24px;
+      padding: 80px 24px;
       position: relative;
     }
     .stats-inner {
@@ -360,8 +341,7 @@
       content: '';
       position: absolute;
       right: -20px;
-      top: 10%;
-      height: 80%;
+      top: 10%; height: 80%;
       width: 1px;
       background: linear-gradient(to bottom, transparent, var(--gray-400), transparent);
     }
@@ -387,10 +367,10 @@
 
 
     /* ============================================
-       GOLDEN AGE — Editorial 2-column
+       GOLDEN AGE — Editorial 2-col
        ============================================ */
     .golden-age {
-      padding: 100px 24px;
+      padding: 120px 24px;
       background: var(--sand);
       position: relative;
     }
@@ -402,11 +382,7 @@
       gap: 80px;
       align-items: start;
     }
-
-    .golden-left {
-      position: sticky;
-      top: 120px;
-    }
+    .golden-left { position: sticky; top: 120px; }
     .golden-label {
       font-family: var(--font-heading);
       font-size: 0.78rem;
@@ -424,10 +400,7 @@
       line-height: 0.95;
       margin-bottom: 20px;
     }
-    .golden-title em {
-      font-style: normal;
-      color: var(--naranja);
-    }
+    .golden-title em { font-style: normal; color: var(--naranja); }
     .golden-desc {
       font-size: 1.05rem;
       color: var(--gray-600);
@@ -435,11 +408,7 @@
       max-width: 440px;
     }
 
-    .golden-right {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    .golden-right { display: flex; flex-direction: column; gap: 20px; }
     .golden-card {
       background: var(--white);
       border-radius: 20px;
@@ -450,15 +419,15 @@
       box-shadow: 0 1px 20px rgba(0,0,0,0.04);
       transition: transform 0.4s var(--ease-out), box-shadow 0.3s;
       border: 1px solid rgba(0,0,0,0.04);
+      will-change: transform;
     }
     .golden-card:hover {
-      transform: translateX(8px);
+      transform: translateX(8px) !important;
       box-shadow: 0 8px 32px rgba(0,0,0,0.08);
     }
     .golden-card-icon {
       flex-shrink: 0;
-      width: 52px;
-      height: 52px;
+      width: 52px; height: 52px;
       border-radius: 14px;
       display: flex;
       align-items: center;
@@ -484,7 +453,7 @@
 
 
     /* ============================================
-       LA QUEBRADA — Full-bleed cinematic
+       LA QUEBRADA — Pinned cinematic section
        ============================================ */
     .quebrada {
       position: relative;
@@ -520,15 +489,16 @@
       align-items: center;
     }
 
-    .quebrada-visual {
-      position: relative;
-    }
+    .quebrada-visual { position: relative; }
     .quebrada-img-wrapper {
       position: relative;
       border-radius: 24px;
       overflow: hidden;
       aspect-ratio: 3/4;
       box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+      /* GSAP will animate clip-path from inset(30%) to inset(0%) */
+      clip-path: inset(30% round 24px);
+      will-change: clip-path, transform;
     }
     .quebrada-img-wrapper img {
       width: 100%;
@@ -542,7 +512,6 @@
       background: linear-gradient(to top, rgba(7,30,61,0.6), transparent 50%);
     }
 
-    /* The diver silhouette */
     .diver-svg {
       position: absolute;
       top: -40px;
@@ -550,13 +519,7 @@
       width: 120px;
       height: 180px;
       z-index: 3;
-      opacity: 0;
-      transform: translateY(-60px) rotate(15deg);
-      transition: opacity 0.6s, transform 1.5s var(--ease-out);
-    }
-    .diver-svg.diving {
-      opacity: 1;
-      transform: translateY(280px) rotate(-5deg);
+      will-change: transform;
     }
     .diver-svg svg {
       width: 100%;
@@ -567,8 +530,7 @@
 
     .quebrada-year {
       position: absolute;
-      bottom: 24px;
-      left: 24px;
+      bottom: 24px; left: 24px;
       z-index: 4;
       font-family: var(--font-display);
       font-size: 4rem;
@@ -577,9 +539,7 @@
       line-height: 1;
     }
 
-    .quebrada-content {
-      padding: 20px 0;
-    }
+    .quebrada-content { padding: 20px 0; }
     .quebrada-label {
       font-family: var(--font-heading);
       font-size: 0.78rem;
@@ -651,10 +611,10 @@
 
 
     /* ============================================
-       GALLERY — Asymmetric masonry
+       GALLERY — Asymmetric masonry + parallax
        ============================================ */
     .gallery {
-      padding: 100px 24px;
+      padding: 120px 24px;
       background: var(--white);
       position: relative;
     }
@@ -698,6 +658,7 @@
       overflow: hidden;
       position: relative;
       cursor: pointer;
+      will-change: transform;
     }
     .g-item img {
       width: 100%;
@@ -708,31 +669,21 @@
     .g-item:hover img { transform: scale(1.06); }
     .g-item-caption {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      bottom: 0; left: 0; right: 0;
       padding: 40px 20px 16px;
       background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
       opacity: 0;
       transform: translateY(8px);
       transition: opacity 0.4s, transform 0.4s var(--ease-out);
     }
-    .g-item:hover .g-item-caption {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .g-item:hover .g-item-caption { opacity: 1; transform: translateY(0); }
     .g-item-caption h3 {
       font-family: var(--font-heading);
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1rem; font-weight: 600;
       color: var(--white);
     }
-    .g-item-caption p {
-      font-size: 0.78rem;
-      color: rgba(255,255,255,0.7);
-    }
+    .g-item-caption p { font-size: 0.78rem; color: rgba(255,255,255,0.7); }
 
-    /* Asymmetric grid placement */
     .g-item:nth-child(1) { grid-column: 1 / 8; grid-row: 1 / 4; }
     .g-item:nth-child(2) { grid-column: 8 / 13; grid-row: 1 / 3; }
     .g-item:nth-child(3) { grid-column: 8 / 13; grid-row: 3 / 5; }
@@ -744,23 +695,21 @@
        REVIEWS — Offset cards
        ============================================ */
     .reviews {
-      padding: 100px 24px;
+      padding: 120px 24px;
       background: var(--sand);
       position: relative;
       overflow: hidden;
     }
     .reviews::before {
-      content: '"';
+      content: '\201C';
       position: absolute;
-      top: -40px;
-      right: 5%;
+      top: -40px; right: 5%;
       font-family: var(--font-display);
       font-size: 30rem;
       color: rgba(0,0,0,0.02);
       line-height: 1;
       pointer-events: none;
     }
-
     .reviews-header {
       max-width: 1100px;
       margin: 0 auto 48px;
@@ -782,7 +731,6 @@
       color: var(--gray-900);
     }
     .reviews-title em { color: var(--naranja); font-style: italic; }
-
     .reviews-rating {
       display: inline-flex;
       align-items: center;
@@ -808,10 +756,7 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 20px;
     }
-    /* Offset: odd cards pushed down */
-    .reviews-grid .r-card:nth-child(odd) {
-      margin-top: 40px;
-    }
+    .reviews-grid .r-card:nth-child(odd) { margin-top: 40px; }
     .r-card {
       background: var(--white);
       border-radius: 20px;
@@ -819,8 +764,9 @@
       box-shadow: 0 2px 16px rgba(0,0,0,0.04);
       transition: transform 0.4s var(--ease-out);
       border: 1px solid rgba(0,0,0,0.03);
+      will-change: transform;
     }
-    .r-card:hover { transform: translateY(-4px); }
+    .r-card:hover { transform: translateY(-4px) !important; }
     .r-card-stars {
       color: var(--sunset);
       font-size: 0.85rem;
@@ -834,14 +780,9 @@
       font-style: italic;
       margin-bottom: 20px;
     }
-    .r-card-author {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .r-card-author { display: flex; align-items: center; gap: 12px; }
     .r-card-avatar {
-      width: 38px;
-      height: 38px;
+      width: 38px; height: 38px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -864,11 +805,12 @@
 
 
     /* ============================================
-       PRODUCTS — Horizontal scroll with overlap
+       PRODUCTS — Pinned horizontal scroll
        ============================================ */
     .products {
       padding: 100px 24px 80px;
       background: var(--white);
+      overflow: hidden;
     }
     .products-header {
       max-width: 1100px;
@@ -891,32 +833,24 @@
       color: var(--gray-900);
     }
 
-    .products-scroll {
+    .products-track {
       display: flex;
-      gap: 20px;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      max-width: 1100px;
-      margin: 0 auto 40px;
+      gap: 24px;
+      width: max-content;
       padding: 10px 0;
-      cursor: grab;
+      will-change: transform;
     }
-    .products-scroll:active { cursor: grabbing; }
-    .products-scroll::-webkit-scrollbar { display: none; }
 
     .p-card {
-      flex: 0 0 220px;
-      scroll-snap-align: start;
+      flex: 0 0 240px;
       background: var(--gray-50);
       border-radius: 20px;
       overflow: hidden;
-      transition: transform 0.4s var(--ease-spring), box-shadow 0.4s;
+      transition: box-shadow 0.4s;
       border: 1px solid rgba(0,0,0,0.04);
+      will-change: transform;
     }
     .p-card:hover {
-      transform: translateY(-6px) rotate(-1deg);
       box-shadow: 0 16px 48px rgba(0,0,0,0.12);
     }
     .p-card img {
@@ -932,6 +866,10 @@
       text-align: center;
     }
 
+    .products-cta-wrap {
+      text-align: center;
+      margin-top: 48px;
+    }
     .products-cta {
       display: inline-flex;
       align-items: center;
@@ -978,14 +916,9 @@
       max-width: 280px;
       line-height: 1.5;
     }
-    .footer-social {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
-    }
+    .footer-social { display: flex; gap: 12px; margin-top: 16px; }
     .footer-social a {
-      width: 36px;
-      height: 36px;
+      width: 36px; height: 36px;
       border-radius: 50%;
       background: rgba(255,255,255,0.06);
       display: flex;
@@ -995,7 +928,6 @@
       transition: background 0.3s;
     }
     .footer-social a:hover { background: rgba(255,255,255,0.12); }
-
     .site-footer-mega {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -1022,7 +954,6 @@
     }
     .footer-col ul li a:hover { color: rgba(255,255,255,0.75); }
     .site-footer-see-all { color: var(--turquesa) !important; font-weight: 600; }
-
     .site-footer-bottom {
       text-align: center;
       padding-top: 24px;
@@ -1034,53 +965,21 @@
 
 
     /* ============================================
-       REVEAL SYSTEM
-       ============================================ */
-    .reveal {
-      opacity: 0;
-      transform: translateY(32px);
-      transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
-      transition-delay: var(--d, 0s);
-    }
-    .reveal.vis { opacity: 1; transform: translateY(0); }
-    .reveal-x {
-      opacity: 0;
-      transform: translateX(40px);
-      transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
-      transition-delay: var(--d, 0s);
-    }
-    .reveal-x.vis { opacity: 1; transform: translateX(0); }
-    .reveal-s {
-      opacity: 0;
-      transform: scale(0.9);
-      transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-spring);
-      transition-delay: var(--d, 0s);
-    }
-    .reveal-s.vis { opacity: 1; transform: scale(1); }
-
-
-    /* ============================================
        RESPONSIVE
        ============================================ */
     @media (max-width: 900px) {
-      .hero {
-        grid-template-columns: 1fr;
-        min-height: auto;
-      }
+      .hero { grid-template-columns: 1fr; min-height: auto; }
       .hero-image {
         clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
         min-height: 50vh;
       }
       .hero-text { padding: 50px 28px 80px; }
       .hero-scroll { display: none; }
-
       .golden-inner { grid-template-columns: 1fr; gap: 40px; }
       .golden-left { position: static; }
-
       .quebrada-layout { grid-template-columns: 1fr; }
       .quebrada-visual { order: -1; max-width: 400px; margin: 0 auto; }
       .quebrada-stats { flex-direction: column; }
-
       .gallery-grid {
         grid-template-columns: 1fr 1fr;
         grid-auto-rows: 180px;
@@ -1090,7 +989,6 @@
       .g-item:nth-child(3),
       .g-item:nth-child(4),
       .g-item:nth-child(5) { grid-column: auto; grid-row: auto; }
-
       .reviews-grid { grid-template-columns: 1fr; }
       .reviews-grid .r-card:nth-child(odd) { margin-top: 0; }
     }
@@ -1109,8 +1007,7 @@
       .site-footer-mega { grid-template-columns: 1fr; }
       .footer-col-title button {
         display: inline-block;
-        background: none;
-        border: none;
+        background: none; border: none;
         color: rgba(255,255,255,0.4);
         font-size: 1rem;
         cursor: pointer;
@@ -1122,12 +1019,13 @@
       .footer-col.open .footer-col-title button { transform: rotate(180deg); }
     }
 
+    /* Reduced motion: disable GSAP pinning/scrub via fallback */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
       }
-      .reveal, .reveal-x, .reveal-s { opacity: 1; transform: none; }
+      .quebrada-img-wrapper { clip-path: inset(0% round 24px) !important; }
     }
   </style>
 </head>
@@ -1143,7 +1041,7 @@
 
 
   <!-- NAV -->
-  <nav class="site-nav">
+  <nav class="site-nav" id="siteNav">
     <a href="/" class="nav-logo-link">
       <img src="/assets/LOGO-03.png" alt="AXKAN" class="nav-logo">
     </a>
@@ -1170,14 +1068,14 @@
 
 
   <!-- ============================================
-       SPLIT HERO
+       HERO
        ============================================ -->
   <section class="hero" id="hero">
     <div class="hero-image">
-      <img src="https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=1400&q=80" alt="Bahía de Acapulco">
+      <img src="https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=1400&q=80" alt="Bahía de Acapulco" id="heroImg">
     </div>
 
-    <div class="hero-text">
+    <div class="hero-text" id="heroText">
       <div class="hero-badge">Puerto Legendario</div>
       <h1 class="hero-title">
         ACA<br><span class="line2">PULCO</span>
@@ -1185,7 +1083,6 @@
       <p class="hero-tagline">Donde el sol se encuentra</p>
       <p class="hero-twist">con el mar...</p>
       <p class="hero-location">Guerrero, México</p>
-
       <div class="hero-scroll">scroll</div>
     </div>
   </section>
@@ -1196,23 +1093,23 @@
 
 
   <!-- ============================================
-       STATS STRIP
+       STATS
        ============================================ -->
-  <section class="stats-strip">
+  <section class="stats-strip" id="stats">
     <div class="stats-inner">
-      <div class="stat-item reveal" style="--d:0s">
+      <div class="stat-item">
         <div class="stat-number" data-target="35" data-suffix="m">0m</div>
         <div class="stat-label">Altura La Quebrada</div>
       </div>
-      <div class="stat-item reveal" style="--d:0.1s">
+      <div class="stat-item">
         <div class="stat-number" data-target="1934" data-suffix="">0</div>
         <div class="stat-label">Clavadistas Desde</div>
       </div>
-      <div class="stat-item reveal" style="--d:0.2s">
+      <div class="stat-item">
         <div class="stat-number" data-target="300" data-suffix="+">0+</div>
         <div class="stat-label">Días de Sol</div>
       </div>
-      <div class="stat-item reveal" style="--d:0.3s">
+      <div class="stat-item">
         <div class="stat-number" data-target="200" data-suffix="+">0+</div>
         <div class="stat-label">Películas Filmadas</div>
       </div>
@@ -1221,39 +1118,39 @@
 
 
   <!-- ============================================
-       GOLDEN AGE — Editorial
+       GOLDEN AGE
        ============================================ -->
   <section class="golden-age" id="historia">
     <div class="golden-inner">
       <div class="golden-left">
-        <p class="golden-label reveal">¿Sabías que...?</p>
-        <h2 class="golden-title reveal" style="--d:0.1s">El Puerto que<br>Conquistó <em>Hollywood</em></h2>
-        <p class="golden-desc reveal" style="--d:0.15s">Acapulco ha sido escenario de películas, hogar de estrellas y destino de aventureros por más de un siglo. Su bahía, la más famosa de México, ha definido el glamour del turismo mexicano.</p>
+        <p class="golden-label">¿Sabías que...?</p>
+        <h2 class="golden-title">El Puerto que<br>Conquistó <em>Hollywood</em></h2>
+        <p class="golden-desc">Acapulco ha sido escenario de películas, hogar de estrellas y destino de aventureros por más de un siglo. Su bahía, la más famosa de México, ha definido el glamour del turismo mexicano.</p>
       </div>
 
       <div class="golden-right">
-        <div class="golden-card reveal-x" style="--d:0.1s">
+        <div class="golden-card">
           <div class="golden-card-icon">🏰</div>
           <div>
             <h3 class="golden-card-title">Fuerte de San Diego</h3>
             <p class="golden-card-text">Fortaleza del siglo XVII que protegió la ruta del Galeón de Manila. Hoy es el Museo Histórico de Acapulco con 400 años de historia.</p>
           </div>
         </div>
-        <div class="golden-card reveal-x" style="--d:0.2s">
+        <div class="golden-card">
           <div class="golden-card-icon">🎬</div>
           <div>
             <h3 class="golden-card-title">Capital del Cine Mexicano</h3>
             <p class="golden-card-text">Más de 200 películas filmadas aquí, desde el cine de oro hasta "Fun in Acapulco" con Elvis Presley. Sinatra y Elizabeth Taylor lo hicieron su refugio.</p>
           </div>
         </div>
-        <div class="golden-card reveal-x" style="--d:0.3s">
+        <div class="golden-card">
           <div class="golden-card-icon">🌅</div>
           <div>
             <h3 class="golden-card-title">Pie de la Cuesta</h3>
             <p class="golden-card-text">Los atardeceres más espectaculares del Pacífico mexicano. El cielo arde en naranjas y rosas mientras el sol se hunde en el horizonte.</p>
           </div>
         </div>
-        <div class="golden-card reveal-x" style="--d:0.4s">
+        <div class="golden-card">
           <div class="golden-card-icon">🎶</div>
           <div>
             <h3 class="golden-card-title">La Costera</h3>
@@ -1270,19 +1167,18 @@
 
 
   <!-- ============================================
-       LA QUEBRADA — Full bleed cinematic
+       LA QUEBRADA — PINNED CINEMATIC
        ============================================ -->
   <section class="quebrada" id="quebrada">
     <div class="quebrada-bg"></div>
 
     <div class="quebrada-layout">
       <div class="quebrada-visual">
-        <div class="quebrada-img-wrapper reveal-s">
+        <div class="quebrada-img-wrapper" id="quebradaImg">
           <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80" alt="Acantilados de La Quebrada" loading="lazy">
           <div class="quebrada-year">1934</div>
         </div>
 
-        <!-- Diver silhouette -->
         <div class="diver-svg" id="diverSvg">
           <svg viewBox="0 0 80 140" xmlns="http://www.w3.org/2000/svg">
             <path d="M40 5C40 5 38 2 35 2C32 2 30 5 30 8C30 12 33 15 36 15L34 25L20 45C18 48 19 52 22 54L30 58L25 85C24 90 26 95 30 98L38 105C40 107 43 107 45 105L50 98C54 95 55 90 54 85L50 58L58 54C61 52 62 48 60 45L46 25L44 15C47 15 50 12 50 8C50 5 48 2 45 2C42 2 40 5 40 5Z"/>
@@ -1291,28 +1187,28 @@
         </div>
       </div>
 
-      <div class="quebrada-content">
-        <p class="quebrada-label reveal">El Salto Legendario</p>
-        <h2 class="quebrada-title reveal" style="--d:0.1s">LA<br><span class="gradient">QUEBRADA</span></h2>
-        <p class="quebrada-sub reveal" style="--d:0.15s">Donde el valor humano desafía al Pacífico</p>
+      <div class="quebrada-content" id="quebradaContent">
+        <p class="quebrada-label">El Salto Legendario</p>
+        <h2 class="quebrada-title">LA<br><span class="gradient">QUEBRADA</span></h2>
+        <p class="quebrada-sub">Donde el valor humano desafía al Pacífico</p>
 
-        <p class="quebrada-text reveal" style="--d:0.2s">
+        <p class="quebrada-text">
           En los acantilados de <a href="https://es.wikipedia.org/wiki/La_Quebrada_(Acapulco)">La Quebrada</a>, los clavadistas realizan un ritual que desafía la muerte. Desde 35 metros de altura, se lanzan al vacío cronometrando su salto con la llegada de las olas al estrecho canal de roca.
         </p>
-        <p class="quebrada-text reveal" style="--d:0.25s">
+        <p class="quebrada-text">
           Esta tradición, nacida en 1934, ha sido testigo de generaciones de hombres valientes. Cada noche, con antorchas encendidas, el espectáculo se convierte en una ceremonia que eriza la piel.
         </p>
 
         <div class="quebrada-stats">
-          <div class="q-stat reveal-s" style="--d:0.3s">
+          <div class="q-stat">
             <div class="q-stat-num" data-target="5">0</div>
             <div class="q-stat-label">Shows diarios</div>
           </div>
-          <div class="q-stat reveal-s" style="--d:0.35s">
+          <div class="q-stat">
             <div class="q-stat-num" data-target="3">0</div>
             <div class="q-stat-label">Segundos de caída</div>
           </div>
-          <div class="q-stat reveal-s" style="--d:0.4s">
+          <div class="q-stat">
             <div class="q-stat-num">3.5m</div>
             <div class="q-stat-label">Profundidad del canal</div>
           </div>
@@ -1327,32 +1223,32 @@
 
 
   <!-- ============================================
-       GALLERY — Asymmetric masonry
+       GALLERY
        ============================================ -->
   <section class="gallery" id="galeria">
     <div class="gallery-header">
-      <h2 class="gallery-title reveal">El Viaje<br><em>Visual</em></h2>
-      <span class="gallery-drag reveal" style="--d:0.1s">← Hover para explorar →</span>
+      <h2 class="gallery-title">El Viaje<br><em>Visual</em></h2>
+      <span class="gallery-drag">← Hover para explorar →</span>
     </div>
 
     <div class="gallery-grid">
-      <div class="g-item reveal-s" style="--d:0.1s">
+      <div class="g-item">
         <img src="https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=900&q=80" alt="Bahía de Acapulco" loading="lazy">
         <div class="g-item-caption"><h3>La Bahía</h3><p>La más icónica de México</p></div>
       </div>
-      <div class="g-item reveal-s" style="--d:0.15s">
+      <div class="g-item">
         <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80" alt="Playa tropical" loading="lazy">
         <div class="g-item-caption"><h3>La Playa</h3><p>Arena dorada y olas del Pacífico</p></div>
       </div>
-      <div class="g-item reveal-s" style="--d:0.2s">
+      <div class="g-item">
         <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&q=80" alt="Atardecer Acapulco" loading="lazy">
         <div class="g-item-caption"><h3>El Atardecer</h3><p>Donde el cielo se vuelve fuego</p></div>
       </div>
-      <div class="g-item reveal-s" style="--d:0.25s">
+      <div class="g-item">
         <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80" alt="Costa de Acapulco" loading="lazy">
         <div class="g-item-caption"><h3>La Costa</h3><p>Donde la sierra besa al mar</p></div>
       </div>
-      <div class="g-item reveal-s" style="--d:0.3s">
+      <div class="g-item">
         <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=900&q=80" alt="Acantilados Pacífico" loading="lazy">
         <div class="g-item-caption"><h3>Los Acantilados</h3><p>Donde los valientes se lanzan al vacío</p></div>
       </div>
@@ -1361,13 +1257,13 @@
 
 
   <!-- ============================================
-       REVIEWS — Offset
+       REVIEWS
        ============================================ -->
   <section class="reviews" id="reviews">
     <div class="reviews-header">
-      <p class="reviews-label reveal">Lo que dicen los visitantes</p>
-      <h2 class="reviews-title reveal" style="--d:0.1s">Acapulco <em>enamora</em></h2>
-      <div class="reviews-rating reveal-s" style="--d:0.15s">
+      <p class="reviews-label">Lo que dicen los visitantes</p>
+      <h2 class="reviews-title">Acapulco <em>enamora</em></h2>
+      <div class="reviews-rating">
         <strong>4.7</strong>
         <span>
           <span class="stars">★★★★★</span><br>
@@ -1377,7 +1273,7 @@
     </div>
 
     <div class="reviews-grid">
-      <div class="r-card reveal" style="--d:0.1s">
+      <div class="r-card">
         <div class="r-card-stars">★★★★★</div>
         <p class="r-card-text">"Ver a los clavadistas de La Quebrada de noche, con las antorchas, es algo que no olvidaré jamás. La energía del público, el silencio antes del salto... piel de gallina."</p>
         <div class="r-card-author">
@@ -1385,7 +1281,7 @@
           <div><div class="r-card-name">Mariana R.</div><div class="r-card-origin">CDMX, México</div></div>
         </div>
       </div>
-      <div class="r-card reveal" style="--d:0.15s">
+      <div class="r-card">
         <div class="r-card-stars">★★★★★</div>
         <p class="r-card-text">"Los atardeceres en Pie de la Cuesta son de otro nivel. El cielo se pinta de todos los colores posibles. Llevamos nuestro imán de AXKAN para no olvidarlo nunca."</p>
         <div class="r-card-author">
@@ -1393,7 +1289,7 @@
           <div><div class="r-card-name">José Luis P.</div><div class="r-card-origin">Guadalajara, México</div></div>
         </div>
       </div>
-      <div class="r-card reveal" style="--d:0.2s">
+      <div class="r-card">
         <div class="r-card-stars">★★★★☆</div>
         <p class="r-card-text">"La bahía de noche es mágica. Cenamos frente al mar y la brisa, las luces de la costera... Acapulco tiene esa magia que no encuentras en otro lado."</p>
         <div class="r-card-author">
@@ -1401,7 +1297,7 @@
           <div><div class="r-card-name">Carolina F.</div><div class="r-card-origin">Puebla, México</div></div>
         </div>
       </div>
-      <div class="r-card reveal" style="--d:0.25s">
+      <div class="r-card">
         <div class="r-card-stars">★★★★★</div>
         <p class="r-card-text">"El Fuerte de San Diego me sorprendió. No esperaba tanta historia en un destino de playa. Y la comida guerrerense... el pozole es lo mejor que he probado."</p>
         <div class="r-card-author">
@@ -1414,38 +1310,38 @@
 
 
   <!-- ============================================
-       PRODUCTS
+       PRODUCTS — Pinned horizontal scroll
        ============================================ -->
   <section class="products" id="productos">
     <div class="products-header">
-      <p class="products-label reveal">Souvenirs AXKAN</p>
-      <h2 class="products-title reveal" style="--d:0.1s">Lleva la energía del puerto contigo</h2>
+      <p class="products-label">Souvenirs AXKAN</p>
+      <h2 class="products-title">Lleva la energía del puerto contigo</h2>
     </div>
 
-    <div class="products-scroll" id="productsScroll">
-      <div class="p-card reveal-s" style="--d:0.1s">
+    <div class="products-track" id="productsTrack">
+      <div class="p-card">
         <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/ACAPULCO_1.png?v=1753996788" alt="Imán Acapulco AXKAN" loading="lazy">
         <p class="p-card-name">Imán Acapulco Clásico</p>
       </div>
-      <div class="p-card reveal-s" style="--d:0.15s">
+      <div class="p-card">
         <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/SENORFROGSRANASMARUIACHIS.png?v=1753996788" alt="Imán Señor Frog's AXKAN" loading="lazy">
         <p class="p-card-name">Señor Frog's</p>
       </div>
-      <div class="p-card reveal-s" style="--d:0.2s">
+      <div class="p-card">
         <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/ACAPULCOBOCHO.png?v=1753996788" alt="Imán Bocho Acapulco AXKAN" loading="lazy">
         <p class="p-card-name">Bocho Acapulco</p>
       </div>
-      <div class="p-card reveal-s" style="--d:0.25s">
+      <div class="p-card">
         <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/PALMERATELEFONOQUEBRADORA.png?v=1753996788" alt="Imán Quebrada AXKAN" loading="lazy">
         <p class="p-card-name">La Quebrada</p>
       </div>
-      <div class="p-card reveal-s" style="--d:0.3s">
+      <div class="p-card">
         <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/QUEBRADORAESFERADENAVIDAD.png?v=1753996788" alt="Imán Clavadista AXKAN" loading="lazy">
         <p class="p-card-name">Clavadista</p>
       </div>
     </div>
 
-    <div style="text-align:center">
+    <div class="products-cta-wrap">
       <a href="https://wa.me/5215538253251?text=Hola!%20Quiero%20cotizar%20souvenirs%20de%20Acapulco" class="products-cta" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.638l4.72-1.33A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.319 0-4.462-.756-6.196-2.034l-.436-.332-3.2.901.84-3.072-.362-.467A9.945 9.945 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
         Cotizar por WhatsApp
@@ -1518,91 +1414,434 @@
 
 
   <!-- ============================================
-       JS
+       GSAP + ScrollTrigger
        ============================================ -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+  (() => {
+    'use strict';
 
-      // Loader
-      setTimeout(() => document.getElementById('loader').classList.add('done'), 900);
+    gsap.registerPlugin(ScrollTrigger);
 
-      // Reveals
-      const obs = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            e.target.classList.add('vis');
-            obs.unobserve(e.target);
-          }
-        });
-      }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
-      document.querySelectorAll('.reveal, .reveal-x, .reveal-s').forEach(el => obs.observe(el));
+    // Reduced motion check
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      // Counters
-      const cObs = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            const el = e.target;
-            const target = parseInt(el.dataset.target);
-            const suffix = el.dataset.suffix || '';
-            const start = performance.now();
-            const dur = 2200;
-            function tick(now) {
-              const p = Math.min((now - start) / dur, 1);
-              const ease = 1 - Math.pow(1 - p, 4);
-              el.textContent = Math.round(ease * target).toLocaleString() + suffix;
-              if (p < 1) requestAnimationFrame(tick);
-            }
-            requestAnimationFrame(tick);
-            cObs.unobserve(el);
-          }
-        });
-      }, { threshold: 0.5 });
-      document.querySelectorAll('[data-target]').forEach(c => cObs.observe(c));
+    // ====================================
+    // LOADER
+    // ====================================
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loader').classList.add('done');
+        // Refresh ScrollTrigger after loader is gone
+        setTimeout(() => ScrollTrigger.refresh(), 400);
+      }, 800);
+    });
 
-      // Diver animation on scroll
-      const diverSvg = document.getElementById('diverSvg');
-      const quebrada = document.querySelector('.quebrada');
-      if (diverSvg && quebrada) {
-        const dObs = new IntersectionObserver((entries) => {
-          entries.forEach(e => {
-            if (e.isIntersecting) {
-              setTimeout(() => diverSvg.classList.add('diving'), 600);
-              dObs.unobserve(e.target);
-            }
-          });
-        }, { threshold: 0.3 });
-        dObs.observe(quebrada);
+
+    // ====================================
+    // NAV — Glassmorphism on scroll
+    // ====================================
+    const nav = document.getElementById('siteNav');
+    ScrollTrigger.create({
+      start: 80,
+      onUpdate: (self) => {
+        if (window.scrollY > 80) {
+          nav.classList.add('scrolled');
+        } else {
+          nav.classList.remove('scrolled');
+        }
       }
+    });
 
-      // Product drag scroll
-      const ps = document.getElementById('productsScroll');
-      if (ps) {
-        let drag = false, sx, sl;
-        ps.addEventListener('mousedown', e => { drag = true; sx = e.pageX - ps.offsetLeft; sl = ps.scrollLeft; ps.style.cursor = 'grabbing'; });
-        ps.addEventListener('mouseleave', () => { drag = false; ps.style.cursor = 'grab'; });
-        ps.addEventListener('mouseup', () => { drag = false; ps.style.cursor = 'grab'; });
-        ps.addEventListener('mousemove', e => { if (!drag) return; e.preventDefault(); ps.scrollLeft = sl - ((e.pageX - ps.offsetLeft) - sx) * 1.5; });
-      }
 
-      // Mobile nav
-      const ham = document.querySelector('.nav-hamburger');
-      const mob = document.querySelector('.site-mobile-menu');
-      if (ham && mob) {
-        ham.addEventListener('click', () => {
-          const open = ham.getAttribute('aria-expanded') === 'true';
-          ham.setAttribute('aria-expanded', !open);
-          ham.classList.toggle('active');
-          mob.classList.toggle('active');
-        });
-      }
+    // ====================================
+    // 1. HERO — Parallax image + text fade
+    // Image moves slower than scroll (parallax)
+    // Text elements fade out as you scroll away
+    // ====================================
+    if (!prefersReduced) {
 
-      // Footer toggles
-      document.querySelectorAll('.footer-col-title button').forEach(b => {
-        b.addEventListener('click', () => b.closest('.footer-col').classList.toggle('open'));
+      // Hero image parallax
+      gsap.to('#heroImg', {
+        yPercent: -12,
+        scale: 1.08,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true
+        }
       });
 
-      console.log('🌊 AXKAN Acapulco Historia v2 initialized');
+      // Hero text elements fade out + move up as you scroll past
+      gsap.utils.toArray('#heroText > *').forEach((el, i) => {
+        gsap.to(el, {
+          opacity: 0,
+          y: -40 - (i * 10),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.hero',
+            start: '50% top',
+            end: 'bottom top',
+            scrub: true
+          }
+        });
+      });
+
+      // Hero entrance: stagger children on load
+      gsap.from('#heroText > *', {
+        opacity: 0,
+        y: 40,
+        duration: 0.8,
+        stagger: 0.12,
+        ease: 'power3.out',
+        delay: 1
+      });
+
+
+      // ====================================
+      // 2. STATS — Scrubbed fade + count
+      // Numbers count up tied to scroll
+      // ====================================
+      const statItems = gsap.utils.toArray('.stat-item');
+      statItems.forEach((item, i) => {
+        gsap.from(item, {
+          opacity: 0,
+          y: 60,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: item,
+            start: 'top 85%',
+            end: 'top 55%',
+            scrub: 0.5
+          }
+        });
+      });
+
+      // Scrubbed counters
+      document.querySelectorAll('.stat-number[data-target]').forEach(el => {
+        const target = parseInt(el.dataset.target);
+        const suffix = el.dataset.suffix || '';
+        const counter = { val: 0 };
+
+        gsap.to(counter, {
+          val: target,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 80%',
+            end: 'top 40%',
+            scrub: 0.5,
+            onUpdate: () => {
+              el.textContent = Math.round(counter.val).toLocaleString() + suffix;
+            }
+          }
+        });
+      });
+
+
+      // ====================================
+      // 3. GOLDEN AGE — Left sticky, right cards scrub in
+      // ====================================
+      // Left title elements
+      gsap.from('.golden-label', {
+        opacity: 0, y: 40, ease: 'none',
+        scrollTrigger: { trigger: '.golden-label', start: 'top 85%', end: 'top 60%', scrub: 0.5 }
+      });
+      gsap.from('.golden-title', {
+        opacity: 0, y: 50, ease: 'none',
+        scrollTrigger: { trigger: '.golden-title', start: 'top 85%', end: 'top 55%', scrub: 0.5 }
+      });
+      gsap.from('.golden-desc', {
+        opacity: 0, y: 40, ease: 'none',
+        scrollTrigger: { trigger: '.golden-desc', start: 'top 85%', end: 'top 60%', scrub: 0.5 }
+      });
+
+      // Right cards: slide from right + fade, staggered by position
+      gsap.utils.toArray('.golden-card').forEach((card, i) => {
+        gsap.from(card, {
+          opacity: 0,
+          x: 80,
+          rotateY: 8,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 88%',
+            end: 'top 55%',
+            scrub: 0.8
+          }
+        });
+      });
+
+
+      // ====================================
+      // 4. LA QUEBRADA — PINNED CINEMATIC
+      // The showpiece. Pinned for 200vh of scroll.
+      // Clip-path reveal, diver dive, text reveal.
+      // ====================================
+      const qTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.quebrada',
+          start: 'top top',
+          end: '+=200%',
+          pin: true,
+          scrub: 1,
+          anticipatePin: 1
+        }
+      });
+
+      // Set initial states
+      gsap.set('#diverSvg', { opacity: 0, y: -80, rotation: 20 });
+      gsap.set('#quebradaContent > *', { opacity: 0, y: 50 });
+
+      // Phase 1: Image clip-path expands (0% → 35% of timeline)
+      qTl.to('#quebradaImg', {
+        clipPath: 'inset(0% round 24px)',
+        scale: 1,
+        duration: 3.5,
+        ease: 'power2.out'
+      });
+
+      // Phase 2: Diver appears and falls (20% → 55%)
+      qTl.to('#diverSvg', {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'power2.out'
+      }, '-=2');
+
+      qTl.to('#diverSvg', {
+        y: 320,
+        rotation: -8,
+        duration: 2.5,
+        ease: 'power1.in'
+      }, '-=1.2');
+
+      // Splash: diver fades at bottom
+      qTl.to('#diverSvg', {
+        opacity: 0,
+        scale: 0.7,
+        duration: 0.6
+      }, '-=0.4');
+
+      // Phase 3: Content text reveals (50% → 85%)
+      const contentEls = gsap.utils.toArray('#quebradaContent > *');
+      contentEls.forEach((el, i) => {
+        qTl.to(el, {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          ease: 'power2.out'
+        }, `-=${i === 0 ? 0.2 : 0.7}`);
+      });
+
+      // Phase 4: Quebrada q-stat counters
+      document.querySelectorAll('.q-stat-num[data-target]').forEach(el => {
+        const target = parseInt(el.dataset.target);
+        const counter = { val: 0 };
+        // These animate as part of the pinned section
+        // But we need a separate trigger since they're inside pinned content
+        // We'll animate them in the timeline directly
+        qTl.add(() => {
+          gsap.to(counter, {
+            val: target,
+            duration: 0.8,
+            ease: 'power2.out',
+            onUpdate: () => {
+              el.textContent = Math.round(counter.val);
+            }
+          });
+        }, '-=1');
+      });
+
+
+      // ====================================
+      // 5. GALLERY — Parallax at different speeds
+      // Each image moves at a different y speed
+      // ====================================
+      const galleryItems = gsap.utils.toArray('.g-item');
+      const speeds = [-30, 20, -15, 25, -20]; // different parallax offsets
+
+      galleryItems.forEach((item, i) => {
+        // Fade + scale in
+        gsap.from(item, {
+          opacity: 0,
+          scale: 0.88,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: item,
+            start: 'top 90%',
+            end: 'top 55%',
+            scrub: 0.5
+          }
+        });
+
+        // Parallax — different speed per item
+        gsap.to(item, {
+          y: speeds[i] || 0,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.gallery',
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true
+          }
+        });
+      });
+
+      // Gallery header
+      gsap.from('.gallery-title', {
+        opacity: 0, y: 60, ease: 'none',
+        scrollTrigger: { trigger: '.gallery-title', start: 'top 85%', end: 'top 55%', scrub: 0.5 }
+      });
+
+
+      // ====================================
+      // 6. REVIEWS — Alternating slide-in
+      // Odd from left, even from right
+      // ====================================
+      gsap.from('.reviews-label', {
+        opacity: 0, y: 40, ease: 'none',
+        scrollTrigger: { trigger: '.reviews-label', start: 'top 85%', end: 'top 65%', scrub: 0.5 }
+      });
+      gsap.from('.reviews-title', {
+        opacity: 0, y: 40, ease: 'none',
+        scrollTrigger: { trigger: '.reviews-title', start: 'top 85%', end: 'top 60%', scrub: 0.5 }
+      });
+      gsap.from('.reviews-rating', {
+        opacity: 0, scale: 0.85, ease: 'none',
+        scrollTrigger: { trigger: '.reviews-rating', start: 'top 85%', end: 'top 60%', scrub: 0.5 }
+      });
+
+      gsap.utils.toArray('.r-card').forEach((card, i) => {
+        const fromLeft = i % 2 === 0;
+        gsap.from(card, {
+          opacity: 0,
+          x: fromLeft ? -60 : 60,
+          rotateZ: fromLeft ? -2 : 2,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 90%',
+            end: 'top 60%',
+            scrub: 0.8
+          }
+        });
+      });
+
+
+      // ====================================
+      // 7. PRODUCTS — Pinned horizontal scroll
+      // Vertical scroll drives horizontal movement
+      // ====================================
+      const track = document.getElementById('productsTrack');
+      const cards = gsap.utils.toArray('.p-card');
+
+      if (track && cards.length > 0) {
+        // Product header fade in
+        gsap.from('.products-label', {
+          opacity: 0, y: 30, ease: 'none',
+          scrollTrigger: { trigger: '.products-label', start: 'top 85%', end: 'top 65%', scrub: 0.5 }
+        });
+        gsap.from('.products-title', {
+          opacity: 0, y: 40, ease: 'none',
+          scrollTrigger: { trigger: '.products-title', start: 'top 85%', end: 'top 60%', scrub: 0.5 }
+        });
+
+        // Calculate how far to scroll
+        const getScrollAmount = () => {
+          return -(track.scrollWidth - window.innerWidth + 100);
+        };
+
+        gsap.to(track, {
+          x: getScrollAmount,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.products',
+            start: 'top 15%',
+            end: () => `+=${track.scrollWidth - window.innerWidth + 100}`,
+            pin: true,
+            scrub: 1,
+            anticipatePin: 1,
+            invalidateOnRefresh: true
+          }
+        });
+
+        // Each card: slight scale + rotation on entry
+        cards.forEach((card, i) => {
+          gsap.from(card, {
+            opacity: 0,
+            scale: 0.9,
+            rotation: 3,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: card,
+              containerAnimation: gsap.getById ? undefined : undefined,
+              start: 'left 90%',
+              end: 'left 60%',
+              scrub: true,
+              // Since cards move horizontally, we observe them within the container
+              horizontal: true
+            }
+          });
+        });
+
+        // CTA button
+        gsap.from('.products-cta-wrap', {
+          opacity: 0, y: 30, ease: 'none',
+          scrollTrigger: { trigger: '.products-cta-wrap', start: 'top 90%', end: 'top 70%', scrub: 0.5 }
+        });
+      }
+
+
+      // ====================================
+      // FOOTER PARALLAX
+      // ====================================
+      gsap.from('.footer-brand', {
+        opacity: 0, y: 40, ease: 'none',
+        scrollTrigger: { trigger: '.site-footer', start: 'top 90%', end: 'top 65%', scrub: 0.5 }
+      });
+
+    } // end !prefersReduced
+
+
+    // ====================================
+    // MOBILE NAV (always active)
+    // ====================================
+    const ham = document.querySelector('.nav-hamburger');
+    const mob = document.querySelector('.site-mobile-menu');
+    if (ham && mob) {
+      ham.addEventListener('click', () => {
+        const open = ham.getAttribute('aria-expanded') === 'true';
+        ham.setAttribute('aria-expanded', !open);
+        ham.classList.toggle('active');
+        mob.classList.toggle('active');
+      });
+    }
+
+    // Footer toggles
+    document.querySelectorAll('.footer-col-title button').forEach(b => {
+      b.addEventListener('click', () => b.closest('.footer-col').classList.toggle('open'));
     });
+
+
+    // ====================================
+    // VISIBILITY API — pause when tab hidden
+    // ====================================
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        gsap.globalTimeline.pause();
+      } else {
+        gsap.globalTimeline.resume();
+      }
+    });
+
+
+    console.log('🌊 AXKAN Acapulco Historia v3 — GSAP Scroll Cinema initialized');
+  })();
   </script>
 
 </body>
