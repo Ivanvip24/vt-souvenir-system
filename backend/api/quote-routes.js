@@ -15,6 +15,7 @@ import {
   getPricingInfo
 } from '../services/quote-generator.js';
 import { query } from '../shared/database.js';
+import { calculateCustomPrice, getAllConfig } from '../services/pricing-engine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -350,6 +351,45 @@ router.get('/list', async (req, res) => {
       success: false,
       error: 'Error al listar cotizaciones'
     });
+  }
+});
+
+// Calculate custom price (below-MOQ, standard, high-volume)
+router.post('/calculate-price', async (req, res) => {
+  try {
+    const { productName, quantity } = req.body;
+
+    if (!productName || !quantity) {
+      return res.status(400).json({
+        success: false,
+        error: 'Se requiere productName y quantity'
+      });
+    }
+
+    const result = await calculateCustomPrice({
+      productName,
+      quantity: parseInt(quantity)
+    });
+
+    if (result.error) {
+      return res.json({ success: false, error: result.error, ...result });
+    }
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error calculating price:', error);
+    res.status(500).json({ success: false, error: 'Error al calcular precio' });
+  }
+});
+
+// Get pricing configuration
+router.get('/pricing-config', async (req, res) => {
+  try {
+    const config = await getAllConfig();
+    res.json({ success: true, data: config });
+  } catch (error) {
+    console.error('Error fetching pricing config:', error);
+    res.status(500).json({ success: false, error: 'Error al obtener configuración' });
   }
 });
 
