@@ -202,7 +202,7 @@ function parseResponse(html, cookies) {
   }
 
   // Check for "not found" indicators (not an error, just no match)
-  const notFoundPatterns = ['No se encontr', 'no encontr', 'Sin resultado', 'No existe', 'ERR'];
+  const notFoundPatterns = ['No se encontr', 'no encontr', 'no es posible generar', 'Sin resultado', 'No existe', 'ERR'];
   for (const pattern of notFoundPatterns) {
     if (html.includes(pattern)) {
       return {
