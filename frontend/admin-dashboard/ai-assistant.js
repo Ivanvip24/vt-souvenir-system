@@ -659,7 +659,8 @@ function showQuoteResult(data) {
  * Show price calculation result in chat
  */
 function showPriceCalculation(data) {
-    if (!data) return;
+    console.log('🧮 showPriceCalculation called with:', data);
+    if (!data) { console.log('🧮 No data, returning'); return; }
 
     let html = '';
 
@@ -733,11 +734,22 @@ function showPriceCalculation(data) {
 
     // Append to last assistant message
     const messages = document.querySelectorAll('.ai-message.assistant');
+    console.log('🧮 Found assistant messages:', messages.length);
     if (messages.length > 0) {
         const lastMessage = messages[messages.length - 1];
         const contentDiv = lastMessage.querySelector('.ai-message-content');
+        console.log('🧮 Content div found:', !!contentDiv);
         if (contentDiv) {
             contentDiv.insertAdjacentHTML('beforeend', html);
+            console.log('🧮 Price card appended successfully');
+        }
+    } else {
+        // Fallback: append directly to chat container
+        console.log('🧮 FALLBACK: No .ai-message.assistant found');
+        const chatBody = document.getElementById('ai-chat-messages');
+        if (chatBody) {
+            chatBody.insertAdjacentHTML('beforeend', html);
+            console.log('🧮 Appended to chat body as fallback');
         }
     }
 }
