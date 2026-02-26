@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Acapulco - Historia | AXKAN Souvenirs</title>
+  <meta name="description" content="Descubre Acapulco: clavadistas de La Quebrada, bahía legendaria y la época dorada del turismo mexicano. Souvenirs que despiertan el orgullo mexicano.">
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://upload.wikimedia.org">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="../../assets/LOGO-01.png">
+
+  <!-- Shared Nav + Footer -->
+  <link rel="stylesheet" href="/shared-nav-footer.css">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Acapulco — Donde el Sol se Encuentra con el Mar">
+  <meta property="og:description" content="Clavadistas legendarios, bahía icónica y la época dorada del turismo mexicano. AXKAN Souvenirs.">
+  <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Acapulco_Bahia2.jpg/1920px-Acapulco_Bahia2.jpg">
+  <meta property="og:type" content="website">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TouristDestination",
+    "name": "Acapulco",
+    "description": "Puerto icónico famoso por los clavadistas de La Quebrada, su bahía legendaria y la época dorada del turismo mexicano.",
+    "touristType": "Beach",
+    "geo": {"@type": "GeoCoordinates", "latitude": 16.8531, "longitude": -99.8237},
+    "containedInPlace": {"@type": "State", "name": "Guerrero, México"}
+  }
+  </script>
+
+  <style>
+    /* ============================================
+       ACAPULCO HISTORIA
+       "Sunset Glamour & Pacific Thunder"
+       Self-contained — AXKAN brand system
+       ============================================ */
+
+    @font-face {
+      font-family: 'RL AQVA';
+      src: url('../../fonts/rl-aqva-black.otf') format('opentype');
+      font-weight: 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      /* AXKAN core */
+      --rosa: #e72a88;
+      --verde: #8ab73b;
+      --naranja: #f39223;
+      --turquesa: #09adc2;
+      --rojo: #e52421;
+      --oro: #D4A574;
+
+      /* Acapulco extras */
+      --sunset-gold: #F5A623;
+      --ocean-deep: #0A1628;
+      --ocean-mid: #0E2A4A;
+      --pacific-teal: #0C7B8F;
+      --cliff-warm: #C75B3A;
+      --sand: #FFF8F0;
+      --foam: #E8F4F8;
+
+      /* Neutrals */
+      --white: #FFFFFF;
+      --off-white: #FAFAFA;
+      --gray-100: #F5F5F5;
+      --gray-300: #D4D4D4;
+      --gray-500: #737373;
+      --gray-700: #404040;
+      --gray-900: #171717;
+
+      /* Typography */
+      --font-display: 'RL AQVA', 'Fredoka', sans-serif;
+      --font-heading: 'Fredoka', sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+
+      /* Animation */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--gray-900);
+      background: var(--white);
+      overflow-x: hidden;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+    a { text-decoration: none; color: inherit; }
+
+
+    /* ============================================
+       WAVE CANVAS — Background particles
+       ============================================ */
+    .wave-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+      overflow: hidden;
+    }
+
+    .wave-dot {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0;
+      animation: waveDrift linear infinite;
+      background: radial-gradient(circle at 40% 40%, rgba(255,255,255,0.5), transparent 60%),
+                  radial-gradient(circle at 50% 50%, var(--dot-color, var(--turquesa)), transparent);
+      filter: blur(0.5px);
+    }
+
+    @keyframes waveDrift {
+      0% {
+        opacity: 0;
+        transform: translateX(-80px) translateY(0) scale(0.4);
+      }
+      8% { opacity: var(--dot-opacity, 0.5); transform: translateX(-40px) scale(1); }
+      50% { transform: translateX(50vw) translateY(-30px) scale(0.9); }
+      85% { opacity: var(--dot-opacity, 0.5); }
+      100% {
+        opacity: 0;
+        transform: translateX(calc(100vw + 80px)) translateY(10px) scale(0.6);
+      }
+    }
+
+
+    /* ============================================
+       REVEAL ANIMATIONS
+       ============================================ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+      transition-delay: var(--delay, 0s);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-60px);
+      transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+      transition-delay: var(--delay, 0s);
+    }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+
+    .reveal-right {
+      opacity: 0;
+      transform: translateX(60px);
+      transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+      transition-delay: var(--delay, 0s);
+    }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+    .reveal-scale {
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-spring);
+      transition-delay: var(--delay, 0s);
+    }
+    .reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+
+    /* ============================================
+       PAGE LOADER
+       ============================================ */
+    .page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: linear-gradient(135deg, var(--ocean-deep) 0%, var(--ocean-mid) 50%, var(--pacific-teal) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    .page-loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    .loader-wave {
+      display: flex;
+      gap: 6px;
+      align-items: end;
+    }
+    .loader-wave span {
+      width: 6px;
+      height: 20px;
+      background: var(--turquesa);
+      border-radius: 3px;
+      animation: loaderWave 1s ease-in-out infinite;
+    }
+    .loader-wave span:nth-child(2) { animation-delay: 0.1s; height: 30px; background: var(--naranja); }
+    .loader-wave span:nth-child(3) { animation-delay: 0.2s; height: 25px; background: var(--rosa); }
+    .loader-wave span:nth-child(4) { animation-delay: 0.3s; height: 35px; background: var(--sunset-gold); }
+    .loader-wave span:nth-child(5) { animation-delay: 0.4s; height: 22px; background: var(--turquesa); }
+
+    @keyframes loaderWave {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(2.5); }
+    }
+
+    .loader-text {
+      font-family: var(--font-display);
+      color: var(--white);
+      font-size: 1.1rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+    }
+
+
+    /* ============================================
+       HERO
+       ============================================ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Acapulco_Bahia2.jpg/1920px-Acapulco_Bahia2.jpg');
+      background-size: cover;
+      background-position: center 40%;
+      filter: brightness(0.55) saturate(1.2);
+    }
+    .hero-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(10,22,40,0.3) 0%, transparent 40%),
+        linear-gradient(to top, rgba(10,22,40,0.85) 0%, transparent 50%);
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 0 24px;
+      max-width: 900px;
+    }
+
+    /* Caracol watermark */
+    .hero-caracol {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 500px;
+      opacity: 0.04;
+      z-index: 1;
+    }
+    .hero-caracol svg {
+      width: 100%;
+      height: 100%;
+      fill: var(--white);
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 8px 28px;
+      border-radius: 50px;
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,0.2);
+      animation: fadeInUp 0.8s var(--ease-out) both;
+      animation-delay: 0.3s;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 12vw, 9rem);
+      font-weight: 900;
+      color: var(--white);
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.8s var(--ease-out) both;
+      animation-delay: 0.5s;
+    }
+    .hero-title .letter-highlight {
+      background: linear-gradient(135deg, var(--naranja), var(--sunset-gold), var(--rosa));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-tagline {
+      font-family: var(--font-heading);
+      font-size: clamp(1.2rem, 3vw, 1.6rem);
+      color: var(--white);
+      font-weight: 500;
+      margin-bottom: 4px;
+      animation: fadeInUp 0.8s var(--ease-out) both;
+      animation-delay: 0.7s;
+    }
+    .hero-twist {
+      font-family: var(--font-heading);
+      font-size: clamp(1.3rem, 3.2vw, 1.7rem);
+      color: var(--sunset-gold);
+      font-weight: 700;
+      font-style: italic;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.8s var(--ease-out) both;
+      animation-delay: 0.9s;
+    }
+    .hero-location {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      color: var(--white);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      animation: fadeInUp 0.8s var(--ease-out) both;
+      animation-delay: 1.1s;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      animation: fadeInUp 0.8s var(--ease-out) both;
+      animation-delay: 1.5s;
+    }
+    .scroll-indicator span {
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+    }
+    .scroll-indicator .arrow {
+      width: 20px;
+      height: 20px;
+      border-right: 2px solid rgba(255,255,255,0.6);
+      border-bottom: 2px solid rgba(255,255,255,0.6);
+      transform: rotate(45deg);
+      animation: scrollBounce 2s ease-in-out infinite;
+    }
+    @keyframes scrollBounce {
+      0%, 100% { transform: rotate(45deg) translate(0, 0); }
+      50% { transform: rotate(45deg) translate(4px, 4px); }
+    }
+
+
+    /* ============================================
+       WAVE DIVIDER SVG
+       ============================================ */
+    .wave-divider {
+      width: 100%;
+      line-height: 0;
+      overflow: hidden;
+    }
+    .wave-divider svg {
+      width: 100%;
+      height: 80px;
+      display: block;
+    }
+    .wave-divider-flip {
+      transform: scaleY(-1);
+    }
+
+
+    /* ============================================
+       FUN FACTS SECTION
+       ============================================ */
+    .funfacts {
+      padding: 100px 24px 80px;
+      background: var(--sand);
+      text-align: center;
+      position: relative;
+    }
+    .funfacts-label {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--naranja);
+      margin-bottom: 12px;
+    }
+    .funfacts-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+    .funfacts-title em {
+      color: var(--turquesa);
+      font-style: normal;
+    }
+    .funfacts-subtitle {
+      font-size: 1rem;
+      color: var(--gray-500);
+      max-width: 600px;
+      margin: 0 auto 60px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1000px;
+      margin: 0 auto 60px;
+    }
+    .stat-card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 36px 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+      transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    .stat-card:nth-child(1)::before { background: linear-gradient(90deg, var(--turquesa), var(--pacific-teal)); }
+    .stat-card:nth-child(2)::before { background: linear-gradient(90deg, var(--naranja), var(--sunset-gold)); }
+    .stat-card:nth-child(3)::before { background: linear-gradient(90deg, var(--rosa), var(--rojo)); }
+
+    .stat-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      margin: 0 auto 16px;
+    }
+    .stat-card:nth-child(1) .stat-icon { background: rgba(9,173,194,0.1); }
+    .stat-card:nth-child(2) .stat-icon { background: rgba(243,146,35,0.1); }
+    .stat-card:nth-child(3) .stat-icon { background: rgba(231,42,136,0.1); }
+
+    .stat-number {
+      font-family: var(--font-heading);
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-family: var(--font-heading);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gray-500);
+      margin-bottom: 12px;
+    }
+    .stat-desc {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+    }
+
+    /* Fact cards grid */
+    .facts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .fact-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: left;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.03);
+      transition: transform 0.3s var(--ease-out);
+    }
+    .fact-card:hover { transform: translateY(-2px); }
+    .fact-icon {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      background: var(--foam);
+    }
+    .fact-title {
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+    .fact-text {
+      font-size: 0.88rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+    }
+
+
+    /* ============================================
+       LA QUEBRADA — Immersive dark section
+       ============================================ */
+    .quebrada {
+      position: relative;
+      padding: 120px 24px;
+      background: var(--ocean-deep);
+      overflow: hidden;
+      text-align: center;
+    }
+    .quebrada-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 80%, rgba(9,173,194,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 20%, rgba(243,146,35,0.08) 0%, transparent 50%),
+        linear-gradient(180deg, var(--ocean-deep) 0%, var(--ocean-mid) 100%);
+    }
+
+    /* Animated wave lines in background */
+    .quebrada-waves {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 200%;
+      height: 200px;
+      opacity: 0.08;
+    }
+    .quebrada-waves path {
+      fill: none;
+      stroke: var(--turquesa);
+      stroke-width: 2;
+    }
+    .quebrada-waves .wave1 { animation: waveShift 8s ease-in-out infinite; }
+    .quebrada-waves .wave2 { animation: waveShift 10s ease-in-out infinite reverse; }
+    .quebrada-waves .wave3 { animation: waveShift 12s ease-in-out infinite; }
+
+    @keyframes waveShift {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(-25%); }
+    }
+
+    .quebrada-label {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--turquesa);
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 2;
+    }
+    .quebrada-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 900;
+      color: var(--white);
+      line-height: 0.95;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 2;
+    }
+    .quebrada-title .accent {
+      background: linear-gradient(135deg, var(--turquesa), var(--naranja));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .quebrada-subtitle {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 50px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .quebrada-content {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Cliff diver illustration */
+    .diver-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto 50px;
+      aspect-ratio: 16/9;
+      border-radius: 24px;
+      overflow: hidden;
+    }
+    .diver-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.7) saturate(1.3);
+    }
+    .diver-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, var(--ocean-deep), transparent 60%);
+    }
+    .diver-badge {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(9,173,194,0.2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(9,173,194,0.3);
+    }
+    .diver-badge-number {
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--turquesa);
+      line-height: 1;
+    }
+    .diver-badge-text {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.05em;
+    }
+
+    .quebrada-text {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.8;
+      max-width: 650px;
+      margin: 0 auto 40px;
+      position: relative;
+      z-index: 2;
+    }
+    .quebrada-text a {
+      color: var(--turquesa);
+      border-bottom: 1px solid rgba(9,173,194,0.4);
+      transition: border-color 0.3s;
+    }
+    .quebrada-text a:hover { border-color: var(--turquesa); }
+
+    /* Axolotl-style fun fact cards in dark section */
+    .quebrada-facts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+    .q-fact {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px 16px;
+      text-align: center;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .q-fact:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(9,173,194,0.3);
+    }
+    .q-fact-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    .q-fact-number {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .q-fact-label {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.05em;
+    }
+
+
+    /* ============================================
+       PHOTO GALLERY
+       ============================================ */
+    .gallery {
+      padding: 100px 24px 80px;
+      background: var(--white);
+      text-align: center;
+    }
+    .gallery-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.8rem, 4.5vw, 2.5rem);
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+    .gallery-subtitle {
+      font-size: 0.95rem;
+      color: var(--gray-500);
+      margin-bottom: 48px;
+    }
+
+    .gallery-track-wrapper {
+      position: relative;
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+    .gallery-track {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 10px 0 20px;
+      cursor: grab;
+    }
+    .gallery-track:active { cursor: grabbing; }
+    .gallery-track::-webkit-scrollbar { display: none; }
+
+    .gallery-card {
+      flex: 0 0 380px;
+      scroll-snap-align: start;
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 4/5;
+      background: var(--gray-100);
+    }
+    .gallery-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s var(--ease-out);
+    }
+    .gallery-card:hover img { transform: scale(1.05); }
+    .gallery-card-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 60px 24px 24px;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    }
+    .gallery-card-title {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+    .gallery-card-desc {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.75);
+    }
+
+    /* Progress bar */
+    .gallery-progress {
+      max-width: 1200px;
+      margin: 20px auto 0;
+      height: 3px;
+      background: var(--gray-100);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .gallery-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--turquesa), var(--naranja));
+      border-radius: 2px;
+      width: 20%;
+      transition: width 0.2s ease;
+    }
+
+
+    /* ============================================
+       REVIEWS
+       ============================================ */
+    .reviews {
+      padding: 100px 24px;
+      background: var(--sand);
+      text-align: center;
+    }
+    .reviews-label {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--rosa);
+      margin-bottom: 12px;
+    }
+    .reviews-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.8rem, 4.5vw, 2.5rem);
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+    .reviews-title em {
+      color: var(--naranja);
+      font-style: italic;
+    }
+
+    .rating-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--white);
+      padding: 12px 28px;
+      border-radius: 50px;
+      margin-bottom: 48px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    }
+    .rating-number {
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    .rating-stars { color: var(--sunset-gold); font-size: 1.1rem; letter-spacing: 2px; }
+    .rating-text { font-size: 0.8rem; color: var(--gray-500); }
+
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .review-card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 32px;
+      text-align: left;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+      transition: transform 0.3s var(--ease-out);
+    }
+    .review-card:hover { transform: translateY(-3px); }
+    .review-stars {
+      color: var(--sunset-gold);
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+    .review-text {
+      font-size: 0.92rem;
+      color: var(--gray-700);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+    .review-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .review-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--white);
+    }
+    .review-card:nth-child(1) .review-avatar { background: var(--turquesa); }
+    .review-card:nth-child(2) .review-avatar { background: var(--naranja); }
+    .review-card:nth-child(3) .review-avatar { background: var(--rosa); }
+    .review-card:nth-child(4) .review-avatar { background: var(--verde); }
+    .review-name {
+      font-family: var(--font-heading);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+    .review-origin {
+      font-size: 0.78rem;
+      color: var(--gray-500);
+    }
+
+
+    /* ============================================
+       PRODUCTS
+       ============================================ */
+    .products {
+      padding: 100px 24px 80px;
+      background: var(--white);
+      text-align: center;
+    }
+    .products-label {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--turquesa);
+      margin-bottom: 12px;
+    }
+    .products-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 48px;
+    }
+
+    .products-carousel {
+      display: flex;
+      gap: 24px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      max-width: 1200px;
+      margin: 0 auto 40px;
+      padding: 10px 0;
+    }
+    .products-carousel::-webkit-scrollbar { display: none; }
+
+    .product-card {
+      flex: 0 0 240px;
+      scroll-snap-align: start;
+      background: var(--gray-100);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: transform 0.3s var(--ease-out), box-shadow 0.3s;
+      cursor: pointer;
+    }
+    .product-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+    }
+    .product-card img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      transition: transform 0.4s var(--ease-out);
+    }
+    .product-card:hover img { transform: scale(1.05); }
+    .product-card-info {
+      padding: 16px;
+    }
+    .product-card-name {
+      font-family: var(--font-heading);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .products-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #25D366;
+      color: var(--white);
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 16px 36px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.3s var(--ease-spring), box-shadow 0.3s;
+      text-decoration: none;
+    }
+    .products-cta:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 8px 24px rgba(37,211,102,0.3);
+    }
+    .products-cta svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+
+    /* ============================================
+       FOOTER
+       ============================================ */
+    .site-footer {
+      background: var(--gray-900);
+      padding: 60px 24px 30px;
+      color: var(--white);
+    }
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      max-width: 1100px;
+      margin: 0 auto 40px;
+      flex-wrap: wrap;
+      gap: 40px;
+    }
+    .footer-brand img {
+      height: 40px;
+      width: auto;
+      margin-bottom: 12px;
+    }
+    .footer-brand p {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+      max-width: 280px;
+      line-height: 1.5;
+    }
+    .footer-social {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .footer-social a {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: background 0.3s;
+    }
+    .footer-social a:hover { background: rgba(255,255,255,0.15); }
+
+    .site-footer-mega {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      max-width: 1100px;
+      margin: 0 auto 40px;
+    }
+    .footer-col-title {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 16px;
+    }
+    .footer-col-title button {
+      display: none;
+    }
+    .footer-col ul {
+      list-style: none;
+    }
+    .footer-col ul li { margin-bottom: 8px; }
+    .footer-col ul li a {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.45);
+      transition: color 0.3s;
+    }
+    .footer-col ul li a:hover { color: rgba(255,255,255,0.8); }
+    .site-footer-see-all {
+      color: var(--turquesa) !important;
+      font-weight: 600;
+    }
+
+    .site-footer-bottom {
+      text-align: center;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .site-footer-bottom p {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.35);
+    }
+
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: 1fr; max-width: 400px; }
+      .facts-grid { grid-template-columns: 1fr; }
+      .quebrada-facts { grid-template-columns: 1fr; max-width: 300px; margin: 0 auto; }
+      .gallery-card { flex: 0 0 300px; }
+      .reviews-grid { grid-template-columns: 1fr; }
+      .product-card { flex: 0 0 200px; }
+      .site-footer-mega { grid-template-columns: 1fr 1fr; gap: 24px; }
+      .footer-top { flex-direction: column; align-items: center; text-align: center; }
+      .footer-brand p { max-width: 100%; }
+      .footer-social { justify-content: center; }
+      .diver-container { aspect-ratio: 4/3; }
+    }
+    @media (max-width: 480px) {
+      .hero-title { font-size: 3.2rem; }
+      .site-footer-mega { grid-template-columns: 1fr; }
+      .footer-col-title button {
+        display: inline-block;
+        background: none;
+        border: none;
+        color: rgba(255,255,255,0.5);
+        font-size: 1rem;
+        cursor: pointer;
+        float: right;
+        transition: transform 0.3s;
+      }
+      .footer-col ul { display: none; }
+      .footer-col.open ul { display: block; }
+      .footer-col.open .footer-col-title button { transform: rotate(180deg); }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+      .reveal, .reveal-left, .reveal-right, .reveal-scale {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Page Loader -->
+  <div class="page-loader" id="pageLoader">
+    <div class="loader-wave">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="loader-text">Acapulco</div>
+  </div>
+
+  <!-- Wave Canvas (floating particles) -->
+  <div class="wave-canvas" id="waveCanvas" aria-hidden="true"></div>
+
+
+  <!-- ============================================
+       NAVIGATION
+       ============================================ -->
+  <nav class="site-nav">
+    <a href="/" class="nav-logo-link">
+      <img src="/assets/LOGO-03.png" alt="AXKAN" class="nav-logo">
+    </a>
+    <ul class="nav-links">
+      <li><a href="/productos">Productos</a></li>
+      <li><a href="/#calidad">Calidad</a></li>
+      <li><a href="/diseños">Diseños</a></li>
+      <li><a href="/#mayoreo">Mayoreo</a></li>
+      <li><a href="/envio">Envío</a></li>
+      <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
+    </ul>
+    <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="site-mobile-menu" role="dialog" aria-label="Menú de navegación">
+    <a href="/productos">Productos</a>
+    <a href="/#calidad">Calidad</a>
+    <a href="/diseños">Diseños</a>
+    <a href="/#mayoreo">Mayoreo</a>
+    <a href="/envio">Envío</a>
+    <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
+  </div>
+
+
+  <!-- ============================================
+       HERO
+       ============================================ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg" role="img" aria-label="Bahía de Acapulco"></div>
+    <div class="hero-gradient"></div>
+
+    <div class="hero-caracol" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><path d="M50 5C50 5 95 30 95 55C95 75 78 95 50 95C22 95 5 75 5 55C5 35 20 20 35 20C50 20 60 32 60 45C60 58 50 65 42 65C34 65 28 58 28 50C28 42 34 38 40 38C46 38 50 42 50 47" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-badge">Puerto Legendario</div>
+      <h1 class="hero-title">
+        ACAPULC<span class="letter-highlight">O</span>
+      </h1>
+      <p class="hero-tagline">Donde el sol se encuentra</p>
+      <p class="hero-twist">con el mar...</p>
+      <p class="hero-location">Guerrero, México</p>
+    </div>
+
+    <a href="#funfacts" class="scroll-indicator" aria-label="Descubrir más">
+      <span>Descubre más</span>
+      <div class="arrow"></div>
+    </a>
+  </section>
+
+
+  <!-- Wave divider -->
+  <div class="wave-divider">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+      <path d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z" fill="#FFF8F0"/>
+    </svg>
+  </div>
+
+
+  <!-- ============================================
+       FUN FACTS
+       ============================================ -->
+  <section class="funfacts" id="funfacts">
+    <p class="funfacts-label reveal">¿Sabías que...?</p>
+    <h2 class="funfacts-title reveal" style="--delay:0.1s">El Puerto que Conquistó <em>Hollywood</em></h2>
+    <p class="funfacts-subtitle reveal" style="--delay:0.15s">Acapulco ha sido escenario de películas, hogar de estrellas y destino de aventureros por más de un siglo.</p>
+
+    <div class="stats-grid">
+      <div class="stat-card reveal-scale" style="--delay:0.2s">
+        <div class="stat-icon">🌊</div>
+        <div class="stat-number" data-target="35" data-suffix="m">0m</div>
+        <div class="stat-label">Altura La Quebrada</div>
+        <p class="stat-desc">Los clavadistas se lanzan desde 35 metros de altura hacia un canal de solo 3.5 metros de profundidad</p>
+      </div>
+      <div class="stat-card reveal-scale" style="--delay:0.3s">
+        <div class="stat-icon">🌅</div>
+        <div class="stat-number" data-target="1930" data-suffix="">0</div>
+        <div class="stat-label">Época Dorada Desde</div>
+        <p class="stat-desc">Desde los años 30, figuras como Elvis Presley, Frank Sinatra y Elizabeth Taylor lo hicieron su refugio favorito</p>
+      </div>
+      <div class="stat-card reveal-scale" style="--delay:0.4s">
+        <div class="stat-icon">🏖️</div>
+        <div class="stat-number" data-target="300" data-suffix="+">0+</div>
+        <div class="stat-label">Días de Sol al Año</div>
+        <p class="stat-desc">El clima tropical garantiza sol y calor prácticamente todo el año en la bahía más famosa de México</p>
+      </div>
+    </div>
+
+    <div class="facts-grid">
+      <div class="fact-card reveal-left" style="--delay:0.1s">
+        <div class="fact-icon">🏰</div>
+        <div>
+          <h3 class="fact-title">Fuerte de San Diego</h3>
+          <p class="fact-text">Fortaleza del siglo XVII construida para proteger la ruta comercial del Galeón de Manila. Hoy es el Museo Histórico de Acapulco.</p>
+        </div>
+      </div>
+      <div class="fact-card reveal-right" style="--delay:0.15s">
+        <div class="fact-icon">🎬</div>
+        <div>
+          <h3 class="fact-title">Capital del Cine Mexicano</h3>
+          <p class="fact-text">Escenario de más de 200 películas, desde el cine de oro mexicano hasta producciones de Hollywood como "Fun in Acapulco" con Elvis.</p>
+        </div>
+      </div>
+      <div class="fact-card reveal-left" style="--delay:0.2s">
+        <div class="fact-icon">🌴</div>
+        <div>
+          <h3 class="fact-title">Pie de la Cuesta</h3>
+          <p class="fact-text">A 10 km del centro, esta playa ofrece los atardeceres más espectaculares de todo el Pacífico mexicano, donde el cielo arde en naranjas y rosas.</p>
+        </div>
+      </div>
+      <div class="fact-card reveal-right" style="--delay:0.25s">
+        <div class="fact-icon">🎶</div>
+        <div>
+          <h3 class="fact-title">La Costera</h3>
+          <p class="fact-text">La Costera Miguel Alemán, la avenida icónica que bordea la bahía, es el corazón de la vida nocturna y la energía del puerto.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Wave divider -->
+  <div class="wave-divider wave-divider-flip">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+      <path d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z" fill="#0A1628"/>
+    </svg>
+  </div>
+
+
+  <!-- ============================================
+       LA QUEBRADA — Immersive section
+       ============================================ -->
+  <section class="quebrada" id="quebrada">
+    <div class="quebrada-bg"></div>
+
+    <!-- Animated wave lines -->
+    <svg class="quebrada-waves" viewBox="0 0 2880 200" preserveAspectRatio="none" aria-hidden="true">
+      <path class="wave1" d="M0,100 C480,150 960,50 1440,100 C1920,150 2400,50 2880,100"/>
+      <path class="wave2" d="M0,130 C480,80 960,180 1440,130 C1920,80 2400,180 2880,130" style="opacity:0.6"/>
+      <path class="wave3" d="M0,160 C480,120 960,200 1440,160 C1920,120 2400,200 2880,160" style="opacity:0.3"/>
+    </svg>
+
+    <p class="quebrada-label reveal">El Salto Legendario</p>
+    <h2 class="quebrada-title reveal" style="--delay:0.1s">LA<br><span class="accent">QUEBRADA</span></h2>
+    <p class="quebrada-subtitle reveal" style="--delay:0.15s">Donde el valor humano desafía al Pacífico</p>
+
+    <div class="quebrada-content">
+      <div class="diver-container reveal-scale" style="--delay:0.2s">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Clavadista_de_La_Quebrada%2C_Acapulco%2C_M%C3%A9xico%2C_2013-10-14%2C_DD_01.JPG/800px-Clavadista_de_La_Quebrada%2C_Acapulco%2C_M%C3%A9xico%2C_2013-10-14%2C_DD_01.JPG"
+          alt="Clavadista de La Quebrada, Acapulco"
+          loading="lazy">
+        <div class="diver-overlay"></div>
+        <div class="diver-badge">
+          <div class="diver-badge-number">1934</div>
+          <div class="diver-badge-text">Tradición viva desde hace 90 años</div>
+        </div>
+      </div>
+
+      <p class="quebrada-text reveal" style="--delay:0.3s">
+        En los acantilados de <a href="https://es.wikipedia.org/wiki/La_Quebrada_(Acapulco)">La Quebrada</a>, los clavadistas realizan un ritual que desafía la muerte. Desde 35 metros de altura, se lanzan al vacío cronometrando su salto con la llegada de las olas al estrecho canal de roca. Un segundo de diferencia puede ser fatal.
+      </p>
+      <p class="quebrada-text reveal" style="--delay:0.35s">
+        Esta tradición, nacida en 1934, ha sido testigo de generaciones de hombres valientes que mantienen viva una de las proezas más impresionantes del mundo. Cada noche, con antorchas encendidas, el espectáculo se convierte en una ceremonia que eriza la piel.
+      </p>
+
+      <div class="quebrada-facts">
+        <div class="q-fact reveal-scale" style="--delay:0.4s">
+          <div class="q-fact-icon">🔥</div>
+          <div class="q-fact-number" data-target="5">0</div>
+          <div class="q-fact-label">Shows diarios</div>
+        </div>
+        <div class="q-fact reveal-scale" style="--delay:0.45s">
+          <div class="q-fact-icon">⏱️</div>
+          <div class="q-fact-number" data-target="3">0</div>
+          <div class="q-fact-label">Segundos de caída</div>
+        </div>
+        <div class="q-fact reveal-scale" style="--delay:0.5s">
+          <div class="q-fact-icon">🌊</div>
+          <div class="q-fact-number">3.5m</div>
+          <div class="q-fact-label">Profundidad del canal</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Wave divider -->
+  <div class="wave-divider">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+      <path d="M0,40 C360,0 720,80 1080,40 C1260,20 1380,30 1440,40 L1440,80 L0,80 Z" fill="#FFFFFF"/>
+    </svg>
+  </div>
+
+
+  <!-- ============================================
+       PHOTO GALLERY
+       ============================================ -->
+  <section class="gallery" id="gallery">
+    <h2 class="gallery-title reveal">El Viaje Visual</h2>
+    <p class="gallery-subtitle reveal" style="--delay:0.1s">Desliza para explorar Acapulco</p>
+
+    <div class="gallery-track-wrapper">
+      <div class="gallery-track" id="galleryTrack">
+        <div class="gallery-card">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Acapulco_Bahia2.jpg/800px-Acapulco_Bahia2.jpg" alt="Bahía de Acapulco panorámica" loading="lazy">
+          <div class="gallery-card-caption">
+            <h3 class="gallery-card-title">La Bahía</h3>
+            <p class="gallery-card-desc">La bahía más icónica de todo México</p>
+          </div>
+        </div>
+        <div class="gallery-card">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Clavadista_de_La_Quebrada%2C_Acapulco%2C_M%C3%A9xico%2C_2013-10-14%2C_DD_01.JPG/800px-Clavadista_de_La_Quebrada%2C_Acapulco%2C_M%C3%A9xico%2C_2013-10-14%2C_DD_01.JPG" alt="Clavadista de La Quebrada" loading="lazy">
+          <div class="gallery-card-caption">
+            <h3 class="gallery-card-title">La Quebrada</h3>
+            <p class="gallery-card-desc">35 metros de pura valentía</p>
+          </div>
+        </div>
+        <div class="gallery-card">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Fuerte_de_San_Diego%2C_Acapulco%2C_Guerrero_%2824693490592%29.jpg/800px-Fuerte_de_San_Diego%2C_Acapulco%2C_Guerrero_%2824693490592%29.jpg" alt="Fuerte de San Diego, Acapulco" loading="lazy">
+          <div class="gallery-card-caption">
+            <h3 class="gallery-card-title">Fuerte de San Diego</h3>
+            <p class="gallery-card-desc">400 años de historia colonial</p>
+          </div>
+        </div>
+        <div class="gallery-card">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Acapulco_de_Juárez%2C_Guerrero_%2824855684816%29.jpg/800px-Acapulco_de_Juárez%2C_Guerrero_%2824855684816%29.jpg" alt="Atardecer en Acapulco" loading="lazy">
+          <div class="gallery-card-caption">
+            <h3 class="gallery-card-title">Atardecer Dorado</h3>
+            <p class="gallery-card-desc">Donde el cielo se vuelve fuego</p>
+          </div>
+        </div>
+        <div class="gallery-card">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Acapulco_Panoramic.jpg/800px-Acapulco_Panoramic.jpg" alt="Vista panorámica Costera Acapulco" loading="lazy">
+          <div class="gallery-card-caption">
+            <h3 class="gallery-card-title">La Costera</h3>
+            <p class="gallery-card-desc">El corazón vibrante del puerto</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gallery-progress">
+      <div class="gallery-progress-bar" id="galleryProgress"></div>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       REVIEWS
+       ============================================ -->
+  <section class="reviews" id="reviews">
+    <p class="reviews-label reveal">Lo que dicen los visitantes</p>
+    <h2 class="reviews-title reveal" style="--delay:0.1s">Acapulco <em>enamora</em></h2>
+
+    <div class="rating-badge reveal-scale" style="--delay:0.15s">
+      <span class="rating-number">4.7</span>
+      <span>
+        <span class="rating-stars">★★★★★</span><br>
+        <span class="rating-text">Basado en experiencias reales</span>
+      </span>
+    </div>
+
+    <div class="reviews-grid">
+      <div class="review-card reveal-left" style="--delay:0.2s">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Ver a los clavadistas de La Quebrada de noche, con las antorchas, es algo que no olvidaré jamás. La energía del público, el silencio antes del salto... piel de gallina."</p>
+        <div class="review-author">
+          <div class="review-avatar">MR</div>
+          <div>
+            <div class="review-name">Mariana R.</div>
+            <div class="review-origin">CDMX, México</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card reveal-right" style="--delay:0.25s">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Los atardeceres en Pie de la Cuesta son de otro nivel. El cielo se pinta de todos los colores posibles. Llevamos nuestro imán de AXKAN para no olvidarlo nunca."</p>
+        <div class="review-author">
+          <div class="review-avatar">JL</div>
+          <div>
+            <div class="review-name">José Luis P.</div>
+            <div class="review-origin">Guadalajara, México</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card reveal-left" style="--delay:0.3s">
+        <div class="review-stars">★★★★☆</div>
+        <p class="review-text">"La bahía de noche es mágica. Cenamos frente al mar y la brisa, las luces de la costera... Acapulco tiene esa magia que no encuentras en otro lado."</p>
+        <div class="review-author">
+          <div class="review-avatar">CF</div>
+          <div>
+            <div class="review-name">Carolina F.</div>
+            <div class="review-origin">Puebla, México</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card reveal-right" style="--delay:0.35s">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"El Fuerte de San Diego me sorprendió. No esperaba tanta historia en un destino de playa. Y la comida guerrerense... el pozole es lo mejor que he probado."</p>
+        <div class="review-author">
+          <div class="review-avatar">RA</div>
+          <div>
+            <div class="review-name">Roberto A.</div>
+            <div class="review-origin">Monterrey, México</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       PRODUCTS
+       ============================================ -->
+  <section class="products" id="productos">
+    <p class="products-label reveal">Souvenirs AXKAN</p>
+    <h2 class="products-title reveal" style="--delay:0.1s">Lleva la energía del puerto contigo</h2>
+
+    <div class="products-carousel">
+      <div class="product-card reveal-scale" style="--delay:0.15s">
+        <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/ACAPULCO_1.png?v=1753996788" alt="Imán Acapulco AXKAN" loading="lazy">
+        <div class="product-card-info"><p class="product-card-name">Imán Acapulco Clásico</p></div>
+      </div>
+      <div class="product-card reveal-scale" style="--delay:0.2s">
+        <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/SENORFROGSRANASMARUIACHIS.png?v=1753996788" alt="Imán Señor Frog's AXKAN" loading="lazy">
+        <div class="product-card-info"><p class="product-card-name">Señor Frog's</p></div>
+      </div>
+      <div class="product-card reveal-scale" style="--delay:0.25s">
+        <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/ACAPULCOBOCHO.png?v=1753996788" alt="Imán Bocho Acapulco AXKAN" loading="lazy">
+        <div class="product-card-info"><p class="product-card-name">Bocho Acapulco</p></div>
+      </div>
+      <div class="product-card reveal-scale" style="--delay:0.3s">
+        <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/PALMERATELEFONOQUEBRADORA.png?v=1753996788" alt="Imán Quebrada AXKAN" loading="lazy">
+        <div class="product-card-info"><p class="product-card-name">La Quebrada</p></div>
+      </div>
+      <div class="product-card reveal-scale" style="--delay:0.35s">
+        <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/QUEBRADORAESFERADENAVIDAD.png?v=1753996788" alt="Imán Clavadista AXKAN" loading="lazy">
+        <div class="product-card-info"><p class="product-card-name">Clavadista</p></div>
+      </div>
+    </div>
+
+    <a href="https://wa.me/5215538253251?text=Hola!%20Quiero%20cotizar%20souvenirs%20de%20Acapulco" class="products-cta" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.638l4.72-1.33A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.319 0-4.462-.756-6.196-2.034l-.436-.332-3.2.901.84-3.072-.362-.467A9.945 9.945 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+      Cotizar por WhatsApp
+    </a>
+  </section>
+
+
+  <!-- ============================================
+       FOOTER
+       ============================================ -->
+  <footer class="site-footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="/assets/LETTERS.png" alt="AXKAN" style="height:40px;width:auto;">
+        <p>Souvenirs que despiertan el orgullo mexicano. Calidad premium, diseños únicos, entregas a toda la República.</p>
+        <div class="footer-social">
+          <a href="https://instagram.com/axkan.mx" target="_blank" aria-label="Instagram">📸</a>
+          <a href="https://tiktok.com/@axkan.mx" target="_blank" aria-label="TikTok">🎵</a>
+          <a href="https://facebook.com/axkan.mx" target="_blank" aria-label="Facebook">👍</a>
+          <a href="https://wa.me/5215538253251" target="_blank" aria-label="WhatsApp">💬</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="site-footer-mega">
+      <div class="footer-col">
+        <h3 class="footer-col-title">Productos <button aria-label="Toggle">▾</button></h3>
+        <ul>
+          <li><a href="/productos/imanes-mdf">Imanes MDF</a></li>
+          <li><a href="/productos/llaveros-mdf">Llaveros MDF</a></li>
+          <li><a href="/productos/portallaves-mdf">Portallaves</a></li>
+          <li><a href="/productos/destapadores-mdf">Destapadores</a></li>
+          <li><a href="/productos/portarretratos-mdf">Portarretratos</a></li>
+          <li><a href="/productos" class="site-footer-see-all">Ver Todos →</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3 class="footer-col-title">Diseños <button aria-label="Toggle">▾</button></h3>
+        <ul>
+          <li><a href="/diseños">Catálogo de Diseños</a></li>
+          <li><a href="/diseños/huasteca-potosina/historia">Huasteca Potosina</a></li>
+          <li><a href="/diseños/chichen-itza/historia">Chichén Itzá</a></li>
+          <li><a href="/diseños/chignahuapan/historia">Chignahuapan</a></li>
+          <li><a href="/diseños/acapulco/historia">Acapulco</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3 class="footer-col-title">Formularios <button aria-label="Toggle">▾</button></h3>
+        <ul>
+          <li><a href="/cuestionario">Cuestionario Inicial</a></li>
+          <li><a href="/pedidos">Hacer Pedido</a></li>
+          <li><a href="/envio">Datos de Envío</a></li>
+          <li><a href="/midiseño">Mi Diseño</a></li>
+          <li><a href="/seguimiento">Seguimiento de Pedido</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3 class="footer-col-title">Recursos <button aria-label="Toggle">▾</button></h3>
+        <ul>
+          <li><a href="/faq">Preguntas Frecuentes</a></li>
+          <li><a href="/ubicacion">Ubicación</a></li>
+          <li><a href="/brand">Manual de Marca</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="site-footer-bottom">
+      <p>© 2025 AXKAN. Todos los derechos reservados. Hecho con orgullo en México 🇲🇽</p>
+    </div>
+  </footer>
+
+
+  <!-- ============================================
+       JAVASCRIPT
+       ============================================ -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // Page loader
+      setTimeout(() => {
+        document.getElementById('pageLoader').classList.add('hidden');
+      }, 1200);
+
+      // ---- Wave particles ----
+      function initWaveParticles() {
+        const canvas = document.getElementById('waveCanvas');
+        const colors = ['#09adc2', '#f39223', '#e72a88', '#F5A623', '#8ab73b', '#0C7B8F'];
+        const count = window.innerWidth < 768 ? 8 : 14;
+
+        for (let i = 0; i < count; i++) {
+          const dot = document.createElement('div');
+          dot.classList.add('wave-dot');
+          const size = Math.random() * 12 + 6;
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          const duration = Math.random() * 15 + 12;
+          const delay = Math.random() * duration;
+          const top = Math.random() * 100;
+          const opacity = Math.random() * 0.3 + 0.15;
+
+          dot.style.cssText = `
+            width: ${size}px; height: ${size}px;
+            top: ${top}%;
+            --dot-color: ${color};
+            --dot-opacity: ${opacity};
+            animation-duration: ${duration}s;
+            animation-delay: -${delay}s;
+          `;
+          canvas.appendChild(dot);
+        }
+      }
+      initWaveParticles();
+
+      // ---- Reveal animations ----
+      function initRevealAnimations() {
+        const els = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+        if (!els.length) return;
+
+        const obs = new IntersectionObserver((entries) => {
+          entries.forEach(e => {
+            if (e.isIntersecting) {
+              e.target.classList.add('visible');
+              obs.unobserve(e.target);
+            }
+          });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+        els.forEach(el => obs.observe(el));
+      }
+      initRevealAnimations();
+
+      // ---- Counter animations ----
+      function initCounterAnimations() {
+        const counters = document.querySelectorAll('[data-target]');
+        if (!counters.length) return;
+
+        const obs = new IntersectionObserver((entries) => {
+          entries.forEach(e => {
+            if (e.isIntersecting) {
+              const el = e.target;
+              const target = parseInt(el.dataset.target);
+              const suffix = el.dataset.suffix || '';
+              const duration = 2000;
+              const start = performance.now();
+
+              function update(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(eased * target);
+                el.textContent = current.toLocaleString() + suffix;
+
+                if (progress < 1) {
+                  requestAnimationFrame(update);
+                }
+              }
+              requestAnimationFrame(update);
+              obs.unobserve(el);
+            }
+          });
+        }, { threshold: 0.5 });
+
+        counters.forEach(c => obs.observe(c));
+      }
+      initCounterAnimations();
+
+      // ---- Gallery drag scroll ----
+      function initGalleryScroll() {
+        const track = document.getElementById('galleryTrack');
+        const progressBar = document.getElementById('galleryProgress');
+        if (!track || !progressBar) return;
+
+        // Progress bar update
+        track.addEventListener('scroll', () => {
+          const scrollLeft = track.scrollLeft;
+          const maxScroll = track.scrollWidth - track.clientWidth;
+          const pct = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
+          progressBar.style.width = Math.max(20, pct) + '%';
+        }, { passive: true });
+
+        // Drag to scroll
+        let isDragging = false;
+        let startX, scrollLeft;
+
+        track.addEventListener('mousedown', (e) => {
+          isDragging = true;
+          startX = e.pageX - track.offsetLeft;
+          scrollLeft = track.scrollLeft;
+          track.style.cursor = 'grabbing';
+        });
+        track.addEventListener('mouseleave', () => { isDragging = false; track.style.cursor = 'grab'; });
+        track.addEventListener('mouseup', () => { isDragging = false; track.style.cursor = 'grab'; });
+        track.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          e.preventDefault();
+          const x = e.pageX - track.offsetLeft;
+          const walk = (x - startX) * 1.5;
+          track.scrollLeft = scrollLeft - walk;
+        });
+      }
+      initGalleryScroll();
+
+      // ---- Smooth scroll ----
+      document.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+          const target = document.querySelector(link.getAttribute('href'));
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      // ---- Scroll indicator hide ----
+      const scrollInd = document.querySelector('.scroll-indicator');
+      if (scrollInd) {
+        window.addEventListener('scroll', () => {
+          scrollInd.style.opacity = window.scrollY > 200 ? '0' : '1';
+        }, { passive: true });
+      }
+
+      // ---- Mobile nav ----
+      const hamburger = document.querySelector('.nav-hamburger');
+      const mobileMenu = document.querySelector('.site-mobile-menu');
+      if (hamburger && mobileMenu) {
+        hamburger.addEventListener('click', () => {
+          const isOpen = hamburger.getAttribute('aria-expanded') === 'true';
+          hamburger.setAttribute('aria-expanded', !isOpen);
+          hamburger.classList.toggle('active');
+          mobileMenu.classList.toggle('active');
+        });
+      }
+
+      // ---- Footer toggles (mobile) ----
+      document.querySelectorAll('.footer-col-title button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.closest('.footer-col').classList.toggle('open');
+        });
+      });
+
+      // ---- Visibility API — pause animations ----
+      document.addEventListener('visibilitychange', () => {
+        const canvas = document.getElementById('waveCanvas');
+        if (canvas) {
+          canvas.style.animationPlayState = document.hidden ? 'paused' : 'running';
+        }
+      });
+
+      console.log('🌊 AXKAN Acapulco Historia initialized');
+    });
+  </script>
+
+</body>
+</html>
