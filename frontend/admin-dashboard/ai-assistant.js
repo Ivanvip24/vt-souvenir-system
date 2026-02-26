@@ -540,6 +540,8 @@ function handleAiAction(action) {
             closeAiChatModal();
             showOrderDetail(action.data.order.id);
         }
+    } else if (action.type === 'calculate_price') {
+        showPriceCalculation(action.data);
     } else if (action.type === 'generate_quote') {
         // Show quote result in chat
         showQuoteResult(action.data);
@@ -651,6 +653,93 @@ function showQuoteResult(data) {
     }
 
     addMessageToChat('assistant', html, { isHtml: true });
+}
+
+/**
+ * Show price calculation result in chat
+ */
+function showPriceCalculation(data) {
+    if (!data) return;
+
+    let html = '';
+
+    if (data.error) {
+        html = `
+            <div class="ai-quote-result" style="border-left: 3px solid #f39223;">
+                <div class="ai-quote-header">
+                    <span class="ai-quote-icon">⚠️</span>
+                    <div>
+                        <div class="ai-quote-title">Cálculo de Precio</div>
+                        <div class="ai-quote-number">${escapeHtml(data.error)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        const scenarioLabels = {
+            'below_moq': '📦 Pedido Especial (bajo mínimo)',
+            'standard': '📊 Precio Estándar',
+            'high_volume': '🏭 Volumen Alto'
+        };
+
+        const scenarioColors = {
+            'below_moq': '#f39223',
+            'standard': '#8ab73b',
+            'high_volume': '#09adc2'
+        };
+
+        const color = scenarioColors[data.scenario] || '#8ab73b';
+
+        html = `
+            <div class="ai-quote-result" style="border-left: 3px solid ${color};">
+                <div class="ai-quote-header">
+                    <span class="ai-quote-icon">🧮</span>
+                    <div>
+                        <div class="ai-quote-title">${scenarioLabels[data.scenario] || 'Cálculo de Precio'}</div>
+                        <div class="ai-quote-number">${escapeHtml(data.productName)} — ${data.quantity.toLocaleString('es-MX')} pzas</div>
+                    </div>
+                </div>
+
+                <div class="ai-quote-details">
+                    <div class="ai-quote-items" style="font-family: monospace; font-size: 0.85em;">
+                        ${(data.breakdown || []).map(line => {
+                            if (line === '---') {
+                                return '<hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 8px 0;">';
+                            }
+                            const isHighlight = line.includes('Precio final') || line.includes('Total pedido');
+                            return `<div style="${isHighlight ? 'font-weight: bold; color: ' + color + ';' : ''} padding: 2px 0;">${escapeHtml(line)}</div>`;
+                        }).join('')}
+                    </div>
+
+                    <div class="ai-quote-total">
+                        <span>PRECIO/PZA:</span>
+                        <span class="ai-quote-total-amount" style="color: ${color};">$${data.finalPrice?.toFixed(2) || '0.00'}</span>
+                    </div>
+
+                    <div class="ai-quote-total" style="font-size: 0.9em; opacity: 0.8;">
+                        <span>TOTAL PEDIDO:</span>
+                        <span>$${data.orderTotal?.toLocaleString('es-MX', { minimumFractionDigits: 2 }) || '0.00'}</span>
+                    </div>
+
+                    ${data.margin ? `
+                        <div style="text-align: center; margin-top: 8px; padding: 4px 8px; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.85em;">
+                            Margen: ${data.margin}% · Costo: $${data.totalCostPerPiece?.toFixed(2)}/pza
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // Append to last assistant message
+    const messages = document.querySelectorAll('.ai-chat-message.assistant');
+    if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        const contentDiv = lastMessage.querySelector('.ai-chat-message-content');
+        if (contentDiv) {
+            contentDiv.insertAdjacentHTML('beforeend', html);
+        }
+    }
 }
 
 /**
