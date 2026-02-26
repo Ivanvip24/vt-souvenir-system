@@ -1,0 +1,2066 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chignahuapan - Historia | AXKAN Souvenirs</title>
+  <meta name="description" content="Descubre Chignahuapan: la capital mundial de las esferas navideñas, hogar de ajolotes mágicos y Pueblo Mágico de Puebla. Souvenirs que despiertan el orgullo mexicano.">
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="../../assets/LOGO-01.png">
+
+  <!-- Shared Nav + Footer -->
+  <link rel="stylesheet" href="/shared-nav-footer.css">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Chignahuapan — Donde la Navidad Nunca Termina">
+  <meta property="og:description" content="Capital mundial de las esferas navideñas y hogar de ajolotes mágicos. AXKAN Souvenirs.">
+  <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Basilica_Chignahuapan.jpg/1920px-Basilica_Chignahuapan.jpg">
+  <meta property="og:type" content="website">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TouristDestination",
+    "name": "Chignahuapan",
+    "description": "Pueblo Mágico famoso por sus esferas navideñas artesanales y su laguna con ajolotes.",
+    "touristType": "Cultural",
+    "geo": {"@type": "GeoCoordinates", "latitude": 19.845, "longitude": -98.000},
+    "containedInPlace": {"@type": "State", "name": "Puebla, México"}
+  }
+  </script>
+
+  <style>
+    /* ============================================
+       CHIGNAHUAPAN HISTORIA
+       "Christmas Fever Dream meets Mexican Magic"
+       Self-contained — no shared historia.css
+       ============================================ */
+
+    @font-face {
+      font-family: 'RL AQVA';
+      src: url('../../fonts/rl-aqva-black.otf') format('opentype');
+      font-weight: 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      /* AXKAN */
+      --rosa: #e72a88;
+      --verde: #8ab73b;
+      --naranja: #f39223;
+      --turquesa: #09adc2;
+      --rojo: #e52421;
+      --oro: #D4A574;
+
+      /* Christmas extras */
+      --deep-green: #1a5c2a;
+      --christmas-red: #c0392b;
+      --gold: #FFD700;
+      --warm-gold: #f0c040;
+      --snow: #f0f4f8;
+      --night: #0c1a2e;
+      --night-deep: #060e1a;
+
+      /* Neutrals */
+      --white: #FFFFFF;
+      --off-white: #FAFAFA;
+      --gray-100: #F5F5F5;
+      --gray-500: #737373;
+      --gray-700: #404040;
+      --gray-900: #171717;
+
+      /* Typography */
+      --font-display: 'RL AQVA', 'Fredoka', sans-serif;
+      --font-heading: 'Fredoka', sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+
+      /* Animation */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--gray-900);
+      background: var(--white);
+      overflow-x: hidden;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+    a { text-decoration: none; color: inherit; }
+
+
+    /* ============================================
+       FALLING SPHERES — Background particles
+       ============================================ */
+    .sphere-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+      overflow: hidden;
+    }
+
+    .sphere {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0;
+      animation: sphereFall linear infinite;
+      /* Glossy sphere look */
+      background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.6), transparent 50%),
+                  radial-gradient(circle at 50% 50%, var(--sphere-color, var(--rojo)), transparent);
+      box-shadow: inset -2px -4px 8px rgba(0,0,0,0.2), 0 0 12px rgba(255,255,255,0.1);
+    }
+
+    @keyframes sphereFall {
+      0% {
+        opacity: 0;
+        transform: translateY(-60px) rotate(0deg) scale(0.5);
+      }
+      5% { opacity: var(--sphere-opacity, 0.7); transform: translateY(-30px) scale(1); }
+      90% { opacity: var(--sphere-opacity, 0.7); }
+      100% {
+        opacity: 0;
+        transform: translateY(calc(100vh + 60px)) rotate(360deg) scale(0.8);
+      }
+    }
+
+    /* Swinging ornament */
+    @keyframes ornamentSwing {
+      0%, 100% { transform: rotate(-8deg); }
+      50% { transform: rotate(8deg); }
+    }
+
+    @keyframes ornamentSwingWide {
+      0%, 100% { transform: rotate(-15deg); }
+      50% { transform: rotate(15deg); }
+    }
+
+
+    /* ============================================
+       REVEAL ANIMATIONS
+       ============================================ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+      transition-delay: var(--delay, 0s);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-60px);
+      transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+      transition-delay: var(--delay, 0s);
+    }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right {
+      opacity: 0;
+      transform: translateX(60px);
+      transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+      transition-delay: var(--delay, 0s);
+    }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+    .reveal-scale {
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-spring);
+      transition-delay: var(--delay, 0s);
+    }
+    .reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+    @keyframes glow {
+      0%, 100% { filter: drop-shadow(0 0 8px var(--glow-color, rgba(255,215,0,0.5))); }
+      50% { filter: drop-shadow(0 0 20px var(--glow-color, rgba(255,215,0,0.8))); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes drawSpiral {
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+    @keyframes starPulse {
+      0% { transform: scale(0) rotate(0deg); opacity: 0; }
+      50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+      100% { transform: scale(1) rotate(360deg); opacity: 1; }
+    }
+
+
+    /* ============================================
+       SECTION 1: HERO
+       ============================================ */
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+      overflow: hidden;
+      background: var(--night-deep);
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .hero-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.08);
+      transition: transform 10s ease-out;
+    }
+
+    .hero.loaded .hero-bg img { transform: scale(1); }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 120%, rgba(231,42,136,0.12) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(6,14,26,0.35) 0%, rgba(6,14,26,0.15) 30%, rgba(6,14,26,0.65) 100%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+      animation: fadeInUp 1.2s var(--ease-out) 0.3s both;
+    }
+
+    /* Pueblo Magico badge */
+    .pueblo-magico-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 20px;
+      border-radius: 50px;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.8s var(--ease-out) 0.6s both;
+    }
+
+    .pueblo-magico-badge img {
+      height: 28px;
+      width: auto;
+    }
+
+    .pueblo-magico-badge span {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--white);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    /* Caracol watermark */
+    .caracol-watermark {
+      position: absolute;
+      top: -80px;
+      right: -50px;
+      width: 180px;
+      height: 180px;
+      opacity: 0.4;
+    }
+
+    .spiral-path {
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
+      animation: drawSpiral 3s var(--ease-out) 1.2s forwards;
+    }
+
+    .destination-name {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 13vw, 6.5rem);
+      font-weight: 900;
+      line-height: 0.92;
+      letter-spacing: 0.02em;
+      color: var(--white);
+      margin-bottom: 1rem;
+      /* Christmas metallic shine */
+      background:
+        linear-gradient(
+          110deg,
+          transparent 0%, transparent 18%,
+          #FFD700 20%, #e72a88 24%, #8ab73b 28%, #e52421 32%, #FFD700 36%,
+          transparent 38%, transparent 100%
+        ),
+        linear-gradient(#FFFFFF, #FFFFFF);
+      background-size: 200% 100%, 100% 100%;
+      background-clip: text, text;
+      -webkit-background-clip: text, text;
+      -webkit-text-fill-color: transparent;
+      animation: metallicShine 3.5s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px rgba(255,215,0,0.3)) drop-shadow(0 4px 20px rgba(0,0,0,0.5));
+    }
+
+    @keyframes metallicShine {
+      0% { background-position: -50% 0, 0 0; }
+      100% { background-position: 150% 0, 0 0; }
+    }
+
+    .hero-tagline {
+      font-size: clamp(1.1rem, 4vw, 1.6rem);
+      color: var(--white);
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeInUp 0.8s var(--ease-out) 1.4s forwards;
+    }
+
+    .tagline-main { display: block; font-weight: 400; }
+    .tagline-twist {
+      display: block;
+      font-weight: 700;
+      font-style: italic;
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(255,215,0,0.4);
+    }
+
+    .hero-subtitle {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--white);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      text-shadow: 2px 2px 15px rgba(0,0,0,0.6);
+      opacity: 0;
+      animation: fadeInUp 0.8s var(--ease-out) 1.6s forwards;
+    }
+
+    /* Hanging ornaments in hero */
+    .hero-ornaments {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .hanging-ornament {
+      position: absolute;
+      top: -5px;
+      transform-origin: top center;
+    }
+
+    .ornament-string {
+      width: 1px;
+      background: rgba(255,255,255,0.3);
+      margin: 0 auto;
+    }
+
+    .ornament-ball {
+      width: var(--orn-size, 30px);
+      height: var(--orn-size, 30px);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.7), transparent 45%),
+        radial-gradient(circle at 50% 50%, var(--orn-color, var(--rojo)));
+      box-shadow:
+        inset -3px -5px 10px rgba(0,0,0,0.3),
+        0 0 20px var(--orn-glow, rgba(229,36,33,0.4));
+      position: relative;
+    }
+
+    .ornament-ball::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 6px;
+      background: var(--oro);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--white);
+      z-index: 2;
+      opacity: 0;
+      animation: fadeInUp 0.8s var(--ease-out) 2s forwards;
+    }
+
+    .scroll-text {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.6;
+    }
+
+    .scroll-arrow { animation: bounce 2s infinite; }
+    .scroll-arrow svg { width: 24px; height: 24px; }
+
+
+    /* ============================================
+       SECTION 2: FUN FACTS / TWIST
+       ============================================ */
+    .funfacts {
+      padding: 5rem 2rem;
+      background:
+        radial-gradient(ellipse at 30% 0%, rgba(26,92,42,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 100%, rgba(231,42,136,0.05) 0%, transparent 50%),
+        var(--off-white);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .funfacts-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .funfacts-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-eyebrow {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--rosa);
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title strong { color: var(--rosa); }
+
+    .section-subtitle {
+      font-size: 1rem;
+      color: var(--gray-500);
+    }
+
+    /* Stat cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.4s var(--ease-out);
+    }
+
+    .stat-card:hover { transform: translateY(-6px); }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--stat-accent, var(--rosa));
+    }
+
+    .stat-ornament {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      animation: ornamentSwing 3s ease-in-out infinite;
+      transform-origin: top center;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.5), transparent 50%),
+        radial-gradient(circle at 50% 50%, var(--stat-accent, var(--rojo)));
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    .stat-ornament::before {
+      content: '';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 12px;
+      background: var(--gray-500);
+    }
+
+    .stat-ornament::after {
+      content: '';
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 7px;
+      background: var(--oro);
+      border-radius: 3px 3px 0 0;
+    }
+
+    .stat-number {
+      font-family: var(--font-heading);
+      font-size: clamp(2.2rem, 6vw, 3rem);
+      font-weight: 700;
+      color: var(--gray-900);
+      line-height: 1.1;
+    }
+
+    .stat-unit {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-desc {
+      font-size: 0.9rem;
+      color: var(--gray-700);
+      margin-top: 0.5rem;
+    }
+
+    /* Fun fact cards */
+    .funfact-cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .funfact-card {
+      display: flex;
+      gap: 1.2rem;
+      align-items: flex-start;
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      transition: transform 0.3s var(--ease-out);
+    }
+
+    .funfact-card:hover { transform: translateX(6px); }
+
+    .funfact-icon {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      background: var(--icon-bg, rgba(231,42,136,0.1));
+    }
+
+    .funfact-text h3 {
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .funfact-text p {
+      font-size: 0.88rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+    }
+
+
+    /* ============================================
+       SECTION 3: THE AXOLOTL
+       ============================================ */
+    .axolotl-section {
+      position: relative;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 2rem;
+      overflow: hidden;
+      background: var(--night-deep);
+    }
+
+    .axolotl-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .axolotl-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .axolotl-bg-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 80%, rgba(9,173,194,0.15) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(6,14,26,0.85) 0%, rgba(6,14,26,0.6) 40%, rgba(6,14,26,0.9) 100%);
+    }
+
+    .axolotl-content {
+      position: relative;
+      z-index: 2;
+      max-width: 650px;
+      text-align: center;
+      color: var(--white);
+    }
+
+    .axolotl-label {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--turquesa);
+      margin-bottom: 1rem;
+    }
+
+    .axolotl-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5rem, 10vw, 4rem);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+    }
+
+    .axolotl-story {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      margin-bottom: 2rem;
+      opacity: 0.95;
+    }
+
+    .axolotl-story strong { color: var(--turquesa); }
+
+    .axolotl-facts {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .axolotl-fact {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      background: rgba(9,173,194,0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(9,173,194,0.2);
+      padding: 1.2rem;
+      border-radius: 14px;
+      text-align: left;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .axolotl-fact-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    /* Swimming axolotls */
+    .swimming-axolotls {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .swimming-axolotl {
+      position: absolute;
+      font-size: var(--axo-size, 2rem);
+      opacity: 0;
+      animation: swimAcross var(--swim-dur, 18s) linear infinite;
+      animation-delay: var(--swim-delay, 0s);
+    }
+
+    @keyframes swimAcross {
+      0% {
+        opacity: 0;
+        transform: translateX(-80px) translateY(0) scaleX(-1);
+      }
+      5% { opacity: var(--axo-opacity, 0.4); }
+      45% { transform: translateX(calc(50vw - 40px)) translateY(-20px) scaleX(-1); }
+      55% { transform: translateX(calc(50vw + 40px)) translateY(10px) scaleX(-1); }
+      90% { opacity: var(--axo-opacity, 0.4); }
+      100% {
+        opacity: 0;
+        transform: translateX(calc(100vw + 80px)) translateY(-5px) scaleX(-1);
+      }
+    }
+
+    /* Bubble particles */
+    .water-bubbles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .water-bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.3), rgba(9,173,194,0.1));
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: bubbleRise var(--bub-dur, 6s) ease-in infinite;
+      animation-delay: var(--bub-delay, 0s);
+      opacity: 0;
+    }
+
+    @keyframes bubbleRise {
+      0% { opacity: 0; transform: translateY(0) scale(0.5); }
+      10% { opacity: 0.6; }
+      80% { opacity: 0.3; }
+      100% { opacity: 0; transform: translateY(-200px) scale(1.2); }
+    }
+
+
+    /* ============================================
+       SECTION 4: PHOTO GALLERY
+       ============================================ */
+    .gallery {
+      padding: 5rem 0;
+      background: var(--white);
+      overflow: hidden;
+    }
+
+    .gallery-header {
+      text-align: center;
+      padding: 0 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .gallery-header h2 {
+      font-family: var(--font-heading);
+      font-size: clamp(1.8rem, 5vw, 2.4rem);
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.5rem;
+    }
+
+    .gallery-header p {
+      font-size: 0.9rem;
+      color: var(--gray-500);
+    }
+
+    .gallery-track {
+      display: flex;
+      gap: 1.2rem;
+      padding: 0 2rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      cursor: grab;
+    }
+
+    .gallery-track::-webkit-scrollbar { display: none; }
+
+    .gallery-item {
+      flex: 0 0 82%;
+      scroll-snap-align: center;
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 12px 45px rgba(0,0,0,0.12);
+    }
+
+    .gallery-item img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      transition: transform 0.6s var(--ease-out);
+    }
+
+    .gallery-item:hover img { transform: scale(1.05); }
+
+    .gallery-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 3rem 1.2rem 1.2rem;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      color: var(--white);
+    }
+
+    .caption-title {
+      display: block;
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .caption-desc {
+      font-size: 0.82rem;
+      opacity: 0.8;
+    }
+
+    .gallery-progress {
+      margin-top: 1.2rem;
+      padding: 0 2rem;
+    }
+
+    .progress-bar {
+      height: 3px;
+      background: var(--gray-100);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: var(--progress-width, 20%);
+      background: linear-gradient(90deg, var(--rosa), var(--rojo));
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+
+    /* ============================================
+       SECTION 5: REVIEWS
+       ============================================ */
+    .reviews {
+      padding: 5rem 2rem;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(255,215,0,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 50%, rgba(231,42,136,0.04) 0%, transparent 50%),
+        var(--off-white);
+      overflow: hidden;
+    }
+
+    .reviews-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .overall-rating {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      background: var(--white);
+      padding: 0.8rem 1.5rem;
+      border-radius: 50px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      margin-top: 1rem;
+    }
+
+    .rating-number {
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .rating-stars {
+      display: flex;
+      gap: 2px;
+      color: var(--warm-gold);
+      font-size: 1.1rem;
+    }
+
+    .rating-count {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+    }
+
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .review-card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.06);
+      position: relative;
+      transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+    }
+
+    .review-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 45px rgba(0,0,0,0.1);
+    }
+
+    .review-card::before {
+      content: '\201C';
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      font-family: Georgia, serif;
+      font-size: 4rem;
+      color: var(--rosa);
+      opacity: 0.12;
+      line-height: 1;
+    }
+
+    .review-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .review-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+
+    .review-meta { flex: 1; }
+
+    .review-name {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--gray-900);
+    }
+
+    .review-date {
+      font-size: 0.78rem;
+      color: var(--gray-500);
+    }
+
+    .review-stars {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 0.8rem;
+    }
+
+    .review-star {
+      color: var(--warm-gold);
+      font-size: 0.9rem;
+    }
+
+    .review-text {
+      font-size: 0.95rem;
+      color: var(--gray-700);
+      line-height: 1.7;
+    }
+
+    .review-tag {
+      display: inline-block;
+      margin-top: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--tag-bg, rgba(231,42,136,0.1));
+      color: var(--tag-color, var(--rosa));
+    }
+
+
+    /* ============================================
+       SECTION 6: PRODUCTS
+       ============================================ */
+    .products {
+      padding: 5rem 2rem;
+      background: var(--white);
+      position: relative;
+    }
+
+    .products-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .products-label {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--rosa);
+      margin-bottom: 0.5rem;
+    }
+
+    .products-header h2 {
+      font-family: var(--font-heading);
+      font-size: clamp(1.8rem, 5vw, 2.4rem);
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.5rem;
+    }
+
+    .products-header p {
+      font-size: 1rem;
+      color: var(--gray-500);
+      font-style: italic;
+    }
+
+    .products-carousel {
+      display: flex;
+      gap: 1.2rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 1rem;
+      scrollbar-width: none;
+      cursor: grab;
+    }
+
+    .products-carousel::-webkit-scrollbar { display: none; }
+
+    .product-card {
+      flex: 0 0 72%;
+      scroll-snap-align: center;
+      background: var(--off-white);
+      border-radius: 18px;
+      overflow: hidden;
+      transition: transform 0.3s var(--ease-out);
+    }
+
+    .product-card:hover { transform: translateY(-5px); }
+
+    .product-image {
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, #f5f0eb 0%, #ede5db 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 0.4s var(--ease-out);
+    }
+
+    .product-card:hover .product-image img { transform: scale(1.06); }
+
+    .product-info {
+      padding: 1.2rem;
+    }
+
+    .product-info h3 {
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .product-desc {
+      font-size: 0.82rem;
+      color: var(--gray-500);
+      margin-bottom: 0.8rem;
+    }
+
+    .product-price {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--rosa);
+    }
+
+    .products-cta {
+      text-align: center;
+      margin-top: 3rem;
+    }
+
+    .cta-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      background: #25D366;
+      color: var(--white);
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 8px 30px rgba(37,211,102,0.35);
+      transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+    }
+
+    .cta-whatsapp:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 45px rgba(37,211,102,0.45);
+    }
+
+    .whatsapp-icon { width: 24px; height: 24px; }
+
+
+    /* ============================================
+       RESPONSIVE: TABLET (768px+)
+       ============================================ */
+    @media (min-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .funfact-cards { grid-template-columns: repeat(2, 1fr); }
+      .axolotl-facts { grid-template-columns: repeat(2, 1fr); }
+      .gallery-item { flex: 0 0 48%; }
+      .reviews-grid { grid-template-columns: repeat(2, 1fr); }
+      .product-card { flex: 0 0 38%; }
+      .hero-subtitle { font-size: 2.5rem; }
+    }
+
+    /* ============================================
+       RESPONSIVE: DESKTOP (1024px+)
+       ============================================ */
+    @media (min-width: 1024px) {
+      .hero-content { max-width: 850px; }
+      .gallery-item { flex: 0 0 38%; }
+      .product-card { flex: 0 0 28%; }
+    }
+
+    /* ============================================
+       REDUCED MOTION
+       ============================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+      .sphere-canvas, .swimming-axolotls, .water-bubbles, .hero-ornaments { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================
+       FALLING SPHERES (Global background)
+       ============================================ -->
+  <div class="sphere-canvas" id="sphereCanvas" aria-hidden="true"></div>
+
+
+  <!-- ============================================
+       SHARED NAVIGATION
+       ============================================ -->
+  <nav class="site-nav">
+    <a href="/" class="nav-logo-link">
+      <img src="/assets/LOGO-03.png" alt="AXKAN" class="nav-logo">
+    </a>
+    <ul class="nav-links">
+      <li><a href="/productos">Productos</a></li>
+      <li><a href="/#calidad">Calidad</a></li>
+      <li><a href="/diseños">Diseños</a></li>
+      <li><a href="/#mayoreo">Mayoreo</a></li>
+      <li><a href="/envio">Envío</a></li>
+      <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
+    </ul>
+    <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="site-mobile-menu" aria-hidden="true">
+    <a href="/productos">Productos</a>
+    <a href="/#calidad">Calidad</a>
+    <a href="/diseños">Diseños</a>
+    <a href="/#mayoreo">Mayoreo</a>
+    <a href="/envio">Envío</a>
+    <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
+  </div>
+
+
+  <!-- ============================================
+       SECTION 1: HERO
+       ============================================ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <img
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Basilica_Chignahuapan.jpg/1920px-Basilica_Chignahuapan.jpg"
+        alt="Basílica de la Inmaculada Concepción, Chignahuapan - Foto real"
+        loading="eager"
+      >
+      <div class="hero-overlay"></div>
+    </div>
+
+    <!-- Hanging ornaments -->
+    <div class="hero-ornaments" id="heroOrnaments" aria-hidden="true"></div>
+
+    <div class="hero-content">
+      <svg class="caracol-watermark" viewBox="0 0 100 100" fill="none">
+        <path d="M50 10 C70 10 90 30 90 50 C90 70 70 90 50 90 C30 90 10 70 10 50 C10 35 25 20 40 20 C55 20 70 35 70 50 C70 60 60 70 50 70 C40 70 30 60 30 50 C30 42 38 35 46 35 C54 35 60 42 60 50"
+              stroke="rgba(255,215,0,0.2)"
+              stroke-width="2"
+              fill="none"
+              class="spiral-path"/>
+      </svg>
+
+      <div class="pueblo-magico-badge">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Pueblos_M%C3%A1gicos_Oficial.svg/200px-Pueblos_M%C3%A1gicos_Oficial.svg.png" alt="Pueblo Mágico" onerror="this.style.display='none'">
+        <span>Pueblo Mágico</span>
+      </div>
+
+      <h1 class="destination-name">CHIGNA<br>HUAPAN</h1>
+
+      <p class="hero-tagline">
+        <span class="tagline-main">Donde la Navidad</span>
+        <span class="tagline-twist">nunca termina...</span>
+      </p>
+
+      <p class="hero-subtitle">Puebla, México</p>
+    </div>
+
+    <a href="#funfacts" class="scroll-indicator">
+      <span class="scroll-text">Descubre más</span>
+      <div class="scroll-arrow">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </a>
+  </section>
+
+
+  <!-- ============================================
+       SECTION 2: FUN FACTS
+       ============================================ -->
+  <section class="funfacts" id="funfacts">
+    <div class="funfacts-container">
+      <div class="funfacts-header reveal">
+        <span class="section-eyebrow">¿Sabías que...?</span>
+        <h2 class="section-title">La Capital Mundial de las <strong>Esferas Navideñas</strong></h2>
+        <p class="section-subtitle">Chignahuapan produce la mayoría de las esferas navideñas artesanales de México</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card reveal-scale" style="--delay: 0.1s; --stat-accent: var(--rojo)">
+          <div class="stat-ornament" style="--stat-accent: var(--rojo)">
+            <span style="position:relative;z-index:1;font-size:1.2rem">&#127877;</span>
+          </div>
+          <div class="stat-number"><span data-target="70">0</span>M+</div>
+          <div class="stat-unit">esferas al año</div>
+          <p class="stat-desc">Más de 70 millones de esferas producidas artesanalmente cada año</p>
+        </div>
+
+        <div class="stat-card reveal-scale" style="--delay: 0.25s; --stat-accent: var(--verde)">
+          <div class="stat-ornament" style="--stat-accent: var(--deep-green)">
+            <span style="position:relative;z-index:1;font-size:1.2rem">&#127981;</span>
+          </div>
+          <div class="stat-number"><span data-target="400">0</span>+</div>
+          <div class="stat-unit">talleres artesanales</div>
+          <p class="stat-desc">Más de 400 familias dedicadas a la tradición esferera desde los años 60</p>
+        </div>
+
+        <div class="stat-card reveal-scale" style="--delay: 0.4s; --stat-accent: var(--naranja)">
+          <div class="stat-ornament" style="--stat-accent: var(--naranja)">
+            <span style="position:relative;z-index:1;font-size:1.2rem">&#127775;</span>
+          </div>
+          <div class="stat-number"><span data-target="2009">0</span></div>
+          <div class="stat-unit">Pueblo Mágico desde</div>
+          <p class="stat-desc">Designado Pueblo Mágico por su riqueza cultural y tradición artesanal</p>
+        </div>
+      </div>
+
+      <div class="funfact-cards">
+        <div class="funfact-card reveal-left" style="--delay: 0.1s">
+          <div class="funfact-icon" style="--icon-bg: rgba(229,36,33,0.1)">&#127882;</div>
+          <div class="funfact-text">
+            <h3>La Feria Nacional de la Esfera</h3>
+            <p>Cada octubre-noviembre, Chignahuapan se transforma en un pueblo navideño con la feria más grande de esferas de México. Miles de visitantes llegan a admirar y comprar esferas únicas hechas a mano.</p>
+          </div>
+        </div>
+
+        <div class="funfact-card reveal-right" style="--delay: 0.2s">
+          <div class="funfact-icon" style="--icon-bg: rgba(9,173,194,0.1)">&#128167;</div>
+          <div class="funfact-text">
+            <h3>Aguas Termales Naturales</h3>
+            <p>Sus aguas termales de origen volcánico alcanzan hasta 50°C. Los manantiales han sido sagrados para los pueblos originarios durante siglos.</p>
+          </div>
+        </div>
+
+        <div class="funfact-card reveal-left" style="--delay: 0.3s">
+          <div class="funfact-icon" style="--icon-bg: rgba(231,42,136,0.1)">&#9962;</div>
+          <div class="funfact-text">
+            <h3>La Virgen Inmaculada más Grande</h3>
+            <p>La escultura de la Virgen Inmaculada Concepción, de 12 metros de altura, es visible desde cualquier punto del pueblo y está tallada en madera de cedro.</p>
+          </div>
+        </div>
+
+        <div class="funfact-card reveal-right" style="--delay: 0.4s">
+          <div class="funfact-icon" style="--icon-bg: rgba(138,183,59,0.1)">&#127956;</div>
+          <div class="funfact-text">
+            <h3>Sierra Norte de Puebla</h3>
+            <p>Enclavado a 2,280 metros de altitud en la Sierra Norte, Chignahuapan ofrece bosques de pino, neblina mística y un clima fresco que invita a chocolate caliente todo el año.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       SECTION 3: THE AXOLOTL
+       ============================================ -->
+  <section class="axolotl-section" id="axolotl">
+    <div class="axolotl-bg">
+      <img
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Laguna_de_Chignahuapan%2C_Puebla%2C_M%C3%A9xico%2C_2013-10-11%2C_DD_01.JPG/1280px-Laguna_de_Chignahuapan%2C_Puebla%2C_M%C3%A9xico%2C_2013-10-11%2C_DD_01.JPG"
+        alt="Laguna de Chignahuapan"
+        loading="lazy"
+      >
+      <div class="axolotl-bg-overlay"></div>
+    </div>
+
+    <!-- Swimming axolotls -->
+    <div class="swimming-axolotls" id="swimmingAxolotls" aria-hidden="true">
+      <div class="swimming-axolotl" style="--swim-dur: 22s; --swim-delay: 0s; --axo-size: 2.5rem; --axo-opacity: 0.35; top: 20%">&#129434;</div>
+      <div class="swimming-axolotl" style="--swim-dur: 28s; --swim-delay: 5s; --axo-size: 1.8rem; --axo-opacity: 0.25; top: 60%">&#129434;</div>
+      <div class="swimming-axolotl" style="--swim-dur: 18s; --swim-delay: 10s; --axo-size: 3rem; --axo-opacity: 0.3; top: 40%">&#129434;</div>
+      <div class="swimming-axolotl" style="--swim-dur: 25s; --swim-delay: 3s; --axo-size: 2rem; --axo-opacity: 0.2; top: 75%">&#129434;</div>
+      <div class="swimming-axolotl" style="--swim-dur: 20s; --swim-delay: 8s; --axo-size: 2.2rem; --axo-opacity: 0.3; top: 30%">&#129434;</div>
+    </div>
+
+    <!-- Water bubbles -->
+    <div class="water-bubbles" id="waterBubbles" aria-hidden="true">
+      <div class="water-bubble" style="width:8px;height:8px;left:15%;bottom:10%;--bub-dur:5s;--bub-delay:0s"></div>
+      <div class="water-bubble" style="width:5px;height:5px;left:35%;bottom:5%;--bub-dur:7s;--bub-delay:1s"></div>
+      <div class="water-bubble" style="width:10px;height:10px;left:55%;bottom:15%;--bub-dur:6s;--bub-delay:2s"></div>
+      <div class="water-bubble" style="width:6px;height:6px;left:70%;bottom:8%;--bub-dur:8s;--bub-delay:0.5s"></div>
+      <div class="water-bubble" style="width:7px;height:7px;left:85%;bottom:12%;--bub-dur:5.5s;--bub-delay:3s"></div>
+      <div class="water-bubble" style="width:4px;height:4px;left:25%;bottom:20%;--bub-dur:9s;--bub-delay:1.5s"></div>
+      <div class="water-bubble" style="width:9px;height:9px;left:45%;bottom:7%;--bub-dur:6.5s;--bub-delay:4s"></div>
+      <div class="water-bubble" style="width:5px;height:5px;left:62%;bottom:18%;--bub-dur:7.5s;--bub-delay:2.5s"></div>
+    </div>
+
+    <div class="axolotl-content">
+      <span class="axolotl-label reveal">Guardián de la Laguna</span>
+      <h2 class="axolotl-title reveal" style="--delay: 0.15s">El Ajolote</h2>
+      <p class="axolotl-story reveal" style="--delay: 0.3s">
+        En la <strong>Laguna de Chignahuapan</strong>, una de las más grandes de Puebla,
+        habita una criatura que los mexicas consideraban divina: el ajolote.
+        Asociado con <strong>Xólotl</strong>, el dios gemelo de Quetzalcóatl,
+        este anfibio tiene el poder de regenerar sus propias extremidades, corazón y cerebro.
+      </p>
+
+      <div class="axolotl-facts">
+        <div class="axolotl-fact reveal-left" style="--delay: 0.4s">
+          <span class="axolotl-fact-icon">&#129434;</span>
+          <span>El ajolote puede <strong>regenerar</strong> extremidades completas, incluyendo partes de su cerebro y corazón — un superpoder que la ciencia moderna aún estudia.</span>
+        </div>
+        <div class="axolotl-fact reveal-right" style="--delay: 0.5s">
+          <span class="axolotl-fact-icon">&#127758;</span>
+          <span>Es <strong>endémico de México</strong> y está en peligro crítico de extinción. Chignahuapan alberga poblaciones silvestres en su laguna de aguas cristalinas.</span>
+        </div>
+        <div class="axolotl-fact reveal-left" style="--delay: 0.6s">
+          <span class="axolotl-fact-icon">&#10024;</span>
+          <span>Su nombre náhuatl <strong>"axolotl"</strong> significa "monstruo de agua" — pero para los mexicas, era la forma acuática del dios Xólotl que se escondió para no ser sacrificado.</span>
+        </div>
+        <div class="axolotl-fact reveal-right" style="--delay: 0.7s">
+          <span class="axolotl-fact-icon">&#128150;</span>
+          <span>El ajolote nunca crece — permanece en estado larvario toda su vida. Es el <strong>Peter Pan del reino animal</strong>: eternamente joven.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       SECTION 4: PHOTO GALLERY
+       ============================================ -->
+  <section class="gallery" id="gallery">
+    <div class="gallery-header reveal">
+      <h2>El Viaje Visual</h2>
+      <p>Desliza para explorar Chignahuapan</p>
+    </div>
+
+    <div class="gallery-track" id="galleryTrack">
+      <div class="gallery-item">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Detalle_Fachada_Parroquia_de_Santiago_Ap%C3%B3stol%2C_Chignahuapan%2C_Puebla.jpg/800px-Detalle_Fachada_Parroquia_de_Santiago_Ap%C3%B3stol%2C_Chignahuapan%2C_Puebla.jpg" alt="Parroquia de Santiago Apóstol, Chignahuapan" loading="lazy">
+        <div class="gallery-caption">
+          <span class="caption-title">Parroquia de Santiago Apóstol</span>
+          <span class="caption-desc">El corazón del pueblo, donde todo comienza</span>
+        </div>
+      </div>
+
+      <div class="gallery-item">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Murales_en_Laguna_de_Chignahuapan%2C_Puebla_01.jpg/800px-Murales_en_Laguna_de_Chignahuapan%2C_Puebla_01.jpg" alt="Laguna de Chignahuapan" loading="lazy">
+        <div class="gallery-caption">
+          <span class="caption-title">La Laguna</span>
+          <span class="caption-desc">Aguas cristalinas y hogar de los ajolotes</span>
+        </div>
+      </div>
+
+      <div class="gallery-item">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Chignahuapan_Kiosco.JPG/800px-Chignahuapan_Kiosco.JPG" alt="Kiosco de Chignahuapan" loading="lazy">
+        <div class="gallery-caption">
+          <span class="caption-title">El Kiosco</span>
+          <span class="caption-desc">Punto de encuentro en el zócalo del pueblo</span>
+        </div>
+      </div>
+
+      <div class="gallery-item">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Inmaculada_Concepcion_de_Chignahuapan.jpg/800px-Inmaculada_Concepcion_de_Chignahuapan.jpg" alt="Virgen Inmaculada Concepción de Chignahuapan" loading="lazy">
+        <div class="gallery-caption">
+          <span class="caption-title">Virgen Inmaculada</span>
+          <span class="caption-desc">12 metros tallados en cedro — visible desde todo el pueblo</span>
+        </div>
+      </div>
+
+      <div class="gallery-item">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Esferas_navide%C3%B1as_de_Chignahuapan%2C_Puebla.jpg/800px-Esferas_navide%C3%B1as_de_Chignahuapan%2C_Puebla.jpg" alt="Esferas navideñas artesanales de Chignahuapan" loading="lazy">
+        <div class="gallery-caption">
+          <span class="caption-title">Talleres de Esferas</span>
+          <span class="caption-desc">70 millones de esferas al año, todas hechas a mano</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="gallery-progress">
+      <div class="progress-bar" id="galleryProgress"></div>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       SECTION 5: REVIEWS
+       ============================================ -->
+  <section class="reviews" id="reviews">
+    <div class="reviews-header">
+      <span class="section-eyebrow reveal">Lo que dicen los visitantes</span>
+      <h2 class="section-title reveal" style="--delay: 0.1s">Chignahuapan <strong>enamora</strong></h2>
+
+      <div class="overall-rating reveal-scale" style="--delay: 0.2s">
+        <span class="rating-number">4.8</span>
+        <div>
+          <div class="rating-stars">
+            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+          </div>
+          <span class="rating-count">Basado en experiencias reales</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="reviews-grid">
+      <div class="review-card reveal-left" style="--delay: 0.1s">
+        <div class="review-header">
+          <div class="review-avatar" style="background: linear-gradient(135deg, var(--rojo), var(--rosa))">MR</div>
+          <div class="review-meta">
+            <div class="review-name">María Rodríguez</div>
+            <div class="review-date">Diciembre 2025</div>
+          </div>
+        </div>
+        <div class="review-stars">
+          <span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span>
+        </div>
+        <p class="review-text">Entrar a los talleres de esferas fue como entrar a un mundo mágico. Ver cómo soplan el vidrio y pintan cada esfera a mano... mis hijos no querían irse. Compramos esferas para toda la familia y unos imanes de recuerdo que me encantan.</p>
+        <span class="review-tag" style="--tag-bg: rgba(229,36,33,0.1); --tag-color: var(--rojo)">Esferas</span>
+      </div>
+
+      <div class="review-card reveal-right" style="--delay: 0.2s">
+        <div class="review-header">
+          <div class="review-avatar" style="background: linear-gradient(135deg, var(--turquesa), var(--verde))">CG</div>
+          <div class="review-meta">
+            <div class="review-name">Carlos García</div>
+            <div class="review-date">Noviembre 2025</div>
+          </div>
+        </div>
+        <div class="review-stars">
+          <span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span>
+        </div>
+        <p class="review-text">Fuimos a la Feria de la Esfera y fue una experiencia increíble. El pueblo entero se llena de luz y color. Los ajolotes en la laguna son impresionantes — no sabía que podías verlos en estado silvestre. Definitivamente volvemos el próximo año.</p>
+        <span class="review-tag" style="--tag-bg: rgba(9,173,194,0.1); --tag-color: var(--turquesa)">Ajolotes</span>
+      </div>
+
+      <div class="review-card reveal-left" style="--delay: 0.3s">
+        <div class="review-header">
+          <div class="review-avatar" style="background: linear-gradient(135deg, var(--naranja), var(--warm-gold))">LP</div>
+          <div class="review-meta">
+            <div class="review-name">Laura Pérez</div>
+            <div class="review-date">Enero 2026</div>
+          </div>
+        </div>
+        <div class="review-stars">
+          <span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star" style="opacity:0.3">&#9733;</span>
+        </div>
+        <p class="review-text">Las aguas termales son una maravilla después de caminar por el pueblo. El clima fresco de la sierra te abraza. Lo mejor fue el chocolate caliente artesanal y la amabilidad de su gente. Un pueblo que se siente como un abrazo navideño.</p>
+        <span class="review-tag" style="--tag-bg: rgba(243,146,35,0.1); --tag-color: var(--naranja)">Aguas Termales</span>
+      </div>
+
+      <div class="review-card reveal-right" style="--delay: 0.4s">
+        <div class="review-header">
+          <div class="review-avatar" style="background: linear-gradient(135deg, var(--verde), var(--deep-green))">JM</div>
+          <div class="review-meta">
+            <div class="review-name">Javier Mendoza</div>
+            <div class="review-date">Octubre 2025</div>
+          </div>
+        </div>
+        <div class="review-stars">
+          <span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span>
+        </div>
+        <p class="review-text">Soy fotógrafo y Chignahuapan es un paraíso visual. La Virgen Inmaculada al atardecer, los colores de las esferas en los talleres, la neblina sobre la laguna... Cada esquina es una postal. Le compré a mi esposa unos llaveros de AXKAN y le encantaron.</p>
+        <span class="review-tag" style="--tag-bg: rgba(138,183,59,0.1); --tag-color: var(--verde)">Sierra Norte</span>
+      </div>
+
+      <div class="review-card reveal-scale" style="--delay: 0.5s; grid-column: 1 / -1">
+        <div class="review-header">
+          <div class="review-avatar" style="background: linear-gradient(135deg, var(--rosa), #aa1e6b)">AF</div>
+          <div class="review-meta">
+            <div class="review-name">Ana Flores</div>
+            <div class="review-date">Diciembre 2025</div>
+          </div>
+        </div>
+        <div class="review-stars">
+          <span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span><span class="review-star">&#9733;</span>
+        </div>
+        <p class="review-text">Llevo a mi familia cada Navidad y no nos cansamos. Este año descubrimos un taller donde te dejan pintar tu propia esfera — la mejor actividad para niños. Chignahuapan no es solo un destino, es una tradición familiar. Siempre compramos souvenirs para regalar a los que no pudieron venir.</p>
+        <span class="review-tag">Tradición Familiar</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       SECTION 6: PRODUCTS
+       ============================================ -->
+  <section class="products" id="products">
+    <div class="products-header reveal">
+      <span class="products-label">AXKAN Souvenirs</span>
+      <h2>Lleva la magia navideña contigo</h2>
+      <p>Cada vez que lo veas, volverás a sentir Chignahuapan</p>
+    </div>
+
+    <div class="products-carousel" id="productsCarousel">
+      <div class="product-card reveal" style="--delay: 0.1s">
+        <div class="product-image">
+          <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/AXOLOTESBAJOELAGUAANIMADOS.png?v=1740783456" alt="Imán Ajolotes Chignahuapan - AXKAN" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h3>Imán Ajolotes</h3>
+          <p class="product-desc">Diseño animado, corte láser en MDF</p>
+          <span class="product-price">$49 MXN</span>
+        </div>
+      </div>
+
+      <div class="product-card reveal" style="--delay: 0.2s">
+        <div class="product-image">
+          <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/ARBOLDENAVIDADMASMUCHASESFERAS.png?v=1740783456" alt="Imán Árbol Navidad Esferas - AXKAN" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h3>Imán Árbol Navideño</h3>
+          <p class="product-desc">Esferas artesanales, acabado premium</p>
+          <span class="product-price">$49 MXN</span>
+        </div>
+      </div>
+
+      <div class="product-card reveal" style="--delay: 0.3s">
+        <div class="product-image">
+          <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IGLESIAVIRGENYKIOSKOCONPLANTITAS.png?v=1740783456" alt="Imán Iglesia Kiosco Chignahuapan - AXKAN" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h3>Imán Iglesia y Kiosco</h3>
+          <p class="product-desc">Vista panorámica del pueblo</p>
+          <span class="product-price">$49 MXN</span>
+        </div>
+      </div>
+
+      <div class="product-card reveal" style="--delay: 0.4s">
+        <div class="product-image">
+          <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/CAPULINAANIMADO.png?v=1740783456" alt="Imán Capulina Chignahuapan - AXKAN" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h3>Imán Capulina</h3>
+          <p class="product-desc">Diseño animado exclusivo</p>
+          <span class="product-price">$49 MXN</span>
+        </div>
+      </div>
+
+      <div class="product-card reveal" style="--delay: 0.5s">
+        <div class="product-image">
+          <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMAN_CHIGNAHUAPAN_ALARGADO_QUETZALCOATL_PIRAMIDE_AXOLOTE_CHAQUIRA.png?v=1755194020" alt="Imán Quetzalcoatl Ajolote Chignahuapan - AXKAN" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h3>Imán Quetzalcóatl & Ajolote</h3>
+          <p class="product-desc">Diseño alargado con chaquira</p>
+          <span class="product-price">$59 MXN</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="products-cta reveal">
+      <a href="https://wa.me/5215538253251?text=Hola!%20Vi%20los%20souvenirs%20de%20Chignahuapan%20y%20me%20interesan"
+         class="cta-whatsapp"
+         target="_blank">
+        <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        <span>Pedir por WhatsApp</span>
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ============================================
+       SHARED FOOTER
+       ============================================ -->
+  <footer class="site-footer">
+    <div class="site-footer-content">
+      <div class="site-footer-brand">
+        <img src="/assets/LETTERS.png" alt="AXKAN" style="height:40px;width:auto;">
+        <p>Souvenirs premium que capturan la esencia de México. Diseñado y producido con orgullo en México.</p>
+        <div class="site-footer-social">
+          <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
+          <a href="https://www.tiktok.com/@axkan_oficial" target="_blank" aria-label="TikTok"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.98a8.18 8.18 0 004.76 1.52V7.05a4.84 4.84 0 01-1-.36z"/></svg></a>
+          <a href="https://www.facebook.com/AxkanOficial" target="_blank" aria-label="Facebook"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+          <a href="https://wa.me/525538253251" target="_blank" aria-label="WhatsApp"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          <a href="https://www.youtube.com/@AxkanOficial" target="_blank" aria-label="YouTube"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+        </div>
+      </div>
+
+      <div class="site-footer-mega">
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Productos</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/productos/imanes-mdf">Imanes MDF</a></li>
+            <li><a href="/productos/llaveros-mdf">Llaveros MDF</a></li>
+            <li><a href="/productos/portallaves-mdf">Portallaves</a></li>
+            <li><a href="/productos/destapadores-mdf">Destapadores</a></li>
+            <li><a href="/productos/portarretratos-mdf">Portarretratos</a></li>
+            <li><a href="/productos" class="site-footer-see-all">Ver Todos →</a></li>
+          </ul>
+        </div>
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Diseños</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/diseños">Catálogo de Diseños</a></li>
+            <li><a href="/diseños/huasteca-potosina/historia">Huasteca Potosina</a></li>
+            <li><a href="/diseños/chichen-itza/historia">Chichén Itzá</a></li>
+            <li><a href="/diseños/chignahuapan/historia">Chignahuapan</a></li>
+          </ul>
+        </div>
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Formularios</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/cuestionario">Cuestionario Inicial</a></li>
+            <li><a href="/pedidos">Hacer Pedido</a></li>
+            <li><a href="/envio">Datos de Envío</a></li>
+            <li><a href="/midiseño">Mi Diseño</a></li>
+            <li><a href="/seguimiento">Seguimiento de Pedido</a></li>
+          </ul>
+        </div>
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Recursos</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/faq">Preguntas Frecuentes</a></li>
+            <li><a href="/ubicacion">Ubicación</a></li>
+            <li><a href="/brand">Manual de Marca</a></li>
+            <li><a href="mailto:informacion@axkan.art">informacion@axkan.art</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="site-footer-bottom">
+      <span>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</span>
+    </div>
+  </footer>
+
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script>
+  (function() {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    function init() {
+      setTimeout(function() {
+        document.querySelector('.hero').classList.add('loaded');
+      }, 100);
+
+      initFallingSpheres();
+      initHangingOrnaments();
+      initRevealAnimations();
+      initCounterAnimations();
+      initGalleryScroll();
+      initCarouselDrag();
+      initSmoothScroll();
+      initScrollIndicatorHide();
+      initLazyFadeIn();
+      initVisibilityPause();
+
+      console.log('🎄 AXKAN Chignahuapan Historia initialized');
+    }
+
+
+    /* Falling Spheres */
+    function initFallingSpheres() {
+      var canvas = document.getElementById('sphereCanvas');
+      if (!canvas) return;
+
+      var colors = [
+        { color: '#e52421', glow: 'rgba(229,36,33,0.3)' },
+        { color: '#e72a88', glow: 'rgba(231,42,136,0.3)' },
+        { color: '#8ab73b', glow: 'rgba(138,183,59,0.3)' },
+        { color: '#FFD700', glow: 'rgba(255,215,0,0.3)' },
+        { color: '#09adc2', glow: 'rgba(9,173,194,0.3)' },
+        { color: '#f39223', glow: 'rgba(243,146,35,0.3)' },
+        { color: '#1a5c2a', glow: 'rgba(26,92,42,0.3)' },
+        { color: '#D4A574', glow: 'rgba(212,165,116,0.3)' }
+      ];
+
+      var count = window.innerWidth < 768 ? 10 : 18;
+
+      for (var i = 0; i < count; i++) {
+        var sphere = document.createElement('div');
+        sphere.className = 'sphere';
+        var c = colors[Math.floor(Math.random() * colors.length)];
+        var size = 8 + Math.random() * 20;
+        var left = Math.random() * 100;
+        var dur = 8 + Math.random() * 14;
+        var delay = Math.random() * 15;
+        var opacity = 0.15 + Math.random() * 0.35;
+
+        sphere.style.cssText =
+          '--sphere-color:' + c.color + ';' +
+          '--sphere-opacity:' + opacity + ';' +
+          'width:' + size + 'px;' +
+          'height:' + size + 'px;' +
+          'left:' + left + '%;' +
+          'animation-duration:' + dur + 's;' +
+          'animation-delay:' + delay + 's;' +
+          'box-shadow:inset -2px -4px 8px rgba(0,0,0,0.2),0 0 ' + (size * 0.6) + 'px ' + c.glow + ';';
+
+        canvas.appendChild(sphere);
+      }
+    }
+
+
+    /* Hanging Ornaments */
+    function initHangingOrnaments() {
+      var container = document.getElementById('heroOrnaments');
+      if (!container) return;
+
+      var ornaments = [
+        { left: '8%', size: 26, string: 60, color: '#e52421', glow: 'rgba(229,36,33,0.4)', dur: '3.2s' },
+        { left: '22%', size: 20, string: 90, color: '#FFD700', glow: 'rgba(255,215,0,0.4)', dur: '4s' },
+        { left: '38%', size: 32, string: 50, color: '#8ab73b', glow: 'rgba(138,183,59,0.4)', dur: '3.5s' },
+        { left: '55%', size: 22, string: 110, color: '#e72a88', glow: 'rgba(231,42,136,0.4)', dur: '3.8s' },
+        { left: '68%', size: 28, string: 70, color: '#09adc2', glow: 'rgba(9,173,194,0.4)', dur: '4.2s' },
+        { left: '82%', size: 18, string: 100, color: '#f39223', glow: 'rgba(243,146,35,0.4)', dur: '3s' },
+        { left: '92%', size: 24, string: 80, color: '#1a5c2a', glow: 'rgba(26,92,42,0.4)', dur: '3.6s' }
+      ];
+
+      ornaments.forEach(function(o) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'hanging-ornament';
+        wrapper.style.cssText = 'left:' + o.left + ';animation:ornamentSwing ' + o.dur + ' ease-in-out infinite;';
+
+        var str = document.createElement('div');
+        str.className = 'ornament-string';
+        str.style.height = o.string + 'px';
+
+        var ball = document.createElement('div');
+        ball.className = 'ornament-ball';
+        ball.style.cssText =
+          '--orn-size:' + o.size + 'px;' +
+          '--orn-color:' + o.color + ';' +
+          '--orn-glow:' + o.glow + ';';
+
+        wrapper.appendChild(str);
+        wrapper.appendChild(ball);
+        container.appendChild(wrapper);
+      });
+    }
+
+
+    /* Reveal Animations */
+    function initRevealAnimations() {
+      var reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+      if (!reveals.length) return;
+
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { rootMargin: '-40px 0px', threshold: 0.12 });
+
+      reveals.forEach(function(el) { observer.observe(el); });
+    }
+
+
+    /* Counter Animations */
+    function initCounterAnimations() {
+      var counters = document.querySelectorAll('[data-target]');
+      if (!counters.length) return;
+
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting && !entry.target.dataset.animated) {
+            var target = parseInt(entry.target.dataset.target, 10);
+            animateCounter(entry.target, target);
+            entry.target.dataset.animated = 'true';
+          }
+        });
+      }, { threshold: 0.5 });
+
+      counters.forEach(function(el) { observer.observe(el); });
+    }
+
+    function animateCounter(el, target) {
+      var duration = target > 1000 ? 2200 : 1500;
+      var start = performance.now();
+
+      function update(now) {
+        var elapsed = now - start;
+        var progress = Math.min(elapsed / duration, 1);
+        var ease = 1 - Math.pow(1 - progress, 3);
+        var current = Math.floor(target * ease);
+
+        if (target > 1000) {
+          el.textContent = current.toLocaleString();
+        } else {
+          el.textContent = current;
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          el.textContent = target > 1000 ? target.toLocaleString() : target;
+          el.style.transform = 'scale(1.12)';
+          setTimeout(function() { el.style.transform = 'scale(1)'; el.style.transition = 'transform 0.3s ease'; }, 150);
+        }
+      }
+
+      requestAnimationFrame(update);
+    }
+
+
+    /* Gallery Scroll */
+    function initGalleryScroll() {
+      var track = document.getElementById('galleryTrack');
+      var progress = document.getElementById('galleryProgress');
+      if (!track || !progress) return;
+
+      track.addEventListener('scroll', function() {
+        var scrollW = track.scrollWidth - track.clientWidth;
+        var pct = scrollW > 0 ? (track.scrollLeft / scrollW) * 100 : 0;
+        progress.style.cssText = '--progress-width:' + Math.max(20, pct) + '%';
+      }, { passive: true });
+
+      addDragScroll(track);
+    }
+
+
+    /* Carousel Drag */
+    function initCarouselDrag() {
+      var carousel = document.getElementById('productsCarousel');
+      if (carousel) addDragScroll(carousel);
+    }
+
+    function addDragScroll(el) {
+      var isDown = false, startX, scrollLeft;
+
+      el.addEventListener('mousedown', function(e) {
+        isDown = true;
+        el.style.cursor = 'grabbing';
+        startX = e.pageX - el.offsetLeft;
+        scrollLeft = el.scrollLeft;
+      });
+      el.addEventListener('mouseleave', function() { isDown = false; el.style.cursor = 'grab'; });
+      el.addEventListener('mouseup', function() { isDown = false; el.style.cursor = 'grab'; });
+      el.addEventListener('mousemove', function(e) {
+        if (!isDown) return;
+        e.preventDefault();
+        el.scrollLeft = scrollLeft - ((e.pageX - el.offsetLeft) - startX) * 1.5;
+      });
+
+      el.style.cursor = 'grab';
+    }
+
+
+    /* Smooth Scroll */
+    function initSmoothScroll() {
+      document.querySelectorAll('a[href^="#"]').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          var href = link.getAttribute('href');
+          if (href === '#') return;
+          var target = document.querySelector(href);
+          if (target) {
+            e.preventDefault();
+            window.scrollTo({ top: target.getBoundingClientRect().top + window.pageYOffset, behavior: 'smooth' });
+          }
+        });
+      });
+    }
+
+
+    /* Scroll Indicator Hide */
+    function initScrollIndicatorHide() {
+      var indicator = document.querySelector('.scroll-indicator');
+      if (!indicator) return;
+      window.addEventListener('scroll', function() {
+        indicator.style.opacity = window.scrollY > 120 ? '0' : '1';
+        indicator.style.pointerEvents = window.scrollY > 120 ? 'none' : 'auto';
+      }, { passive: true });
+    }
+
+
+    /* Lazy Fade In */
+    function initLazyFadeIn() {
+      document.querySelectorAll('img[loading="lazy"]').forEach(function(img) {
+        img.style.opacity = '0';
+        img.style.transition = 'opacity 0.6s ease';
+        if (img.complete) { img.style.opacity = '1'; }
+        else { img.addEventListener('load', function() { img.style.opacity = '1'; }); }
+      });
+    }
+
+
+    /* Visibility Pause */
+    function initVisibilityPause() {
+      document.addEventListener('visibilitychange', function() {
+        document.body.classList.toggle('reduce-motion', document.hidden);
+      });
+    }
+
+
+  })();
+  </script>
+
+  <!-- Nav + Mobile Menu JS -->
+  <script>
+    var navEl = document.querySelector('.site-nav');
+    var heroEl = document.querySelector('.hero');
+    if (navEl && heroEl) {
+      new IntersectionObserver(function(e) {
+        navEl.classList.toggle('nav--scrolled', !e[0].isIntersecting);
+      }, { threshold: 0.05 }).observe(heroEl);
+    }
+
+    var hamburger = document.querySelector('.nav-hamburger');
+    var mobileMenu = document.querySelector('.site-mobile-menu');
+    if (hamburger && mobileMenu) {
+      hamburger.addEventListener('click', function() {
+        var isActive = hamburger.classList.toggle('active');
+        mobileMenu.classList.toggle('active');
+        hamburger.setAttribute('aria-expanded', isActive);
+        mobileMenu.setAttribute('aria-hidden', !isActive);
+        document.body.style.overflow = isActive ? 'hidden' : '';
+      });
+      mobileMenu.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function() {
+          hamburger.classList.remove('active');
+          mobileMenu.classList.remove('active');
+          hamburger.setAttribute('aria-expanded', 'false');
+          mobileMenu.setAttribute('aria-hidden', 'true');
+          document.body.style.overflow = '';
+        });
+      });
+    }
+  </script>
+</body>
+</html>
