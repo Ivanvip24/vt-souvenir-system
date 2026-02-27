@@ -687,7 +687,7 @@ Cuando el usuario pida crear una cotización o "cotizar" productos, debes:
 - **Imanes MDF Grande**: $15/u (100-999 pzas) → $12/u (1000+ pzas)
 - **Imanes 3D**: $15/u (100-999 pzas) → $12/u (1000+ pzas)
 - **Imanes Foil Metálico**: $15/u (100-999 pzas) → $12/u (1000+ pzas)
-- **Llaveros MDF**: $10/u (100-999 pzas) → $8/u (1000+ pzas)
+- **Llaveros MDF**: $10/u (100-999 pzas) → $7/u (1000+ pzas)
 - **Destapadores MDF**: $20/u (100-499 pzas) → $17/u (500-999 pzas) → $15/u (1000+ pzas)
 - **Portallaves MDF**: $40/u (mín. 50 pzas)
 - **Portarretratos MDF**: $40/u (mín. 20 pzas)
@@ -1436,7 +1436,7 @@ router.post('/chat', async (req, res) => {
 
         // Default prices if not specified
         if (!unitPrice) {
-          if (productName.includes('Llavero')) unitPrice = quantity >= 1000 ? 8 : 10;
+          if (productName.includes('Llavero')) unitPrice = quantity >= 1000 ? 7 : 10;
           else if (productName.includes('Destapador')) unitPrice = quantity >= 1000 ? 15 : quantity >= 500 ? 17 : 20;
           else if (productName.includes('Portallaves')) unitPrice = 40;
           else if (productName.includes('Portarretratos')) unitPrice = 40;
