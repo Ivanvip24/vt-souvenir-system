@@ -1314,6 +1314,74 @@ router.post('/chat', async (req, res) => {
           }
         };
         console.log('🛒 Starting order creation wizard with products:', enrichedProducts);
+      } else if (action.type === 'generate_catalog') {
+        try {
+          const { generateCatalogPDF, getCatalogUrl } = await import('../services/catalog-generator.js');
+          const result = await generateCatalogPDF();
+          actionData = {
+            type: 'generate_catalog',
+            data: {
+              success: true,
+              pdfUrl: getCatalogUrl(result.filepath),
+              filename: result.filename,
+              productCount: result.productCount,
+              generatedAt: result.generatedAt
+            }
+          };
+          console.log(`📋 Catalog generated: ${result.filename}`);
+        } catch (catalogError) {
+          console.error('❌ Error generating catalog:', catalogError);
+          actionData = {
+            type: 'generate_catalog',
+            data: { success: false, error: catalogError.message || 'Error al generar el catálogo' }
+          };
+        }
+      } else if (action.type === 'generate_receipt') {
+        try {
+          const receiptInput = {
+            clientName: action.clientName || 'Cliente',
+            projectName: action.projectName || '',
+            projectDescription: action.projectDescription || '',
+            items: (action.items || []).map(item => ({
+              product: item.product || 'Productos AXKAN',
+              size: item.size || '',
+              quantity: parseInt(item.quantity) || 1,
+              unitPrice: parseFloat(item.unitPrice) || 0
+            })),
+            advanceAmount: parseFloat(action.advanceAmount) || 0,
+            includeIVA: action.includeIVA === true || action.includeIVA === 'true',
+            ivaRate: parseFloat(action.ivaRate) || 16,
+            paymentMethod: action.paymentMethod || 'Transferencia Bancaria',
+            receiptType: action.receiptType || 'advance',
+            specialInstructions: action.specialInstructions || ''
+          };
+
+          const result = await generateBrandedReceipt(receiptInput);
+          const pdfUrl = getBrandedReceiptUrl(result.filepath);
+
+          actionData = {
+            type: 'generate_receipt',
+            data: {
+              success: true,
+              pdfUrl,
+              filename: result.filename,
+              receiptNumber: result.receiptNumber,
+              clientName: receiptInput.clientName,
+              receiptType: receiptInput.receiptType,
+              totalProject: result.totalProject,
+              advanceAmount: result.advanceAmount,
+              remainingBalance: result.remainingBalance,
+              includeIVA: result.includeIVA
+            }
+          };
+          console.log(`🧾 Branded receipt generated: ${result.receiptNumber} for ${receiptInput.clientName}`);
+        } catch (receiptError) {
+          console.error('❌ Error generating branded receipt:', receiptError);
+          actionData = {
+            type: 'generate_receipt',
+            data: { success: false, error: receiptError.message || 'Error al generar el recibo' }
+          };
+        }
       }
 
       // Remove the action block from displayed message
@@ -1396,83 +1464,6 @@ router.post('/chat', async (req, res) => {
         };
 
         console.log('🛒 Fallback order creation:', actionData.data.products);
-      }
-    } else if (action.type === 'generate_catalog') {
-      try {
-        const { generateCatalogPDF, getCatalogUrl } = await import('../services/catalog-generator.js');
-        const result = await generateCatalogPDF();
-
-        actionData = {
-          type: 'generate_catalog',
-          data: {
-            success: true,
-            pdfUrl: getCatalogUrl(result.filepath),
-            filename: result.filename,
-            productCount: result.productCount,
-            generatedAt: result.generatedAt
-          }
-        };
-
-        console.log(`📋 Catalog generated: ${result.filename}`);
-      } catch (catalogError) {
-        console.error('❌ Error generating catalog:', catalogError);
-        actionData = {
-          type: 'generate_catalog',
-          data: {
-            success: false,
-            error: catalogError.message || 'Error al generar el catálogo'
-          }
-        };
-      }
-    } else if (action.type === 'generate_receipt') {
-      try {
-        const receiptInput = {
-          clientName: action.clientName || 'Cliente',
-          projectName: action.projectName || '',
-          projectDescription: action.projectDescription || '',
-          items: (action.items || []).map(item => ({
-            product: item.product || 'Productos AXKAN',
-            size: item.size || '',
-            quantity: parseInt(item.quantity) || 1,
-            unitPrice: parseFloat(item.unitPrice) || 0
-          })),
-          advanceAmount: parseFloat(action.advanceAmount) || 0,
-          includeIVA: action.includeIVA === true || action.includeIVA === 'true',
-          ivaRate: parseFloat(action.ivaRate) || 16,
-          paymentMethod: action.paymentMethod || 'Transferencia Bancaria',
-          receiptType: action.receiptType || 'advance',
-          specialInstructions: action.specialInstructions || ''
-        };
-
-        const result = await generateBrandedReceipt(receiptInput);
-        const pdfUrl = getBrandedReceiptUrl(result.filepath);
-
-        actionData = {
-          type: 'generate_receipt',
-          data: {
-            success: true,
-            pdfUrl,
-            filename: result.filename,
-            receiptNumber: result.receiptNumber,
-            clientName: receiptInput.clientName,
-            receiptType: receiptInput.receiptType,
-            totalProject: result.totalProject,
-            advanceAmount: result.advanceAmount,
-            remainingBalance: result.remainingBalance,
-            includeIVA: result.includeIVA
-          }
-        };
-
-        console.log(`🧾 Branded receipt generated: ${result.receiptNumber} for ${receiptInput.clientName}`);
-      } catch (receiptError) {
-        console.error('❌ Error generating branded receipt:', receiptError);
-        actionData = {
-          type: 'generate_receipt',
-          data: {
-            success: false,
-            error: receiptError.message || 'Error al generar el recibo'
-          }
-        };
       }
     }
 
