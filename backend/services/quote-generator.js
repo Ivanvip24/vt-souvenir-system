@@ -67,7 +67,7 @@ const PRICING_TIERS = {
   ],
   'llaveros': [
     { min: 50, max: 999, price: 10.00, label: 'Llaveros MDF' },
-    { min: 1000, max: Infinity, price: 8.00, label: 'Llaveros MDF' }
+    { min: 1000, max: Infinity, price: 7.00, label: 'Llaveros MDF' }
   ],
   'destapadores': [
     { min: 50, max: 499, price: 20.00, label: 'Destapadores MDF' },
