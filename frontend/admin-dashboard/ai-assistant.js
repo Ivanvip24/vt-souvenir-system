@@ -555,6 +555,9 @@ function handleAiAction(action) {
     } else if (action.type === 'generate_catalog') {
         // Show catalog download in chat
         showCatalogResult(action.data);
+    } else if (action.type === 'generate_receipt') {
+        // Show receipt result in chat
+        showReceiptResult(action.data);
     } else {
         console.log('⚠️ DEBUG: Unknown action type:', action.type);
     }
@@ -961,9 +964,90 @@ function copyQuoteImage(btn, pdfUrl) {
     });
 }
 
+/**
+ * Show receipt generation result in chat
+ */
+function showReceiptResult(data) {
+    if (!data) return;
+
+    let html = '';
+
+    if (data.success) {
+        const formatCurrency = (amount) => new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN'
+        }).format(amount);
+
+        const typeLabels = {
+            advance: 'Recibo de Anticipo',
+            full: 'Recibo de Pago Total',
+            note: 'Nota de Pago'
+        };
+        const typeLabel = typeLabels[data.receiptType] || 'Recibo';
+
+        html = `
+            <div class="ai-quote-result">
+                <div class="ai-quote-header">
+                    <span class="ai-quote-icon">🧾</span>
+                    <div>
+                        <div class="ai-quote-title">${typeLabel}</div>
+                        <div class="ai-quote-number">${escapeHtml(data.receiptNumber)}</div>
+                    </div>
+                </div>
+
+                <div class="ai-quote-details">
+                    <div class="ai-quote-client">
+                        <strong>Cliente:</strong> ${escapeHtml(data.clientName)}
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                        <div style="background: #faf8f5; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #e72a88;">
+                            <div style="font-size: 11px; color: #8a8a8a;">Total Proyecto</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #1a1a1a;">${formatCurrency(data.totalProject)}</div>
+                        </div>
+                        <div style="background: #f0fdf4; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #059669;">
+                            <div style="font-size: 11px; color: #8a8a8a;">${data.receiptType === 'full' ? 'Pagado' : 'Anticipo'}</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #059669;">${formatCurrency(data.advanceAmount)}</div>
+                        </div>
+                    </div>
+
+                    ${data.remainingBalance > 0 ? `
+                    <div style="background: #fffbeb; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #f59e0b; margin-top: 8px;">
+                        <div style="font-size: 11px; color: #8a8a8a;">Saldo Pendiente</div>
+                        <div style="font-size: 16px; font-weight: 700; color: #b45309;">${formatCurrency(data.remainingBalance)}</div>
+                    </div>` : ''}
+
+                    <div style="margin-top: 8px; font-size: 12px; color: #8a8a8a;">
+                        ${data.includeIVA ? '✅ Incluye IVA 16%' : '📝 Sin IVA'}
+                    </div>
+                </div>
+
+                <div class="ai-quote-actions">
+                    <a href="${data.pdfUrl}" target="_blank" class="ai-quote-download-btn">
+                        📥 Descargar Recibo PDF
+                    </a>
+                    <button onclick="copyQuoteImage(this, '${data.pdfUrl}')" class="ai-quote-copy-btn">
+                        📷 Copiar Imagen
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        html = `
+            <div class="ai-quote-error">
+                <span class="ai-quote-error-icon">❌</span>
+                <span>${escapeHtml(data.error || 'Error al generar el recibo')}</span>
+            </div>
+        `;
+    }
+
+    addMessageToChat('assistant', html, { isHtml: true });
+}
+
 // Export quote functions globally
 window.showQuoteResult = showQuoteResult;
 window.showMultipleQuotesResult = showMultipleQuotesResult;
+window.showReceiptResult = showReceiptResult;
 window.copyQuoteImage = copyQuoteImage;
 
 /**

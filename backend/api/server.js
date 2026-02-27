@@ -102,6 +102,14 @@ if (!fs.existsSync(catalogsPath)) {
 app.use('/catalogs', express.static(catalogsPath));
 console.log(`📁 Serving catalogs from: ${catalogsPath}`);
 
+// Branded Receipt PDFs
+const brandedReceiptsPath = path.join(__dirname, '../branded-receipts');
+if (!fs.existsSync(brandedReceiptsPath)) {
+  fs.mkdirSync(brandedReceiptsPath, { recursive: true });
+}
+app.use('/branded-receipts', express.static(brandedReceiptsPath));
+console.log(`📁 Serving branded receipts from: ${brandedReceiptsPath}`);
+
 // Shipping Labels PDFs
 const labelsPath = path.join(__dirname, '../labels');
 if (!fs.existsSync(labelsPath)) {

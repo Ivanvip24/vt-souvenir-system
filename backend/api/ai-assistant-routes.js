@@ -10,6 +10,7 @@ import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
 import { parseQuoteRequest, generateQuotePDF, getQuoteUrl, getPricingInfo } from '../services/quote-generator.js';
 import { calculateCustomPrice } from '../services/pricing-engine.js';
+import { generateBrandedReceipt, getBrandedReceiptUrl } from '../services/branded-receipt-generator.js';
 
 const router = express.Router();
 
@@ -888,10 +889,63 @@ Cuando el usuario pida CREAR UN PEDIDO (no cotizar, sino crear el pedido real), 
 
 **El wizard popup recolectará automáticamente:** nombre, teléfono, fecha evento, entrega, vendedor, anticipo
 
+### 7. GENERAR RECIBO / NOTA DE PAGO
+
+Cuando el usuario pida generar un recibo, nota de pago, recibo de adelanto, o comprobante de pago, extrae la información y genera el recibo PDF con marca AXKAN.
+
+**Frases que activan esta acción:**
+- "genera un recibo", "hazme un recibo", "crear recibo"
+- "nota de pago", "nota de adelanto", "comprobante"
+- "recibo para [cliente]", "recibo de [cantidad]"
+- "genera una nota para...", "haz una nota de..."
+
+**Información a extraer:**
+- Nombre del cliente (obligatorio)
+- Productos con cantidad, tamaño y precio unitario (si se mencionan)
+- Monto del adelanto o pago total
+- Si incluye IVA o no (default: NO incluye IVA)
+- Método de pago (transferencia, efectivo, etc.)
+- Nombre del proyecto (opcional)
+
+**OBLIGATORIO: Incluye este bloque action:**
+
+\`\`\`action
+{
+  "type": "generate_receipt",
+  "clientName": "Nombre del cliente",
+  "projectName": "Nombre del proyecto (opcional, string vacío si no hay)",
+  "items": [
+    { "product": "Imanes 3D", "size": "Grande", "quantity": 3000, "unitPrice": 11.50 }
+  ],
+  "advanceAmount": 42000,
+  "includeIVA": false,
+  "paymentMethod": "Transferencia Bancaria",
+  "receiptType": "advance"
+}
+\`\`\`
+
+**Reglas para receiptType:**
+- "advance" = cuando mencionan "adelanto", "anticipo", "primer pago", "abono"
+- "full" = cuando mencionan "pago completo", "liquidación", "pago total"
+- "note" = cuando solo piden una "nota" o "comprobante" genérico
+
+**Reglas para IVA:**
+- Default: NO incluir IVA (includeIVA: false)
+- Solo incluir IVA si el usuario lo menciona explícitamente: "con IVA", "facturado", "con impuestos"
+- Si dicen "sin IVA" o "sin factura", confirmar includeIVA: false
+
+**Si no se mencionan productos detallados** pero sí un monto, genera el recibo con una descripción general:
+- "Recibo de $500 para Juan" → items: [{ "product": "Productos AXKAN", "size": "-", "quantity": 1, "unitPrice": 500 }], advanceAmount: 0, receiptType: "note"
+
+**Si se mencionan productos**, calcula los totales automáticamente y el advanceAmount es el monto que el cliente está pagando ahora.
+
+**Si el advanceAmount es 0 o no se especifica y receiptType es "note"**, el pago total es la suma de los items.
+
 ## IMPORTANTE PARA ACCIONES:
 - Para CREAR PEDIDO: SIEMPRE incluye el bloque action inmediatamente, sin preguntar
 - El bloque action debe estar en JSON válido
 - Para cotizaciones, SIEMPRE genera el PDF además de dar el resumen de precios
+- Para recibos: SIEMPRE incluye el bloque action con generate_receipt
 - Si hay múltiples coincidencias de cliente en búsquedas, pregunta cuál es el correcto`;
 }
 
@@ -1367,6 +1421,56 @@ router.post('/chat', async (req, res) => {
           data: {
             success: false,
             error: catalogError.message || 'Error al generar el catálogo'
+          }
+        };
+      }
+    } else if (action.type === 'generate_receipt') {
+      try {
+        const receiptInput = {
+          clientName: action.clientName || 'Cliente',
+          projectName: action.projectName || '',
+          projectDescription: action.projectDescription || '',
+          items: (action.items || []).map(item => ({
+            product: item.product || 'Productos AXKAN',
+            size: item.size || '',
+            quantity: parseInt(item.quantity) || 1,
+            unitPrice: parseFloat(item.unitPrice) || 0
+          })),
+          advanceAmount: parseFloat(action.advanceAmount) || 0,
+          includeIVA: action.includeIVA === true || action.includeIVA === 'true',
+          ivaRate: parseFloat(action.ivaRate) || 16,
+          paymentMethod: action.paymentMethod || 'Transferencia Bancaria',
+          receiptType: action.receiptType || 'advance',
+          specialInstructions: action.specialInstructions || ''
+        };
+
+        const result = await generateBrandedReceipt(receiptInput);
+        const pdfUrl = getBrandedReceiptUrl(result.filepath);
+
+        actionData = {
+          type: 'generate_receipt',
+          data: {
+            success: true,
+            pdfUrl,
+            filename: result.filename,
+            receiptNumber: result.receiptNumber,
+            clientName: receiptInput.clientName,
+            receiptType: receiptInput.receiptType,
+            totalProject: result.totalProject,
+            advanceAmount: result.advanceAmount,
+            remainingBalance: result.remainingBalance,
+            includeIVA: result.includeIVA
+          }
+        };
+
+        console.log(`🧾 Branded receipt generated: ${result.receiptNumber} for ${receiptInput.clientName}`);
+      } catch (receiptError) {
+        console.error('❌ Error generating branded receipt:', receiptError);
+        actionData = {
+          type: 'generate_receipt',
+          data: {
+            success: false,
+            error: receiptError.message || 'Error al generar el recibo'
           }
         };
       }
