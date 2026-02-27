@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
 import { processIncomingMessage } from '../services/whatsapp-ai.js';
+import { sendWhatsAppMessage } from '../services/whatsapp-api.js';
 import {
   downloadWhatsAppMedia,
   uploadMediaToCloudinary,
@@ -12,38 +13,6 @@ import {
 } from '../services/whatsapp-media.js';
 
 const router = Router();
-
-// ---------------------------------------------------------------------------
-// Helper: send a text message via the Meta WhatsApp Cloud API
-// ---------------------------------------------------------------------------
-async function sendWhatsAppMessage(to, text) {
-  try {
-    const response = await fetch(
-      `https://graph.facebook.com/v22.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: to,
-          type: 'text',
-          text: { body: text }
-        })
-      }
-    );
-    const data = await response.json();
-    if (data.error) {
-      console.error('🟢 WhatsApp send error:', data.error);
-    }
-    return data;
-  } catch (err) {
-    console.error('🟢 WhatsApp send failed:', err.message);
-    return null;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // 1. GET /webhook — Meta verification handshake (no auth)
@@ -331,6 +300,23 @@ router.put('/conversations/:id/read', authMiddleware, async (req, res) => {
     console.error('🟢 WhatsApp mark read error:', err);
     res.status(500).json({ success: false, error: 'Failed to mark as read' });
   }
+});
+
+// ---------------------------------------------------------------------------
+// 7. GET /health — Check WhatsApp bot token status (auth required)
+// ---------------------------------------------------------------------------
+import { isTokenDead } from '../services/whatsapp-api.js';
+
+router.get('/health', authMiddleware, async (req, res) => {
+  const dead = isTokenDead();
+  res.json({
+    success: true,
+    whatsapp: {
+      tokenStatus: dead ? 'EXPIRED' : 'OK',
+      phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ? 'configured' : 'MISSING',
+      accessToken: process.env.WHATSAPP_ACCESS_TOKEN ? 'configured' : 'MISSING',
+    },
+  });
 });
 
 export default router;

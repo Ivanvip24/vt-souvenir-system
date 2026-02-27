@@ -5,11 +5,7 @@
  */
 
 import { v2 as cloudinary } from 'cloudinary';
-
-const WHATSAPP_API_BASE = 'https://graph.facebook.com/v22.0';
-
-function getAccessToken() { return process.env.WHATSAPP_ACCESS_TOKEN; }
-function getPhoneNumberId() { return process.env.WHATSAPP_PHONE_NUMBER_ID; }
+import { metaApiFetch, getPhoneNumberId } from './whatsapp-api.js';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -29,11 +25,7 @@ cloudinary.config({
 export async function downloadWhatsAppMedia(mediaId) {
   try {
     // Step 1: Get media URL from Meta API
-    const metadataResponse = await fetch(`${WHATSAPP_API_BASE}/${mediaId}`, {
-      headers: {
-        'Authorization': `Bearer ${getAccessToken()}`,
-      },
-    });
+    const metadataResponse = await metaApiFetch(`/${mediaId}`);
 
     if (!metadataResponse.ok) {
       const errorBody = await metadataResponse.text();
@@ -44,11 +36,7 @@ export async function downloadWhatsAppMedia(mediaId) {
     const { url, mime_type } = metadata;
 
     // Step 2: Download binary from the CDN URL (requires auth header)
-    const mediaResponse = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${getAccessToken()}`,
-      },
-    });
+    const mediaResponse = await metaApiFetch(url);
 
     if (!mediaResponse.ok) {
       const errorBody = await mediaResponse.text();
@@ -113,12 +101,9 @@ export async function sendWhatsAppImage(to, imageUrl, caption = '') {
       },
     };
 
-    const response = await fetch(`${WHATSAPP_API_BASE}/${getPhoneNumberId()}/messages`, {
+    const response = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getAccessToken()}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
 
@@ -157,12 +142,9 @@ export async function sendWhatsAppDocument(to, documentUrl, filename, caption = 
       },
     };
 
-    const response = await fetch(`${WHATSAPP_API_BASE}/${getPhoneNumberId()}/messages`, {
+    const response = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getAccessToken()}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
 
@@ -197,12 +179,9 @@ export async function sendWhatsAppAudio(to, audioUrl) {
       },
     };
 
-    const response = await fetch(`${WHATSAPP_API_BASE}/${getPhoneNumberId()}/messages`, {
+    const response = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getAccessToken()}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
 
