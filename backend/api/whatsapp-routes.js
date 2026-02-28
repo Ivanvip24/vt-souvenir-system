@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
-import { processIncomingMessage } from '../services/whatsapp-ai.js';
+import { processIncomingMessage, generateConversationInsights } from '../services/whatsapp-ai.js';
 import { sendWhatsAppMessage } from '../services/whatsapp-api.js';
 import {
   downloadWhatsAppMedia,
@@ -303,7 +303,36 @@ router.put('/conversations/:id/read', authMiddleware, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. GET /health — Check WhatsApp bot token status (auth required)
+// 7. POST /conversations/:id/insights — AI conversation analysis (auth required)
+// ---------------------------------------------------------------------------
+router.post('/conversations/:id/insights', authMiddleware, async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const forceRefresh = req.body?.forceRefresh || false;
+
+    // If force refresh, reset cache counter so it re-analyzes
+    if (forceRefresh) {
+      await query(
+        'UPDATE whatsapp_conversations SET insights_message_count = 0 WHERE id = $1',
+        [conversationId]
+      );
+    }
+
+    const result = await generateConversationInsights(conversationId);
+
+    res.json({
+      success: true,
+      data: result.insights,
+      cached: result.cached
+    });
+  } catch (err) {
+    console.error('🟢 WhatsApp insights error:', err);
+    res.status(500).json({ success: false, error: 'Failed to generate insights' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 8. GET /health — Check WhatsApp bot token status (auth required)
 // ---------------------------------------------------------------------------
 import { isTokenDead } from '../services/whatsapp-api.js';
 

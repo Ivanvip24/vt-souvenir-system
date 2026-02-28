@@ -435,8 +435,148 @@ function sanitizeMessageHistory(messages) {
   return sanitized;
 }
 
+// ---------------------------------------------------------------------------
+// Conversation Insights — AI-powered analysis for the admin dashboard
+// ---------------------------------------------------------------------------
+
+const INSIGHTS_SYSTEM_PROMPT = `Eres un analista de conversaciones de venta de souvenirs personalizados (marca AXKAN).
+Analiza la conversacion y extrae insights accionables para el administrador.
+
+Responde UNICAMENTE con JSON valido, sin markdown, sin backticks, sin texto adicional.
+El formato es:
+{
+  "insights": [
+    {
+      "category": "order|product|urgency|followup|risk|info",
+      "icon": "emoji apropiado",
+      "text": "Insight concreto y accionable en espanol, maximo 2 oraciones",
+      "priority": "high|medium|low"
+    }
+  ]
+}
+
+Categorias:
+- "order": Detalles de pedido (cantidades, productos, precios mencionados)
+- "product": Interes en productos especificos o personalizacion
+- "urgency": Fechas limite, eventos proximos, urgencia
+- "followup": Acciones pendientes o informacion que falta recopilar
+- "risk": Senales de insatisfaccion, quejas, o riesgo de perder la venta
+- "info": Datos del cliente (nombre, ubicacion, tipo de evento/negocio)
+
+Reglas:
+- Maximo 8 insights, minimo 1
+- Prioriza lo accionable: que puede hacer el admin AHORA
+- Se directo y especifico (no "el cliente pregunto por productos", sino "Cliente interesado en 200 imanes para boda el 15 de marzo")
+- Si hay un pedido en proceso, incluye el resumen como primer insight con priority "high"
+- Si la conversacion es solo un saludo o muy corta, da 1-2 insights indicando la etapa temprana
+- Responde SOLO con el JSON, nada mas`;
+
+/**
+ * Generate AI-powered insights for a WhatsApp conversation.
+ * Uses caching by message count to avoid redundant API calls.
+ *
+ * @param {number} conversationId
+ * @returns {Promise<{insights: Array, cached: boolean}>}
+ */
+export async function generateConversationInsights(conversationId) {
+  // 1. Load all messages
+  const messagesResult = await query(
+    `SELECT direction, sender, content, message_type, metadata, created_at
+     FROM whatsapp_messages
+     WHERE conversation_id = $1
+     ORDER BY created_at ASC`,
+    [conversationId]
+  );
+
+  // 2. Check cache
+  const convResult = await query(
+    `SELECT insights_data, insights_message_count, client_name, wa_id
+     FROM whatsapp_conversations WHERE id = $1`,
+    [conversationId]
+  );
+
+  if (convResult.rows.length === 0) {
+    throw new Error('Conversation not found');
+  }
+
+  const conv = convResult.rows[0];
+  const currentMsgCount = messagesResult.rows.length;
+
+  // Return cached if still fresh
+  if (conv.insights_data && conv.insights_message_count >= currentMsgCount) {
+    return { insights: conv.insights_data, cached: true };
+  }
+
+  if (currentMsgCount === 0) {
+    return { insights: { insights: [] }, cached: false };
+  }
+
+  // 3. Build compact transcript
+  const transcript = messagesResult.rows
+    .filter(r => r.content && r.content.trim())
+    .map(r => {
+      const role = r.direction === 'inbound' ? 'CLIENTE' : (r.sender === 'ai' ? 'BOT' : 'ADMIN');
+      const time = new Date(r.created_at).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+      let line = `[${time}] ${role}: ${r.content}`;
+      if (r.message_type === 'audio' && r.metadata?.transcription) {
+        line += ` (transcripcion de audio: ${r.metadata.transcription})`;
+      }
+      return line;
+    })
+    .join('\n');
+
+  // Truncate very long transcripts (keep most recent)
+  const MAX_CHARS = 80000;
+  const trimmedTranscript = transcript.length > MAX_CHARS
+    ? '...[mensajes anteriores omitidos]...\n' + transcript.slice(-MAX_CHARS)
+    : transcript;
+
+  // 4. Call Claude
+  const client = getClient();
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 1000,
+    system: INSIGHTS_SYSTEM_PROMPT,
+    messages: [
+      {
+        role: 'user',
+        content: `Analiza esta conversacion de WhatsApp con el cliente "${conv.client_name || conv.wa_id}":\n\n${trimmedTranscript}`
+      }
+    ]
+  });
+
+  // 5. Parse JSON response
+  let insightsJson;
+  try {
+    const raw = response.content[0].text.trim();
+    const cleaned = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '');
+    insightsJson = JSON.parse(cleaned);
+  } catch (parseErr) {
+    console.error('🟢 WhatsApp Insights: Failed to parse AI response:', parseErr.message);
+    insightsJson = {
+      insights: [{
+        category: 'info',
+        icon: '\u26a0\ufe0f',
+        text: 'No se pudo analizar la conversacion. Intenta de nuevo.',
+        priority: 'low'
+      }]
+    };
+  }
+
+  // 6. Cache in database
+  await query(
+    `UPDATE whatsapp_conversations
+     SET insights_data = $1, insights_generated_at = NOW(), insights_message_count = $2
+     WHERE id = $3`,
+    [JSON.stringify(insightsJson), currentMsgCount, conversationId]
+  );
+
+  return { insights: insightsJson, cached: false };
+}
+
 export default {
   processIncomingMessage,
   getSystemPrompt,
-  buildConversationHistory
+  buildConversationHistory,
+  generateConversationInsights
 };

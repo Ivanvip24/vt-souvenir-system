@@ -15,7 +15,10 @@ const waState = {
   searchQuery: '',
   pollingInterval: null,
   mobileShowChat: false,
-  pendingImageUrl: null
+  pendingImageUrl: null,
+  insights: null,
+  insightsLoading: false,
+  insightsVisible: true
 };
 
 // ==========================================
@@ -575,6 +578,173 @@ function injectWhatsAppStyles() {
       background: #e5e7eb;
       border-color: #d1d5db;
     }
+
+    /* ===== Insights Panel ===== */
+    .wa-insights-panel {
+      width: 320px;
+      min-width: 280px;
+      border-left: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      overflow-y: auto;
+    }
+    .wa-insights-header {
+      padding: 16px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .wa-insights-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wa-insights-refresh-btn {
+      background: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .wa-insights-refresh-btn:hover {
+      border-color: #e72a88;
+      color: #e72a88;
+    }
+    .wa-insights-refresh-btn.loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .wa-insights-list {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .wa-insight-item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      animation: waInsightFadeIn 0.3s ease;
+    }
+    @keyframes waInsightFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .wa-insight-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      width: 24px;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .wa-insight-text {
+      flex: 1;
+      min-width: 0;
+      color: #333;
+    }
+    .wa-insight-high {
+      background: #fef2f2;
+      border-left: 3px solid #e72a88;
+    }
+    .wa-insight-medium {
+      background: #fff7ed;
+      border-left: 3px solid #f39223;
+    }
+    .wa-insight-low {
+      background: #f0fdf4;
+      border-left: 3px solid #8ab73b;
+    }
+    .wa-insights-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: #aaa;
+      gap: 12px;
+      text-align: center;
+      flex: 1;
+    }
+    .wa-insights-loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #f0f0f0;
+      border-top: 3px solid #e72a88;
+      border-radius: 50%;
+      animation: waInsightsSpin 0.8s linear infinite;
+    }
+    @keyframes waInsightsSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .wa-insights-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .wa-insights-toggle {
+      display: none;
+      background: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+      margin-left: auto;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .wa-insights-toggle:hover {
+      border-color: #e72a88;
+      color: #e72a88;
+    }
+    @media (max-width: 1100px) {
+      .wa-insights-panel {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 20;
+        box-shadow: -4px 0 12px rgba(0,0,0,0.1);
+        width: 300px;
+      }
+      .wa-insights-panel.wa-insights-visible {
+        display: flex;
+      }
+      .wa-insights-toggle {
+        display: inline-flex;
+      }
+    }
+    @media (max-width: 768px) {
+      .wa-insights-panel {
+        width: 100%;
+      }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -918,6 +1088,19 @@ function renderWhatsApp() {
   }
 
   layout.appendChild(chatPanel);
+
+  // --- Insights panel (third column) ---
+  if (waState.selectedConversationId) {
+    var insightsPanel = document.createElement('div');
+    insightsPanel.className = 'wa-insights-panel';
+    insightsPanel.id = 'wa-insights-panel';
+    if (waState.insightsVisible) {
+      insightsPanel.classList.add('wa-insights-visible');
+    }
+    buildInsightsPanelDOM(insightsPanel);
+    layout.appendChild(insightsPanel);
+  }
+
   container.appendChild(layout);
 
   // Bind events
@@ -1152,6 +1335,15 @@ function buildChatViewDOM(parentEl) {
   }
 
   header.appendChild(headerInfo);
+
+  // Insights toggle button (visible on small screens)
+  var insightsToggle = document.createElement('button');
+  insightsToggle.className = 'wa-insights-toggle';
+  insightsToggle.id = 'wa-insights-toggle';
+  insightsToggle.title = 'Ver insights';
+  insightsToggle.textContent = '\u2728 Insights';
+  header.appendChild(insightsToggle);
+
   parentEl.appendChild(header);
 
   // --- Messages area ---
@@ -1413,6 +1605,7 @@ function bindWhatsAppEvents() {
 
   bindConversationClickEvents();
   bindChatEvents();
+  bindInsightsEvents();
 }
 
 function bindConversationClickEvents() {
@@ -1519,6 +1712,23 @@ async function selectConversation(convId) {
     renderChatView();
     markConversationRead(convId);
 
+    // Ensure insights panel exists in layout
+    if (!document.getElementById('wa-insights-panel')) {
+      var layout = document.getElementById('wa-layout');
+      if (layout) {
+        var insightsPanel = document.createElement('div');
+        insightsPanel.className = 'wa-insights-panel wa-insights-visible';
+        insightsPanel.id = 'wa-insights-panel';
+        buildInsightsPanelDOM(insightsPanel);
+        layout.appendChild(insightsPanel);
+        bindInsightsEvents();
+      }
+    }
+
+    // Load insights for this conversation
+    waState.insights = null;
+    fetchInsights(convId, false);
+
     // Remove unread badge from list item
     var listItem = document.querySelector('.wa-conv-item[data-conv-id="' + convId + '"]');
     if (listItem) {
@@ -1598,6 +1808,142 @@ async function handleSendMessage() {
     var ok = await fetchConversationMessages(waState.selectedConversationId);
     if (ok) renderChatMessages();
     scrollChatToBottom();
+  }
+}
+
+// ==========================================
+// INSIGHTS PANEL
+// ==========================================
+
+function buildInsightsPanelDOM(parentEl) {
+  parentEl.textContent = '';
+
+  // Header
+  var header = document.createElement('div');
+  header.className = 'wa-insights-header';
+
+  var title = document.createElement('div');
+  title.className = 'wa-insights-title';
+  title.textContent = '\u2728 Insights';
+  header.appendChild(title);
+
+  var refreshBtn = document.createElement('button');
+  refreshBtn.className = 'wa-insights-refresh-btn';
+  refreshBtn.id = 'wa-insights-refresh';
+  refreshBtn.title = 'Re-analizar conversacion';
+  if (waState.insightsLoading) refreshBtn.classList.add('loading');
+  refreshBtn.textContent = waState.insightsLoading ? '\u23f3 Analizando...' : '\u21bb Refresh';
+  header.appendChild(refreshBtn);
+
+  parentEl.appendChild(header);
+
+  // Content area
+  var content = document.createElement('div');
+  content.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow-y:auto;';
+
+  if (waState.insightsLoading) {
+    var loadingDiv = document.createElement('div');
+    loadingDiv.className = 'wa-insights-loading';
+    var spinner = document.createElement('div');
+    spinner.className = 'wa-insights-loading-spinner';
+    loadingDiv.appendChild(spinner);
+    var loadingText = document.createElement('div');
+    loadingText.style.fontSize = '13px';
+    loadingText.textContent = 'Analizando conversacion...';
+    loadingDiv.appendChild(loadingText);
+    var loadingSubtext = document.createElement('div');
+    loadingSubtext.style.cssText = 'font-size:11px;color:#ccc;margin-top:4px;';
+    loadingSubtext.textContent = 'Esto puede tomar unos segundos';
+    loadingDiv.appendChild(loadingSubtext);
+    content.appendChild(loadingDiv);
+  } else if (waState.insights && waState.insights.length > 0) {
+    var list = document.createElement('div');
+    list.className = 'wa-insights-list';
+
+    for (var i = 0; i < waState.insights.length; i++) {
+      var insight = waState.insights[i];
+      var item = document.createElement('div');
+      item.className = 'wa-insight-item wa-insight-' + (insight.priority || 'medium');
+      item.style.animationDelay = (i * 0.05) + 's';
+
+      var icon = document.createElement('div');
+      icon.className = 'wa-insight-icon';
+      icon.textContent = insight.icon || '\u2728';
+      item.appendChild(icon);
+
+      var text = document.createElement('div');
+      text.className = 'wa-insight-text';
+      text.textContent = insight.text || '';
+      item.appendChild(text);
+
+      list.appendChild(item);
+    }
+
+    content.appendChild(list);
+  } else {
+    var emptyDiv = document.createElement('div');
+    emptyDiv.className = 'wa-insights-empty';
+    emptyDiv.textContent = 'Selecciona una conversacion para ver insights';
+    content.appendChild(emptyDiv);
+  }
+
+  parentEl.appendChild(content);
+}
+
+function renderInsightsPanel() {
+  var panel = document.getElementById('wa-insights-panel');
+  if (!panel) return;
+  buildInsightsPanelDOM(panel);
+  bindInsightsEvents();
+}
+
+async function fetchInsights(conversationId, forceRefresh) {
+  waState.insightsLoading = true;
+  waState.insights = null;
+  renderInsightsPanel();
+
+  try {
+    var res = await fetch(API_BASE + '/whatsapp/conversations/' + conversationId + '/insights', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ forceRefresh: !!forceRefresh })
+    });
+    var json = await res.json();
+
+    if (json.success && json.data) {
+      // data may be {insights: [...]} or directly [...]
+      waState.insights = json.data.insights || json.data;
+    } else {
+      waState.insights = null;
+    }
+  } catch (err) {
+    console.error('Error fetching insights:', err);
+    waState.insights = null;
+  }
+
+  waState.insightsLoading = false;
+  renderInsightsPanel();
+}
+
+function bindInsightsEvents() {
+  var refreshBtn = document.getElementById('wa-insights-refresh');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function() {
+      if (waState.selectedConversationId && !waState.insightsLoading) {
+        fetchInsights(waState.selectedConversationId, true);
+      }
+    });
+  }
+
+  var toggleBtn = document.getElementById('wa-insights-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      waState.insightsVisible = !waState.insightsVisible;
+      var panel = document.getElementById('wa-insights-panel');
+      if (panel) {
+        panel.classList.toggle('wa-insights-visible', waState.insightsVisible);
+      }
+    });
   }
 }
 
