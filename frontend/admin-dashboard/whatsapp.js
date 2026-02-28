@@ -16,6 +16,8 @@ const waState = {
   pollingInterval: null,
   mobileShowChat: false,
   pendingImageUrl: null,
+  pendingImageFile: null,
+  uploadingImage: false,
   insights: null,
   insightsLoading: false,
   insightsVisible: true
@@ -577,6 +579,71 @@ function injectWhatsAppStyles() {
     .wa-img-btn:hover {
       background: #e5e7eb;
       border-color: #d1d5db;
+    }
+
+    .wa-img-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .wa-img-preview-strip {
+      padding: 8px 16px 0;
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .wa-img-preview-thumb {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid #e72a88;
+    }
+
+    .wa-img-preview-info {
+      flex: 1;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .wa-img-preview-name {
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+
+    .wa-img-remove-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #fee2e2;
+      color: #e74c3c;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .wa-img-remove-btn:hover {
+      background: #fca5a5;
+    }
+
+    .wa-img-uploading {
+      font-size: 12px;
+      color: #e72a88;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     /* ===== Insights Panel ===== */
@@ -1353,6 +1420,21 @@ function buildChatViewDOM(parentEl) {
   buildMessagesDOM(messagesArea);
   parentEl.appendChild(messagesArea);
 
+  // --- Hidden file input for image uploads ---
+  var fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.id = 'wa-file-input';
+  fileInput.accept = 'image/jpeg,image/png,image/gif,image/webp,image/heic';
+  fileInput.style.display = 'none';
+  parentEl.appendChild(fileInput);
+
+  // --- Image preview strip (shown when image is attached) ---
+  var previewStrip = document.createElement('div');
+  previewStrip.className = 'wa-img-preview-strip';
+  previewStrip.id = 'wa-img-preview-strip';
+  previewStrip.style.display = 'none';
+  parentEl.appendChild(previewStrip);
+
   // --- Input area ---
   var inputArea = document.createElement('div');
   inputArea.className = 'wa-input-area';
@@ -1635,24 +1717,74 @@ function bindChatEvents() {
     sendBtn.addEventListener('click', handleSendMessage);
   }
 
-  // Image attach button
+  // Image attach button — opens file picker
   var imgBtn = document.getElementById('wa-img-btn');
-  if (imgBtn) {
+  var fileInput = document.getElementById('wa-file-input');
+  if (imgBtn && fileInput) {
     imgBtn.addEventListener('click', function() {
-      var url = prompt('URL de la imagen a enviar:');
-      if (url && url.trim()) {
-        waState.pendingImageUrl = url.trim();
-        imgBtn.style.background = '#e72a88';
-        imgBtn.style.color = '#fff';
-        imgBtn.style.borderColor = '#e72a88';
-        imgBtn.title = 'Imagen adjunta (click para quitar)';
+      if (waState.pendingImageFile) {
+        // Already have an image — clicking again removes it
+        clearPendingImage();
       } else {
-        waState.pendingImageUrl = null;
-        imgBtn.style.background = '';
-        imgBtn.style.color = '';
-        imgBtn.style.borderColor = '';
-        imgBtn.title = 'Adjuntar imagen';
+        fileInput.click();
       }
+    });
+
+    fileInput.addEventListener('change', function() {
+      var file = fileInput.files[0];
+      if (!file) return;
+
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        if (typeof window.showToast === 'function') {
+          window.showToast('La imagen es muy grande (max 10MB)', 'error');
+        }
+        fileInput.value = '';
+        return;
+      }
+
+      waState.pendingImageFile = file;
+
+      // Show preview strip
+      var strip = document.getElementById('wa-img-preview-strip');
+      if (strip) {
+        strip.textContent = '';
+        strip.style.display = 'flex';
+
+        var thumb = document.createElement('img');
+        thumb.className = 'wa-img-preview-thumb';
+        thumb.src = URL.createObjectURL(file);
+        strip.appendChild(thumb);
+
+        var info = document.createElement('div');
+        info.className = 'wa-img-preview-info';
+        var nameDiv = document.createElement('div');
+        nameDiv.className = 'wa-img-preview-name';
+        nameDiv.textContent = file.name;
+        info.appendChild(nameDiv);
+        var sizeDiv = document.createElement('div');
+        sizeDiv.textContent = (file.size / 1024 < 1024)
+          ? Math.round(file.size / 1024) + ' KB'
+          : (file.size / 1024 / 1024).toFixed(1) + ' MB';
+        info.appendChild(sizeDiv);
+        strip.appendChild(info);
+
+        var removeBtn = document.createElement('button');
+        removeBtn.className = 'wa-img-remove-btn';
+        removeBtn.title = 'Quitar imagen';
+        removeBtn.textContent = '\u00D7';
+        removeBtn.addEventListener('click', clearPendingImage);
+        strip.appendChild(removeBtn);
+      }
+
+      // Highlight image button
+      imgBtn.style.background = '#e72a88';
+      imgBtn.style.color = '#fff';
+      imgBtn.style.borderColor = '#e72a88';
+      imgBtn.title = 'Imagen adjunta (click para quitar)';
+
+      // Reset file input so same file can be re-selected
+      fileInput.value = '';
     });
   }
 
@@ -1671,6 +1803,40 @@ function bindChatEvents() {
       this.style.height = Math.min(this.scrollHeight, 100) + 'px';
     });
   }
+}
+
+// ==========================================
+// IMAGE UPLOAD HELPERS
+// ==========================================
+
+function clearPendingImage() {
+  waState.pendingImageFile = null;
+  waState.pendingImageUrl = null;
+  var strip = document.getElementById('wa-img-preview-strip');
+  if (strip) {
+    strip.textContent = '';
+    strip.style.display = 'none';
+  }
+  var imgBtn = document.getElementById('wa-img-btn');
+  if (imgBtn) {
+    imgBtn.style.background = '';
+    imgBtn.style.color = '';
+    imgBtn.style.borderColor = '';
+    imgBtn.title = 'Adjuntar imagen';
+  }
+}
+
+async function uploadImageToCloudinary(file) {
+  var formData = new FormData();
+  formData.append('receipt', file);
+
+  var res = await fetch(API_BASE + '/client/upload/payment-receipt', {
+    method: 'POST',
+    body: formData
+  });
+  var json = await res.json();
+  if (!json.success) throw new Error(json.error || 'Error al subir imagen');
+  return json.url;
 }
 
 // ==========================================
@@ -1755,12 +1921,42 @@ async function handleSendMessage() {
   if (!input || !waState.selectedConversationId) return;
 
   var message = input.value.trim();
-  var imageUrl = waState.pendingImageUrl;
-  if (!message && !imageUrl) return;
+  var hasImage = !!waState.pendingImageFile;
+  if (!message && !hasImage) return;
 
   // Disable controls while sending
   input.disabled = true;
   if (sendBtn) sendBtn.disabled = true;
+
+  var imageUrl = null;
+
+  // Upload image to Cloudinary first if attached
+  if (waState.pendingImageFile) {
+    try {
+      waState.uploadingImage = true;
+      var strip = document.getElementById('wa-img-preview-strip');
+      if (strip) {
+        var uploadingDiv = document.createElement('div');
+        uploadingDiv.className = 'wa-img-uploading';
+        uploadingDiv.id = 'wa-upload-status';
+        uploadingDiv.textContent = 'Subiendo imagen...';
+        strip.appendChild(uploadingDiv);
+      }
+      imageUrl = await uploadImageToCloudinary(waState.pendingImageFile);
+    } catch (uploadErr) {
+      console.error('Image upload error:', uploadErr);
+      waState.uploadingImage = false;
+      var statusEl = document.getElementById('wa-upload-status');
+      if (statusEl) statusEl.remove();
+      input.disabled = false;
+      if (sendBtn) sendBtn.disabled = false;
+      if (typeof window.showToast === 'function') {
+        window.showToast('Error al subir imagen: ' + uploadErr.message, 'error');
+      }
+      return;
+    }
+    waState.uploadingImage = false;
+  }
 
   // Optimistic UI: add the message locally
   var tempMsg = {
@@ -1779,14 +1975,7 @@ async function handleSendMessage() {
   // Clear input and reset image state
   input.value = '';
   input.style.height = 'auto';
-  waState.pendingImageUrl = null;
-  var imgBtn = document.getElementById('wa-img-btn');
-  if (imgBtn) {
-    imgBtn.style.background = '';
-    imgBtn.style.color = '';
-    imgBtn.style.borderColor = '';
-    imgBtn.title = 'Adjuntar imagen';
-  }
+  clearPendingImage();
 
   // Send to API
   var success = await sendReply(waState.selectedConversationId, message || '', imageUrl);
