@@ -478,7 +478,33 @@ Reglas:
  * @param {number} conversationId
  * @returns {Promise<{insights: Array, cached: boolean}>}
  */
+// Auto-migrate: ensure insights columns exist (runs once per server lifecycle)
+let insightsColumnsReady = false;
+
+async function ensureInsightsColumns() {
+  if (insightsColumnsReady) return;
+  try {
+    await query(`
+      ALTER TABLE whatsapp_conversations
+      ADD COLUMN IF NOT EXISTS insights_data JSONB,
+      ADD COLUMN IF NOT EXISTS insights_generated_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS insights_message_count INTEGER DEFAULT 0
+    `);
+    insightsColumnsReady = true;
+  } catch (err) {
+    // Columns may already exist or concurrent migration — that's fine
+    if (err.message?.includes('already exists')) {
+      insightsColumnsReady = true;
+    } else {
+      console.error('🟢 WhatsApp Insights: Auto-migration warning:', err.message);
+    }
+  }
+}
+
 export async function generateConversationInsights(conversationId) {
+  // Auto-migrate on first call
+  await ensureInsightsColumns();
+
   // 1. Load all messages
   const messagesResult = await query(
     `SELECT direction, sender, content, message_type, metadata, created_at
