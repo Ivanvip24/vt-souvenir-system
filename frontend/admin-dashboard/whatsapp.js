@@ -812,6 +812,61 @@ function injectWhatsAppStyles() {
         width: 100%;
       }
     }
+
+    /* ===== AI Toggle Button ===== */
+    .wa-ai-toggle {
+      background: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .wa-ai-toggle.ai-on {
+      color: #16a34a;
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+    .wa-ai-toggle.ai-on:hover {
+      border-color: #16a34a;
+      background: #dcfce7;
+    }
+    .wa-ai-toggle.ai-off {
+      color: #dc2626;
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+    .wa-ai-toggle.ai-off:hover {
+      border-color: #dc2626;
+      background: #fee2e2;
+    }
+    .wa-ai-toggle-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .ai-on .wa-ai-toggle-dot { background: #16a34a; }
+    .ai-off .wa-ai-toggle-dot { background: #dc2626; }
+
+    /* AI-off indicator in conversation list */
+    .wa-conv-ai-off {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #dc2626;
+      margin-left: 4px;
+      flex-shrink: 0;
+      vertical-align: middle;
+      title: 'AI desactivada';
+    }
   `;
   document.head.appendChild(style);
 }
@@ -1246,6 +1301,14 @@ function buildConversationItemDOM(c) {
   nameSpan.textContent = displayName;
   headerRow.appendChild(nameSpan);
 
+  // AI-off indicator (red dot)
+  if (c.ai_enabled === false) {
+    var aiOffDot = document.createElement('span');
+    aiOffDot.className = 'wa-conv-ai-off';
+    aiOffDot.title = 'AI desactivada';
+    headerRow.appendChild(aiOffDot);
+  }
+
   var timeSpan = document.createElement('span');
   timeSpan.className = 'wa-conv-time';
   timeSpan.textContent = time;
@@ -1402,6 +1465,18 @@ function buildChatViewDOM(parentEl) {
   }
 
   header.appendChild(headerInfo);
+
+  // AI toggle button
+  var aiEnabled = conv.ai_enabled !== false; // default true
+  var aiToggle = document.createElement('button');
+  aiToggle.className = 'wa-ai-toggle ' + (aiEnabled ? 'ai-on' : 'ai-off');
+  aiToggle.id = 'wa-ai-toggle';
+  aiToggle.title = aiEnabled ? 'AI activada — clic para desactivar' : 'AI desactivada — clic para activar';
+  var aiDot = document.createElement('span');
+  aiDot.className = 'wa-ai-toggle-dot';
+  aiToggle.appendChild(aiDot);
+  aiToggle.appendChild(document.createTextNode(aiEnabled ? ' AI ON' : ' AI OFF'));
+  header.appendChild(aiToggle);
 
   // Insights toggle button (visible on small screens)
   var insightsToggle = document.createElement('button');
@@ -2086,6 +2161,29 @@ function renderInsightsPanel() {
   bindInsightsEvents();
 }
 
+async function toggleAiEnabled(conversationId, enabled) {
+  try {
+    var res = await fetch(API_BASE + '/whatsapp/conversations/' + conversationId + '/settings', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
+      },
+      body: JSON.stringify({ ai_enabled: enabled })
+    });
+    var data = await res.json();
+    if (data.success) {
+      // Update local state
+      var conv = waState.conversations.find(function(c) { return c.id === conversationId; });
+      if (conv) conv.ai_enabled = enabled;
+      // Re-render chat panel and conversation list to reflect change
+      renderWaTab();
+    }
+  } catch (err) {
+    console.error('Failed to toggle AI:', err);
+  }
+}
+
 async function fetchInsights(conversationId, forceRefresh) {
   waState.insightsLoading = true;
   waState.insights = null;
@@ -2132,6 +2230,17 @@ function bindInsightsEvents() {
       if (panel) {
         panel.classList.toggle('wa-insights-visible', waState.insightsVisible);
       }
+    });
+  }
+
+  // AI toggle button
+  var aiToggleBtn = document.getElementById('wa-ai-toggle');
+  if (aiToggleBtn) {
+    aiToggleBtn.addEventListener('click', function() {
+      var conv = waState.conversations.find(function(c) { return c.id === waState.selectedConversationId; });
+      if (!conv) return;
+      var currentlyEnabled = conv.ai_enabled !== false;
+      toggleAiEnabled(waState.selectedConversationId, !currentlyEnabled);
     });
   }
 }

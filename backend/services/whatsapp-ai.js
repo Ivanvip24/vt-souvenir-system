@@ -203,10 +203,45 @@ function parseAIResponse(responseText) {
       console.error('🟢 WhatsApp AI: Failed to parse SEND_IMAGE JSON:', err.message);
     }
   }
-  // Remove SEND_IMAGE blocks from clean reply
   cleanReply = cleanReply.replace(/\[SEND_IMAGE\].*?\[\/SEND_IMAGE\]/g, '').trim();
 
-  return { cleanReply, intent, orderJson, imagesToSend };
+  // Extract SEND_LIST blocks (interactive list menus)
+  const listsToSend = [];
+  const listMatches = cleanReply.matchAll(/\[SEND_LIST\](.*?)\[\/SEND_LIST\]/gs);
+  for (const match of listMatches) {
+    try {
+      listsToSend.push(JSON.parse(match[1].trim()));
+    } catch (err) {
+      console.error('🟢 WhatsApp AI: Failed to parse SEND_LIST JSON:', err.message);
+    }
+  }
+  cleanReply = cleanReply.replace(/\[SEND_LIST\].*?\[\/SEND_LIST\]/gs, '').trim();
+
+  // Extract SEND_BUTTONS blocks (quick reply buttons)
+  const buttonsToSend = [];
+  const buttonMatches = cleanReply.matchAll(/\[SEND_BUTTONS\](.*?)\[\/SEND_BUTTONS\]/gs);
+  for (const match of buttonMatches) {
+    try {
+      buttonsToSend.push(JSON.parse(match[1].trim()));
+    } catch (err) {
+      console.error('🟢 WhatsApp AI: Failed to parse SEND_BUTTONS JSON:', err.message);
+    }
+  }
+  cleanReply = cleanReply.replace(/\[SEND_BUTTONS\].*?\[\/SEND_BUTTONS\]/gs, '').trim();
+
+  // Extract SEND_DOCUMENT blocks
+  const documentsToSend = [];
+  const docMatches = cleanReply.matchAll(/\[SEND_DOCUMENT\](.*?)\[\/SEND_DOCUMENT\]/gs);
+  for (const match of docMatches) {
+    try {
+      documentsToSend.push(JSON.parse(match[1].trim()));
+    } catch (err) {
+      console.error('🟢 WhatsApp AI: Failed to parse SEND_DOCUMENT JSON:', err.message);
+    }
+  }
+  cleanReply = cleanReply.replace(/\[SEND_DOCUMENT\].*?\[\/SEND_DOCUMENT\]/gs, '').trim();
+
+  return { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend };
 }
 
 /**
@@ -330,7 +365,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     const rawReply = response.content[0].text;
 
     // Parse the response for intent and order blocks
-    const { cleanReply, intent, orderJson, imagesToSend } = parseAIResponse(rawReply);
+    const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend } = parseAIResponse(rawReply);
 
     let actionTaken = null;
     let orderData = null;
@@ -376,7 +411,10 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       intent: intent,
       orderData: orderData,
       actionTaken: actionTaken,
-      imagesToSend: resolvedImages
+      imagesToSend: resolvedImages,
+      listsToSend: listsToSend || [],
+      buttonsToSend: buttonsToSend || [],
+      documentsToSend: documentsToSend || [],
     };
 
   } catch (error) {
@@ -388,7 +426,10 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       intent: 'error',
       orderData: null,
       actionTaken: null,
-      imagesToSend: []
+      imagesToSend: [],
+      listsToSend: [],
+      buttonsToSend: [],
+      documentsToSend: [],
     };
   }
 }
@@ -478,6 +519,26 @@ Reglas:
  * @param {number} conversationId
  * @returns {Promise<{insights: Array, cached: boolean}>}
  */
+// Auto-migrate: ensure ai_enabled column exists (runs once per server lifecycle)
+let aiToggleColumnReady = false;
+
+export async function ensureAiToggleColumn() {
+  if (aiToggleColumnReady) return;
+  try {
+    await query(`
+      ALTER TABLE whatsapp_conversations
+      ADD COLUMN IF NOT EXISTS ai_enabled BOOLEAN NOT NULL DEFAULT true
+    `);
+    aiToggleColumnReady = true;
+  } catch (err) {
+    if (err.message?.includes('already exists')) {
+      aiToggleColumnReady = true;
+    } else {
+      console.error('🟢 WhatsApp AI Toggle: Auto-migration warning:', err.message);
+    }
+  }
+}
+
 // Auto-migrate: ensure insights columns exist (runs once per server lifecycle)
 let insightsColumnsReady = false;
 

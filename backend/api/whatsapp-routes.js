@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
-import { processIncomingMessage, generateConversationInsights } from '../services/whatsapp-ai.js';
-import { sendWhatsAppMessage } from '../services/whatsapp-api.js';
+import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn } from '../services/whatsapp-ai.js';
+import { sendWhatsAppMessage, sendWhatsAppListMessage, sendWhatsAppButtonMessage, sendWhatsAppCTAMessage } from '../services/whatsapp-api.js';
 import {
   downloadWhatsAppMedia,
   uploadMediaToCloudinary,
@@ -98,6 +98,19 @@ router.post('/webhook', (req, res) => {
           messageText = '[Sticker recibido]';
           mediaContext = { type: 'sticker' };
         }
+        else if (message.type === 'interactive') {
+          // User tapped a list item or quick reply button
+          const interactiveData = message.interactive;
+          if (interactiveData?.type === 'list_reply') {
+            messageText = `[Seleccionó: ${interactiveData.list_reply.title}]`;
+            messageMetadata = { interactive_type: 'list_reply', ...interactiveData.list_reply };
+          } else if (interactiveData?.type === 'button_reply') {
+            messageText = `[Seleccionó: ${interactiveData.button_reply.title}]`;
+            messageMetadata = { interactive_type: 'button_reply', ...interactiveData.button_reply };
+          } else {
+            messageText = `[Respuesta interactiva: ${interactiveData?.type || 'desconocida'}]`;
+          }
+        }
         else {
           messageText = `[Mensaje tipo ${message.type} recibido]`;
         }
@@ -117,17 +130,21 @@ router.post('/webhook', (req, res) => {
         return;
       }
 
+      // Ensure ai_enabled column exists (auto-migration on first call)
+      await ensureAiToggleColumn();
+
       // Get or create conversation
       const convResult = await query(
         `INSERT INTO whatsapp_conversations (wa_id, client_name, last_message_at)
          VALUES ($1, $2, NOW())
          ON CONFLICT (wa_id) DO UPDATE
            SET client_name = $2, last_message_at = NOW(), updated_at = NOW()
-         RETURNING id, client_id`,
+         RETURNING id, client_id, ai_enabled`,
         [waId, clientName]
       );
       const conversationId = convResult.rows[0].id;
       let clientId = convResult.rows[0].client_id;
+      const aiEnabled = convResult.rows[0].ai_enabled;
 
       // Try to match an existing client by phone number (last 10 digits)
       if (!clientId) {
@@ -157,12 +174,21 @@ router.post('/webhook', (req, res) => {
         [conversationId]
       );
 
+      // Skip AI processing if ai_enabled is false for this conversation
+      if (aiEnabled === false) {
+        console.log(`🟢 WhatsApp AI disabled for conversation ${conversationId} — skipping auto-reply`);
+        return;
+      }
+
       // Get AI reply (pass media context for vision/audio processing)
       const aiResult = await processIncomingMessage(conversationId, waId, messageText, mediaContext);
       const replyText = aiResult.reply;
       const intent = aiResult.intent || null;
       const summary = aiResult.summary || null;
       const imagesToSend = aiResult.imagesToSend || [];
+      const listsToSend = aiResult.listsToSend || [];
+      const buttonsToSend = aiResult.buttonsToSend || [];
+      const documentsToSend = aiResult.documentsToSend || [];
 
       // Send text reply via Meta API
       await sendWhatsAppMessage(waId, replyText);
@@ -178,11 +204,61 @@ router.post('/webhook', (req, res) => {
         }
       }
 
+      // Send interactive list messages
+      for (const list of listsToSend) {
+        try {
+          const result = await sendWhatsAppListMessage(
+            waId, list.header || '', list.body || '', list.footer || '',
+            list.buttonText || 'Ver opciones', list.sections || []
+          );
+          if (!result.success && result.fallbackText) {
+            await sendWhatsAppMessage(waId, result.fallbackText);
+          }
+        } catch (listErr) {
+          console.error('🟢 WhatsApp list send error:', listErr.message);
+        }
+      }
+
+      // Send interactive button messages
+      for (const btn of buttonsToSend) {
+        try {
+          const result = await sendWhatsAppButtonMessage(
+            waId, btn.body || '', btn.buttons || [],
+            btn.header || null, btn.footer || null
+          );
+          if (!result.success && result.fallbackText) {
+            await sendWhatsAppMessage(waId, result.fallbackText);
+          }
+        } catch (btnErr) {
+          console.error('🟢 WhatsApp button send error:', btnErr.message);
+        }
+      }
+
+      // Send documents if AI requested them
+      for (const doc of documentsToSend) {
+        try {
+          if (doc.url) {
+            await sendWhatsAppDocument(waId, doc.url, doc.caption || '', doc.filename || 'documento.pdf');
+          }
+        } catch (docErr) {
+          console.error('🟢 WhatsApp document send error:', docErr.message);
+        }
+      }
+
       // Store outbound AI message
       const outboundWaId = 'ai_' + Date.now();
       const outboundMetadata = { intent };
       if (imagesToSend.length > 0) {
         outboundMetadata.imagesSent = imagesToSend;
+      }
+      if (listsToSend.length > 0) {
+        outboundMetadata.listsSent = listsToSend;
+      }
+      if (buttonsToSend.length > 0) {
+        outboundMetadata.buttonsSent = buttonsToSend;
+      }
+      if (documentsToSend.length > 0) {
+        outboundMetadata.documentsSent = documentsToSend;
       }
       await query(
         `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, metadata)
@@ -303,7 +379,34 @@ router.put('/conversations/:id/read', authMiddleware, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. POST /conversations/:id/insights — AI conversation analysis (auth required)
+// 7. PATCH /conversations/:id/settings — Update conversation settings (auth required)
+// ---------------------------------------------------------------------------
+router.patch('/conversations/:id/settings', authMiddleware, async (req, res) => {
+  try {
+    const { ai_enabled } = req.body;
+    if (typeof ai_enabled !== 'boolean') {
+      return res.status(400).json({ success: false, error: 'ai_enabled must be a boolean' });
+    }
+
+    const result = await query(
+      'UPDATE whatsapp_conversations SET ai_enabled = $1, updated_at = NOW() WHERE id = $2 RETURNING id, ai_enabled',
+      [ai_enabled, req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
+    console.log(`🟢 WhatsApp AI ${ai_enabled ? 'enabled' : 'disabled'} for conversation ${req.params.id}`);
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('🟢 WhatsApp settings update error:', err);
+    res.status(500).json({ success: false, error: 'Failed to update settings' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 8. POST /conversations/:id/insights — AI conversation analysis (auth required)
 // ---------------------------------------------------------------------------
 router.post('/conversations/:id/insights', authMiddleware, async (req, res) => {
   try {

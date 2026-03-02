@@ -144,6 +144,154 @@ export async function sendWhatsAppMessage(to, text) {
 }
 
 /**
+ * Send a list message (radio-button menu) via WhatsApp Cloud API.
+ * Max 10 rows total across all sections, row titles max 24 chars, button text max 20 chars.
+ * @returns {{ success: boolean, data?: object, error?: string, fallbackText?: string }}
+ */
+export async function sendWhatsAppListMessage(to, header, body, footer, buttonText, sections) {
+  try {
+    // Truncate and validate
+    const truncatedButton = (buttonText || 'Ver opciones').substring(0, 20);
+    const truncatedSections = (sections || []).map(section => ({
+      title: (section.title || '').substring(0, 24),
+      rows: (section.rows || []).slice(0, 10).map(row => ({
+        id: row.id || `row_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        title: (row.title || '').substring(0, 24),
+        description: row.description ? row.description.substring(0, 72) : undefined,
+      })),
+    }));
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      to,
+      type: 'interactive',
+      interactive: {
+        type: 'list',
+        body: { text: body || ' ' },
+        action: {
+          button: truncatedButton,
+          sections: truncatedSections,
+        },
+      },
+    };
+
+    if (header) payload.interactive.header = { type: 'text', text: header.substring(0, 60) };
+    if (footer) payload.interactive.footer = { text: footer.substring(0, 60) };
+
+    const response = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error('🟢 WhatsApp list send error:', data.error);
+      const fallbackText = `${body}\n\n${truncatedSections.map(s =>
+        s.rows.map(r => `• ${r.title}${r.description ? ' - ' + r.description : ''}`).join('\n')
+      ).join('\n')}`;
+      return { success: false, error: data.error, fallbackText };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('🟢 WhatsApp list send failed:', err.message);
+    return { success: false, error: err.message, fallbackText: body };
+  }
+}
+
+/**
+ * Send a quick-reply button message via WhatsApp Cloud API.
+ * Max 3 buttons, button titles max 20 chars.
+ * @returns {{ success: boolean, data?: object, error?: string, fallbackText?: string }}
+ */
+export async function sendWhatsAppButtonMessage(to, body, buttons, header, footer) {
+  try {
+    const truncatedButtons = (buttons || []).slice(0, 3).map((btn, i) => ({
+      type: 'reply',
+      reply: {
+        id: btn.id || `btn_${Date.now()}_${i}`,
+        title: (btn.title || btn.text || '').substring(0, 20),
+      },
+    }));
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      to,
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: { text: body || ' ' },
+        action: { buttons: truncatedButtons },
+      },
+    };
+
+    if (header) payload.interactive.header = { type: 'text', text: header.substring(0, 60) };
+    if (footer) payload.interactive.footer = { text: footer.substring(0, 60) };
+
+    const response = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error('🟢 WhatsApp button send error:', data.error);
+      const fallbackText = `${body}\n\n${truncatedButtons.map(b => `• ${b.reply.title}`).join('\n')}`;
+      return { success: false, error: data.error, fallbackText };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('🟢 WhatsApp button send failed:', err.message);
+    return { success: false, error: err.message, fallbackText: body };
+  }
+}
+
+/**
+ * Send a CTA URL button message via WhatsApp Cloud API.
+ * @returns {{ success: boolean, data?: object, error?: string, fallbackText?: string }}
+ */
+export async function sendWhatsAppCTAMessage(to, body, displayText, url, header, footer) {
+  try {
+    const payload = {
+      messaging_product: 'whatsapp',
+      to,
+      type: 'interactive',
+      interactive: {
+        type: 'cta_url',
+        body: { text: body || ' ' },
+        action: {
+          name: 'cta_url',
+          parameters: {
+            display_text: (displayText || 'Ver más').substring(0, 20),
+            url,
+          },
+        },
+      },
+    };
+
+    if (header) payload.interactive.header = { type: 'text', text: header.substring(0, 60) };
+    if (footer) payload.interactive.footer = { text: footer.substring(0, 60) };
+
+    const response = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error('🟢 WhatsApp CTA send error:', data.error);
+      return { success: false, error: data.error, fallbackText: `${body}\n\n${url}` };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('🟢 WhatsApp CTA send failed:', err.message);
+    return { success: false, error: err.message, fallbackText: `${body}\n\n${url}` };
+  }
+}
+
+/**
  * Check if the WhatsApp token is currently known to be dead.
  */
 export function isTokenDead() {
