@@ -2174,7 +2174,7 @@ async function toggleAiEnabled(conversationId, enabled) {
       var conv = waState.conversations.find(function(c) { return c.id === conversationId; });
       if (conv) conv.ai_enabled = enabled;
       // Re-render chat panel and conversation list to reflect change
-      renderWaTab();
+      renderWhatsApp();
     }
   } catch (err) {
     console.error('Failed to toggle AI:', err);
