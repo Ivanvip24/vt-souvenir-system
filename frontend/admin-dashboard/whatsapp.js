@@ -2165,10 +2165,7 @@ async function toggleAiEnabled(conversationId, enabled) {
   try {
     var res = await fetch(API_BASE + '/whatsapp/conversations/' + conversationId + '/settings', {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('adminToken')
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ ai_enabled: enabled })
     });
     var data = await res.json();
