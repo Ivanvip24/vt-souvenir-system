@@ -40,6 +40,7 @@ async function runAllMigrations() {
     await runMigration('012-add-cep-verifications.sql');
     await runMigration('013-add-pricing-config.sql');
     await runMigration('014-add-whatsapp-ai-toggle.sql');
+    await runMigration('015-whatsapp-features.sql');
 
     console.log('\n✨ All migrations completed successfully!');
 
