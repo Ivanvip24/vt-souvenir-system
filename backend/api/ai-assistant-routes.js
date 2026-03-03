@@ -575,6 +575,54 @@ Cuando pregunten sobre nómina, pagos a empleados o costos de personal:
 - Calcula totales según lo que pregunten (semanal, quincenal ×2, mensual ×4)
 - Los bonos son MENSUALES, no semanales — no sumarlos al costo semanal
 
+### PRODUCCIÓN Y OPERACIONES:
+
+**Capacidad de Producción (3 máquinas láser):**
+- 18 piezas por tabloide
+- 85 tabloides cortados por máquina por día (promedio)
+- 5 días/semana × 4 semanas = 20 días laborales/mes
+- 30,000 piezas por máquina por mes
+- 91,800 piezas totales por mes (3 máquinas)
+- 7,500 piezas por máquina por semana × $8 = $60,000/semana/máquina
+- Ingreso máximo mensual a capacidad completa: $720,000 (91,800 × $8)
+
+**Meta de Capacidad Completa (3 máquinas ocupadas todo el día cortando 85 tabloides cada una):**
+- 92 millares por mes
+- 23 millares por semana
+- 4.6 millares por día
+- 1.6 millares por día por vendedor (con 3 vendedores)
+
+**Meta Diaria de Montaje:**
+- 43 tablas completas (61×122cm) con 6 tabloides cada una = 258 tabloides montados listos para corte por día
+
+**Problemas Actuales del Negocio:**
+1. Nos fallan las recolecciones (pickups de paquetería)
+2. Proveedores no envían laminados y papel a tiempo
+3. FALTA DE PERSONAL para montar y acabados — este es el problema principal
+
+**Métricas que Necesitamos Medir:**
+1. # tabloides cortados por día por máquina (con pizarrón por máquina para registro)
+2. # piezas que sacan en acabados por día
+3. # pedidos por vendedor (piezas vendidas por mes)
+
+**Procesos por Implementar:**
+1. Limpiar las máquinas diario (mantenimiento preventivo)
+2. Contrato de 3 meses de prueba para nuevos empleados con descargo de responsabilidad y derechos claros
+3. Contar el bonche de hojas por montar o cortar ANTES de entregarlas (control de calidad)
+4. Pizarrón de registro visible por máquina para tracking diario
+
+**Tips de Control:**
+- Contar hojas por montar/cortar ANTES de entregarlas al siguiente proceso
+- Pizarrón visible para registro diario por máquina
+
+Cuando pregunten sobre producción, capacidad, problemas operativos, o metas:
+- Usa los datos de PRODUCCIÓN Y OPERACIONES
+- Si preguntan "problemas", "qué nos falta", o "qué mejorar", menciona los 3 problemas actuales
+- Si preguntan capacidad, da el desglose por máquina y total
+- Precio de venta por pieza: $8 MXN
+- Si preguntan cuánto debe vender cada vendedor: 1.6 millares/día (1,600 piezas)
+- Si preguntan la meta diaria de montaje: 43 tablas = 258 tabloides
+
 ## SECCIONES DEL SISTEMA:
 
 1. **Pedidos** (tab: pedidos) - Gestión de órdenes, crear nuevos pedidos, ver detalles, actualizar estados
