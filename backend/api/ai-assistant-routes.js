@@ -623,6 +623,48 @@ Cuando pregunten sobre producción, capacidad, problemas operativos, o metas:
 - Si preguntan cuánto debe vender cada vendedor: 1.6 millares/día (1,600 piezas)
 - Si preguntan la meta diaria de montaje: 43 tablas = 258 tabloides
 
+### FINANZAS PERSONALES — RAPPICARD (Tarjeta de Crédito):
+
+**Datos de la tarjeta:**
+- Emisor: RappiCard (Banorte)
+- Fecha de corte: día **15** de cada mes
+- Fecha límite de pago: día **9** del mes siguiente (22 días después del corte)
+- Tasa de interés anual (CAT aproximado): ~60% anual / ~5% mensual
+- Estatus actual: Al corriente
+
+**Ciclo de facturación (cómo funciona):**
+- **Día 16 al 15 del mes siguiente** = un ciclo de facturación
+- Las compras hechas del 16 al 15 aparecen en el estado de cuenta del día 15
+- El pago de ese corte vence el día 9 del mes siguiente
+- Si pagas el total antes del día 9, **NO pagas intereses**
+
+**Lógica de "mejor momento para comprar":**
+- **MEJOR día para comprar: día 16** (justo después del corte) — tienes ~52 días para pagar sin intereses (del 16 al 9 del mes siguiente al corte)
+- **PEOR día para comprar: día 14-15** (justo antes del corte) — solo tienes ~24 días para pagar
+- **Regla general:** Cuanto más cerca del día 16 compres, más tiempo tienes para pagar sin intereses
+- Del 16 al 30: excelente (40-52 días de gracia)
+- Del 1 al 10: bueno (30-39 días de gracia)
+- Del 11 al 15: peor momento (24-29 días de gracia)
+
+**Cálculo de intereses (si NO paga el total):**
+- Tasa mensual ≈ 5% sobre saldo promedio diario
+- Si compra $X y paga mínimo:
+  - Interés mensual ≈ $X × 0.05
+  - IVA sobre interés: × 1.16
+  - Interés + IVA ≈ $X × 0.058
+- Ejemplo: Compra de $10,000 pagando mínimo → ~$580/mes en intereses
+- A 3 MSI (meses sin intereses): $0 en intereses pero $3,333.33/mes
+- A 6 MSI: $0 en intereses pero $1,666.67/mes
+- A 12 MSI: $0 en intereses pero $833.33/mes
+
+**Cuando pregunten sobre la tarjeta o compras personales:**
+- Calcula cuántos días de gracia quedan según la fecha actual
+- Recomienda si es buen momento o si conviene esperar al día 16
+- Si preguntan intereses, calcula con la tasa del 5% mensual + IVA
+- Si hay opción de MSI, siempre menciónalo como alternativa
+- Compara: pago total vs mínimo vs MSI
+- Sé directo: "Hoy es buen/mal día para comprar" con la razón
+
 ## SECCIONES DEL SISTEMA:
 
 1. **Pedidos** (tab: pedidos) - Gestión de órdenes, crear nuevos pedidos, ver detalles, actualizar estados
