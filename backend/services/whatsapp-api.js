@@ -292,10 +292,171 @@ export async function sendWhatsAppCTAMessage(to, body, displayText, url, header,
 }
 
 /**
+ * Send an emoji reaction to a specific message.
+ */
+export async function sendWhatsAppReaction(to, messageId, emoji) {
+  try {
+    const response = await metaApiFetch(
+      `${WHATSAPP_API_BASE}/${getPhoneNumberId()}/messages`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to,
+          type: 'reaction',
+          reaction: { message_id: messageId, emoji }
+        })
+      }
+    );
+    const data = await response.json();
+    if (data.error) {
+      console.error('🟢 WhatsApp reaction send error:', data.error);
+      return { success: false, error: data.error };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('🟢 WhatsApp reaction send failed:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Send a location request — client sees a "Share Location" button.
+ */
+export async function sendWhatsAppLocationRequest(to, body) {
+  try {
+    const response = await metaApiFetch(
+      `${WHATSAPP_API_BASE}/${getPhoneNumberId()}/messages`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to,
+          type: 'interactive',
+          interactive: {
+            type: 'location_request_message',
+            body: { text: body },
+            action: { name: 'send_location' }
+          }
+        })
+      }
+    );
+    const data = await response.json();
+    if (data.error) {
+      console.error('🟢 WhatsApp location request error:', data.error);
+      return { success: false, error: data.error, fallbackText: body };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('🟢 WhatsApp location request failed:', err.message);
+    return { success: false, error: err.message, fallbackText: body };
+  }
+}
+
+/**
+ * Send a product carousel — series of image+button messages.
+ */
+export async function sendWhatsAppCarousel(to, cards) {
+  const results = [];
+  for (const card of cards.slice(0, 5)) {
+    try {
+      if (card.imageUrl) {
+        const caption = `*${card.name}*\n💰 $${card.price} MXN c/u\n${card.description || ''}`.trim();
+        const imgResponse = await metaApiFetch(
+          `${WHATSAPP_API_BASE}/${getPhoneNumberId()}/messages`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to,
+              type: 'image',
+              image: { link: card.imageUrl, caption }
+            })
+          }
+        );
+        results.push(await imgResponse.json());
+      }
+      const btnResponse = await metaApiFetch(
+        `${WHATSAPP_API_BASE}/${getPhoneNumberId()}/messages`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to,
+            type: 'interactive',
+            interactive: {
+              type: 'button',
+              body: { text: `¿Te interesa ${card.name}?` },
+              action: {
+                buttons: [
+                  { type: 'reply', reply: { id: `order_${card.productId || card.name}`, title: 'Quiero este' } },
+                  { type: 'reply', reply: { id: `info_${card.productId || card.name}`, title: 'Más info' } }
+                ]
+              }
+            }
+          })
+        }
+      );
+      results.push(await btnResponse.json());
+    } catch (err) {
+      console.error(`🟢 WhatsApp carousel card error (${card.name}):`, err.message);
+    }
+  }
+  return { success: true, cardsSent: results.length };
+}
+
+/**
+ * Send a WhatsApp Flow message — opens a multi-screen form.
+ */
+export async function sendWhatsAppFlow(to, flowId, flowToken, body, ctaText = 'Comenzar') {
+  try {
+    const response = await metaApiFetch(
+      `${WHATSAPP_API_BASE}/${getPhoneNumberId()}/messages`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to,
+          type: 'interactive',
+          interactive: {
+            type: 'flow',
+            body: { text: body },
+            action: {
+              name: 'flow',
+              parameters: {
+                flow_id: flowId,
+                flow_token: flowToken,
+                flow_cta: ctaText,
+                flow_action: 'navigate',
+                flow_action_payload: { screen: 'PRODUCT_SELECT' }
+              }
+            }
+          }
+        })
+      }
+    );
+    const data = await response.json();
+    if (data.error) {
+      console.error('🟢 WhatsApp flow send error:', data.error);
+      return { success: false, error: data.error, fallbackText: body };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('🟢 WhatsApp flow send failed:', err.message);
+    return { success: false, error: err.message, fallbackText: body };
+  }
+}
+
+/**
  * Check if the WhatsApp token is currently known to be dead.
  */
 export function isTokenDead() {
   return tokenDead;
 }
 
-export { WHATSAPP_API_BASE, getAccessToken, getPhoneNumberId };
+export { WHATSAPP_API_BASE, getAccessToken, getPhoneNumberId, metaApiFetch };

@@ -1,0 +1,32 @@
+{
+  "version": "3.0",
+  "screens": [
+    {
+      "id": "PRODUCT_SELECT",
+      "title": "¿Qué producto te interesa?",
+      "data": { "products": { "type": "array", "__example__": [] } },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "Dropdown", "name": "product", "label": "Producto", "required": true, "data-source": "${data.products}" },
+          { "type": "TextInput", "name": "quantity", "label": "Cantidad aproximada", "input-type": "number", "required": true },
+          { "type": "TextArea", "name": "details", "label": "Detalles de personalización", "helper-text": "Diseño, texto, colores..." },
+          { "type": "Footer", "label": "Siguiente", "on-click-action": { "name": "navigate", "next": { "type": "screen", "name": "CONTACT" } } }
+        ]
+      }
+    },
+    {
+      "id": "CONTACT",
+      "title": "Datos de contacto",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextInput", "name": "client_name", "label": "Nombre completo", "required": true },
+          { "type": "TextInput", "name": "city", "label": "Ciudad", "required": true },
+          { "type": "TextInput", "name": "event_date", "label": "Fecha del evento (aprox)", "helper-text": "Opcional" },
+          { "type": "Footer", "label": "Solicitar cotización", "on-click-action": { "name": "complete", "payload": {} } }
+        ]
+      }
+    }
+  ]
+}

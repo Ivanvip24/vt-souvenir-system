@@ -1,0 +1,33 @@
+{
+  "version": "3.0",
+  "screens": [
+    {
+      "id": "LEAD_INFO",
+      "title": "Cuéntanos de ti",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextInput", "name": "client_name", "label": "Nombre completo", "required": true },
+          { "type": "TextInput", "name": "city", "label": "Ciudad", "required": true },
+          { "type": "Dropdown", "name": "business_type", "label": "Tipo de cliente", "required": true, "data-source": [
+            { "id": "personal", "title": "Personal / Evento" },
+            { "id": "business", "title": "Negocio / Tienda" },
+            { "id": "event_planner", "title": "Organizador de eventos" },
+            { "id": "hotel", "title": "Hotel / Restaurante" }
+          ]},
+          { "type": "Dropdown", "name": "event_type", "label": "Tipo de evento", "data-source": [
+            { "id": "boda", "title": "Boda" }, { "id": "xv", "title": "XV Años" },
+            { "id": "bautizo", "title": "Bautizo" }, { "id": "corporativo", "title": "Corporativo" },
+            { "id": "otro", "title": "Otro / No aplica" }
+          ]},
+          { "type": "Dropdown", "name": "quantity_range", "label": "Cantidad estimada", "data-source": [
+            { "id": "small", "title": "100 - 200 piezas" },
+            { "id": "medium", "title": "200 - 500 piezas" },
+            { "id": "large", "title": "500+ piezas" }
+          ]},
+          { "type": "Footer", "label": "Registrarme", "on-click-action": { "name": "complete", "payload": {} } }
+        ]
+      }
+    }
+  ]
+}

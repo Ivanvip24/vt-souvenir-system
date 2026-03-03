@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
 import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn } from '../services/whatsapp-ai.js';
-import { sendWhatsAppMessage, sendWhatsAppListMessage, sendWhatsAppButtonMessage, sendWhatsAppCTAMessage } from '../services/whatsapp-api.js';
+import { sendWhatsAppMessage, sendWhatsAppListMessage, sendWhatsAppButtonMessage, sendWhatsAppCTAMessage, sendWhatsAppReaction, sendWhatsAppLocationRequest, sendWhatsAppCarousel, sendWhatsAppFlow } from '../services/whatsapp-api.js';
 import {
   downloadWhatsAppMedia,
   uploadMediaToCloudinary,
@@ -107,9 +107,31 @@ router.post('/webhook', (req, res) => {
           } else if (interactiveData?.type === 'button_reply') {
             messageText = `[Seleccionó: ${interactiveData.button_reply.title}]`;
             messageMetadata = { interactive_type: 'button_reply', ...interactiveData.button_reply };
+          } else if (interactiveData?.type === 'nfm_reply') {
+            const responseJson = interactiveData.nfm_reply?.response_json;
+            const flowToken = interactiveData.nfm_reply?.flow_token;
+            try {
+              const parsed = JSON.parse(responseJson);
+              messageText = `[Formulario completado: ${JSON.stringify(parsed)}]`;
+              messageMetadata = { interactive_type: 'nfm_reply', flow_token: flowToken, flow_response: parsed };
+            } catch {
+              messageText = `[Formulario completado]`;
+              messageMetadata = { interactive_type: 'nfm_reply', flow_token: flowToken };
+            }
           } else {
             messageText = `[Respuesta interactiva: ${interactiveData?.type || 'desconocida'}]`;
           }
+        }
+        else if (message.type === 'location') {
+          const loc = message.location;
+          messageText = `[Ubicación compartida: ${loc.name || loc.address || `${loc.latitude}, ${loc.longitude}`}]`;
+          messageMetadata = {
+            type: 'location',
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            name: loc.name || null,
+            address: loc.address || null
+          };
         }
         else {
           messageText = `[Mensaje tipo ${message.type} recibido]`;
@@ -245,6 +267,58 @@ router.post('/webhook', (req, res) => {
         }
       }
 
+      // Send emoji reaction if AI requested one
+      if (aiResult.reactionEmoji && waMessageId) {
+        try {
+          await sendWhatsAppReaction(waId, waMessageId, aiResult.reactionEmoji);
+        } catch (reactErr) {
+          console.error('🟢 WhatsApp reaction send error:', reactErr.message);
+        }
+      }
+
+      // Send location request if AI requested one
+      if (aiResult.locationRequest) {
+        try {
+          const locBody = aiResult.locationRequest.body || '¿Podrías compartirme tu ubicación para el envío?';
+          const result = await sendWhatsAppLocationRequest(waId, locBody);
+          if (!result.success && result.fallbackText) {
+            await sendWhatsAppMessage(waId, result.fallbackText);
+          }
+        } catch (locErr) {
+          console.error('🟢 WhatsApp location request error:', locErr.message);
+        }
+      }
+
+      // Send product carousel if AI requested one
+      if (aiResult.carouselCards && aiResult.carouselCards.length > 0) {
+        try {
+          await sendWhatsAppCarousel(waId, aiResult.carouselCards);
+        } catch (carouselErr) {
+          console.error('🟢 WhatsApp carousel send error:', carouselErr.message);
+        }
+      }
+
+      // Send WhatsApp Flow if AI requested one
+      if (aiResult.flowRequest) {
+        const flowType = aiResult.flowRequest.flowId || 'order_form';
+        const flowId = process.env[`WA_FLOW_${flowType.toUpperCase().replace('_', '_')}_ID`] || null;
+        if (flowId) {
+          try {
+            const flowToken = `${flowType}_${Date.now()}`;
+            const result = await sendWhatsAppFlow(
+              waId, flowId, flowToken,
+              aiResult.flowRequest.body || 'Completa este formulario:',
+              aiResult.flowRequest.ctaText || 'Comenzar'
+            );
+            if (!result.success && result.fallbackText) {
+              await sendWhatsAppMessage(waId, result.fallbackText);
+            }
+          } catch (flowErr) {
+            console.error('🟢 WhatsApp flow send error:', flowErr.message);
+          }
+        }
+      }
+
       // Store outbound AI message
       const outboundWaId = 'ai_' + Date.now();
       const outboundMetadata = { intent };
@@ -259,6 +333,18 @@ router.post('/webhook', (req, res) => {
       }
       if (documentsToSend.length > 0) {
         outboundMetadata.documentsSent = documentsToSend;
+      }
+      if (aiResult.reactionEmoji) {
+        outboundMetadata.reactionSent = aiResult.reactionEmoji;
+      }
+      if (aiResult.locationRequest) {
+        outboundMetadata.locationRequested = true;
+      }
+      if (aiResult.carouselCards?.length > 0) {
+        outboundMetadata.carouselSent = aiResult.carouselCards;
+      }
+      if (aiResult.flowRequest) {
+        outboundMetadata.flowSent = aiResult.flowRequest;
       }
       await query(
         `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, metadata)
@@ -275,6 +361,37 @@ router.post('/webhook', (req, res) => {
       console.error('🟢 WhatsApp webhook error:', err);
     }
   })();
+});
+
+// ---------------------------------------------------------------------------
+// Flow data endpoint — Meta calls this for dynamic screen data (no auth)
+// ---------------------------------------------------------------------------
+router.post('/flow-endpoint', async (req, res) => {
+  try {
+    const { action, screen, data, flow_token } = req.body;
+
+    if (action === 'ping') {
+      return res.json({ data: { status: 'active' } });
+    }
+
+    if (action === 'INIT') {
+      const productsResult = await query('SELECT id, name, base_price FROM products WHERE is_active = true ORDER BY name');
+      const products = productsResult.rows.map(p => ({
+        id: String(p.id),
+        title: `${p.name} — $${p.base_price} MXN`
+      }));
+      return res.json({ screen: 'PRODUCT_SELECT', data: { products } });
+    }
+
+    if (action === 'data_exchange') {
+      return res.json({ screen, data: {} });
+    }
+
+    res.json({ data: {} });
+  } catch (err) {
+    console.error('🟢 WhatsApp flow endpoint error:', err.message);
+    res.status(500).json({ data: { error: err.message } });
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -435,7 +552,30 @@ router.post('/conversations/:id/insights', authMiddleware, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// 8. GET /health — Check WhatsApp bot token status (auth required)
+// 9. POST /conversations/:id/react — Admin emoji reaction (auth required)
+// ---------------------------------------------------------------------------
+router.post('/conversations/:id/react', authMiddleware, async (req, res) => {
+  try {
+    const { messageId, emoji } = req.body;
+    if (!messageId || !emoji) {
+      return res.status(400).json({ success: false, error: 'messageId and emoji are required' });
+    }
+
+    const conv = await query('SELECT wa_id FROM whatsapp_conversations WHERE id = $1', [req.params.id]);
+    if (conv.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
+    const result = await sendWhatsAppReaction(conv.rows[0].wa_id, messageId, emoji);
+    res.json(result);
+  } catch (err) {
+    console.error('🟢 WhatsApp admin reaction error:', err);
+    res.status(500).json({ success: false, error: 'Failed to send reaction' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 10. GET /health — Check WhatsApp bot token status (auth required)
 // ---------------------------------------------------------------------------
 import { isTokenDead } from '../services/whatsapp-api.js';
 

@@ -241,7 +241,56 @@ function parseAIResponse(responseText) {
   }
   cleanReply = cleanReply.replace(/\[SEND_DOCUMENT\].*?\[\/SEND_DOCUMENT\]/gs, '').trim();
 
-  return { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend };
+  // Extract REACT block (emoji reaction)
+  let reactionEmoji = null;
+  const reactMatch = cleanReply.match(/\[REACT\](.*?)\[\/REACT\]/s);
+  if (reactMatch) {
+    try {
+      const reactData = JSON.parse(reactMatch[1].trim());
+      reactionEmoji = reactData.emoji || null;
+    } catch (err) {
+      console.error('🟢 WhatsApp AI: Failed to parse REACT JSON:', err.message);
+    }
+    cleanReply = cleanReply.replace(/\[REACT\].*?\[\/REACT\]/s, '').trim();
+  }
+
+  // Extract REQUEST_LOCATION block
+  let locationRequest = null;
+  const locationMatch = cleanReply.match(/\[REQUEST_LOCATION\](.*?)\[\/REQUEST_LOCATION\]/s);
+  if (locationMatch) {
+    try {
+      locationRequest = JSON.parse(locationMatch[1].trim());
+    } catch (err) {
+      console.error('🟢 WhatsApp AI: Failed to parse REQUEST_LOCATION JSON:', err.message);
+    }
+    cleanReply = cleanReply.replace(/\[REQUEST_LOCATION\].*?\[\/REQUEST_LOCATION\]/s, '').trim();
+  }
+
+  // Extract SEND_CAROUSEL block
+  let carouselRequest = null;
+  const carouselMatch = cleanReply.match(/\[SEND_CAROUSEL\](.*?)\[\/SEND_CAROUSEL\]/s);
+  if (carouselMatch) {
+    try {
+      carouselRequest = JSON.parse(carouselMatch[1].trim());
+    } catch (err) {
+      console.error('🟢 WhatsApp AI: Failed to parse SEND_CAROUSEL JSON:', err.message);
+    }
+    cleanReply = cleanReply.replace(/\[SEND_CAROUSEL\].*?\[\/SEND_CAROUSEL\]/s, '').trim();
+  }
+
+  // Extract SEND_FLOW block
+  let flowRequest = null;
+  const flowMatch = cleanReply.match(/\[SEND_FLOW\](.*?)\[\/SEND_FLOW\]/s);
+  if (flowMatch) {
+    try {
+      flowRequest = JSON.parse(flowMatch[1].trim());
+    } catch (err) {
+      console.error('🟢 WhatsApp AI: Failed to parse SEND_FLOW JSON:', err.message);
+    }
+    cleanReply = cleanReply.replace(/\[SEND_FLOW\].*?\[\/SEND_FLOW\]/s, '').trim();
+  }
+
+  return { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, reactionEmoji, locationRequest, carouselRequest, flowRequest };
 }
 
 /**
@@ -365,7 +414,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     const rawReply = response.content[0].text;
 
     // Parse the response for intent and order blocks
-    const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend } = parseAIResponse(rawReply);
+    const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, reactionEmoji, locationRequest, carouselRequest, flowRequest } = parseAIResponse(rawReply);
 
     let actionTaken = null;
     let orderData = null;
@@ -406,6 +455,26 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       };
     }).filter(img => img.imageUrl);
 
+    // Resolve carousel product cards from catalog
+    let carouselCards = [];
+    if (carouselRequest?.products) {
+      carouselCards = carouselRequest.products.map(productName => {
+        const nameLower = productName.toLowerCase();
+        const match = products.find(p => p.name.toLowerCase() === nameLower)
+          || products.find(p => nameLower.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(nameLower));
+        if (match) {
+          return {
+            name: match.name,
+            price: match.base_price,
+            description: match.description || '',
+            imageUrl: match.image_url || null,
+            productId: match.id
+          };
+        }
+        return null;
+      }).filter(Boolean);
+    }
+
     return {
       reply: cleanReply,
       intent: intent,
@@ -415,6 +484,10 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       listsToSend: listsToSend || [],
       buttonsToSend: buttonsToSend || [],
       documentsToSend: documentsToSend || [],
+      reactionEmoji: reactionEmoji || null,
+      locationRequest: locationRequest || null,
+      carouselCards,
+      flowRequest: flowRequest || null,
     };
 
   } catch (error) {
@@ -430,6 +503,10 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       listsToSend: [],
       buttonsToSend: [],
       documentsToSend: [],
+      reactionEmoji: null,
+      locationRequest: null,
+      carouselCards: [],
+      flowRequest: null,
     };
   }
 }

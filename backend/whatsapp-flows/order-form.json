@@ -1,0 +1,49 @@
+{
+  "version": "3.0",
+  "screens": [
+    {
+      "id": "PRODUCT_SELECT",
+      "title": "Selecciona tu producto",
+      "data": { "products": { "type": "array", "__example__": [] } },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "Dropdown", "name": "product", "label": "Producto", "required": true, "data-source": "${data.products}" },
+          { "type": "TextInput", "name": "quantity", "label": "Cantidad", "input-type": "number", "required": true, "helper-text": "Mínimo 100 piezas" },
+          { "type": "TextArea", "name": "customization", "label": "Personalización", "helper-text": "Describe tu diseño o texto" },
+          { "type": "Footer", "label": "Siguiente", "on-click-action": { "name": "navigate", "next": { "type": "screen", "name": "EVENT_DETAILS" } } }
+        ]
+      }
+    },
+    {
+      "id": "EVENT_DETAILS",
+      "title": "Detalles del evento",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "Dropdown", "name": "event_type", "label": "Tipo de evento", "required": true, "data-source": [
+            { "id": "boda", "title": "Boda" }, { "id": "xv", "title": "XV Años" },
+            { "id": "bautizo", "title": "Bautizo" }, { "id": "cumpleanos", "title": "Cumpleaños" },
+            { "id": "corporativo", "title": "Corporativo" }, { "id": "otro", "title": "Otro" }
+          ]},
+          { "type": "DatePicker", "name": "delivery_date", "label": "Fecha de entrega", "required": true },
+          { "type": "Footer", "label": "Siguiente", "on-click-action": { "name": "navigate", "next": { "type": "screen", "name": "SHIPPING" } } }
+        ]
+      }
+    },
+    {
+      "id": "SHIPPING",
+      "title": "Datos de envío",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          { "type": "TextInput", "name": "client_name", "label": "Nombre completo", "required": true },
+          { "type": "TextInput", "name": "address", "label": "Dirección", "required": true },
+          { "type": "TextInput", "name": "city", "label": "Ciudad", "required": true },
+          { "type": "TextInput", "name": "state", "label": "Estado", "required": true },
+          { "type": "Footer", "label": "Confirmar pedido", "on-click-action": { "name": "complete", "payload": {} } }
+        ]
+      }
+    }
+  ]
+}

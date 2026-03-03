@@ -1486,6 +1486,19 @@ function buildChatViewDOM(parentEl) {
   insightsToggle.textContent = '\u2728 Insights';
   header.appendChild(insightsToggle);
 
+  // Templates button
+  var tplBtn = document.createElement('button');
+  tplBtn.textContent = '\uD83D\uDCE8 Plantillas';
+  tplBtn.title = 'Gestionar plantillas de WhatsApp';
+  tplBtn.style.cssText = 'padding:6px 12px;background:#f39223;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;margin-left:8px;';
+  tplBtn.onclick = function() {
+    var panel = document.getElementById('wa-templates-panel');
+    if (!panel) { panel = buildTemplatesPanel(); }
+    panel.style.display = 'block';
+    loadTemplates();
+  };
+  header.appendChild(tplBtn);
+
   parentEl.appendChild(header);
 
   // --- Messages area ---
@@ -1682,6 +1695,27 @@ function buildMessagesDOM(parentEl) {
         }
         contentDiv.appendChild(docCaptionDiv);
       }
+    } else if (msgType === 'location' || (meta && meta.type === 'location')) {
+      // Location message rendering
+      var lat = meta.latitude;
+      var lng = meta.longitude;
+      var locName = meta.name || meta.address || (lat + ', ' + lng);
+      var mapUrl = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+      var locDiv = document.createElement('div');
+      locDiv.style.cssText = 'padding:8px;background:rgba(0,0,0,0.05);border-radius:8px;';
+      var locLink = document.createElement('a');
+      locLink.href = mapUrl;
+      locLink.target = '_blank';
+      locLink.style.cssText = 'color:#09adc2;text-decoration:none;font-weight:600;';
+      locLink.textContent = '\uD83D\uDCCD ' + locName;
+      locDiv.appendChild(locLink);
+      contentDiv.appendChild(locDiv);
+      if (contentText && contentText !== '[Ubicacion]' && contentText !== '[Location]') {
+        var locCaptionDiv = document.createElement('div');
+        locCaptionDiv.style.marginTop = '4px';
+        locCaptionDiv.textContent = contentText;
+        contentDiv.appendChild(locCaptionDiv);
+      }
     } else {
       // Text message (default) - handle newlines
       var lines = contentText.split('\n');
@@ -1689,6 +1723,20 @@ function buildMessagesDOM(parentEl) {
         if (j > 0) contentDiv.appendChild(document.createElement('br'));
         contentDiv.appendChild(document.createTextNode(lines[j]));
       }
+    }
+
+    // Flow response rendering
+    if (meta && meta.interactive_type === 'nfm_reply' && meta.flow_response) {
+      var flowData = meta.flow_response;
+      var flowHTML = '<div style="margin-top:6px;padding:8px;background:rgba(0,0,0,0.05);border-radius:8px;">' +
+        '<strong>\uD83D\uDCCB Formulario completado:</strong><br>';
+      for (var flowKey in flowData) {
+        if (flowData.hasOwnProperty(flowKey)) {
+          flowHTML += '<span style="color:#666;">' + flowKey + ':</span> ' + flowData[flowKey] + '<br>';
+        }
+      }
+      flowHTML += '</div>';
+      contentDiv.innerHTML += flowHTML;
     }
 
     // Outbound messages: show sent image thumbnails from metadata
@@ -1715,6 +1763,54 @@ function buildMessagesDOM(parentEl) {
     timeDiv.className = 'wa-msg-time';
     timeDiv.textContent = waFormatTime(m.created_at);
     msgDiv.appendChild(timeDiv);
+
+    // Reaction picker for inbound messages
+    if (m.direction === 'inbound' && m.wa_message_id) {
+      var reactBar = document.createElement('div');
+      reactBar.className = 'wa-react-bar';
+      reactBar.style.cssText = 'display:none;position:absolute;top:-28px;right:8px;background:#fff;border-radius:16px;padding:2px 6px;box-shadow:0 1px 4px rgba(0,0,0,0.15);z-index:10;';
+      var emojis = ['\uD83D\uDC4D','\u2764\uFE0F','\u2705','\uD83D\uDE4F','\uD83C\uDF89'];
+      emojis.forEach(function(emoji) {
+        var btn = document.createElement('span');
+        btn.textContent = emoji;
+        btn.style.cssText = 'cursor:pointer;padding:2px 4px;font-size:16px;';
+        btn.title = 'React with ' + emoji;
+        btn.onclick = (function(emojiChar, msgId, btnEl) {
+          return async function(e) {
+            e.stopPropagation();
+            try {
+              await fetch('/api/whatsapp/conversations/' + waState.selectedConversationId + '/react', {
+                method: 'POST',
+                headers: Object.assign({}, getAuthHeaders(), { 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ messageId: msgId, emoji: emojiChar })
+              });
+              btnEl.style.transform = 'scale(1.3)';
+              setTimeout(function() { btnEl.style.transform = ''; }, 300);
+            } catch (err) {
+              console.error('Reaction failed:', err);
+            }
+          };
+        })(emoji, m.wa_message_id, btn);
+        reactBar.appendChild(btn);
+      });
+      msgDiv.style.position = 'relative';
+      msgDiv.appendChild(reactBar);
+      msgDiv.addEventListener('mouseenter', (function(bar) {
+        return function() { bar.style.display = 'flex'; };
+      })(reactBar));
+      msgDiv.addEventListener('mouseleave', (function(bar) {
+        return function() { bar.style.display = 'none'; };
+      })(reactBar));
+    }
+
+    // Show reaction sent badge
+    if (meta && meta.reactionSent) {
+      var badge = document.createElement('span');
+      badge.textContent = meta.reactionSent;
+      badge.style.cssText = 'position:absolute;bottom:-8px;right:8px;font-size:18px;background:#fff;border-radius:50%;padding:1px 3px;box-shadow:0 1px 3px rgba(0,0,0,0.15);';
+      msgDiv.style.position = 'relative';
+      msgDiv.appendChild(badge);
+    }
 
     parentEl.appendChild(msgDiv);
   }
@@ -2239,6 +2335,270 @@ function bindInsightsEvents() {
       var currentlyEnabled = conv.ai_enabled !== false;
       toggleAiEnabled(waState.selectedConversationId, !currentlyEnabled);
     });
+  }
+}
+
+// ==========================================
+// TEMPLATES MANAGEMENT PANEL
+// ==========================================
+
+function buildTemplatesPanel() {
+  var panel = document.createElement('div');
+  panel.id = 'wa-templates-panel';
+  panel.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;';
+
+  var modal = document.createElement('div');
+  modal.style.cssText = 'background:#fff;max-width:700px;margin:40px auto;border-radius:12px;padding:24px;max-height:calc(100vh - 80px);overflow-y:auto;';
+
+  // Build modal header
+  var modalHeader = document.createElement('div');
+  modalHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;';
+  var modalTitle = document.createElement('h2');
+  modalTitle.style.cssText = 'margin:0;font-size:18px;';
+  modalTitle.textContent = '\uD83D\uDCE8 Plantillas de WhatsApp';
+  modalHeader.appendChild(modalTitle);
+  var closeBtn = document.createElement('button');
+  closeBtn.id = 'wa-tpl-close';
+  closeBtn.style.cssText = 'background:none;border:none;font-size:24px;cursor:pointer;';
+  closeBtn.textContent = '\u2715';
+  modalHeader.appendChild(closeBtn);
+  modal.appendChild(modalHeader);
+
+  // Template list area
+  var tplList = document.createElement('div');
+  tplList.id = 'wa-tpl-list';
+  tplList.style.marginBottom = '24px';
+  var loadingP = document.createElement('p');
+  loadingP.style.color = '#999';
+  loadingP.textContent = 'Cargando plantillas...';
+  tplList.appendChild(loadingP);
+  modal.appendChild(tplList);
+
+  // Divider
+  var hr1 = document.createElement('hr');
+  hr1.style.cssText = 'border:none;border-top:1px solid #eee;margin:16px 0;';
+  modal.appendChild(hr1);
+
+  // Send template section
+  var sendTitle = document.createElement('h3');
+  sendTitle.style.cssText = 'font-size:15px;margin-bottom:12px;';
+  sendTitle.textContent = 'Enviar plantilla';
+  modal.appendChild(sendTitle);
+
+  var sendGrid = document.createElement('div');
+  sendGrid.style.cssText = 'display:grid;gap:10px;';
+
+  var tplSelect = document.createElement('select');
+  tplSelect.id = 'wa-tpl-select';
+  tplSelect.style.cssText = 'padding:8px;border:1px solid #ddd;border-radius:6px;';
+  sendGrid.appendChild(tplSelect);
+
+  var tplTo = document.createElement('input');
+  tplTo.id = 'wa-tpl-to';
+  tplTo.type = 'text';
+  tplTo.placeholder = 'N\u00famero (ej: 5215512345678)';
+  tplTo.style.cssText = 'padding:8px;border:1px solid #ddd;border-radius:6px;';
+  sendGrid.appendChild(tplTo);
+
+  var tplVars = document.createElement('div');
+  tplVars.id = 'wa-tpl-vars';
+  sendGrid.appendChild(tplVars);
+
+  var sendBtn = document.createElement('button');
+  sendBtn.id = 'wa-tpl-send';
+  sendBtn.style.cssText = 'padding:10px;background:#e72a88;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;';
+  sendBtn.textContent = 'Enviar';
+  sendGrid.appendChild(sendBtn);
+
+  var tplResult = document.createElement('div');
+  tplResult.id = 'wa-tpl-result';
+  tplResult.style.cssText = 'color:#666;font-size:13px;';
+  sendGrid.appendChild(tplResult);
+
+  modal.appendChild(sendGrid);
+
+  // Divider
+  var hr2 = document.createElement('hr');
+  hr2.style.cssText = 'border:none;border-top:1px solid #eee;margin:16px 0;';
+  modal.appendChild(hr2);
+
+  // Broadcasts history
+  var bcastTitle = document.createElement('h3');
+  bcastTitle.style.cssText = 'font-size:15px;margin-bottom:12px;';
+  bcastTitle.textContent = 'Historial de env\u00edos';
+  modal.appendChild(bcastTitle);
+
+  var bcastDiv = document.createElement('div');
+  bcastDiv.id = 'wa-tpl-broadcasts';
+  var bcastLoading = document.createElement('p');
+  bcastLoading.style.color = '#999';
+  bcastLoading.textContent = 'Cargando...';
+  bcastDiv.appendChild(bcastLoading);
+  modal.appendChild(bcastDiv);
+
+  panel.appendChild(modal);
+  document.body.appendChild(panel);
+
+  // Close button
+  closeBtn.onclick = function() { panel.style.display = 'none'; };
+  panel.onclick = function(e) { if (e.target === panel) panel.style.display = 'none'; };
+
+  // Load templates
+  loadTemplates();
+
+  // Send button
+  sendBtn.onclick = sendTemplateFromUI;
+
+  return panel;
+}
+
+async function loadTemplates() {
+  try {
+    var res = await fetch('/api/whatsapp/templates', { headers: getAuthHeaders() });
+    var data = await res.json();
+    var listEl = document.getElementById('wa-tpl-list');
+    var selectEl = document.getElementById('wa-tpl-select');
+
+    if (!listEl || !selectEl) return;
+
+    // Clear existing content
+    listEl.textContent = '';
+    selectEl.textContent = '';
+
+    if (!data.templates || !data.templates.length) {
+      var noTplP = document.createElement('p');
+      noTplP.style.color = '#999';
+      noTplP.textContent = 'No hay plantillas. ';
+      var seedBtn = document.createElement('button');
+      seedBtn.id = 'wa-tpl-seed';
+      seedBtn.style.cssText = 'color:#e72a88;border:none;background:none;cursor:pointer;text-decoration:underline;';
+      seedBtn.textContent = 'Crear plantillas por defecto';
+      seedBtn.onclick = async function() {
+        await fetch('/api/whatsapp/templates/seed', { method: 'POST', headers: getAuthHeaders() });
+        loadTemplates();
+      };
+      noTplP.appendChild(seedBtn);
+      listEl.appendChild(noTplP);
+      return;
+    }
+
+    // Render template cards
+    data.templates.forEach(function(t) {
+      var statusColors = { pending: '#f39223', approved: '#8ab73b', rejected: '#e52421' };
+      var color = statusColors[(t.status || '').toLowerCase()] || '#999';
+
+      var card = document.createElement('div');
+      card.style.cssText = 'padding:8px 12px;border:1px solid #eee;border-radius:8px;margin-bottom:8px;';
+
+      var cardRow = document.createElement('div');
+      cardRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
+      var nameStrong = document.createElement('strong');
+      nameStrong.textContent = t.name;
+      cardRow.appendChild(nameStrong);
+      var statusBadge = document.createElement('span');
+      statusBadge.style.cssText = 'font-size:12px;padding:2px 8px;border-radius:10px;background:' + color + '20;color:' + color + ';';
+      statusBadge.textContent = t.status || 'pending';
+      cardRow.appendChild(statusBadge);
+      card.appendChild(cardRow);
+
+      var bodyP = document.createElement('p');
+      bodyP.style.cssText = 'margin:4px 0 0;font-size:13px;color:#666;';
+      bodyP.textContent = t.body_text;
+      card.appendChild(bodyP);
+
+      listEl.appendChild(card);
+
+      // Add to select dropdown
+      var opt = document.createElement('option');
+      opt.value = t.name;
+      opt.textContent = t.name + ' (' + (t.status || 'pending') + ')';
+      selectEl.appendChild(opt);
+    });
+
+    selectEl.onchange = function() { updateTemplateVarFields(data.templates); };
+    updateTemplateVarFields(data.templates);
+
+    // Load broadcasts
+    try {
+      var bRes = await fetch('/api/whatsapp/broadcasts', { headers: getAuthHeaders() });
+      var bData = await bRes.json();
+      var bEl = document.getElementById('wa-tpl-broadcasts');
+      if (!bEl) return;
+      bEl.textContent = '';
+
+      if (bData.broadcasts && bData.broadcasts.length) {
+        bData.broadcasts.forEach(function(b) {
+          var bRow = document.createElement('div');
+          bRow.style.cssText = 'padding:6px;border-bottom:1px solid #f0f0f0;font-size:13px;';
+          var bName = document.createElement('strong');
+          bName.textContent = b.template_name || '?';
+          bRow.appendChild(bName);
+          bRow.appendChild(document.createTextNode(' \u2014 ' + b.total_sent + ' enviados \u2014 ' + new Date(b.created_at).toLocaleDateString()));
+          bEl.appendChild(bRow);
+        });
+      } else {
+        var noBcast = document.createElement('p');
+        noBcast.style.color = '#999';
+        noBcast.textContent = 'Sin env\u00edos a\u00fan';
+        bEl.appendChild(noBcast);
+      }
+    } catch (bErr) {
+      console.error('Load broadcasts error:', bErr);
+    }
+  } catch (err) {
+    console.error('Load templates error:', err);
+  }
+}
+
+function updateTemplateVarFields(templates) {
+  var selectEl = document.getElementById('wa-tpl-select');
+  if (!selectEl) return;
+  var name = selectEl.value;
+  var tpl = null;
+  for (var i = 0; i < templates.length; i++) {
+    if (templates[i].name === name) { tpl = templates[i]; break; }
+  }
+  var varsEl = document.getElementById('wa-tpl-vars');
+  if (!varsEl) return;
+  varsEl.textContent = '';
+  if (!tpl || !tpl.variables || !tpl.variables.length) return;
+  tpl.variables.forEach(function(v) {
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.dataset.var = v.name;
+    inp.placeholder = v.name + ' (ej: ' + (v.example || '') + ')';
+    inp.style.cssText = 'padding:8px;border:1px solid #ddd;border-radius:6px;width:100%;box-sizing:border-box;margin-bottom:6px;';
+    varsEl.appendChild(inp);
+  });
+}
+
+async function sendTemplateFromUI() {
+  var selectEl = document.getElementById('wa-tpl-select');
+  var toEl = document.getElementById('wa-tpl-to');
+  var resultEl = document.getElementById('wa-tpl-result');
+  if (!selectEl || !toEl || !resultEl) return;
+
+  var name = selectEl.value;
+  var to = toEl.value.trim();
+  if (!to) { resultEl.textContent = '\u26A0\uFE0F Ingresa un n\u00famero'; return; }
+
+  var variables = {};
+  var varInputs = document.querySelectorAll('#wa-tpl-vars input');
+  for (var i = 0; i < varInputs.length; i++) {
+    variables[varInputs[i].dataset.var] = varInputs[i].value;
+  }
+
+  resultEl.textContent = 'Enviando...';
+  try {
+    var res = await fetch('/api/whatsapp/templates/' + name + '/send', {
+      method: 'POST',
+      headers: Object.assign({}, getAuthHeaders(), { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ to: to, variables: variables })
+    });
+    var data = await res.json();
+    resultEl.textContent = data.error ? '\u274C ' + data.error : '\u2705 Enviado correctamente';
+  } catch (err) {
+    resultEl.textContent = '\u274C Error: ' + err.message;
   }
 }
 
