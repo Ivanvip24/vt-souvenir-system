@@ -459,4 +459,4 @@ export function isTokenDead() {
   return tokenDead;
 }
 
-export { WHATSAPP_API_BASE, getAccessToken, getPhoneNumberId, metaApiFetch };
+export { WHATSAPP_API_BASE, getAccessToken, getPhoneNumberId };
