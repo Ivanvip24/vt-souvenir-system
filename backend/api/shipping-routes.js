@@ -1990,78 +1990,55 @@ router.post('/clients/:clientId/generate', async (req, res) => {
     console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for client ${client.name} (no order)`);
     console.log(`   Address: ${destAddress.street} ${destAddress.street_number}, ${destAddress.colonia}, ${destAddress.city}, ${destAddress.state} CP ${destAddress.postal}`);
 
-    // Get fresh quotes — fire 3 in parallel to maximize carrier coverage.
-    // Skydropx randomly omits carriers from multi-package quotes, so we
-    // need multiple attempts (same strategy as the quoting endpoint).
-    console.log(`   📦 Firing 3 fresh quotes in parallel for ${labelsCount} package(s)...`);
-    const quotePromises = [];
-    for (let i = 0; i < 3; i++) {
-      quotePromises.push(
-        skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, labelsCount).catch(err => {
-          console.log(`   ⚠️ Quote ${i + 1} error: ${err.message}`);
-          return null;
-        })
-      );
-    }
-
-    const quoteResults = await Promise.all(quotePromises);
-
-    // Merge all rates — keep best rate per carrier-service, with its quotation_id
-    const allRatesMap = new Map();
-    for (const q of quoteResults) {
-      if (!q?.rates?.length) continue;
-      for (const rate of q.rates) {
-        const key = `${rate.carrier}-${rate.service}`;
-        const existing = allRatesMap.get(key);
-        if (!existing || rate.total_price < existing.total_price) {
-          allRatesMap.set(key, { ...rate, quotation_id: q.quotation_id });
-        }
-      }
-    }
-
-    const allFreshRates = Array.from(allRatesMap.values());
-    console.log(`   ✅ Got ${allFreshRates.length} unique carrier-service rates from ${quoteResults.filter(Boolean).length}/3 quotes`);
-
-    if (allFreshRates.length === 0) {
-      console.error(`❌ No rates from any quote for: ${client.city}, ${client.state} CP ${postal}`);
-      return res.status(400).json({
-        success: false,
-        error: `No hay tarifas de envío disponibles para: ${client.city}, ${client.state} CP ${postal}. Intenta de nuevo en unos segundos o verifica la dirección.`,
-        address: {
-          city: client.city,
-          state: client.state,
-          postal: postal,
-          street: client.street
-        }
-      });
-    }
-
-    // Match the user's selected carrier/service in the fresh results
+    // Use the original quotation_id from the user's selected rate directly.
+    // The quoting endpoint already fired 4+ parallel quotes and returned the
+    // correct quotation_id per rate. Re-quoting is unreliable because Skydropx
+    // randomly omits carriers from multi-package quotes.
     let finalRate;
     let finalQuotationId;
 
-    if (selectedRate) {
-      const matchingRate = allFreshRates.find(r =>
-        r.carrier === selectedRate.carrier && r.service === selectedRate.service
-      );
-      if (matchingRate) {
-        console.log(`📦 Matched pre-selected rate in fresh quotes: ${matchingRate.carrier} - ${matchingRate.service}`);
-        finalRate = matchingRate;
-        finalQuotationId = matchingRate.quotation_id;
-      } else {
-        // Carrier truly not available — return error instead of silently switching
-        console.log(`⚠️ Pre-selected rate (${selectedRate.carrier} - ${selectedRate.service}) not available in any fresh quote`);
-        return res.status(400).json({
-          success: false,
-          error: `${selectedRate.carrier} - ${selectedRate.service} no está disponible en este momento. Por favor cotiza de nuevo y selecciona otra opción.`
-        });
+    if (quotationId && rateId && selectedRate) {
+      // Use the original quotation_id + rate_id from the quoting step
+      console.log(`📦 Using original quote: ${selectedRate.carrier} - ${selectedRate.service} (quotation: ${quotationId})`);
+      finalRate = selectedRate;
+      finalQuotationId = quotationId;
+
+      // If this rate came from a single-package estimate but we need multiple packages,
+      // we need a fresh multi-package quote for this specific carrier
+      if (selectedRate.isEstimated && labelsCount > 1) {
+        console.log(`   ⚠️ Rate was single-package estimate, getting fresh multi-package quote...`);
+        const freshQuotePromises = [];
+        for (let i = 0; i < 3; i++) {
+          freshQuotePromises.push(
+            skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, labelsCount).catch(() => null)
+          );
+        }
+        const freshResults = await Promise.all(freshQuotePromises);
+        for (const q of freshResults) {
+          if (!q?.rates?.length) continue;
+          const match = q.rates.find(r =>
+            r.carrier === selectedRate.carrier && r.service === selectedRate.service
+          );
+          if (match) {
+            console.log(`   ✅ Found ${match.carrier} - ${match.service} in fresh multi-package quote`);
+            finalRate = match;
+            finalQuotationId = q.quotation_id;
+            break;
+          }
+        }
       }
     } else {
-      // Auto-select cheapest
-      console.log(`📦 Auto-selecting cheapest rate`);
-      allFreshRates.sort((a, b) => a.total_price - b.total_price);
-      finalRate = allFreshRates[0];
-      finalQuotationId = finalRate.quotation_id;
+      // No pre-selected rate — get a fresh quote and pick cheapest
+      console.log(`📦 No pre-selected rate, getting fresh quote...`);
+      const quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, labelsCount);
+      if (!quote?.rates?.length) {
+        return res.status(400).json({
+          success: false,
+          error: `No hay tarifas de envío disponibles para: ${client.city}, ${client.state} CP ${postal}.`
+        });
+      }
+      finalRate = skydropx.selectBestRate(quote.rates);
+      finalQuotationId = quote.quotation_id;
     }
 
     // Generate ONE shipment with multiple packages (MULTIGUÍA)

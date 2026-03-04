@@ -1911,14 +1911,17 @@ async function generateClientLabelUI() {
       headers: getAuthHeaders(),
       body: JSON.stringify({
         labelsCount: packagesCount,
-        quotationId: quotationId,
+        quotationId: selectedRate.quotation_id || quotationId,
         rateId: selectedRate.rate_id,
+        isEstimated: selectedRate.isEstimated || false,
         selectedRate: {
           rate_id: selectedRate.rate_id,
           carrier: selectedRate.carrier,
           service: selectedRate.service,
           total_price: selectedRate.price,
-          days: selectedRate.days
+          days: selectedRate.days,
+          quotation_id: selectedRate.quotation_id,
+          isEstimated: selectedRate.isEstimated || false
         }
       })
     });
