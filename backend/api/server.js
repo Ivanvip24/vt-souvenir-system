@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+// Build: 2026-03-04-drag-drop-heic
 import { config } from 'dotenv';
 import { testConnection, query } from '../shared/database.js';
 import * as notionAgent from '../agents/notion-agent/index.js';
