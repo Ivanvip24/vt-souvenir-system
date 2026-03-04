@@ -83,14 +83,24 @@ function truncate(str, maxLen) {
 }
 
 /**
- * Sanitize text for Skydropx — only letters, numbers, spaces, apostrophes, periods allowed.
- * Replaces accented chars with ASCII equivalents, strips everything else.
+ * Sanitize text for Skydropx name fields — ONLY letters, numbers, spaces, apostrophes.
+ * Skydropx explicitly rejects periods, hyphens, slashes, accents, and everything else.
  */
 function sanitizeForSkydropx(str) {
   if (!str) return str;
   // Normalize accented characters to ASCII (ñ→n, é→e, etc.)
   const normalized = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  // Keep only letters, numbers, spaces, apostrophes, periods, hyphens, #
+  // Keep ONLY what Skydropx allows: letters, numbers, spaces, apostrophes
+  return normalized.replace(/[^a-zA-Z0-9\s']/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Sanitize text for Skydropx street/reference fields — slightly more permissive.
+ */
+function sanitizeStreetForSkydropx(str) {
+  if (!str) return str;
+  const normalized = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  // Streets allow #, periods, hyphens in addition to letters/numbers/spaces
   return normalized.replace(/[^a-zA-Z0-9\s'.#-]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
@@ -134,7 +144,7 @@ function buildCleanAddress(addr) {
   return {
     name: truncate(sanitizeForSkydropx(addr.name || 'Cliente'), MAX_NAME_LENGTH),
     company: truncate(sanitizeForSkydropx(addr.name || 'Cliente'), MAX_NAME_LENGTH),
-    street1: truncate(sanitizeForSkydropx(
+    street1: truncate(sanitizeStreetForSkydropx(
       `${addr.street || 'Calle'} ${addr.street_number || addr.number || 'S/N'}`.trim()
     ), MAX_STREET_LENGTH),
     neighborhood: truncate(sanitizeForSkydropx(addr.colonia || addr.neighborhood || 'Centro'), MAX_NAME_LENGTH),
@@ -145,7 +155,7 @@ function buildCleanAddress(addr) {
     country_code: 'MX',
     phone: sanitizePhone(addr.phone),
     email: sanitizeEmail(addr.email),
-    reference: truncate(sanitizeForSkydropx(addr.reference_notes || addr.reference || 'Sin referencia'), MAX_REFERENCE_LENGTH)
+    reference: truncate(sanitizeStreetForSkydropx(addr.reference_notes || addr.reference || 'Sin referencia'), MAX_REFERENCE_LENGTH)
   };
 }
 
