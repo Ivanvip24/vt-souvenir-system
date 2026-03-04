@@ -2003,10 +2003,11 @@ router.post('/clients/:clientId/generate', async (req, res) => {
       finalRate = selectedRate;
       finalQuotationId = quotationId;
 
-      // If this rate came from a single-package estimate but we need multiple packages,
-      // we need a fresh multi-package quote for this specific carrier
+      // Safety check: if this rate is flagged as single-package estimate but we need
+      // multiple packages, the quotation_id won't work. This shouldn't happen anymore
+      // (quoting endpoint now filters these out), but guard against it.
       if (selectedRate.isEstimated && labelsCount > 1) {
-        console.log(`   ⚠️ Rate was single-package estimate, getting fresh multi-package quote...`);
+        console.log(`   ⚠️ Rate was single-package estimate for ${labelsCount} packages — attempting fresh multi-package quote...`);
         const freshQuotePromises = [];
         for (let i = 0; i < 3; i++) {
           freshQuotePromises.push(
@@ -2014,6 +2015,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
           );
         }
         const freshResults = await Promise.all(freshQuotePromises);
+        let found = false;
         for (const q of freshResults) {
           if (!q?.rates?.length) continue;
           const match = q.rates.find(r =>
@@ -2023,8 +2025,16 @@ router.post('/clients/:clientId/generate', async (req, res) => {
             console.log(`   ✅ Found ${match.carrier} - ${match.service} in fresh multi-package quote`);
             finalRate = match;
             finalQuotationId = q.quotation_id;
+            found = true;
             break;
           }
+        }
+        if (!found) {
+          console.log(`   ❌ ${selectedRate.carrier} - ${selectedRate.service} not available for ${labelsCount} packages`);
+          return res.status(400).json({
+            success: false,
+            error: `${selectedRate.carrier} – ${selectedRate.service} no soporta envíos de ${labelsCount} paquetes. Por favor selecciona otra paquetería.`
+          });
         }
       }
     } else {
@@ -2275,28 +2285,36 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
       });
     });
 
-    // For carriers only in single quote, or if single × N is cheaper than multi, use that
+    // For multi-package orders: only add single-quote rates if the carrier also exists
+    // in multi-package quotes (i.e. single × N is cheaper). Never add carriers that
+    // ONLY appear in single-package quotes — their quotation_id won't work for N packages.
+    // For single-package orders: add all single-quote rates normally.
     if (singlePackageQuote?.rates) {
       singlePackageQuote.rates.forEach(rate => {
         const key = `${rate.carrier}-${rate.service}`;
         const estimatedTotal = rate.total_price * packagesCount;
         const existing = ratesMap.get(key);
 
-        if (!existing) {
-          // Carrier only available in single quote — add with single × N price
+        if (!existing && packagesCount === 1) {
+          // Single-package order: safe to add any carrier from single quote
           ratesMap.set(key, {
             ...rate,
             total_price: estimatedTotal,
             source: 'single_estimated',
             quotation_id: singlePackageQuote.quotation_id
           });
-        } else if (estimatedTotal < existing.total_price) {
-          // Single × N is actually cheaper than multi — use the lower price
+        } else if (!existing && packagesCount > 1) {
+          // Multi-package order: carrier ONLY in single quote — skip it.
+          // Its quotation_id is for 1 package and will fail at generation time.
+          console.log(`   ⏭️ Skipping ${rate.carrier} - ${rate.service}: only available in single-package quote (incompatible with ${packagesCount} packages)`);
+        } else if (existing && estimatedTotal < existing.total_price) {
+          // Carrier exists in both — single × N is cheaper, use lower price
+          // but keep the multi-package quotation_id so generation works
           ratesMap.set(key, {
-            ...rate,
+            ...existing,
             total_price: estimatedTotal,
             source: 'single_cheaper',
-            quotation_id: singlePackageQuote.quotation_id
+            quotation_id: existing.quotation_id  // keep multi-package quotation_id
           });
         }
       });
@@ -2321,7 +2339,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
         days: rate.days,
         daysText: rate.days === 1 ? '1 día' : `${rate.days} días`,
         isCheapest: index === 0,
-        isEstimated: rate.source !== 'multi',
+        isEstimated: rate.source === 'single_estimated',
         quotation_id: rate.quotation_id
       };
     });
