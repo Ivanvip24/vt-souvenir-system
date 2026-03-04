@@ -120,8 +120,18 @@ export async function calculateCustomPrice({ productName, quantity }) {
   const moq = MOQ[tierKey] || MOQ.default;
 
   // 4. Get tier price for comparison
-  const tierResult = calculateTieredPrice(productName, Math.max(quantity, moq), bom.basePrice);
-  const tierPrice = tierResult.unitPrice || bom.basePrice;
+  const tierResult = calculateTieredPrice(productName, Math.max(quantity, moq), bom.basePrice || 0);
+  const tierPrice = parseFloat(tierResult.unitPrice) || parseFloat(bom.basePrice) || 0;
+
+  // 4b. If no tier found and no BOM cost, we can't calculate
+  if (!tierKey && bom.totalCost === 0 && tierPrice === 0) {
+    return {
+      error: `No se encontró "${productName}" en el catálogo ni tiene BOM registrado. Verifica el nombre del producto.`,
+      productName,
+      quantity,
+      scenario: 'unknown'
+    };
+  }
 
   // 5. Determine scenario
   let scenario;
@@ -135,8 +145,8 @@ export async function calculateCustomPrice({ productName, quantity }) {
 
   // 6. For standard orders, just return tier pricing
   if (scenario === 'standard') {
-    const standardResult = calculateTieredPrice(productName, quantity, bom.basePrice);
-    const unitPrice = standardResult.unitPrice || bom.basePrice;
+    const standardResult = calculateTieredPrice(productName, quantity, bom.basePrice || 0);
+    const unitPrice = parseFloat(standardResult.unitPrice) || parseFloat(bom.basePrice) || 0;
     const margin = bom.totalCost > 0 ? ((unitPrice - bom.totalCost) / unitPrice * 100) : 0;
 
     return {
