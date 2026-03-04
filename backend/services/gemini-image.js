@@ -1,10 +1,10 @@
 /**
  * Gemini Image Generation Service
- * Uses Google Gemini 2.0 Flash to generate product mockups, design layouts, and marketing images.
+ * Uses Google Gemini to generate product mockups, design layouts, and marketing images.
  */
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-2.0-flash-preview-image-generation';
+const GEMINI_MODEL = 'gemini-2.5-flash-preview-image-generation';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**
