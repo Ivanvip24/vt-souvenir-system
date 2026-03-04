@@ -558,6 +558,10 @@ function handleAiAction(action) {
     } else if (action.type === 'generate_receipt') {
         // Show receipt result in chat
         showReceiptResult(action.data);
+    } else if (action.type === 'generate_product_image') {
+        showProductImage(action.data);
+    } else if (action.type === 'estimate_product_cost') {
+        showCostEstimate(action.data);
     } else {
         console.log('⚠️ DEBUG: Unknown action type:', action.type);
     }
@@ -756,6 +760,164 @@ function showPriceCalculation(data) {
         }
     }
 }
+
+function showProductImage(data) {
+    if (!data) return;
+
+    let html = '';
+
+    if (data.success && data.imageBase64) {
+        html = `
+            <div class="ai-quote-result" style="border-left: 3px solid #e72a88;">
+                <div class="ai-quote-header">
+                    <span class="ai-quote-icon">🎨</span>
+                    <div>
+                        <div class="ai-quote-title">Imagen Generada</div>
+                        <div class="ai-quote-number">${escapeHtml(data.prompt || 'Producto AXKAN')}</div>
+                    </div>
+                </div>
+
+                <div style="padding: 12px; text-align: center;">
+                    <img src="data:${data.mimeType || 'image/png'};base64,${data.imageBase64}"
+                         style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"
+                         alt="Mockup generado por IA" />
+                </div>
+
+                ${data.textResponse ? `<div style="padding: 4px 12px 8px; font-size: 0.85em; opacity: 0.7;">${escapeHtml(data.textResponse)}</div>` : ''}
+
+                <div style="padding: 8px 12px; text-align: center;">
+                    <button onclick="downloadBase64Image('${data.mimeType || 'image/png'}', this.closest('.ai-quote-result').querySelector('img').src, 'axkan-mockup.png')"
+                            class="ai-action-btn" style="background: #e72a88; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                        Descargar Imagen
+                    </button>
+                </div>
+            </div>`;
+    } else {
+        html = `
+            <div class="ai-quote-result" style="border-left: 3px solid #e52421;">
+                <div class="ai-quote-header">
+                    <span class="ai-quote-icon">⚠️</span>
+                    <div>
+                        <div class="ai-quote-title">Error generando imagen</div>
+                        <div class="ai-quote-number">${escapeHtml(data.error || 'Error desconocido')}</div>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    const messages = document.querySelectorAll('.ai-message.assistant');
+    if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        const contentDiv = lastMessage.querySelector('.ai-message-content');
+        if (contentDiv) {
+            contentDiv.insertAdjacentHTML('beforeend', html);
+        }
+    }
+}
+
+function showCostEstimate(data) {
+    if (!data) return;
+
+    let html = '';
+
+    if (data.error) {
+        html = `
+            <div class="ai-quote-result" style="border-left: 3px solid #f39223;">
+                <div class="ai-quote-header">
+                    <span class="ai-quote-icon">⚠️</span>
+                    <div>
+                        <div class="ai-quote-title">Estimación de Costo</div>
+                        <div class="ai-quote-number">${escapeHtml(data.error)}</div>
+                    </div>
+                </div>
+            </div>`;
+    } else {
+        const confidenceColors = { high: '#8ab73b', medium: '#f39223', low: '#e52421' };
+        const confidenceLabels = { high: 'Alta', medium: 'Media', low: 'Baja' };
+        const confColor = confidenceColors[data.confidence] || '#f39223';
+        const confLabel = confidenceLabels[data.confidence] || 'Media';
+
+        const materialsHtml = (data.materialBreakdown || []).map(m => `
+            <div style="display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <span>${escapeHtml(m.name)} ${m.matchedMaterial ? '<span style="opacity:0.5;">→ ' + escapeHtml(m.matchedMaterial) + '</span>' : '<span style="color:#e52421;">(no encontrado)</span>'}</span>
+                <span>$${(m.subtotal || 0).toFixed(2)}</span>
+            </div>
+        `).join('');
+
+        html = `
+            <div class="ai-quote-result" style="border-left: 3px solid #09adc2;">
+                <div class="ai-quote-header">
+                    <span class="ai-quote-icon">🔬</span>
+                    <div>
+                        <div class="ai-quote-title">Estimación de Costo</div>
+                        <div class="ai-quote-number">${escapeHtml(data.description || 'Producto hipotético')}</div>
+                    </div>
+                </div>
+
+                <div class="ai-quote-details">
+                    <div style="font-size: 0.85em; margin-bottom: 8px;">
+                        <strong>Desglose de materiales:</strong>
+                        ${materialsHtml}
+                    </div>
+
+                    <div style="font-family: monospace; font-size: 0.85em;">
+                        <div style="padding: 2px 0;">Costo materiales: $${(data.estimatedCostPerUnit - (data.laborEstimate || 0)).toFixed(2)}/pza</div>
+                        <div style="padding: 2px 0;">Mano de obra: $${(data.laborEstimate || 0).toFixed(2)}/pza</div>
+                        <div style="padding: 2px 0;">Desperdicio: ${data.wastePercent || 5}% (+$${(data.wasteCost || 0).toFixed(2)})</div>
+                    </div>
+
+                    <div class="ai-quote-total">
+                        <span>COSTO/PZA:</span>
+                        <span class="ai-quote-total-amount" style="color: #09adc2;">$${(data.estimatedCostPerUnit || 0).toFixed(2)}</span>
+                    </div>
+
+                    ${data.quantity ? `
+                        <div class="ai-quote-total" style="font-size: 0.9em; opacity: 0.8;">
+                            <span>TOTAL (${data.quantity} pzas):</span>
+                            <span>$${(data.totalForQuantity || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                    ` : ''}
+
+                    ${data.suggestedPriceRange ? `
+                        <div style="text-align: center; margin-top: 8px; padding: 6px 8px; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.85em;">
+                            Precio sugerido: $${data.suggestedPriceRange.low?.toFixed(2)} — $${data.suggestedPriceRange.high?.toFixed(2)} /pza
+                        </div>
+                    ` : ''}
+
+                    <div style="text-align: center; margin-top: 6px;">
+                        <span style="display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.8em; font-weight: bold; background: ${confColor}22; color: ${confColor}; border: 1px solid ${confColor};">
+                            Confianza: ${confLabel}
+                        </span>
+                    </div>
+
+                    ${data.unmatchedMaterials?.length > 0 ? `
+                        <div style="margin-top: 6px; font-size: 0.8em; color: #f39223;">
+                            ⚠️ Materiales no encontrados: ${data.unmatchedMaterials.join(', ')}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>`;
+    }
+
+    const messages = document.querySelectorAll('.ai-message.assistant');
+    if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        const contentDiv = lastMessage.querySelector('.ai-message-content');
+        if (contentDiv) {
+            contentDiv.insertAdjacentHTML('beforeend', html);
+        }
+    }
+}
+
+function downloadBase64Image(mimeType, imgSrc, filename) {
+    const link = document.createElement('a');
+    link.href = imgSrc;
+    link.download = filename || 'axkan-image.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+window.downloadBase64Image = downloadBase64Image;
 
 /**
  * Show catalog generation result in chat

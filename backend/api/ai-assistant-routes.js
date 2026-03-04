@@ -11,6 +11,9 @@ import { authMiddleware } from './admin-routes.js';
 import { parseQuoteRequest, generateQuotePDF, getQuoteUrl, getPricingInfo } from '../services/quote-generator.js';
 import { calculateCustomPrice } from '../services/pricing-engine.js';
 import { generateBrandedReceipt, getBrandedReceiptUrl } from '../services/branded-receipt-generator.js';
+import { generateProductImage, buildProductMockupPrompt } from '../services/gemini-image.js';
+import { estimateHypotheticalCost, listAvailableMaterials } from '../services/pricing-engine.js';
+import { generateWeeklyInsights, getProductOpportunities } from '../services/rd-insights.js';
 
 const router = express.Router();
 
@@ -444,6 +447,21 @@ async function getBusinessContext() {
     `).catch(() => ({ rows: [] }));
     context.productCosts = productCosts.rows;
 
+    // Get raw materials for AI R&D reference
+    const rawMaterials = await query(`
+      SELECT name, sku, cost_per_unit, unit_type, unit_label, current_stock
+      FROM raw_materials WHERE is_active = true ORDER BY name
+    `).catch(() => ({ rows: [] }));
+    context.rawMaterials = rawMaterials.rows;
+
+    // Weekly R&D digest (generate once per week)
+    const lastDigest = conversationStore.get('last_rd_digest');
+    const isNewWeek = !lastDigest || (Date.now() - lastDigest > 7 * 24 * 60 * 60 * 1000);
+    if (isNewWeek) {
+      context.rdInsights = await generateWeeklyInsights().catch(() => null);
+      conversationStore.set('last_rd_digest', Date.now());
+    }
+
     return context;
   } catch (error) {
     console.error('Error fetching business context:', error);
@@ -664,6 +682,34 @@ Cuando pregunten sobre producción, capacidad, problemas operativos, o metas:
 - Si hay opción de MSI, siempre menciónalo como alternativa
 - Compara: pago total vs mínimo vs MSI
 - Sé directo: "Hoy es buen/mal día para comprar" con la razón
+
+## ROL ADICIONAL: DIRECTOR DE I+D Y OPERACIONES
+
+Además de CRM, eres el Director de Investigación y Desarrollo de AXKAN. Puedes:
+1. **Generar imágenes de producto** con IA (mockups, diseños, material de marketing)
+2. **Estimar costos de productos hipotéticos** construyendo un BOM virtual con materiales reales
+3. **Analizar oportunidades de negocio** basado en datos de ventas
+
+### MATERIALES DISPONIBLES (costos reales del inventario):
+${context.rawMaterials?.length > 0 ? context.rawMaterials.map(m => `- ${m.name} (${m.sku || 'sin SKU'}): $${parseFloat(m.cost_per_unit || 0).toFixed(2)}/${m.unit_label || 'unidad'} — stock: ${m.current_stock || 0}`).join('\n') : 'Sin materiales registrados'}
+
+### INSIGHTS SEMANALES DE I+D:
+${context.rdInsights ? context.rdInsights.insights.map(i => `- [${i.type.toUpperCase()}] ${i.title}: ${i.description || ''} ${i.recommendation ? '→ ' + i.recommendation : ''}`).join('\n') : 'Pide análisis con: "dame análisis de la semana" o "qué oportunidades hay"'}
+
+### ACCIONES DE I+D DISPONIBLES:
+Cuando Iván pida generar una imagen o mockup de producto, usa:
+\`\`\`action
+{ "type": "generate_product_image", "productType": "imán/llavero/destapador", "description": "descripción detallada del producto a visualizar", "style": "product_mockup", "dimensions": "7x5cm" }
+\`\`\`
+Estilos disponibles: product_mockup (foto de producto), design_layout (diseño plano), marketing (lifestyle/Instagram)
+
+Cuando pregunte cuánto costaría PRODUCIR un producto nuevo o hipotético que NO existe en el catálogo, usa:
+\`\`\`action
+{ "type": "estimate_product_cost", "description": "imán 3D con 3 capas", "materials": ["MDF 3mm", "imán", "resina epóxica"], "dimensions": { "width": 7, "height": 5, "unit": "cm" }, "layers": 3, "finish": "resina", "quantity": 100 }
+\`\`\`
+IMPORTANTE: Usa nombres de materiales del inventario real (lista arriba). El sistema hará fuzzy match.
+
+Para productos EXISTENTES del catálogo, sigue usando calculate_price.
 
 ## SECCIONES DEL SISTEMA:
 
@@ -1470,6 +1516,61 @@ router.post('/chat', async (req, res) => {
           actionData = {
             type: 'generate_receipt',
             data: { success: false, error: receiptError.message || 'Error al generar el recibo' }
+          };
+        }
+      } else if (action.type === 'generate_product_image') {
+        try {
+          const prompt = buildProductMockupPrompt({
+            productType: action.productType || 'souvenir',
+            description: action.description || 'producto AXKAN',
+            style: action.style || 'product_mockup',
+            dimensions: action.dimensions || null,
+            design: action.design || null
+          });
+          const result = await generateProductImage(prompt);
+          actionData = {
+            type: 'generate_product_image',
+            data: {
+              success: result.success,
+              imageBase64: result.imageBase64 || null,
+              mimeType: result.mimeType || null,
+              prompt: action.description,
+              textResponse: result.textResponse || null,
+              error: result.error || null
+            }
+          };
+          if (result.success) {
+            console.log(`🎨 Product image generated for: ${action.description}`);
+          } else {
+            console.log(`⚠️ Image generation failed: ${result.error}`);
+          }
+        } catch (imgErr) {
+          console.error('Error generating product image:', imgErr);
+          actionData = {
+            type: 'generate_product_image',
+            data: { success: false, error: 'Error al generar imagen: ' + (imgErr.message || 'Error interno') }
+          };
+        }
+      } else if (action.type === 'estimate_product_cost') {
+        try {
+          const estimate = await estimateHypotheticalCost({
+            description: action.description || '',
+            materials: action.materials || [],
+            dimensions: action.dimensions || null,
+            layers: parseInt(action.layers) || 1,
+            finish: action.finish || null,
+            quantity: parseInt(action.quantity) || 100
+          });
+          actionData = {
+            type: 'estimate_product_cost',
+            data: estimate
+          };
+          console.log(`🔬 Cost estimate: ${action.description} = $${estimate.estimatedCostPerUnit}/pza (${estimate.confidence} confidence)`);
+        } catch (estErr) {
+          console.error('Error estimating product cost:', estErr);
+          actionData = {
+            type: 'estimate_product_cost',
+            data: { error: 'Error al estimar costo: ' + (estErr.message || 'Error interno') }
           };
         }
       }

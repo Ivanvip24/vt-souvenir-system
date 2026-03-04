@@ -280,3 +280,152 @@ export async function calculateCustomPrice({ productName, quantity }) {
     components: bom.components
   };
 }
+
+/**
+ * List all active raw materials from the database.
+ * @returns {Promise<Array>} Array of raw material rows
+ */
+export async function listAvailableMaterials() {
+  const result = await query(
+    'SELECT id, name, sku, cost_per_unit, unit_type, unit_label FROM raw_materials WHERE is_active = true ORDER BY name'
+  );
+  return result.rows;
+}
+
+/**
+ * Estimate a hypothetical production cost by fuzzy-matching material names
+ * against real raw_materials DB data and building a virtual BOM.
+ *
+ * @param {Object} params
+ * @param {string} params.description - Human-readable description of the product
+ * @param {string[]} params.materials - Array of material name strings to match
+ * @param {Object} [params.dimensions] - { width, height } in cm
+ * @param {number} [params.layers=1] - Number of layers
+ * @param {string|null} [params.finish=null] - Finish type (reserved for future use)
+ * @param {number} [params.quantity=100] - Quantity for total cost calculation
+ * @returns {Promise<Object>} Cost estimate with breakdown, confidence, and suggested prices
+ */
+export async function estimateHypotheticalCost({ description, materials, dimensions, layers = 1, finish = null, quantity = 100 }) {
+  const round2 = (val) => Math.round(val * 100) / 100;
+
+  // 1. Fetch all active raw materials
+  const result = await query(
+    'SELECT id, name, sku, cost_per_unit, unit_type, unit_label FROM raw_materials WHERE is_active = true'
+  );
+  const allMaterials = result.rows;
+
+  // Default dimensions: standard magnet size 7cm x 5cm
+  const width = (dimensions && dimensions.width) || 7;
+  const height = (dimensions && dimensions.height) || 5;
+
+  const materialBreakdown = [];
+  const unmatchedMaterials = [];
+  let totalMaterialCost = 0;
+
+  // 2. For each requested material, fuzzy-match to a real raw_material
+  for (const materialName of materials) {
+    const lowerName = materialName.toLowerCase();
+
+    // Try exact match first
+    let matched = allMaterials.find(
+      (m) => m.name.toLowerCase() === lowerName
+    );
+
+    // Then fuzzy: either direction includes
+    if (!matched) {
+      matched = allMaterials.find(
+        (m) =>
+          m.name.toLowerCase().includes(lowerName) ||
+          lowerName.includes(m.name.toLowerCase())
+      );
+    }
+
+    if (!matched) {
+      unmatchedMaterials.push(materialName);
+      materialBreakdown.push({
+        name: materialName,
+        matchedMaterial: null,
+        costPerUnit: 0,
+        quantityUsed: 0,
+        subtotal: 0
+      });
+      continue;
+    }
+
+    // 3. Calculate cost based on material type
+    const unitType = (matched.unit_type || '').toLowerCase();
+    const matchedName = matched.name.toLowerCase();
+    const isSheet =
+      unitType.includes('sheet') ||
+      unitType.includes('pliego') ||
+      matchedName.includes('mdf') ||
+      matchedName.includes('vinil') ||
+      matchedName.includes('papel');
+
+    let subtotal;
+    let quantityUsed;
+
+    if (isSheet) {
+      // Area-based cost: (width_cm * height_cm / 10000) * cost_per_unit
+      const areaSqM = (width * height) / 10000;
+      subtotal = round2(areaSqM * parseFloat(matched.cost_per_unit));
+      quantityUsed = round2(areaSqM);
+    } else {
+      // Unit materials: cost_per_unit * 1 per piece
+      subtotal = round2(parseFloat(matched.cost_per_unit) * 1);
+      quantityUsed = 1;
+    }
+
+    totalMaterialCost += subtotal;
+
+    materialBreakdown.push({
+      name: materialName,
+      matchedMaterial: matched.name,
+      costPerUnit: round2(parseFloat(matched.cost_per_unit)),
+      quantityUsed,
+      subtotal
+    });
+  }
+
+  // 4. Labor estimate
+  const baseLaborPerPiece = 0.50;
+  const labor = round2(baseLaborPerPiece * (1 + (layers - 1) * 0.3));
+
+  // 5. Waste percentage applied to material cost only
+  const wastePercent = 5 + (layers - 1) * 2;
+  const wasteCost = round2(totalMaterialCost * (wastePercent / 100));
+
+  // Total cost per unit
+  const totalCost = round2(totalMaterialCost + wasteCost + labor);
+
+  // 6. Suggested price range
+  const low = round2(totalCost * 2.5);
+  const mid = round2(totalCost * 3.0);
+  const high = round2(totalCost * 3.5);
+
+  // 7. Confidence based on match ratio
+  const totalRequested = materials.length;
+  const matchedCount = totalRequested - unmatchedMaterials.length;
+  let confidence;
+  if (matchedCount === totalRequested) {
+    confidence = 'high';
+  } else if (totalRequested > 0 && matchedCount / totalRequested > 0.5) {
+    confidence = 'medium';
+  } else {
+    confidence = 'low';
+  }
+
+  return {
+    description,
+    estimatedCostPerUnit: round2(totalCost),
+    materialBreakdown,
+    laborEstimate: round2(labor),
+    wastePercent,
+    wasteCost: round2(wasteCost),
+    totalForQuantity: round2(totalCost * quantity),
+    quantity,
+    confidence,
+    suggestedPriceRange: { low: round2(low), mid: round2(mid), high: round2(high) },
+    unmatchedMaterials
+  };
+}
