@@ -1990,47 +1990,40 @@ router.post('/clients/:clientId/generate', async (req, res) => {
     console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for client ${client.name} (no order)`);
     console.log(`   Address: ${destAddress.street} ${destAddress.street_number}, ${destAddress.colonia}, ${destAddress.city}, ${destAddress.state} CP ${destAddress.postal}`);
 
-    // Get quote for shipping (with multiple packages for multiguía) - with retry for empty rates
-    let quote;
-    const MAX_QUOTE_RETRIES = 3;
+    // Get fresh quotes — fire 3 in parallel to maximize carrier coverage.
+    // Skydropx randomly omits carriers from multi-package quotes, so we
+    // need multiple attempts (same strategy as the quoting endpoint).
+    console.log(`   📦 Firing 3 fresh quotes in parallel for ${labelsCount} package(s)...`);
+    const quotePromises = [];
+    for (let i = 0; i < 3; i++) {
+      quotePromises.push(
+        skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, labelsCount).catch(err => {
+          console.log(`   ⚠️ Quote ${i + 1} error: ${err.message}`);
+          return null;
+        })
+      );
+    }
 
-    for (let attempt = 1; attempt <= MAX_QUOTE_RETRIES; attempt++) {
-      try {
-        console.log(`   Quote attempt ${attempt}/${MAX_QUOTE_RETRIES}...`);
-        quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, labelsCount);
+    const quoteResults = await Promise.all(quotePromises);
 
-        if (quote.rates && quote.rates.length > 0) {
-          console.log(`   ✅ Got ${quote.rates.length} rate(s)`);
-          break; // Success!
+    // Merge all rates — keep best rate per carrier-service, with its quotation_id
+    const allRatesMap = new Map();
+    for (const q of quoteResults) {
+      if (!q?.rates?.length) continue;
+      for (const rate of q.rates) {
+        const key = `${rate.carrier}-${rate.service}`;
+        const existing = allRatesMap.get(key);
+        if (!existing || rate.total_price < existing.total_price) {
+          allRatesMap.set(key, { ...rate, quotation_id: q.quotation_id });
         }
-
-        // Empty rates - retry after clearing token cache
-        console.log(`   ⚠️ Empty rates on attempt ${attempt}, retrying...`);
-        if (attempt < MAX_QUOTE_RETRIES) {
-          // Small delay before retry
-          await new Promise(resolve => setTimeout(resolve, 1500));
-        }
-      } catch (quoteError) {
-        console.error(`   ❌ Quote attempt ${attempt} error:`, quoteError.message);
-        if (attempt === MAX_QUOTE_RETRIES) {
-          return res.status(400).json({
-            success: false,
-            error: `Error al cotizar envío: ${quoteError.message}. Verifica que la dirección sea correcta.`,
-            address: {
-              street: destAddress.street,
-              city: destAddress.city,
-              state: destAddress.state,
-              postal: destAddress.postal
-            }
-          });
-        }
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, 1500));
       }
     }
 
-    if (!quote || !quote.rates || quote.rates.length === 0) {
-      console.error(`❌ No rates after ${MAX_QUOTE_RETRIES} attempts for: ${client.city}, ${client.state} CP ${postal}`);
+    const allFreshRates = Array.from(allRatesMap.values());
+    console.log(`   ✅ Got ${allFreshRates.length} unique carrier-service rates from ${quoteResults.filter(Boolean).length}/3 quotes`);
+
+    if (allFreshRates.length === 0) {
+      console.error(`❌ No rates from any quote for: ${client.city}, ${client.state} CP ${postal}`);
       return res.status(400).json({
         success: false,
         error: `No hay tarifas de envío disponibles para: ${client.city}, ${client.state} CP ${postal}. Intenta de nuevo en unos segundos o verifica la dirección.`,
@@ -2043,29 +2036,32 @@ router.post('/clients/:clientId/generate', async (req, res) => {
       });
     }
 
-    // ALWAYS use the fresh quote to avoid quotation_id/package-count mismatch.
-    // The quoting endpoint merges single+multi quotes, so the frontend's quotationId
-    // may belong to a different package count than labelsCount.
+    // Match the user's selected carrier/service in the fresh results
     let finalRate;
-    let finalQuotationId = quote.quotation_id;
+    let finalQuotationId;
 
     if (selectedRate) {
-      // Find matching carrier/service in the fresh quote
-      const matchingRate = quote.rates.find(r =>
+      const matchingRate = allFreshRates.find(r =>
         r.carrier === selectedRate.carrier && r.service === selectedRate.service
       );
       if (matchingRate) {
-        console.log(`📦 Matched pre-selected rate in fresh quote: ${matchingRate.carrier} - ${matchingRate.service}`);
+        console.log(`📦 Matched pre-selected rate in fresh quotes: ${matchingRate.carrier} - ${matchingRate.service}`);
         finalRate = matchingRate;
+        finalQuotationId = matchingRate.quotation_id;
       } else {
-        // Carrier/service not available in fresh quote — use cheapest
-        console.log(`⚠️ Pre-selected rate (${selectedRate.carrier} - ${selectedRate.service}) not in fresh quote, using cheapest`);
-        finalRate = skydropx.selectBestRate(quote.rates);
+        // Carrier truly not available — return error instead of silently switching
+        console.log(`⚠️ Pre-selected rate (${selectedRate.carrier} - ${selectedRate.service}) not available in any fresh quote`);
+        return res.status(400).json({
+          success: false,
+          error: `${selectedRate.carrier} - ${selectedRate.service} no está disponible en este momento. Por favor cotiza de nuevo y selecciona otra opción.`
+        });
       }
     } else {
-      // Auto-select best (cheapest) rate
+      // Auto-select cheapest
       console.log(`📦 Auto-selecting cheapest rate`);
-      finalRate = skydropx.selectBestRate(quote.rates);
+      allFreshRates.sort((a, b) => a.total_price - b.total_price);
+      finalRate = allFreshRates[0];
+      finalQuotationId = finalRate.quotation_id;
     }
 
     // Generate ONE shipment with multiple packages (MULTIGUÍA)
