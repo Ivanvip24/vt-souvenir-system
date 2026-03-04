@@ -4751,6 +4751,33 @@ textarea:disabled {
   }
 }
 
+/* Drag-and-drop visual feedback */
+.ai-chat-container.ai-drag-over {
+  outline: 3px dashed #e72a88;
+  outline-offset: -3px;
+  background: #fef2f8;
+}
+
+.ai-chat-container.ai-drag-over .ai-chat-body::after {
+  content: 'Suelta tu imagen aquí';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(254, 242, 248, 0.9);
+  color: #e72a88;
+  font-size: 1.1rem;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 10;
+  border-radius: 0;
+}
+
+.ai-chat-body {
+  position: relative;
+}
+
 /* Chat Header */
 .ai-chat-header {
   display: flex;

@@ -125,17 +125,52 @@ function handleAiImageSelect(event) {
     event.target.value = '';
 }
 
+function isHeicFile(file) {
+    if (file.type && (file.type === 'image/heic' || file.type === 'image/heif')) return true;
+    var name = (file.name || '').toLowerCase();
+    return name.endsWith('.heic') || name.endsWith('.heif');
+}
+
 function processImageFile(file) {
-    if (!file.type.startsWith('image/')) return;
+    // Accept image/* or HEIC/HEIF (which may have empty type on some browsers)
+    var isImage = file.type.startsWith('image/') || isHeicFile(file);
+    if (!isImage) return;
     if (file.size > 10 * 1024 * 1024) {
         showNotification('La imagen es muy grande (máx 10MB)', 'error');
         return;
     }
+
+    // HEIC/HEIF: convert to JPEG using heic2any library
+    if (isHeicFile(file)) {
+        if (typeof heic2any === 'undefined') {
+            showNotification('No se pudo cargar el conversor HEIC. Intenta con JPG o PNG.', 'error');
+            return;
+        }
+        showNotification('Convirtiendo imagen HEIC...', 'info');
+        heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 })
+            .then(function(convertedBlob) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var dataUrl = e.target.result;
+                    var base64 = dataUrl.split(',')[1];
+                    aiPendingImages.push({ base64: base64, mediaType: 'image/jpeg', preview: dataUrl });
+                    renderImagePreviews();
+                    showNotification('Imagen HEIC convertida correctamente', 'success');
+                };
+                reader.readAsDataURL(convertedBlob);
+            })
+            .catch(function(err) {
+                console.error('HEIC conversion failed:', err);
+                showNotification('Error al convertir HEIC: ' + (err.message || 'formato no soportado'), 'error');
+            });
+        return;
+    }
+
     // Claude API only accepts these media types
     var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     var mediaType = file.type || 'image/png';
     if (!allowedTypes.includes(mediaType)) {
-        // Convert unsupported formats (heic, bmp, tiff, svg, etc.) to PNG via canvas
+        // Convert other unsupported formats (bmp, tiff, svg, etc.) to PNG via canvas
         var img = new Image();
         img.onload = function() {
             var canvas = document.createElement('canvas');
@@ -146,6 +181,9 @@ function processImageFile(file) {
             var pngBase64 = pngDataUrl.split(',')[1];
             aiPendingImages.push({ base64: pngBase64, mediaType: 'image/png', preview: pngDataUrl });
             renderImagePreviews();
+        };
+        img.onerror = function() {
+            showNotification('No se pudo leer la imagen. Intenta con JPG o PNG.', 'error');
         };
         img.src = URL.createObjectURL(file);
         return;
@@ -193,7 +231,7 @@ function removeAiPendingImage(index) {
     renderImagePreviews();
 }
 
-// Paste handler for images
+// Paste handler + Drag-and-drop handler for images
 document.addEventListener('DOMContentLoaded', function() {
     var chatInput = document.getElementById('ai-chat-input');
     if (chatInput) {
@@ -209,6 +247,55 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Drag-and-drop on the entire chat modal
+    var chatBody = document.getElementById('ai-chat-messages');
+    var chatFooter = document.querySelector('.ai-chat-footer');
+    var dropTargets = [chatBody, chatFooter, chatInput].filter(Boolean);
+
+    dropTargets.forEach(function(el) {
+        el.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+            var container = document.querySelector('.ai-chat-container');
+            if (container) container.classList.add('ai-drag-over');
+        });
+
+        el.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var container = document.querySelector('.ai-chat-container');
+            if (container) container.classList.add('ai-drag-over');
+        });
+
+        el.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            // Only remove highlight when leaving the container entirely
+            var related = e.relatedTarget;
+            var container = document.querySelector('.ai-chat-container');
+            if (container && !container.contains(related)) {
+                container.classList.remove('ai-drag-over');
+            }
+        });
+
+        el.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var container = document.querySelector('.ai-chat-container');
+            if (container) container.classList.remove('ai-drag-over');
+
+            var files = e.dataTransfer && e.dataTransfer.files;
+            if (!files || files.length === 0) return;
+            for (var i = 0; i < files.length; i++) {
+                var f = files[i];
+                if (f.type.startsWith('image/') || isHeicFile(f)) {
+                    processImageFile(f);
+                }
+            }
+        });
+    });
 });
 
 // =====================================================
