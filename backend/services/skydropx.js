@@ -88,10 +88,65 @@ function truncate(str, maxLen) {
  */
 function sanitizeForSkydropx(str) {
   if (!str) return str;
-  // Normalize accented characters to ASCII
+  // Normalize accented characters to ASCII (ñ→n, é→e, etc.)
   const normalized = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  // Keep only letters, numbers, spaces, apostrophes, periods, hyphens
+  // Keep only letters, numbers, spaces, apostrophes, periods, hyphens, #
   return normalized.replace(/[^a-zA-Z0-9\s'.#-]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Normalize a phone number — digits only, ensure 10 digits for MX.
+ */
+function sanitizePhone(phone) {
+  if (!phone) return '0000000000';
+  // Strip everything except digits
+  let digits = phone.replace(/\D/g, '');
+  // Remove country code prefix (52 for MX, 1 for US)
+  if (digits.length === 12 && digits.startsWith('52')) digits = digits.slice(2);
+  if (digits.length === 13 && digits.startsWith('521')) digits = digits.slice(3);
+  // Must be 10 digits
+  if (digits.length < 10) digits = digits.padEnd(10, '0');
+  if (digits.length > 10) digits = digits.slice(0, 10);
+  return digits;
+}
+
+/**
+ * Normalize a postal code — digits only, 5 chars, zero-padded.
+ */
+function sanitizePostalCode(postal) {
+  if (!postal) return '';
+  const digits = String(postal).replace(/\D/g, '');
+  return digits.padStart(5, '0').slice(0, 5);
+}
+
+/**
+ * Normalize an email — trim, lowercase, provide fallback.
+ */
+function sanitizeEmail(email) {
+  if (!email || !email.includes('@')) return 'cliente@example.com';
+  return email.trim().toLowerCase();
+}
+
+/**
+ * Build a clean Skydropx-ready address from possibly messy client data.
+ */
+function buildCleanAddress(addr) {
+  return {
+    name: truncate(sanitizeForSkydropx(addr.name || 'Cliente'), MAX_NAME_LENGTH),
+    company: truncate(sanitizeForSkydropx(addr.name || 'Cliente'), MAX_NAME_LENGTH),
+    street1: truncate(sanitizeForSkydropx(
+      `${addr.street || 'Calle'} ${addr.street_number || addr.number || 'S/N'}`.trim()
+    ), MAX_STREET_LENGTH),
+    neighborhood: truncate(sanitizeForSkydropx(addr.colonia || addr.neighborhood || 'Centro'), MAX_NAME_LENGTH),
+    postal_code: sanitizePostalCode(addr.zip || addr.postal || addr.postal_code),
+    area_level1: sanitizeForSkydropx(addr.state || 'Estado'),
+    area_level2: sanitizeForSkydropx(addr.city || 'Ciudad'),
+    area_level3: truncate(sanitizeForSkydropx(addr.colonia || addr.neighborhood || 'Centro'), MAX_NAME_LENGTH),
+    country_code: 'MX',
+    phone: sanitizePhone(addr.phone),
+    email: sanitizeEmail(addr.email),
+    reference: truncate(sanitizeForSkydropx(addr.reference_notes || addr.reference || 'Sin referencia'), MAX_REFERENCE_LENGTH)
+  };
 }
 
 /**
@@ -172,17 +227,17 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, packa
     quotation: {
       address_from: {
         country_code: 'MX',
-        postal_code: ORIGIN_ADDRESS.zip,
-        area_level1: ORIGIN_ADDRESS.state,
-        area_level2: ORIGIN_ADDRESS.city,
-        area_level3: ORIGIN_ADDRESS.neighborhood
+        postal_code: sanitizePostalCode(ORIGIN_ADDRESS.zip),
+        area_level1: sanitizeForSkydropx(ORIGIN_ADDRESS.state),
+        area_level2: sanitizeForSkydropx(ORIGIN_ADDRESS.city),
+        area_level3: sanitizeForSkydropx(ORIGIN_ADDRESS.neighborhood)
       },
       address_to: {
         country_code: 'MX',
-        postal_code: destAddress.zip || destAddress.postal || destAddress.postal_code,
-        area_level1: destAddress.state || 'Estado',
-        area_level2: destAddress.city || 'Ciudad',
-        area_level3: destAddress.colonia || destAddress.neighborhood || 'Colonia'
+        postal_code: sanitizePostalCode(destAddress.zip || destAddress.postal || destAddress.postal_code),
+        area_level1: sanitizeForSkydropx(destAddress.state || 'Estado'),
+        area_level2: sanitizeForSkydropx(destAddress.city || 'Ciudad'),
+        area_level3: sanitizeForSkydropx(destAddress.colonia || destAddress.neighborhood || 'Colonia')
       },
       parcels: parcels
     }
@@ -267,9 +322,6 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, packa
  * @param {number} packagesCount - Number of packages/boxes in this shipment (default 1)
  */
 export async function createShipment(quotationId, rateId, rate, destAddress, packageInfo = DEFAULT_PACKAGE, packagesCount = 1) {
-  const destStreet = `${destAddress.street || ''} ${destAddress.street_number || destAddress.number || 'S/N'}`.trim();
-  const originStreet = `${ORIGIN_ADDRESS.street} ${ORIGIN_ADDRESS.number}`;
-
   // Build packages array for multiguía
   const packages = [];
   for (let i = 0; i < packagesCount; i++) {
@@ -287,38 +339,16 @@ export async function createShipment(quotationId, rateId, rate, destAddress, pac
     });
   }
 
+  // Build clean, Skydropx-safe addresses from possibly messy client data
+  const cleanOrigin = buildCleanAddress(ORIGIN_ADDRESS);
+  const cleanDest = buildCleanAddress(destAddress);
+
   const shipmentPayload = {
     shipment: {
       quotation_id: quotationId,
       rate_id: rateId,
-      address_from: {
-        name: truncate(sanitizeForSkydropx(ORIGIN_ADDRESS.name), MAX_NAME_LENGTH),
-        company: truncate(sanitizeForSkydropx(ORIGIN_ADDRESS.company), MAX_NAME_LENGTH),
-        street1: truncate(sanitizeForSkydropx(originStreet), MAX_STREET_LENGTH),
-        neighborhood: truncate(sanitizeForSkydropx(ORIGIN_ADDRESS.neighborhood), MAX_NAME_LENGTH),
-        postal_code: ORIGIN_ADDRESS.zip,
-        area_level1: sanitizeForSkydropx(ORIGIN_ADDRESS.state),
-        area_level2: sanitizeForSkydropx(ORIGIN_ADDRESS.city),
-        area_level3: truncate(sanitizeForSkydropx(ORIGIN_ADDRESS.neighborhood), MAX_NAME_LENGTH),
-        country_code: 'MX',
-        phone: ORIGIN_ADDRESS.phone,
-        email: ORIGIN_ADDRESS.email,
-        reference: truncate(sanitizeForSkydropx(ORIGIN_ADDRESS.reference), MAX_REFERENCE_LENGTH)
-      },
-      address_to: {
-        name: truncate(sanitizeForSkydropx(destAddress.name), MAX_NAME_LENGTH),
-        company: truncate(sanitizeForSkydropx(destAddress.name), MAX_NAME_LENGTH),
-        street1: truncate(sanitizeForSkydropx(destStreet), MAX_STREET_LENGTH),
-        neighborhood: truncate(sanitizeForSkydropx(destAddress.colonia || destAddress.neighborhood || 'Centro'), MAX_NAME_LENGTH),
-        postal_code: destAddress.zip || destAddress.postal || destAddress.postal_code,
-        area_level1: sanitizeForSkydropx(destAddress.state),
-        area_level2: sanitizeForSkydropx(destAddress.city),
-        area_level3: truncate(sanitizeForSkydropx(destAddress.colonia || destAddress.neighborhood || 'Centro'), MAX_NAME_LENGTH),
-        country_code: 'MX',
-        phone: destAddress.phone,
-        email: destAddress.email || 'cliente@example.com',
-        reference: truncate(destAddress.reference_notes || destAddress.reference || 'Sin referencia', MAX_REFERENCE_LENGTH)
-      },
+      address_from: cleanOrigin,
+      address_to: cleanDest,
       packages: packages
     }
   };
