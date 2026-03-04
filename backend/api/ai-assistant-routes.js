@@ -1128,12 +1128,14 @@ router.post('/chat', async (req, res) => {
     if (images && images.length > 0) {
       userContent = [];
       // Add image blocks first
+      const allowedMediaTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       for (const img of images) {
+        const mediaType = allowedMediaTypes.includes(img.mediaType) ? img.mediaType : 'image/png';
         userContent.push({
           type: 'image',
           source: {
             type: 'base64',
-            media_type: img.mediaType || 'image/png',
+            media_type: mediaType,
             data: img.base64
           }
         });

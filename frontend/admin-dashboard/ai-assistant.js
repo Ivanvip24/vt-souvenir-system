@@ -131,11 +131,29 @@ function processImageFile(file) {
         showNotification('La imagen es muy grande (máx 10MB)', 'error');
         return;
     }
+    // Claude API only accepts these media types
+    var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    var mediaType = file.type || 'image/png';
+    if (!allowedTypes.includes(mediaType)) {
+        // Convert unsupported formats (heic, bmp, tiff, svg, etc.) to PNG via canvas
+        var img = new Image();
+        img.onload = function() {
+            var canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            var pngDataUrl = canvas.toDataURL('image/png');
+            var pngBase64 = pngDataUrl.split(',')[1];
+            aiPendingImages.push({ base64: pngBase64, mediaType: 'image/png', preview: pngDataUrl });
+            renderImagePreviews();
+        };
+        img.src = URL.createObjectURL(file);
+        return;
+    }
     var reader = new FileReader();
     reader.onload = function(e) {
         var dataUrl = e.target.result;
         var base64 = dataUrl.split(',')[1];
-        var mediaType = file.type || 'image/png';
         aiPendingImages.push({ base64: base64, mediaType: mediaType, preview: dataUrl });
         renderImagePreviews();
     };
