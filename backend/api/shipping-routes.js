@@ -2043,20 +2043,29 @@ router.post('/clients/:clientId/generate', async (req, res) => {
       });
     }
 
-    // Use pre-selected rate if provided, otherwise auto-select cheapest
+    // ALWAYS use the fresh quote to avoid quotation_id/package-count mismatch.
+    // The quoting endpoint merges single+multi quotes, so the frontend's quotationId
+    // may belong to a different package count than labelsCount.
     let finalRate;
-    let finalQuotationId;
+    let finalQuotationId = quote.quotation_id;
 
-    if (quotationId && rateId && selectedRate) {
-      // Use the rate selected by the user
-      console.log(`📦 Using pre-selected rate: ${selectedRate.carrier} - ${selectedRate.service}`);
-      finalRate = selectedRate;
-      finalQuotationId = quotationId;
+    if (selectedRate) {
+      // Find matching carrier/service in the fresh quote
+      const matchingRate = quote.rates.find(r =>
+        r.carrier === selectedRate.carrier && r.service === selectedRate.service
+      );
+      if (matchingRate) {
+        console.log(`📦 Matched pre-selected rate in fresh quote: ${matchingRate.carrier} - ${matchingRate.service}`);
+        finalRate = matchingRate;
+      } else {
+        // Carrier/service not available in fresh quote — use cheapest
+        console.log(`⚠️ Pre-selected rate (${selectedRate.carrier} - ${selectedRate.service}) not in fresh quote, using cheapest`);
+        finalRate = skydropx.selectBestRate(quote.rates);
+      }
     } else {
       // Auto-select best (cheapest) rate
       console.log(`📦 Auto-selecting cheapest rate`);
       finalRate = skydropx.selectBestRate(quote.rates);
-      finalQuotationId = quote.quotation_id;
     }
 
     // Generate ONE shipment with multiple packages (MULTIGUÍA)
