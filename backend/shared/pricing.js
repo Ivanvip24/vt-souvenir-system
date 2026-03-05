@@ -8,6 +8,16 @@
 // Tiered pricing configuration - SINGLE SOURCE OF TRUTH
 // NOTE: Actual minimum is 50 pieces, but marketing displays "100 pieces minimum"
 export const PRICING_TIERS = {
+  // Magnet sizes — matched by productName sent from frontend: "Imanes de MDF (Chico)" etc.
+  'imanes de mdf (chico)': [
+    { min: 50, max: 999, price: 8.00 },
+    { min: 1000, max: Infinity, price: 6.00 }
+  ],
+  'imanes de mdf (grande)': [
+    { min: 50, max: 999, price: 15.00 },
+    { min: 1000, max: Infinity, price: 12.00 }
+  ],
+  // Default "Imanes de MDF" = Mediano (also matches "Imanes de MDF (Mediano)")
   'imanes de mdf': [
     { min: 50, max: 999, price: 11.00 },
     { min: 1000, max: Infinity, price: 8.00 }

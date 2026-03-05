@@ -212,9 +212,14 @@ router.post('/orders/submit', async (req, res) => {
 
       const product = productResult.rows[0];
 
+      // Use frontend's productName if it includes size info (e.g. "Imanes de MDF (Chico)")
+      // This ensures size-specific pricing is applied correctly
+      const pricingName = item.productName || product.name;
+      const displayName = item.productName || product.name;
+
       // SERVER-SIDE TIERED PRICING - This is the SOURCE OF TRUTH
       const pricing = calculateTieredPrice(
-        product.name,
+        pricingName,
         item.quantity,
         product.base_price
       );
@@ -230,7 +235,7 @@ router.post('/orders/submit', async (req, res) => {
 
       // Log if client sent different price (potential manipulation attempt)
       if (item.unitPrice && Math.abs(parseFloat(item.unitPrice) - pricing.unitPrice) > 0.01) {
-        console.warn(`⚠️ PRICE MISMATCH DETECTED for ${product.name}:`);
+        console.warn(`⚠️ PRICE MISMATCH DETECTED for ${displayName}:`);
         console.warn(`   Client sent: $${item.unitPrice}`);
         console.warn(`   Server calculated: $${pricing.unitPrice}`);
         console.warn(`   Using server price (secure)`);
@@ -242,7 +247,7 @@ router.post('/orders/submit', async (req, res) => {
 
       orderItems.push({
         productId: product.id,
-        productName: product.name,
+        productName: displayName,
         quantity: item.quantity,
         unitPrice: unitPrice,
         unitCost: product.production_cost,

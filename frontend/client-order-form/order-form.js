@@ -1357,12 +1357,12 @@ function createProductCard(product) {
   const productNameLower = product.name.toLowerCase();
   const isMagnetProduct = productNameLower === 'imanes de mdf';
 
-  // Get selected size for magnets (default to 'Ch' - Chico)
+  // Get selected size for magnets (default to 'M' - Mediano)
   // Persist default into state so handleQuantityChange picks it up
   if (isMagnetProduct && !state.magnetSizes[product.id]) {
-    state.magnetSizes[product.id] = 'Ch';
+    state.magnetSizes[product.id] = 'M';
   }
-  const selectedSize = state.magnetSizes?.[product.id] || 'Ch';
+  const selectedSize = state.magnetSizes[product.id] || 'M';
 
   // Get tiered pricing - show Tier 1 price (minimum quantity) when no items in cart
   let defaultQuantity = 1;
@@ -1568,8 +1568,8 @@ window.handleQuantityChange = function(productId, value) {
   const productNameLower = product.name.toLowerCase();
   const isMagnetProduct = productNameLower === 'imanes de mdf';
 
-  // Get selected size for magnets (default to 'Ch')
-  const selectedSize = state.magnetSizes[productId] || 'Ch';
+  // Get selected size for magnets (default to 'M')
+  const selectedSize = state.magnetSizes[productId] || 'M';
 
   // Check minimum order quantity (MOQ)
   let moq = 0; // Default no minimum
