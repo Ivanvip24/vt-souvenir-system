@@ -1468,7 +1468,7 @@ function showShippingLabelModal(action) {
         <div class="ai-action-section">
             <label>NÚMERO DE GUÍAS (CAJAS)</label>
             <input type="number" id="ai-action-labels-count" class="ai-action-input"
-                   value="${calculatedBoxes}" min="1" max="50" style="font-size: 24px; font-weight: bold; text-align: center;">
+                   value="${calculatedBoxes}" min="1" max="100" style="font-size: 24px; font-weight: bold; text-align: center;">
             ${boxBreakdown.length > 0 ? `
                 <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px; margin-top: 10px;">
                     <div style="font-weight: 600; color: #166534; margin-bottom: 8px;">

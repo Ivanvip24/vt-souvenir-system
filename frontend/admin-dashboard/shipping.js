@@ -1675,7 +1675,7 @@ function showShippingQuoteModal(clientId, clientName, city, state, postal) {
           <label>¿Cuántas cajas enviarás?</label>
           <div class="shipping-quote-counter">
             <button type="button" class="counter-btn minus" onclick="updatePackagesCount(-1)">−</button>
-            <input type="number" id="packages-count-input" value="1" min="1" max="20" onchange="updatePackagesCountInput(this.value)">
+            <input type="number" id="packages-count-input" value="1" min="1" max="100" onchange="updatePackagesCountInput(this.value)">
             <button type="button" class="counter-btn plus" onclick="updatePackagesCount(1)">+</button>
           </div>
         </div>
@@ -1716,7 +1716,7 @@ function showShippingQuoteModal(clientId, clientName, city, state, postal) {
 function updatePackagesCount(delta) {
   const input = document.getElementById('packages-count-input');
   let newVal = parseInt(input.value) + delta;
-  newVal = Math.max(1, Math.min(20, newVal));
+  newVal = Math.max(1, Math.min(100, newVal));
   input.value = newVal;
   shippingQuoteState.packagesCount = newVal;
 
@@ -1726,7 +1726,7 @@ function updatePackagesCount(delta) {
 
 function updatePackagesCountInput(value) {
   let newVal = parseInt(value) || 1;
-  newVal = Math.max(1, Math.min(20, newVal));
+  newVal = Math.max(1, Math.min(100, newVal));
   document.getElementById('packages-count-input').value = newVal;
   shippingQuoteState.packagesCount = newVal;
   clearQuoteResults();
