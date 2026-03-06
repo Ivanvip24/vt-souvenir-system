@@ -481,9 +481,9 @@ async function showClientDetailPopup(clientId) {
             </div>
           `}
 
-          <!-- Payment Notes Section -->
+          <!-- Cuentas Section -->
           <div class="client-popup-section">
-            <h4>Notas de Pago <button class="copy-btn" onclick="togglePaymentNotes(${client.id})" title="Abrir/Cerrar notas de pago" style="font-size:12px;padding:2px 8px;background:linear-gradient(135deg,#09adc2,#106c7f);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-left:8px;">+ Nota de Pago</button></h4>
+            <h4>Cuentas <button class="copy-btn" onclick="togglePaymentNotes(${client.id})" title="Abrir/Cerrar cuentas" style="font-size:12px;padding:2px 8px;background:linear-gradient(135deg,#09adc2,#106c7f);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-left:8px;">+ Nueva Cuenta</button></h4>
             <div id="payment-notes-container-${client.id}" class="payment-notes-embed" style="display:none;"></div>
           </div>
         </div>

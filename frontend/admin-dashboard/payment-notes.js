@@ -1095,7 +1095,7 @@
         color: COLORS.turquesa,
         fontSize: '13px',
       },
-    }, ['Cargando notas de pago...']);
+    }, ['Cargando cuentas...']);
     container.appendChild(loadingDiv);
 
     // Load data if not already loaded

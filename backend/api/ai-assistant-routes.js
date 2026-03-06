@@ -1077,16 +1077,18 @@ Cuando el usuario pida generar un recibo, nota de pago, recibo de adelanto, o co
 
 **Si el advanceAmount es 0 o no se especifica y receiptType es "note"**, el pago total es la suma de los items.
 
-### 8. ABRIR NOTAS DE PAGO
-Cuando el usuario pida crear o ver notas de pago de un cliente, abrir el seguimiento de pagos, o registrar pagos de un pedido:
+### 8. ABRIR CUENTAS (TRACKING DE PAGOS)
+Cuando el usuario pida abrir, ver o crear las cuentas de un cliente, trackear sus pagos, o llevar el control de lo que debe:
 
 **Frases que activan esta acción:**
-- "crear una nota para los pagos de [cliente]"
-- "notas de pago de [cliente]"
-- "seguimiento de pagos de [cliente]"
-- "abrir pagos de [cliente]"
-- "registrar pagos de [cliente]"
-- "ver pagos de [cliente]"
+- "cuentas de [cliente]"
+- "abrir cuentas de [cliente]"
+- "ver las cuentas de [cliente]"
+- "trackear pagos de [cliente]"
+- "control de cuentas de [cliente]"
+- "cuánto debe [cliente]"
+- "seguimiento de cuentas de [cliente]"
+- "crear cuenta para [cliente]"
 
 **OBLIGATORIO: Incluye este bloque action:**
 
@@ -1097,14 +1099,14 @@ Cuando el usuario pida crear o ver notas de pago de un cliente, abrir el seguimi
 }
 \`\`\`
 
-El sistema buscará al cliente y abrirá automáticamente el panel de notas de pago dentro del popup del cliente.
+El sistema buscará al cliente y abrirá automáticamente el panel de cuentas dentro del popup del cliente.
 
 ## IMPORTANTE PARA ACCIONES:
 - Para CREAR PEDIDO: SIEMPRE incluye el bloque action inmediatamente, sin preguntar
 - El bloque action debe estar en JSON válido
 - Para cotizaciones, SIEMPRE genera el PDF además de dar el resumen de precios
 - Para recibos: SIEMPRE incluye el bloque action con generate_receipt
-- Para notas de pago: SIEMPRE incluye el bloque action con open_payment_notes
+- Para cuentas: SIEMPRE incluye el bloque action con open_payment_notes
 - Si hay múltiples coincidencias de cliente en búsquedas, pregunta cuál es el correcto`;
 }
 

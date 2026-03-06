@@ -1030,7 +1030,7 @@ function handleOpenPaymentNotes(data) {
             <div class="ai-quote-header">
                 <span class="ai-quote-icon">📋</span>
                 <div>
-                    <div class="ai-quote-title">Notas de Pago</div>
+                    <div class="ai-quote-title">Cuentas</div>
                     <div class="ai-quote-number">Se encontraron ${data.clientMatches.length} clientes con "${escapeHtml(data.searchTerm)}"</div>
                 </div>
             </div>
