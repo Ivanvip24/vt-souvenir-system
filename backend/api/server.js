@@ -5135,6 +5135,67 @@ app.get('/api/clients/:id', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════
+// PAYMENT NOTES
+// ═══════════════════════════════════════════════
+
+/**
+ * GET /api/payment-notes/:clientId
+ * Get payment note for a client
+ */
+app.get('/api/payment-notes/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const result = await query('SELECT * FROM payment_notes WHERE client_id = $1', [clientId]);
+    if (result.rows.length === 0) {
+      return res.json({ success: true, data: null });
+    }
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error('Error fetching payment note:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * PUT /api/payment-notes/:clientId
+ * Create or update payment note for a client (upsert)
+ */
+app.put('/api/payment-notes/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { data } = req.body;
+    if (!data) return res.status(400).json({ success: false, error: 'data is required' });
+
+    const result = await query(`
+      INSERT INTO payment_notes (client_id, data, updated_at)
+      VALUES ($1, $2, NOW())
+      ON CONFLICT (client_id) DO UPDATE SET data = $2, updated_at = NOW()
+      RETURNING *
+    `, [clientId, JSON.stringify(data)]);
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error('Error saving payment note:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/payment-notes/:clientId
+ * Delete payment note for a client
+ */
+app.delete('/api/payment-notes/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    await query('DELETE FROM payment_notes WHERE client_id = $1', [clientId]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting payment note:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 /**
  * POST /api/clients
  * Create a new client
@@ -5419,6 +5480,24 @@ async function startServer() {
       console.log('   ✅ system_settings table ready');
     } catch (ssErr) {
       console.log('   ℹ️  system_settings migration:', ssErr.message.split('\n')[0]);
+    }
+
+    // Create payment_notes table for payment tracking
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS payment_notes (
+          id SERIAL PRIMARY KEY,
+          client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+          data JSONB NOT NULL DEFAULT '{}',
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(client_id)
+        )
+      `);
+      await query(`CREATE INDEX IF NOT EXISTS idx_payment_notes_client_id ON payment_notes(client_id)`);
+      console.log('   ✅ payment_notes table ready');
+    } catch (pnErr) {
+      console.log('   ℹ️  payment_notes migration:', pnErr.message.split('\n')[0]);
     }
 
     // Load origin address from DB into skydropx service

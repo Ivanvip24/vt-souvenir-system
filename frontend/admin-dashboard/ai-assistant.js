@@ -667,6 +667,8 @@ function handleAiAction(action) {
         showProductImage(action.data);
     } else if (action.type === 'estimate_product_cost') {
         showCostEstimate(action.data);
+    } else if (action.type === 'open_payment_notes') {
+        handleOpenPaymentNotes(action.data);
     } else {
         console.log('⚠️ DEBUG: Unknown action type:', action.type);
     }
@@ -1013,6 +1015,72 @@ function showCostEstimate(data) {
         }
     }
 }
+
+function handleOpenPaymentNotes(data) {
+    if (!data) return;
+
+    if (data.clientNotFound) {
+        appendAiMessage(`No encontré un cliente con el nombre "${escapeHtml(data.searchTerm)}". Intenta con otro nombre o búscalo manualmente.`, 'assistant');
+        return;
+    }
+
+    if (data.needsClientSelection && data.clientMatches) {
+        // Multiple matches — show selection
+        let html = `<div class="ai-quote-result" style="border-left: 3px solid #09adc2;">
+            <div class="ai-quote-header">
+                <span class="ai-quote-icon">📋</span>
+                <div>
+                    <div class="ai-quote-title">Notas de Pago</div>
+                    <div class="ai-quote-number">Se encontraron ${data.clientMatches.length} clientes con "${escapeHtml(data.searchTerm)}"</div>
+                </div>
+            </div>
+            <div style="margin-top: 8px;">`;
+
+        data.clientMatches.forEach(client => {
+            html += `<button onclick="openPaymentNotesFromAI(${client.id})" style="display: block; width: 100%; text-align: left; padding: 8px 12px; margin: 4px 0; background: rgba(9,173,194,0.1); border: 1px solid rgba(9,173,194,0.3); border-radius: 6px; color: #e0e0e0; cursor: pointer; font-size: 0.9em;">
+                <strong>${escapeHtml(client.name)}</strong>
+                ${client.phone ? '<br><span style="opacity:0.6;">' + escapeHtml(client.phone) + '</span>' : ''}
+                ${client.city ? '<br><span style="opacity:0.6;">' + escapeHtml(client.city) + ', ' + escapeHtml(client.state || '') + '</span>' : ''}
+            </button>`;
+        });
+
+        html += `</div></div>`;
+
+        const messages = document.querySelectorAll('.ai-message.assistant');
+        if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            const contentDiv = lastMessage.querySelector('.ai-message-content');
+            if (contentDiv) {
+                contentDiv.insertAdjacentHTML('beforeend', html);
+            }
+        }
+        return;
+    }
+
+    // Single client found — open payment notes directly
+    if (data.client) {
+        closeAiChatModal();
+        openPaymentNotesFromAI(data.client.id);
+    }
+}
+
+function openPaymentNotesFromAI(clientId) {
+    // Close the AI chat modal if open
+    const aiModal = document.getElementById('ai-chat-modal');
+    if (aiModal) aiModal.style.display = 'none';
+
+    // Open the client detail popup which contains payment notes
+    if (typeof showClientDetailPopup === 'function') {
+        showClientDetailPopup(clientId);
+        // After the popup opens, auto-expand the payment notes section
+        setTimeout(() => {
+            if (typeof openPaymentNotesForClient === 'function') {
+                openPaymentNotesForClient(clientId);
+            }
+        }, 500);
+    }
+}
+window.openPaymentNotesFromAI = openPaymentNotesFromAI;
 
 function downloadBase64Image(mimeType, imgSrc, filename) {
     const link = document.createElement('a');

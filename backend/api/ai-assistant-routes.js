@@ -1077,11 +1077,34 @@ Cuando el usuario pida generar un recibo, nota de pago, recibo de adelanto, o co
 
 **Si el advanceAmount es 0 o no se especifica y receiptType es "note"**, el pago total es la suma de los items.
 
+### 8. ABRIR NOTAS DE PAGO
+Cuando el usuario pida crear o ver notas de pago de un cliente, abrir el seguimiento de pagos, o registrar pagos de un pedido:
+
+**Frases que activan esta acción:**
+- "crear una nota para los pagos de [cliente]"
+- "notas de pago de [cliente]"
+- "seguimiento de pagos de [cliente]"
+- "abrir pagos de [cliente]"
+- "registrar pagos de [cliente]"
+- "ver pagos de [cliente]"
+
+**OBLIGATORIO: Incluye este bloque action:**
+
+\`\`\`action
+{
+  "type": "open_payment_notes",
+  "clientName": "nombre del cliente mencionado"
+}
+\`\`\`
+
+El sistema buscará al cliente y abrirá automáticamente el panel de notas de pago dentro del popup del cliente.
+
 ## IMPORTANTE PARA ACCIONES:
 - Para CREAR PEDIDO: SIEMPRE incluye el bloque action inmediatamente, sin preguntar
 - El bloque action debe estar en JSON válido
 - Para cotizaciones, SIEMPRE genera el PDF además de dar el resumen de precios
 - Para recibos: SIEMPRE incluye el bloque action con generate_receipt
+- Para notas de pago: SIEMPRE incluye el bloque action con open_payment_notes
 - Si hay múltiples coincidencias de cliente en búsquedas, pregunta cuál es el correcto`;
 }
 
@@ -1574,6 +1597,38 @@ router.post('/chat', async (req, res) => {
             type: 'estimate_product_cost',
             data: { error: 'Error al estimar costo: ' + (estErr.message || 'Error interno') }
           };
+        }
+      } else if (action.type === 'open_payment_notes') {
+        // Search for the client to open their payment notes
+        if (action.clientName) {
+          const clients = await findClientByName(action.clientName);
+          if (clients.length === 1) {
+            actionData = {
+              type: 'open_payment_notes',
+              data: {
+                client: clients[0],
+                clientId: clients[0].id
+              }
+            };
+            console.log(`📋 Opening payment notes for client: ${clients[0].name} (ID: ${clients[0].id})`);
+          } else if (clients.length > 1) {
+            actionData = {
+              type: 'open_payment_notes',
+              data: {
+                clientMatches: clients,
+                needsClientSelection: true,
+                searchTerm: action.clientName
+              }
+            };
+          } else {
+            actionData = {
+              type: 'open_payment_notes',
+              data: {
+                clientNotFound: true,
+                searchTerm: action.clientName
+              }
+            };
+          }
         }
       }
 
