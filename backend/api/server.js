@@ -5140,58 +5140,114 @@ app.get('/api/clients/:id', async (req, res) => {
 // ═══════════════════════════════════════════════
 
 /**
- * GET /api/payment-notes/:clientId
- * Get payment note for a client
+ * GET /api/payment-notes/client/:clientId
+ * List all cuentas for a client
  */
-app.get('/api/payment-notes/:clientId', async (req, res) => {
+app.get('/api/payment-notes/client/:clientId', async (req, res) => {
   try {
     const { clientId } = req.params;
-    const result = await query('SELECT * FROM payment_notes WHERE client_id = $1', [clientId]);
+    const result = await query(
+      'SELECT id, client_id, name, data, created_at, updated_at FROM payment_notes WHERE client_id = $1 ORDER BY created_at DESC',
+      [clientId]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error('Error fetching payment notes:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/payment-notes/cuenta/:cuentaId
+ * Get a single cuenta by ID
+ */
+app.get('/api/payment-notes/cuenta/:cuentaId', async (req, res) => {
+  try {
+    const { cuentaId } = req.params;
+    const result = await query('SELECT * FROM payment_notes WHERE id = $1', [cuentaId]);
     if (result.rows.length === 0) {
-      return res.json({ success: true, data: null });
+      return res.status(404).json({ success: false, error: 'Cuenta not found' });
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error fetching payment note:', error);
+    console.error('Error fetching cuenta:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 /**
- * PUT /api/payment-notes/:clientId
- * Create or update payment note for a client (upsert)
+ * POST /api/payment-notes
+ * Create a new cuenta for a client
  */
-app.put('/api/payment-notes/:clientId', async (req, res) => {
+app.post('/api/payment-notes', async (req, res) => {
   try {
-    const { clientId } = req.params;
-    const { data } = req.body;
-    if (!data) return res.status(400).json({ success: false, error: 'data is required' });
+    const { clientId, name, data } = req.body;
+    if (!clientId) return res.status(400).json({ success: false, error: 'clientId is required' });
 
     const result = await query(`
-      INSERT INTO payment_notes (client_id, data, updated_at)
-      VALUES ($1, $2, NOW())
-      ON CONFLICT (client_id) DO UPDATE SET data = $2, updated_at = NOW()
+      INSERT INTO payment_notes (client_id, name, data)
+      VALUES ($1, $2, $3)
       RETURNING *
-    `, [clientId, JSON.stringify(data)]);
+    `, [clientId, name || '', JSON.stringify(data || {})]);
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error saving payment note:', error);
+    console.error('Error creating cuenta:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 /**
- * DELETE /api/payment-notes/:clientId
- * Delete payment note for a client
+ * PUT /api/payment-notes/cuenta/:cuentaId
+ * Update a cuenta
  */
-app.delete('/api/payment-notes/:clientId', async (req, res) => {
+app.put('/api/payment-notes/cuenta/:cuentaId', async (req, res) => {
   try {
-    const { clientId } = req.params;
-    await query('DELETE FROM payment_notes WHERE client_id = $1', [clientId]);
+    const { cuentaId } = req.params;
+    const { data, name } = req.body;
+
+    let setClauses = ['updated_at = NOW()'];
+    let params = [];
+    let paramIdx = 1;
+
+    if (data !== undefined) {
+      setClauses.push(`data = $${paramIdx}`);
+      params.push(JSON.stringify(data));
+      paramIdx++;
+    }
+    if (name !== undefined) {
+      setClauses.push(`name = $${paramIdx}`);
+      params.push(name);
+      paramIdx++;
+    }
+
+    params.push(cuentaId);
+    const result = await query(
+      `UPDATE payment_notes SET ${setClauses.join(', ')} WHERE id = $${paramIdx} RETURNING *`,
+      params
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Cuenta not found' });
+    }
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating cuenta:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/payment-notes/cuenta/:cuentaId
+ * Delete a single cuenta
+ */
+app.delete('/api/payment-notes/cuenta/:cuentaId', async (req, res) => {
+  try {
+    const { cuentaId } = req.params;
+    await query('DELETE FROM payment_notes WHERE id = $1', [cuentaId]);
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting payment note:', error);
+    console.error('Error deleting cuenta:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -5482,19 +5538,27 @@ async function startServer() {
       console.log('   ℹ️  system_settings migration:', ssErr.message.split('\n')[0]);
     }
 
-    // Create payment_notes table for payment tracking
+    // Create payment_notes table for payment tracking (multiple cuentas per client)
     try {
       await query(`
         CREATE TABLE IF NOT EXISTS payment_notes (
           id SERIAL PRIMARY KEY,
           client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+          name VARCHAR(200) DEFAULT '',
           data JSONB NOT NULL DEFAULT '{}',
           created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW(),
-          UNIQUE(client_id)
+          updated_at TIMESTAMP DEFAULT NOW()
         )
       `);
       await query(`CREATE INDEX IF NOT EXISTS idx_payment_notes_client_id ON payment_notes(client_id)`);
+      // Add name column if table already existed without it
+      try {
+        await query(`ALTER TABLE payment_notes ADD COLUMN IF NOT EXISTS name VARCHAR(200) DEFAULT ''`);
+      } catch (_) {}
+      // Drop old UNIQUE constraint if it exists (we now allow multiple per client)
+      try {
+        await query(`ALTER TABLE payment_notes DROP CONSTRAINT IF EXISTS payment_notes_client_id_key`);
+      } catch (_) {}
       console.log('   ✅ payment_notes table ready');
     } catch (pnErr) {
       console.log('   ℹ️  payment_notes migration:', pnErr.message.split('\n')[0]);

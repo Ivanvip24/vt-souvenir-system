@@ -483,8 +483,8 @@ async function showClientDetailPopup(clientId) {
 
           <!-- Cuentas Section -->
           <div class="client-popup-section">
-            <h4>Cuentas <button class="copy-btn" onclick="togglePaymentNotes(${client.id})" title="Abrir/Cerrar cuentas" style="font-size:12px;padding:2px 8px;background:linear-gradient(135deg,#09adc2,#106c7f);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-left:8px;">+ Nueva Cuenta</button></h4>
-            <div id="payment-notes-container-${client.id}" class="payment-notes-embed" style="display:none;"></div>
+            <h4>Cuentas <button class="copy-btn" onclick="togglePaymentNotes(${client.id})" title="Crear nueva cuenta" style="font-size:12px;padding:2px 8px;background:linear-gradient(135deg,#09adc2,#106c7f);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-left:8px;">+ Nueva Cuenta</button></h4>
+            <div id="payment-notes-container-${client.id}" class="payment-notes-embed"></div>
           </div>
         </div>
 
@@ -508,6 +508,11 @@ async function showClientDetailPopup(clientId) {
     `;
 
     document.body.appendChild(popup);
+
+    // Auto-load cuentas list
+    if (typeof openPaymentNotesForClient === 'function') {
+      openPaymentNotesForClient(client.id);
+    }
 
   } catch (error) {
     console.error('Error loading client details:', error);
