@@ -3951,10 +3951,7 @@ async function openCreateOrderModal() {
   document.getElementById('quick-order-state').value = '';
   document.getElementById('client-autocomplete-dropdown').style.display = 'none';
 
-  const eventType = document.getElementById('quick-order-event-type');
-  if (eventType) eventType.value = '';
-  const eventDate = document.getElementById('quick-order-event-date');
-  if (eventDate) eventDate.value = '';
+  // Event type and date removed from UI
   const shipping = document.getElementById('quick-order-shipping');
   if (shipping) shipping.checked = false;
   const address = document.getElementById('quick-order-address');
@@ -3980,14 +3977,17 @@ function searchClientByPhone(phone) {
   const dropdown = document.getElementById('client-autocomplete-dropdown');
   if (clientSearchTimeout) clearTimeout(clientSearchTimeout);
 
-  if (!phone || phone.length < 3) {
+  // Strip spaces, dashes, parentheses — search digits only
+  const digits = (phone || '').replace(/\D/g, '');
+
+  if (digits.length < 3) {
     dropdown.style.display = 'none';
     return;
   }
 
   clientSearchTimeout = setTimeout(async () => {
     try {
-      const response = await fetch(`${API_BASE}/clients/search?phone=${encodeURIComponent(phone)}`, {
+      const response = await fetch(`${API_BASE}/clients/search?phone=${encodeURIComponent(digits)}`, {
         headers: getAuthHeaders()
       });
       const data = await response.json();
@@ -4209,7 +4209,6 @@ async function submitQuickOrder(copyToClipboard) {
   const clientCity = document.getElementById('quick-order-city').value.trim();
   const clientState = document.getElementById('quick-order-state').value.trim();
   const notes = document.getElementById('quick-order-notes')?.value.trim() || '';
-  const eventType = document.getElementById('quick-order-event-type')?.value || '';
   const isShipping = document.getElementById('quick-order-shipping')?.checked || false;
   const address = isShipping ? (document.getElementById('quick-order-address')?.value.trim() || '') : '';
 
@@ -4227,11 +4226,7 @@ async function submitQuickOrder(copyToClipboard) {
     productionCost: totalCost,
     status: 'pending_review',
     depositAmount,
-    notes: [
-      notes,
-      eventType ? `Evento: ${eventType}` : '',
-      document.getElementById('quick-order-event-date')?.value ? `Fecha evento: ${document.getElementById('quick-order-event-date').value}` : ''
-    ].filter(Boolean).join(' | ') || null,
+    notes: notes || null,
     createdBy: 'admin'
   };
 

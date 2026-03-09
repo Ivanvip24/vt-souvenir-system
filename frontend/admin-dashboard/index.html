@@ -590,31 +590,17 @@
                             </div>
                         </div>
 
-                        <!-- OPTIONAL DETAILS (collapsed by default) -->
-                        <details style="margin-bottom: 20px;">
-                            <summary style="cursor: pointer; font-size: 14px; color: #6b7280; font-weight: 500; padding: 8px 0;">
-                                Detalles opcionales (evento, envío, notas)
-                            </summary>
-                            <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                <select id="quick-order-event-type" style="padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: white;">
-                                    <option value="">Tipo de evento</option>
-                                    <option value="quinceañera">Quinceañera</option>
-                                    <option value="boda">Boda</option>
-                                    <option value="bautizo">Bautizo</option>
-                                    <option value="corporativo">Corporativo</option>
-                                    <option value="otro">Otro</option>
-                                </select>
-                                <input type="date" id="quick-order-event-date" style="padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px;">
-                                <label style="display: flex; align-items: center; gap: 8px; grid-column: span 2; padding: 8px 0;">
-                                    <input type="checkbox" id="quick-order-shipping" onchange="toggleShippingAddress()">
-                                    <span style="font-size: 14px; color: #374151;">Envío a domicilio (no recoger en tienda)</span>
-                                </label>
-                                <div id="quick-order-address-section" style="display: none; grid-column: span 2;">
-                                    <textarea id="quick-order-address" rows="2" placeholder="Dirección de envío completa..." style="width: 100%; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; box-sizing: border-box;"></textarea>
-                                </div>
-                                <textarea id="quick-order-notes" placeholder="Notas (pega contexto de WhatsApp aquí...)" rows="2" style="grid-column: span 2; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px;"></textarea>
+                        <!-- SHIPPING & NOTES (always visible) -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 8px 0;">
+                                <input type="checkbox" id="quick-order-shipping" onchange="toggleShippingAddress()">
+                                <span style="font-size: 14px; font-weight: 500; color: #374151;">Envío a domicilio (no recoger en tienda)</span>
+                            </label>
+                            <div id="quick-order-address-section" style="display: none; margin-top: 8px;">
+                                <textarea id="quick-order-address" rows="2" placeholder="Dirección de envío completa..." style="width: 100%; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; box-sizing: border-box;"></textarea>
                             </div>
-                        </details>
+                            <textarea id="quick-order-notes" placeholder="Notas (pega contexto de WhatsApp aquí...)" rows="2" style="width: 100%; margin-top: 10px; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; box-sizing: border-box;"></textarea>
+                        </div>
 
                         <!-- SUBMIT BUTTONS -->
                         <div style="display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
