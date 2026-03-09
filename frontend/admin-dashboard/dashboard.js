@@ -3952,7 +3952,6 @@ async function openCreateOrderModal() {
   document.getElementById('quick-order-state').value = '';
   document.getElementById('client-autocomplete-dropdown').style.display = 'none';
 
-  // Event type and date removed from UI
   const shipping = document.getElementById('quick-order-shipping');
   if (shipping) shipping.checked = false;
   const address = document.getElementById('quick-order-address');
@@ -3963,8 +3962,11 @@ async function openCreateOrderModal() {
   if (addressSection) addressSection.style.display = 'none';
   const productSearch = document.getElementById('quick-order-product-search');
   if (productSearch) productSearch.value = '';
+  const salesRep = document.getElementById('quick-order-sales-rep');
+  if (salesRep) salesRep.value = '';
 
   await loadProductsForCreateOrder();
+  await loadQuickOrderSalesReps();
 
   document.getElementById('create-order-modal').classList.remove('hidden');
   setTimeout(() => document.getElementById('quick-order-phone').focus(), 100);
@@ -4038,6 +4040,27 @@ function selectClient(id, name, phone, email, city, state, address) {
 
   const productSearch = document.getElementById('quick-order-product-search');
   if (productSearch) productSearch.focus();
+}
+
+async function loadQuickOrderSalesReps() {
+  const dropdown = document.getElementById('quick-order-sales-rep');
+  if (!dropdown) return;
+  try {
+    const response = await fetch(`${API_BASE}/salespeople`, { headers: getAuthHeaders() });
+    const data = await response.json();
+    const salespeople = data.data || data.salespeople || [];
+    dropdown.innerHTML = '<option value="">Vendedor (opcional)</option>';
+    salespeople.forEach(sp => {
+      if (sp.is_active) {
+        const option = document.createElement('option');
+        option.value = sp.name;
+        option.textContent = sp.name;
+        dropdown.appendChild(option);
+      }
+    });
+  } catch (error) {
+    console.error('Error loading salespeople for quick order:', error);
+  }
 }
 
 function toggleShippingAddress() {
@@ -4210,6 +4233,7 @@ async function submitQuickOrder(copyToClipboard) {
   const clientCity = document.getElementById('quick-order-city').value.trim();
   const clientState = document.getElementById('quick-order-state').value.trim();
   const notes = document.getElementById('quick-order-notes')?.value.trim() || '';
+  const salesRep = document.getElementById('quick-order-sales-rep')?.value || '';
   const isShipping = document.getElementById('quick-order-shipping')?.checked || false;
   const address = isShipping ? (document.getElementById('quick-order-address')?.value.trim() || '') : '';
 
@@ -4228,6 +4252,7 @@ async function submitQuickOrder(copyToClipboard) {
     status: 'pending_review',
     depositAmount,
     notes: notes || null,
+    salesRep: salesRep || null,
     createdBy: 'admin'
   };
 

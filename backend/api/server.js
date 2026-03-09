@@ -428,21 +428,25 @@ app.post('/api/orders/quick', async (req, res) => {
   try {
     const result = await notionSync.createOrderBothSystems(req.body, { skipNotion: true });
 
-    // Set deposit_amount and approval_status if provided
-    if (req.body.depositAmount || req.body.status) {
-      const updates = [];
-      const params = [];
-      let paramIdx = 1;
+    // Set deposit_amount, approval_status, sales_rep if provided
+    const updates = [];
+    const params = [];
+    let paramIdx = 1;
 
-      if (req.body.depositAmount) {
-        updates.push(`deposit_amount = $${paramIdx++}`);
-        params.push(req.body.depositAmount);
-      }
-      if (req.body.status) {
-        updates.push(`approval_status = $${paramIdx++}`);
-        params.push(req.body.status);
-      }
+    if (req.body.depositAmount) {
+      updates.push(`deposit_amount = $${paramIdx++}`);
+      params.push(req.body.depositAmount);
+    }
+    if (req.body.status) {
+      updates.push(`approval_status = $${paramIdx++}`);
+      params.push(req.body.status);
+    }
+    if (req.body.salesRep) {
+      updates.push(`sales_rep = $${paramIdx++}`);
+      params.push(req.body.salesRep);
+    }
 
+    if (updates.length > 0) {
       params.push(result.orderId);
       await query(
         `UPDATE orders SET ${updates.join(', ')} WHERE id = $${paramIdx}`,

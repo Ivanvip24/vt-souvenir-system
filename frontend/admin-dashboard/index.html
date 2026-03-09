@@ -590,16 +590,21 @@
                             </div>
                         </div>
 
-                        <!-- SHIPPING & NOTES (always visible) -->
+                        <!-- SALES REP, SHIPPING & NOTES -->
                         <div style="margin-bottom: 20px;">
-                            <label style="display: flex; align-items: center; gap: 8px; padding: 8px 0;">
-                                <input type="checkbox" id="quick-order-shipping" onchange="toggleShippingAddress()">
-                                <span style="font-size: 14px; font-weight: 500; color: #374151;">Envío a domicilio (no recoger en tienda)</span>
-                            </label>
-                            <div id="quick-order-address-section" style="display: none; margin-top: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                                <select id="quick-order-sales-rep" style="flex: 1; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; font-size: 14px;">
+                                    <option value="">Vendedor (opcional)</option>
+                                </select>
+                                <label style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                    <input type="checkbox" id="quick-order-shipping" onchange="toggleShippingAddress()">
+                                    <span style="font-size: 14px; color: #374151;">Envío a domicilio</span>
+                                </label>
+                            </div>
+                            <div id="quick-order-address-section" style="display: none; margin-bottom: 10px;">
                                 <textarea id="quick-order-address" rows="2" placeholder="Dirección de envío completa..." style="width: 100%; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; box-sizing: border-box;"></textarea>
                             </div>
-                            <textarea id="quick-order-notes" placeholder="Notas (pega contexto de WhatsApp aquí...)" rows="2" style="width: 100%; margin-top: 10px; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; box-sizing: border-box;"></textarea>
+                            <textarea id="quick-order-notes" placeholder="Notas (pega contexto de WhatsApp aquí...)" rows="2" style="width: 100%; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; box-sizing: border-box;"></textarea>
                         </div>
 
                         <!-- SUBMIT BUTTONS -->
