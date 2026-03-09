@@ -29,6 +29,8 @@
     { "source": "/marca", "destination": "/brand-manual-web/index.html" },
     { "source": "/", "destination": "/landing/index.html" },
     { "source": "/landing", "destination": "/landing/index.html" },
+    { "source": "/v2", "destination": "/landing/index-v2.html" },
+    { "source": "/index-v2", "destination": "/landing/index-v2.html" },
     { "source": "/souvenirs", "destination": "/landing/souvenirs/index.html" },
     { "source": "/diseños", "destination": "/landing/souvenirs/index.html" },
     { "source": "/diseños/:destination/historia", "destination": "/landing/souvenirs/:destination/historia.html" },
