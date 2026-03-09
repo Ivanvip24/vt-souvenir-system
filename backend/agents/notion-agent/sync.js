@@ -262,7 +262,7 @@ export async function syncStatusToNotion(orderId, newStatus) {
  * Create order in both systems simultaneously
  * Recommended way to create new orders
  */
-export async function createOrderBothSystems(orderData) {
+export async function createOrderBothSystems(orderData, { skipNotion = false } = {}) {
   const client = await query('BEGIN');
 
   try {
@@ -377,8 +377,11 @@ export async function createOrderBothSystems(orderData) {
       }
     }
 
-    // 5. Sync to Notion
-    const syncResult = await syncOrderToNotion(orderId);
+    // 5. Sync to Notion (unless explicitly skipped)
+    let syncResult = { notionPageId: null, notionPageUrl: null };
+    if (!skipNotion) {
+      syncResult = await syncOrderToNotion(orderId);
+    }
 
     await query('COMMIT');
 

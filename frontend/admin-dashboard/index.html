@@ -536,82 +536,97 @@
                 <div class="modal-backdrop" onclick="closeDepositModal()"></div>
             </div>
 
-            <!-- Create Order Modal -->
+            <!-- Quick Order Entry Modal -->
             <div id="create-order-modal" class="modal hidden">
-                <div class="modal-content modal-large" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
-                    <div class="modal-header">
-                        <h2><i data-lucide="plus-circle" class="icon-sm" style="display: inline; vertical-align: middle;"></i> Crear Nuevo Pedido</h2>
-                        <button class="modal-close" onclick="closeCreateOrderModal()">×</button>
+                <div class="modal-content modal-large" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #7CB342 0%, #558B2F 100%); padding: 16px 24px;">
+                        <h2 style="color: white; margin: 0; font-size: 18px;">
+                            <i data-lucide="zap" class="icon-sm" style="display: inline; vertical-align: middle;"></i>
+                            Pedido Rápido
+                        </h2>
+                        <button class="modal-close" onclick="closeCreateOrderModal()" style="color: white;">×</button>
                     </div>
-                    <div class="modal-body" style="padding: 24px;">
-                        <!-- Step indicator -->
-                        <div class="create-order-steps" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;">
-                            <div class="step active" data-step="1">
-                                <span class="step-number">1</span>
-                                <span class="step-label">Cliente</span>
+                    <div class="modal-body" style="padding: 20px;">
+
+                        <!-- CLIENT SECTION -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 12px 0; color: #374151; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Cliente</h4>
+                            <div style="position: relative;">
+                                <input type="tel" id="quick-order-phone" placeholder="Teléfono (3+ dígitos para buscar)"
+                                       oninput="searchClientByPhone(this.value)"
+                                       autocomplete="off"
+                                       style="width: 100%; padding: 12px 16px; border: 2px solid #d1d5db; border-radius: 10px; font-size: 16px; font-weight: 600; box-sizing: border-box;">
+                                <div id="client-autocomplete-dropdown" style="display:none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #7CB342; border-top: none; border-radius: 0 0 10px 10px; z-index: 10; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                                </div>
                             </div>
-                            <div class="step-connector"></div>
-                            <div class="step" data-step="2">
-                                <span class="step-number">2</span>
-                                <span class="step-label">Productos</span>
+                            <div id="quick-order-client-info" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                                <input type="text" id="quick-order-name" placeholder="Nombre *" style="padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                <input type="email" id="quick-order-email" placeholder="Email (opcional)" style="padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                <input type="text" id="quick-order-city" placeholder="Ciudad (opcional)" style="padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                <input type="text" id="quick-order-state" placeholder="Estado (opcional)" style="padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px;">
                             </div>
                         </div>
 
-                        <!-- Step 1: Client Info -->
-                        <div id="create-order-step-1" class="create-order-step">
-                            <h3 style="margin-bottom: 16px; color: #374151;">Información del Cliente</h3>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                                <div class="form-group">
-                                    <label for="new-order-client-name">Nombre del Cliente *</label>
-                                    <input type="text" id="new-order-client-name" placeholder="Ej: María González" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="new-order-client-phone">Teléfono *</label>
-                                    <input type="tel" id="new-order-client-phone" placeholder="Ej: 5512345678" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="new-order-client-email">Email</label>
-                                    <input type="email" id="new-order-client-email" placeholder="Ej: maria@email.com">
-                                </div>
-                                <div class="form-group">
-                                    <label for="new-order-client-city">Ciudad</label>
-                                    <input type="text" id="new-order-client-city" placeholder="Ej: Ciudad de México">
-                                </div>
-                            </div>
-                            <div class="form-group" style="margin-top: 16px;">
-                                <label for="new-order-client-address">Dirección de Envío</label>
-                                <textarea id="new-order-client-address" rows="2" placeholder="Calle, número, colonia, CP..."></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Step 2: Products -->
-                        <div id="create-order-step-2" class="create-order-step hidden">
-                            <h3 style="margin-bottom: 16px; color: #374151;">Seleccionar Productos</h3>
-                            <div id="create-order-products-list" style="display: grid; gap: 12px; max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                        <!-- PRODUCTS SECTION -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 12px 0; color: #374151; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Productos</h4>
+                            <input type="text" id="quick-order-product-search" placeholder="Buscar producto..."
+                                   oninput="filterQuickOrderProducts(this.value)"
+                                   style="width: 100%; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box;">
+                            <div id="create-order-products-list" style="display: grid; gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
                                 <!-- Products loaded dynamically -->
                             </div>
-                            <div class="order-summary-bar" style="margin-top: 16px; padding: 16px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
+                            <div class="order-summary-bar" style="margin-top: 12px; padding: 14px 16px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 600; color: #166534;">Total del Pedido:</span>
-                                    <span id="create-order-total" style="font-size: 24px; font-weight: 700; color: #166534;">$0.00</span>
+                                    <div>
+                                        <span style="font-weight: 600; color: #166534;">Total:</span>
+                                        <span id="create-order-total" style="font-size: 22px; font-weight: 700; color: #166534; margin-left: 8px;">$0.00</span>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <span style="font-size: 13px; color: #6b7280;">Anticipo (50%):</span>
+                                        <span id="quick-order-deposit" style="font-weight: 600; color: #374151; margin-left: 4px;">$0.00</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Navigation Buttons -->
-                        <div style="display: flex; justify-content: space-between; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
-                            <button id="create-order-prev-btn" class="btn btn-secondary" onclick="createOrderPrevStep()" style="display: none;">
-                                ← Anterior
-                            </button>
-                            <div style="margin-left: auto; display: flex; gap: 12px;">
-                                <button class="btn btn-secondary" onclick="closeCreateOrderModal()">Cancelar</button>
-                                <button id="create-order-next-btn" class="btn btn-primary" onclick="createOrderNextStep()">
-                                    Siguiente →
-                                </button>
-                                <button id="create-order-submit-btn" class="btn btn-success" onclick="submitNewOrder()" style="display: none;">
-                                    ✓ Crear Pedido
-                                </button>
+                        <!-- OPTIONAL DETAILS (collapsed by default) -->
+                        <details style="margin-bottom: 20px;">
+                            <summary style="cursor: pointer; font-size: 14px; color: #6b7280; font-weight: 500; padding: 8px 0;">
+                                Detalles opcionales (evento, envío, notas)
+                            </summary>
+                            <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <select id="quick-order-event-type" style="padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: white;">
+                                    <option value="">Tipo de evento</option>
+                                    <option value="quinceañera">Quinceañera</option>
+                                    <option value="boda">Boda</option>
+                                    <option value="bautizo">Bautizo</option>
+                                    <option value="corporativo">Corporativo</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                <input type="date" id="quick-order-event-date" style="padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                <label style="display: flex; align-items: center; gap: 8px; grid-column: span 2; padding: 8px 0;">
+                                    <input type="checkbox" id="quick-order-shipping" onchange="toggleShippingAddress()">
+                                    <span style="font-size: 14px; color: #374151;">Envío a domicilio (no recoger en tienda)</span>
+                                </label>
+                                <div id="quick-order-address-section" style="display: none; grid-column: span 2;">
+                                    <textarea id="quick-order-address" rows="2" placeholder="Dirección de envío completa..." style="width: 100%; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; box-sizing: border-box;"></textarea>
+                                </div>
+                                <textarea id="quick-order-notes" placeholder="Notas (pega contexto de WhatsApp aquí...)" rows="2" style="grid-column: span 2; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px;"></textarea>
                             </div>
+                        </details>
+
+                        <!-- SUBMIT BUTTONS -->
+                        <div style="display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                            <button class="btn btn-secondary" onclick="closeCreateOrderModal()" style="flex: 0 0 auto;">
+                                Cancelar
+                            </button>
+                            <button id="quick-order-submit" class="btn btn-primary" onclick="submitQuickOrder(false)" style="flex: 1;">
+                                Crear Pedido
+                            </button>
+                            <button id="quick-order-submit-copy" class="btn btn-success" onclick="submitQuickOrder(true)" style="flex: 1;" title="Crea pedido y copia resumen para WhatsApp">
+                                Crear y Copiar Resumen
+                            </button>
                         </div>
                     </div>
                 </div>

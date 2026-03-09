@@ -3924,61 +3924,142 @@ window.updateAddMagnetPrice = updateAddMagnetPrice;
 window.deleteOrderItem = deleteOrderItem;
 
 // ==========================================
-// CREATE ORDER MODAL
+// QUICK ORDER ENTRY
 // ==========================================
 
 let createOrderState = {
-  currentStep: 1,
   products: [],
-  selectedProducts: {} // productId -> quantity
+  allProducts: [],
+  selectedProducts: {},
+  selectedClient: null
 };
 
-/**
- * Open the create order modal
- */
+let clientSearchTimeout = null;
+
 async function openCreateOrderModal() {
-  // Reset state
   createOrderState = {
-    currentStep: 1,
     products: [],
-    selectedProducts: {}
+    allProducts: [],
+    selectedProducts: {},
+    selectedClient: null
   };
 
-  // Reset form fields
-  document.getElementById('new-order-client-name').value = '';
-  document.getElementById('new-order-client-phone').value = '';
-  document.getElementById('new-order-client-email').value = '';
-  document.getElementById('new-order-client-city').value = '';
-  document.getElementById('new-order-client-address').value = '';
+  document.getElementById('quick-order-phone').value = '';
+  document.getElementById('quick-order-name').value = '';
+  document.getElementById('quick-order-email').value = '';
+  document.getElementById('quick-order-city').value = '';
+  document.getElementById('quick-order-state').value = '';
+  document.getElementById('client-autocomplete-dropdown').style.display = 'none';
 
-  // Reset steps
-  updateCreateOrderStep(1);
+  const eventType = document.getElementById('quick-order-event-type');
+  if (eventType) eventType.value = '';
+  const eventDate = document.getElementById('quick-order-event-date');
+  if (eventDate) eventDate.value = '';
+  const shipping = document.getElementById('quick-order-shipping');
+  if (shipping) shipping.checked = false;
+  const address = document.getElementById('quick-order-address');
+  if (address) address.value = '';
+  const notes = document.getElementById('quick-order-notes');
+  if (notes) notes.value = '';
+  const addressSection = document.getElementById('quick-order-address-section');
+  if (addressSection) addressSection.style.display = 'none';
+  const productSearch = document.getElementById('quick-order-product-search');
+  if (productSearch) productSearch.value = '';
 
-  // Load products for step 2
   await loadProductsForCreateOrder();
 
-  // Show modal
   document.getElementById('create-order-modal').classList.remove('hidden');
-
-  // Re-initialize Lucide icons
-  if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
-  }
+  setTimeout(() => document.getElementById('quick-order-phone').focus(), 100);
 }
 
-/**
- * Close the create order modal
- */
 function closeCreateOrderModal() {
   document.getElementById('create-order-modal').classList.add('hidden');
 }
 
-/**
- * Load products for the create order form
- */
+function searchClientByPhone(phone) {
+  const dropdown = document.getElementById('client-autocomplete-dropdown');
+  if (clientSearchTimeout) clearTimeout(clientSearchTimeout);
+
+  if (!phone || phone.length < 3) {
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  clientSearchTimeout = setTimeout(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/clients/search?phone=${encodeURIComponent(phone)}`, {
+        headers: getAuthHeaders()
+      });
+      const data = await response.json();
+
+      if (data.success && data.clients.length > 0) {
+        dropdown.innerHTML = data.clients.map(client => {
+          const safeName = (client.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const safeEmail = (client.email || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const safeCity = (client.city || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const safeState = (client.state || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const safeAddress = (client.address || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          return `
+            <div onclick="selectClient(${client.id}, '${safeName}', '${client.phone || ''}', '${safeEmail}', '${safeCity}', '${safeState}', '${safeAddress}')"
+                 style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f3f4f6; transition: background 0.15s;"
+                 onmouseenter="this.style.background='#f0fdf4'" onmouseleave="this.style.background='white'">
+              <div style="font-weight: 600; color: #111827;">${client.name || 'Sin nombre'}</div>
+              <div style="font-size: 13px; color: #6b7280;">${client.phone || ''} ${client.city ? '· ' + client.city : ''}</div>
+            </div>
+          `;
+        }).join('');
+        dropdown.style.display = 'block';
+      } else {
+        dropdown.style.display = 'none';
+      }
+    } catch (error) {
+      console.error('Client search error:', error);
+      dropdown.style.display = 'none';
+    }
+  }, 300);
+}
+
+function selectClient(id, name, phone, email, city, state, address) {
+  createOrderState.selectedClient = { id, name, phone, email, city, state, address };
+
+  document.getElementById('quick-order-phone').value = phone;
+  document.getElementById('quick-order-name').value = name;
+  document.getElementById('quick-order-email').value = email || '';
+  document.getElementById('quick-order-city').value = city || '';
+  document.getElementById('quick-order-state').value = state || '';
+
+  if (address) {
+    const addrField = document.getElementById('quick-order-address');
+    if (addrField) addrField.value = address;
+  }
+
+  document.getElementById('client-autocomplete-dropdown').style.display = 'none';
+
+  const productSearch = document.getElementById('quick-order-product-search');
+  if (productSearch) productSearch.focus();
+}
+
+function toggleShippingAddress() {
+  const section = document.getElementById('quick-order-address-section');
+  const checked = document.getElementById('quick-order-shipping').checked;
+  section.style.display = checked ? 'block' : 'none';
+}
+
+function filterQuickOrderProducts(searchTerm) {
+  if (!searchTerm || searchTerm.length < 1) {
+    createOrderState.products = [...createOrderState.allProducts];
+  } else {
+    const term = searchTerm.toLowerCase();
+    createOrderState.products = createOrderState.allProducts.filter(p =>
+      p.name.toLowerCase().includes(term)
+    );
+  }
+  renderProductsForCreateOrder();
+}
+
 async function loadProductsForCreateOrder() {
   const container = document.getElementById('create-order-products-list');
-  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando productos...</p></div>';
+  container.innerHTML = '<div style="text-align:center; padding:20px; color:#6b7280;">Cargando productos...</div>';
 
   try {
     const response = await fetch(`${API_BASE}/client/products`);
@@ -3986,9 +4067,8 @@ async function loadProductsForCreateOrder() {
 
     if (data.success && data.products) {
       createOrderState.products = data.products;
+      createOrderState.allProducts = [...data.products];
       renderProductsForCreateOrder();
-    } else {
-      container.innerHTML = '<p style="text-align: center; color: #6b7280;">No se pudieron cargar los productos</p>';
     }
   } catch (error) {
     console.error('Error loading products:', error);
@@ -3996,42 +4076,40 @@ async function loadProductsForCreateOrder() {
   }
 }
 
-/**
- * Render products in the create order form
- */
 function renderProductsForCreateOrder() {
   const container = document.getElementById('create-order-products-list');
 
   if (!createOrderState.products.length) {
-    container.innerHTML = '<p style="text-align: center; color: #6b7280;">No hay productos disponibles</p>';
+    container.innerHTML = '<p style="text-align: center; color: #6b7280;">No se encontraron productos</p>';
     return;
   }
 
   container.innerHTML = createOrderState.products.map(product => {
     const quantity = createOrderState.selectedProducts[product.id] || 0;
-    // Handle different field names and ensure it's a number
     const price = parseFloat(product.base_price || product.basePrice || product.price || 0);
     const subtotal = quantity * price;
 
     return `
-      <div class="create-order-product-card ${quantity > 0 ? 'selected' : ''}" data-product-id="${product.id}">
-        <div style="display: flex; gap: 12px; align-items: center;">
+      <div class="create-order-product-card ${quantity > 0 ? 'selected' : ''}" data-product-id="${product.id}" style="padding: 12px; background: ${quantity > 0 ? '#f0fdf4' : '#f9fafb'}; border: 2px solid ${quantity > 0 ? '#86efac' : '#e5e7eb'}; border-radius: 8px;">
+        <div style="display: flex; gap: 10px; align-items: center;">
           <img src="${product.thumbnail_url || product.image_url || product.thumbnailUrl || product.imageUrl || ''}" alt="${product.name}"
-               style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #f3f4f6;"
+               style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: #f3f4f6;"
                onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f3f4f6%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 font-size=%2240%22 text-anchor=%22middle%22 dy=%22.3em%22>📦</text></svg>'">
-          <div style="flex: 1;">
-            <h4 style="margin: 0 0 4px 0; font-weight: 600; color: #111827;">${product.name}</h4>
-            <p style="margin: 0; font-size: 14px; color: #6b7280;">$${price.toFixed(2)} c/u</p>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: 600; color: #111827; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${product.name}</div>
+            <div style="font-size: 13px; color: #6b7280;">$${price.toFixed(2)} c/u</div>
           </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button onclick="updateCreateOrderQuantity(${product.id}, -1)" class="qty-btn" ${quantity === 0 ? 'disabled' : ''}>−</button>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button onclick="updateCreateOrderQuantity(${product.id}, -10)" class="qty-btn" style="width:30px; height:30px; font-size:11px; background:white; border:1px solid #d1d5db; border-radius:6px; cursor:pointer;" ${quantity < 10 ? 'disabled' : ''}>-10</button>
+            <button onclick="updateCreateOrderQuantity(${product.id}, -1)" class="qty-btn" style="width:30px; height:30px; font-size:16px; background:white; border:1px solid #d1d5db; border-radius:6px; cursor:pointer;" ${quantity === 0 ? 'disabled' : ''}>−</button>
             <input type="number" value="${quantity}" min="0"
                    onchange="setCreateOrderQuantity(${product.id}, this.value)"
-                   style="width: 60px; text-align: center; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 600;">
-            <button onclick="updateCreateOrderQuantity(${product.id}, 1)" class="qty-btn">+</button>
+                   style="width: 55px; text-align: center; padding: 6px; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 600; font-size: 14px;">
+            <button onclick="updateCreateOrderQuantity(${product.id}, 1)" class="qty-btn" style="width:30px; height:30px; font-size:16px; background:white; border:1px solid #d1d5db; border-radius:6px; cursor:pointer;">+</button>
+            <button onclick="updateCreateOrderQuantity(${product.id}, 10)" class="qty-btn" style="width:30px; height:30px; font-size:11px; background:white; border:1px solid #d1d5db; border-radius:6px; cursor:pointer;">+10</button>
           </div>
         </div>
-        ${quantity > 0 ? `<div style="text-align: right; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;"><span style="font-weight: 600; color: #166534;">Subtotal: $${subtotal.toFixed(2)}</span></div>` : ''}
+        ${quantity > 0 ? '<div style="text-align: right; margin-top: 6px; font-weight: 600; color: #166534; font-size: 13px;">Subtotal: $' + subtotal.toFixed(2) + '</div>' : ''}
       </div>
     `;
   }).join('');
@@ -4039,9 +4117,6 @@ function renderProductsForCreateOrder() {
   updateCreateOrderTotal();
 }
 
-/**
- * Update product quantity
- */
 function updateCreateOrderQuantity(productId, delta) {
   const current = createOrderState.selectedProducts[productId] || 0;
   const newQty = Math.max(0, current + delta);
@@ -4055,9 +4130,6 @@ function updateCreateOrderQuantity(productId, delta) {
   renderProductsForCreateOrder();
 }
 
-/**
- * Set product quantity directly
- */
 function setCreateOrderQuantity(productId, value) {
   const qty = parseInt(value) || 0;
 
@@ -4070,14 +4142,11 @@ function setCreateOrderQuantity(productId, value) {
   renderProductsForCreateOrder();
 }
 
-/**
- * Update order total display
- */
 function updateCreateOrderTotal() {
   let total = 0;
 
   for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
-    const product = createOrderState.products.find(p => p.id === parseInt(productId));
+    const product = createOrderState.allProducts.find(p => p.id === parseInt(productId));
     if (product) {
       const price = parseFloat(product.base_price || product.basePrice || product.price || 0);
       total += price * quantity;
@@ -4085,96 +4154,37 @@ function updateCreateOrderTotal() {
   }
 
   document.getElementById('create-order-total').textContent = `$${total.toFixed(2)}`;
-}
-
-/**
- * Update step indicator and visibility
- */
-function updateCreateOrderStep(step) {
-  createOrderState.currentStep = step;
-
-  // Update step indicators
-  document.querySelectorAll('.create-order-steps .step').forEach((el, idx) => {
-    if (idx + 1 <= step) {
-      el.classList.add('active');
-    } else {
-      el.classList.remove('active');
-    }
-  });
-
-  // Show/hide step content
-  for (let i = 1; i <= 2; i++) {
-    const stepEl = document.getElementById(`create-order-step-${i}`);
-    if (stepEl) {
-      stepEl.classList.toggle('hidden', i !== step);
-    }
-  }
-
-  // Update buttons
-  document.getElementById('create-order-prev-btn').style.display = step > 1 ? 'block' : 'none';
-  document.getElementById('create-order-next-btn').style.display = step < 2 ? 'block' : 'none';
-  document.getElementById('create-order-submit-btn').style.display = step === 2 ? 'block' : 'none';
-}
-
-/**
- * Go to next step
- */
-function createOrderNextStep() {
-  // Validate current step
-  if (createOrderState.currentStep === 1) {
-    const name = document.getElementById('new-order-client-name').value.trim();
-    const phone = document.getElementById('new-order-client-phone').value.trim();
-
-    if (!name) {
-      alert('Por favor ingresa el nombre del cliente');
-      document.getElementById('new-order-client-name').focus();
-      return;
-    }
-    if (!phone) {
-      alert('Por favor ingresa el teléfono del cliente');
-      document.getElementById('new-order-client-phone').focus();
-      return;
-    }
-  }
-
-  if (createOrderState.currentStep < 2) {
-    updateCreateOrderStep(createOrderState.currentStep + 1);
+  const depositEl = document.getElementById('quick-order-deposit');
+  if (depositEl) {
+    depositEl.textContent = `$${Math.ceil(total * 0.5).toFixed(2)}`;
   }
 }
 
-/**
- * Go to previous step
- */
-function createOrderPrevStep() {
-  if (createOrderState.currentStep > 1) {
-    updateCreateOrderStep(createOrderState.currentStep - 1);
-  }
-}
+async function submitQuickOrder(copyToClipboard) {
+  const clientName = document.getElementById('quick-order-name').value.trim();
+  const clientPhone = document.getElementById('quick-order-phone').value.trim();
 
-/**
- * Submit the new order
- */
-async function submitNewOrder() {
-  // Validate products are selected
+  if (!clientName) {
+    alert('El nombre del cliente es obligatorio');
+    document.getElementById('quick-order-name').focus();
+    return;
+  }
+  if (!clientPhone) {
+    alert('El teléfono del cliente es obligatorio');
+    document.getElementById('quick-order-phone').focus();
+    return;
+  }
   if (Object.keys(createOrderState.selectedProducts).length === 0) {
-    alert('Por favor selecciona al menos un producto');
+    alert('Selecciona al menos un producto');
     return;
   }
 
-  // Gather form data
-  const clientName = document.getElementById('new-order-client-name').value.trim();
-  const clientPhone = document.getElementById('new-order-client-phone').value.trim();
-  const clientEmail = document.getElementById('new-order-client-email').value.trim();
-  const clientCity = document.getElementById('new-order-client-city').value.trim();
-  const clientAddress = document.getElementById('new-order-client-address').value.trim();
-
-  // Build items array
   const items = [];
   let totalPrice = 0;
   let totalCost = 0;
 
   for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
-    const product = createOrderState.products.find(p => p.id === parseInt(productId));
+    const product = createOrderState.allProducts.find(p => p.id === parseInt(productId));
     if (product) {
       const unitPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
       const unitCost = parseFloat(product.production_cost || product.productionCost || product.cost || 0);
@@ -4186,38 +4196,55 @@ async function submitNewOrder() {
       items.push({
         productId: product.id,
         productName: product.name,
-        quantity: quantity,
-        unitPrice: unitPrice,
-        unitCost: unitCost,
-        lineTotal: lineTotal,
-        lineCost: lineCost
+        quantity,
+        unitPrice,
+        unitCost,
+        lineTotal,
+        lineCost
       });
     }
   }
 
-  // Build order payload
+  const clientEmail = document.getElementById('quick-order-email').value.trim();
+  const clientCity = document.getElementById('quick-order-city').value.trim();
+  const clientState = document.getElementById('quick-order-state').value.trim();
+  const notes = document.getElementById('quick-order-notes')?.value.trim() || '';
+  const eventType = document.getElementById('quick-order-event-type')?.value || '';
+  const isShipping = document.getElementById('quick-order-shipping')?.checked || false;
+  const address = isShipping ? (document.getElementById('quick-order-address')?.value.trim() || '') : '';
+
+  const depositAmount = Math.ceil(totalPrice * 0.5);
+
   const orderData = {
     clientName,
     clientPhone,
     clientEmail: clientEmail || null,
     clientCity: clientCity || null,
-    clientAddress: clientAddress || null,
+    clientState: clientState || null,
+    clientAddress: address || null,
     items,
     totalPrice,
     productionCost: totalCost,
     status: 'pending_review',
-    depositAmount: Math.ceil(totalPrice * 0.5),
+    depositAmount,
+    notes: [
+      notes,
+      eventType ? `Evento: ${eventType}` : '',
+      document.getElementById('quick-order-event-date')?.value ? `Fecha evento: ${document.getElementById('quick-order-event-date').value}` : ''
+    ].filter(Boolean).join(' | ') || null,
     createdBy: 'admin'
   };
 
-  // Submit button state
-  const submitBtn = document.getElementById('create-order-submit-btn');
-  const originalText = submitBtn.innerHTML;
+  const submitBtn = document.getElementById('quick-order-submit');
+  const submitCopyBtn = document.getElementById('quick-order-submit-copy');
+  const origText = copyToClipboard ? submitCopyBtn.innerHTML : submitBtn.innerHTML;
+  const activeBtn = copyToClipboard ? submitCopyBtn : submitBtn;
   submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span class="spinner-sm"></span> Creando...';
+  submitCopyBtn.disabled = true;
+  activeBtn.innerHTML = '<span class="spinner-sm"></span> Creando...';
 
   try {
-    const response = await fetch(`${API_BASE}/orders`, {
+    const response = await fetch(`${API_BASE}/orders/quick`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(orderData)
@@ -4225,34 +4252,56 @@ async function submitNewOrder() {
 
     const result = await response.json();
 
-    if (result.success || response.ok) {
+    if (result.success) {
+      const orderNumber = result.data?.orderNumber || 'Generado';
+
+      if (copyToClipboard) {
+        const itemLines = items.map(i => `${i.quantity} ${i.productName} - $${i.lineTotal.toFixed(2)}`).join('\n');
+        const summary = `✅ Pedido ${orderNumber}\n${itemLines}\nTotal: $${totalPrice.toFixed(2)}\nAnticipo (50%): $${depositAmount.toFixed(2)}\n\nHaz tu anticipo aquí:\nhttps://axkan-pedidos.vercel.app`;
+
+        try {
+          await navigator.clipboard.writeText(summary);
+        } catch (e) {
+          const ta = document.createElement('textarea');
+          ta.value = summary;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+      }
+
       closeCreateOrderModal();
 
-      // Show success message
-      alert(`✅ Pedido creado exitosamente!\n\nNúmero: ${result.data?.orderNumber || 'Generado'}\nCliente: ${clientName}\nTotal: $${totalPrice.toFixed(2)}`);
+      const toastMsg = copyToClipboard
+        ? `✅ Pedido ${orderNumber} creado. Resumen copiado al portapapeles.`
+        : `✅ Pedido ${orderNumber} creado exitosamente.`;
 
-      // Reload orders list
+      alert(toastMsg);
       loadOrders();
     } else {
-      alert('Error al crear el pedido: ' + (result.message || 'Error desconocido'));
+      alert('Error al crear el pedido: ' + (result.message || result.error || 'Error desconocido'));
     }
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('Error creating quick order:', error);
     alert('Error de conexión al crear el pedido');
   } finally {
     submitBtn.disabled = false;
-    submitBtn.innerHTML = originalText;
+    submitCopyBtn.disabled = false;
+    activeBtn.innerHTML = origText;
   }
 }
 
-// Export create order functions
+// Export quick order functions to window
 window.openCreateOrderModal = openCreateOrderModal;
 window.closeCreateOrderModal = closeCreateOrderModal;
+window.searchClientByPhone = searchClientByPhone;
+window.selectClient = selectClient;
+window.toggleShippingAddress = toggleShippingAddress;
+window.filterQuickOrderProducts = filterQuickOrderProducts;
 window.updateCreateOrderQuantity = updateCreateOrderQuantity;
 window.setCreateOrderQuantity = setCreateOrderQuantity;
-window.createOrderNextStep = createOrderNextStep;
-window.createOrderPrevStep = createOrderPrevStep;
-window.submitNewOrder = submitNewOrder;
+window.submitQuickOrder = submitQuickOrder;
 
 // ==========================================
 // REFERENCE SHEET GENERATION (AXKAN ORDEN DE COMPRA)

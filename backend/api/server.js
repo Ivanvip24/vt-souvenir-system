@@ -399,6 +399,73 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
+// Quick-entry: search clients by phone for autocomplete
+app.get('/api/clients/search', async (req, res) => {
+  try {
+    const { phone } = req.query;
+
+    if (!phone || phone.length < 3) {
+      return res.json({ success: true, clients: [] });
+    }
+
+    const result = await query(`
+      SELECT id, name, phone, email, city, state, address
+      FROM clients
+      WHERE phone LIKE '%' || $1 || '%'
+      ORDER BY updated_at DESC
+      LIMIT 5
+    `, [phone]);
+
+    res.json({ success: true, clients: result.rows });
+  } catch (error) {
+    console.error('Error searching clients:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Quick-entry: create order (DB only, no Notion)
+app.post('/api/orders/quick', async (req, res) => {
+  try {
+    const result = await notionSync.createOrderBothSystems(req.body, { skipNotion: true });
+
+    // Set deposit_amount and approval_status if provided
+    if (req.body.depositAmount || req.body.status) {
+      const updates = [];
+      const params = [];
+      let paramIdx = 1;
+
+      if (req.body.depositAmount) {
+        updates.push(`deposit_amount = $${paramIdx++}`);
+        params.push(req.body.depositAmount);
+      }
+      if (req.body.status) {
+        updates.push(`approval_status = $${paramIdx++}`);
+        params.push(req.body.status);
+      }
+
+      params.push(result.orderId);
+      await query(
+        `UPDATE orders SET ${updates.join(', ')} WHERE id = $${paramIdx}`,
+        params
+      );
+    }
+
+    // Fetch the created order number for the response
+    const orderRow = await query('SELECT order_number FROM orders WHERE id = $1', [result.orderId]);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        orderId: result.orderId,
+        orderNumber: orderRow.rows[0]?.order_number || result.orderNumber
+      }
+    });
+  } catch (error) {
+    console.error('Error creating quick order:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Get orders with filters - Query PostgreSQL directly
 app.get('/api/orders', async (req, res) => {
   try {
