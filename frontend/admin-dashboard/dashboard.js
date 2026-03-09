@@ -3382,7 +3382,7 @@ function openEditProductModal(orderId, itemId, productName, currentQuantity, uni
                    && !productLower.includes('3d') && !productLower.includes('foil');
 
   // Determine current size based on product name first, then unit price
-  // Pricing: Chico: $8 (50-999) / $6 (1000+), Mediano: $11 (50-999) / $8 (1000+), Grande: $15 (50-999) / $12 (1000+)
+  // Pricing: Chico: $8 (100-999) / $6 (1000+), Mediano: $11 (100-999) / $8 (1000+), Grande: $15 (100-999) / $12 (1000+)
   let currentSize = 'mediano'; // Default to mediano
   if (isMagnet) {
     // Try to detect from product name first
@@ -3415,21 +3415,21 @@ function openEditProductModal(orderId, itemId, productName, currentQuantity, uni
             <input type="radio" name="magnet-size" value="chico" ${currentSize === 'chico' ? 'checked' : ''} onchange="updateMagnetPrice()" style="margin-right: 8px;">
             <div>
               <div style="font-weight: 600; font-size: 14px;">Chico</div>
-              <div style="font-size: 11px; color: var(--gray-500);">$8 (50-999) · $6 (1000+)</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$8 (100-999) · $6 (1000+)</div>
             </div>
           </label>
           <label style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid ${currentSize === 'mediano' ? 'var(--primary)' : 'var(--gray-200)'}; border-radius: 8px; cursor: pointer; background: ${currentSize === 'mediano' ? 'rgba(231, 42, 136, 0.05)' : 'white'};">
             <input type="radio" name="magnet-size" value="mediano" ${currentSize === 'mediano' ? 'checked' : ''} onchange="updateMagnetPrice()" style="margin-right: 8px;">
             <div>
               <div style="font-weight: 600; font-size: 14px;">Mediano</div>
-              <div style="font-size: 11px; color: var(--gray-500);">$11 (50-999) · $8 (1000+)</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$11 (100-999) · $8 (1000+)</div>
             </div>
           </label>
           <label style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid ${currentSize === 'grande' ? 'var(--primary)' : 'var(--gray-200)'}; border-radius: 8px; cursor: pointer; background: ${currentSize === 'grande' ? 'rgba(231, 42, 136, 0.05)' : 'white'};">
             <input type="radio" name="magnet-size" value="grande" ${currentSize === 'grande' ? 'checked' : ''} onchange="updateMagnetPrice()" style="margin-right: 8px;">
             <div>
               <div style="font-weight: 600; font-size: 14px;">Grande</div>
-              <div style="font-size: 11px; color: var(--gray-500);">$15 (50-999) · $12 (1000+)</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$15 (100-999) · $12 (1000+)</div>
             </div>
           </label>
         </div>
@@ -3512,9 +3512,9 @@ function updateMagnetPrice() {
   const quantity = parseInt(quantityInput.value) || 100;
 
   // Calculate price based on size and quantity
-  // Chico: $8 (50-999), $6 (1000+)
-  // Mediano: $11 (50-999), $8 (1000+)
-  // Grande: $15 (50-999), $12 (1000+)
+  // Chico: $8 (100-999), $6 (1000+)
+  // Mediano: $11 (100-999), $8 (1000+)
+  // Grande: $15 (100-999), $12 (1000+)
   let newPrice;
   if (size === 'chico') {
     newPrice = quantity >= 1000 ? 6 : 8;
@@ -3660,21 +3660,21 @@ async function openAddProductModal(orderId) {
             <input type="radio" name="add-magnet-size" value="chico" onchange="updateAddMagnetPrice()" style="margin-right: 8px;">
             <div>
               <div style="font-weight: 600; font-size: 14px;">Chico</div>
-              <div style="font-size: 11px; color: var(--gray-500);">$8 (50-999) · $6 (1000+)</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$8 (100-999) · $6 (1000+)</div>
             </div>
           </label>
           <label id="add-size-mediano-label" style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid var(--primary); border-radius: 8px; cursor: pointer; background: rgba(231, 42, 136, 0.05);">
             <input type="radio" name="add-magnet-size" value="mediano" checked onchange="updateAddMagnetPrice()" style="margin-right: 8px;">
             <div>
               <div style="font-weight: 600; font-size: 14px;">Mediano</div>
-              <div style="font-size: 11px; color: var(--gray-500);">$11 (50-999) · $8 (1000+)</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$11 (100-999) · $8 (1000+)</div>
             </div>
           </label>
           <label id="add-size-grande-label" style="flex: 1; min-width: 120px; display: flex; align-items: center; padding: 10px; border: 2px solid var(--gray-200); border-radius: 8px; cursor: pointer; background: white;">
             <input type="radio" name="add-magnet-size" value="grande" onchange="updateAddMagnetPrice()" style="margin-right: 8px;">
             <div>
               <div style="font-weight: 600; font-size: 14px;">Grande</div>
-              <div style="font-size: 11px; color: var(--gray-500);">$15 (50-999) · $12 (1000+)</div>
+              <div style="font-size: 11px; color: var(--gray-500);">$15 (100-999) · $12 (1000+)</div>
             </div>
           </label>
         </div>

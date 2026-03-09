@@ -164,7 +164,7 @@ export async function generateCatalogPDF(options = {}) {
       // SECTION: PRECIOS UNITARIOS
       // ==============================
       doc.fontSize(8).font('Helvetica-Bold').fillColor(C.pinkDark);
-      textCenter(doc, 'PRECIO POR UNIDAD  (50-999 pzas)', PAD, ROW_W, y);
+      textCenter(doc, 'PRECIO POR UNIDAD  (100-999 pzas)', PAD, ROW_W, y);
 
       y += 16;
 

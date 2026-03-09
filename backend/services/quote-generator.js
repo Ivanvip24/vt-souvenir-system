@@ -721,9 +721,9 @@ export async function generateQuotePDF(quoteData) {
          .text('PRECIOS POR VOLUMEN', 60, itemY + 8);
 
       doc.font('Helvetica').fontSize(8);
-      doc.text('Imanes MDF: $11/u (50-999 pzas) | $8/u (1000+ pzas)', 60, itemY + 22);
-      doc.text('Llaveros MDF: $10/u (50-999 pzas) | $7/u (1000+ pzas)', 60, itemY + 33);
-      doc.text('Destapadores MDF: $20/u (50-999 pzas) | $17/u (1000+ pzas)', 60, itemY + 44);
+      doc.text('Imanes MDF: $11/u (100-999 pzas) | $8/u (1000+ pzas)', 60, itemY + 22);
+      doc.text('Llaveros MDF: $10/u (100-999 pzas) | $7/u (1000+ pzas)', 60, itemY + 33);
+      doc.text('Destapadores MDF: $20/u (100-999 pzas) | $17/u (1000+ pzas)', 60, itemY + 44);
       doc.text('Portallaves MDF: $40/u (min. 20 pzas)', 300, itemY + 22);
       doc.text('Portarretratos MDF: $40/u (min. 20 pzas)', 300, itemY + 33);
       doc.text('Souvenir Box: $2,250/u (sin minimo)', 300, itemY + 44);
@@ -907,17 +907,17 @@ export async function deleteQuote(filepath) {
 export function getPricingInfo() {
   return {
     products: [
-      { name: 'Imanes MDF Chico', minQty: 50, prices: [{ qty: '50-999', price: 8 }, { qty: '1000+', price: 6 }] },
-      { name: 'Imanes MDF Mediano', minQty: 50, prices: [{ qty: '50-999', price: 11 }, { qty: '1000+', price: 8 }] },
-      { name: 'Imanes MDF Grande', minQty: 50, prices: [{ qty: '50-999', price: 15 }, { qty: '1000+', price: 12 }] },
+      { name: 'Imanes MDF Chico', minQty: 100, prices: [{ qty: '100-999', price: 8 }, { qty: '1000+', price: 6 }] },
+      { name: 'Imanes MDF Mediano', minQty: 100, prices: [{ qty: '100-999', price: 11 }, { qty: '1000+', price: 8 }] },
+      { name: 'Imanes MDF Grande', minQty: 100, prices: [{ qty: '100-999', price: 15 }, { qty: '1000+', price: 12 }] },
       { name: 'Imanes 3D', minQty: 100, prices: [{ qty: '100-999', price: 15 }, { qty: '1000+', price: 12 }] },
       { name: 'Imanes Foil Metálico', minQty: 100, prices: [{ qty: '100-999', price: 15 }, { qty: '1000+', price: 12 }] },
-      { name: 'Llaveros MDF', minQty: 50, prices: [{ qty: '50-999', price: 10 }, { qty: '1000+', price: 7 }] },
-      { name: 'Destapadores MDF', minQty: 50, prices: [{ qty: '50-499', price: 20 }, { qty: '500-999', price: 17 }, { qty: '1000+', price: 15 }] },
+      { name: 'Llaveros MDF', minQty: 100, prices: [{ qty: '100-999', price: 10 }, { qty: '1000+', price: 7 }] },
+      { name: 'Destapadores MDF', minQty: 100, prices: [{ qty: '100-499', price: 20 }, { qty: '500-999', price: 17 }, { qty: '1000+', price: 15 }] },
       { name: 'Portallaves MDF', minQty: 20, prices: [{ qty: '20+', price: 40 }] },
       { name: 'Portarretratos MDF', minQty: 20, prices: [{ qty: '20+', price: 40 }] },
       { name: 'Souvenir Box', minQty: 1, prices: [{ qty: '1+', price: 2250 }] },
-      { name: 'Botones Metálicos', minQty: 50, prices: [{ qty: '50-999', price: 8 }, { qty: '1000+', price: 6 }] }
+      { name: 'Botones Metálicos', minQty: 100, prices: [{ qty: '100-999', price: 8 }, { qty: '1000+', price: 6 }] }
     ],
     notes: {
       production: '5-7 días hábiles',

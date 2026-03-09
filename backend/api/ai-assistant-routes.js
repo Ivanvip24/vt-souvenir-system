@@ -857,7 +857,7 @@ Cuando el usuario pregunte sobre precios para cantidades FUERA de lo estándar (
 - "Dame un precio para un pedido especial de 15 destapadores" → calculate_price
 - "A qué precio puedo vender 10,000 imanes?" → calculate_price
 
-**REGLA:** Si la cantidad es menor al MOQ o mayor a 1000 piezas, SIEMPRE usa calculate_price en vez de generate_quote. Para cantidades estándar (50-999), puedes usar generate_quote normalmente.
+**REGLA:** Si la cantidad es menor al MOQ o mayor a 1000 piezas, SIEMPRE usa calculate_price en vez de generate_quote. Para cantidades estándar (100-999), puedes usar generate_quote normalmente.
 
 **Para calcular precio, incluye este bloque:**
 
