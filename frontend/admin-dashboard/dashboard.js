@@ -771,11 +771,12 @@ function applyFilter(filter) {
   // Then apply search filter if there's a search query
   if (state.searchQuery && state.searchQuery.trim() !== '') {
     const query = state.searchQuery.toLowerCase().trim();
+    const queryDigits = query.replace(/\D/g, '');
     filtered = filtered.filter(order => {
       return (
         (order.orderNumber && order.orderNumber.toLowerCase().includes(query)) ||
         (order.clientName && order.clientName.toLowerCase().includes(query)) ||
-        (order.clientPhone && order.clientPhone.toString().includes(query)) ||
+        (order.clientPhone && queryDigits.length >= 3 && order.clientPhone.toString().replace(/\D/g, '').includes(queryDigits)) ||
         (order.status && order.status.toLowerCase().includes(query))
       );
     });
