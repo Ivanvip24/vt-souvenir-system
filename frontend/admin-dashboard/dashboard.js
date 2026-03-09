@@ -3990,11 +3990,30 @@ function getQuickTieredPrice(productName, quantity) {
   return tier ? tier.price : null;
 }
 
+const MAGNET_SIZE_CONFIG = {
+  ch: { label: 'Ch', fullLabel: 'Chico', suffix: '(Chico)', tiers: [{ min: 50, max: 999, price: 8.00 }, { min: 1000, max: Infinity, price: 6.00 }] },
+  m:  { label: 'M',  fullLabel: 'Mediano', suffix: '', tiers: [{ min: 50, max: 999, price: 11.00 }, { min: 1000, max: Infinity, price: 8.00 }] },
+  g:  { label: 'G',  fullLabel: 'Grande', suffix: '(Grande)', tiers: [{ min: 50, max: 999, price: 15.00 }, { min: 1000, max: Infinity, price: 12.00 }] }
+};
+
+function isMagnetProduct(productName) {
+  const n = productName.toLowerCase();
+  return n.includes('imanes de mdf') && !n.includes('3d') && !n.includes('foil');
+}
+
+function getMagnetPrice(size, quantity) {
+  const config = MAGNET_SIZE_CONFIG[size];
+  if (!config || quantity <= 0) return null;
+  const tier = config.tiers.find(t => quantity >= t.min && quantity <= t.max);
+  return tier ? tier.price : null;
+}
+
 let createOrderState = {
   products: [],
   allProducts: [],
   selectedProducts: {},
-  selectedClient: null
+  selectedClient: null,
+  magnetSizes: {} // productId -> 'ch' | 'm' | 'g'
 };
 
 let clientSearchTimeout = null;
@@ -4004,7 +4023,8 @@ async function openCreateOrderModal() {
     products: [],
     allProducts: [],
     selectedProducts: {},
-    selectedClient: null
+    selectedClient: null,
+    magnetSizes: {}
   };
 
   document.getElementById('quick-order-phone').value = '';
@@ -4172,9 +4192,30 @@ function renderProductsForCreateOrder() {
 
   container.innerHTML = createOrderState.products.map(product => {
     const quantity = createOrderState.selectedProducts[product.id] || 0;
-    const fallbackPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
-    const price = (quantity > 0 ? getQuickTieredPrice(product.name, quantity) : null) || fallbackPrice;
+    const isMagnet = isMagnetProduct(product.name);
+    const selectedSize = createOrderState.magnetSizes[product.id] || 'm';
+
+    let price;
+    if (isMagnet) {
+      price = (quantity > 0 ? getMagnetPrice(selectedSize, quantity) : null) || MAGNET_SIZE_CONFIG[selectedSize].tiers[0].price;
+    } else {
+      const fallbackPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
+      price = (quantity > 0 ? getQuickTieredPrice(product.name, quantity) : null) || fallbackPrice;
+    }
     const subtotal = quantity * price;
+
+    const sizeButtons = isMagnet ? `
+      <div style="display: flex; gap: 4px; margin-top: 6px;">
+        ${['ch', 'm', 'g'].map(s => {
+          const cfg = MAGNET_SIZE_CONFIG[s];
+          const isActive = selectedSize === s;
+          return `<button onclick="setMagnetSize(${product.id}, '${s}')"
+            style="padding: 4px 10px; font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; border: 2px solid ${isActive ? '#7CB342' : '#d1d5db'}; background: ${isActive ? '#7CB342' : 'white'}; color: ${isActive ? 'white' : '#374151'}; transition: all 0.15s;">
+            ${cfg.fullLabel} <span style="font-weight: 400; opacity: 0.8;">$${cfg.tiers[0].price}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    ` : '';
 
     return `
       <div class="create-order-product-card ${quantity > 0 ? 'selected' : ''}" data-product-id="${product.id}" style="padding: 12px; background: ${quantity > 0 ? '#f0fdf4' : '#f9fafb'}; border: 2px solid ${quantity > 0 ? '#86efac' : '#e5e7eb'}; border-radius: 8px;">
@@ -4183,8 +4224,9 @@ function renderProductsForCreateOrder() {
                style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: #f3f4f6;"
                onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f3f4f6%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2250%22 font-size=%2240%22 text-anchor=%22middle%22 dy=%22.3em%22>📦</text></svg>'">
           <div style="flex: 1; min-width: 0;">
-            <div style="font-weight: 600; color: #111827; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${product.name}</div>
+            <div style="font-weight: 600; color: #111827; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${product.name}${isMagnet ? ' (' + MAGNET_SIZE_CONFIG[selectedSize].fullLabel + ')' : ''}</div>
             <div style="font-size: 13px; color: #6b7280;">$${price.toFixed(2)} c/u</div>
+            ${sizeButtons}
           </div>
           <div style="display: flex; align-items: center; gap: 6px;">
             <button onclick="updateCreateOrderQuantity(${product.id}, -10)" class="qty-btn" style="width:30px; height:30px; font-size:11px; background:white; border:1px solid #d1d5db; border-radius:6px; cursor:pointer;" ${quantity < 10 ? 'disabled' : ''}>-10</button>
@@ -4229,14 +4271,25 @@ function setCreateOrderQuantity(productId, value) {
   renderProductsForCreateOrder();
 }
 
+function setMagnetSize(productId, size) {
+  createOrderState.magnetSizes[productId] = size;
+  renderProductsForCreateOrder();
+}
+
 function updateCreateOrderTotal() {
   let total = 0;
 
   for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
     const product = createOrderState.allProducts.find(p => p.id === parseInt(productId));
     if (product) {
-      const fallbackPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
-      const price = getQuickTieredPrice(product.name, quantity) || fallbackPrice;
+      let price;
+      if (isMagnetProduct(product.name)) {
+        const size = createOrderState.magnetSizes[productId] || 'm';
+        price = getMagnetPrice(size, quantity) || MAGNET_SIZE_CONFIG[size].tiers[0].price;
+      } else {
+        const fallbackPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
+        price = getQuickTieredPrice(product.name, quantity) || fallbackPrice;
+      }
       total += price * quantity;
     }
   }
@@ -4274,8 +4327,23 @@ async function submitQuickOrder(copyToClipboard) {
   for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
     const product = createOrderState.allProducts.find(p => p.id === parseInt(productId));
     if (product) {
-      const fallbackPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
-      const unitPrice = getQuickTieredPrice(product.name, quantity) || fallbackPrice;
+      let unitPrice;
+      let productName = product.name;
+
+      if (isMagnetProduct(product.name)) {
+        const size = createOrderState.magnetSizes[productId] || 'm';
+        const cfg = MAGNET_SIZE_CONFIG[size];
+        unitPrice = getMagnetPrice(size, quantity) || cfg.tiers[0].price;
+        // Set product name with size suffix: "Imanes de MDF (Chico)", "Imanes de MDF (Grande)"
+        // Mediano has no suffix since "Imanes de MDF" already means Mediano
+        if (cfg.suffix) {
+          productName = product.name.replace(/\s*\(.*?\)\s*$/, '') + ' ' + cfg.suffix;
+        }
+      } else {
+        const fallbackPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
+        unitPrice = getQuickTieredPrice(product.name, quantity) || fallbackPrice;
+      }
+
       const unitCost = parseFloat(product.production_cost || product.productionCost || product.cost || 0);
       const lineTotal = unitPrice * quantity;
       const lineCost = unitCost * quantity;
@@ -4284,7 +4352,7 @@ async function submitQuickOrder(copyToClipboard) {
 
       items.push({
         productId: product.id,
-        productName: product.name,
+        productName,
         quantity,
         unitPrice,
         unitCost,
@@ -4387,6 +4455,7 @@ window.toggleShippingAddress = toggleShippingAddress;
 window.filterQuickOrderProducts = filterQuickOrderProducts;
 window.updateCreateOrderQuantity = updateCreateOrderQuantity;
 window.setCreateOrderQuantity = setCreateOrderQuantity;
+window.setMagnetSize = setMagnetSize;
 window.submitQuickOrder = submitQuickOrder;
 
 // ==========================================
