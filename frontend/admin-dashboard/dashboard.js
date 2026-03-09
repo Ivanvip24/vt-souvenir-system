@@ -3928,6 +3928,68 @@ window.deleteOrderItem = deleteOrderItem;
 // QUICK ORDER ENTRY
 // ==========================================
 
+// Tiered pricing — mirrors backend/shared/pricing.js (source of truth)
+const QUICK_PRICING_TIERS = {
+  'imanes de mdf (chico)': [
+    { min: 50, max: 999, price: 8.00 },
+    { min: 1000, max: Infinity, price: 6.00 }
+  ],
+  'imanes de mdf': [
+    { min: 50, max: 999, price: 11.00 },
+    { min: 1000, max: Infinity, price: 8.00 }
+  ],
+  'imanes de mdf (grande)': [
+    { min: 50, max: 999, price: 15.00 },
+    { min: 1000, max: Infinity, price: 12.00 }
+  ],
+  'imán 3d mdf 3mm': [
+    { min: 50, max: 999, price: 15.00 },
+    { min: 1000, max: Infinity, price: 12.00 }
+  ],
+  'imán de mdf con foil': [
+    { min: 50, max: 999, price: 15.00 },
+    { min: 1000, max: Infinity, price: 12.00 }
+  ],
+  'llaveros de mdf': [
+    { min: 50, max: 999, price: 10.00 },
+    { min: 1000, max: Infinity, price: 7.00 }
+  ],
+  'destapador de mdf': [
+    { min: 50, max: 999, price: 20.00 },
+    { min: 1000, max: Infinity, price: 17.00 }
+  ],
+  'botones metálicos': [
+    { min: 50, max: 999, price: 8.00 },
+    { min: 1000, max: Infinity, price: 6.00 }
+  ],
+  'portallaves de mdf': [
+    { min: 20, max: Infinity, price: 40.00 }
+  ],
+  'portarretratos de mdf': [
+    { min: 20, max: Infinity, price: 40.00 }
+  ],
+  'souvenir box': [
+    { min: 1, max: Infinity, price: 2250.00 }
+  ]
+};
+
+function getQuickTieredPrice(productName, quantity) {
+  const nameLower = productName.toLowerCase();
+  let tiers = null;
+
+  for (const [key, tierArray] of Object.entries(QUICK_PRICING_TIERS)) {
+    if (nameLower.includes(key) || key.includes(nameLower)) {
+      tiers = tierArray;
+      break;
+    }
+  }
+
+  if (!tiers || quantity <= 0) return null;
+
+  const tier = tiers.find(t => quantity >= t.min && quantity <= t.max);
+  return tier ? tier.price : null;
+}
+
 let createOrderState = {
   products: [],
   allProducts: [],
@@ -4110,7 +4172,8 @@ function renderProductsForCreateOrder() {
 
   container.innerHTML = createOrderState.products.map(product => {
     const quantity = createOrderState.selectedProducts[product.id] || 0;
-    const price = parseFloat(product.base_price || product.basePrice || product.price || 0);
+    const fallbackPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
+    const price = (quantity > 0 ? getQuickTieredPrice(product.name, quantity) : null) || fallbackPrice;
     const subtotal = quantity * price;
 
     return `
@@ -4172,7 +4235,8 @@ function updateCreateOrderTotal() {
   for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
     const product = createOrderState.allProducts.find(p => p.id === parseInt(productId));
     if (product) {
-      const price = parseFloat(product.base_price || product.basePrice || product.price || 0);
+      const fallbackPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
+      const price = getQuickTieredPrice(product.name, quantity) || fallbackPrice;
       total += price * quantity;
     }
   }
@@ -4210,7 +4274,8 @@ async function submitQuickOrder(copyToClipboard) {
   for (const [productId, quantity] of Object.entries(createOrderState.selectedProducts)) {
     const product = createOrderState.allProducts.find(p => p.id === parseInt(productId));
     if (product) {
-      const unitPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
+      const fallbackPrice = parseFloat(product.base_price || product.basePrice || product.price || 0);
+      const unitPrice = getQuickTieredPrice(product.name, quantity) || fallbackPrice;
       const unitCost = parseFloat(product.production_cost || product.productionCost || product.cost || 0);
       const lineTotal = unitPrice * quantity;
       const lineCost = unitCost * quantity;
