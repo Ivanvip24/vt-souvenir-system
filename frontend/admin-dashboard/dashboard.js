@@ -4025,7 +4025,7 @@ async function openCreateOrderModal() {
   const productSearch = document.getElementById('quick-order-product-search');
   if (productSearch) productSearch.value = '';
   const salesRep = document.getElementById('quick-order-sales-rep');
-  if (salesRep) salesRep.value = '';
+  if (salesRep) salesRep.value = 'Ivan';
 
   await loadProductsForCreateOrder();
   await loadQuickOrderSalesReps();
@@ -4111,9 +4111,9 @@ async function loadQuickOrderSalesReps() {
     const response = await fetch(`${API_BASE}/salespeople`, { headers: getAuthHeaders() });
     const data = await response.json();
     const salespeople = data.data || data.salespeople || [];
-    dropdown.innerHTML = '<option value="">Vendedor (opcional)</option>';
+    dropdown.innerHTML = '<option value="Ivan" selected>Ivan</option>';
     salespeople.forEach(sp => {
-      if (sp.is_active) {
+      if (sp.is_active && sp.name.toLowerCase() !== 'ivan') {
         const option = document.createElement('option');
         option.value = sp.name;
         option.textContent = sp.name;
