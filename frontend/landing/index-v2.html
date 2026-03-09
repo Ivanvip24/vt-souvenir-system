@@ -345,65 +345,189 @@ body {
 
 
 /* ═══════════════════════════════════════════════════════════
-   HERO SECTION — "The Magnet Floats"
+   HERO SECTION — Mexico Photo Grid
    ═══════════════════════════════════════════════════════════ */
 
 .hero {
     position: relative;
     width: 100%;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    background: var(--dark);
-    padding: 0 24px;
+    height: 100vh;
     overflow: hidden;
 }
 
-.hero-product {
-    max-width: min(450px, 70vw);
+/* ─── Photo Grid Background ─── */
+.hero-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 4px;
     width: 100%;
-    border-radius: 12px;
-    filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.12));
-    transform: rotate(-3deg);
-    /* Load animation initial state */
+    height: 100%;
+}
+
+.hero-grid-cell {
+    overflow: hidden;
     opacity: 0;
-    animation: heroFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+    animation: heroGridReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-grid-cell:nth-child(1) { animation-delay: 0s; }
+.hero-grid-cell:nth-child(2) { animation-delay: 0.08s; }
+.hero-grid-cell:nth-child(3) { animation-delay: 0.16s; }
+.hero-grid-cell:nth-child(4) { animation-delay: 0.12s; }
+.hero-grid-cell:nth-child(5) { animation-delay: 0.2s; }
+.hero-grid-cell:nth-child(6) { animation-delay: 0.06s; }
+
+.hero-grid-cell picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-grid-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 8s ease;
+}
+
+.hero-grid-cell:hover img {
+    transform: scale(1.05);
+}
+
+@keyframes heroGridReveal {
+    from {
+        opacity: 0;
+        transform: scale(1.08);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ─── Dark Overlay ─── */
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at center, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.25) 70%),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.2) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ─── Center Content ─── */
+.hero-content {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    text-align: center;
+}
+
+.hero-logo {
+    width: 48px;
+    height: auto;
+    margin-bottom: 16px;
+    filter: brightness(0) invert(1);
+    opacity: 0;
+    animation: heroFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+}
+
+.hero-label {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 12px;
+    opacity: 0;
+    animation: heroFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
 }
 
 .hero-title {
     font-family: var(--font-display);
     font-size: clamp(2.8rem, 7vw, 5.5rem);
-    text-align: center;
-    color: var(--white);
-    margin-top: 48px;
-    line-height: 1.1;
-    /* Load animation initial state */
+    color: #fff;
+    line-height: 1.05;
+    margin: 0;
     opacity: 0;
-    animation: heroFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+    animation: heroFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
 }
 
 .hero-title .highlight {
     color: var(--rosa);
 }
 
-.hero-tagline {
+.hero-subtitle {
     font-family: var(--font-body);
     font-size: 1.1rem;
-    color: var(--gray-500);
+    color: rgba(255, 255, 255, 0.7);
     letter-spacing: 0.02em;
-    text-align: center;
     margin-top: 16px;
-    /* Load animation initial state */
     opacity: 0;
-    animation: heroFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+    animation: heroFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.65s forwards;
 }
 
+/* ─── CTA Buttons ─── */
+.hero-ctas {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    opacity: 0;
+    animation: heroFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+}
+
+.hero-btn {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    padding: 14px 32px;
+    border-radius: 100px;
+    transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.hero-btn:hover {
+    transform: translateY(-2px);
+}
+
+.hero-btn-primary {
+    background: var(--rosa);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 24px rgba(231, 42, 136, 0.3);
+}
+
+.hero-btn-primary:hover {
+    background: #d1247a;
+    box-shadow: 0 6px 32px rgba(231, 42, 136, 0.45);
+}
+
+.hero-btn-secondary {
+    background: transparent;
+    color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+}
+
+.hero-btn-secondary:hover {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Animations ─── */
 @keyframes heroFadeUp {
     from {
         opacity: 0;
-        transform: translateY(40px);
+        transform: translateY(30px);
     }
     to {
         opacity: 1;
@@ -411,55 +535,88 @@ body {
     }
 }
 
-/* Scroll indicator */
+/* ─── Scroll indicator ─── */
 .hero-scroll-indicator {
     position: absolute;
     bottom: 32px;
     left: 50%;
     transform: translateX(-50%);
-    opacity: 0.3;
-    animation: scrollBounce 2s ease-in-out infinite;
+    z-index: 2;
+    opacity: 0;
+    animation: scrollFadeIn 0.5s ease 1.2s forwards;
 }
 
 .hero-scroll-indicator svg {
     width: 24px;
     height: 24px;
-    stroke: var(--gray-500);
+    stroke: rgba(255, 255, 255, 0.4);
     stroke-width: 2;
     fill: none;
+    animation: scrollBounce 2s ease-in-out infinite;
+}
+
+@keyframes scrollFadeIn {
+    to { opacity: 1; }
 }
 
 @keyframes scrollBounce {
-    0%, 100% {
-        transform: translateX(-50%) translateY(0);
-    }
-    50% {
-        transform: translateX(-50%) translateY(8px);
-    }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
 }
 
-/* Hero responsive */
+/* ─── Hero Responsive ─── */
 @media (max-width: 768px) {
-    .hero {
-        padding: 0 24px;
-        padding-top: 64px;
+    .hero-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(3, 1fr);
     }
 
-    .hero-product {
-        max-width: 70vw;
+    .hero-logo {
+        width: 40px;
     }
 
     .hero-title {
-        margin-top: 36px;
+        font-size: clamp(2.2rem, 9vw, 3.5rem);
     }
 
-    .hero-tagline {
-        font-size: 1rem;
-        padding: 0 8px;
+    .hero-subtitle {
+        font-size: 0.95rem;
+        padding: 0 12px;
+    }
+
+    .hero-ctas {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .hero-btn {
+        width: 100%;
+        text-align: center;
+        padding: 14px 24px;
     }
 
     .hero-scroll-indicator {
-        bottom: 24px;
+        bottom: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+    }
+
+    /* Hide last 2 cells on very small screens */
+    .hero-grid-cell:nth-child(5),
+    .hero-grid-cell:nth-child(6) {
+        display: none;
+    }
+
+    .hero-label {
+        font-size: 0.65rem;
     }
 }
 
@@ -474,12 +631,12 @@ body {
     min-height: 100vh;
     display: flex;
     align-items: center;
-    background: var(--dark);
+    background: var(--white);
     padding: 120px 24px;
     overflow: hidden;
 }
 
-/* Subtle top separator — thin luminous line */
+/* Subtle top separator — thin line */
 .quality::before {
     content: '';
     position: absolute;
@@ -490,9 +647,9 @@ body {
     height: 1px;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(9, 173, 194, 0.15) 20%,
-        rgba(9, 173, 194, 0.3) 50%,
-        rgba(9, 173, 194, 0.15) 80%,
+        rgba(0, 0, 0, 0.06) 20%,
+        rgba(0, 0, 0, 0.1) 50%,
+        rgba(0, 0, 0, 0.06) 80%,
         transparent 100%
     );
 }
@@ -540,7 +697,7 @@ body {
     height: 80%;
     background: radial-gradient(
         ellipse at center,
-        rgba(9, 173, 194, 0.08) 0%,
+        rgba(9, 173, 194, 0.05) 0%,
         transparent 70%
     );
     z-index: -1;
@@ -597,7 +754,7 @@ body {
     font-family: var(--font-body);
     font-size: 1.1rem;
     line-height: 1.7;
-    color: var(--white);
+    color: var(--gray-500);
     opacity: 0;
     transform: translateY(24px);
     will-change: transform, opacity;
@@ -606,7 +763,7 @@ body {
 }
 
 .quality.visible .quality-desc {
-    opacity: 0.7;
+    opacity: 1;
     transform: translateY(0);
     transition-delay: 0.5s;
 }
@@ -636,7 +793,7 @@ body {
     align-items: center;
     gap: 8px;
     padding: 0 20px;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .quality-attr:first-child {
@@ -659,8 +816,7 @@ body {
 .quality-attr-text {
     font-family: var(--font-body);
     font-size: 0.85rem;
-    color: var(--white);
-    opacity: 0.6;
+    color: var(--gray-500);
     white-space: nowrap;
     letter-spacing: 0.01em;
 }
@@ -1754,19 +1910,64 @@ body {
      ═══════════════════════════════════════════════════════════ -->
 
 <section class="hero" id="hero">
-    <img
-        class="hero-product"
-        src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800"
-        alt="Imanes AXKAN con corte laser de destinos turisticos de Mexico"
-        loading="eager"
-    >
+    <!-- Photo Grid Background -->
+    <div class="hero-grid">
+        <div class="hero-grid-cell">
+            <picture>
+                <source media="(max-width: 768px)" srcset="/assets/mexico-1-p.jpg">
+                <img src="/assets/mexico-1.jpg" alt="Chichen Itza, Mexico" loading="eager">
+            </picture>
+        </div>
+        <div class="hero-grid-cell">
+            <picture>
+                <source media="(max-width: 768px)" srcset="/assets/mexico-3-p.jpg">
+                <img src="/assets/mexico-3.jpg" alt="Cancun vista aerea, Mexico" loading="eager">
+            </picture>
+        </div>
+        <div class="hero-grid-cell">
+            <picture>
+                <source media="(max-width: 768px)" srcset="/assets/mexico-4-p.jpg">
+                <img src="/assets/mexico-4.jpg" alt="Guanajuato ciudad colorida, Mexico" loading="eager">
+            </picture>
+        </div>
+        <div class="hero-grid-cell">
+            <picture>
+                <source media="(max-width: 768px)" srcset="/assets/mexico-6-p.jpg">
+                <img src="/assets/mexico-6.jpg" alt="Atardecer en playa, Mexico" loading="eager">
+            </picture>
+        </div>
+        <div class="hero-grid-cell">
+            <picture>
+                <source media="(max-width: 768px)" srcset="/assets/mexico-5-p.jpg">
+                <img src="/assets/mexico-5.jpg" alt="Catedral Ciudad de Mexico" loading="eager">
+            </picture>
+        </div>
+        <div class="hero-grid-cell">
+            <picture>
+                <source media="(max-width: 768px)" srcset="/assets/mexico-2-p.jpg">
+                <img src="/assets/mexico-2.jpg" alt="Papel picado, tradicion mexicana" loading="eager">
+            </picture>
+        </div>
+    </div>
 
-    <h1 class="hero-title">
-        <span data-sanity="heroTitleLine1">Llevate </span><span class="highlight" data-sanity="heroHighlight">Mexico</span><span data-sanity="heroTitleLine2"> Contigo</span>
-    </h1>
+    <!-- Dark Overlay -->
+    <div class="hero-overlay"></div>
 
-    <p class="hero-tagline" data-sanity="heroTagline">Souvenirs personalizados con corte laser</p>
+    <!-- Center Content -->
+    <div class="hero-content">
+        <img class="hero-logo" src="/assets/LOGO-01.png" alt="AXKAN">
+        <span class="hero-label">Recuerdos Hechos Souvenir</span>
+        <h1 class="hero-title">
+            <span data-sanity="heroTitleLine1">Ll&eacute;vate </span><span class="highlight" data-sanity="heroHighlight">M&eacute;xico</span><span data-sanity="heroTitleLine2"> Contigo</span>
+        </h1>
+        <p class="hero-subtitle" data-sanity="heroTagline">Souvenirs personalizados con corte l&aacute;ser</p>
+        <div class="hero-ctas">
+            <a href="/pedidos" class="hero-btn hero-btn-primary" data-sanity-href="heroCtaPrimaryUrl" data-sanity="heroCtaPrimaryText">Hacer Pedido &rarr;</a>
+            <a href="/seguimiento" class="hero-btn hero-btn-secondary">Seguimiento de Pedido</a>
+        </div>
+    </div>
 
+    <!-- Scroll Indicator -->
     <div class="hero-scroll-indicator" aria-hidden="true">
         <svg viewBox="0 0 24 24">
             <polyline points="6 9 12 15 18 9"></polyline>
@@ -1844,7 +2045,7 @@ body {
             <span class="dest-card-name">Cancun</span>
         </a>
         <a href="/souvenirs/oaxaca" class="dest-card">
-            <img class="dest-card-img" src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/artboard_3_d115305a-4348-42c6-985b-c3bbc506f59f.png?v=1754951642&width=600" alt="Souvenirs de Oaxaca" loading="lazy">
+            <img class="dest-card-img" src="/assets/mexico-1.jpg" alt="Souvenirs de Oaxaca" loading="lazy">
             <span class="dest-card-name">Oaxaca</span>
         </a>
         <a href="/souvenirs/cdmx" class="dest-card">
