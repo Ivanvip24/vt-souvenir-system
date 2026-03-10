@@ -814,7 +814,7 @@ Cuando el usuario pida crear una cotización o "cotizar" productos, debes:
 
 **PEDIDO MÍNIMO (MOQ):**
 - El pedido mínimo es de **100 piezas** para todos los productos
-- EXCEPCIONES: Portallaves, Portaretratos y Souvenir Box tienen mínimo de **50 piezas**
+- EXCEPCIONES: Portallaves y Portaretratos tienen mínimo de **20 piezas**, Souvenir Box mínimo **1 pieza**
 - SIEMPRE menciona estos mínimos cuando te pregunten sobre cantidades o pedidos mínimos
 
 **LISTA DE PRECIOS OFICIAL:**
@@ -825,7 +825,7 @@ Cuando el usuario pida crear una cotización o "cotizar" productos, debes:
 - **Imanes Foil Metálico**: $15/u (100-999 pzas) → $12/u (1000+ pzas)
 - **Llaveros MDF**: $10/u (100-999 pzas) → $7/u (1000+ pzas)
 - **Destapadores MDF**: $20/u (100-499 pzas) → $17/u (500-999 pzas) → $15/u (1000+ pzas)
-- **Portallaves MDF**: $40/u (mín. 50 pzas)
+- **Portallaves MDF**: $40/u (mín. 20 pzas)
 - **Portarretratos MDF**: $40/u (mín. 20 pzas)
 - **Souvenir Box**: $2,250/u (sin mínimo)
 - **Botones Metálicos**: $8/u (100-999 pzas) → $6/u (1000+ pzas)
@@ -938,7 +938,7 @@ Cuando el usuario pida cotizaciones con DIFERENTES CANTIDADES del MISMO producto
 **IMPORTANTE para cotizaciones:**
 - Si el usuario pregunta "cuánto cuesta" o "cuál es el precio", SIEMPRE genera la cotización PDF
 - El sistema automáticamente calculará los precios por volumen
-- Mínimo de 100 piezas para la mayoría de productos (excepto Portallaves: 50, Portaretratos: 50, Souvenir Box: 1)
+- Mínimo de 100 piezas para la mayoría de productos (excepto Portallaves: 20, Portaretratos: 20, Souvenir Box: 1)
 - Si el usuario no especifica tamaño de imán, asume MEDIANO
 - Responde primero con un resumen de los precios, luego genera el PDF
 
