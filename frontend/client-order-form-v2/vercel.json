@@ -1,0 +1,19 @@
+{
+  "rewrites": [
+    {
+      "source": "/client-order-form/:path*",
+      "destination": "/:path*"
+    },
+    {
+      "source": "/client-order-form",
+      "destination": "/"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    }
+  ]
+}
