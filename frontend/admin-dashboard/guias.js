@@ -266,10 +266,11 @@ function createGuiaCard(guia) {
   var row3 = document.createElement('div');
   row3.className = 'guia-card__row3';
 
-  if (guia.shipping_cost && parseFloat(guia.shipping_cost) > 0) {
+  var costVal = parseFloat(guia.shipping_cost || guia.t1_shipping_cost || 0);
+  if (costVal > 0) {
     var costSpan = document.createElement('span');
     costSpan.className = 'guia-card__cost';
-    costSpan.textContent = '$' + parseFloat(guia.shipping_cost).toFixed(2);
+    costSpan.textContent = '$' + costVal.toFixed(2);
     row3.appendChild(costSpan);
   }
 

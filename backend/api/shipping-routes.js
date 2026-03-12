@@ -469,7 +469,8 @@ router.get('/labels', async (req, res) => {
       whereConditions.push(`(
         sl.tracking_number ILIKE $${paramIndex} OR
         o.order_number ILIKE $${paramIndex} OR
-        c.name ILIKE $${paramIndex}
+        c.name ILIKE $${paramIndex} OR
+        sl.t1_client_name ILIKE $${paramIndex}
       )`);
       params.push(`%${search}%`);
       paramIndex++;
@@ -487,28 +488,28 @@ router.get('/labels', async (req, res) => {
 
     const whereClause = whereConditions.join(' AND ');
 
-    // Get total count (LEFT JOIN to include labels without orders)
+    // Get total count (LEFT JOINs to include T1 labels without client/order)
     const countResult = await query(`
       SELECT COUNT(*) as total
       FROM shipping_labels sl
       LEFT JOIN orders o ON sl.order_id = o.id
-      JOIN clients c ON sl.client_id = c.id
+      LEFT JOIN clients c ON sl.client_id = c.id
       WHERE ${whereClause}
     `, params);
 
-    // Get paginated results (LEFT JOIN to include labels without orders)
+    // Get paginated results (LEFT JOINs to include T1 labels without client/order)
     const result = await query(`
       SELECT
         sl.*,
         COALESCE(o.order_number, 'Sin pedido') as order_number,
         o.total_price as order_total,
-        c.name as client_name,
+        COALESCE(c.name, sl.t1_client_name) as client_name,
         c.phone as client_phone,
         c.city as client_city,
         c.state as client_state
       FROM shipping_labels sl
       LEFT JOIN orders o ON sl.order_id = o.id
-      JOIN clients c ON sl.client_id = c.id
+      LEFT JOIN clients c ON sl.client_id = c.id
       WHERE ${whereClause}
       ORDER BY sl.created_at DESC
       LIMIT $${paramIndex++} OFFSET $${paramIndex}
