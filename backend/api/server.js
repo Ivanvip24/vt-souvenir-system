@@ -78,6 +78,7 @@ const ALLOWED_ORIGINS = [
   'https://vtanunciando.com',
   'https://www.vtanunciando.com',
   'https://shipping.t1.com',
+  'https://client-order-form-v2.vercel.app',
   process.env.FRONTEND_URL,
   ...(process.env.EXTRA_CORS_ORIGINS ? process.env.EXTRA_CORS_ORIGINS.split(',') : [])
 ].filter(Boolean);
