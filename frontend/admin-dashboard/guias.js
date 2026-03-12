@@ -262,8 +262,47 @@ function createGuiaCard(guia) {
   row2.appendChild(clientSpan);
   row2.appendChild(daysSpan);
 
+  // Row 3 — extra details
+  var row3 = document.createElement('div');
+  row3.className = 'guia-card__row3';
+
+  if (guia.shipping_cost && parseFloat(guia.shipping_cost) > 0) {
+    var costSpan = document.createElement('span');
+    costSpan.className = 'guia-card__cost';
+    costSpan.textContent = '$' + parseFloat(guia.shipping_cost).toFixed(2);
+    row3.appendChild(costSpan);
+  }
+
+  if (guia.weight && parseFloat(guia.weight) > 0) {
+    var dimsSpan = document.createElement('span');
+    dimsSpan.className = 'guia-card__dims';
+    var dimsParts = [parseFloat(guia.weight) + 'kg'];
+    if (guia.length && guia.width && guia.height) {
+      dimsParts.push(guia.length + '\u00D7' + guia.width + '\u00D7' + guia.height + 'cm');
+    }
+    dimsSpan.textContent = dimsParts.join(' \u00B7 ');
+    row3.appendChild(dimsSpan);
+  }
+
+  if (guia.order_number && guia.order_number !== 'Sin pedido') {
+    var orderSpan = document.createElement('span');
+    orderSpan.className = 'guia-card__order';
+    orderSpan.textContent = guia.order_number;
+    row3.appendChild(orderSpan);
+  }
+
+  if (guia.client_phone) {
+    var phoneSpan = document.createElement('span');
+    phoneSpan.className = 'guia-card__phone';
+    phoneSpan.textContent = guia.client_phone;
+    row3.appendChild(phoneSpan);
+  }
+
   card.appendChild(row1);
   card.appendChild(row2);
+  if (row3.childNodes.length > 0) {
+    card.appendChild(row3);
+  }
 
   return card;
 }

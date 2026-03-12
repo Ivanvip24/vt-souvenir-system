@@ -10319,6 +10319,30 @@ body.mobile-menu-open {
     flex-shrink: 0;
 }
 
+.guia-card__row3 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 36px;
+    font-size: 11px;
+    color: var(--gray-400);
+}
+.guia-card__cost {
+    font-weight: 700;
+    color: var(--success);
+}
+.guia-card__dims {
+    color: var(--gray-400);
+}
+.guia-card__order {
+    color: var(--gray-500);
+    font-weight: 600;
+}
+.guia-card__phone {
+    color: var(--gray-400);
+    margin-left: auto;
+}
+
 /* Loading skeletons */
 .guia-card-skeleton {
     padding: 14px 16px;
