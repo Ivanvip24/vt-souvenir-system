@@ -71,7 +71,10 @@
                     window.location.href = 'login.html';
                 }
             } catch (e) {
-                console.warn('Auth verification failed, continuing with cached token');
+                console.warn('Auth verification failed - redirecting to login');
+                localStorage.removeItem('admin_token');
+                window.location.href = 'login.html';
+                return;
             }
         })();
     </script>

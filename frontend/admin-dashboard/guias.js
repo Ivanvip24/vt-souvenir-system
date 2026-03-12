@@ -80,10 +80,9 @@ function guiasToast(message, type) {
  * Initialize guias view
  */
 async function initGuiasView() {
-  try {
-    await fetch(GUIAS_API_URL + '/refresh-pending-tracking', { method: 'POST' });
-  } catch (err) { /* silent */ }
+  // Load guías immediately, refresh tracking in background
   loadGuias();
+  fetch(GUIAS_API_URL + '/refresh-pending-tracking', { method: 'POST' }).catch(function() {});
 }
 
 /**

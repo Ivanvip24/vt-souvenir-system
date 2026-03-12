@@ -10,6 +10,12 @@
 let commandPaletteOpen = false;
 let selectedCommandIndex = 0;
 
+function escapeHtmlCP(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 // =====================================================
 // KEYBOARD SHORTCUT (⌘K / Ctrl+K)
 // =====================================================
@@ -125,9 +131,9 @@ function handleCommandSearch(query) {
         html += `
             <div class="command-section">
                 <div class="command-section-title">Buscar Pedido</div>
-                <div class="command-item command-search" data-action="search-order" data-query="${q}" onclick="executeCommand('search-order', '${q}')">
+                <div class="command-item command-search" data-action="search-order" data-query="${escapeHtmlCP(q)}" onclick="executeCommand('search-order', '${escapeHtmlCP(q)}')">
                     <i data-lucide="search" class="command-icon"></i>
-                    <span class="command-text">Buscar pedido "${q.toUpperCase()}"</span>
+                    <span class="command-text">Buscar pedido "${escapeHtmlCP(q.toUpperCase())}"</span>
                 </div>
             </div>
         `;

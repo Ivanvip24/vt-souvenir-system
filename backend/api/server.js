@@ -5405,7 +5405,7 @@ app.post('/api/payment-notes', authMiddleware, async (req, res) => {
  * PUT /api/payment-notes/cuenta/:cuentaId
  * Update a cuenta
  */
-app.put('/api/payment-notes/cuenta/:cuentaId', async (req, res) => {
+app.put('/api/payment-notes/cuenta/:cuentaId', authMiddleware, async (req, res) => {
   try {
     const { cuentaId } = req.params;
     const { data, name } = req.body;
@@ -5445,7 +5445,7 @@ app.put('/api/payment-notes/cuenta/:cuentaId', async (req, res) => {
  * DELETE /api/payment-notes/cuenta/:cuentaId
  * Delete a single cuenta
  */
-app.delete('/api/payment-notes/cuenta/:cuentaId', async (req, res) => {
+app.delete('/api/payment-notes/cuenta/:cuentaId', authMiddleware, async (req, res) => {
   try {
     const { cuentaId } = req.params;
     await query('DELETE FROM payment_notes WHERE id = $1', [cuentaId]);
@@ -5460,7 +5460,7 @@ app.delete('/api/payment-notes/cuenta/:cuentaId', async (req, res) => {
  * POST /api/clients
  * Create a new client
  */
-app.post('/api/clients', async (req, res) => {
+app.post('/api/clients', authMiddleware, async (req, res) => {
   try {
     const { name, phone, email, address, street, street_number, colonia, city, state, postal_code, reference_notes } = req.body;
 
@@ -5485,7 +5485,7 @@ app.post('/api/clients', async (req, res) => {
  * PUT /api/clients/:id
  * Update a client
  */
-app.put('/api/clients/:id', async (req, res) => {
+app.put('/api/clients/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, phone, email, street, street_number, colonia, city, state, postal_code, reference_notes } = req.body;
@@ -5522,7 +5522,7 @@ app.put('/api/clients/:id', async (req, res) => {
  * DELETE /api/clients/:id
  * Delete a client (sets client_id to NULL on orders if any exist)
  */
-app.delete('/api/clients/:id', async (req, res) => {
+app.delete('/api/clients/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -5577,8 +5577,7 @@ app.use((err, req, res, next) => {
 
   res.status(500).json({
     success: false,
-    error: 'Internal server error',
-    message: err.message
+    error: 'Internal server error'
   });
 });
 

@@ -9,12 +9,20 @@ import { query } from '../shared/database.js';
 
 const router = express.Router();
 
-// JWT secret from environment or default
-const JWT_SECRET = process.env.JWT_SECRET || 'default-jwt-secret';
+// JWT secret from environment (REQUIRED)
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('CRITICAL: JWT_SECRET environment variable is not set!');
+  // Don't crash - but log loudly
+}
 
-// Admin credentials from environment variables or defaults
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+// Admin credentials from environment variables (no defaults)
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH; // bcrypt hash
+const ADMIN_PASSWORD_PLAIN = process.env.ADMIN_PASSWORD; // fallback for migration
+
+// Pre-computed dummy hash for timing-safe comparison on wrong usernames
+const DUMMY_HASH = '$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012';
 
 // ========================================
 // AUTHENTICATION
@@ -28,13 +36,42 @@ router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Validate credentials
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    // Check server configuration
+    if (!ADMIN_USERNAME || !JWT_SECRET) {
+      return res.status(503).json({
+        success: false,
+        error: 'Server not configured'
+      });
+    }
+
+    const usernameMatch = username === ADMIN_USERNAME;
+    let passwordValid = false;
+
+    if (ADMIN_PASSWORD_HASH) {
+      // Primary: bcrypt hash comparison
+      // Always run bcrypt.compare even on wrong username to prevent timing attacks
+      const hashToCompare = usernameMatch ? ADMIN_PASSWORD_HASH : DUMMY_HASH;
+      passwordValid = await bcrypt.compare(password || '', hashToCompare);
+      // Only count as valid if username also matched
+      passwordValid = passwordValid && usernameMatch;
+    } else if (ADMIN_PASSWORD_PLAIN) {
+      // Fallback: plaintext comparison (for migration only)
+      console.warn('WARNING: Using plaintext ADMIN_PASSWORD. Set ADMIN_PASSWORD_HASH for production security.');
+      // Still run bcrypt on dummy to keep timing consistent
+      await bcrypt.compare(password || '', DUMMY_HASH);
+      passwordValid = usernameMatch && password === ADMIN_PASSWORD_PLAIN;
+    } else {
+      // No password configured at all
+      await bcrypt.compare(password || '', DUMMY_HASH);
+      passwordValid = false;
+    }
+
+    if (passwordValid) {
       // Generate JWT token
       const token = jwt.sign(
         { username, role: 'admin' },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: '8h' }
       );
 
       res.json({
@@ -595,10 +632,18 @@ router.post('/employees', authMiddleware, async (req, res) => {
     }
 
     // Validate password length
-    if (password.length < 6) {
+    if (password.length < 8) {
       return res.status(400).json({
         success: false,
-        error: 'La contraseña debe tener al menos 6 caracteres'
+        error: 'La contraseña debe tener al menos 8 caracteres'
+      });
+    }
+
+    // Validate password complexity
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      return res.status(400).json({
+        success: false,
+        error: 'La contraseña debe incluir mayúsculas, minúsculas y números'
       });
     }
 
@@ -739,10 +784,17 @@ router.put('/employees/:id/password', authMiddleware, async (req, res) => {
       });
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       return res.status(400).json({
         success: false,
-        error: 'La contraseña debe tener al menos 6 caracteres'
+        error: 'La contraseña debe tener al menos 8 caracteres'
+      });
+    }
+
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        error: 'La contraseña debe incluir mayúsculas, minúsculas y números'
       });
     }
 

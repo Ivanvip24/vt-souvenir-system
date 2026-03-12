@@ -6,7 +6,10 @@
 import jwt from 'jsonwebtoken';
 import { query } from '../../shared/database.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-jwt-secret';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('CRITICAL: JWT_SECRET environment variable is not set! Employee auth will fail.');
+}
 
 /**
  * Main employee authentication middleware
