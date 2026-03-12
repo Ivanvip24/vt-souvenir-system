@@ -209,6 +209,8 @@ router.get('/shipments', async (req, res) => {
 /**
  * POST /api/t1/sync
  * Bulk import T1 shipments scraped from T1's "Mis envíos" page.
+ * Protected by a sync key (X-Sync-Key header) instead of JWT,
+ * since this runs from T1's browser console cross-origin.
  * Body: { shipments: [{ tracking, carrier, date, time, client, cost, trackingStatus }] }
  */
 router.post('/sync', async (req, res) => {

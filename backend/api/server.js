@@ -437,7 +437,13 @@ app.use('/api/knowledge', authMiddleware, knowledgeRoutes);
 app.use('/api/leads', authMiddleware, leadRoutes);
 app.use('/api/whatsapp', authMiddleware, whatsappRoutes);
 app.use('/api/whatsapp', authMiddleware, whatsappTemplateRoutes);
-app.use('/api/t1', authMiddleware, t1Routes);
+// T1 routes — sync endpoint accepts sync key, all others require JWT
+app.use('/api/t1', (req, res, next) => {
+  if (req.path === '/sync' && req.method === 'POST' && req.headers['x-sync-key'] === 'axkan-t1-sync-2026') {
+    return next(); // Skip JWT auth for sync with valid key
+  }
+  authMiddleware(req, res, next);
+}, t1Routes);
 
 // ========================================
 // PUSH NOTIFICATION ENDPOINTS

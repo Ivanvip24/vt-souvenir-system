@@ -546,8 +546,7 @@ function t1CloseSyncModal() {
 
 function t1BuildSyncScript() {
   var apiUrl = T1_API_URL + '/sync';
-  var token = localStorage.getItem('adminToken') || '';
-  return '(async()=>{const t=document.querySelectorAll("table tbody tr"),s=[];t.forEach(r=>{const c=r.querySelectorAll("td");if(c.length<7)return;const f=c[1].querySelector(".flex-col"),p=f?f.querySelectorAll("span"):[],n=c[4].textContent.trim().replace(/\\s+/g," "),v=c[7]?c[7].textContent.trim():"";p[0]&&s.push({tracking:p[0].textContent.trim(),carrier:p[1]?p[1].textContent.trim():"",client:n,cost:c[5].textContent.trim(),trackingStatus:v})});console.log("Syncing "+s.length+" shipments...");const r=await fetch("' + apiUrl + '",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer ' + token + '"},body:JSON.stringify({shipments:s})});const d=await r.json();console.log("T1 Sync:",d);document.title="SYNC OK: "+d.inserted+" nuevos, "+d.updated+" actualizados"})()';
+  return '(async()=>{const t=document.querySelectorAll("table tbody tr"),s=[];t.forEach(r=>{const c=r.querySelectorAll("td");if(c.length<7)return;const f=c[1].querySelector(".flex-col"),p=f?f.querySelectorAll("span"):[],n=c[4].textContent.trim().replace(/\\s+/g," "),v=c[7]?c[7].textContent.trim():"";p[0]&&s.push({tracking:p[0].textContent.trim(),carrier:p[1]?p[1].textContent.trim():"",client:n,cost:c[5].textContent.trim(),trackingStatus:v})});console.log("Syncing "+s.length+" shipments...");const r=await fetch("' + apiUrl + '",{method:"POST",headers:{"Content-Type":"application/json","X-Sync-Key":"axkan-t1-sync-2026"},body:JSON.stringify({shipments:s})});const d=await r.json();console.log("T1 Sync:",d);document.title="SYNC OK: "+d.inserted+" nuevos, "+d.updated+" actualizados"})()';
 }
 
 function t1CopySyncScript() {
