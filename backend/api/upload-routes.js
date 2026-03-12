@@ -151,7 +151,7 @@ router.post('/multiple', upload.array('files', 5), async (req, res) => {
     console.error('❌ Multi-upload error:', error.message);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al subir los archivos'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -187,7 +187,7 @@ router.delete('/image/:publicId', async (req, res) => {
     console.error('❌ Delete error:', error.message);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al eliminar la imagen'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -205,14 +205,14 @@ router.use((error, req, res, next) => {
     }
     return res.status(400).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 
   if (error) {
     return res.status(400).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 

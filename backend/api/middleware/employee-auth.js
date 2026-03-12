@@ -202,7 +202,7 @@ export async function optionalAuth(req, res, next) {
  * @param {string} expiresIn - Token expiration (default: 24h)
  * @returns {string} JWT token
  */
-export function generateEmployeeToken(employee, expiresIn = '24h') {
+export function generateEmployeeToken(employee, expiresIn = '8h') {
   return jwt.sign(
     {
       employeeId: employee.id,

@@ -100,7 +100,7 @@ router.get('/origin-address', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching origin address:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -153,7 +153,7 @@ router.put('/origin-address', async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating origin address:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -344,7 +344,7 @@ router.post('/orders/:orderId/generate', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error generating shipping label:', error);
-    res.status(500).json({ error: error.message || 'Error generando guía de envío' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -398,7 +398,7 @@ router.get('/orders/:orderId/calculate-boxes', async (req, res) => {
 
   } catch (error) {
     console.error('Error calculating boxes:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -830,7 +830,7 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error getting shipping quotes:', error);
-    res.status(500).json({ error: error.message || 'Error obteniendo cotizaciones' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -1031,7 +1031,7 @@ router.post('/orders/:orderId/generate-selected', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error generating label with selected rate:', error);
-    res.status(500).json({ error: error.message || 'Error generando guía' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -1147,7 +1147,7 @@ router.post('/labels/:labelId/refresh-tracking', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error refreshing tracking:', error);
-    res.status(500).json({ error: error.message || 'Error actualizando rastreo' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -1367,7 +1367,7 @@ router.post('/pickups/request', async (req, res) => {
           results.push({
             carrier: carrier,
             success: false,
-            error: error.message,
+            error: 'Error interno del servidor',
             shipment_count: labels.length
           });
         }
@@ -1406,7 +1406,7 @@ router.post('/pickups/request', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error requesting pickup:', error);
-    res.status(500).json({ error: error.message || 'Error solicitando recolección' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -1578,7 +1578,7 @@ router.post('/pickups/request/carrier', async (req, res) => {
     console.error('❌ Error requesting carrier pickup:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error solicitando recolección'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1739,7 +1739,7 @@ router.get('/pickups/skydropx-test', async (req, res) => {
       usage: 'Add ?shipment_id=UUID to test creating a pickup. Add &date=YYYY-MM-DD for specific date.'
     });
   } catch (error) {
-    res.json({ success: false, error: error.message });
+    res.json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -1865,7 +1865,7 @@ router.patch('/pickups/:pickupId', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error updating pickup:', error);
-    res.status(500).json({ success: false, error: error.message || 'Error actualizando recolección' });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -1915,7 +1915,7 @@ router.delete('/pickups/:pickupId', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error cancelling pickup:', error);
-    res.status(500).json({ error: error.message || 'Error cancelando recolección' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -2140,7 +2140,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
     console.error('❌ Error generating shipping label for client:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error generando guía de envío'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2360,7 +2360,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error getting shipping quotes for client:', error);
-    res.status(500).json({ error: error.message || 'Error obteniendo cotizaciones' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 

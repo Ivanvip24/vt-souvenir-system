@@ -32,7 +32,7 @@ router.get('/auth/status', async (req, res) => {
     }
   } catch (error) {
     console.error('Error checking ML connection:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -46,7 +46,7 @@ router.get('/auth/connect', (req, res) => {
     res.json({ authUrl });
   } catch (error) {
     console.error('Error generating auth URL:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -87,7 +87,7 @@ router.post('/auth/disconnect', async (req, res) => {
     res.json({ success: true, message: 'Mercado Libre account disconnected' });
   } catch (error) {
     console.error('Error disconnecting ML:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -105,7 +105,7 @@ router.get('/products', async (req, res) => {
     res.json({ products });
   } catch (error) {
     console.error('Error getting products:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -120,7 +120,7 @@ router.get('/products/:productId/listings', async (req, res) => {
     res.json({ listings });
   } catch (error) {
     console.error('Error getting listings:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -166,7 +166,7 @@ router.post('/products/:productId/publish', async (req, res) => {
     });
   } catch (error) {
     console.error('Error publishing product:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -214,7 +214,7 @@ router.post('/products/bulk-publish', async (req, res) => {
     });
   } catch (error) {
     console.error('Error bulk publishing:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -250,7 +250,7 @@ router.get('/listings', async (req, res) => {
     res.json({ listings: result.rows });
   } catch (error) {
     console.error('Error getting listings:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -284,7 +284,7 @@ router.patch('/listings/:listingId', async (req, res) => {
     res.json({ success: true, result });
   } catch (error) {
     console.error('Error updating listing:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -309,7 +309,7 @@ router.post('/listings/:listingId/pause', async (req, res) => {
     res.json({ success: true, result });
   } catch (error) {
     console.error('Error pausing listing:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -334,7 +334,7 @@ router.post('/listings/:listingId/activate', async (req, res) => {
     res.json({ success: true, result });
   } catch (error) {
     console.error('Error activating listing:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -359,7 +359,7 @@ router.delete('/listings/:listingId', async (req, res) => {
     res.json({ success: true, result });
   } catch (error) {
     console.error('Error closing listing:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -383,7 +383,7 @@ router.post('/inventory/sync', async (req, res) => {
     });
   } catch (error) {
     console.error('Error syncing inventory:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -411,7 +411,7 @@ router.get('/inventory/status', async (req, res) => {
     res.json({ listings: result.rows });
   } catch (error) {
     console.error('Error getting inventory status:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -430,7 +430,7 @@ router.get('/categories/:siteId', async (req, res) => {
     res.json({ categories });
   } catch (error) {
     console.error('Error getting categories:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -445,7 +445,7 @@ router.get('/categories/:siteId/:categoryId/attributes', async (req, res) => {
     res.json({ attributes });
   } catch (error) {
     console.error('Error getting category attributes:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -465,7 +465,7 @@ router.post('/categories/predict', async (req, res) => {
     res.json({ prediction });
   } catch (error) {
     console.error('Error predicting category:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -485,7 +485,7 @@ router.post('/category-mappings', async (req, res) => {
     res.json({ success: true, message: 'Category mapping saved' });
   } catch (error) {
     console.error('Error saving category mapping:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -502,7 +502,7 @@ router.get('/category-mappings', async (req, res) => {
     res.json({ mappings: result.rows });
   } catch (error) {
     console.error('Error getting category mappings:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -525,7 +525,7 @@ router.get('/me', async (req, res) => {
     res.json({ user });
   } catch (error) {
     console.error('Error getting ML user:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -551,7 +551,7 @@ router.post('/test-publish', async (req, res) => {
     });
   } catch (error) {
     console.error('Error in test publish:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -582,7 +582,7 @@ router.get('/stats', async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting stats:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -605,7 +605,7 @@ router.get('/sync-history', async (req, res) => {
     res.json({ history: result.rows });
   } catch (error) {
     console.error('Error getting sync history:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 

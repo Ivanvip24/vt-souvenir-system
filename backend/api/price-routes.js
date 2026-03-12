@@ -168,7 +168,7 @@ router.get('/dashboard', async (req, res) => {
     console.error('Error fetching price dashboard:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -197,7 +197,7 @@ router.get('/products', async (req, res) => {
     console.error('Error fetching products pricing:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -239,7 +239,7 @@ router.get('/products/:productId/history', async (req, res) => {
     console.error('Error fetching product price history:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -307,7 +307,7 @@ router.post('/products/:productId', async (req, res) => {
     console.error('Error updating product price:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -351,7 +351,7 @@ router.get('/materials/:materialId/history', async (req, res) => {
     console.error('Error fetching material cost history:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -414,7 +414,7 @@ router.post('/materials/:materialId/cost', async (req, res) => {
     console.error('Error recording material cost:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -459,7 +459,7 @@ router.get('/trends', async (req, res) => {
     console.error('Error fetching price trends:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -497,7 +497,7 @@ router.get('/margins', async (req, res) => {
     console.error('Error fetching margin analysis:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -549,7 +549,7 @@ router.get('/insights', async (req, res) => {
     console.error('Error fetching pricing insights:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -610,7 +610,7 @@ router.post('/insights', async (req, res) => {
     console.error('Error creating insight:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -641,7 +641,7 @@ router.put('/insights/:insightId/dismiss', async (req, res) => {
     console.error('Error dismissing insight:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -669,7 +669,7 @@ router.post('/insights/:insightId/implement', async (req, res) => {
     console.error('Error implementing insight:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -721,7 +721,7 @@ router.get('/benchmarks', async (req, res) => {
     console.error('Error fetching benchmarks:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -774,7 +774,7 @@ router.post('/benchmarks', async (req, res) => {
     console.error('Error adding benchmark:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });

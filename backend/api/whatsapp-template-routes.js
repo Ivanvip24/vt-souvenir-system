@@ -25,7 +25,7 @@ router.get('/templates', async (req, res) => {
     res.json({ templates });
   } catch (err) {
     console.error('🟢 Template list error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -36,7 +36,7 @@ router.post('/templates', async (req, res) => {
     res.json({ template });
   } catch (err) {
     console.error('🟢 Template create error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -49,7 +49,7 @@ router.post('/templates/:name/send', async (req, res) => {
     res.json({ result });
   } catch (err) {
     console.error('🟢 Template send error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -69,7 +69,7 @@ router.post('/templates/:name/broadcast', async (req, res) => {
     });
   } catch (err) {
     console.error('🟢 Template broadcast error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -80,7 +80,7 @@ router.get('/broadcasts', async (req, res) => {
     res.json({ broadcasts });
   } catch (err) {
     console.error('🟢 Broadcast list error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -92,7 +92,7 @@ router.post('/templates/seed', async (req, res) => {
     res.json({ message: 'Default templates seeded', templates });
   } catch (err) {
     console.error('🟢 Template seed error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 

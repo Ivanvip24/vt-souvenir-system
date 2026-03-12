@@ -18,8 +18,10 @@ if (!JWT_SECRET) {
 
 // Admin credentials from environment variables (no defaults)
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH; // bcrypt hash
-const ADMIN_PASSWORD_PLAIN = process.env.ADMIN_PASSWORD; // fallback for migration
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
+if (!ADMIN_PASSWORD_HASH) {
+  console.error('CRITICAL: ADMIN_PASSWORD_HASH not set! Admin login will fail.');
+}
 
 // Pre-computed dummy hash for timing-safe comparison on wrong usernames
 const DUMMY_HASH = '$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012';
@@ -47,23 +49,15 @@ router.post('/login', async (req, res) => {
     const usernameMatch = username === ADMIN_USERNAME;
     let passwordValid = false;
 
-    if (ADMIN_PASSWORD_HASH) {
-      // Primary: bcrypt hash comparison
-      // Always run bcrypt.compare even on wrong username to prevent timing attacks
-      const hashToCompare = usernameMatch ? ADMIN_PASSWORD_HASH : DUMMY_HASH;
-      passwordValid = await bcrypt.compare(password || '', hashToCompare);
-      // Only count as valid if username also matched
-      passwordValid = passwordValid && usernameMatch;
-    } else if (ADMIN_PASSWORD_PLAIN) {
-      // Fallback: plaintext comparison (for migration only)
-      console.warn('WARNING: Using plaintext ADMIN_PASSWORD. Set ADMIN_PASSWORD_HASH for production security.');
-      // Still run bcrypt on dummy to keep timing consistent
-      await bcrypt.compare(password || '', DUMMY_HASH);
-      passwordValid = usernameMatch && password === ADMIN_PASSWORD_PLAIN;
-    } else {
-      // No password configured at all
+    if (!ADMIN_PASSWORD_HASH) {
+      // No password hash configured — reject all logins
       await bcrypt.compare(password || '', DUMMY_HASH);
       passwordValid = false;
+    } else {
+      // bcrypt hash comparison (timing-safe: always runs bcrypt even on wrong username)
+      const hashToCompare = usernameMatch ? ADMIN_PASSWORD_HASH : DUMMY_HASH;
+      passwordValid = await bcrypt.compare(password || '', hashToCompare);
+      passwordValid = passwordValid && usernameMatch;
     }
 
     if (passwordValid) {
@@ -388,7 +382,7 @@ router.post('/run-migration', authMiddleware, async (req, res) => {
     console.error('❌ Migration failed:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -453,7 +447,7 @@ router.post('/create-manager', authMiddleware, async (req, res) => {
     console.error('Create manager error:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -510,7 +504,7 @@ router.post('/run-gallery-archive-migration', authMiddleware, async (req, res) =
     console.error('Gallery archive migration error:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1465,7 +1459,7 @@ router.post('/import-clients', authMiddleware, async (req, res) => {
 
         imported++;
       } catch (error) {
-        errors.push({ name: record.name, error: error.message });
+        errors.push({ name: record.name, error: 'Error interno del servidor' });
       }
     }
 
@@ -1481,7 +1475,7 @@ router.post('/import-clients', authMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error('❌ Import error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 

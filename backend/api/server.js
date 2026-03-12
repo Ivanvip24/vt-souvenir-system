@@ -193,10 +193,7 @@ app.get('/health', async (req, res) => {
   const dbConnected = await testConnection();
 
   res.json({
-    status: 'ok',
-    service: 'Souvenir Management System',
-    database: dbConnected ? 'connected' : 'disconnected',
-    timestamp: new Date().toISOString()
+    status: dbConnected ? 'ok' : 'degraded'
   });
 });
 
@@ -322,7 +319,7 @@ app.get('/api/facebook/stats', authMiddleware, async (req, res) => {
       scheduler: schedulerStatus
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -332,7 +329,7 @@ app.get('/api/facebook/pending', authMiddleware, async (req, res) => {
     const pending = await facebookMarketplace.getPendingUploads();
     res.json({ success: true, count: pending.length, data: pending });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -354,7 +351,7 @@ app.post('/api/facebook/queue', authMiddleware, async (req, res) => {
 
     res.json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -373,7 +370,7 @@ app.get('/api/facebook/status', authMiddleware, async (req, res) => {
     const status = await facebookMarketplace.isImageUploaded(imageUrl);
     res.json({ success: true, ...status });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -384,7 +381,7 @@ app.get('/api/facebook/order/:orderId', authMiddleware, async (req, res) => {
     const status = await facebookMarketplace.getOrderFacebookStatus(orderId);
     res.json({ success: true, data: status });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -409,7 +406,7 @@ app.get('/api/facebook/export', authMiddleware, async (req, res) => {
       }))
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -425,7 +422,7 @@ app.post('/api/facebook/mark-uploaded', authMiddleware, async (req, res) => {
     await facebookMarketplace.markAsUploaded(listingIds);
     res.json({ success: true, marked: listingIds.length });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -468,7 +465,7 @@ app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
     res.json({ success: true, message: 'Subscribed' });
   } catch (error) {
     console.error('Push subscribe error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -479,7 +476,7 @@ app.post('/api/push/unsubscribe', authMiddleware, async (req, res) => {
     await pushService.removeSubscription(endpoint);
     res.json({ success: true, message: 'Unsubscribed' });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -498,7 +495,7 @@ app.post('/api/push/test', authMiddleware, async (req, res) => {
     }
     res.json({ success: true, type, ...result });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -527,7 +524,7 @@ app.post('/api/orders', authMiddleware, async (req, res) => {
     console.error('Error creating order:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -552,7 +549,7 @@ app.get('/api/clients/search', authMiddleware, async (req, res) => {
     res.json({ success: true, clients: result.rows });
   } catch (error) {
     console.error('Error searching clients:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -599,7 +596,7 @@ app.post('/api/orders/quick', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating quick order:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -795,7 +792,7 @@ app.get('/api/orders', authMiddleware, async (req, res) => {
     console.error('Error querying orders:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -868,7 +865,7 @@ app.get('/api/orders/calendar', authMiddleware, async (req, res) => {
     console.error('❌ Calendar data error:', error.message);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -998,7 +995,7 @@ app.get('/api/reminders', authMiddleware, async (req, res) => {
     res.json({ success: true, data: reminders });
   } catch (error) {
     console.error('Reminders fetch error:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -1020,7 +1017,7 @@ app.post('/api/reminders', authMiddleware, async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error('Reminder create error:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -1040,7 +1037,7 @@ app.post('/api/reminders/:id/complete', authMiddleware, async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error('Reminder complete error:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -1057,7 +1054,7 @@ app.delete('/api/reminders/:id/complete', authMiddleware, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Reminder uncomplete error:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -1069,7 +1066,7 @@ app.delete('/api/reminders/:id', authMiddleware, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Reminder delete error:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -1123,7 +1120,7 @@ app.get('/api/orders/capacity', authMiddleware, async (req, res) => {
     console.error('❌ Capacity calculation error:', error.message);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1191,7 +1188,7 @@ app.get('/api/orders/next-available-date', authMiddleware, async (req, res) => {
     console.error('❌ Next available date error:', error.message);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1361,7 +1358,7 @@ app.get('/api/orders/:orderId', authMiddleware, async (req, res) => {
     console.error('Error getting order:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1410,7 +1407,7 @@ app.patch('/api/orders/:orderId/status', authMiddleware, async (req, res) => {
     console.error('Error updating status:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1429,7 +1426,7 @@ app.post('/api/orders/:orderId/sync', authMiddleware, async (req, res) => {
     console.error('Error syncing order:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1449,7 +1446,7 @@ app.post('/api/orders/sync/bulk', authMiddleware, async (req, res) => {
     console.error('Error in bulk sync:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1662,7 +1659,7 @@ app.post('/api/orders/:orderId/approve', authMiddleware, async (req, res) => {
     console.error('Error approving order:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1702,7 +1699,7 @@ app.post('/api/orders/:orderId/reject', authMiddleware, async (req, res) => {
     console.error('Error rejecting order:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1746,7 +1743,7 @@ app.post('/api/orders/:orderId/payment-proof', authMiddleware, async (req, res) 
     console.error('Error uploading payment proof:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1999,7 +1996,7 @@ app.post('/api/orders/:orderId/second-payment', authMiddleware, async (req, res)
     console.error('Error uploading second payment receipt:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2106,7 +2103,7 @@ app.post('/api/orders/:orderId/confirm-second-payment', authMiddleware, async (r
     console.error('Error confirming second payment:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2141,7 +2138,7 @@ app.post('/api/orders/:orderId/archive', authMiddleware, async (req, res) => {
     console.error('Error archiving order:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2192,7 +2189,7 @@ app.post('/api/orders/:orderId/production-sheet', authMiddleware, async (req, re
     console.error('Error saving production sheet:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2229,7 +2226,7 @@ app.delete('/api/orders/:orderId/production-sheet', authMiddleware, async (req, 
     console.error('Error removing production sheet:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2298,7 +2295,7 @@ app.post('/api/orders/reference-sheet/generate', authMiddleware, async (req, res
     console.error('Error generating custom reference sheet:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2394,7 +2391,7 @@ app.post('/api/orders/:orderId/reference-sheet', authMiddleware, async (req, res
     console.error('Error generating reference sheet:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2498,7 +2495,7 @@ app.post('/api/orders/:orderId/reference-sheet/save', authMiddleware, async (req
     console.error('Error generating/saving reference sheet:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2551,7 +2548,7 @@ app.put('/api/orders/:orderId/items/:itemId', authMiddleware, async (req, res) =
     console.error('Error updating order item:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2625,7 +2622,7 @@ app.post('/api/orders/:orderId/items/:itemId/attachment', authMiddleware, async 
     console.error('Error adding attachment:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2694,7 +2691,7 @@ app.delete('/api/orders/:orderId/items/:itemId/attachment', authMiddleware, asyn
     console.error('Error removing attachment:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -2882,7 +2879,7 @@ app.put('/api/orders/:orderId/items/:itemId/modify', authMiddleware, async (req,
     console.error('Error modifying order item:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3026,7 +3023,7 @@ app.post('/api/orders/:orderId/items/add', authMiddleware, async (req, res) => {
     console.error('Error adding order item:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3098,7 +3095,7 @@ app.delete('/api/orders/:orderId/items/:itemId', authMiddleware, async (req, res
 
   } catch (error) {
     console.error('Error removing order item:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -3142,7 +3139,7 @@ app.put('/api/orders/:orderId/notes', authMiddleware, async (req, res) => {
     console.error('Error updating order notes:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3215,7 +3212,7 @@ app.post('/api/orders/:orderId/attachment', authMiddleware, async (req, res) => 
     console.error('Error adding attachment:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3283,7 +3280,7 @@ app.delete('/api/orders/:orderId/attachment', authMiddleware, async (req, res) =
     console.error('Error removing attachment:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3390,7 +3387,7 @@ app.get('/api/orders/:orderId/receipt/download', authMiddleware, async (req, res
     console.error('Error regenerating receipt:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3498,7 +3495,7 @@ app.post('/api/orders/:orderId/process-receipt', authMiddleware, async (req, res
     console.error('❌ Error processing receipt:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3743,7 +3740,7 @@ app.post('/api/orders/:orderId/verify-payment', authMiddleware, async (req, res)
     console.error('❌ Error in Claude AI verification:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3768,7 +3765,7 @@ app.get('/api/alerts', authMiddleware, async (req, res) => {
     console.error('Error getting order alerts:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3789,7 +3786,7 @@ app.get('/api/alerts/summary', authMiddleware, async (req, res) => {
     console.error('Error getting alerts summary:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3830,7 +3827,7 @@ app.post('/api/alerts/send-digest', authMiddleware, async (req, res) => {
     console.error('Error sending daily digest:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3853,7 +3850,7 @@ app.get('/api/analytics', authMiddleware, async (req, res) => {
     console.error('Error getting analytics:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3883,7 +3880,7 @@ app.get('/api/analytics/revenue', authMiddleware, async (req, res) => {
     console.error('Error getting revenue:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3909,7 +3906,7 @@ app.get('/api/analytics/products/top', authMiddleware, async (req, res) => {
     console.error('Error getting top products:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -3935,7 +3932,7 @@ app.get('/api/analytics/clients/top', authMiddleware, async (req, res) => {
     console.error('Error getting top clients:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -4170,7 +4167,7 @@ app.get('/api/analytics/dashboard', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting dashboard analytics:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4240,7 +4237,7 @@ app.get('/api/analytics/products/:productName', authMiddleware, async (req, res)
     });
   } catch (error) {
     console.error('Error getting product analytics:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4259,7 +4256,7 @@ app.post('/api/reports/daily/send', authMiddleware, async (req, res) => {
     console.error('Error sending daily report:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -4287,7 +4284,7 @@ app.post('/api/reports/monthly/send', authMiddleware, async (req, res) => {
     console.error('Error sending monthly report:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -4305,7 +4302,7 @@ app.get('/api/reports/schedule', authMiddleware, (req, res) => {
     console.error('Error getting scheduled jobs:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -4322,7 +4319,7 @@ app.post('/api/test/email', async (req, res) => {
     res.json({ success: true, to, ...result });
   } catch (error) {
     console.error('Error testing email:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4371,7 +4368,7 @@ app.get('/api/salespeople', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching salespeople:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4402,7 +4399,7 @@ app.post('/api/salespeople', authMiddleware, async (req, res) => {
     if (error.code === '23505') {
       return res.status(400).json({ success: false, error: 'A salesperson with this name already exists' });
     }
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4439,7 +4436,7 @@ app.put('/api/salespeople/:id', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating salesperson:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4468,7 +4465,7 @@ app.delete('/api/salespeople/:id', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting salesperson:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4540,7 +4537,7 @@ app.get('/api/commissions', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching commissions:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4601,7 +4598,7 @@ app.get('/api/commissions/monthly', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching monthly commissions:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4651,7 +4648,7 @@ app.get('/api/commissions/:salesperson/orders', authMiddleware, async (req, res)
     });
   } catch (error) {
     console.error('Error fetching salesperson orders:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4879,7 +4876,7 @@ app.get('/api/clients', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching clients:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -4959,7 +4956,7 @@ app.post('/api/clients/autocomplete-addresses', authMiddleware, async (req, res)
     });
   } catch (error) {
     console.error('Error auto-completing addresses:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5167,7 +5164,7 @@ app.post('/api/clients/from-google-maps', authMiddleware, async (req, res) => {
     res.json({ success: true, data: result, sources, confidence });
   } catch (error) {
     console.error('Error extracting Google Maps data:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5308,7 +5305,7 @@ app.post('/api/shipping/labels/bulk', authMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error('Error generating bulk labels:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5345,7 +5342,7 @@ app.get('/api/clients/:id', authMiddleware, async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error('Error fetching client:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5367,7 +5364,7 @@ app.get('/api/payment-notes/client/:clientId', authMiddleware, async (req, res) 
     res.json({ success: true, data: result.rows });
   } catch (error) {
     console.error('Error fetching payment notes:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5385,7 +5382,7 @@ app.get('/api/payment-notes/cuenta/:cuentaId', authMiddleware, async (req, res) 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error('Error fetching cuenta:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5407,7 +5404,7 @@ app.post('/api/payment-notes', authMiddleware, async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error('Error creating cuenta:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5447,7 +5444,7 @@ app.put('/api/payment-notes/cuenta/:cuentaId', authMiddleware, async (req, res) 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error('Error updating cuenta:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5462,7 +5459,7 @@ app.delete('/api/payment-notes/cuenta/:cuentaId', authMiddleware, async (req, re
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting cuenta:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5487,7 +5484,7 @@ app.post('/api/clients', authMiddleware, async (req, res) => {
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error('Error creating client:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5524,7 +5521,7 @@ app.put('/api/clients/:id', authMiddleware, async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error('Error updating client:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -5552,7 +5549,7 @@ app.delete('/api/clients/:id', authMiddleware, async (req, res) => {
     res.json({ success: true, message: 'Client deleted successfully' });
   } catch (error) {
     console.error('Error deleting client:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 

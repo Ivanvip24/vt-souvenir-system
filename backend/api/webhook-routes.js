@@ -4,7 +4,10 @@ import { query } from '../shared/database.js';
 const router = express.Router();
 
 // Security: Webhook secret for Make.com authentication
-const WEBHOOK_SECRET = process.env.MAKE_WEBHOOK_SECRET || 'change-this-in-production';
+const WEBHOOK_SECRET = process.env.MAKE_WEBHOOK_SECRET;
+if (!WEBHOOK_SECRET) {
+  console.error('CRITICAL: MAKE_WEBHOOK_SECRET not set! Webhook endpoints will reject all requests.');
+}
 
 // Middleware to verify webhook authenticity
 function verifyWebhookSecret(req, res, next) {
@@ -87,7 +90,6 @@ router.get('/order/:identifier', verifyWebhookSecret, async (req, res) => {
 
     // Check if identifier is order number or ID
     const isId = !isNaN(identifier);
-    const field = isId ? 'id' : 'order_number';
 
     const result = await query(`
       SELECT
@@ -98,8 +100,8 @@ router.get('/order/:identifier', verifyWebhookSecret, async (req, res) => {
         c.address as client_address
       FROM orders o
       LEFT JOIN clients c ON o.client_id = c.id
-      WHERE o.${field} = $1
-    `, [identifier]);
+      WHERE CASE WHEN $2 THEN o.id = $1::int ELSE o.order_number = $1 END
+    `, [identifier, isId]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Order not found' });

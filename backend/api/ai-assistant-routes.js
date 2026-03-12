@@ -1862,7 +1862,7 @@ router.post('/chat', async (req, res) => {
     console.error('❌ AI Assistant error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al procesar tu mensaje'
+      error: 'Error interno del servidor'
     });
   }
 });

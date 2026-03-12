@@ -192,7 +192,7 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
     console.error('❌ Receipt analysis error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al procesar el recibo'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -337,7 +337,7 @@ router.post('/save', async (req, res) => {
     console.error('❌ Error saving receipt:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al guardar el recibo'
+      error: 'Error interno del servidor'
     });
   } finally {
     client.release();
@@ -398,7 +398,7 @@ router.get('/', async (req, res) => {
     console.error('Error fetching receipts:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -452,7 +452,7 @@ router.get('/:id', async (req, res) => {
     console.error('Error fetching receipt:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -483,7 +483,7 @@ router.get('/suppliers/list', async (req, res) => {
     console.error('Error fetching suppliers:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -526,7 +526,7 @@ router.delete('/:id', async (req, res) => {
     console.error('Error deleting receipt:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   } finally {
     client.release();
@@ -544,14 +544,14 @@ router.use((error, req, res, next) => {
     }
     return res.status(400).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 
   if (error) {
     return res.status(400).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 

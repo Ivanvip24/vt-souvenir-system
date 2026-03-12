@@ -82,7 +82,7 @@ router.post('/generate', async (req, res) => {
     console.error('❌ Error generating quote:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al generar la cotización'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -141,7 +141,7 @@ router.post('/parse', async (req, res) => {
     console.error('❌ Error parsing quote:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al analizar la solicitud'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -225,7 +225,7 @@ router.post('/generate-from-text', async (req, res) => {
     console.error('❌ Error generating quote from text:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al generar la cotización'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -303,7 +303,7 @@ router.post('/save', async (req, res) => {
     console.error('❌ Error saving quote:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al guardar la cotización'
+      error: 'Error interno del servidor'
     });
   }
 });

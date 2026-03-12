@@ -65,7 +65,7 @@ router.get('/materials', async (req, res) => {
     console.error('Error fetching raw materials:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -98,7 +98,7 @@ router.get('/materials/:id', async (req, res) => {
     console.error('Error fetching material:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -174,7 +174,7 @@ router.post('/materials', async (req, res) => {
     console.error('Error creating material:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -264,7 +264,7 @@ router.put('/materials/:id', async (req, res) => {
     console.error('Error updating material:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -302,7 +302,7 @@ router.delete('/materials/:id', async (req, res) => {
     console.error('Error deleting material:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -351,7 +351,7 @@ router.get('/products/:productId/components', async (req, res) => {
     console.error('Error fetching product components:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -406,7 +406,7 @@ router.post('/products/:productId/components', async (req, res) => {
     console.error('Error adding component:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -463,7 +463,7 @@ router.put('/products/:productId/components/:componentId', async (req, res) => {
     console.error('Error updating component:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -487,7 +487,7 @@ router.delete('/products/:productId/components/:componentId', async (req, res) =
     console.error('Error removing component:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -568,7 +568,7 @@ router.get('/products/:productId/cost-breakdown', async (req, res) => {
     console.error('Error getting cost breakdown:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -593,7 +593,7 @@ router.get('/cost-summary', async (req, res) => {
     console.error('Error fetching BOM cost summary:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -618,7 +618,7 @@ router.get('/material-usage', async (req, res) => {
     console.error('Error fetching material usage:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -655,7 +655,7 @@ router.post('/calculate-area-cost', async (req, res) => {
     console.error('Error calculating area cost:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: 'Error interno del servidor'
     });
   }
 });

@@ -23,7 +23,7 @@ router.get('/materials', async (req, res) => {
     res.json({ success: true, count: materials.length, materials });
   } catch (error) {
     console.error('Error fetching materials:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -36,7 +36,7 @@ router.get('/materials/:id', async (req, res) => {
     res.json({ success: true, material });
   } catch (error) {
     console.error('Error fetching material:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -46,7 +46,7 @@ router.post('/materials', async (req, res) => {
     res.status(201).json({ success: true, material });
   } catch (error) {
     console.error('Error creating material:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -56,7 +56,7 @@ router.patch('/materials/:id', async (req, res) => {
     res.json({ success: true, material });
   } catch (error) {
     console.error('Error updating material:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -66,7 +66,7 @@ router.get('/materials/:id/statistics', async (req, res) => {
     res.json({ success: true, statistics: stats });
   } catch (error) {
     console.error('Error fetching statistics:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -82,7 +82,7 @@ router.get('/materials/:id/transactions', async (req, res) => {
     res.json({ success: true, count: transactions.length, transactions });
   } catch (error) {
     console.error('Error fetching transactions:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -100,7 +100,7 @@ router.post('/materials/:id/purchase', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error recording purchase:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -114,7 +114,7 @@ router.post('/materials/:id/consume', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error recording consumption:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -128,7 +128,7 @@ router.post('/materials/:id/adjust', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error adjusting stock:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -142,7 +142,7 @@ router.get('/materials/:id/forecast', async (req, res) => {
     res.json({ success: true, forecast });
   } catch (error) {
     console.error('Error calculating forecast:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -156,7 +156,7 @@ router.get('/alerts', async (req, res) => {
     res.json({ success: true, count: alerts.length, alerts });
   } catch (error) {
     console.error('Error fetching alerts:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -166,7 +166,7 @@ router.get('/alerts/summary', async (req, res) => {
     res.json({ success: true, summary });
   } catch (error) {
     console.error('Error fetching alert summary:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -177,7 +177,7 @@ router.post('/alerts/:id/acknowledge', async (req, res) => {
     res.json({ success: true, alert });
   } catch (error) {
     console.error('Error acknowledging alert:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -187,7 +187,7 @@ router.post('/alerts/generate', async (req, res) => {
     res.json({ success: true, count: alerts.length, alerts });
   } catch (error) {
     console.error('Error generating alerts:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -201,7 +201,7 @@ router.get('/products/:id/bom', async (req, res) => {
     res.json({ success: true, count: bom.length, bom });
   } catch (error) {
     console.error('Error fetching BOM:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -214,7 +214,7 @@ router.post('/products/:id/bom', async (req, res) => {
     res.status(201).json({ success: true, bomEntry });
   } catch (error) {
     console.error('Error adding BOM entry:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -224,7 +224,7 @@ router.get('/materials/:id/products', async (req, res) => {
     res.json({ success: true, count: products.length, products });
   } catch (error) {
     console.error('Error fetching products:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -238,7 +238,7 @@ router.get('/orders/:id/materials', async (req, res) => {
     res.json({ success: true, requirements });
   } catch (error) {
     console.error('Error calculating requirements:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -248,7 +248,7 @@ router.get('/orders/:id/fulfillment', async (req, res) => {
     res.json({ success: true, ...fulfillment });
   } catch (error) {
     console.error('Error checking fulfillment:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -259,7 +259,7 @@ router.post('/orders/:id/reserve', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error reserving materials:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -270,7 +270,7 @@ router.post('/orders/:id/release', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error releasing materials:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -280,7 +280,7 @@ router.get('/orders/:id/reservations', async (req, res) => {
     res.json({ success: true, count: reservations.length, reservations });
   } catch (error) {
     console.error('Error fetching reservations:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -291,7 +291,7 @@ router.post('/orders/check-impact', async (req, res) => {
     res.json({ success: true, impact });
   } catch (error) {
     console.error('Error checking impact:', error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -337,7 +337,7 @@ router.get('/dashboard/overview', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching dashboard overview:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -482,7 +482,7 @@ router.get('/labels/generate', async (req, res) => {
 
   } catch (error) {
     console.error('Error generating labels:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 
@@ -774,7 +774,7 @@ router.get('/smart-barcodes/sheet', async (req, res) => {
     res.send(html);
   } catch (error) {
     console.error('Error generating smart barcodes:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
 

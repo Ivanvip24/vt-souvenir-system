@@ -4,6 +4,7 @@
  */
 
 import express from 'express';
+import crypto from 'crypto';
 import multer from 'multer';
 import { query } from '../shared/database.js';
 import { generateOrderNumber, formatCurrency } from '../shared/utils.js';
@@ -837,7 +838,7 @@ router.post('/upload-file', upload.single('file'), async (req, res) => {
     console.error('Error uploading file:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al subir el archivo'
+      error: 'Error al subir el archivo'
     });
   }
 });
@@ -892,8 +893,14 @@ router.post('/orders/:orderId/upload-proof', async (req, res) => {
 router.get('/orders/:orderId/status', async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { token } = req.query; // Simple token: hash(orderId + clientPhone)
+    const { token } = req.query;
 
+    // Validate token to prevent order enumeration
+    if (!token) {
+      return res.status(401).json({ success: false, error: 'Token requerido' });
+    }
+
+    // Look up order and client phone to validate token
     const result = await query(
       `SELECT
         o.order_number,
@@ -902,7 +909,8 @@ router.get('/orders/:orderId/status', async (req, res) => {
         o.deposit_paid,
         o.total_price,
         o.deposit_amount,
-        c.name as client_name
+        c.name as client_name,
+        c.phone as client_phone
        FROM orders o
        JOIN clients c ON o.client_id = c.id
        WHERE o.id = $1`,
@@ -917,6 +925,12 @@ router.get('/orders/:orderId/status', async (req, res) => {
     }
 
     const order = result.rows[0];
+
+    // Validate token = sha256(orderId + clientPhone)
+    const expectedToken = crypto.createHash('sha256').update(`${orderId}${order.client_phone}`).digest('hex');
+    if (token !== expectedToken) {
+      return res.status(403).json({ success: false, error: 'Token inválido' });
+    }
 
     res.json({
       success: true,
@@ -1424,7 +1438,7 @@ async function triggerMakeWebhook(data) {
     }
   } catch (error) {
     console.error('❌ Error triggering Make.com webhook:', error.message);
-    return { success: false, error: error.message };
+    return { success: false, error: 'Error de conexión con webhook' };
   }
 }
 

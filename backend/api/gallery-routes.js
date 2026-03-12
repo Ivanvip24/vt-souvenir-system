@@ -764,7 +764,7 @@ router.post('/upload', employeeAuth, upload.single('design'), async (req, res) =
     console.error('Upload design error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al subir el diseño'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1049,7 +1049,7 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
     console.error('Batch upload error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al subir los diseños'
+      error: 'Error interno del servidor'
     });
   }
 });
@@ -1092,7 +1092,7 @@ router.post('/analyze', employeeAuth, upload.single('design'), async (req, res) 
     console.error('Analysis error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Error al analizar el diseño'
+      error: 'Error interno del servidor'
     });
   }
 });
