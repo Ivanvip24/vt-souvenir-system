@@ -18,26 +18,29 @@ if (!fs.existsSync(QUOTES_DIR)) {
   fs.mkdirSync(QUOTES_DIR, { recursive: true });
 }
 
-// AXKAN Brand Colors (Mexican Pink Palette)
+// AXKAN Brand Colors — matching catalog style (no black)
 const COLORS = {
-  pinkLight: '#E91E63',
-  pinkMedium: '#C2185B',
-  pinkDark: '#AD1457',
-  pinkDeep: '#880E4F',
-  pinkPale: '#FCE4EC',
-  pinkAccent: '#F8BBD9',
-  textDark: '#1f2937',
-  textGray: '#6b7280',
-  successGreen: '#059669',
-  successBg: '#d1fae5',
-  warningOrange: '#b45309',
-  warningBg: '#fef3c7',
-  infoBlueBg: '#dbeafe',
-  infoBlue: '#2563eb'
+  pink: '#E91E63',
+  pinkDeep: '#AD1457',
+  pinkPale: '#FDF2F8',
+  green: '#7CB342',
+  orange: '#FF9800',
+  cyan: '#00BCD4',
+  red: '#F44336',
+  text: '#555555',
+  textLight: '#999999',
+  white: '#FFFFFF',
+  grayLine: '#E0E0E0'
 };
 
-// Logo path
-const LOGO_PATH = path.join(__dirname, '../../frontend/assets/images/LOGO-01.png');
+const BAND = [COLORS.pink, COLORS.green, COLORS.orange, COLORS.cyan, COLORS.red];
+
+// Assets — deployed in backend/assets/
+const ASSETS = {
+  logo: path.join(__dirname, '../assets/images/JAGUAR_LETTERS.png'),
+  fontTitle: path.join(__dirname, '../assets/fonts/RLAQVA.otf'),
+  fontBody: path.join(__dirname, '../assets/fonts/FONT-OBJEKTIV-VF-BODY.otf')
+};
 
 // Pricing configuration (matching frontend order-form.js)
 const PRICING_TIERS = {
@@ -474,339 +477,278 @@ export async function generateQuotePDF(quoteData) {
       const filename = `cotizacion-${quoteNumber}-${Date.now()}.pdf`;
       const filepath = path.join(QUOTES_DIR, filename);
 
-      // Create PDF document
+      // Create PDF document — Monolito design with multi-page support
       const doc = new PDFDocument({
         size: 'LETTER',
-        margins: { top: 50, bottom: 50, left: 50, right: 50 }
+        margins: { top: 40, bottom: 15, left: 55, right: 55 },
+        autoFirstPage: false
       });
+
+      // Register official AXKAN fonts
+      if (fs.existsSync(ASSETS.fontTitle)) doc.registerFont('Title', ASSETS.fontTitle);
+      if (fs.existsSync(ASSETS.fontBody)) doc.registerFont('Body', ASSETS.fontBody);
+
+      const titleFont = fs.existsSync(ASSETS.fontTitle) ? 'Title' : 'Helvetica-Bold';
+      const bodyFont = fs.existsSync(ASSETS.fontBody) ? 'Body' : 'Helvetica';
+
+      const pw = 612;   // LETTER width
+      const ph = 792;   // LETTER height
+      const ml = 55;
+      const cw = pw - ml - 55;
+      const segW = pw / BAND.length;
+
+      const FOOTER_ZONE = 40;
+      const PAGE_BOTTOM = ph - FOOTER_ZONE;
+      const CONT_TOP = 30;
 
       // Pipe to file
       const stream = fs.createWriteStream(filepath);
       doc.pipe(stream);
 
-      // ============================================
-      // HEADER with AXKAN branding
-      // ============================================
-      const headerHeight = 120;
-      doc.rect(0, 0, doc.page.width, headerHeight)
-         .fillAndStroke(COLORS.pinkMedium, COLORS.pinkMedium);
-
-      // Lighter gradient overlay
-      doc.rect(0, 0, doc.page.width, headerHeight / 2)
-         .fillOpacity(0.3)
-         .fill(COLORS.pinkLight);
-      doc.fillOpacity(1);
-
-      // Logo on right
-      const logoSize = 70;
-      const logoX = doc.page.width - 50 - logoSize;
-      if (fs.existsSync(LOGO_PATH)) {
-        try {
-          doc.image(LOGO_PATH, logoX, 25, { height: logoSize });
-        } catch (err) {
-          console.log('Could not load logo:', err.message);
+      // ── Page chrome helpers
+      function drawTopBand() {
+        for (let i = 0; i < BAND.length; i++) {
+          doc.rect(segW * i, 0, segW + 1, 5).fill(BAND[i]);
         }
       }
-
-      // Company header
-      doc.fontSize(32)
-         .font('Helvetica-Bold')
-         .fillColor('#ffffff')
-         .text('Axkan', 50, 25, { width: 400, align: 'left' });
-
-      doc.fontSize(13)
-         .font('Helvetica')
-         .fillColor('#FCE4EC')
-         .text('Souvenirs Personalizados', 50, 62, { width: 400, align: 'left' });
-
-      doc.fontSize(18)
-         .font('Helvetica-Bold')
-         .fillColor('#ffffff')
-         .text('COTIZACIÓN', 50, 85, { width: 400, align: 'left' });
-
-      // Reset color
-      doc.fillColor('#000000');
-      doc.y = headerHeight + 30;
-
-      // ============================================
-      // QUOTE INFO BOX
-      // ============================================
-      const startY = doc.y;
-      const infoBoxHeight = quoteData.clientName ? 100 : 70;
-
-      doc.roundedRect(50, startY - 5, 510, infoBoxHeight, 5)
-         .fillAndStroke(COLORS.pinkPale, COLORS.pinkAccent);
-
-      doc.fillColor('#000000');
-      doc.fontSize(10).font('Helvetica');
-
-      const labelX = 65;
-      const valueX = 180;
-      let lineY = startY + 5;
-
-      // Quote info labels
-      doc.fillColor(COLORS.pinkDark).font('Helvetica');
-      doc.text('Número de Cotización:', labelX, lineY);
-      doc.text('Fecha:', labelX, lineY + 15);
-      doc.text('Válida hasta:', labelX, lineY + 30);
-
-      // Quote info values
-      doc.fillColor(COLORS.textDark).font('Helvetica-Bold');
-      doc.text(quoteNumber, valueX, lineY);
-      doc.text(formatDate(now), valueX, lineY + 15);
-      doc.text(formatDate(validUntil), valueX, lineY + 30);
-
-      // Client info (right column) if provided
-      if (quoteData.clientName) {
-        const rightLabelX = 320;
-        const rightValueX = 400;
-
-        doc.fillColor(COLORS.pinkDark).font('Helvetica');
-        doc.text('Cliente:', rightLabelX, lineY);
-        if (quoteData.clientPhone) doc.text('Teléfono:', rightLabelX, lineY + 15);
-        if (quoteData.clientEmail) doc.text('Email:', rightLabelX, lineY + 30);
-
-        doc.fillColor(COLORS.textDark).font('Helvetica-Bold');
-        doc.text(quoteData.clientName, rightValueX, lineY);
-        if (quoteData.clientPhone) doc.text(quoteData.clientPhone, rightValueX, lineY + 15);
-        if (quoteData.clientEmail) doc.text(quoteData.clientEmail, rightValueX, lineY + 30);
+      function drawFooter() {
+        const fY = ph - 20;
+        for (let i = 0; i < BAND.length; i++) {
+          doc.rect(segW * i, fY, segW + 1, 4).fill(BAND[i]);
+        }
+        doc.font(bodyFont).fontSize(6).fillColor('#B0B0B0')
+           .text('axkan.art   •   55 3825 3251   •   informacion@axkan.art', ml, fY - 11, { width: cw, align: 'center', lineBreak: false });
+      }
+      function newPage() {
+        doc.addPage({ size: 'LETTER', margins: { top: 40, bottom: 15, left: 55, right: 55 } });
+        drawTopBand();
+        drawFooter();
+      }
+      function ensureSpace(y, needed) {
+        if (y + needed > PAGE_BOTTOM) { newPage(); return CONT_TOP; }
+        return y;
       }
 
-      // Position after info box
-      doc.y = startY + infoBoxHeight + 20;
+      // Table column positions
+      const cN = ml + 8;
+      const cQ = ml + 240;
+      const cP = ml + 320;
+      const cS = ml + cw - 8;
 
-      // ============================================
-      // PRODUCTS TABLE
-      // ============================================
-      doc.font('Helvetica-Bold')
-         .fontSize(12)
-         .fillColor(COLORS.textDark)
-         .text('PRODUCTOS COTIZADOS', 50, doc.y);
-
-      doc.moveDown(0.5);
-
-      // Table header
-      const tableTop = doc.y;
-      doc.rect(50, tableTop - 3, 510, 22)
-         .fillAndStroke(COLORS.pinkPale, COLORS.pinkLight);
-
-      doc.fontSize(9)
-         .font('Helvetica-Bold')
-         .fillColor(COLORS.pinkDark)
-         .text('Producto', 55, tableTop + 3)
-         .text('Cantidad', 280, tableTop + 3)
-         .text('Precio Unit.', 360, tableTop + 3)
-         .text('Subtotal', 470, tableTop + 3);
-
-      // Table rows
-      let itemY = tableTop + 27;
-      doc.font('Helvetica').fontSize(10);
+      function drawTableHeader(atY) {
+        doc.font(bodyFont).fontSize(6).fillColor('#B0B0B0');
+        doc.text('PRODUCTO', cN, atY);
+        doc.text('CANTIDAD', cQ, atY);
+        doc.text('PRECIO', cP, atY);
+        doc.text('SUBTOTAL', cS - 60, atY, { width: 60, align: 'right' });
+        const lineY = atY + 4;
+        doc.moveTo(ml + 4, lineY).lineTo(ml + cw - 4, lineY).lineWidth(0.4).strokeColor(COLORS.pink).opacity(0.2).stroke();
+        doc.opacity(1);
+        return lineY + 10;
+      }
 
       // Track items with special prices for notes
       const specialPriceItems = validItems.filter(item => item.isSpecialPrice);
 
-      // Valid items
-      for (const item of validItems) {
-        // Product name (with special price marker if applicable)
+      // ══════════════════════════════════════════
+      // PAGE 1 — Header
+      // ══════════════════════════════════════════
+      newPage();
+      let y = 16;
+
+      // Logo
+      if (fs.existsSync(ASSETS.logo)) {
+        try { doc.image(ASSETS.logo, (pw - 160) / 2, y, { fit: [160, 56], align: 'center' }); }
+        catch (err) { console.log('Could not load logo:', err.message); }
+      }
+      y += 80;
+
+      // Tagline pill
+      const tagW = 210;
+      const tagX = (pw - tagW) / 2;
+      doc.roundedRect(tagX, y, tagW, 14, 7).fill(COLORS.pinkPale);
+      doc.font(bodyFont).fontSize(5.5).fillColor(COLORS.pink)
+         .text('RECUERDOS HECHOS SOUVENIR', ml, y + 3, { width: cw, align: 'center', characterSpacing: 2 });
+      y += 34;
+
+      // Quote number + date
+      doc.font(bodyFont).fontSize(7.5).fillColor('#B0B0B0')
+         .text(`${quoteNumber}   •   ${formatDate(now)}   •   Vigencia: ${formatDate(validUntil)}`, ml, y, { width: cw, align: 'center' });
+      y += 32;
+
+      // Client card
+      if (quoteData.clientName) {
+        const cardH = 34;
+        const cardW = 230;
+        const cardX = (pw - cardW) / 2;
+        doc.roundedRect(cardX, y, cardW, cardH, 6).fill('#F6F6F6');
+        doc.roundedRect(cardX, y + 5, 3, cardH - 10, 1.5).fill(COLORS.pink);
+        doc.font(bodyFont).fontSize(6).fillColor('#B0B0B0')
+           .text('CLIENTE', cardX + 14, y + 6);
+        doc.font(bodyFont).fontSize(10).fillColor('#505050')
+           .text(quoteData.clientName, cardX + 14, y + 18);
+        y += cardH + 34;
+      }
+
+      // Diamond divider
+      const rW = cw * 0.45;
+      const rxS = ml + (cw - rW) / 2;
+      doc.moveTo(rxS, y).lineTo(pw / 2 - 6, y).lineWidth(0.3).strokeColor('#E0E0E0').stroke();
+      doc.moveTo(pw / 2 + 6, y).lineTo(rxS + rW, y).lineWidth(0.3).strokeColor('#E0E0E0').stroke();
+      doc.save();
+      doc.translate(pw / 2, y).rotate(45);
+      doc.rect(-2, -2, 4, 4).fill(COLORS.pink);
+      doc.restore();
+      y += 26;
+
+      // "PRODUCTOS" title
+      doc.moveTo(ml + 40, y + 4).lineTo(pw / 2 - 42, y + 4).lineWidth(0.3).strokeColor('#E0E0E0').stroke();
+      doc.moveTo(pw / 2 + 42, y + 4).lineTo(ml + cw - 40, y + 4).lineWidth(0.3).strokeColor('#E0E0E0').stroke();
+      doc.font(titleFont).fontSize(8).fillColor('#505050')
+         .text('PRODUCTOS', ml, y, { width: cw, align: 'center', characterSpacing: 2 });
+      y += 26;
+
+      // ── Table header
+      y = drawTableHeader(y);
+
+      // ── Product rows with page breaks
+      const rowH = 28;
+      for (let i = 0; i < validItems.length; i++) {
+        const item = validItems[i];
+        if (y + rowH > PAGE_BOTTOM) { newPage(); y = CONT_TOP; y = drawTableHeader(y); }
+
+        if (i % 2 === 0) {
+          doc.roundedRect(ml + 2, y - 3, cw - 4, rowH, 3).fill('#F6F6F6');
+        }
         const displayName = item.isSpecialPrice ? `* ${item.productName}` : item.productName;
-        doc.fillColor(item.isSpecialPrice ? COLORS.pinkDark : COLORS.textDark);
-        doc.text(displayName, 50, itemY, { width: 220 });
-        doc.text(item.quantity.toLocaleString('es-MX'), 280, itemY);
-        doc.text(formatCurrency(item.unitPrice), 360, itemY);
-        doc.text(formatCurrency(item.subtotal), 470, itemY);
-        itemY += 22;
+        doc.font(bodyFont).fontSize(9).fillColor(item.isSpecialPrice ? COLORS.pinkDeep : '#505050')
+           .text(displayName, cN, y + 3, { width: 220 });
+        doc.font(bodyFont).fontSize(8.5).fillColor('#808080')
+           .text(item.quantity.toLocaleString('es-MX') + ' pzas', cQ, y + 3);
+        doc.font(bodyFont).fontSize(8.5).fillColor('#808080')
+           .text(formatCurrency(item.unitPrice), cP, y + 3);
+        doc.font(titleFont).fontSize(9).fillColor('#505050')
+           .text(formatCurrency(item.subtotal), cS - 75, y + 2, { width: 75, align: 'right' });
+        y += rowH;
       }
 
-      // Special quote items (price to be determined)
+      // Special quote items (price TBD)
       for (const item of specialQuoteItems) {
-        doc.fillColor(COLORS.textGray);
-        doc.text(item.productName, 50, itemY, { width: 220 });
-        doc.text(item.quantity.toLocaleString('es-MX'), 280, itemY);
-        doc.fillColor(COLORS.warningOrange);
-        doc.text('Por cotizar', 360, itemY);
-        doc.text('—', 470, itemY);
-        itemY += 22;
+        if (y + rowH > PAGE_BOTTOM) { newPage(); y = CONT_TOP; y = drawTableHeader(y); }
+        doc.font(bodyFont).fontSize(9).fillColor('#B0B0B0')
+           .text(item.productName, cN, y + 3, { width: 220 });
+        doc.font(bodyFont).fontSize(8.5).fillColor('#B0B0B0')
+           .text(item.quantity.toLocaleString('es-MX') + ' pzas', cQ, y + 3);
+        doc.font(bodyFont).fontSize(8.5).fillColor(COLORS.orange)
+           .text('Por cotizar', cP, y + 3);
+        doc.font(bodyFont).fontSize(8.5).fillColor(COLORS.orange)
+           .text('—', cS - 75, y + 3, { width: 75, align: 'right' });
+        y += rowH;
       }
 
-      // Invalid items (below minimum) with warning
+      // Invalid items (below minimum)
       if (invalidItems.length > 0) {
-        itemY += 5;
-        doc.fillColor(COLORS.warningOrange).fontSize(8);
-        doc.text('AVISO: Los siguientes productos estan por debajo del minimo:', 50, itemY);
-        itemY += 15;
-
-        doc.fontSize(9);
+        y = ensureSpace(y, 15 + invalidItems.length * 13);
+        y += 6;
+        doc.font(bodyFont).fontSize(7.5).fillColor(COLORS.orange);
+        doc.text('Los siguientes productos están por debajo del mínimo:', ml + 6, y);
+        y += 13;
         for (const item of invalidItems) {
-          doc.fillColor(COLORS.warningOrange);
-          doc.text(`${item.productName}: ${item.quantity} pzas (mínimo ${item.minimumRequired})`, 60, itemY);
-          itemY += 15;
+          doc.font(bodyFont).fontSize(8).fillColor(COLORS.orange);
+          doc.text(`${item.productName}: ${item.quantity} pzas (mínimo ${item.minimumRequired})`, ml + 14, y);
+          y += 13;
         }
       }
 
-      // Shipping line (if applicable)
+      // Shipping line
       if (shippingEstimate > 0) {
-        itemY += 5;
-        doc.fillColor(COLORS.textGray);
-        doc.fontSize(9);
-        doc.text('Envio (estimado)', 50, itemY, { width: 220 });
-        doc.text('—', 280, itemY);
-        doc.text('—', 360, itemY);
-        doc.text(formatCurrency(shippingEstimate), 470, itemY);
-        itemY += 20;
+        if (y + 22 > PAGE_BOTTOM) { newPage(); y = CONT_TOP; }
+        y += 4;
+        doc.font(bodyFont).fontSize(8.5).fillColor('#B0B0B0')
+           .text('Envío (estimado)', cN, y + 2);
+        doc.font(titleFont).fontSize(9).fillColor('#505050')
+           .text(formatCurrency(shippingEstimate), cS - 75, y + 1, { width: 75, align: 'right' });
+        y += 22;
       }
 
-      // Divider line
-      doc.moveTo(50, itemY).lineTo(560, itemY).stroke();
-      itemY += 15;
+      y += 24;
 
-      // ============================================
-      // TOTALS
-      // ============================================
-      doc.font('Helvetica-Bold').fontSize(11);
+      // ══════════════════════════════════════════
+      // TOTALS + BOTTOM SECTIONS (~250px needed)
+      // ══════════════════════════════════════════
+      y = ensureSpace(y, 250);
 
-      // Subtotal
-      doc.fillColor(COLORS.textDark);
-      doc.text('SUBTOTAL:', 350, itemY);
-      doc.text(formatCurrency(subtotal), 470, itemY);
-      itemY += 20;
+      // Totals card
+      const totCardW = 230;
+      const totCardX = ml + cw - totCardW;
+      const totCardH = freeShipping ? 108 : 90;
+      doc.roundedRect(totCardX, y, totCardW, totCardH, 8).fill('#F6F6F6');
 
-      if (shippingEstimate > 0) {
-        doc.text('ENVÍO:', 350, itemY);
-        doc.text(formatCurrency(shippingEstimate), 470, itemY);
-        itemY += 20;
-      }
+      let ty = y + 10;
+      const tL = totCardX + 16;
+      const tR = totCardX + totCardW - 16;
 
-      // Total box
-      doc.roundedRect(340, itemY - 5, 220, 35, 3)
-         .fillAndStroke(COLORS.successBg, COLORS.successGreen);
-
-      doc.fontSize(14)
-         .fillColor(COLORS.successGreen)
-         .font('Helvetica-Bold');
-      doc.text('TOTAL:', 355, itemY + 5);
-      doc.text(formatCurrency(total), 355, itemY + 5, { width: 195, align: 'right' });
-
-      itemY += 45;
-
-      // Deposit amount box (50% anticipo)
-      doc.roundedRect(340, itemY - 5, 220, 30, 3)
-         .fillAndStroke(COLORS.warningBg, '#f59e0b');
-
-      doc.fontSize(11)
-         .fillColor(COLORS.warningOrange)
-         .font('Helvetica-Bold');
-      doc.text('ANTICIPO (50%):', 355, itemY + 3);
-      doc.text(formatCurrency(depositAmount), 355, itemY + 3, { width: 195, align: 'right' });
-
-      itemY += 40;
-
-      // Free shipping notice if applicable
       if (freeShipping) {
-        doc.fontSize(10)
-           .fillColor(COLORS.successGreen)
-           .font('Helvetica-Bold')
-           .text('ENVIO GRATIS INCLUIDO (pedido de ' + totalPieces.toLocaleString('es-MX') + ' piezas)', 50, itemY, { align: 'center', width: 510 });
-        itemY += 20;
+        const pillW = 140;
+        const pillX = totCardX + (totCardW - pillW) / 2;
+        doc.roundedRect(pillX, ty - 1, pillW, 14, 7).fill('#F1F8E9');
+        doc.font(bodyFont).fontSize(7).fillColor(COLORS.green)
+           .text('Envío gratis incluido', totCardX, ty + 1, { width: totCardW, align: 'center' });
+        ty += 20;
       }
 
-      // ============================================
-      // PRICE BREAKDOWN / TIERS INFO
-      // ============================================
-      doc.roundedRect(50, itemY, 510, 60, 5)
-         .fillAndStroke(COLORS.infoBlueBg, COLORS.infoBlue);
+      doc.font(bodyFont).fontSize(8.5).fillColor('#808080').text('Subtotal', tL, ty);
+      doc.font(bodyFont).fontSize(8.5).fillColor('#505050')
+         .text(formatCurrency(subtotal), tL, ty, { width: tR - tL, align: 'right' });
+      ty += 20;
 
-      doc.fillColor(COLORS.infoBlue)
-         .fontSize(9)
-         .font('Helvetica-Bold')
-         .text('PRECIOS POR VOLUMEN', 60, itemY + 8);
+      if (shippingEstimate > 0) {
+        doc.font(bodyFont).fontSize(8.5).fillColor('#808080').text('Envío', tL, ty);
+        doc.font(bodyFont).fontSize(8.5).fillColor('#505050')
+           .text(formatCurrency(shippingEstimate), tL, ty, { width: tR - tL, align: 'right' });
+        ty += 20;
+      }
 
-      doc.font('Helvetica').fontSize(8);
-      doc.text('Imanes MDF: $11/u (100-999 pzas) | $8/u (1000+ pzas)', 60, itemY + 22);
-      doc.text('Llaveros MDF: $10/u (100-999 pzas) | $7/u (1000+ pzas)', 60, itemY + 33);
-      doc.text('Destapadores MDF: $20/u (100-999 pzas) | $17/u (1000+ pzas)', 60, itemY + 44);
-      doc.text('Portallaves MDF: $40/u (min. 20 pzas)', 300, itemY + 22);
-      doc.text('Portarretratos MDF: $40/u (min. 20 pzas)', 300, itemY + 33);
-      doc.text('Souvenir Box: $2,250/u (sin minimo)', 300, itemY + 44);
+      doc.font(titleFont).fontSize(16).fillColor(COLORS.pink).text('TOTAL', tL, ty);
+      doc.font(titleFont).fontSize(16).fillColor(COLORS.pink)
+         .text(formatCurrency(total), tL, ty, { width: tR - tL, align: 'right' });
+      ty += 24;
 
-      itemY += 75;
+      doc.font(bodyFont).fontSize(8).fillColor(COLORS.orange).text('Anticipo 50%', tL, ty);
+      doc.font(titleFont).fontSize(10).fillColor(COLORS.orange)
+         .text(formatCurrency(depositAmount), tL, ty, { width: tR - tL, align: 'right' });
 
-      // ============================================
-      // NOTES & TERMS
-      // ============================================
-      // Build notes text including special price items, special quote items, and user notes
+      y += totCardH + 24;
+
+      // Volume pricing box (cyan border)
+      const volH = 30;
+      doc.roundedRect(ml, y, cw, volH, 5).lineWidth(0.5).strokeColor(COLORS.cyan).opacity(0.35).stroke();
+      doc.opacity(1);
+      doc.font(titleFont).fontSize(6).fillColor(COLORS.cyan)
+         .text('PRECIOS POR VOLUMEN', ml + 10, y + 5);
+      doc.font(bodyFont).fontSize(5.5).fillColor('#808080')
+         .text('Imanes: Ch $8/$6 • Med $11/$8 • Gde/3D/Foil $15/$12  |  Llaveros $10/$7  |  Destapadores $20/$17/$15  |  Portallaves/Portarretratos $40  |  Box $2,250', ml + 10, y + 17, { width: cw - 20 });
+      y += volH + 20;
+
+      // Notes
       const notesLines = [];
-
-      // Add note about special prices applied (marked with *)
       if (specialPriceItems.length > 0) {
-        const priceList = specialPriceItems.map(item =>
-          `${item.productName} ${formatCurrency(item.unitPrice)}`
-        ).join(', ');
-        notesLines.push(`* Precios especiales aplicados: ${priceList}.`);
+        notesLines.push(`* Precios especiales aplicados: ${specialPriceItems.map(i => `${i.productName} ${formatCurrency(i.unitPrice)}`).join(', ')}.`);
       }
-
-      // Add note about special quote items
       if (specialQuoteItems.length > 0) {
-        const specialItemNames = specialQuoteItems.map(item =>
-          `${item.productName} (${item.quantity.toLocaleString('es-MX')} pzas)`
-        ).join(', ');
-        notesLines.push(`${specialItemNames} requiere precio especial - contactar para cotización.`);
+        notesLines.push(`${specialQuoteItems.map(i => `${i.productName} (${i.quantity.toLocaleString('es-MX')} pzas)`).join(', ')} requiere precio especial — contactar para cotización.`);
       }
-
-      // Add user notes
-      if (quoteData.notes) {
-        notesLines.push(quoteData.notes);
-      }
+      if (quoteData.notes) notesLines.push(quoteData.notes);
 
       if (notesLines.length > 0) {
-        doc.fillColor(COLORS.textDark)
-           .fontSize(10)
-           .font('Helvetica-Bold')
-           .text('NOTAS:', 50, itemY);
-
-        doc.font('Helvetica')
-           .fontSize(9)
-           .fillColor(COLORS.textGray)
-           .text(notesLines.join(' '), 50, itemY + 15, { width: 510 });
-
-        itemY += 40 + (notesLines.length > 1 ? 15 : 0);
+        doc.font(bodyFont).fontSize(7).fillColor('#808080')
+           .text(notesLines.join(' '), ml, y, { width: cw, align: 'center' });
+        y += 18;
       }
 
       // Terms
-      doc.fillColor(COLORS.textGray)
-         .fontSize(8)
-         .font('Helvetica');
-
-      const terms = [
-        '• Esta cotización tiene una vigencia de ' + validityDays + ' días.',
-        '• Precios en pesos mexicanos (MXN), no incluyen IVA.',
-        '• Se requiere anticipo del 50% para iniciar producción.',
-        '• Tiempo de producción: 5-7 días hábiles después del anticipo.',
-        '• Envío incluido en pedidos de 300+ piezas. Otros envíos se cotizan según destino.'
-      ];
-
-      for (const term of terms) {
-        doc.text(term, 50, itemY);
-        itemY += 12;
-      }
-
-      // ============================================
-      // FOOTER
-      // ============================================
-      doc.moveDown(2);
-      doc.fontSize(10)
-         .fillColor(COLORS.pinkMedium)
-         .font('Helvetica-Bold')
-         .text('¡Gracias por cotizar con AXKAN!', { align: 'center' });
-
-      doc.moveDown(0.5);
-      doc.fontSize(9)
-         .fillColor(COLORS.textGray)
-         .font('Helvetica')
-         .text('WhatsApp: 55 3825 3251 | Email: informacion@axkan.art', { align: 'center' });
-
-      doc.moveDown(0.3);
-      doc.fontSize(7)
-         .text(`Cotización generada el ${formatDate(now)} | ${quoteNumber}`, { align: 'center' });
+      doc.font(bodyFont).fontSize(5.5).fillColor('#B0B0B0')
+         .text(`Vigencia: ${validityDays} días  •  Precios en MXN, no incluyen IVA  •  Anticipo 50% para iniciar  •  Producción 5–7 días hábiles  •  Envío gratis 300+ pzas`, ml, y, { width: cw, align: 'center' });
 
       // Finalize PDF
       doc.end();
