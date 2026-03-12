@@ -590,12 +590,19 @@ function initializeEventListeners() {
   // Step 3: Products (loaded dynamically)
   document.getElementById('continue-products').addEventListener('click', handleProductsSubmit);
 
-  // Step 4: Payment
-  document.getElementById('submit-order').addEventListener('click', handleOrderSubmit);
-  document.getElementById('stripe-pay-btn').addEventListener('click', handleStripePayment);
+  // Step 4A: Review — continue to payment
+  document.getElementById('continue-to-pay').addEventListener('click', handleContinueToPay);
   document.querySelectorAll('input[name="payment"]').forEach(radio => {
     radio.addEventListener('change', handlePaymentMethodChange);
   });
+
+  // Step 4B: Payment — "Ya pagué" buttons
+  document.getElementById('btn-ya-pague').addEventListener('click', handleYaPague);
+  document.getElementById('btn-ya-pague-stripe').addEventListener('click', handleYaPague);
+  document.getElementById('stripe-pay-btn').addEventListener('click', handleStripePayment);
+
+  // Step 4C: Proof upload + submit
+  document.getElementById('submit-order').addEventListener('click', handleOrderSubmit);
   setupFileUpload('proof-upload-area', 'payment-proof', 'proof-preview', handleProofUpload);
 
   // Back buttons
@@ -622,7 +629,9 @@ function showStep(stepNumber) {
     1.5: 'step-confirm',
     2: 'step-info',
     3: 'step-products',
-    4: 'step-payment',
+    4: 'step-review',     // 4A: Review & payment method
+    4.5: 'step-pay',      // 4B: Payment instructions
+    4.7: 'step-proof',    // 4C: Upload proof
     5: 'step-success'
   };
 
@@ -641,11 +650,38 @@ function showStep(stepNumber) {
     loadProducts();
   } else if (stepNumber === 4) {
     populatePaymentSummary();
+  } else if (stepNumber === 4.5) {
+    populatePayStep();
+  } else if (stepNumber === 4.7) {
+    setupProofStep();
   }
+
+  // Manage beforeunload warning for payment sub-steps
+  if (stepNumber === 4.5 || stepNumber === 4.7) {
+    window._orderInProgress = true;
+  } else {
+    window._orderInProgress = false;
+  }
+
+  // Scroll to top
+  window.scrollTo(0, 0);
 }
 
+// Warn users if they try to close during payment flow
+window.addEventListener('beforeunload', function(e) {
+  if (window._orderInProgress) {
+    e.preventDefault();
+    e.returnValue = 'Tu pedido no se ha enviado aun. Si sales perderas tu progreso.';
+  }
+});
+
 function goBack() {
-  if (state.currentStep > 1) {
+  // Sub-step aware back navigation
+  if (state.currentStep === 4.7) {
+    showStep(4.5); // Proof → Pay
+  } else if (state.currentStep === 4.5) {
+    showStep(4); // Pay → Review
+  } else if (state.currentStep > 1) {
     showStep(state.currentStep - 1);
   }
 }
@@ -1917,8 +1953,9 @@ async function handleProofUpload(files, previewEl) {
     return;
   }
 
-  // Disable submit button while uploading
+  // Show and disable submit button while uploading
   const submitBtn = document.getElementById('submit-order');
+  submitBtn.style.display = 'block'; // Make visible (starts hidden on Step 4C)
   const originalButtonState = submitBtn.disabled;
   submitBtn.disabled = true;
   submitBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)'; // Orange = uploading
@@ -2232,207 +2269,99 @@ window.switchBankTab = function(tab) {
 };
 
 function populatePaymentSummary() {
-  document.getElementById('payment-total').textContent = `$${state.totals.subtotal.toFixed(2)}`;
-  document.getElementById('payment-deposit').textContent = `$${state.totals.deposit.toFixed(2)}`;
-  document.getElementById('bank-amount').textContent = `$${state.totals.deposit.toFixed(2)}`;
-  document.getElementById('card-amount').textContent = `$${state.totals.deposit.toFixed(2)}`;
-  document.getElementById('bank-amount-preview').textContent = `$${state.totals.deposit.toFixed(2)}`;
-
-  // Initialize payment UI with bank_transfer as default
-  const bankDetails = document.getElementById('bank-details');
-  const stripeLink = document.getElementById('stripe-payment-link');
-  const submitBtn = document.getElementById('submit-order');
-
-  bankDetails.classList.remove('hidden');
-  stripeLink.style.display = 'none';
-  submitBtn.style.display = 'block';
+  // Step 4A: Just populate the summary fields (no bank details to show here)
+  const depositEl = document.getElementById('payment-deposit');
+  const totalEl = document.getElementById('payment-total');
+  if (depositEl) depositEl.textContent = `$${state.totals.deposit.toFixed(2)}`;
+  if (totalEl) totalEl.textContent = `$${state.totals.subtotal.toFixed(2)}`;
 }
 
 function handlePaymentMethodChange(e) {
   state.payment.method = e.target.value;
+  // In the new flow, we just store the method — the actual bank/stripe UI shows on Step 4B
+}
 
-  const bankDetails = document.getElementById('bank-details');
-  const stripeLink = document.getElementById('stripe-payment-link');
-  const submitBtn = document.getElementById('submit-order');
+/**
+ * Step 4A → 4B: "Continuar al Pago" button handler
+ */
+function handleContinueToPay() {
+  // Store notes before transitioning
+  const clientNotes = document.getElementById('client-notes');
+  if (clientNotes) {
+    state.order.clientNotes = clientNotes.value.trim();
+  }
+  showStep(4.5);
+}
 
-  if (e.target.value === 'bank_transfer') {
-    bankDetails.classList.remove('hidden');
-    stripeLink.style.display = 'none';
-    submitBtn.style.display = 'block';
+/**
+ * Step 4B: Populate payment instructions based on selected method
+ */
+function populatePayStep() {
+  const deposit = state.totals.deposit.toFixed(2);
+  const bankSection = document.getElementById('bank-pay-section');
+  const stripeSection = document.getElementById('stripe-pay-section');
+
+  if (state.payment.method === 'stripe') {
+    bankSection.style.display = 'none';
+    stripeSection.style.display = 'block';
+    const stripeAmountEl = document.getElementById('stripe-amount-preview');
+    if (stripeAmountEl) stripeAmountEl.textContent = `$${deposit}`;
   } else {
-    bankDetails.classList.add('hidden');
-    stripeLink.style.display = 'block';
-    submitBtn.style.display = 'none';
+    bankSection.style.display = 'block';
+    stripeSection.style.display = 'none';
+    // Populate bank amounts
+    const bankAmountPreview = document.getElementById('bank-amount-preview');
+    const bankAmount = document.getElementById('bank-amount');
+    const cardAmount = document.getElementById('card-amount');
+    if (bankAmountPreview) bankAmountPreview.textContent = `$${deposit}`;
+    if (bankAmount) bankAmount.textContent = `$${deposit}`;
+    if (cardAmount) cardAmount.textContent = `$${deposit}`;
+  }
+}
+
+/**
+ * Step 4B → 4C: "Ya pagué" button handler
+ */
+function handleYaPague() {
+  showStep(4.7);
+}
+
+/**
+ * Step 4C: Setup the proof upload step
+ */
+function setupProofStep() {
+  // Make sure submit button is hidden until proof is uploaded
+  const submitBtn = document.getElementById('submit-order');
+  if (submitBtn) {
+    // Show submit if proof is already uploaded (e.g. user went back and returned)
+    if (state.payment.proofFile && state.payment.proofFile.uploaded) {
+      submitBtn.style.display = 'block';
+    } else {
+      submitBtn.style.display = 'none';
+    }
   }
 }
 
 async function handleStripePayment() {
-  // Show instruction popup before opening Stripe
-  showStripeInstructionsModal();
-}
+  const stripeBtn = document.getElementById('stripe-pay-btn');
+  const returnNotice = document.getElementById('stripe-return-notice');
 
-function showStripeInstructionsModal() {
-  // Create modal overlay
-  const overlay = document.createElement('div');
-  overlay.id = 'stripe-instructions-modal';
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    animation: fadeIn 0.3s ease;
-  `;
+  // Show the return notice FIRST so the user reads it
+  if (returnNotice) {
+    returnNotice.style.display = 'block';
+    returnNotice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 
-  // Create modal content
-  const modal = document.createElement('div');
-  modal.style.cssText = `
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    border-radius: 20px;
-    padding: 32px;
-    max-width: 450px;
-    width: 90%;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(233, 30, 99, 0.3);
-    animation: slideUp 0.3s ease;
-  `;
+  // Update button to "re-open" style
+  if (stripeBtn) {
+    stripeBtn.textContent = 'Abrir Stripe de nuevo';
+    stripeBtn.style.opacity = '0.7';
+  }
 
-  modal.innerHTML = `
-    <div style="font-size: 48px; margin-bottom: 16px;">💳</div>
-    <h2 style="color: #ffffff; margin-bottom: 16px; font-size: 22px;">Instrucciones de Pago con Tarjeta</h2>
-    <div style="background: rgba(233, 30, 99, 0.1); border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: left;">
-      <ol style="color: #e0e0e0; margin: 0; padding-left: 20px; line-height: 1.8;">
-        <li style="margin-bottom: 8px;">Serás redirigido a la página de pago de Stripe</li>
-        <li style="margin-bottom: 8px;">Completa tu pago con tarjeta</li>
-        <li style="margin-bottom: 8px;"><strong style="color: var(--primary);">Toma una captura de pantalla</strong> del comprobante de pago</li>
-        <li style="margin-bottom: 8px;">Regresa a esta pestaña</li>
-        <li><strong style="color: var(--primary);">Sube el comprobante</strong> y crea tu pedido</li>
-      </ol>
-    </div>
-    <p style="color: #9ca3af; font-size: 13px; margin-bottom: 24px;">
-      Tu pedido no será creado hasta que subas el comprobante de pago.
-    </p>
-    <div style="display: flex; gap: 12px; justify-content: center;">
-      <button id="cancel-stripe-btn" style="
-        padding: 14px 28px;
-        border: 1px solid rgba(255,255,255,0.2);
-        background: transparent;
-        color: #ffffff;
-        border-radius: 10px;
-        font-size: 15px;
-        cursor: pointer;
-        transition: all 0.2s;
-      ">Cancelar</button>
-      <button id="continue-stripe-btn" style="
-        padding: 14px 28px;
-        border: none;
-        background: linear-gradient(135deg, #635bff, #4f46e5);
-        color: white;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 4px 15px rgba(99, 91, 255, 0.4);
-      ">Ir a Pagar →</button>
-    </div>
-  `;
-
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-
-  // Handle cancel button
-  document.getElementById('cancel-stripe-btn').addEventListener('click', () => {
-    overlay.remove();
-  });
-
-  // Handle continue button
-  document.getElementById('continue-stripe-btn').addEventListener('click', () => {
-    // Open Stripe in new tab
-    window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
-
-    // Close modal immediately
-    overlay.remove();
-
-    // Transform Stripe button into upload field
-    transformStripeButtonToUpload();
-  });
-
-  // Close on overlay click
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      overlay.remove();
-    }
-  });
-}
-
-function transformStripeButtonToUpload() {
-  const stripeLink = document.getElementById('stripe-payment-link');
-  const submitBtn = document.getElementById('submit-order');
-
-  // Replace Stripe button with upload field
-  stripeLink.innerHTML = `
-    <div class="stripe-receipt-upload" style="animation: slideUp 0.3s ease;">
-      <div style="background: linear-gradient(135deg, rgba(99, 91, 255, 0.1), rgba(79, 70, 229, 0.1)); border: 2px dashed #635bff; border-radius: 12px; padding: 20px; text-align: center;">
-        <div style="font-size: 14px; color: #635bff; font-weight: 600; margin-bottom: 12px;">
-          💳 Sube tu comprobante de pago de Stripe
-        </div>
-        <div class="file-upload-area" id="stripe-proof-upload-area" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(99, 91, 255, 0.3); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s;">
-          <input type="file"
-                 id="stripe-payment-proof"
-                 accept="image/*,application/pdf"
-                 hidden>
-          <div class="upload-prompt">
-            <span class="upload-icon" style="font-size: 32px; display: block; margin-bottom: 8px;">📸</span>
-            <p style="color: #e0e0e0; margin: 0 0 4px 0;">Toca para subir captura de pantalla</p>
-            <span class="file-hint" style="color: #9ca3af; font-size: 12px;">Imagen o PDF del comprobante de Stripe</span>
-          </div>
-          <div id="stripe-proof-preview" class="file-preview"></div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Setup file upload for Stripe receipt (uses same handler as bank transfer)
-  setupFileUpload('stripe-proof-upload-area', 'stripe-payment-proof', 'stripe-proof-preview', handleProofUpload);
-
-  // Show submit button
-  submitBtn.style.display = 'block';
-
-  // Mark payment method as stripe (so backend knows it's a card payment)
-  state.payment.method = 'stripe';
-
-  // Show toast notification
-  const toast = document.createElement('div');
-  toast.style.cssText = `
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #635bff, #4f46e5);
-    color: white;
-    padding: 16px 24px;
-    border-radius: 12px;
-    font-weight: 600;
-    z-index: 10001;
-    box-shadow: 0 4px 20px rgba(99, 91, 255, 0.4);
-    animation: slideDown 0.3s ease;
-    max-width: 90%;
-    text-align: center;
-  `;
-  toast.innerHTML = '💳 Completa tu pago en Stripe, toma captura y súbela aquí';
-  document.body.appendChild(toast);
-
+  // Open Stripe AFTER a delay so the user sees the instructions first
   setTimeout(() => {
-    toast.style.animation = 'fadeOut 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, 5000);
+    window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
+  }, 1500);
 }
 
 async function handleOrderSubmit() {
@@ -2457,9 +2386,12 @@ async function handleOrderSubmit() {
     }
   }
 
-  // Get notes from payment step
-  const clientNotes = document.getElementById('client-notes').value.trim();
-  state.order.clientNotes = clientNotes;
+  // Notes were already captured in handleContinueToPay() on Step 4A
+  // Just make sure we have the latest value
+  const notesEl = document.getElementById('client-notes');
+  if (notesEl) {
+    state.order.clientNotes = notesEl.value.trim();
+  }
 
   // Disable button
   submitBtn.disabled = true;
@@ -2577,6 +2509,9 @@ async function uploadPaymentProof(orderId) {
 // ==========================================
 
 function showSuccessScreen(orderNumber) {
+  // Clear beforeunload warning — order is complete
+  window._orderInProgress = false;
+
   document.getElementById('success-order-number').textContent = orderNumber;
 
   // #17: Show email confirmation notice

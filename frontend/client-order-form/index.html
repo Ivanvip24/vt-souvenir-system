@@ -423,21 +423,21 @@
             </div>
         </section>
 
-        <!-- STEP 4: Payment Method -->
-        <section id="step-payment" class="step">
+        <!-- STEP 4A: Review Order & Choose Payment Method -->
+        <section id="step-review" class="step">
             <div class="progress-bar">
-                <div class="progress" style="width: 75%"></div>
+                <div class="progress" style="width: 80%"></div>
             </div>
             <div class="step-indicator">Paso 4 de 4</div>
 
             <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
 
             <div class="card">
-                <h2>Método de Pago</h2>
+                <h2>Confirma tu Pedido</h2>
 
-                <!-- Order Summary - Single unified summary -->
+                <!-- Order Summary -->
                 <div class="order-summary-card">
-                    <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--gray-900);">📋 Resumen de tu Pedido</h3>
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--gray-900);">Resumen de tu Pedido</h3>
 
                     <div id="order-items-summary"></div>
 
@@ -448,10 +448,10 @@
                         </div>
                         <div class="summary-row" style="margin-bottom: 8px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 15px;">🚚 Envío:</span>
+                                <span style="font-size: 15px;">Envio:</span>
                                 <button type="button" id="pickup-toggle-summary" onclick="toggleStorePickup()"
                                         style="font-size: 10px; padding: 4px 8px; border-radius: 12px; border: 1px solid #10b981; background: transparent; color: #10b981; cursor: pointer; white-space: nowrap;">
-                                    🏪 Recoger en tienda
+                                    Recoger en tienda
                                 </button>
                             </div>
                             <strong id="summary-shipping" style="font-size: 15px;">$0.00</strong>
@@ -461,7 +461,7 @@
                             <strong id="summary-total" style="font-size: 16px;">$0.00</strong>
                         </div>
                         <div class="summary-row" style="margin-bottom: 0;">
-                            <span style="font-size: 14px; color: var(--gray-500);">💰 Anticipo (50%):</span>
+                            <span style="font-size: 14px; color: var(--gray-500);">Anticipo (50%):</span>
                             <strong id="summary-deposit" style="color: var(--primary); font-size: 15px;">$0.00</strong>
                         </div>
                     </div>
@@ -472,6 +472,8 @@
                 <input type="hidden" id="payment-deposit">
                 <input type="hidden" id="summary-total-pay">
 
+                <h3 style="font-size: 15px; margin-top: 24px; margin-bottom: 12px; color: var(--gray-900);">Como deseas pagar?</h3>
+
                 <div class="payment-methods">
                     <label class="payment-option">
                         <input type="radio" name="payment" value="bank_transfer" checked>
@@ -479,7 +481,7 @@
                             <div class="payment-icon">🏦</div>
                             <div class="payment-info">
                                 <strong>Transferencia Bancaria</strong>
-                                <p>Sube tu comprobante de pago</p>
+                                <p>SPEI, app bancaria o cajero</p>
                             </div>
                         </div>
                     </label>
@@ -489,17 +491,17 @@
                         <div class="payment-card">
                             <div class="payment-icon">💳</div>
                             <div class="payment-info">
-                                <strong>Tarjeta de Crédito/Débito</strong>
+                                <strong>Tarjeta de Credito/Debito</strong>
                                 <p>Pago seguro con Stripe</p>
                             </div>
                         </div>
                     </label>
                 </div>
 
-                <!-- Notes collapsible (moved here) -->
+                <!-- Notes collapsible -->
                 <details class="notes-collapsible" style="margin-top: 20px;">
                     <summary class="notes-summary">
-                        📝 Agregar notas al pedido (opcional)
+                        Agregar notas al pedido (opcional)
                     </summary>
                     <div class="form-group" style="margin-top: 12px;">
                         <textarea id="client-notes"
@@ -508,44 +510,50 @@
                     </div>
                 </details>
 
-                <!-- Stripe Payment Link (shown when card payment selected) -->
-                <div id="stripe-payment-link" class="stripe-payment-container" style="margin-top: 20px;">
-                    <button type="button" id="stripe-pay-btn" class="btn btn-primary btn-large" style="background: linear-gradient(135deg, #635bff, #4f46e5);">
-                        💳 Confirmar y Pagar →
-                    </button>
-                    <p style="text-align: center; font-size: 12px; color: var(--gray-600); margin-top: 10px;">
-                        🔒 Pago seguro con Stripe
-                    </p>
-                </div>
+                <button id="continue-to-pay" class="btn btn-primary btn-large" style="margin-top: 24px;">
+                    Continuar al Pago →
+                </button>
+            </div>
+        </section>
 
-                <!-- Bank Transfer Details (hidden initially) -->
-                <div id="bank-details" class="bank-details hidden">
+        <!-- STEP 4B: Payment Instructions -->
+        <section id="step-pay" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 88%"></div>
+            </div>
+            <div class="step-indicator">Paso 4 de 4 — Pago</div>
 
-                    <!-- Step 1: Amount to pay -->
-                    <div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1)); border-radius: 12px; margin-bottom: 20px;">
-                        <div style="font-size: 13px; color: var(--gray-500); margin-bottom: 4px;">Monto a depositar (anticipo 50%)</div>
-                        <strong id="bank-amount-preview" class="highlight-amount" style="font-size: 28px;"></strong>
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
+
+            <div class="card">
+                <!-- Bank Transfer Instructions -->
+                <div id="bank-pay-section">
+                    <h2>Realiza tu Transferencia</h2>
+
+                    <!-- Amount to pay - prominent -->
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1)); border-radius: 16px; margin-bottom: 24px;">
+                        <div style="font-size: 13px; color: var(--gray-500); margin-bottom: 6px;">Monto a depositar (anticipo 50%)</div>
+                        <strong id="bank-amount-preview" class="highlight-amount" style="font-size: 32px;"></strong>
                     </div>
 
-                    <!-- SPEI Reference tip - prominent -->
-                    <div class="spei-tip" style="margin-bottom: 20px;">
+                    <!-- SPEI Reference tip -->
+                    <div class="spei-tip" style="margin-bottom: 24px;">
                         <span class="spei-icon">💡</span>
                         <div>
-                            <strong>Importante:</strong> En el concepto/referencia de tu transferencia escribe <strong>tu número de teléfono</strong> para identificar tu pago más rápido.
+                            <strong>Importante:</strong> En el concepto/referencia de tu transferencia escribe <strong>tu numero de telefono</strong> para identificar tu pago mas rapido.
                         </div>
                     </div>
 
-                    <!-- Step 2: Bank info - tabs for SPEI vs Deposit -->
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--gray-500);">② Elige cómo pagar:</div>
+                    <!-- Bank info tabs -->
+                    <div style="margin-bottom: 24px;">
                         <div id="bank-tabs" style="display: flex; gap: 8px; margin-bottom: 16px;">
                             <button type="button" class="bank-tab active" onclick="switchBankTab('spei')" id="tab-spei"
                                     style="flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--primary); background: rgba(231, 42, 136, 0.1); color: var(--primary); font-weight: 600; font-size: 13px; cursor: pointer;">
-                                📲 SPEI / App Bancaria
+                                SPEI / App Bancaria
                             </button>
                             <button type="button" class="bank-tab" onclick="switchBankTab('deposit')" id="tab-deposit"
                                     style="flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--gray-300); background: transparent; color: var(--gray-500); font-weight: 600; font-size: 13px; cursor: pointer;">
-                                🏧 Cajero / Oxxo
+                                Cajero / Oxxo
                             </button>
                         </div>
 
@@ -559,14 +567,14 @@
                                 <span>Cuenta CLABE:</span>
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <strong id="bank-account">012 180 01571714055 4</strong>
-                                    <button type="button" class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('012180015717140554', this)" aria-label="Copiar número de cuenta">
+                                    <button type="button" class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('012180015717140554', this)" aria-label="Copiar numero de cuenta">
                                         📋 <span class="copy-text">Copiar</span>
                                     </button>
                                 </div>
                             </div>
                             <div class="info-row">
                                 <span>Titular:</span>
-                                <strong id="bank-holder">Iván Valencia</strong>
+                                <strong id="bank-holder">Ivan Valencia</strong>
                             </div>
                             <div class="info-row">
                                 <span>Monto:</span>
@@ -574,7 +582,7 @@
                             </div>
                         </div>
 
-                        <!-- Deposit Tab Content (hidden by default) -->
+                        <!-- Deposit Tab Content -->
                         <div id="bank-tab-deposit" class="bank-info" style="display: none;">
                             <div class="info-row">
                                 <span>Banco:</span>
@@ -584,14 +592,14 @@
                                 <span>Tarjeta:</span>
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <strong>4152 3138 4049 8567</strong>
-                                    <button type="button" class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('4152313840498567', this)" aria-label="Copiar número de tarjeta">
+                                    <button type="button" class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('4152313840498567', this)" aria-label="Copiar numero de tarjeta">
                                         📋 <span class="copy-text">Copiar</span>
                                     </button>
                                 </div>
                             </div>
                             <div class="info-row">
                                 <span>Titular:</span>
-                                <strong>Iván Valencia</strong>
+                                <strong>Ivan Valencia</strong>
                             </div>
                             <div class="info-row">
                                 <span>Monto:</span>
@@ -600,29 +608,86 @@
                         </div>
                     </div>
 
-                    <!-- Step 3: Upload proof -->
-                    <div class="form-group">
-                        <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--gray-500);">③ Sube tu comprobante:</div>
-                        <div class="file-upload-area" id="proof-upload-area">
-                            <input type="file"
-                                   id="payment-proof"
-                                   accept="image/*,application/pdf"
-                                   hidden>
-                            <div class="upload-prompt">
-                                <span class="upload-icon">📄</span>
-                                <p>Toca para subir comprobante</p>
-                                <span class="file-hint">Imagen o PDF</span>
-                            </div>
-                            <div id="proof-preview" class="file-preview"></div>
-                        </div>
+                    <button id="btn-ya-pague" class="btn btn-large btn-ya-pague">
+                        Ya pague →
+                    </button>
+                </div>
+
+                <!-- Stripe Payment Section -->
+                <div id="stripe-pay-section" style="display: none;">
+                    <h2>Pago con Tarjeta</h2>
+
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(99, 91, 255, 0.1), rgba(79, 70, 229, 0.1)); border-radius: 16px; margin-bottom: 24px;">
+                        <div style="font-size: 13px; color: var(--gray-500); margin-bottom: 6px;">Monto a pagar (anticipo 50%)</div>
+                        <strong id="stripe-amount-preview" class="highlight-amount" style="font-size: 32px;"></strong>
+                    </div>
+
+                    <div id="stripe-payment-link" class="stripe-payment-container">
+                        <button type="button" id="stripe-pay-btn" class="btn btn-primary btn-large" style="background: linear-gradient(135deg, #635bff, #4f46e5);">
+                            💳 Pagar con Stripe →
+                        </button>
+                        <p style="text-align: center; font-size: 12px; color: var(--gray-600); margin-top: 10px;">
+                            Pago seguro con Stripe
+                        </p>
+                    </div>
+
+                    <!-- After Stripe payment, show return instructions + button -->
+                    <div id="stripe-return-notice" style="display: none; margin-top: 24px; text-align: center; padding: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px;">
+                        <p style="font-size: 15px; font-weight: 600; color: #10b981; margin-bottom: 4px;">
+                            Se abrio una ventana de pago
+                        </p>
+                        <p style="font-size: 13px; color: var(--gray-400); margin-bottom: 16px;">
+                            Despues de pagar, regresa aqui y presiona el boton de abajo.
+                        </p>
+                        <button id="btn-ya-pague-stripe" class="btn btn-large btn-ya-pague">
+                            Ya pague →
+                        </button>
                     </div>
                 </div>
 
                 <!-- Hidden: keep for JS compatibility -->
+                <div id="bank-details" style="display: none;"></div>
                 <div id="bank-details-content" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- STEP 4C: Upload Proof -->
+        <section id="step-proof" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 95%"></div>
+            </div>
+            <div class="step-indicator">Paso 4 de 4 — Comprobante</div>
+
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
+
+            <div class="card" style="text-align: center;">
+                <h2>Sube tu Comprobante</h2>
+                <p class="help-text" style="margin-bottom: 24px;">
+                    Para confirmar tu pedido, sube la captura de pantalla o foto de tu comprobante de pago.
+                </p>
+
+                <!-- Large upload area -->
+                <div class="form-group">
+                    <div class="file-upload-area file-upload-area--large" id="proof-upload-area">
+                        <input type="file"
+                               id="payment-proof"
+                               accept="image/*,application/pdf"
+                               hidden>
+                        <div class="upload-prompt">
+                            <span class="upload-icon" style="font-size: 48px; display: block; margin-bottom: 12px;">📷</span>
+                            <p style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Toca para subir comprobante</p>
+                            <span class="file-hint">Imagen o PDF de tu comprobante de pago</span>
+                        </div>
+                        <div id="proof-preview" class="file-preview"></div>
+                    </div>
+                </div>
+
+                <p style="font-size: 12px; color: var(--gray-500); margin-top: 16px; margin-bottom: 24px;">
+                    Tu pedido NO se enviara hasta que subas el comprobante
+                </p>
 
                 <button id="submit-order" class="btn btn-primary btn-large" style="display: none;">
-                    <span id="submit-text">✅ Enviar Pedido</span>
+                    <span id="submit-text">Enviar Pedido</span>
                     <span id="submit-loader" class="hidden">
                         <span class="spinner-small"></span> Enviando...
                     </span>
@@ -633,45 +698,105 @@
         <!-- STEP 5: Success -->
         <section id="step-success" class="step">
             <div class="success-container">
-                <div class="logo" style="margin-bottom: 24px;">
-                    <img src="./logo.png" alt="AXKAN Logo" style="height: 100px;">
+
+                <!-- Animated confetti burst -->
+                <div class="success-confetti" aria-hidden="true">
+                    <span class="confetti-piece" style="--i:0"></span>
+                    <span class="confetti-piece" style="--i:1"></span>
+                    <span class="confetti-piece" style="--i:2"></span>
+                    <span class="confetti-piece" style="--i:3"></span>
+                    <span class="confetti-piece" style="--i:4"></span>
+                    <span class="confetti-piece" style="--i:5"></span>
+                    <span class="confetti-piece" style="--i:6"></span>
+                    <span class="confetti-piece" style="--i:7"></span>
+                    <span class="confetti-piece" style="--i:8"></span>
+                    <span class="confetti-piece" style="--i:9"></span>
+                    <span class="confetti-piece" style="--i:10"></span>
+                    <span class="confetti-piece" style="--i:11"></span>
                 </div>
-                <div class="success-icon">✅</div>
-                <h2>¡Pedido Enviado!</h2>
 
-                <div class="success-details">
-                    <p class="order-number">
-                        Tu número de pedido:<br>
-                        <strong id="success-order-number"></strong>
+                <!-- Jaguar mark celebration -->
+                <div class="success-hero">
+                    <div class="success-checkmark">
+                        <svg class="checkmark-svg" viewBox="0 0 52 52">
+                            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                        </svg>
+                    </div>
+                    <h2 class="success-title">¡Pedido Enviado!</h2>
+                    <p class="success-subtitle">Tu pedido está en camino a hacerse realidad</p>
+                </div>
+
+                <!-- Order number card -->
+                <div class="success-order-card">
+                    <div class="success-order-card-label">Número de pedido</div>
+                    <div class="success-order-card-number" id="success-order-number"></div>
+                    <div class="success-order-card-divider"></div>
+                    <p id="email-confirmation-notice" class="success-order-card-email" style="display:none">
+                        Confirmación enviada a <strong id="success-email"></strong>
                     </p>
+                </div>
 
-                    <!-- #17: Email confirmation preview -->
-                    <p id="email-confirmation-notice" class="email-confirmation-notice">
-                        Recibirás confirmación a: <strong id="success-email"></strong>
-                    </p>
-
-                    <div class="info-box">
-                        <p><strong>¿Qué sigue?</strong></p>
-                        <ul>
-                            <li>✓ Recibirás confirmación por correo</li>
-                            <li>✓ Revisaremos tu pedido</li>
-                            <li>✓ Te contactaremos pronto</li>
-                        </ul>
+                <!-- Timeline: What happens next -->
+                <div class="success-timeline">
+                    <h3 class="success-timeline-title">¿Qué sigue?</h3>
+                    <div class="success-timeline-steps">
+                        <div class="timeline-step" style="--delay: 0.6s">
+                            <div class="timeline-step-icon" style="background: linear-gradient(135deg, #e72a88, #c91e73);">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            </div>
+                            <div class="timeline-step-content">
+                                <strong>Confirmación por correo</strong>
+                                <span>Recibirás un resumen de tu pedido</span>
+                            </div>
+                        </div>
+                        <div class="timeline-step" style="--delay: 0.8s">
+                            <div class="timeline-step-icon" style="background: linear-gradient(135deg, #09adc2, #0891a6);">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </div>
+                            <div class="timeline-step-content">
+                                <strong>Revisión de tu pedido</strong>
+                                <span>Verificamos tu comprobante y datos</span>
+                            </div>
+                        </div>
+                        <div class="timeline-step" style="--delay: 1.0s">
+                            <div class="timeline-step-icon" style="background: linear-gradient(135deg, #8ab73b, #6d9e2a);">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </div>
+                            <div class="timeline-step-content">
+                                <strong>Te contactamos</strong>
+                                <span>Para confirmar diseño y detalles</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- #16: More action buttons -->
+                <!-- Action buttons -->
                 <div class="success-actions">
-                    <button onclick="window.location.reload()" class="btn btn-primary btn-large">
+                    <button onclick="window.location.reload()" class="btn-success-primary">
                         Hacer Otro Pedido
                     </button>
-                    <a href="https://wa.me/5215538253251" target="whatsapp-chat" class="btn btn-secondary btn-large" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; background: #25D366; border-color: #25D366; color: white;">
-                        <span>💬</span> WhatsApp Iván
-                    </a>
-                    <a href="https://wa.me/5215518942408" target="whatsapp-chat" class="btn btn-secondary btn-large" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; background: #25D366; border-color: #25D366; color: white;">
-                        <span>💬</span> WhatsApp Daniel
-                    </a>
+                    <div class="success-whatsapp-group">
+                        <p class="success-whatsapp-label">¿Tienes preguntas? Escríbenos</p>
+                        <div class="success-whatsapp-buttons">
+                            <a href="https://wa.me/5215538253251" target="whatsapp-chat" class="btn-whatsapp">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                Iván
+                            </a>
+                            <a href="https://wa.me/5215518942408" target="whatsapp-chat" class="btn-whatsapp">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                Daniel
+                            </a>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- AXKAN brand footer -->
+                <div class="success-brand-footer">
+                    <img src="./logo.png" alt="AXKAN" class="success-brand-logo">
+                    <p class="success-brand-tagline">Recuerdos Hechos Souvenir</p>
+                </div>
+
             </div>
         </section>
 
