@@ -6,7 +6,10 @@ let initialized = false;
 async function initializePushService() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT || 'mailto:admin@axkan.mx';
+  let subject = process.env.VAPID_SUBJECT || 'mailto:admin@axkan.mx';
+  if (subject && !subject.startsWith('mailto:') && !subject.startsWith('https://')) {
+    subject = 'mailto:' + subject;
+  }
 
   if (!publicKey || !privateKey) {
     console.log('⚠️  Push notifications disabled — VAPID keys not configured');
