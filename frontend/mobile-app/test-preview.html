@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#ffffff">
+    <title>AXKAN Command — Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script>
+    // Mock fetch BEFORE app.js loads — intercept all API calls with realistic data
+    window._originalFetch = window.fetch;
+    window.fetch = async function(url, opts) {
+        var u = typeof url === 'string' ? url : url.url;
+
+        if (u.includes('/admin/verify')) {
+            return new Response(JSON.stringify({ success: true, user: { username: 'admin', role: 'admin' } }));
+        }
+        if (u.includes('/admin/login')) {
+            return new Response(JSON.stringify({ success: true, token: 'mock-token-preview', user: { username: 'admin', role: 'admin' } }));
+        }
+        if (u.includes('/api/orders') && !u.includes('analytics')) {
+            return new Response(JSON.stringify({
+                success: true, count: 6, data: [
+                    { id: 1, orderNumber: 'AXK-2401', createdAt: '2026-03-10T08:00:00Z', clientName: 'María García Fernández', clientPhone: '5551234567', clientCity: 'CDMX', clientState: 'CDMX', totalPrice: 15000, productionCost: 6000, profit: 9000, profitMargin: 60, depositAmount: 7500, depositPaid: true, status: 'Design', approvalStatus: 'approved', department: 'Design', archiveStatus: 'active', salesRep: 'Ivan', items: [{ productName: 'Imán Chichén Itzá', quantity: 200, unitPrice: 75, unitCost: 30, lineTotal: 15000, lineCost: 6000 }], notes: 'Diseño con pirámide y cielo naranja', productionDeadline: '2026-03-14T00:00:00Z' },
+                    { id: 2, orderNumber: 'AXK-2402', createdAt: '2026-03-09T14:00:00Z', clientName: 'Roberto López Méndez', clientPhone: '5559876543', clientCity: 'Cancún', clientState: 'Quintana Roo', totalPrice: 22000, productionCost: 8800, profit: 13200, status: 'Printing', approvalStatus: 'approved', department: 'Production', archiveStatus: 'active', items: [{ productName: 'Imán Cancún Playa', quantity: 300, unitPrice: 73, unitCost: 29, lineTotal: 22000, lineCost: 8800 }] },
+                    { id: 3, orderNumber: 'AXK-2403', createdAt: '2026-03-09T10:00:00Z', clientName: 'Ana Martínez Ruiz', clientPhone: '5555551234', clientCity: 'Oaxaca de Juárez', clientState: 'Oaxaca', totalPrice: 8500, productionCost: 3400, profit: 5100, status: 'New', approvalStatus: 'pending_review', department: 'Design', archiveStatus: 'active', items: [{ productName: 'Imán Monte Albán', quantity: 100, unitPrice: 85, unitCost: 34, lineTotal: 8500, lineCost: 3400 }], notes: 'Primera compra, enviar mockup antes' },
+                    { id: 4, orderNumber: 'AXK-2404', createdAt: '2026-03-08T16:00:00Z', clientName: 'Carlos Hernández Torres', clientPhone: '5558889999', clientCity: 'Guanajuato', clientState: 'Guanajuato', totalPrice: 30000, productionCost: 12000, profit: 18000, status: 'Shipping', approvalStatus: 'approved', carrier: 'FedEx', trackingNumber: 'FX794512836MX', shippingCost: 850, archiveStatus: 'active', items: [{ productName: 'Imán Guanajuato Callejón', quantity: 200, unitPrice: 75, unitCost: 30, lineTotal: 15000, lineCost: 6000 }, { productName: 'Imán San Miguel Allende', quantity: 200, unitPrice: 75, unitCost: 30, lineTotal: 15000, lineCost: 6000 }], estimatedDeliveryDate: '2026-03-13T00:00:00Z' },
+                    { id: 5, orderNumber: 'AXK-2405', createdAt: '2026-03-07T12:00:00Z', clientName: 'Laura Sánchez Díaz', clientCity: 'Puebla', clientState: 'Puebla', totalPrice: 12000, productionCost: 4800, profit: 7200, status: 'Cutting', approvalStatus: 'approved', archiveStatus: 'active', items: [{ productName: 'Imán Puebla Catedral', quantity: 150, unitPrice: 80, unitCost: 32, lineTotal: 12000, lineCost: 4800 }] },
+                    { id: 6, orderNumber: 'AXK-2406', createdAt: '2026-03-10T09:00:00Z', clientName: 'Pedro Ramírez Flores', clientCity: 'Mérida', clientState: 'Yucatán', totalPrice: 18000, productionCost: 7200, profit: 10800, status: 'Delivered', approvalStatus: 'approved', deliveryDate: '2026-03-10T09:00:00Z', archiveStatus: 'active', items: [{ productName: 'Imán Mérida Centro', quantity: 250, unitPrice: 72, unitCost: 29, lineTotal: 18000, lineCost: 7200 }] }
+                ]
+            }));
+        }
+        if (u.includes('/api/alerts')) {
+            return new Response(JSON.stringify({
+                success: true, data: {
+                    critical: [{ alertTitle: 'Pago pendiente', alertMessage: 'AXK-2403 sin anticipo recibido', orderNumber: 'AXK-2403' }],
+                    warning: [{ alertTitle: 'Deadline cercano', alertMessage: 'AXK-2401 entrega en 4 días', orderNumber: 'AXK-2401' }],
+                    upcoming: [],
+                    summary: { criticalCount: 1, warningCount: 1, upcomingCount: 0, totalAlerts: 2 }
+                }
+            }));
+        }
+        if (u.includes('/analytics/dashboard')) {
+            return new Response(JSON.stringify({
+                success: true, data: {
+                    summary: { totalRevenue: 105500, totalOrders: 6, totalProfit: 63300, avgOrderValue: 17583, avgProfitMargin: 60 }
+                }
+            }));
+        }
+        if (u.includes('/admin/tasks/stats')) {
+            return new Response(JSON.stringify({
+                success: true,
+                stats: { total: 8, pending: 3, in_progress: 2, completed: 2, blocked: 1, urgent: 1, high_priority: 2 },
+                byDepartment: [
+                    { department: 'design', count: 4, pending: 2, in_progress: 1 },
+                    { department: 'production', count: 3, pending: 1, in_progress: 1 },
+                    { department: 'shipping', count: 1, pending: 0, in_progress: 0 }
+                ]
+            }));
+        }
+        if (u.includes('/admin/tasks')) {
+            return new Response(JSON.stringify({
+                success: true, tasks: [
+                    { id: 1, title: 'Diseño imanes Chichén Itzá', department: 'design', priority: 'urgent', status: 'in_progress', assigned_to_name: 'Lilian', order_number: 'AXK-2401', due_date: '2026-03-12' },
+                    { id: 2, title: 'Imprimir lote Cancún 300pz', department: 'production', priority: 'high', status: 'pending', order_number: 'AXK-2402' },
+                    { id: 3, title: 'Cortar imanes Puebla 150pz', department: 'production', priority: 'normal', status: 'in_progress', assigned_to_name: 'Jorge', order_number: 'AXK-2405' },
+                    { id: 4, title: 'Verificar diseño Monte Albán', department: 'design', priority: 'normal', status: 'pending', order_number: 'AXK-2403' },
+                    { id: 5, title: 'Enviar guía FedEx Guanajuato', department: 'shipping', priority: 'high', status: 'completed', assigned_to_name: 'Carlos', order_number: 'AXK-2404' },
+                    { id: 6, title: 'Revisar arte final Mérida', department: 'design', priority: 'low', status: 'completed', order_number: 'AXK-2406' },
+                    { id: 7, title: 'Reimpresión lote Oaxaca', department: 'production', priority: 'normal', status: 'blocked', order_number: 'AXK-2403' },
+                    { id: 8, title: 'Preparar mockup Chichén v2', department: 'design', priority: 'normal', status: 'pending', order_number: 'AXK-2401' }
+                ], total: 8
+            }));
+        }
+        return window._originalFetch(url, opts);
+    };
+
+    // Pre-set token so it skips login
+    localStorage.setItem('admin_token', 'mock-preview-token');
+    </script>
+</head>
+<body>
+    <!-- Reuse exact same HTML structure as index.html minus login -->
+
+    <!-- MAIN APP (starts visible) -->
+    <div id="login-screen" class="screen">
+        <div class="login-container">
+            <div class="login-brand">
+                <div class="login-jaguar-glow"></div>
+                <img src="jaguar.png" alt="AXKAN" class="login-logo">
+                <h1 class="login-title">COMMAND</h1>
+                <p class="login-sub">Panel de Control Móvil</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="input-group">
+                    <label for="username">USUARIO</label>
+                    <input type="text" id="username" name="username" autocomplete="username" required>
+                    <div class="input-line"></div>
+                </div>
+                <div class="input-group">
+                    <label for="password">CONTRASEÑA</label>
+                    <input type="password" id="password" name="password" autocomplete="current-password" required>
+                    <div class="input-line"></div>
+                </div>
+                <button type="submit" id="login-btn" class="btn-login">
+                    <span class="btn-text">ACCEDER</span>
+                    <span class="btn-loader"></span>
+                </button>
+                <p id="login-error" class="login-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-screen" class="screen">
+        <header class="app-header">
+            <div class="header-left">
+                <img src="jaguar.png" alt="" class="header-logo">
+                <span class="header-title">AXKAN</span>
+            </div>
+            <div class="header-right">
+                <div id="connection-dot" class="connection-dot online"></div>
+                <button id="refresh-btn" class="header-btn" aria-label="Refresh">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                </button>
+                <button id="logout-btn" class="header-btn" aria-label="Logout">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <main id="content" class="content">
+            <div id="view-home" class="view active">
+                <div id="alerts-banner" class="alerts-banner hidden">
+                    <div class="alert-pulse"></div>
+                    <span id="alerts-text" class="alerts-text"></span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-card"><div class="stat-number" id="stat-pending">—</div><div class="stat-label">Pendientes</div><div class="stat-accent pending"></div></div>
+                    <div class="stat-card"><div class="stat-number" id="stat-progress">—</div><div class="stat-label">En Proceso</div><div class="stat-accent progress"></div></div>
+                    <div class="stat-card"><div class="stat-number" id="stat-completed">—</div><div class="stat-label">Completados</div><div class="stat-accent completed"></div></div>
+                </div>
+                <div class="section-block">
+                    <h2 class="section-title">PIPELINE</h2>
+                    <div id="pipeline-bar" class="pipeline-bar"><div class="pipeline-empty">Cargando...</div></div>
+                    <div id="pipeline-legend" class="pipeline-legend"></div>
+                </div>
+                <div class="section-block">
+                    <h2 class="section-title">REVENUE <span class="section-badge" id="revenue-period">HOY</span></h2>
+                    <div class="revenue-grid">
+                        <div class="revenue-card main"><div class="revenue-amount" id="revenue-total">$0</div><div class="revenue-label">Ingresos</div></div>
+                        <div class="revenue-card"><div class="revenue-amount small" id="revenue-profit">$0</div><div class="revenue-label">Utilidad</div></div>
+                        <div class="revenue-card"><div class="revenue-amount small" id="revenue-orders">0</div><div class="revenue-label">Pedidos</div></div>
+                    </div>
+                </div>
+                <div class="section-block">
+                    <h2 class="section-title">RECIENTES</h2>
+                    <div id="recent-orders" class="order-list"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+                </div>
+            </div>
+
+            <div id="view-orders" class="view">
+                <div class="filters-bar">
+                    <div class="search-wrap">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="search" id="order-search" placeholder="Buscar pedido o cliente..." class="search-input">
+                    </div>
+                    <div id="status-filters" class="chip-row">
+                        <button class="chip active" data-filter="all">Todos</button>
+                        <button class="chip" data-filter="pending_review">Pendientes</button>
+                        <button class="chip" data-filter="approved">Aprobados</button>
+                        <button class="chip" data-filter="production">Producción</button>
+                        <button class="chip" data-filter="shipped">Enviados</button>
+                        <button class="chip" data-filter="delivered">Entregados</button>
+                    </div>
+                </div>
+                <div id="orders-list" class="order-list"></div>
+                <div id="orders-empty" class="empty-state hidden">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <p>Sin pedidos</p>
+                </div>
+            </div>
+
+            <div id="order-detail" class="detail-sheet">
+                <div class="detail-header">
+                    <button id="detail-back" class="detail-back">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                        <span>Pedidos</span>
+                    </button>
+                    <span id="detail-order-num" class="detail-order-num"></span>
+                </div>
+                <div id="detail-content" class="detail-content"></div>
+            </div>
+
+            <div id="view-pipeline" class="view">
+                <div class="section-block no-top">
+                    <h2 class="section-title">STATUS PIPELINE</h2>
+                    <div id="pipeline-columns" class="pipeline-columns"></div>
+                </div>
+                <div class="section-block">
+                    <h2 class="section-title">POR DEPARTAMENTO</h2>
+                    <div id="dept-breakdown" class="dept-breakdown"></div>
+                </div>
+            </div>
+
+            <div id="view-tasks" class="view">
+                <div class="filters-bar">
+                    <div id="task-filters" class="chip-row">
+                        <button class="chip active" data-filter="all">Todos</button>
+                        <button class="chip" data-filter="pending">Pendiente</button>
+                        <button class="chip" data-filter="in_progress">En Proceso</button>
+                        <button class="chip" data-filter="completed">Completado</button>
+                        <button class="chip" data-filter="blocked">Bloqueado</button>
+                    </div>
+                </div>
+                <div id="task-stats" class="task-stats-row"></div>
+                <div id="tasks-list" class="order-list"></div>
+                <div id="tasks-empty" class="empty-state hidden">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <p>Sin tareas</p>
+                </div>
+            </div>
+        </main>
+
+        <nav class="tab-bar">
+            <button class="tab active" data-view="home">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <span>Home</span>
+            </button>
+            <button class="tab" data-view="orders">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                <span>Pedidos</span>
+            </button>
+            <button class="tab" data-view="pipeline">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <span>Pipeline</span>
+            </button>
+            <button class="tab" data-view="tasks">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span>Tareas</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,812 @@
+/* ============================================
+   AXKAN COMMAND — Mobile Dashboard App
+   ============================================ */
+
+const API = 'https://vt-souvenir-backend.onrender.com/api';
+const TOKEN_KEY = 'admin_token';
+
+// ── State ──
+let allOrders = [];
+let allTasks = [];
+let alertsData = null;
+let analyticsData = null;
+let taskStats = null;
+let currentFilter = 'all';
+let currentTaskFilter = 'all';
+let refreshTimer = null;
+
+// ── Status color map ──
+const STATUS_COLORS = {
+    'New': { bg: '#e72a88', cls: 'new', label: 'Nuevo' },
+    'Design': { bg: '#09adc2', cls: 'production', label: 'Diseño' },
+    'Printing': { bg: '#8ab73b', cls: 'approved', label: 'Impresión' },
+    'Cutting': { bg: '#f39223', cls: 'pending', label: 'Corte' },
+    'Counting': { bg: '#D4A574', cls: 'pending', label: 'Conteo' },
+    'Shipping': { bg: '#a482c8', cls: 'shipped', label: 'Envío' },
+    'Delivered': { bg: '#8ab73b', cls: 'delivered', label: 'Entregado' },
+    'Cancelled': { bg: '#e52421', cls: 'cancelled', label: 'Cancelado' },
+};
+
+const APPROVAL_MAP = {
+    'pending_review': { cls: 'pending', label: 'Pendiente' },
+    'approved': { cls: 'approved', label: 'Aprobado' },
+    'needs_changes': { cls: 'pending', label: 'Cambios' },
+    'rejected': { cls: 'cancelled', label: 'Rechazado' },
+};
+
+// ── Utility ──
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return document.querySelectorAll(sel); }
+
+function formatMoney(n) {
+    if (n == null || isNaN(n)) return '$0';
+    return '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function formatDate(d) {
+    if (!d) return '—';
+    const date = new Date(d);
+    const day = date.getDate();
+    const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return day + ' ' + months[date.getMonth()];
+}
+
+function getHeaders() {
+    return {
+        'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY),
+        'Content-Type': 'application/json'
+    };
+}
+
+async function apiFetch(path, opts) {
+    const res = await fetch(API + path, Object.assign({ headers: getHeaders() }, opts || {}));
+    if (res.status === 401 || res.status === 403) {
+        logout();
+        throw new Error('Unauthorized');
+    }
+    return res.json();
+}
+
+// ── Safe text helper — all dynamic content goes through this ──
+function safeText(str) {
+    if (str == null) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+}
+
+// ── Safe DOM builder — creates elements without innerHTML ──
+function el(tag, attrs, children) {
+    const node = document.createElement(tag);
+    if (attrs) {
+        Object.keys(attrs).forEach(function(key) {
+            if (key === 'className') node.className = attrs[key];
+            else if (key === 'textContent') node.textContent = attrs[key];
+            else if (key === 'style' && typeof attrs[key] === 'object') {
+                Object.assign(node.style, attrs[key]);
+            } else if (key.startsWith('on') && typeof attrs[key] === 'function') {
+                node.addEventListener(key.slice(2).toLowerCase(), attrs[key]);
+            } else if (key.startsWith('data-')) {
+                node.setAttribute(key, attrs[key]);
+            } else {
+                node.setAttribute(key, attrs[key]);
+            }
+        });
+    }
+    if (children) {
+        if (!Array.isArray(children)) children = [children];
+        children.forEach(function(child) {
+            if (child == null) return;
+            if (typeof child === 'string') {
+                node.appendChild(document.createTextNode(child));
+            } else {
+                node.appendChild(child);
+            }
+        });
+    }
+    return node;
+}
+
+// ── Auth ──
+async function checkAuth() {
+    var token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return showLogin();
+    try {
+        var data = await apiFetch('/admin/verify');
+        if (data.success) showApp();
+        else showLogin();
+    } catch(e) {
+        showLogin();
+    }
+}
+
+function showLogin() {
+    $('#login-screen').classList.add('active');
+    $('#app-screen').classList.remove('active');
+    stopRefresh();
+}
+
+function showApp() {
+    $('#login-screen').classList.remove('active');
+    $('#app-screen').classList.add('active');
+    loadAllData();
+    startRefresh();
+    initPushNotifications();
+}
+
+function logout() {
+    localStorage.removeItem(TOKEN_KEY);
+    allOrders = [];
+    allTasks = [];
+    showLogin();
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    var btn = $('#login-btn');
+    var errEl = $('#login-error');
+    btn.classList.add('loading');
+    errEl.textContent = '';
+
+    try {
+        var res = await fetch(API + '/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: $('#username').value.trim(),
+                password: $('#password').value
+            })
+        });
+        var data = await res.json();
+        if (data.success && data.token) {
+            localStorage.setItem(TOKEN_KEY, data.token);
+            showApp();
+        } else {
+            errEl.textContent = data.message || 'Credenciales incorrectas';
+        }
+    } catch(e) {
+        errEl.textContent = 'Error de conexión';
+    } finally {
+        btn.classList.remove('loading');
+    }
+}
+
+// ── Data Loading ──
+async function loadAllData() {
+    updateConnectionStatus(true);
+    try {
+        var results = await Promise.allSettled([
+            apiFetch('/orders'),
+            apiFetch('/alerts'),
+            apiFetch('/analytics/dashboard?startDate=' + getTodayISO() + '&endDate=' + getTodayISO()),
+            apiFetch('/admin/tasks?limit=100'),
+            apiFetch('/admin/tasks/stats'),
+        ]);
+
+        if (results[0].status === 'fulfilled' && results[0].value.success) {
+            allOrders = results[0].value.data || [];
+        }
+        if (results[1].status === 'fulfilled' && results[1].value.success) {
+            alertsData = results[1].value.data;
+        }
+        if (results[2].status === 'fulfilled' && results[2].value.success) {
+            analyticsData = results[2].value.data;
+        }
+        if (results[3].status === 'fulfilled' && results[3].value.success) {
+            allTasks = results[3].value.tasks || [];
+        }
+        if (results[4].status === 'fulfilled' && results[4].value.success) {
+            taskStats = results[4].value;
+        }
+
+        renderHome();
+        renderOrders();
+        renderPipeline();
+        renderTasks();
+    } catch(e) {
+        updateConnectionStatus(false);
+    }
+}
+
+function getTodayISO() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function updateConnectionStatus(online) {
+    var dot = $('#connection-dot');
+    dot.classList.toggle('online', online);
+    dot.classList.toggle('offline', !online);
+}
+
+// ── Auto Refresh ──
+function startRefresh() {
+    stopRefresh();
+    refreshTimer = setInterval(function() { loadAllData(); }, 30000);
+}
+
+function stopRefresh() {
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+    }
+}
+
+// ── Render: Home ──
+function renderHome() {
+    // Stats
+    var pending = allOrders.filter(function(o) { return o.approvalStatus === 'pending_review'; }).length;
+    var inProgress = allOrders.filter(function(o) { return ['Design','Printing','Cutting','Counting'].indexOf(o.status) >= 0; }).length;
+    var today = getTodayISO();
+    var completedToday = allOrders.filter(function(o) { return o.status === 'Delivered' && o.deliveryDate && o.deliveryDate.startsWith(today); }).length;
+
+    animateNumber($('#stat-pending'), pending);
+    animateNumber($('#stat-progress'), inProgress);
+    animateNumber($('#stat-completed'), completedToday);
+
+    // Alerts
+    if (alertsData && alertsData.summary && alertsData.summary.totalAlerts > 0) {
+        var s = alertsData.summary;
+        var parts = [];
+        if (s.criticalCount > 0) parts.push(s.criticalCount + ' críticas');
+        if (s.warningCount > 0) parts.push(s.warningCount + ' avisos');
+        if (s.upcomingCount > 0) parts.push(s.upcomingCount + ' próximos');
+        $('#alerts-text').textContent = parts.join(' · ');
+        $('#alerts-banner').classList.remove('hidden');
+    } else {
+        $('#alerts-banner').classList.add('hidden');
+    }
+
+    // Pipeline bar
+    renderPipelineBar();
+
+    // Revenue
+    if (analyticsData && analyticsData.summary) {
+        var sum = analyticsData.summary;
+        $('#revenue-total').textContent = formatMoney(sum.totalRevenue);
+        $('#revenue-profit').textContent = formatMoney(sum.totalProfit);
+        $('#revenue-orders').textContent = sum.totalOrders || 0;
+    }
+
+    // Recent orders (last 5) — built with safe DOM
+    var recent = allOrders.slice().sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); }).slice(0, 5);
+    var recentContainer = $('#recent-orders');
+    recentContainer.replaceChildren();
+    if (recent.length === 0) {
+        recentContainer.appendChild(el('p', { className: 'empty-state' }, [
+            el('span', { style: { color: 'var(--muted)' }, textContent: 'Sin pedidos recientes' })
+        ]));
+    } else {
+        recent.forEach(function(o) {
+            recentContainer.appendChild(buildOrderCard(o, 0));
+        });
+    }
+}
+
+function animateNumber(elem, target) {
+    var current = parseInt(elem.textContent) || 0;
+    if (current === target) { elem.textContent = target; return; }
+    var diff = target - current;
+    var steps = Math.min(Math.abs(diff), 20);
+    var stepTime = 300 / steps;
+    var i = 0;
+    var timer = setInterval(function() {
+        i++;
+        elem.textContent = Math.round(current + (diff * (i / steps)));
+        if (i >= steps) {
+            elem.textContent = target;
+            clearInterval(timer);
+        }
+    }, stepTime);
+}
+
+function renderPipelineBar() {
+    var statusOrder = ['New', 'Design', 'Printing', 'Cutting', 'Counting', 'Shipping', 'Delivered'];
+    var counts = {};
+    var total = 0;
+
+    allOrders.forEach(function(o) {
+        if (o.status && o.status !== 'Cancelled' && o.archiveStatus !== 'cancelado') {
+            counts[o.status] = (counts[o.status] || 0) + 1;
+            total++;
+        }
+    });
+
+    var barEl = $('#pipeline-bar');
+    var legendEl = $('#pipeline-legend');
+    barEl.replaceChildren();
+    legendEl.replaceChildren();
+
+    if (total === 0) {
+        barEl.appendChild(el('div', { className: 'pipeline-empty', textContent: 'Sin pedidos activos' }));
+        return;
+    }
+
+    statusOrder.forEach(function(status) {
+        var count = counts[status] || 0;
+        if (count === 0) return;
+        var pct = (count / total * 100);
+        var info = STATUS_COLORS[status] || { bg: '#555', label: status };
+
+        var seg = el('div', { className: 'pipeline-segment', title: info.label + ': ' + count }, [
+            el('span', { textContent: String(count) })
+        ]);
+        seg.style.flex = String(pct);
+        seg.style.background = info.bg;
+        barEl.appendChild(seg);
+
+        var dot = el('div', { className: 'legend-dot' });
+        dot.style.background = info.bg;
+        legendEl.appendChild(el('div', { className: 'legend-item' }, [dot, info.label]));
+    });
+}
+
+// ── Build Order Card (safe DOM) ──
+function buildOrderCard(order, index) {
+    var statusInfo = STATUS_COLORS[order.status] || { cls: 'new', label: order.status || 'N/A' };
+    var approvalInfo = APPROVAL_MAP[order.approvalStatus];
+    var badge = approvalInfo || statusInfo;
+
+    var card = el('div', { className: 'order-card', 'data-id': String(order.id) }, [
+        el('div', { className: 'order-card-top' }, [
+            el('span', { className: 'order-number', textContent: '#' + (order.orderNumber || order.id) }),
+            el('span', { className: 'status-badge ' + badge.cls, textContent: badge.label })
+        ]),
+        el('div', { className: 'order-client', textContent: order.clientName || 'Sin nombre' }),
+        el('div', { className: 'order-card-bottom' }, [
+            el('span', { className: 'order-amount', textContent: formatMoney(order.totalPrice) }),
+            el('span', { className: 'order-date', textContent: formatDate(order.createdAt) })
+        ])
+    ]);
+    if (index != null) {
+        card.style.animationDelay = (index * 0.04) + 's';
+    }
+    card.addEventListener('click', function() {
+        var o = allOrders.find(function(x) { return String(x.id) === String(order.id); });
+        if (o) showOrderDetail(o);
+    });
+    return card;
+}
+
+// ── Render: Orders ──
+function renderOrders() {
+    var search = ($('#order-search') ? $('#order-search').value : '').toLowerCase();
+    var filtered = allOrders.slice();
+
+    // Filter by status
+    if (currentFilter !== 'all') {
+        if (currentFilter === 'pending_review') {
+            filtered = filtered.filter(function(o) { return o.approvalStatus === 'pending_review'; });
+        } else if (currentFilter === 'approved') {
+            filtered = filtered.filter(function(o) { return o.approvalStatus === 'approved' && ['Shipping','Delivered'].indexOf(o.status) < 0; });
+        } else if (currentFilter === 'production') {
+            filtered = filtered.filter(function(o) { return ['Design','Printing','Cutting','Counting'].indexOf(o.status) >= 0; });
+        } else if (currentFilter === 'shipped') {
+            filtered = filtered.filter(function(o) { return o.status === 'Shipping'; });
+        } else if (currentFilter === 'delivered') {
+            filtered = filtered.filter(function(o) { return o.status === 'Delivered'; });
+        }
+    }
+
+    // Search
+    if (search) {
+        filtered = filtered.filter(function(o) {
+            return (o.clientName || '').toLowerCase().indexOf(search) >= 0 ||
+                   (o.orderNumber || '').toLowerCase().indexOf(search) >= 0;
+        });
+    }
+
+    // Sort newest first
+    filtered.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+
+    var list = $('#orders-list');
+    var empty = $('#orders-empty');
+
+    list.replaceChildren();
+
+    if (filtered.length === 0) {
+        empty.classList.remove('hidden');
+    } else {
+        empty.classList.add('hidden');
+        filtered.forEach(function(o, i) {
+            list.appendChild(buildOrderCard(o, i));
+        });
+    }
+}
+
+// ── Order Detail (safe DOM) ──
+function showOrderDetail(order) {
+    var sheet = $('#order-detail');
+    $('#detail-order-num').textContent = '#' + (order.orderNumber || order.id);
+
+    var statusInfo = STATUS_COLORS[order.status] || { cls: 'new', label: order.status };
+    var approvalInfo = APPROVAL_MAP[order.approvalStatus] || { cls: 'pending', label: order.approvalStatus };
+
+    var content = $('#detail-content');
+    content.replaceChildren();
+
+    // Status badges section
+    content.appendChild(buildDetailSection('Estado', [
+        el('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } }, [
+            el('span', { className: 'status-badge ' + (statusInfo.cls || 'new'), textContent: statusInfo.label }),
+            el('span', { className: 'status-badge ' + (approvalInfo.cls || 'pending'), textContent: approvalInfo.label })
+        ])
+    ]));
+
+    // Client section
+    content.appendChild(buildDetailSection('Cliente', [
+        buildDetailRow('Nombre', order.clientName || '—'),
+        buildDetailRow('Teléfono', order.clientPhone || '—'),
+        buildDetailRow('Ciudad', order.clientCity || '—'),
+        buildDetailRow('Estado', order.clientState || '—'),
+    ]));
+
+    // Financial section
+    var totalVal = el('span', { className: 'detail-value', textContent: formatMoney(order.totalPrice) });
+    totalVal.style.fontSize = '16px';
+    totalVal.style.fontWeight = '700';
+    var profitVal = el('span', { className: 'detail-value', textContent: formatMoney(order.profit) });
+    profitVal.style.color = 'var(--verde)';
+
+    content.appendChild(buildDetailSection('Financiero', [
+        el('div', { className: 'detail-row' }, [el('span', { className: 'detail-key', textContent: 'Total' }), totalVal]),
+        buildDetailRow('Costo Prod.', formatMoney(order.productionCost)),
+        el('div', { className: 'detail-row' }, [el('span', { className: 'detail-key', textContent: 'Utilidad' }), profitVal]),
+        buildDetailRow('Anticipo', formatMoney(order.depositAmount) + ' ' + (order.depositPaid ? '✓' : '✗')),
+    ]));
+
+    // Items
+    if (order.items && order.items.length > 0) {
+        var itemChildren = [];
+        order.items.forEach(function(item) {
+            itemChildren.push(el('div', { className: 'detail-item-card' }, [
+                el('div', { className: 'detail-item-name', textContent: item.productName || 'Producto' }),
+                el('div', { className: 'detail-item-meta' }, [
+                    el('span', { textContent: item.quantity + ' pzas × ' + formatMoney(item.unitPrice) }),
+                    el('span', { style: { fontWeight: '600' }, textContent: formatMoney(item.lineTotal) })
+                ])
+            ]));
+        });
+        content.appendChild(buildDetailSection('Productos (' + order.items.length + ')', itemChildren));
+    }
+
+    // Shipping
+    if (order.trackingNumber || order.carrier) {
+        var shippingRows = [];
+        if (order.carrier) shippingRows.push(buildDetailRow('Paquetería', order.carrier));
+        if (order.trackingNumber) shippingRows.push(buildDetailRow('Guía', order.trackingNumber));
+        if (order.shippingCost) shippingRows.push(buildDetailRow('Costo', formatMoney(order.shippingCost)));
+        content.appendChild(buildDetailSection('Envío', shippingRows));
+    }
+
+    // Dates
+    var dateRows = [buildDetailRow('Creado', formatDate(order.createdAt))];
+    if (order.eventDate) dateRows.push(buildDetailRow('Evento', formatDate(order.eventDate)));
+    if (order.productionDeadline) dateRows.push(buildDetailRow('Deadline', formatDate(order.productionDeadline)));
+    if (order.deliveryDate) dateRows.push(buildDetailRow('Entrega', formatDate(order.deliveryDate)));
+    content.appendChild(buildDetailSection('Fechas', dateRows));
+
+    // Notes
+    if (order.notes || order.internalNotes) {
+        var noteChildren = [];
+        if (order.notes) {
+            var np = el('p', { textContent: order.notes });
+            np.style.fontSize = '13px';
+            np.style.color = 'var(--text-secondary)';
+            np.style.marginBottom = '8px';
+            noteChildren.push(np);
+        }
+        if (order.internalNotes) {
+            var ip = el('p', { textContent: order.internalNotes });
+            ip.style.fontSize = '13px';
+            ip.style.color = 'var(--muted)';
+            ip.style.fontStyle = 'italic';
+            noteChildren.push(ip);
+        }
+        content.appendChild(buildDetailSection('Notas', noteChildren));
+    }
+
+    sheet.classList.add('active');
+}
+
+function buildDetailSection(title, children) {
+    return el('div', { className: 'detail-section' }, [
+        el('div', { className: 'detail-section-title', textContent: title })
+    ].concat(children || []));
+}
+
+function buildDetailRow(key, value) {
+    return el('div', { className: 'detail-row' }, [
+        el('span', { className: 'detail-key', textContent: key }),
+        el('span', { className: 'detail-value', textContent: value })
+    ]);
+}
+
+function hideOrderDetail() {
+    $('#order-detail').classList.remove('active');
+}
+
+// ── Render: Pipeline ──
+function renderPipeline() {
+    var statusOrder = ['New', 'Design', 'Printing', 'Cutting', 'Counting', 'Shipping', 'Delivered'];
+    var counts = {};
+    var revenue = {};
+
+    allOrders.forEach(function(o) {
+        if (o.status && o.archiveStatus !== 'cancelado') {
+            counts[o.status] = (counts[o.status] || 0) + 1;
+            revenue[o.status] = (revenue[o.status] || 0) + (Number(o.totalPrice) || 0);
+        }
+    });
+
+    var colsEl = $('#pipeline-columns');
+    colsEl.replaceChildren();
+
+    statusOrder.forEach(function(status) {
+        var count = counts[status] || 0;
+        var rev = revenue[status] || 0;
+        var info = STATUS_COLORS[status] || { bg: '#555', label: status };
+
+        var colorBar = el('div', { className: 'pipeline-col-color' });
+        colorBar.style.background = info.bg;
+
+        colsEl.appendChild(el('div', { className: 'pipeline-col' }, [
+            colorBar,
+            el('div', { className: 'pipeline-col-info' }, [
+                el('div', { className: 'pipeline-col-name', textContent: info.label }),
+                el('div', { className: 'pipeline-col-sub', textContent: formatMoney(rev) })
+            ]),
+            el('div', { className: 'pipeline-col-count', textContent: String(count) })
+        ]));
+    });
+
+    // Department breakdown
+    var deptEl = $('#dept-breakdown');
+    deptEl.replaceChildren();
+
+    if (taskStats && taskStats.byDepartment && taskStats.byDepartment.length > 0) {
+        var maxCount = Math.max.apply(null, taskStats.byDepartment.map(function(d) { return d.count; }).concat([1]));
+        var deptColors = { design: 'var(--turquesa)', production: 'var(--naranja)', shipping: 'var(--rosa)' };
+
+        taskStats.byDepartment.forEach(function(dept) {
+            var color = deptColors[dept.department] || 'var(--muted)';
+            var pct = (dept.count / maxCount * 100);
+
+            var barFill = el('div', { className: 'dept-bar-fill' });
+            barFill.style.width = pct + '%';
+            barFill.style.background = color;
+
+            deptEl.appendChild(el('div', { className: 'dept-card' }, [
+                el('div', { className: 'dept-name', textContent: dept.department }),
+                el('div', { className: 'dept-bar-wrap' }, [barFill]),
+                el('div', { className: 'dept-stats' }, [
+                    el('span', {}, ['Total: ', el('strong', { textContent: String(dept.count) })]),
+                    el('span', {}, ['Pendiente: ', el('strong', { textContent: String(dept.pending || 0) })]),
+                    el('span', {}, ['En proceso: ', el('strong', { textContent: String(dept.in_progress || 0) })]),
+                ])
+            ]));
+        });
+    } else {
+        var msg = el('p', { textContent: 'Sin datos de departamentos' });
+        msg.style.color = 'var(--muted)';
+        msg.style.fontSize = '13px';
+        deptEl.appendChild(msg);
+    }
+}
+
+// ── Render: Tasks ──
+function renderTasks() {
+    // Stats
+    var statsEl = $('#task-stats');
+    statsEl.replaceChildren();
+
+    if (taskStats && taskStats.stats) {
+        var s = taskStats.stats;
+        var statItems = [
+            { num: s.urgent || 0, label: 'Urgentes' },
+            { num: s.in_progress || 0, label: 'En proceso' },
+            { num: s.pending || 0, label: 'Pendientes' },
+            { num: s.blocked || 0, label: 'Bloqueados' },
+        ];
+        statItems.forEach(function(item) {
+            statsEl.appendChild(el('div', { className: 'task-stat-mini' }, [
+                el('div', { className: 'task-stat-num', textContent: String(item.num) }),
+                el('div', { className: 'task-stat-label', textContent: item.label })
+            ]));
+        });
+    }
+
+    // Task list
+    var filtered = allTasks.slice();
+    if (currentTaskFilter !== 'all') {
+        filtered = filtered.filter(function(t) { return t.status === currentTaskFilter; });
+    }
+
+    var priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
+    filtered.sort(function(a, b) {
+        return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
+    });
+
+    var listEl = $('#tasks-list');
+    var emptyEl = $('#tasks-empty');
+    listEl.replaceChildren();
+
+    if (filtered.length === 0) {
+        emptyEl.classList.remove('hidden');
+    } else {
+        emptyEl.classList.add('hidden');
+        filtered.forEach(function(t, i) {
+            listEl.appendChild(buildTaskCard(t, i));
+        });
+    }
+}
+
+function buildTaskCard(task, index) {
+    var statusLabels = {
+        pending: 'Pendiente', in_progress: 'En Proceso', completed: 'Completado',
+        blocked: 'Bloqueado', cancelled: 'Cancelado'
+    };
+
+    var statusCls = task.status === 'in_progress' ? 'production' :
+                    task.status === 'completed' ? 'delivered' :
+                    task.status === 'blocked' ? 'cancelled' : 'pending';
+
+    var metaItems = [
+        el('span', { className: 'task-meta-item' }, [
+            el('span', { className: 'status-badge ' + statusCls, textContent: statusLabels[task.status] || task.status })
+        ])
+    ];
+
+    if (task.department) metaItems.push(el('span', { className: 'task-meta-item', textContent: task.department }));
+    if (task.assigned_to_name) metaItems.push(el('span', { className: 'task-meta-item', textContent: '→ ' + task.assigned_to_name }));
+    if (task.order_number) metaItems.push(el('span', { className: 'task-meta-item', textContent: '#' + task.order_number }));
+    if (task.due_date) metaItems.push(el('span', { className: 'task-meta-item', textContent: '⏱ ' + formatDate(task.due_date) }));
+
+    // Style the status badge smaller
+    if (metaItems[0]) {
+        var badge = metaItems[0].querySelector('.status-badge');
+        if (badge) {
+            badge.style.fontSize = '9px';
+            badge.style.padding = '2px 6px';
+        }
+    }
+
+    var card = el('div', { className: 'task-card' }, [
+        el('div', { className: 'task-card-top' }, [
+            el('span', { className: 'task-title', textContent: task.title || '' }),
+            el('span', { className: 'task-priority ' + (task.priority || 'normal'), textContent: (task.priority || 'normal').toUpperCase() })
+        ]),
+        el('div', { className: 'task-meta' }, metaItems)
+    ]);
+    card.style.animationDelay = (index * 0.04) + 's';
+    return card;
+}
+
+// ── Navigation ──
+function switchView(viewName) {
+    $$('.view').forEach(function(v) { v.classList.remove('active'); });
+    $$('.tab').forEach(function(t) { t.classList.remove('active'); });
+    $('#view-' + viewName).classList.add('active');
+    $('.tab[data-view="' + viewName + '"]').classList.add('active');
+    hideOrderDetail();
+}
+
+// ── Event Binding ──
+// ── Push Notifications ──
+
+async function initPushNotifications() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (Notification.permission === 'denied') return;
+
+    try {
+        var reg = await navigator.serviceWorker.ready;
+
+        // Check if already subscribed
+        var existing = await reg.pushManager.getSubscription();
+        if (existing) return; // Already subscribed
+
+        // Fetch VAPID public key from backend
+        var keyResp = await apiFetch('/push/vapid-public-key');
+        if (!keyResp.success || !keyResp.publicKey) return;
+
+        // Request permission
+        var permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
+
+        // Subscribe
+        var sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(keyResp.publicKey)
+        });
+
+        // Send subscription to backend
+        await fetch(API + '/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: sub.toJSON() })
+        });
+
+        console.log('Push notifications enabled');
+    } catch(err) {
+        console.error('Push setup failed:', err);
+    }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var rawData = atob(base64);
+    var outputArray = new Uint8Array(rawData.length);
+    for (var i = 0; i < rawData.length; i++) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// ── Init ──
+
+function init() {
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(function(reg) {
+            console.log('SW registered:', reg.scope);
+        }).catch(function(err) {
+            console.error('SW registration failed:', err);
+        });
+    }
+
+    // Login
+    $('#login-form').addEventListener('submit', handleLogin);
+
+    // Tabs
+    $$('.tab').forEach(function(tab) {
+        tab.addEventListener('click', function() { switchView(tab.dataset.view); });
+    });
+
+    // Order filters
+    $$('#status-filters .chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+            $$('#status-filters .chip').forEach(function(c) { c.classList.remove('active'); });
+            chip.classList.add('active');
+            currentFilter = chip.dataset.filter;
+            renderOrders();
+        });
+    });
+
+    // Task filters
+    $$('#task-filters .chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+            $$('#task-filters .chip').forEach(function(c) { c.classList.remove('active'); });
+            chip.classList.add('active');
+            currentTaskFilter = chip.dataset.filter;
+            renderTasks();
+        });
+    });
+
+    // Search
+    var searchDebounce;
+    $('#order-search').addEventListener('input', function() {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(function() { renderOrders(); }, 200);
+    });
+
+    // Detail back
+    $('#detail-back').addEventListener('click', hideOrderDetail);
+
+    // Refresh
+    $('#refresh-btn').addEventListener('click', function() {
+        $('#refresh-btn').classList.add('spinning');
+        loadAllData().finally(function() {
+            setTimeout(function() { $('#refresh-btn').classList.remove('spinning'); }, 600);
+        });
+    });
+
+    // Logout
+    $('#logout-btn').addEventListener('click', logout);
+
+    // Online/offline
+    window.addEventListener('online', function() { updateConnectionStatus(true); });
+    window.addEventListener('offline', function() { updateConnectionStatus(false); });
+
+    // Start
+    checkAuth();
+}
+
+document.addEventListener('DOMContentLoaded', init);

@@ -47,6 +47,7 @@ import * as facebookMarketplace from '../services/facebook-marketplace.js';
 import * as facebookScheduler from '../services/facebook-scheduler.js';
 import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
 import { generateCatalogPDF, getCatalogUrl } from '../services/catalog-generator.js';
+import pushService from '../services/push-notification.js';
 
 config();
 
@@ -377,6 +378,50 @@ app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/whatsapp', whatsappTemplateRoutes);
 
 // ========================================
+// PUSH NOTIFICATION ENDPOINTS
+// ========================================
+
+app.get('/api/push/vapid-public-key', (req, res) => {
+  const key = pushService.getVapidPublicKey();
+  if (!key) return res.status(503).json({ success: false, error: 'Push not configured' });
+  res.json({ success: true, publicKey: key });
+});
+
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const { subscription } = req.body;
+    if (!subscription || !subscription.endpoint || !subscription.keys) {
+      return res.status(400).json({ success: false, error: 'Invalid subscription' });
+    }
+    await pushService.saveSubscription(subscription, req.headers['user-agent']);
+    res.json({ success: true, message: 'Subscribed' });
+  } catch (error) {
+    console.error('Push subscribe error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/push/unsubscribe', async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ success: false, error: 'Endpoint required' });
+    await pushService.removeSubscription(endpoint);
+    res.json({ success: true, message: 'Unsubscribed' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/push/test', async (req, res) => {
+  try {
+    const result = await pushService.sendToAll('AXKAN Test', 'Las notificaciones están funcionando', { view: 'home' });
+    res.json({ success: true, ...result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ========================================
 // NOTION AGENT ENDPOINTS
 // ========================================
 
@@ -384,6 +429,13 @@ app.use('/api/whatsapp', whatsappTemplateRoutes);
 app.post('/api/orders', async (req, res) => {
   try {
     const result = await notionSync.createOrderBothSystems(req.body);
+
+    // Push notification (fire-and-forget)
+    pushService.notifyNewOrder(
+      result.orderNumber || req.body.orderNumber,
+      req.body.clientName,
+      req.body.totalPrice
+    );
 
     res.status(201).json({
       success: true,
@@ -1247,8 +1299,9 @@ app.patch('/api/orders/:orderId/status', async (req, res) => {
     }
 
     // Get current status before updating
-    const currentOrder = await query('SELECT status FROM orders WHERE id = $1', [orderId]);
+    const currentOrder = await query('SELECT status, order_number FROM orders WHERE id = $1', [orderId]);
     const oldStatus = currentOrder.rows.length > 0 ? currentOrder.rows[0].status : null;
+    const orderNumber = currentOrder.rows.length > 0 ? currentOrder.rows[0].order_number : null;
 
     const result = await notionSync.syncStatusToNotion(orderId, status);
 
@@ -1261,6 +1314,9 @@ app.patch('/api/orders/:orderId/status', async (req, res) => {
       } catch (taskError) {
         console.error('Task generation failed (non-blocking):', taskError);
       }
+
+      // Push notification (fire-and-forget)
+      pushService.notifyStatusChange(orderNumber || `#${orderId}`, oldStatus, status);
     }
 
     res.json({
@@ -1508,6 +1564,9 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
 
     console.log(`✅ Order ${orderId} approved successfully`);
     console.log(`📦 Shipping label will be generated when client selects shipping and uploads second payment`);
+
+    // Push notification (fire-and-forget)
+    pushService.notifyOrderApproved(order.order_number, order.client_name);
 
     res.json({
       success: true,
@@ -4517,12 +4576,14 @@ app.get('/api/commissions/:salesperson/orders', async (req, res) => {
 // Check email environment variables (diagnostic)
 app.get('/api/test/email-config', (req, res) => {
   const config = {
+    RESEND_API_KEY: process.env.RESEND_API_KEY ? `SET (${process.env.RESEND_API_KEY.length} chars)` : 'NOT SET',
     EMAIL_SERVICE: process.env.EMAIL_SERVICE || 'NOT SET',
     EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
     EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? `SET (${process.env.EMAIL_PASSWORD.length} chars)` : 'NOT SET',
     COMPANY_NAME: process.env.COMPANY_NAME || 'NOT SET',
     COMPANY_EMAIL: process.env.COMPANY_EMAIL || 'NOT SET',
     ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'NOT SET',
+    ACTIVE_PROVIDER: process.env.RESEND_API_KEY ? 'resend' : (process.env.SENDGRID_API_KEY ? 'sendgrid' : 'smtp'),
   };
 
   console.log('📋 Email Configuration Check:', config);
@@ -4530,7 +4591,7 @@ app.get('/api/test/email-config', (req, res) => {
   res.json({
     success: true,
     config: config,
-    note: 'Gmail App Password should be 16 characters (4 groups of 4). Regular Gmail password will NOT work.'
+    note: 'Recommended: Use Resend (RESEND_API_KEY). Free tier: 100 emails/day. Works on Render without SMTP port issues.'
   });
 });
 
@@ -5482,6 +5543,9 @@ async function startServer() {
 
     // Initialize CEP retry scheduler (every 5 min, checks failed Banxico verifications)
     initializeCepRetryScheduler();
+
+    // Initialize Push Notification Service
+    pushService.initializePushService();
 
     // Initialize Facebook Marketplace Scheduler (daily at 9 AM)
     await facebookScheduler.initFacebookScheduler();
