@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -12,7 +14,7 @@ import * as analyticsAgent from '../agents/analytics-agent/index.js';
 import { getDateRange } from '../shared/utils.js';
 import clientRoutes from './client-routes.js';
 import inventoryRoutes from './inventory-routes.js';
-import adminRoutes from './admin-routes.js';
+import adminRoutes, { authMiddleware } from './admin-routes.js';
 import priceRoutes from './price-routes.js';
 import bomRoutes from './bom-routes.js';
 import webhookRoutes from './webhook-routes.js';
@@ -58,15 +60,72 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - CORS with explicit Authorization header support
+// ========================================
+// SECURITY MIDDLEWARE
+// ========================================
+
+// Helmet - security headers (CSP, HSTS, X-Frame-Options, etc.)
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for now (frontend loads CDN scripts)
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
+
+// CORS - restrict to known origins only
+const ALLOWED_ORIGINS = [
+  'https://vt-souvenir-frontend.onrender.com',
+  'https://axkan-pedidos.vercel.app',
+  'https://vtanunciando.com',
+  'https://www.vtanunciando.com',
+  process.env.FRONTEND_URL,
+  ...(process.env.EXTRA_CORS_ORIGINS ? process.env.EXTRA_CORS_ORIGINS.split(',') : [])
+].filter(Boolean);
+
+// Allow localhost in development
+if (process.env.NODE_ENV !== 'production') {
+  ALLOWED_ORIGINS.push('http://localhost:3000', 'http://localhost:3001', 'http://localhost:5500', 'http://127.0.0.1:5500');
+}
+
 app.use(cors({
-  origin: true,
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    console.warn(`⚠️ CORS blocked origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Rate limiting - global (100 requests per 15 minutes per IP)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Demasiadas solicitudes, intenta más tarde' }
+});
+app.use('/api/', globalLimiter);
+
+// Strict rate limit on login (5 attempts per 15 minutes)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Demasiados intentos de login. Espera 15 minutos.' },
+  skipSuccessfulRequests: true
+});
+app.use('/api/admin/login', loginLimiter);
+app.use('/api/employees/login', loginLimiter);
+
+// Body parsing - reduced limit to prevent memory abuse
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Request logging
 app.use((req, res, next) => {
@@ -78,12 +137,12 @@ app.use((req, res, next) => {
 // STATIC FILES - Serve PDF Receipts & Payment Proofs
 // ========================================
 const receiptsPath = path.join(__dirname, '../receipts');
-app.use('/receipts', express.static(receiptsPath));
-console.log(`📁 Serving receipts from: ${receiptsPath}`);
+app.use('/receipts', authMiddleware, express.static(receiptsPath));
+console.log(`📁 Serving receipts from: ${receiptsPath} (auth protected)`);
 
 const paymentReceiptsPath = path.join(__dirname, '../payment-receipts');
-app.use('/payment-receipts', express.static(paymentReceiptsPath));
-console.log(`📁 Serving payment receipts from: ${paymentReceiptsPath}`);
+app.use('/payment-receipts', authMiddleware, express.static(paymentReceiptsPath));
+console.log(`📁 Serving payment receipts from: ${paymentReceiptsPath} (auth protected)`);
 
 // Axkan brand assets (knowledge base images) - uses submodule
 const axkanPath = process.env.AXKAN_REPO_PATH || path.join(__dirname, '../assets/axkan');
@@ -95,8 +154,8 @@ const quotesPath = path.join(__dirname, '../quotes');
 if (!fs.existsSync(quotesPath)) {
   fs.mkdirSync(quotesPath, { recursive: true });
 }
-app.use('/quotes', express.static(quotesPath));
-console.log(`📁 Serving quotes from: ${quotesPath}`);
+app.use('/quotes', authMiddleware, express.static(quotesPath));
+console.log(`📁 Serving quotes from: ${quotesPath} (auth protected)`);
 
 // Catalog PDFs
 const catalogsPath = path.join(__dirname, '../catalogs');
@@ -111,16 +170,16 @@ const brandedReceiptsPath = path.join(__dirname, '../branded-receipts');
 if (!fs.existsSync(brandedReceiptsPath)) {
   fs.mkdirSync(brandedReceiptsPath, { recursive: true });
 }
-app.use('/branded-receipts', express.static(brandedReceiptsPath));
-console.log(`📁 Serving branded receipts from: ${brandedReceiptsPath}`);
+app.use('/branded-receipts', authMiddleware, express.static(brandedReceiptsPath));
+console.log(`📁 Serving branded receipts from: ${brandedReceiptsPath} (auth protected)`);
 
 // Shipping Labels PDFs
 const labelsPath = path.join(__dirname, '../labels');
 if (!fs.existsSync(labelsPath)) {
   fs.mkdirSync(labelsPath, { recursive: true });
 }
-app.use('/labels', express.static(labelsPath));
-console.log(`📁 Serving labels from: ${labelsPath}`);
+app.use('/labels', authMiddleware, express.static(labelsPath));
+console.log(`📁 Serving labels from: ${labelsPath} (auth protected)`);
 
 // ========================================
 // HEALTH CHECK
@@ -189,19 +248,19 @@ app.use('/api/client', clientRoutes);
 app.use('/api/admin', adminRoutes);
 
 // ========================================
-// INVENTORY MANAGEMENT ROUTES
+// INVENTORY MANAGEMENT ROUTES (auth required)
 // ========================================
-app.use('/api/inventory', inventoryRoutes);
+app.use('/api/inventory', authMiddleware, inventoryRoutes);
 
 // ========================================
-// PRICE TRACKING & ANALYTICS ROUTES
+// PRICE TRACKING & ANALYTICS ROUTES (auth required)
 // ========================================
-app.use('/api/prices', priceRoutes);
+app.use('/api/prices', authMiddleware, priceRoutes);
 
 // ========================================
 // BILL OF MATERIALS ROUTES
 // ========================================
-app.use('/api/bom', bomRoutes);
+app.use('/api/bom', authMiddleware, bomRoutes);
 
 // ========================================
 // MAKE.COM WEBHOOK ROUTES
@@ -209,46 +268,46 @@ app.use('/api/bom', bomRoutes);
 app.use('/api/webhooks', webhookRoutes);
 
 // ========================================
-// DISCOUNTS & SPECIAL CLIENTS ROUTES
+// DISCOUNTS & SPECIAL CLIENTS ROUTES (auth required)
 // ========================================
-app.use('/api/discounts', discountRoutes);
+app.use('/api/discounts', authMiddleware, discountRoutes);
 
 // ========================================
-// SHIPPING / GUÍAS ROUTES
+// SHIPPING / GUÍAS ROUTES (auth required)
 // ========================================
-app.use('/api/shipping', shippingRoutes);
+app.use('/api/shipping', authMiddleware, shippingRoutes);
 
 // ========================================
-// FILE UPLOAD ROUTES (Cloudinary)
+// FILE UPLOAD ROUTES (Cloudinary) (auth required)
 // ========================================
-app.use('/api/client/upload', uploadRoutes);
+app.use('/api/client/upload', authMiddleware, uploadRoutes);
 
 // ========================================
 // SUPPLIER RECEIPT ROUTES (Claude Vision)
 // ========================================
-app.use('/api/receipts', receiptRoutes);
+app.use('/api/receipts', authMiddleware, receiptRoutes);
 
 // ========================================
 // AI ASSISTANT ROUTES (Claude Chat)
 // ========================================
-app.use('/api/ai-assistant', aiAssistantRoutes);
+app.use('/api/ai-assistant', authMiddleware, aiAssistantRoutes);
 
 // ========================================
 // QUOTE GENERATION ROUTES
 // ========================================
-app.use('/api/quotes', quoteRoutes);
+app.use('/api/quotes', authMiddleware, quoteRoutes);
 
 // ========================================
-// MERCADO LIBRE INTEGRATION ROUTES
+// MERCADO LIBRE INTEGRATION ROUTES (auth required)
 // ========================================
-app.use('/api/mercadolibre', mercadolibreRoutes);
+app.use('/api/mercadolibre', authMiddleware, mercadolibreRoutes);
 
 // ========================================
 // FACEBOOK MARKETPLACE ROUTES
 // ========================================
 
-// Get Facebook upload statistics
-app.get('/api/facebook/stats', async (req, res) => {
+// Get Facebook upload statistics (auth required)
+app.get('/api/facebook/stats', authMiddleware, async (req, res) => {
   try {
     const stats = await facebookMarketplace.getUploadStats();
     const schedulerStatus = facebookScheduler.getSchedulerStatus();
@@ -263,8 +322,8 @@ app.get('/api/facebook/stats', async (req, res) => {
   }
 });
 
-// Get pending uploads
-app.get('/api/facebook/pending', async (req, res) => {
+// Get pending uploads (auth required)
+app.get('/api/facebook/pending', authMiddleware, async (req, res) => {
   try {
     const pending = await facebookMarketplace.getPendingUploads();
     res.json({ success: true, count: pending.length, data: pending });
@@ -273,8 +332,8 @@ app.get('/api/facebook/pending', async (req, res) => {
   }
 });
 
-// Queue a design for Facebook upload
-app.post('/api/facebook/queue', async (req, res) => {
+// Queue a design for Facebook upload (auth required)
+app.post('/api/facebook/queue', authMiddleware, async (req, res) => {
   try {
     const { orderId, orderItemId, imageUrl, title } = req.body;
 
@@ -295,8 +354,8 @@ app.post('/api/facebook/queue', async (req, res) => {
   }
 });
 
-// Check if an image is uploaded to Facebook
-app.get('/api/facebook/status', async (req, res) => {
+// Check if an image is uploaded to Facebook (auth required)
+app.get('/api/facebook/status', authMiddleware, async (req, res) => {
   try {
     const { imageUrl } = req.query;
 
@@ -314,8 +373,8 @@ app.get('/api/facebook/status', async (req, res) => {
   }
 });
 
-// Get Facebook status for an order
-app.get('/api/facebook/order/:orderId', async (req, res) => {
+// Get Facebook status for an order (auth required)
+app.get('/api/facebook/order/:orderId', authMiddleware, async (req, res) => {
   try {
     const { orderId } = req.params;
     const status = await facebookMarketplace.getOrderFacebookStatus(orderId);
@@ -325,8 +384,8 @@ app.get('/api/facebook/order/:orderId', async (req, res) => {
   }
 });
 
-// Get pending uploads data for local bot to process
-app.get('/api/facebook/export', async (req, res) => {
+// Get pending uploads data for local bot to process (auth required)
+app.get('/api/facebook/export', authMiddleware, async (req, res) => {
   try {
     const pending = await facebookMarketplace.getPendingUploads();
 
@@ -350,8 +409,8 @@ app.get('/api/facebook/export', async (req, res) => {
   }
 });
 
-// Mark listings as uploaded (called by local bot after success)
-app.post('/api/facebook/mark-uploaded', async (req, res) => {
+// Mark listings as uploaded (called by local bot after success) (auth required)
+app.post('/api/facebook/mark-uploaded', authMiddleware, async (req, res) => {
   try {
     const { listingIds } = req.body;
 
@@ -369,15 +428,15 @@ app.post('/api/facebook/mark-uploaded', async (req, res) => {
 // ========================================
 // EMPLOYEE DASHBOARD ROUTES
 // ========================================
-app.use('/api/employees', employeeRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/gallery', galleryRoutes);
-app.use('/api/notes', notesRoutes);
-app.use('/api/knowledge', knowledgeRoutes);
-app.use('/api/leads', leadRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
-app.use('/api/whatsapp', whatsappTemplateRoutes);
-app.use('/api/t1', t1Routes);
+app.use('/api/employees', authMiddleware, employeeRoutes);
+app.use('/api/tasks', authMiddleware, taskRoutes);
+app.use('/api/gallery', authMiddleware, galleryRoutes);
+app.use('/api/notes', authMiddleware, notesRoutes);
+app.use('/api/knowledge', authMiddleware, knowledgeRoutes);
+app.use('/api/leads', authMiddleware, leadRoutes);
+app.use('/api/whatsapp', authMiddleware, whatsappRoutes);
+app.use('/api/whatsapp', authMiddleware, whatsappTemplateRoutes);
+app.use('/api/t1', authMiddleware, t1Routes);
 
 // ========================================
 // PUSH NOTIFICATION ENDPOINTS
@@ -389,7 +448,7 @@ app.get('/api/push/vapid-public-key', (req, res) => {
   res.json({ success: true, publicKey: key });
 });
 
-app.post('/api/push/subscribe', async (req, res) => {
+app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
   try {
     const { subscription } = req.body;
     if (!subscription || !subscription.endpoint || !subscription.keys) {
@@ -403,7 +462,7 @@ app.post('/api/push/subscribe', async (req, res) => {
   }
 });
 
-app.post('/api/push/unsubscribe', async (req, res) => {
+app.post('/api/push/unsubscribe', authMiddleware, async (req, res) => {
   try {
     const { endpoint } = req.body;
     if (!endpoint) return res.status(400).json({ success: false, error: 'Endpoint required' });
@@ -414,7 +473,7 @@ app.post('/api/push/unsubscribe', async (req, res) => {
   }
 });
 
-app.post('/api/push/test', async (req, res) => {
+app.post('/api/push/test', authMiddleware, async (req, res) => {
   try {
     const type = req.body.type || 'test';
     let result;
@@ -438,7 +497,7 @@ app.post('/api/push/test', async (req, res) => {
 // ========================================
 
 // Create order in Notion and local database
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', authMiddleware, async (req, res) => {
   try {
     const result = await notionSync.createOrderBothSystems(req.body);
 
@@ -464,7 +523,7 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // Quick-entry: search clients by phone for autocomplete
-app.get('/api/clients/search', async (req, res) => {
+app.get('/api/clients/search', authMiddleware, async (req, res) => {
   try {
     const { phone } = req.query;
 
@@ -488,7 +547,7 @@ app.get('/api/clients/search', async (req, res) => {
 });
 
 // Quick-entry: create order (DB only, no Notion)
-app.post('/api/orders/quick', async (req, res) => {
+app.post('/api/orders/quick', authMiddleware, async (req, res) => {
   try {
     const result = await notionSync.createOrderBothSystems(req.body, { skipNotion: true });
 
@@ -535,7 +594,7 @@ app.post('/api/orders/quick', async (req, res) => {
 });
 
 // Get orders with filters - Query PostgreSQL directly
-app.get('/api/orders', async (req, res) => {
+app.get('/api/orders', authMiddleware, async (req, res) => {
   try {
     console.log('🔍 Querying orders from PostgreSQL...');
 
@@ -732,7 +791,7 @@ app.get('/api/orders', async (req, res) => {
 });
 
 // Get orders for calendar view with production deadlines
-app.get('/api/orders/calendar', async (req, res) => {
+app.get('/api/orders/calendar', authMiddleware, async (req, res) => {
   try {
     const { start, end } = req.query;
 
@@ -879,7 +938,7 @@ function computeOccurrences(reminder, startDate, endDate) {
 }
 
 // Get reminders for a date range (computes recurring occurrences)
-app.get('/api/reminders', async (req, res) => {
+app.get('/api/reminders', authMiddleware, async (req, res) => {
   try {
     const { start, end } = req.query;
     const startDate = start || new Date().toISOString().split('T')[0];
@@ -934,7 +993,7 @@ app.get('/api/reminders', async (req, res) => {
 });
 
 // Create a new reminder
-app.post('/api/reminders', async (req, res) => {
+app.post('/api/reminders', authMiddleware, async (req, res) => {
   try {
     const { title, description, category, amount, color, icon, recurrenceType, startDate, endDate } = req.body;
 
@@ -956,7 +1015,7 @@ app.post('/api/reminders', async (req, res) => {
 });
 
 // Mark a reminder occurrence as completed
-app.post('/api/reminders/:id/complete', async (req, res) => {
+app.post('/api/reminders/:id/complete', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { date, notes } = req.body;
@@ -976,7 +1035,7 @@ app.post('/api/reminders/:id/complete', async (req, res) => {
 });
 
 // Uncomplete a reminder occurrence
-app.delete('/api/reminders/:id/complete', async (req, res) => {
+app.delete('/api/reminders/:id/complete', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { date } = req.body;
@@ -993,7 +1052,7 @@ app.delete('/api/reminders/:id/complete', async (req, res) => {
 });
 
 // Delete a reminder
-app.delete('/api/reminders/:id', async (req, res) => {
+app.delete('/api/reminders/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     await query('DELETE FROM calendar_reminders WHERE id = $1', [id]);
@@ -1005,7 +1064,7 @@ app.delete('/api/reminders/:id', async (req, res) => {
 });
 
 // Get capacity info for a date range
-app.get('/api/orders/capacity', async (req, res) => {
+app.get('/api/orders/capacity', authMiddleware, async (req, res) => {
   try {
     const { start, end } = req.query;
     const dailyCapacity = 2500; // Configurable
@@ -1060,7 +1119,7 @@ app.get('/api/orders/capacity', async (req, res) => {
 });
 
 // Find next available production date with capacity
-app.get('/api/orders/next-available-date', async (req, res) => {
+app.get('/api/orders/next-available-date', authMiddleware, async (req, res) => {
   try {
     const { pieces, startDate } = req.query;
     const piecesNeeded = parseInt(pieces) || 100;
@@ -1128,7 +1187,7 @@ app.get('/api/orders/next-available-date', async (req, res) => {
 });
 
 // Get single order by ID
-app.get('/api/orders/:orderId', async (req, res) => {
+app.get('/api/orders/:orderId', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
@@ -1298,7 +1357,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
 });
 
 // Update order status
-app.patch('/api/orders/:orderId/status', async (req, res) => {
+app.patch('/api/orders/:orderId/status', authMiddleware, async (req, res) => {
   try {
     const { status } = req.body;
     const orderId = parseInt(req.params.orderId);
@@ -1347,7 +1406,7 @@ app.patch('/api/orders/:orderId/status', async (req, res) => {
 });
 
 // Sync order to Notion
-app.post('/api/orders/:orderId/sync', async (req, res) => {
+app.post('/api/orders/:orderId/sync', authMiddleware, async (req, res) => {
   try {
     const result = await notionSync.syncOrderToNotion(parseInt(req.params.orderId));
 
@@ -1366,7 +1425,7 @@ app.post('/api/orders/:orderId/sync', async (req, res) => {
 });
 
 // Bulk sync orders to Notion
-app.post('/api/orders/sync/bulk', async (req, res) => {
+app.post('/api/orders/sync/bulk', authMiddleware, async (req, res) => {
   try {
     const limit = req.body.limit || 100;
     const result = await notionSync.syncAllOrdersToNotion(limit);
@@ -1386,7 +1445,7 @@ app.post('/api/orders/sync/bulk', async (req, res) => {
 });
 
 // Approve order
-app.post('/api/orders/:orderId/approve', async (req, res) => {
+app.post('/api/orders/:orderId/approve', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { actualDepositAmount } = req.body;
@@ -1599,7 +1658,7 @@ app.post('/api/orders/:orderId/approve', async (req, res) => {
 });
 
 // Reject order
-app.post('/api/orders/:orderId/reject', async (req, res) => {
+app.post('/api/orders/:orderId/reject', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { reason } = req.body;
@@ -1639,7 +1698,7 @@ app.post('/api/orders/:orderId/reject', async (req, res) => {
 });
 
 // Upload first payment proof (admin upload)
-app.post('/api/orders/:orderId/payment-proof', async (req, res) => {
+app.post('/api/orders/:orderId/payment-proof', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { paymentProofUrl } = req.body;
@@ -1683,7 +1742,7 @@ app.post('/api/orders/:orderId/payment-proof', async (req, res) => {
 });
 
 // Upload second payment receipt (for clients)
-app.post('/api/orders/:orderId/second-payment', async (req, res) => {
+app.post('/api/orders/:orderId/second-payment', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { paymentProof, paymentProofUrl } = req.body; // Base64 encoded image or Cloudinary URL
@@ -1936,7 +1995,7 @@ app.post('/api/orders/:orderId/second-payment', async (req, res) => {
 });
 
 // Confirm second payment and complete order
-app.post('/api/orders/:orderId/confirm-second-payment', async (req, res) => {
+app.post('/api/orders/:orderId/confirm-second-payment', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
@@ -2043,7 +2102,7 @@ app.post('/api/orders/:orderId/confirm-second-payment', async (req, res) => {
 });
 
 // Archive order (mark as completed or cancelled)
-app.post('/api/orders/:orderId/archive', async (req, res) => {
+app.post('/api/orders/:orderId/archive', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { archiveStatus } = req.body;
@@ -2085,7 +2144,7 @@ app.post('/api/orders/:orderId/archive', async (req, res) => {
  * POST /api/orders/:orderId/production-sheet
  * Upload/save production sheet URL for an order
  */
-app.post('/api/orders/:orderId/production-sheet', async (req, res) => {
+app.post('/api/orders/:orderId/production-sheet', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { productionSheetUrl } = req.body;
@@ -2132,7 +2191,7 @@ app.post('/api/orders/:orderId/production-sheet', async (req, res) => {
  * DELETE /api/orders/:orderId/production-sheet
  * Remove production sheet from an order
  */
-app.delete('/api/orders/:orderId/production-sheet', async (req, res) => {
+app.delete('/api/orders/:orderId/production-sheet', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
@@ -2174,7 +2233,7 @@ app.delete('/api/orders/:orderId/production-sheet', async (req, res) => {
  * Generate a custom reference sheet PDF with user-provided data (AXKAN ORDEN DE COMPRA)
  * Optionally saves to an order if orderId is provided
  */
-app.post('/api/orders/reference-sheet/generate', async (req, res) => {
+app.post('/api/orders/reference-sheet/generate', authMiddleware, async (req, res) => {
   try {
     const { orderName, instructions, numDesigns, designs, orderId } = req.body;
 
@@ -2238,7 +2297,7 @@ app.post('/api/orders/reference-sheet/generate', async (req, res) => {
  * POST /api/orders/:orderId/reference-sheet
  * Generate a reference sheet PDF for production tracking
  */
-app.post('/api/orders/:orderId/reference-sheet', async (req, res) => {
+app.post('/api/orders/:orderId/reference-sheet', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
@@ -2334,7 +2393,7 @@ app.post('/api/orders/:orderId/reference-sheet', async (req, res) => {
  * POST /api/orders/:orderId/reference-sheet/save
  * Generate and save reference sheet as an attachment to the order
  */
-app.post('/api/orders/:orderId/reference-sheet/save', async (req, res) => {
+app.post('/api/orders/:orderId/reference-sheet/save', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
@@ -2442,7 +2501,7 @@ app.post('/api/orders/:orderId/reference-sheet/save', async (req, res) => {
  * PUT /api/orders/:orderId/items/:itemId
  * Update notes and attachments for a specific order item
  */
-app.put('/api/orders/:orderId/items/:itemId', async (req, res) => {
+app.put('/api/orders/:orderId/items/:itemId', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const itemId = parseInt(req.params.itemId);
@@ -2491,7 +2550,7 @@ app.put('/api/orders/:orderId/items/:itemId', async (req, res) => {
  * POST /api/orders/:orderId/items/:itemId/attachment
  * Add an attachment to an order item
  */
-app.post('/api/orders/:orderId/items/:itemId/attachment', async (req, res) => {
+app.post('/api/orders/:orderId/items/:itemId/attachment', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const itemId = parseInt(req.params.itemId);
@@ -2565,7 +2624,7 @@ app.post('/api/orders/:orderId/items/:itemId/attachment', async (req, res) => {
  * DELETE /api/orders/:orderId/items/:itemId/attachment
  * Remove an attachment from an order item
  */
-app.delete('/api/orders/:orderId/items/:itemId/attachment', async (req, res) => {
+app.delete('/api/orders/:orderId/items/:itemId/attachment', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const itemId = parseInt(req.params.itemId);
@@ -2638,7 +2697,7 @@ app.delete('/api/orders/:orderId/items/:itemId/attachment', async (req, res) => 
  * PUT /api/orders/:orderId/items/:itemId/modify
  * Modify an existing order item's quantity
  */
-app.put('/api/orders/:orderId/items/:itemId/modify', async (req, res) => {
+app.put('/api/orders/:orderId/items/:itemId/modify', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const itemId = parseInt(req.params.itemId);
@@ -2822,7 +2881,7 @@ app.put('/api/orders/:orderId/items/:itemId/modify', async (req, res) => {
  * POST /api/orders/:orderId/items/add
  * Add a new product to an existing order
  */
-app.post('/api/orders/:orderId/items/add', async (req, res) => {
+app.post('/api/orders/:orderId/items/add', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { productId, productName, quantity, unitPrice, reason } = req.body;
@@ -2966,7 +3025,7 @@ app.post('/api/orders/:orderId/items/add', async (req, res) => {
  * DELETE /api/orders/:orderId/items/:itemId
  * Remove a product from an existing order
  */
-app.delete('/api/orders/:orderId/items/:itemId', async (req, res) => {
+app.delete('/api/orders/:orderId/items/:itemId', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const itemId = parseInt(req.params.itemId);
@@ -3041,7 +3100,7 @@ app.delete('/api/orders/:orderId/items/:itemId', async (req, res) => {
  * PUT /api/orders/:orderId/notes
  * Update internal notes for an order
  */
-app.put('/api/orders/:orderId/notes', async (req, res) => {
+app.put('/api/orders/:orderId/notes', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { internalNotes } = req.body;
@@ -3082,7 +3141,7 @@ app.put('/api/orders/:orderId/notes', async (req, res) => {
  * POST /api/orders/:orderId/attachment
  * Add an attachment to an order
  */
-app.post('/api/orders/:orderId/attachment', async (req, res) => {
+app.post('/api/orders/:orderId/attachment', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { url, filename, type } = req.body;
@@ -3155,7 +3214,7 @@ app.post('/api/orders/:orderId/attachment', async (req, res) => {
  * DELETE /api/orders/:orderId/attachment
  * Remove an attachment from an order
  */
-app.delete('/api/orders/:orderId/attachment', async (req, res) => {
+app.delete('/api/orders/:orderId/attachment', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
     const { url } = req.body;
@@ -3224,7 +3283,7 @@ app.delete('/api/orders/:orderId/attachment', async (req, res) => {
 // ========================================
 // This endpoint regenerates a PDF receipt for an order
 // Useful when the original file is lost (e.g., after server redeploy on Render)
-app.get('/api/orders/:orderId/receipt/download', async (req, res) => {
+app.get('/api/orders/:orderId/receipt/download', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
@@ -3327,7 +3386,7 @@ app.get('/api/orders/:orderId/receipt/download', async (req, res) => {
 });
 
 // Process receipt with OCR and auto-approve if amount matches
-app.post('/api/orders/:orderId/process-receipt', async (req, res) => {
+app.post('/api/orders/:orderId/process-receipt', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
@@ -3439,7 +3498,7 @@ app.post('/api/orders/:orderId/process-receipt', async (req, res) => {
 // POST /api/orders/:orderId/verify-payment
 // Uses Claude Vision to analyze payment receipts
 // ========================================
-app.post('/api/orders/:orderId/verify-payment', async (req, res) => {
+app.post('/api/orders/:orderId/verify-payment', authMiddleware, async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
@@ -3687,7 +3746,7 @@ app.post('/api/orders/:orderId/verify-payment', async (req, res) => {
  * GET /api/alerts
  * Get all order alerts categorized by urgency
  */
-app.get('/api/alerts', async (req, res) => {
+app.get('/api/alerts', authMiddleware, async (req, res) => {
   try {
     const alerts = await orderAlerts.getOrderAlerts();
 
@@ -3708,7 +3767,7 @@ app.get('/api/alerts', async (req, res) => {
  * GET /api/alerts/summary
  * Get a simple count summary of alerts
  */
-app.get('/api/alerts/summary', async (req, res) => {
+app.get('/api/alerts/summary', authMiddleware, async (req, res) => {
   try {
     const summary = await orderAlerts.getAlertsSummary();
 
@@ -3730,7 +3789,7 @@ app.get('/api/alerts/summary', async (req, res) => {
  * Manually trigger the daily digest email
  * Body: { email: "optional-override@email.com" }
  */
-app.post('/api/alerts/send-digest', async (req, res) => {
+app.post('/api/alerts/send-digest', authMiddleware, async (req, res) => {
   try {
     // Allow email override for testing
     const targetEmail = req.body.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
@@ -3771,7 +3830,7 @@ app.post('/api/alerts/send-digest', async (req, res) => {
 // ========================================
 
 // Get analytics summary
-app.get('/api/analytics', async (req, res) => {
+app.get('/api/analytics', authMiddleware, async (req, res) => {
   try {
     const periodType = req.query.period || 'this_month';
     const summary = await analyticsAgent.getAnalytics(periodType);
@@ -3790,7 +3849,7 @@ app.get('/api/analytics', async (req, res) => {
 });
 
 // Get revenue for specific date range
-app.get('/api/analytics/revenue', async (req, res) => {
+app.get('/api/analytics/revenue', authMiddleware, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
@@ -3820,7 +3879,7 @@ app.get('/api/analytics/revenue', async (req, res) => {
 });
 
 // Get top products
-app.get('/api/analytics/products/top', async (req, res) => {
+app.get('/api/analytics/products/top', authMiddleware, async (req, res) => {
   try {
     const periodType = req.query.period || 'this_month';
     const limit = parseInt(req.query.limit) || 10;
@@ -3846,7 +3905,7 @@ app.get('/api/analytics/products/top', async (req, res) => {
 });
 
 // Get top clients
-app.get('/api/analytics/clients/top', async (req, res) => {
+app.get('/api/analytics/clients/top', authMiddleware, async (req, res) => {
   try {
     const periodType = req.query.period || 'this_month';
     const limit = parseInt(req.query.limit) || 10;
@@ -3879,7 +3938,7 @@ app.get('/api/analytics/clients/top', async (req, res) => {
  * GET /api/analytics/dashboard
  * Get comprehensive dashboard data with custom date range
  */
-app.get('/api/analytics/dashboard', async (req, res) => {
+app.get('/api/analytics/dashboard', authMiddleware, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
@@ -4109,7 +4168,7 @@ app.get('/api/analytics/dashboard', async (req, res) => {
  * GET /api/analytics/products/:productName
  * Get detailed analytics for a specific product
  */
-app.get('/api/analytics/products/:productName', async (req, res) => {
+app.get('/api/analytics/products/:productName', authMiddleware, async (req, res) => {
   try {
     const { productName } = req.params;
     const { startDate, endDate } = req.query;
@@ -4176,7 +4235,7 @@ app.get('/api/analytics/products/:productName', async (req, res) => {
 });
 
 // Generate and send daily report
-app.post('/api/reports/daily/send', async (req, res) => {
+app.post('/api/reports/daily/send', authMiddleware, async (req, res) => {
   try {
     const date = req.body.date ? new Date(req.body.date) : new Date();
     const result = await analyticsAgent.scheduler.triggerDailyReport(date);
@@ -4196,7 +4255,7 @@ app.post('/api/reports/daily/send', async (req, res) => {
 });
 
 // Generate and send monthly report
-app.post('/api/reports/monthly/send', async (req, res) => {
+app.post('/api/reports/monthly/send', authMiddleware, async (req, res) => {
   try {
     const { year, month } = req.body;
 
@@ -4224,7 +4283,7 @@ app.post('/api/reports/monthly/send', async (req, res) => {
 });
 
 // Get scheduled jobs info
-app.get('/api/reports/schedule', (req, res) => {
+app.get('/api/reports/schedule', authMiddleware, (req, res) => {
   try {
     const jobs = analyticsAgent.scheduler.getScheduledJobs();
 
@@ -4244,15 +4303,16 @@ app.get('/api/reports/schedule', (req, res) => {
 // Test email configuration
 app.post('/api/test/email', async (req, res) => {
   try {
-    const result = await analyticsAgent.emailSender.testEmailConfig();
-
-    res.json(result);
+    const to = req.body.to || process.env.ADMIN_EMAIL || process.env.EMAIL_USER || 'test@example.com';
+    const result = await sendEmail({
+      to,
+      subject: 'AXKAN Test Email',
+      html: '<div style="font-family:Arial;padding:20px;"><h2 style="color:#E72A88;">AXKAN Email Test</h2><p>If you see this, email is working correctly.</p></div>'
+    });
+    res.json({ success: true, to, ...result });
   } catch (error) {
     console.error('Error testing email:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -4264,7 +4324,7 @@ app.post('/api/test/email', async (req, res) => {
  * GET /api/salespeople
  * List all salespeople
  */
-app.get('/api/salespeople', async (req, res) => {
+app.get('/api/salespeople', authMiddleware, async (req, res) => {
   try {
     const { active_only } = req.query;
 
@@ -4309,7 +4369,7 @@ app.get('/api/salespeople', async (req, res) => {
  * POST /api/salespeople
  * Create a new salesperson
  */
-app.post('/api/salespeople', async (req, res) => {
+app.post('/api/salespeople', authMiddleware, async (req, res) => {
   try {
     const { name, phone, email, commission_rate, notes } = req.body;
 
@@ -4340,7 +4400,7 @@ app.post('/api/salespeople', async (req, res) => {
  * PUT /api/salespeople/:id
  * Update a salesperson
  */
-app.put('/api/salespeople/:id', async (req, res) => {
+app.put('/api/salespeople/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, phone, email, commission_rate, is_active, notes } = req.body;
@@ -4377,7 +4437,7 @@ app.put('/api/salespeople/:id', async (req, res) => {
  * DELETE /api/salespeople/:id
  * Delete a salesperson (soft delete - set inactive)
  */
-app.delete('/api/salespeople/:id', async (req, res) => {
+app.delete('/api/salespeople/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -4406,7 +4466,7 @@ app.delete('/api/salespeople/:id', async (req, res) => {
  * GET /api/commissions
  * Get commission summary for all salespeople
  */
-app.get('/api/commissions', async (req, res) => {
+app.get('/api/commissions', authMiddleware, async (req, res) => {
   try {
     const { start_date, end_date, salesperson } = req.query;
 
@@ -4478,7 +4538,7 @@ app.get('/api/commissions', async (req, res) => {
  * GET /api/commissions/monthly
  * Get monthly commission breakdown
  */
-app.get('/api/commissions/monthly', async (req, res) => {
+app.get('/api/commissions/monthly', authMiddleware, async (req, res) => {
   try {
     const { salesperson, months, start_date, end_date } = req.query;
     const params = [];
@@ -4539,7 +4599,7 @@ app.get('/api/commissions/monthly', async (req, res) => {
  * GET /api/commissions/:salesperson/orders
  * Get orders for a specific salesperson
  */
-app.get('/api/commissions/:salesperson/orders', async (req, res) => {
+app.get('/api/commissions/:salesperson/orders', authMiddleware, async (req, res) => {
   try {
     const { salesperson } = req.params;
     const { start_date, end_date, status } = req.query;
@@ -4586,7 +4646,7 @@ app.get('/api/commissions/:salesperson/orders', async (req, res) => {
 });
 
 // Check email environment variables (diagnostic)
-app.get('/api/test/email-config', (req, res) => {
+app.get('/api/test/email-config', authMiddleware, (req, res) => {
   const config = {
     RESEND_API_KEY: process.env.RESEND_API_KEY ? `SET (${process.env.RESEND_API_KEY.length} chars)` : 'NOT SET',
     EMAIL_SERVICE: process.env.EMAIL_SERVICE || 'NOT SET',
@@ -4661,7 +4721,7 @@ function getStateFromPostal(postalCode) {
   return MX_POSTAL_STATE[code.substring(0, 2)] || null;
 }
 
-app.get('/api/clients', async (req, res) => {
+app.get('/api/clients', authMiddleware, async (req, res) => {
   try {
     const { search, city, state, hasAddress, recent, sort = 'recent', page = 1, limit = 50 } = req.query;
 
@@ -4817,7 +4877,7 @@ app.get('/api/clients', async (req, res) => {
  * POST /api/clients/autocomplete-addresses
  * Auto-fill city/state/colonia from postal codes for clients missing those fields
  */
-app.post('/api/clients/autocomplete-addresses', async (req, res) => {
+app.post('/api/clients/autocomplete-addresses', authMiddleware, async (req, res) => {
   try {
     // Find clients with a postal code (either column) but missing city, state, or colonia
     const result = await query(`
@@ -5015,7 +5075,7 @@ async function reverseGeocodeNominatim(lat, lng) {
   } catch (e) { console.error('Error reverse geocoding:', e.message); return null; }
 }
 
-app.post('/api/clients/from-google-maps', async (req, res) => {
+app.post('/api/clients/from-google-maps', authMiddleware, async (req, res) => {
   try {
     const { url: rawUrl } = req.body;
     if (!rawUrl) return res.status(400).json({ success: false, error: 'URL is required' });
@@ -5105,7 +5165,7 @@ app.post('/api/clients/from-google-maps', async (req, res) => {
  * POST /api/shipping/labels/bulk
  * Generate a PDF with shipping labels for multiple clients
  */
-app.post('/api/shipping/labels/bulk', async (req, res) => {
+app.post('/api/shipping/labels/bulk', authMiddleware, async (req, res) => {
   try {
     const { clientIds } = req.body;
 
@@ -5246,7 +5306,7 @@ app.post('/api/shipping/labels/bulk', async (req, res) => {
  * GET /api/clients/:id
  * Get single client by ID
  */
-app.get('/api/clients/:id', async (req, res) => {
+app.get('/api/clients/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -5287,7 +5347,7 @@ app.get('/api/clients/:id', async (req, res) => {
  * GET /api/payment-notes/client/:clientId
  * List all cuentas for a client
  */
-app.get('/api/payment-notes/client/:clientId', async (req, res) => {
+app.get('/api/payment-notes/client/:clientId', authMiddleware, async (req, res) => {
   try {
     const { clientId } = req.params;
     const result = await query(
@@ -5305,7 +5365,7 @@ app.get('/api/payment-notes/client/:clientId', async (req, res) => {
  * GET /api/payment-notes/cuenta/:cuentaId
  * Get a single cuenta by ID
  */
-app.get('/api/payment-notes/cuenta/:cuentaId', async (req, res) => {
+app.get('/api/payment-notes/cuenta/:cuentaId', authMiddleware, async (req, res) => {
   try {
     const { cuentaId } = req.params;
     const result = await query('SELECT * FROM payment_notes WHERE id = $1', [cuentaId]);
@@ -5323,7 +5383,7 @@ app.get('/api/payment-notes/cuenta/:cuentaId', async (req, res) => {
  * POST /api/payment-notes
  * Create a new cuenta for a client
  */
-app.post('/api/payment-notes', async (req, res) => {
+app.post('/api/payment-notes', authMiddleware, async (req, res) => {
   try {
     const { clientId, name, data } = req.body;
     if (!clientId) return res.status(400).json({ success: false, error: 'clientId is required' });

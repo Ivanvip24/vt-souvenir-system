@@ -44,6 +44,8 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
   try {
     const fromEmail = process.env.COMPANY_EMAIL || process.env.EMAIL_USER || 'informacion@axkan.art';
     const fromName = process.env.COMPANY_NAME || 'AXKAN - Recuerdos Hechos Souvenir';
+    // Resend requires a verified domain; use RESEND_FROM or onboarding@resend.dev as fallback
+    const resendFrom = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
     console.log(`📧 Sending email to: ${to}`);
     console.log(`   Subject: ${subject}`);
@@ -62,7 +64,7 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
       }).filter(att => att.content);
 
       const msg = {
-        from: `${fromName} <${fromEmail}>`,
+        from: `${fromName} <${resendFrom}>`,
         to,
         subject,
         html,
