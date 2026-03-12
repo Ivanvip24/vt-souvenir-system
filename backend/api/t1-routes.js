@@ -98,20 +98,34 @@ router.post('/tracking/link', async (req, res) => {
     // Build the T1 tracking URL
     const trackingUrl = `https://t1envios.com/track/t?trackingnumber=${encodeURIComponent(trackingNumber)}`;
 
-    // Insert or update shipping_labels record
-    const result = await query(`
-      INSERT INTO shipping_labels (
-        order_id, client_id, tracking_number, tracking_url,
-        carrier, carrier_source, status, created_at
-      ) VALUES ($1, $2, $3, $4, $5, 't1', 'label_generated', NOW())
-      ON CONFLICT (tracking_number)
-      DO UPDATE SET
-        order_id = COALESCE(EXCLUDED.order_id, shipping_labels.order_id),
-        client_id = COALESCE(EXCLUDED.client_id, shipping_labels.client_id),
-        carrier = COALESCE(EXCLUDED.carrier, shipping_labels.carrier),
-        tracking_url = EXCLUDED.tracking_url
-      RETURNING *
-    `, [orderId || null, clientId || null, trackingNumber, trackingUrl, carrier || 'unknown']);
+    // Check if tracking number already exists
+    const existing = await query(
+      `SELECT id FROM shipping_labels WHERE tracking_number = $1 AND carrier_source = 't1' LIMIT 1`,
+      [trackingNumber]
+    );
+
+    let result;
+    if (existing.rows.length > 0) {
+      // Update existing record
+      result = await query(`
+        UPDATE shipping_labels SET
+          order_id = COALESCE($1, order_id),
+          client_id = COALESCE($2, client_id),
+          carrier = COALESCE($3, carrier),
+          tracking_url = $4
+        WHERE id = $5
+        RETURNING *
+      `, [orderId || null, clientId || null, carrier || null, trackingUrl, existing.rows[0].id]);
+    } else {
+      // Insert new record
+      result = await query(`
+        INSERT INTO shipping_labels (
+          order_id, client_id, tracking_number, tracking_url,
+          carrier, carrier_source, status, created_at
+        ) VALUES ($1, $2, $3, $4, $5, 't1', 'label_generated', NOW())
+        RETURNING *
+      `, [orderId || null, clientId || null, trackingNumber, trackingUrl, carrier || 'unknown']);
+    }
 
     res.json({
       success: true,
