@@ -2346,10 +2346,13 @@ async function handleStripePayment() {
   const stripeBtn = document.getElementById('stripe-pay-btn');
   const returnNotice = document.getElementById('stripe-return-notice');
 
-  // Show the return notice FIRST so the user reads it
+  // Show the return banner FIRST and scroll to top so it's unmissable
   if (returnNotice) {
     returnNotice.style.display = 'block';
-    returnNotice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      returnNotice.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
   }
 
   // Update button to "re-open" style
@@ -2358,10 +2361,10 @@ async function handleStripePayment() {
     stripeBtn.style.opacity = '0.7';
   }
 
-  // Open Stripe AFTER a delay so the user sees the instructions first
+  // Open Stripe AFTER a longer delay so the user fully reads the warning
   setTimeout(() => {
     window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
-  }, 1500);
+  }, 2500);
 }
 
 async function handleOrderSubmit() {

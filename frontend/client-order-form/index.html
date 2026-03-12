@@ -617,6 +617,16 @@
                 <div id="stripe-pay-section" style="display: none;">
                     <h2>Pago con Tarjeta</h2>
 
+                    <!-- Return banner — appears ABOVE everything after clicking pay -->
+                    <div id="stripe-return-notice" class="stripe-return-banner" style="display: none;">
+                        <div class="stripe-return-icon">⚠️</div>
+                        <p class="stripe-return-title">¡REGRESA AQUÍ DESPUÉS DE PAGAR!</p>
+                        <p class="stripe-return-subtitle">Se abrió una ventana de Stripe. Cuando termines de pagar, vuelve a esta página y presiona el botón de abajo.</p>
+                        <button id="btn-ya-pague-stripe" class="btn btn-large btn-ya-pague">
+                            Ya pagué →
+                        </button>
+                    </div>
+
                     <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(99, 91, 255, 0.1), rgba(79, 70, 229, 0.1)); border-radius: 16px; margin-bottom: 24px;">
                         <div style="font-size: 13px; color: var(--gray-500); margin-bottom: 6px;">Monto a pagar (anticipo 50%)</div>
                         <strong id="stripe-amount-preview" class="highlight-amount" style="font-size: 32px;"></strong>
@@ -629,19 +639,6 @@
                         <p style="text-align: center; font-size: 12px; color: var(--gray-600); margin-top: 10px;">
                             Pago seguro con Stripe
                         </p>
-                    </div>
-
-                    <!-- After Stripe payment, show return instructions + button -->
-                    <div id="stripe-return-notice" style="display: none; margin-top: 24px; text-align: center; padding: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px;">
-                        <p style="font-size: 15px; font-weight: 600; color: #10b981; margin-bottom: 4px;">
-                            Se abrio una ventana de pago
-                        </p>
-                        <p style="font-size: 13px; color: var(--gray-400); margin-bottom: 16px;">
-                            Despues de pagar, regresa aqui y presiona el boton de abajo.
-                        </p>
-                        <button id="btn-ya-pague-stripe" class="btn btn-large btn-ya-pague">
-                            Ya pague →
-                        </button>
                     </div>
                 </div>
 

@@ -3592,6 +3592,47 @@ input:focus:not(:focus-visible) {
 }
 
 /* ==========================================
+   STEP 4B: Stripe return banner
+   ========================================== */
+
+.stripe-return-banner {
+    margin-top: 20px;
+    padding: 24px 20px 20px;
+    background: #fffbeb;
+    border: 2px solid #f59e0b;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    animation: returnBannerPulse 2s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3);
+}
+
+@keyframes returnBannerPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+}
+
+.stripe-return-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+}
+
+.stripe-return-title {
+    font-family: 'RL Aqva', 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: #92400e;
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+}
+
+.stripe-return-subtitle {
+    font-size: 14px;
+    color: #a16207;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+/* ==========================================
    STEP 4B: "Ya pagué" button
    ========================================== */
 
