@@ -7105,6 +7105,11 @@ textarea:disabled {
   font-size: 14px;
 }
 
+/* T1-only action buttons (shown when T1 filter active) */
+.t1-only-btn.hidden {
+  display: none !important;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -10118,6 +10123,22 @@ body.mobile-menu-open {
 .guias-filter-chip--active .guias-filter-count {
     background: rgba(255,255,255,0.25);
     color: white;
+}
+
+.guias-filter-divider {
+    width: 1px;
+    background: var(--gray-200);
+    margin: 4px 2px;
+}
+
+.guias-filter-chip--t1 {
+    border-color: #0891b2;
+    color: #0891b2;
+}
+
+.guias-filter-chip--t1.guias-filter-chip--active {
+    background: #0891b2 !important;
+    border-color: #0891b2 !important;
 }
 
 .guias-filter-count {

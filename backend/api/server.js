@@ -31,6 +31,7 @@ import quoteRoutes from './quote-routes.js';
 import leadRoutes from './lead-routes.js';
 import whatsappRoutes from './whatsapp-routes.js';
 import whatsappTemplateRoutes from './whatsapp-template-routes.js';
+import t1Routes from './t1-routes.js';
 import * as knowledgeIndex from '../services/knowledge-index.js';
 import * as knowledgeAI from '../services/knowledge-ai.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
@@ -376,6 +377,7 @@ app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/whatsapp', whatsappTemplateRoutes);
+app.use('/api/t1', t1Routes);
 
 // ========================================
 // PUSH NOTIFICATION ENDPOINTS
