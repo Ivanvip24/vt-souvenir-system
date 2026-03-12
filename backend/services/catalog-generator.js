@@ -23,9 +23,9 @@ if (!fs.existsSync(CATALOGS_DIR)) {
 // ASSETS
 // ================================================
 const ASSETS = {
-  jaguarLetters: path.join(__dirname, '../../AXKAN_SOURCES/JAGUAR_LETTERS.png'),
-  fontTitle: path.join(__dirname, '../../AXKAN_SOURCES/RLAQVA.otf'),
-  fontBody: path.join(__dirname, '../../AXKAN_SOURCES/FONT-OBJEKTIV-VF-BODY.otf')
+  jaguarLetters: path.join(__dirname, '../assets/images/JAGUAR_LETTERS.png'),
+  fontTitle: path.join(__dirname, '../assets/fonts/RLAQVA.otf'),
+  fontBody: path.join(__dirname, '../assets/fonts/FONT-OBJEKTIV-VF-BODY.otf')
 };
 
 // ================================================
