@@ -3271,3 +3271,56 @@ input:focus:not(:focus-visible) {
         -webkit-backdrop-filter: none;
     }
 }
+
+/* ==========================================
+   STEP 4B: "Ya pagué" button
+   ========================================== */
+
+.btn-ya-pague {
+    width: 100%;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.btn-ya-pague:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.45);
+}
+
+.btn-ya-pague:active {
+    transform: scale(0.97);
+}
+
+/* ==========================================
+   STEP 4C: Large upload area
+   ========================================== */
+
+.file-upload-area--large {
+    padding: 40px 24px;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-width: 3px;
+    border-color: rgba(231, 42, 136, 0.25);
+}
+
+.file-upload-area--large:hover {
+    border-color: var(--axkan-pink);
+    background: rgba(231, 42, 136, 0.08);
+}
+
+.file-upload-area--large .upload-prompt {
+    text-align: center;
+}
