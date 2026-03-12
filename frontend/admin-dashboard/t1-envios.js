@@ -495,6 +495,76 @@ window.initGuiasView = function() {
 };
 
 // ==========================================
+// SYNC FROM T1 (browser scrape)
+// ==========================================
+
+function t1OpenSyncModal() {
+  var modal = document.getElementById('t1-sync-modal');
+  if (!modal) {
+    // Create the modal dynamically
+    modal = document.createElement('div');
+    modal.id = 't1-sync-modal';
+    modal.className = 'modal-overlay';
+    modal.onclick = function(e) { if (e.target === modal) t1CloseSyncModal(); };
+    modal.innerHTML =
+      '<div class="modal-content" style="max-width:540px">' +
+        '<div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e5e7eb">' +
+          '<h3 style="margin:0;font-size:16px">Sincronizar envios de T1</h3>' +
+          '<button onclick="t1CloseSyncModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280">&times;</button>' +
+        '</div>' +
+        '<div style="padding:20px">' +
+          '<p style="margin:0 0 12px;color:#374151;font-size:14px;line-height:1.5">' +
+            '<strong>Paso 1:</strong> Abre <a href="https://shipping.t1.com/shippings/my-shippings?store=208742" target="_blank" style="color:#0891b2">T1 Mis envios</a> (debes estar logueado)' +
+          '</p>' +
+          '<p style="margin:0 0 12px;color:#374151;font-size:14px;line-height:1.5">' +
+            '<strong>Paso 2:</strong> Copia este script y pegalo en la consola del navegador (F12 > Console):' +
+          '</p>' +
+          '<div style="position:relative">' +
+            '<pre id="t1-sync-script" style="background:#1e293b;color:#e2e8f0;padding:12px;border-radius:8px;font-size:11px;overflow-x:auto;max-height:120px;line-height:1.4;margin:0 0 12px"></pre>' +
+            '<button onclick="t1CopySyncScript()" style="position:absolute;top:8px;right:8px;background:#334155;color:#e2e8f0;border:none;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer">Copiar</button>' +
+          '</div>' +
+          '<p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.5">' +
+            '<strong>Paso 3:</strong> Los envios se sincronizaran automaticamente aqui.' +
+          '</p>' +
+          '<div id="t1-sync-status" style="display:none;padding:12px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+
+    // Populate the script content
+    var scriptEl = document.getElementById('t1-sync-script');
+    scriptEl.textContent = t1BuildSyncScript();
+  }
+  modal.classList.remove('hidden');
+  modal.style.display = 'flex';
+}
+
+function t1CloseSyncModal() {
+  var modal = document.getElementById('t1-sync-modal');
+  if (modal) { modal.classList.add('hidden'); modal.style.display = 'none'; }
+}
+
+function t1BuildSyncScript() {
+  var apiUrl = T1_API_URL + '/sync';
+  return '(async()=>{const t=document.querySelectorAll("table tbody tr"),s=[];t.forEach(r=>{const c=r.querySelectorAll("td");if(c.length<7)return;const f=c[1].querySelector(".flex-col"),p=f?f.querySelectorAll("span"):[],n=c[4].textContent.trim().replace(/\\s+/g," "),v=c[7]?c[7].textContent.trim():"";p[0]&&s.push({tracking:p[0].textContent.trim(),carrier:p[1]?p[1].textContent.trim():"",client:n,cost:c[5].textContent.trim(),trackingStatus:v})});const r=await fetch("' + apiUrl + '",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({shipments:s})});const d=await r.json();console.log("T1 Sync:",d);document.title="SYNC OK: "+d.inserted+" nuevos, "+d.updated+" actualizados"})()';
+}
+
+function t1CopySyncScript() {
+  var scriptEl = document.getElementById('t1-sync-script');
+  navigator.clipboard.writeText(scriptEl.textContent).then(function() {
+    guiasToast('Script copiado al portapapeles');
+  });
+}
+
+// Listen for sync completion messages (when user comes back to this tab)
+window.addEventListener('focus', function() {
+  if (guiasCurrentStatus === 't1') {
+    // Silently refresh the count
+    t1LoadCount();
+  }
+});
+
+// ==========================================
 // GLOBAL EXPORTS
 // ==========================================
 
@@ -503,3 +573,6 @@ window.t1CloseLinkModal = t1CloseLinkModal;
 window.t1LinkTrackingSubmit = t1LinkTrackingSubmit;
 window.t1RefreshAndReload = t1RefreshAndReload;
 window.loadT1Guias = loadT1Guias;
+window.t1OpenSyncModal = t1OpenSyncModal;
+window.t1CloseSyncModal = t1CloseSyncModal;
+window.t1CopySyncScript = t1CopySyncScript;

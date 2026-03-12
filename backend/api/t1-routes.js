@@ -203,6 +203,80 @@ router.get('/shipments', async (req, res) => {
 });
 
 // ========================================
+// BULK SYNC (from browser scrape)
+// ========================================
+
+/**
+ * POST /api/t1/sync
+ * Bulk import T1 shipments scraped from T1's "Mis envíos" page.
+ * Body: { shipments: [{ tracking, carrier, date, time, client, cost, trackingStatus }] }
+ */
+router.post('/sync', async (req, res) => {
+  try {
+    const { shipments } = req.body;
+
+    if (!Array.isArray(shipments) || shipments.length === 0) {
+      return res.status(400).json({ error: 'shipments array is required' });
+    }
+
+    let inserted = 0, updated = 0, skipped = 0;
+
+    for (const s of shipments) {
+      if (!s.tracking) { skipped++; continue; }
+
+      const trackingUrl = `https://t1envios.com/track/t?trackingnumber=${encodeURIComponent(s.tracking)}`;
+      const carrier = (s.carrier || 'unknown').toLowerCase();
+
+      // Map T1 status to our status
+      let status = 'label_generated';
+      const ts = (s.trackingStatus || '').toLowerCase();
+      if (ts.includes('entregado')) status = 'delivered';
+      else if (ts.includes('camino') || ts.includes('tránsito')) status = 'in_transit';
+      else if (ts.includes('recolect')) status = 'picked_up';
+
+      // Check if exists
+      const existing = await query(
+        `SELECT id, status FROM shipping_labels WHERE tracking_number = $1 LIMIT 1`,
+        [s.tracking]
+      );
+
+      if (existing.rows.length > 0) {
+        // Update status + carrier if changed
+        await query(`
+          UPDATE shipping_labels SET
+            carrier = $1,
+            carrier_source = 't1',
+            tracking_url = $2,
+            status = $3
+          WHERE id = $4
+        `, [carrier, trackingUrl, status, existing.rows[0].id]);
+        updated++;
+      } else {
+        // Insert new
+        await query(`
+          INSERT INTO shipping_labels (
+            tracking_number, tracking_url, carrier, carrier_source,
+            status, created_at
+          ) VALUES ($1, $2, $3, 't1', $4, NOW())
+        `, [s.tracking, trackingUrl, carrier, status]);
+        inserted++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Synced ${shipments.length} shipments`,
+      inserted,
+      updated,
+      skipped
+    });
+  } catch (error) {
+    console.error('T1 sync error:', error.message);
+    res.status(500).json({ error: 'Failed to sync T1 shipments', details: error.message });
+  }
+});
+
+// ========================================
 // PRODUCTS CATALOG
 // ========================================
 
