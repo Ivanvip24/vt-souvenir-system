@@ -1238,7 +1238,7 @@ function copyQuoteImage(btn, pdfUrl) {
     }
 
     // Fetch PDF with auth token
-    var token = localStorage.getItem('adminToken');
+    var token = localStorage.getItem('admin_token');
     fetch(fullUrl, {
         headers: token ? { 'Authorization': 'Bearer ' + token } : {}
     })

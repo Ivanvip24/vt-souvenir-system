@@ -74,7 +74,7 @@ async function loadT1Guias() {
   if (paginationEl) paginationEl.style.display = 'none';
 
   try {
-    var token = localStorage.getItem('adminToken');
+    var token = localStorage.getItem('admin_token');
     var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
     var resp = await fetch(T1_API_URL + '/shipments?limit=50', { headers: headers });
     var data = await resp.json();
@@ -419,7 +419,7 @@ async function t1LinkTrackingSubmit(event) {
   }
 
   try {
-    var token = localStorage.getItem('adminToken');
+    var token = localStorage.getItem('admin_token');
     var resp = await fetch(T1_API_URL + '/tracking/link', {
       method: 'POST',
       headers: {
@@ -458,7 +458,7 @@ async function t1LinkTrackingSubmit(event) {
 
 async function t1RefreshAndReload() {
   try {
-    var token = localStorage.getItem('adminToken');
+    var token = localStorage.getItem('admin_token');
     await fetch(T1_API_URL + '/tracking/refresh', {
       headers: token ? { 'Authorization': 'Bearer ' + token } : {}
     });
@@ -478,7 +478,7 @@ async function t1RefreshAndReload() {
 
 async function t1LoadCount() {
   try {
-    var token = localStorage.getItem('adminToken');
+    var token = localStorage.getItem('admin_token');
     var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
     var resp = await fetch(T1_API_URL + '/shipments?limit=1', { headers: headers });
     var data = await resp.json();

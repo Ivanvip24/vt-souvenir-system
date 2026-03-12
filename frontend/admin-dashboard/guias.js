@@ -20,7 +20,7 @@ const GUIAS_API_URL = window.location.hostname === 'localhost'
 // Authenticated fetch helper
 function guiasFetch(url, opts) {
   opts = opts || {};
-  var token = localStorage.getItem('adminToken');
+  var token = localStorage.getItem('admin_token');
   if (token) {
     opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token }, opts.headers || {});
   }

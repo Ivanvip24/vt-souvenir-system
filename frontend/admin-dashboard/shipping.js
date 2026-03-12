@@ -2143,7 +2143,7 @@ async function loadOriginAddress() {
   if (!displayEl) return;
 
   try {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem('admin_token');
     const response = await fetch(`${API_BASE}/shipping/origin-address`, {
       headers: token ? { 'Authorization': `Bearer ${token}` } : {}
     });
@@ -2274,7 +2274,7 @@ async function saveOriginAddress() {
   }
 
   try {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem('admin_token');
     const response = await fetch(`${API_BASE}/shipping/origin-address`, {
       method: 'PUT',
       headers: {
