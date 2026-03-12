@@ -4301,7 +4301,7 @@ app.get('/api/reports/schedule', authMiddleware, (req, res) => {
 });
 
 // Test email configuration
-app.post('/api/test/email', async (req, res) => {
+app.post('/api/test/email', authMiddleware, async (req, res) => {
   try {
     const to = req.body.to || process.env.ADMIN_EMAIL || process.env.EMAIL_USER || 'test@example.com';
     const result = await sendEmail({
