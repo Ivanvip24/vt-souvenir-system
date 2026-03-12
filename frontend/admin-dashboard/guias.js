@@ -17,6 +17,16 @@ const GUIAS_API_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:3000/api/shipping'
   : 'https://vt-souvenir-backend.onrender.com/api/shipping';
 
+// Authenticated fetch helper
+function guiasFetch(url, opts) {
+  opts = opts || {};
+  var token = localStorage.getItem('adminToken');
+  if (token) {
+    opts.headers = Object.assign({ 'Authorization': 'Bearer ' + token }, opts.headers || {});
+  }
+  return fetch(url, opts);
+}
+
 // Carrier visual config
 const guiasCarrierStyles = {
   'Estafeta':      { icon: '\u{1F4E6}', accent: '#f59e0b' },
@@ -82,7 +92,7 @@ function guiasToast(message, type) {
 async function initGuiasView() {
   // Load guías immediately, refresh tracking in background
   loadGuias();
-  fetch(GUIAS_API_URL + '/refresh-pending-tracking', { method: 'POST' }).catch(function() {});
+  guiasFetch(GUIAS_API_URL + '/refresh-pending-tracking', { method: 'POST' }).catch(function() {});
 }
 
 /**
@@ -108,7 +118,7 @@ async function loadGuias(page) {
     if (guiasCurrentStatus && guiasCurrentStatus !== 'all') params.append('status', guiasCurrentStatus);
     if (guiasSearchQuery) params.append('search', guiasSearchQuery);
 
-    var response = await fetch(GUIAS_API_URL + '/labels?' + params);
+    var response = await guiasFetch(GUIAS_API_URL + '/labels?' + params);
     var result = await response.json();
 
     if (!result.success) throw new Error(result.error || 'Error loading guias');
@@ -494,7 +504,7 @@ function createPanelSection(labelText) {
  */
 async function handleGuiaPanelStatusChange(guiaId, newStatus) {
   try {
-    var response = await fetch(GUIAS_API_URL + '/labels/' + guiaId + '/status', {
+    var response = await guiasFetch(GUIAS_API_URL + '/labels/' + guiaId + '/status', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
@@ -516,7 +526,7 @@ async function handleGuiaPanelRefresh(guiaId) {
   if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
 
   try {
-    var response = await fetch(GUIAS_API_URL + '/labels/' + guiaId + '/refresh', { method: 'POST' });
+    var response = await guiasFetch(GUIAS_API_URL + '/labels/' + guiaId + '/refresh', { method: 'POST' });
     var result = await response.json();
     if (!result.success) throw new Error(result.error || 'Error');
     guiasToast('Tracking actualizado');
@@ -596,7 +606,7 @@ async function refreshGuias() {
   if (btn) { btn.classList.add('guias-spinning'); btn.disabled = true; }
 
   try {
-    var response = await fetch(GUIAS_API_URL + '/refresh-pending-tracking', { method: 'POST' });
+    var response = await guiasFetch(GUIAS_API_URL + '/refresh-pending-tracking', { method: 'POST' });
     if (response.ok) {
       var data = await response.json();
       if (data.updated > 0) guiasToast(data.updated + ' guias actualizadas', 'info');
@@ -701,8 +711,8 @@ async function loadPickupsForDate(date) {
 
   try {
     var responses = await Promise.all([
-      fetch(GUIAS_API_URL + '/pickups/history?date=' + date),
-      fetch(GUIAS_API_URL + '/pickups/pending')
+      guiasFetch(GUIAS_API_URL + '/pickups/history?date=' + date),
+      guiasFetch(GUIAS_API_URL + '/pickups/pending')
     ]);
 
     var pickupsResult = await responses[0].json();
@@ -857,7 +867,7 @@ function formatPickupDateTime(dateStr) {
 async function triggerPendingPickups() {
   if (!confirm('\u00BFSolicitar recolecci\u00F3n para todas las gu\u00EDas pendientes?')) return;
   try {
-    var response = await fetch(GUIAS_API_URL + '/pickups/request', {
+    var response = await guiasFetch(GUIAS_API_URL + '/pickups/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ triggerAll: true })
@@ -880,7 +890,7 @@ async function triggerPendingPickups() {
 async function cancelPickup(pickupId) {
   if (!pickupId || !confirm('\u00BFCancelar esta recolecci\u00F3n?')) return;
   try {
-    var response = await fetch(GUIAS_API_URL + '/pickups/' + pickupId, { method: 'DELETE' });
+    var response = await guiasFetch(GUIAS_API_URL + '/pickups/' + pickupId, { method: 'DELETE' });
     var result = await response.json();
     if (result.success) {
       alert('Recolecci\u00F3n cancelada exitosamente');
@@ -949,7 +959,7 @@ async function loadPendingLabelsForCarrier(carrier) {
   listEl.textContent = 'Cargando...';
 
   try {
-    var response = await fetch(GUIAS_API_URL + '/pickups/pending');
+    var response = await guiasFetch(GUIAS_API_URL + '/pickups/pending');
     var result = await response.json();
     if (!result.success) throw new Error(result.error || 'Error loading pending labels');
 
@@ -999,7 +1009,7 @@ async function submitPickupRequest(event) {
     if (pendingLabelsCache.length > 0) {
       requestBody.shipmentIds = pendingLabelsCache.map(function(l) { return l.shipment_id; });
     }
-    var response = await fetch(GUIAS_API_URL + '/pickups/request/carrier', {
+    var response = await guiasFetch(GUIAS_API_URL + '/pickups/request/carrier', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
@@ -1029,7 +1039,7 @@ async function submitPickupRequest(event) {
 async function saveConfirmationCode(pickupId, code) {
   if (!code || !code.trim()) return;
   try {
-    var response = await fetch(GUIAS_API_URL + '/pickups/' + encodeURIComponent(pickupId), {
+    var response = await guiasFetch(GUIAS_API_URL + '/pickups/' + encodeURIComponent(pickupId), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ confirmationCode: code.trim(), status: 'confirmed' })
