@@ -3,7 +3,7 @@ import { query } from '../shared/database.js';
 
 let initialized = false;
 
-function initializePushService() {
+async function initializePushService() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
   const subject = process.env.VAPID_SUBJECT || 'mailto:admin@axkan.mx';
@@ -11,6 +11,23 @@ function initializePushService() {
   if (!publicKey || !privateKey) {
     console.log('⚠️  Push notifications disabled — VAPID keys not configured');
     return;
+  }
+
+  // Auto-create table if it doesn't exist
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id SERIAL PRIMARY KEY,
+        endpoint TEXT NOT NULL UNIQUE,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        user_agent TEXT,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+  } catch (err) {
+    console.error('Push table creation failed:', err.message);
   }
 
   webpush.setVapidDetails(subject, publicKey, privateKey);
