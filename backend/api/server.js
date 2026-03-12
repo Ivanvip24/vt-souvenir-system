@@ -414,8 +414,18 @@ app.post('/api/push/unsubscribe', async (req, res) => {
 
 app.post('/api/push/test', async (req, res) => {
   try {
-    const result = await pushService.sendToAll('AXKAN Test', 'Las notificaciones están funcionando', { view: 'home' });
-    res.json({ success: true, ...result });
+    const type = req.body.type || 'test';
+    let result;
+    if (type === 'new_order') {
+      result = await pushService.sendToAll('Nuevo Pedido', 'AXK-2407 — María García Fernández — $15,000', { view: 'orders', orderNumber: 'AXK-2407' });
+    } else if (type === 'status_change') {
+      result = await pushService.sendToAll('Status Actualizado', 'AXK-2404: Printing → Cutting', { view: 'orders', orderNumber: 'AXK-2404' });
+    } else if (type === 'approved') {
+      result = await pushService.sendToAll('Pedido Aprobado', 'AXK-2403 — Ana Martínez Ruiz listo para producción', { view: 'orders', orderNumber: 'AXK-2403' });
+    } else {
+      result = await pushService.sendToAll('AXKAN Test', 'Las notificaciones están funcionando', { view: 'home' });
+    }
+    res.json({ success: true, type, ...result });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
