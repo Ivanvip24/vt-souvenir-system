@@ -1,19 +1,27 @@
+import { Resend } from 'resend';
 import sgMail from '@sendgrid/mail';
 import nodemailer from 'nodemailer';
+import fs from 'fs';
 import { config } from 'dotenv';
 
 config();
 
-// Initialize email transport
+// Initialize email transport — priority: Resend > SendGrid > SMTP
+let resendClient = null;
 let usingSendGridAPI = false;
 let transporter = null;
+let activeProvider = 'none';
 
-if (process.env.EMAIL_SERVICE === 'sendgrid' && process.env.SENDGRID_API_KEY) {
+if (process.env.RESEND_API_KEY) {
+  resendClient = new Resend(process.env.RESEND_API_KEY);
+  activeProvider = 'resend';
+  console.log('✅ Using Resend HTTP API for email');
+} else if (process.env.EMAIL_SERVICE === 'sendgrid' && process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   usingSendGridAPI = true;
+  activeProvider = 'sendgrid';
   console.log('✅ Using SendGrid HTTP API (bypasses SMTP port blocking)');
 } else if (process.env.EMAIL_SERVICE && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-  // Initialize SMTP transporter for local dev (Gmail, etc.)
   transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT) || 587,
@@ -23,30 +31,62 @@ if (process.env.EMAIL_SERVICE === 'sendgrid' && process.env.SENDGRID_API_KEY) {
       pass: process.env.EMAIL_PASSWORD
     }
   });
+  activeProvider = 'smtp';
   console.log(`✅ Using SMTP (${process.env.EMAIL_SERVICE}) for email`);
 } else {
-  console.warn('⚠️  No email service configured. Set EMAIL_SERVICE=sendgrid + SENDGRID_API_KEY, or EMAIL_SERVICE=gmail + EMAIL_USER + EMAIL_PASSWORD');
+  console.warn('⚠️  No email service configured. Set RESEND_API_KEY or EMAIL_SERVICE + credentials.');
 }
 
 /**
- * Send email using SendGrid HTTP API or nodemailer
+ * Send email using Resend, SendGrid, or nodemailer
  */
 export async function sendEmail({ to, subject, html, attachments = [] }) {
   try {
-    const from = {
-      email: process.env.COMPANY_EMAIL || process.env.EMAIL_USER || 'informacion@axkan.art',
-      name: process.env.COMPANY_NAME || 'AXKAN - Recuerdos Hechos Souvenir'
-    };
+    const fromEmail = process.env.COMPANY_EMAIL || process.env.EMAIL_USER || 'informacion@axkan.art';
+    const fromName = process.env.COMPANY_NAME || 'AXKAN - Recuerdos Hechos Souvenir';
 
     console.log(`📧 Sending email to: ${to}`);
     console.log(`   Subject: ${subject}`);
-    console.log(`   Method: ${usingSendGridAPI ? 'SendGrid HTTP API' : 'SMTP'}`);
+    console.log(`   Method: ${activeProvider}`);
 
-    if (usingSendGridAPI) {
-      // Use SendGrid HTTP API (bypasses port blocking on Render)
+    if (resendClient) {
+      // Resend HTTP API (primary — works on Render, free tier)
+      const resendAttachments = attachments.map(att => {
+        let content;
+        if (att.path) {
+          content = fs.readFileSync(att.path);
+        } else if (att.content) {
+          content = Buffer.isBuffer(att.content) ? att.content : Buffer.from(att.content);
+        }
+        return { filename: att.filename, content };
+      }).filter(att => att.content);
+
+      const msg = {
+        from: `${fromName} <${fromEmail}>`,
+        to,
+        subject,
+        html,
+      };
+      if (resendAttachments.length > 0) {
+        msg.attachments = resendAttachments;
+      }
+
+      const { data, error } = await resendClient.emails.send(msg);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      console.log('✅ Email sent successfully via Resend');
+      console.log(`   Message ID: ${data.id}`);
+
+      return { success: true, messageId: data.id, recipients: to };
+
+    } else if (usingSendGridAPI) {
+      // SendGrid HTTP API (fallback)
       const msg = {
         to,
-        from,
+        from: { email: fromEmail, name: fromName },
         subject,
         html,
         attachments: attachments.map(att => ({
@@ -57,9 +97,7 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
         }))
       };
 
-      // If attachment has path, read it
       if (attachments.length > 0 && attachments[0].path) {
-        const fs = await import('fs');
         const fileContent = fs.readFileSync(attachments[0].path);
         msg.attachments[0].content = fileContent.toString('base64');
       }
@@ -75,13 +113,13 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
         recipients: to
       };
     } else {
-      // Fallback to nodemailer SMTP (for local development)
+      // Nodemailer SMTP (last fallback)
       if (!transporter) {
-        throw new Error('Email transporter not initialized. Use SendGrid for cloud platforms.');
+        throw new Error('No email provider configured. Set RESEND_API_KEY or EMAIL_SERVICE + credentials.');
       }
 
       const mailOptions = {
-        from: `${from.name} <${from.email}>`,
+        from: `${fromName} <${fromEmail}>`,
         to,
         subject,
         html,
@@ -103,7 +141,7 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
     console.error('❌ Error sending email:', error);
 
     if (error.response) {
-      console.error('   SendGrid Error Response:', error.response.body);
+      console.error('   Error Response:', error.response.body);
     }
 
     throw new Error(`Failed to send email: ${error.message}`);
@@ -371,8 +409,10 @@ function formatCurrency(amount) {
 
 export function initializeEmailSender() {
   console.log('📋 Email Configuration:');
-  console.log(`   Service: ${process.env.EMAIL_SERVICE}`);
-  console.log(`   Using SendGrid API: ${usingSendGridAPI}`);
+  console.log(`   Active provider: ${activeProvider}`);
+  console.log(`   Resend: ${resendClient ? 'configured' : 'not set'}`);
+  console.log(`   SendGrid: ${usingSendGridAPI ? 'configured' : 'not set'}`);
+  console.log(`   SMTP: ${transporter ? 'configured' : 'not set'}`);
   return true;
 }
 
