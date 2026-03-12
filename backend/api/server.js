@@ -279,9 +279,9 @@ app.use('/api/discounts', authMiddleware, discountRoutes);
 app.use('/api/shipping', authMiddleware, shippingRoutes);
 
 // ========================================
-// FILE UPLOAD ROUTES (Cloudinary) (auth required)
+// FILE UPLOAD ROUTES (Cloudinary) — no auth for client uploads
 // ========================================
-app.use('/api/client/upload', authMiddleware, uploadRoutes);
+app.use('/api/client/upload', uploadRoutes);
 
 // ========================================
 // SUPPLIER RECEIPT ROUTES (Claude Vision)
