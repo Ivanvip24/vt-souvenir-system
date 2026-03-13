@@ -2000,6 +2000,7 @@ function clearPendingImage() {
 async function uploadImageToCloudinary(file) {
   var formData = new FormData();
   formData.append('receipt', file);
+  formData.append('phone', '0000000000'); // Admin upload — phone validation placeholder
 
   var res = await fetch(API_BASE + '/client/upload/payment-receipt', {
     method: 'POST',

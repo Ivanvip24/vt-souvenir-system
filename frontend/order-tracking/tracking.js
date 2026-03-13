@@ -560,6 +560,7 @@
             // Step 1: Upload file to Cloudinary via backend
             var formData = new FormData();
             formData.append('receipt', file);
+            formData.append('phone', (state.clientInfo && state.clientInfo.phone) || '0000000000');
 
             var uploadRes = await fetch(CLIENT_API + '/upload/payment-receipt', {
                 method: 'POST',

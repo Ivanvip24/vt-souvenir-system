@@ -28,8 +28,18 @@ const upload = multer({
 // UPLOAD PAYMENT RECEIPT
 // ========================================
 // Endpoint for clients to upload payment proof images
+// Requires a phone number to prevent anonymous abuse
 router.post('/payment-receipt', upload.single('receipt'), async (req, res) => {
   try {
+    // Require a phone number to prevent anonymous spam uploads
+    const phone = (req.body.phone || '').replace(/\D/g, '');
+    if (!phone || phone.length < 10) {
+      return res.status(400).json({
+        success: false,
+        error: 'Se requiere un número de teléfono válido para subir comprobantes'
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -37,7 +47,7 @@ router.post('/payment-receipt', upload.single('receipt'), async (req, res) => {
       });
     }
 
-    console.log(`📤 Uploading payment receipt: ${req.file.originalname} (${req.file.size} bytes)`);
+    console.log(`📤 Uploading payment receipt: ${req.file.originalname} (${req.file.size} bytes) for phone: ${phone}`);
 
     // Convert HEIC to JPEG if needed
     let fileBuffer = req.file.buffer;
@@ -74,27 +84,21 @@ router.post('/payment-receipt', upload.single('receipt'), async (req, res) => {
   } catch (error) {
     console.error('❌ Upload error:', error);
 
-    // Check for specific Cloudinary errors
-    let errorMessage = error.message || 'Error al subir el archivo';
+    // Log details server-side, return generic message to client
     let errorType = 'upload_failed';
-
     if (error.message && error.message.includes('cloud_name')) {
-      errorMessage = 'Cloudinary no está configurado correctamente';
       errorType = 'config_error';
       console.error('⚠️ Cloudinary config issue - check environment variables');
     } else if (error.message && error.message.includes('Invalid image file')) {
-      errorMessage = 'Archivo de imagen no válido';
       errorType = 'invalid_file';
     } else if (error.http_code === 401) {
-      errorMessage = 'Credenciales de Cloudinary inválidas';
       errorType = 'auth_error';
     }
 
     res.status(500).json({
       success: false,
-      error: errorMessage,
-      errorType,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: 'Error al subir el archivo',
+      errorType
     });
   }
 });

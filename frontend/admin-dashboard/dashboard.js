@@ -1817,6 +1817,7 @@ async function uploadProductionSheet(file, orderId) {
     // Upload via backend (uses server-side Cloudinary credentials)
     const formData = new FormData();
     formData.append('receipt', file);
+    formData.append('phone', '0000000000'); // Admin upload — phone validation placeholder
 
     const uploadResponse = await fetch(`${API_BASE.replace('/api', '')}/api/client/upload/payment-receipt`, {
       method: 'POST',
@@ -2051,6 +2052,7 @@ async function uploadItemAttachment(file, orderId, itemId) {
     // Upload file to Cloudinary via backend
     const formData = new FormData();
     formData.append('receipt', file);
+    formData.append('phone', '0000000000'); // Admin upload — phone validation placeholder
 
     const uploadResponse = await fetch(`${API_BASE.replace('/api', '')}/api/client/upload/payment-receipt`, {
       method: 'POST',
@@ -2492,6 +2494,7 @@ async function uploadPaymentReceipt(file, orderId, paymentType) {
     // Upload via backend (uses server-side Cloudinary credentials)
     const formData = new FormData();
     formData.append('receipt', file);
+    formData.append('phone', '0000000000'); // Admin upload — phone validation placeholder
 
     const uploadResponse = await fetch(`${API_BASE.replace('/api', '')}/api/client/upload/payment-receipt`, {
       method: 'POST',

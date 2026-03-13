@@ -1982,6 +1982,7 @@ async function handleProofUpload(files, previewEl) {
 
     const formData = new FormData();
     formData.append('receipt', compressedFile);
+    formData.append('phone', state.client.phone || '');
 
     console.log('⏳ Uploading to Cloudinary...');
     const response = await fetch(`${API_BASE}/upload/payment-receipt`, {
@@ -2902,6 +2903,7 @@ window.confirmSecondPaymentUpload = async function(orderId) {
     // Upload to Cloudinary first
     const formData = new FormData();
     formData.append('receipt', compressedFile);
+    formData.append('phone', state.client.phone || '');
 
     const uploadResponse = await fetch(`${API_BASE}/upload/payment-receipt`, {
       method: 'POST',

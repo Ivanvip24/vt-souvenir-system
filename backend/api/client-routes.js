@@ -167,6 +167,13 @@ router.post('/orders/submit', async (req, res) => {
       shippingCost,
     } = req.body;
 
+    // Honeypot anti-bot check: if this hidden field is filled, it's a bot
+    if (req.body.website || req.body.company_url) {
+      console.warn(`🤖 Bot detected on order submit — honeypot filled from IP: ${req.ip}`);
+      // Return fake success so bots think it worked
+      return res.json({ success: true, orderId: 0, orderNumber: 'ORD-00000000-0000' });
+    }
+
     // Validation
     if (!items || items.length === 0) {
       return res.status(400).json({
@@ -1075,7 +1082,8 @@ router.post('/address/save', async (req, res) => {
 
 /**
  * POST /api/client/info
- * Get client info by phone - returns saved address even if no active orders
+ * Get client info — requires BOTH phone AND email to return full data.
+ * Phone-only returns existence check (no PII) to prevent enumeration attacks.
  */
 router.post('/info', async (req, res) => {
   try {
@@ -1088,71 +1096,51 @@ router.post('/info', async (req, res) => {
       });
     }
 
-    // Build query conditions
-    const conditions = [];
-    const params = [];
-    let paramIndex = 1;
+    // If BOTH phone AND email provided, verify they match the same client → return full data
+    if (phone && email) {
+      const result = await query(`
+        SELECT id, name, phone, email, address, street, street_number,
+               colonia, city, state, postal, reference_notes
+        FROM clients
+        WHERE phone = $1 AND email = $2
+        LIMIT 1
+      `, [phone, email]);
 
-    if (phone) {
-      conditions.push(`phone = $${paramIndex++}`);
-      params.push(phone);
-    }
+      if (result.rows.length === 0) {
+        return res.json({ success: true, found: false, clientInfo: null, message: 'Cliente no encontrado' });
+      }
 
-    if (email) {
-      conditions.push(`email = $${paramIndex++}`);
-      params.push(email);
-    }
-
-    const whereClause = conditions.join(' OR ');
-
-    // Query client directly from clients table (regardless of order status)
-    const result = await query(`
-      SELECT
-        id,
-        name,
-        phone,
-        email,
-        address,
-        street,
-        street_number,
-        colonia,
-        city,
-        state,
-        postal,
-        reference_notes
-      FROM clients
-      WHERE ${whereClause}
-      LIMIT 1
-    `, params);
-
-    if (result.rows.length === 0) {
+      const client = result.rows[0];
       return res.json({
         success: true,
-        found: false,
-        clientInfo: null,
-        message: 'Cliente no encontrado'
+        found: true,
+        clientInfo: {
+          id: client.id,
+          name: client.name,
+          phone: client.phone,
+          email: client.email,
+          address: client.address,
+          street: client.street,
+          streetNumber: client.street_number,
+          colonia: client.colonia,
+          city: client.city,
+          state: client.state,
+          postal: client.postal,
+          references: client.reference_notes
+        }
       });
     }
 
-    const client = result.rows[0];
+    // Phone-only or email-only: return existence check only (no PII)
+    const field = phone ? 'phone' : 'email';
+    const value = phone || email;
+    const result = await query(`SELECT id FROM clients WHERE ${field} = $1 LIMIT 1`, [value]);
 
     res.json({
       success: true,
-      found: true,
-      clientInfo: {
-        id: client.id,
-        name: client.name,
-        phone: client.phone,
-        email: client.email,
-        address: client.address,
-        street: client.street,
-        streetNumber: client.street_number,
-        colonia: client.colonia,
-        city: client.city,
-        state: client.state,
-        postal: client.postal,
-        references: client.reference_notes
-      }
+      found: result.rows.length > 0,
+      clientInfo: null,
+      message: result.rows.length > 0 ? 'Cliente encontrado — ingresa teléfono y correo para cargar datos' : 'Cliente no encontrado'
     });
 
   } catch (error) {

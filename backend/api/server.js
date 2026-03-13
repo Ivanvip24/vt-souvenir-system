@@ -60,6 +60,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust only the first proxy (Render's reverse proxy) — prevents X-Forwarded-For spoofing
+app.set('trust proxy', 1);
+
 // ========================================
 // SECURITY MIDDLEWARE
 // ========================================
@@ -126,6 +129,37 @@ const loginLimiter = rateLimit({
 });
 app.use('/api/admin/login', loginLimiter);
 app.use('/api/employees/login', loginLimiter);
+
+// Rate limit on client upload endpoints (10 per 15 minutes per IP)
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Demasiadas subidas, intenta más tarde' }
+});
+app.use('/api/client/upload', uploadLimiter);
+
+// Rate limit on order submission (5 per 15 minutes per IP)
+const orderSubmitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Demasiados pedidos, intenta más tarde' }
+});
+app.use('/api/client/orders/submit', orderSubmitLimiter);
+
+// Rate limit on client info lookups (10 per 15 minutes per IP)
+const clientInfoLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Demasiadas consultas, intenta más tarde' }
+});
+app.use('/api/client/info', clientInfoLimiter);
+app.use('/api/client/orders/lookup', clientInfoLimiter);
 
 // Body parsing - reduced limit to prevent memory abuse
 app.use(express.json({ limit: '10mb' }));
