@@ -31,10 +31,70 @@ function initializeClient() {
 }
 
 /**
+ * Validate URL to prevent SSRF attacks
+ * Only allows HTTPS URLs from trusted image hosting domains
+ */
+function validateImageUrl(imageUrl) {
+  let parsed;
+  try {
+    parsed = new URL(imageUrl);
+  } catch {
+    throw new Error('URL inválida');
+  }
+
+  // Block non-HTTPS protocols (file://, ftp://, data:, javascript:, etc.)
+  if (parsed.protocol !== 'https:') {
+    throw new Error('Solo se permiten URLs HTTPS');
+  }
+
+  // Block internal/private IPs and cloud metadata
+  const hostname = parsed.hostname;
+  const blockedPatterns = [
+    /^localhost$/i,
+    /^127\./,
+    /^10\./,
+    /^172\.(1[6-9]|2\d|3[01])\./,
+    /^192\.168\./,
+    /^169\.254\./,          // AWS/cloud metadata
+    /^0\./,
+    /^\[::1\]/,
+    /\.internal$/i,
+    /\.local$/i,
+  ];
+
+  for (const pattern of blockedPatterns) {
+    if (pattern.test(hostname)) {
+      throw new Error('URL bloqueada por política de seguridad');
+    }
+  }
+
+  // Whitelist trusted image hosting domains
+  const allowedDomains = [
+    'res.cloudinary.com',
+    'drive.google.com',
+    'lh3.googleusercontent.com',
+    'lh4.googleusercontent.com',
+    'lh5.googleusercontent.com',
+    'lh6.googleusercontent.com',
+    'i.imgur.com',
+    'storage.googleapis.com',
+  ];
+
+  if (!allowedDomains.some(d => hostname === d || hostname.endsWith('.' + d))) {
+    throw new Error(`Dominio no permitido: ${hostname}`);
+  }
+
+  return parsed;
+}
+
+/**
  * Download image from URL and convert to base64
  */
 async function downloadImageAsBase64(imageUrl) {
   try {
+    // Validate URL before fetching (prevents SSRF)
+    validateImageUrl(imageUrl);
+
     const response = await fetch(imageUrl);
 
     if (!response.ok) {

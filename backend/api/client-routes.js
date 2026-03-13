@@ -19,6 +19,17 @@ import { validateTransfer, downloadCEP, resolveBankCode } from '../services/cep-
 
 const router = express.Router();
 
+// HTML escaping for email templates (prevents stored XSS)
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 // Configure multer for file uploads (in-memory storage)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -859,6 +870,22 @@ router.post('/orders/:orderId/upload-proof', async (req, res) => {
     const { orderId } = req.params;
     const { proofUrl } = req.body; // Will come from frontend after file upload
 
+    // Validate the proof URL — only allow trusted image hosting domains
+    if (proofUrl) {
+      try {
+        const parsed = new URL(proofUrl);
+        if (parsed.protocol !== 'https:') {
+          return res.status(400).json({ success: false, error: 'Solo se permiten URLs HTTPS' });
+        }
+        const allowedDomains = ['res.cloudinary.com', 'drive.google.com', 'lh3.googleusercontent.com', 'lh4.googleusercontent.com', 'lh5.googleusercontent.com', 'lh6.googleusercontent.com', 'storage.googleapis.com'];
+        if (!allowedDomains.some(d => parsed.hostname === d || parsed.hostname.endsWith('.' + d))) {
+          return res.status(400).json({ success: false, error: 'Dominio de imagen no permitido' });
+        }
+      } catch {
+        return res.status(400).json({ success: false, error: 'URL de comprobante inválida' });
+      }
+    }
+
     // Update order with proof URL
     await query(
       `UPDATE orders SET payment_proof_url = $1 WHERE id = $2`,
@@ -1552,7 +1579,7 @@ async function sendAdminNotification(orderId, orderNumber, clientName, total, de
               <div class="section-title">👤 Datos del Cliente</div>
               <div class="info-row">
                 <span class="info-label">Nombre:</span>
-                <span class="info-value">${order.client_name}</span>
+                <span class="info-value">${escapeHtml(order.client_name)}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Teléfono:</span>
@@ -1618,16 +1645,16 @@ async function sendAdminNotification(orderId, orderNumber, clientName, total, de
               <p style="margin: 5px 0;">
                 <strong>${order.payment_method === 'stripe' ? '💳 Tarjeta (Stripe)' : '🏦 Transferencia Bancaria'}</strong>
               </p>
-              ${order.payment_proof_url ? `
+              ${order.payment_proof_url && order.payment_proof_url.startsWith('https://') ? `
               <p style="margin: 10px 0 5px;">Comprobante adjunto:</p>
-              <img src="${order.payment_proof_url}" alt="Comprobante de pago" class="receipt-image" style="max-height: 300px;">
+              <img src="${escapeHtml(order.payment_proof_url)}" alt="Comprobante de pago" class="receipt-image" style="max-height: 300px;">
               ` : ''}
             </div>
 
             ${order.client_notes ? `
             <div class="section" style="background: #FEF3C7;">
               <div class="section-title" style="color: #92400E;">📝 Notas del Cliente</div>
-              <p style="margin: 5px 0;">${order.client_notes}</p>
+              <p style="margin: 5px 0;">${escapeHtml(order.client_notes)}</p>
             </div>
             ` : ''}
 
@@ -1703,7 +1730,7 @@ async function sendPaymentProofNotification(orderId) {
     subject: `💰 Comprobante de Pago: ${order.order_number}`,
     html: `
       <h2>Comprobante de Pago Recibido</h2>
-      <p>El cliente ${order.client_name} subió comprobante de pago para el pedido ${order.order_number}</p>
+      <p>El cliente ${escapeHtml(order.client_name)} subió comprobante de pago para el pedido ${escapeHtml(order.order_number)}</p>
       <p>Por favor verifica el pago en el dashboard.</p>
     `
   });

@@ -12,6 +12,19 @@ const API_BASE = window.location.hostname === 'localhost'
   : 'https://vt-souvenir-backend.onrender.com/api';
 
 // ==========================================
+// SECURITY: HTML escaping to prevent XSS
+// ==========================================
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+// ==========================================
 // STATE MANAGEMENT
 // ==========================================
 
@@ -351,10 +364,10 @@ function renderAlertsWidget() {
         ${data[activeCategory].map(alert => `
           <div class="alert-item ${activeCategory}" onclick="viewOrderFromAlert(${alert.id})">
             <div class="alert-content">
-              <div class="alert-title">${alert.alertTitle}</div>
+              <div class="alert-title">${escapeHtml(alert.alertTitle)}</div>
               <div class="alert-meta">
-                <strong>${alert.clientName}</strong> • ${formatCurrency(alert.totalPrice)}
-                ${alert.alertMessage ? ` • ${alert.alertMessage}` : ''}
+                <strong>${escapeHtml(alert.clientName)}</strong> • ${formatCurrency(alert.totalPrice)}
+                ${alert.alertMessage ? ` • ${escapeHtml(alert.alertMessage)}` : ''}
               </div>
             </div>
             <span class="alert-order">${alert.orderNumber}</span>
@@ -945,7 +958,7 @@ function createOrderCard(order) {
         <div class="client-info">
           <span class="info-label">CLIENTE</span>
           <span class="info-value">
-            ${order.clientName}
+            ${escapeHtml(order.clientName)}
             ${order.clientPhone ? `
               <a href="https://wa.me/${whatsappNumber}" target="whatsapp-chat" class="whatsapp-btn-card" onclick="event.stopPropagation();" title="Enviar WhatsApp">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
@@ -1104,14 +1117,14 @@ async function showOrderDetail(orderId) {
             <div style="flex: 1;">
               <div style="font-size: 12px; color: var(--gray-600); font-weight: 600;">CLIENTE</div>
               <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 18px; font-weight: 700; color: var(--gray-900);">${order.clientName}</span>
+                <span style="font-size: 18px; font-weight: 700; color: var(--gray-900);">${escapeHtml(order.clientName)}</span>
                 ${order.clientPhone ? `
                   <a href="https://wa.me/${order.clientPhone.toString().replace(/\D/g, '').length === 10 ? '52' + order.clientPhone.toString().replace(/\D/g, '') : order.clientPhone.toString().replace(/\D/g, '')}"
                      target="whatsapp-chat"
                      style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #25D366; border-radius: 50%; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;"
                      onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(37,211,102,0.4)';"
                      onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';"
-                     title="Enviar WhatsApp a ${order.clientName}">
+                     title="Enviar WhatsApp a ${escapeHtml(order.clientName)}">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
                     </svg>
@@ -1320,7 +1333,7 @@ async function showOrderDetail(orderId) {
           </tr>
           ${order.items.map(item => `
             <tr>
-              <td style="padding: 6px 0;">${item.productName}</td>
+              <td style="padding: 6px 0;">${escapeHtml(item.productName)}</td>
               <td style="text-align: center; padding: 6px 0;">${item.quantity} pzas</td>
               <td style="text-align: right; padding: 6px 0;">${formatCurrency(item.unitPrice)}</td>
               <td style="text-align: right; padding: 6px 0; font-weight: 600;">${formatCurrency(item.lineTotal)}</td>
@@ -1495,7 +1508,7 @@ async function showOrderDetail(orderId) {
       <div class="detail-section">
         <h3>💬 Notas del Cliente</h3>
         <p style="background: var(--gray-50); padding: 16px; border-radius: 10px; line-height: 1.6;">
-          ${order.clientNotes}
+          ${escapeHtml(order.clientNotes)}
         </p>
       </div>
     ` : ''}
@@ -2783,7 +2796,7 @@ async function lookupClientOrders() {
           <div style="font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 8px;">Productos:</div>
           ${order.items.map(item => `
             <div style="font-size: 14px; color: #374151; margin-bottom: 4px;">
-              • ${item.productName} (${item.quantity} unidades)
+              • ${escapeHtml(item.productName)} (${item.quantity} unidades)
             </div>
           `).join('')}
         </div>
@@ -3449,7 +3462,7 @@ function openEditProductModal(orderId, itemId, productName, currentQuantity, uni
 
       <div style="margin-bottom: 16px;">
         <label style="display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px;">Producto</label>
-        <div style="padding: 10px; background: var(--gray-100); border-radius: 6px; font-weight: 500;">${productName}</div>
+        <div style="padding: 10px; background: var(--gray-100); border-radius: 6px; font-weight: 500;">${escapeHtml(productName)}</div>
       </div>
 
       <div style="margin-bottom: 16px;">
