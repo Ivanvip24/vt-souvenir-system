@@ -44,7 +44,6 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
   try {
     const fromEmail = process.env.COMPANY_EMAIL || process.env.EMAIL_USER || 'informacion@axkan.art';
     const fromName = process.env.COMPANY_NAME || 'AXKAN - Recuerdos Hechos Souvenir';
-    // Resend requires a verified domain; use RESEND_FROM or onboarding@resend.dev as fallback
     const resendFrom = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
     console.log(`📧 Sending email to: ${to}`);
@@ -52,7 +51,6 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
     console.log(`   Method: ${activeProvider}`);
 
     if (resendClient) {
-      // Resend HTTP API (primary — works on Render, free tier)
       const resendAttachments = attachments.map(att => {
         let content;
         if (att.path) {
@@ -85,7 +83,6 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
       return { success: true, messageId: data.id, recipients: to };
 
     } else if (usingSendGridAPI) {
-      // SendGrid HTTP API (fallback)
       const msg = {
         to,
         from: { email: fromEmail, name: fromName },
@@ -115,7 +112,6 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
         recipients: to
       };
     } else {
-      // Nodemailer SMTP (last fallback)
       if (!transporter) {
         throw new Error('No email provider configured. Set RESEND_API_KEY or EMAIL_SERVICE + credentials.');
       }
@@ -152,117 +148,90 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
 
 // ── Brand assets (hosted on Cloudinary) ──
 const LOGO_URL = 'https://res.cloudinary.com/dg1owvdhw/image/upload/w_240,q_auto/brand/axkan-logo-full.png';
-const JAGUAR_URL = 'https://res.cloudinary.com/dg1owvdhw/image/upload/w_80,q_auto/brand/axkan-jaguar.png';
-const PRODUCT_URL = 'https://res.cloudinary.com/dg1owvdhw/image/upload/w_560,q_auto/brand/axkan-product-showcase.jpg';
+
+// Font stack — clean, Apple-like
+const F = "font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
 /**
- * Generate the premium AXKAN email wrapper
+ * Generate clean, document-style AXKAN email
+ * Logo top-left, doc title top-right, thin gradient accent line, white card, footer with links
  */
 function buildEmailHTML(bodyContent, preheader = '') {
   return `<!DOCTYPE html>
-<html lang="es" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
   <title>AXKAN</title>
   <!--[if mso]>
   <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
   <![endif]-->
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap');
     * { margin: 0; padding: 0; }
-    body, table, td, p, a, li { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
-    body { margin: 0; padding: 0; width: 100% !important; background-color: #F5F0EB; }
-    .body-wrap { background-color: #F5F0EB; }
-    .email-container { max-width: 600px; margin: 0 auto; }
-    .serif { font-family: 'DM Serif Display', Georgia, 'Times New Roman', serif; }
-    .sans { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table { border-collapse: collapse; }
+    img { border: 0; line-height: 100%; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; background-color: #f2f2f7; }
     @media only screen and (max-width: 620px) {
       .email-container { width: 100% !important; }
-      .fluid { max-width: 100% !important; height: auto !important; }
-      .stack-column { display: block !important; width: 100% !important; }
-      .pad-mobile { padding-left: 20px !important; padding-right: 20px !important; }
+      .mobile-pad { padding-left: 24px !important; padding-right: 24px !important; }
     }
   </style>
 </head>
-<body style="margin:0; padding:0; background-color:#F5F0EB;">
-  ${preheader ? `<div style="display:none;font-size:1px;color:#F5F0EB;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preheader}</div>` : ''}
+<body style="margin:0; padding:0; background-color:#f2f2f7;">
+  ${preheader ? `<div style="display:none;font-size:1px;color:#f2f2f7;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</div>` : ''}
 
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="body-wrap" style="background-color:#F5F0EB;">
-  <tr><td style="padding: 24px 12px;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" align="center" class="email-container" style="margin:0 auto;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f2f2f7;">
+  <tr><td style="padding: 40px 16px;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" align="center" class="email-container" style="margin:0 auto; background-color:#ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
 
-    <!-- LOGO BAR -->
+    <!-- HEADER: Logo + Document Title -->
     <tr>
-      <td style="padding: 28px 40px 20px; text-align: center;">
-        <img src="${LOGO_URL}" width="160" alt="AXKAN" style="display:inline-block; width:160px; max-width:160px; height:auto;">
-      </td>
-    </tr>
-
-    <!-- HERO GRADIENT -->
-    <tr>
-      <td style="background: linear-gradient(135deg, #E72A88 0%, #B91D73 40%, #8A1558 100%); border-radius: 16px 16px 0 0; padding: 48px 40px 40px; text-align: center;">
-        <!--[if mso]><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;"><v:fill type="gradient" color="#E72A88" color2="#8A1558" angle="135"/><v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0"><![endif]-->
+      <td style="padding: 56px 48px 0;" class="mobile-pad">
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-          <tr><td style="text-align: center; padding-bottom: 16px;">
-            <img src="${JAGUAR_URL}" width="56" alt="" style="width:56px; height:auto; opacity:0.9;">
-          </td></tr>
-          <tr><td style="font-family: 'DM Serif Display', Georgia, serif; font-size: 32px; line-height: 1.2; color: #ffffff; text-align: center; padding-bottom: 12px;">
-            %%HERO_TITLE%%
-          </td></tr>
-          <tr><td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,0.85); text-align: center;">
-            %%HERO_SUBTITLE%%
-          </td></tr>
-        </table>
-        <!--[if mso]></v:textbox></v:rect><![endif]-->
-      </td>
-    </tr>
-
-    <!-- MAIN CONTENT -->
-    <tr>
-      <td style="background-color: #ffffff; padding: 0;">
-        ${bodyContent}
-      </td>
-    </tr>
-
-    <!-- PRODUCT SHOWCASE -->
-    <tr>
-      <td style="background-color: #ffffff; padding: 0 40px 32px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-          <tr><td style="padding: 24px 0 16px; border-top: 1px solid #F0EBE5;">
-            <p style="font-family: 'DM Serif Display', Georgia, serif; font-size: 18px; color: #2C2C28; margin: 0;">Recuerdos Hechos Souvenir</p>
-          </td></tr>
-          <tr><td>
-            <img src="${PRODUCT_URL}" width="520" alt="AXKAN Souvenirs" style="width:100%; max-width:520px; height:auto; border-radius: 12px; display: block;">
-          </td></tr>
-          <tr><td style="padding-top: 16px; text-align: center;">
-            <a href="https://axkan.art" style="display: inline-block; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #E72A88; text-decoration: none; padding: 10px 28px; border: 2px solid #E72A88; border-radius: 50px; letter-spacing: 0.5px;">Visitar axkan.art</a>
-          </td></tr>
+          <tr>
+            <td style="vertical-align: middle; width: 50%;">
+              <img src="${LOGO_URL}" width="140" alt="AXKAN" style="display:block; width:140px; max-width:140px; height:auto;">
+            </td>
+            <td style="vertical-align: middle; text-align: right; width: 50%;">
+              <p style="margin:0; ${F}; font-size: 12px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">%%DOC_LABEL%%</p>
+              <p style="margin: 4px 0 0; ${F}; font-size: 22px; font-weight: 700; color: %%DOC_COLOR%%; letter-spacing: -0.3px;">%%DOC_TITLE%%</p>
+            </td>
+          </tr>
         </table>
       </td>
     </tr>
+
+    <!-- Thin accent line -->
+    <tr>
+      <td style="padding: 40px 48px 0;" class="mobile-pad">
+        <div style="height: 2px; background: linear-gradient(90deg, #E72A88, #F39223, #8AB73B, #09ADC2); border-radius: 2px;"></div>
+      </td>
+    </tr>
+
+    <!-- BODY CONTENT -->
+    ${bodyContent}
 
     <!-- FOOTER -->
     <tr>
-      <td style="background-color: #2C2C28; border-radius: 0 0 16px 16px; padding: 36px 40px; text-align: center;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-          <tr><td style="padding-bottom: 16px;">
-            <img src="${LOGO_URL}" width="120" alt="AXKAN" style="width:120px; height:auto; filter: brightness(10);">
-          </td></tr>
-          <tr><td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.7; color: #9CA3AF;">
-            <strong style="color: #E5E7EB;">${process.env.COMPANY_NAME || 'AXKAN'}</strong> &mdash; Recuerdos Hechos Souvenir<br>
-            <a href="mailto:${process.env.COMPANY_EMAIL || 'informacion@axkan.art'}" style="color: #E72A88; text-decoration: none;">${process.env.COMPANY_EMAIL || 'informacion@axkan.art'}</a><br>
-            <a href="https://axkan.art" style="color: #E72A88; text-decoration: none;">axkan.art</a>
-          </td></tr>
-          <tr><td style="padding-top: 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; color: #6B7280;">
-            Este es un correo automatico. Si tienes preguntas, responde directamente a este mensaje.
-          </td></tr>
-        </table>
+      <td style="padding: 0 48px;" class="mobile-pad">
+        <div style="height: 1px; background-color: #e5e5ea;"></div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px 48px 16px; text-align: center;" class="mobile-pad">
+        <p style="margin: 0; ${F}; font-size: 12px; color: #8e8e93; line-height: 1.6;">
+          <a href="mailto:${process.env.COMPANY_EMAIL || 'informacion@axkan.art'}" style="color: #8e8e93; text-decoration: none;">${process.env.COMPANY_EMAIL || 'informacion@axkan.art'}</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://instagram.com/axkan.mx" style="color: #8e8e93; text-decoration: none;">@axkanoficial</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://axkan.art" style="color: #8e8e93; text-decoration: none;">axkan.art</a>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 48px 32px; text-align: center;" class="mobile-pad">
+        <p style="margin: 0; ${F}; font-size: 11px; color: #c7c7cc;">
+          Recuerdos Hechos Souvenir &copy; ${new Date().getFullYear()} AXKAN. Todos los derechos reservados.
+        </p>
       </td>
     </tr>
 
@@ -273,9 +242,9 @@ function buildEmailHTML(bodyContent, preheader = '') {
 </html>`;
 }
 
-/**
- * Send receipt email with PDF attachment
- */
+// ═══════════════════════════════════════════════════════════════
+// 1. RECIBO DE PAGO — Receipt with PDF attachment
+// ═══════════════════════════════════════════════════════════════
 export async function sendReceiptEmail(order, client, pdfPath) {
   try {
     if (!client.email) {
@@ -283,102 +252,79 @@ export async function sendReceiptEmail(order, client, pdfPath) {
       return { success: false, reason: 'No email address' };
     }
 
-    const orderDateFormatted = new Date(order.orderDate).toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const eventDateFormatted = order.eventDate ? new Date(order.eventDate).toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    const orderDate = new Date(order.orderDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const SP = (h) => `<tr><td style="height:${h}px; line-height:${h}px; font-size:0;" height="${h}">&nbsp;</td></tr>`;
 
     const bodyContent = `
-        <!-- Greeting -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 36px 40px 0;">
-          <tr><td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.7; color: #4B5563;">
-            <p style="margin: 0 0 8px;">Hola <strong style="color: #2C2C28;">${client.name}</strong>,</p>
-            <p style="margin: 0;">Tu orden ha sido aprobada. Adjunto encontraras el recibo de pago con todos los detalles.</p>
-          </td></tr>
-        </table>
+        ${SP(44)}
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <p style="margin: 0 0 6px; ${F}; font-size: 13px; color: #8e8e93;">Hola,</p>
+          <p style="margin: 0; ${F}; font-size: 26px; font-weight: 700; color: #1c1c1e; letter-spacing: -0.3px;">${client.name}</p>
+          <p style="margin: 14px 0 0; ${F}; font-size: 14px; color: #8e8e93; line-height: 1.5;">Tu pago ha sido verificado y registrado correctamente. Adjunto encontraras tu recibo oficial.</p>
+        </td></tr>
 
-        <!-- Order Details Card -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 28px 40px;">
-          <tr><td>
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #FAFAF8; border-radius: 12px; overflow: hidden;">
-              <!-- Order number badge -->
-              <tr><td style="background: linear-gradient(90deg, #E72A88, #F39223); padding: 14px 24px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                  <tr>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 1.5px;">Numero de Orden</td>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff; text-align: right;">${order.orderNumber}</td>
-                  </tr>
-                </table>
-              </td></tr>
-              <!-- Details rows -->
-              <tr><td style="padding: 20px 24px 0;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                  <tr>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; padding-bottom: 4px;">Fecha de Orden</td>
-                  </tr>
-                  <tr>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 15px; color: #2C2C28; padding-bottom: 16px; border-bottom: 1px solid #F0EBE5;">${orderDateFormatted}</td>
-                  </tr>
-                </table>
-              </td></tr>
-              ${eventDateFormatted ? `
-              <tr><td style="padding: 16px 24px 0;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                  <tr>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; padding-bottom: 4px;">Fecha del Evento</td>
-                  </tr>
-                  <tr>
-                    <td style="font-family: 'DM Serif Display', Georgia, serif; font-size: 17px; color: #E72A88; padding-bottom: 16px; border-bottom: 1px solid #F0EBE5;">${eventDateFormatted}</td>
-                  </tr>
-                </table>
-              </td></tr>` : ''}
-              <!-- Totals -->
-              <tr><td style="padding: 20px 24px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                  <tr>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; color: #6B7280; padding-bottom: 10px;">Total del Pedido</td>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 17px; font-weight: 700; color: #2C2C28; text-align: right; padding-bottom: 10px;">${formatCurrency(order.totalPrice)}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; color: #8AB73B; padding-bottom: 10px;">Anticipo Recibido</td>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 17px; font-weight: 700; color: #8AB73B; text-align: right; padding-bottom: 10px;">${formatCurrency(order.actualDepositAmount)}</td>
-                  </tr>
-                  <tr>
-                    <td colspan="2" style="border-top: 2px dashed #F0EBE5; padding-top: 12px;">
-                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                        <tr>
-                          <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; color: #F39223;">Saldo Restante</td>
-                          <td style="font-family: 'DM Serif Display', Georgia, serif; font-size: 24px; font-weight: 700; color: #E72A88; text-align: right;">${formatCurrency(order.remainingBalance)}</td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </td></tr>
-              <!-- Balance note -->
-              <tr><td style="padding: 0 24px 20px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #FEF3C7, #FFF7E0); border-radius: 8px;">
-                  <tr><td style="padding: 12px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #92400E;">
-                    Este monto debera ser pagado antes de la entrega del pedido.
-                  </td></tr>
-                </table>
-              </td></tr>
-            </table>
-          </td></tr>
-        </table>
+        ${SP(36)}
 
-        <!-- Thank you -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 0 40px 36px;">
-          <tr><td style="font-family: 'DM Serif Display', Georgia, serif; font-size: 20px; color: #2C2C28; text-align: center; padding-top: 8px;">
-            Gracias por tu preferencia
-          </td></tr>
-        </table>`;
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="padding: 20px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; width: 50%; vertical-align: top;">
+                <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Fecha</p>
+                <p style="margin: 6px 0 0; ${F}; font-size: 15px; font-weight: 600; color: #1c1c1e;">${orderDate}</p>
+              </td>
+              <td style="padding: 20px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; width: 50%; vertical-align: top; text-align: right;">
+                <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Metodo de Pago</p>
+                <p style="margin: 6px 0 0; ${F}; font-size: 15px; font-weight: 600; color: #1c1c1e;">Transferencia SPEI</p>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
 
-    const html = buildEmailHTML(bodyContent, `Recibo de pago - Orden ${order.orderNumber}`)
-      .replace('%%HERO_TITLE%%', 'Recibo de Pago')
-      .replace('%%HERO_SUBTITLE%%', 'Tu orden ha sido aprobada y esta en proceso');
+        ${SP(32)}
+
+        <!-- Totals -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="padding: 14px 0; ${F}; font-size: 14px; color: #3a3a3c;">Total del Pedido</td>
+              <td style="padding: 14px 0; ${F}; font-size: 14px; font-weight: 600; color: #1c1c1e; text-align: right;">${formatCurrency(order.totalPrice)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 0; ${F}; font-size: 14px; color: #8AB73B; font-style: italic;">Anticipo Recibido</td>
+              <td style="padding: 14px 0; ${F}; font-size: 14px; font-weight: 600; color: #8AB73B; text-align: right;">${formatCurrency(order.actualDepositAmount)}</td>
+            </tr>
+            <tr><td colspan="2"><div style="height: 1px; background-color: #e5e5ea;"></div></td></tr>
+            <tr>
+              <td style="padding: 20px 0 0; ${F}; font-size: 11px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px;">Saldo Restante</td>
+              <td style="padding: 20px 0 0; ${F}; font-size: 28px; font-weight: 700; color: #E72A88; text-align: right; letter-spacing: -0.5px;">${formatCurrency(order.remainingBalance)}</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding: 8px 0 0; ${F}; font-size: 12px; color: #aaa;">
+                Este monto debera ser cubierto antes de la entrega del pedido.
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+        ${SP(40)}
+
+        <!-- CTA -->
+        <tr><td style="padding: 0 48px; text-align: center;" class="mobile-pad">
+          <a href="https://axkan.art" style="display: inline-block; ${F}; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none; padding: 14px 48px; background-color: #E72A88; border-radius: 50px;">Ver Recibo Completo</a>
+        </td></tr>
+
+        ${SP(48)}
+    `;
+
+    const html = buildEmailHTML(bodyContent, `Recibo de pago — Orden ${order.orderNumber}`)
+      .replace('%%DOC_LABEL%%', 'RECIBO DE PAGO')
+      .replace('%%DOC_TITLE%%', order.orderNumber)
+      .replace('%%DOC_COLOR%%', '#E72A88');
 
     return await sendEmail({
       to: client.email,
-      subject: `Recibo de Pago - Orden ${order.orderNumber} | AXKAN`,
+      subject: `Recibo de Pago — ${order.orderNumber} | AXKAN`,
       html,
       attachments: [
         {
@@ -395,10 +341,9 @@ export async function sendReceiptEmail(order, client, pdfPath) {
   }
 }
 
-/**
- * Send receipt email to client during auto-approval flow (called from client-routes.js)
- * Unlike sendReceiptEmail which attaches a PDF file, this links to the PDF URL
- */
+// ═══════════════════════════════════════════════════════════════
+// 2. PEDIDO APROBADO — Order Confirmed (with optional PDF link)
+// ═══════════════════════════════════════════════════════════════
 export async function sendClientReceiptEmail(email, name, orderNumber, pdfUrl, orderData) {
   try {
     if (!email) {
@@ -406,144 +351,158 @@ export async function sendClientReceiptEmail(email, name, orderNumber, pdfUrl, o
       return { success: false, reason: 'No email address' };
     }
 
-    const { totalPrice, depositAmount, remainingBalance, items, eventDate, eventType } = orderData;
-    const eventDateFormatted = eventDate ? new Date(eventDate).toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    const { totalPrice, depositAmount, remainingBalance, items, eventDate } = orderData;
+    const eventDateFmt = eventDate ? new Date(eventDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
-    // Build item rows for the product table
-    const itemRows = (items || []).map((item, i) => {
-      const bgColor = i % 2 === 0 ? '#FAFAF8' : '#ffffff';
-      return `<tr>
-        <td style="padding: 12px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; color: #2C2C28; background: ${bgColor};">${item.productName}</td>
-        <td style="padding: 12px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; color: #6B7280; text-align: center; background: ${bgColor};">${item.quantity}</td>
-        <td style="padding: 12px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; color: #6B7280; text-align: right; background: ${bgColor};">${formatCurrency(item.unitPrice)}</td>
-        <td style="padding: 12px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; color: #2C2C28; text-align: right; background: ${bgColor};">${formatCurrency(item.lineTotal)}</td>
-      </tr>`;
-    }).join('');
+    const itemRows = (items || []).map(item =>
+      `<tr>
+        <td style="padding: 18px 0; ${F}; font-size: 14px; color: #1c1c1e; border-bottom: 1px solid #f0f0f0;">${item.quantity} &times; ${item.productName}</td>
+        <td style="padding: 18px 0; ${F}; font-size: 14px; font-weight: 600; color: #1c1c1e; text-align: right; border-bottom: 1px solid #f0f0f0;">${formatCurrency(item.lineTotal)}</td>
+      </tr>`
+    ).join('');
+
+    // SP = email-safe spacer (Gmail ignores padding on <table>, only <td> works)
+    const SP = (h) => `<tr><td style="height:${h}px; line-height:${h}px; font-size:0;" height="${h}">&nbsp;</td></tr>`;
 
     const bodyContent = `
-        <!-- Greeting -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 36px 40px 0;">
-          <tr><td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.7; color: #4B5563;">
-            <p style="margin: 0 0 8px;">Hola <strong style="color: #2C2C28;">${name}</strong>,</p>
-            <p style="margin: 0;">Tu pedido ha sido verificado y aprobado. Ya estamos trabajando en el.</p>
-          </td></tr>
-        </table>
+        <!-- Spacer after accent line -->
+        ${SP(48)}
 
-        <!-- Order Number Badge -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 28px 40px 0;">
-          <tr><td>
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(90deg, #E72A88, #F39223); border-radius: 10px;">
-              <tr><td style="padding: 16px 24px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                  <tr>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 1.5px;">Orden</td>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 700; color: #ffffff; text-align: right;">${orderNumber}</td>
-                  </tr>
-                </table>
-              </td></tr>
-            </table>
-          </td></tr>
-        </table>
+        <!-- Checkmark -->
+        <tr><td style="text-align: center;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background-color: #8AB73B; color: #fff; ${F}; font-size: 28px; line-height: 56px; margin: 0 auto;">&#10003;</div>
+        </td></tr>
+        ${SP(20)}
+        <tr><td style="text-align: center; padding: 0 48px;" class="mobile-pad">
+          <p style="margin: 0; ${F}; font-size: 28px; font-weight: 700; color: #1c1c1e;">Pedido Confirmado</p>
+        </td></tr>
+        ${SP(14)}
+        <tr><td style="text-align: center; padding: 0 48px;" class="mobile-pad">
+          <p style="margin: 0; ${F}; font-size: 15px; color: #8e8e93; line-height: 1.6;">Hola <strong style="color: #1c1c1e;">${name}</strong>, tu pedido ha sido verificado y ya estamos trabajando en el.</p>
+        </td></tr>
+
+        <!-- Spacer -->
+        ${SP(40)}
+
+        <!-- Order + Event Date -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="padding: 24px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; width: 50%; vertical-align: top;">
+                <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Orden</p>
+                <p style="margin: 8px 0 0; ${F}; font-size: 16px; font-weight: 700; color: #1c1c1e;">${orderNumber}</p>
+              </td>
+              ${eventDateFmt ? `
+              <td style="padding: 24px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; width: 50%; vertical-align: top; text-align: right;">
+                <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Fecha del Evento</p>
+                <p style="margin: 8px 0 0; ${F}; font-size: 16px; font-weight: 700; color: #E72A88;">${eventDateFmt}</p>
+              </td>
+              ` : '<td></td>'}
+            </tr>
+          </table>
+        </td></tr>
 
         ${items && items.length > 0 ? `
-        <!-- Items Table -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 24px 40px 0;">
-          <tr><td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1.5px; padding-bottom: 12px;">
-            Detalle del Pedido
-          </td></tr>
-          <tr><td>
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-radius: 10px; overflow: hidden; border: 1px solid #F0EBE5;">
-              <tr>
-                <td style="padding: 10px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px; background: #F5F0EB; border-bottom: 2px solid #E72A88;">Producto</td>
-                <td style="padding: 10px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; background: #F5F0EB; border-bottom: 2px solid #E72A88;">Cant.</td>
-                <td style="padding: 10px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px; text-align: right; background: #F5F0EB; border-bottom: 2px solid #E72A88;">P. Unit.</td>
-                <td style="padding: 10px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px; text-align: right; background: #F5F0EB; border-bottom: 2px solid #E72A88;">Subtotal</td>
-              </tr>
-              ${itemRows}
-            </table>
-          </td></tr>
-        </table>
+        <!-- Spacer -->
+        ${SP(36)}
+
+        <!-- Products label -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <p style="margin: 0 0 14px; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Productos</p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            ${itemRows}
+          </table>
+        </td></tr>
         ` : ''}
 
-        <!-- Totals Section -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 24px 40px;">
-          <tr><td>
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #FAFAF8; border-radius: 12px; overflow: hidden;">
-              <tr><td style="padding: 20px 24px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                  <tr>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; color: #6B7280; padding-bottom: 10px;">Total del Pedido</td>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 17px; font-weight: 700; color: #2C2C28; text-align: right; padding-bottom: 10px;">${formatCurrency(totalPrice)}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; color: #8AB73B; padding-bottom: 12px;">Anticipo Recibido</td>
-                    <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 17px; font-weight: 700; color: #8AB73B; text-align: right; padding-bottom: 12px;">${formatCurrency(depositAmount)}</td>
-                  </tr>
-                  <tr>
-                    <td colspan="2" style="border-top: 2px dashed #F0EBE5; padding-top: 14px;">
-                      ${remainingBalance > 0 ? `
-                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                        <tr>
-                          <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; color: #F39223;">Saldo Restante</td>
-                          <td style="font-family: 'DM Serif Display', Georgia, serif; font-size: 26px; font-weight: 700; color: #E72A88; text-align: right;">${formatCurrency(remainingBalance)}</td>
-                        </tr>
-                      </table>
-                      ` : `
-                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                        <tr>
-                          <td style="font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 700; color: #8AB73B; text-align: center; padding: 4px 0;">Pedido pagado en su totalidad</td>
-                        </tr>
-                      </table>
-                      `}
-                    </td>
-                  </tr>
-                </table>
-              </td></tr>
-              ${remainingBalance > 0 ? `
-              <tr><td style="padding: 0 24px 20px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #FEF3C7, #FFF7E0); border-radius: 8px;">
-                  <tr><td style="padding: 12px 16px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #92400E;">
-                    Este monto debera ser pagado antes de la entrega del pedido.
-                  </td></tr>
-                </table>
-              </td></tr>` : ''}
-            </table>
-          </td></tr>
-        </table>
+        <!-- Spacer -->
+        ${SP(28)}
 
-        ${eventDateFormatted ? `
-        <!-- Event Date -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 0 40px 16px;">
-          <tr><td>
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #FDF2F8, #FCE7F3); border-radius: 10px; border-left: 4px solid #E72A88;">
-              <tr><td style="padding: 16px 20px;">
-                <p style="margin: 0 0 4px; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px;">Fecha del Evento</p>
-                <p style="margin: 0; font-family: 'DM Serif Display', Georgia, serif; font-size: 17px; color: #E72A88;">${eventDateFormatted}</p>
-              </td></tr>
-            </table>
-          </td></tr>
-        </table>
-        ` : ''}
+        <!-- Totals -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="padding: 14px 0; ${F}; font-size: 14px; color: #3a3a3c;">Total del Pedido</td>
+              <td style="padding: 14px 0; ${F}; font-size: 14px; font-weight: 600; color: #1c1c1e; text-align: right;">${formatCurrency(totalPrice)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 0; ${F}; font-size: 14px; color: #8AB73B; font-style: italic;">Anticipo Recibido</td>
+              <td style="padding: 14px 0; ${F}; font-size: 14px; font-weight: 600; color: #8AB73B; text-align: right;">${formatCurrency(depositAmount)}</td>
+            </tr>
+            <tr><td colspan="2"><div style="height: 1px; background-color: #e5e5ea;"></div></td></tr>
+            ${remainingBalance > 0 ? `
+            <tr>
+              <td style="padding: 20px 0 0; ${F}; font-size: 11px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px;">Saldo Restante</td>
+              <td style="padding: 20px 0 0; ${F}; font-size: 28px; font-weight: 700; color: #E72A88; text-align: right; letter-spacing: -0.5px;">${formatCurrency(remainingBalance)}</td>
+            </tr>
+            ` : `
+            <tr>
+              <td colspan="2" style="padding: 24px 0 0; ${F}; font-size: 15px; font-weight: 600; color: #8AB73B; text-align: center;">
+                Pedido pagado en su totalidad
+              </td>
+            </tr>
+            `}
+          </table>
+        </td></tr>
 
         ${pdfUrl ? `
-        <!-- CTA Button -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 8px 40px 16px;">
-          <tr><td style="text-align: center;">
-            <a href="${pdfUrl}" style="display: inline-block; font-family: 'Inter', Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; padding: 14px 40px; background: linear-gradient(135deg, #E72A88 0%, #B91D73 100%); border-radius: 50px; letter-spacing: 0.3px;">Ver Recibo de Pago</a>
-          </td></tr>
-        </table>
+        ${SP(32)}
+        <tr><td style="padding: 0 48px; text-align: center;" class="mobile-pad">
+          <a href="${pdfUrl}" style="display: inline-block; ${F}; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none; padding: 14px 48px; background-color: #E72A88; border-radius: 50px;">Ver Recibo de Pago</a>
+        </td></tr>
         ` : ''}
 
-        <!-- Thank you -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="padding: 12px 40px 36px;">
-          <tr><td style="font-family: 'DM Serif Display', Georgia, serif; font-size: 20px; color: #2C2C28; text-align: center; padding-top: 8px;">
-            Gracias por tu preferencia
-          </td></tr>
-        </table>`;
+        <!-- Spacer before Next Steps -->
+        ${SP(44)}
 
-    const html = buildEmailHTML(bodyContent, `Tu pedido ${orderNumber} ha sido aprobado - AXKAN`)
-      .replace('%%HERO_TITLE%%', 'Pedido Aprobado')
-      .replace('%%HERO_SUBTITLE%%', `${orderNumber} &mdash; Ya estamos trabajando en tu pedido`);
+        <!-- Divider -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <div style="height: 1px; background-color: #e5e5ea;"></div>
+        </td></tr>
+
+        ${SP(36)}
+
+        <!-- Next Steps -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <p style="margin: 0 0 20px; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Proximos Pasos</p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="width: 44px; vertical-align: top; padding-bottom: 24px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #E72A88; color: #fff; ${F}; font-size: 14px; font-weight: 700; line-height: 32px; text-align: center;">1</div>
+              </td>
+              <td style="vertical-align: top; padding-bottom: 24px;">
+                <p style="margin: 0; ${F}; font-size: 15px; font-weight: 700; color: #1c1c1e;">Diseno en Proceso</p>
+                <p style="margin: 4px 0 0; ${F}; font-size: 13px; color: #8e8e93; line-height: 1.4;">Te enviaremos una vista previa para aprobacion</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 44px; vertical-align: top; padding-bottom: 24px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f0f0f0; color: #8e8e93; ${F}; font-size: 14px; font-weight: 700; line-height: 32px; text-align: center;">2</div>
+              </td>
+              <td style="vertical-align: top; padding-bottom: 24px;">
+                <p style="margin: 0; ${F}; font-size: 15px; font-weight: 700; color: #1c1c1e;">Produccion</p>
+                <p style="margin: 4px 0 0; ${F}; font-size: 13px; color: #8e8e93; line-height: 1.4;">Impresion, corte y empaque de tu pedido</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 44px; vertical-align: top;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f0f0f0; color: #8e8e93; ${F}; font-size: 14px; font-weight: 700; line-height: 32px; text-align: center;">3</div>
+              </td>
+              <td style="vertical-align: top;">
+                <p style="margin: 0; ${F}; font-size: 15px; font-weight: 700; color: #1c1c1e;">Envio</p>
+                <p style="margin: 4px 0 0; ${F}; font-size: 13px; color: #8e8e93; line-height: 1.4;">Recibiras tu numero de rastreo por este medio</p>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+        ${SP(48)}
+    `;
+
+    const html = buildEmailHTML(bodyContent, `Tu pedido ${orderNumber} ha sido aprobado`)
+      .replace('%%DOC_LABEL%%', 'CONFIRMACION')
+      .replace('%%DOC_TITLE%%', 'Pedido Aprobado')
+      .replace('%%DOC_COLOR%%', '#8AB73B');
 
     return await sendEmail({
       to: email,
@@ -556,6 +515,130 @@ export async function sendClientReceiptEmail(email, name, orderNumber, pdfUrl, o
     throw error;
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// 3. ENVIO EN CAMINO — Shipping Notification
+// ═══════════════════════════════════════════════════════════════
+export async function sendShippingNotificationEmail({ email, clientName, orderNumber, trackingNumber, carrier, trackingUrl, deliveryDays, shippedAt }) {
+  try {
+    if (!email) {
+      console.log('⚠️  Client email not provided, skipping shipping notification');
+      return { success: false, reason: 'No email address' };
+    }
+
+    const shippedDate = shippedAt ? new Date(shippedAt) : new Date();
+    const estimatedDelivery = new Date(shippedDate);
+    estimatedDelivery.setDate(estimatedDelivery.getDate() + (deliveryDays || 3));
+    const estStart = shippedDate.toLocaleDateString('es-MX', { day: 'numeric' });
+    const estEnd = estimatedDelivery.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' });
+    const estimatedRange = `${estStart} – ${estEnd}`;
+
+    const TC = '#09ADC2';
+
+    const SP = (h) => `<tr><td style="height:${h}px; line-height:${h}px; font-size:0;" height="${h}">&nbsp;</td></tr>`;
+
+    const bodyContent = `
+        ${SP(48)}
+
+        <!-- Truck icon -->
+        <tr><td style="text-align: center;">
+          <span style="font-size: 44px;">🚚</span>
+        </td></tr>
+        ${SP(16)}
+        <tr><td style="text-align: center; padding: 0 48px;" class="mobile-pad">
+          <p style="margin: 0; ${F}; font-size: 26px; font-weight: 700; color: #1c1c1e;">Tu Pedido Va En Camino</p>
+        </td></tr>
+        ${SP(12)}
+        <tr><td style="text-align: center; padding: 0 48px;" class="mobile-pad">
+          <p style="margin: 0; ${F}; font-size: 15px; color: #8e8e93; line-height: 1.5;">Hola <strong style="color: #1c1c1e;">${clientName}</strong>, tu paquete ya salio de nuestras instalaciones.</p>
+        </td></tr>
+
+        ${SP(36)}
+
+        <!-- Tracking Card -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #d4f0f4; border-radius: 12px;">
+            <tr><td style="padding: 28px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="width: 55%; vertical-align: top; padding-bottom: 20px;">
+                    <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Numero de Rastreo</p>
+                    <p style="margin: 6px 0 0; ${F}; font-size: 18px; font-weight: 700; color: ${TC};">${trackingNumber}</p>
+                  </td>
+                  <td style="width: 45%; vertical-align: top; text-align: right; padding-bottom: 20px;">
+                    <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Paqueteria</p>
+                    <p style="margin: 6px 0 0; ${F}; font-size: 18px; font-weight: 700; color: #1c1c1e;">${carrier || 'Nacional'}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width: 55%; vertical-align: top; border-top: 1px solid #f0f0f0; padding-top: 20px;">
+                    <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Orden</p>
+                    <p style="margin: 6px 0 0; ${F}; font-size: 15px; font-weight: 600; color: #1c1c1e;">${orderNumber}</p>
+                  </td>
+                  <td style="width: 45%; vertical-align: top; text-align: right; border-top: 1px solid #f0f0f0; padding-top: 20px;">
+                    <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Entrega Estimada</p>
+                    <p style="margin: 6px 0 0; ${F}; font-size: 15px; font-weight: 600; color: ${TC};">${estimatedRange}</p>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        ${SP(36)}
+
+        <!-- Progress Steps -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="width: 25%; text-align: center; vertical-align: top;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background-color: ${TC}; color: #fff; ${F}; font-size: 12px; font-weight: 700; line-height: 28px; margin: 0 auto;">&#10003;</div>
+                <p style="margin: 6px 0 0; ${F}; font-size: 10px; color: ${TC}; font-weight: 600;">Creado</p>
+              </td>
+              <td style="width: 25%; text-align: center; vertical-align: top;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background-color: ${TC}; color: #fff; ${F}; font-size: 12px; font-weight: 700; line-height: 28px; margin: 0 auto;">&#10003;</div>
+                <p style="margin: 6px 0 0; ${F}; font-size: 10px; color: ${TC}; font-weight: 600;">Recolectado</p>
+              </td>
+              <td style="width: 25%; text-align: center; vertical-align: top;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background-color: ${TC}; color: #fff; ${F}; font-size: 12px; font-weight: 700; line-height: 28px; margin: 0 auto;">&#10003;</div>
+                <p style="margin: 6px 0 0; ${F}; font-size: 10px; color: ${TC}; font-weight: 600;">En Transito</p>
+              </td>
+              <td style="width: 25%; text-align: center; vertical-align: top;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #e5e5ea; color: #8e8e93; ${F}; font-size: 12px; font-weight: 700; line-height: 28px; margin: 0 auto;">4</div>
+                <p style="margin: 6px 0 0; ${F}; font-size: 10px; color: #8e8e93; font-weight: 600;">Entregado</p>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+        ${trackingUrl ? `
+        ${SP(36)}
+        <tr><td style="padding: 0 48px; text-align: center;" class="mobile-pad">
+          <a href="${trackingUrl}" style="display: inline-block; ${F}; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none; padding: 16px 52px; background-color: #1c1c1e; border-radius: 50px;">Rastrear Mi Paquete</a>
+        </td></tr>
+        ` : ''}
+
+        ${SP(48)}
+    `;
+
+    const html = buildEmailHTML(bodyContent, `Tu pedido ${orderNumber} va en camino`)
+      .replace('%%DOC_LABEL%%', 'ACTUALIZACION')
+      .replace('%%DOC_TITLE%%', 'En Camino')
+      .replace('%%DOC_COLOR%%', TC);
+
+    return await sendEmail({
+      to: email,
+      subject: `Tu Pedido ${orderNumber} Va En Camino | AXKAN`,
+      html
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending shipping notification email:', error);
+    throw error;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat('es-MX', {
@@ -577,5 +660,6 @@ export default {
   sendEmail,
   sendReceiptEmail,
   sendClientReceiptEmail,
+  sendShippingNotificationEmail,
   initializeEmailSender
 };
