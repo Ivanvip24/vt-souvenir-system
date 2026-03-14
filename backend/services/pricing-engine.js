@@ -292,46 +292,218 @@ export async function listAvailableMaterials() {
   return result.rows;
 }
 
+// ============================================================
+// REAL PRODUCTION CONSTANTS (from supplier receipts & axkan.art)
+// ============================================================
+
+// MDF Board specs from Maderas Madeplus (Factura A 27678, Feb 2026)
+const MDF_BOARD = {
+  '3mm': {
+    widthCm: 122, heightCm: 244,           // full board
+    costPerBoard: 125.00,                   // MDF price
+    cutsPerBoard: 4,                        // cut into 4 pieces of 122×61cm
+    costPerCut: 2.50,
+    shippingPerBoard: 1.50,                 // $150 / 100 boards
+    get totalCostPerBoard() {
+      return this.costPerBoard + (this.cutsPerBoard * this.costPerCut) + this.shippingPerBoard;
+    },
+    get areaCm2() { return this.widthCm * this.heightCm; },
+    get costPerCm2() { return this.totalCostPerBoard / this.areaCm2; }
+  },
+  '4.5mm': {
+    widthCm: 122, heightCm: 244,
+    costPerBoard: 125.00,                   // TODO: ask Ivan for 4.5mm price
+    cutsPerBoard: 4,
+    costPerCut: 2.50,
+    shippingPerBoard: 1.50,
+    get totalCostPerBoard() {
+      return this.costPerBoard + (this.cutsPerBoard * this.costPerCut) + this.shippingPerBoard;
+    },
+    get areaCm2() { return this.widthCm * this.heightCm; },
+    get costPerCm2() { return this.totalCostPerBoard / this.areaCm2; }
+  }
+};
+
+// Product dimensions from axkan.art product pages
+const PRODUCT_DIMENSIONS = {
+  'iman_chico_cuadrado':    { w: 5, h: 5, mdf: '3mm', magnets: 1, pzasPerTabloide: 18 },
+  'iman_chico_circular':    { w: 5, h: 5, mdf: '3mm', magnets: 1, pzasPerTabloide: 18 },
+  'iman_chico_alargado':    { w: 8, h: 4, mdf: '3mm', magnets: 1, pzasPerTabloide: 18 },
+  'iman_mediano_cuadrado':  { w: 7.5, h: 7.5, mdf: '3mm', magnets: 1, pzasPerTabloide: 18 },
+  'iman_mediano_circular':  { w: 7.5, h: 7.5, mdf: '3mm', magnets: 1, pzasPerTabloide: 18 },
+  'iman_mediano_alargado':  { w: 5.5, h: 11.5, mdf: '3mm', magnets: 1, pzasPerTabloide: 18 },
+  'iman_grande_cuadrado':   { w: 9.5, h: 9.5, mdf: '3mm', magnets: 1, pzasPerTabloide: 12 },
+  'iman_grande_circular':   { w: 9.5, h: 9.5, mdf: '3mm', magnets: 1, pzasPerTabloide: 12 },
+  'iman_grande_alargado':   { w: 7.5, h: 13.5, mdf: '3mm', magnets: 1, pzasPerTabloide: 12 },
+  'iman_3d_cuadrado':       { w: 7.5, h: 7.5, mdf: '3mm', magnets: 1, layers: 2, pzasPerTabloide: 18 },
+  'iman_3d_alargado':       { w: 11.5, h: 5.5, mdf: '3mm', magnets: 1, layers: 2, pzasPerTabloide: 18 },
+  'iman_foil_cuadrado':     { w: 7.5, h: 7.5, mdf: '3mm', magnets: 1, pzasPerTabloide: 18 },
+  'iman_foil_alargado':     { w: 11.5, h: 5.5, mdf: '3mm', magnets: 1, pzasPerTabloide: 18 },
+  'llavero_cuadrado':       { w: 5, h: 5, mdf: '3mm', magnets: 0, pzasPerTabloide: 18 },
+  'llavero_circular':       { w: 5, h: 5, mdf: '3mm', magnets: 0, pzasPerTabloide: 18 },
+  'llavero_alargado':       { w: 8, h: 4, mdf: '3mm', magnets: 0, pzasPerTabloide: 18 },
+  'destapador':             { w: 11, h: 5, mdf: '3mm', magnets: 1, pzasPerTabloide: 16 },
+  'portallaves':            { w: 19.5, h: 12.5, mdf: '4.5mm', magnets: 2, pzasPerTabloide: 4 },
+  'portarretratos':         { w: 17.45, h: 12.5, mdf: '3mm', magnets: 0, pzasPerTabloide: 4 },
+  'boton':                  { w: 4, h: 4, mdf: null, magnets: 0, pzasPerTabloide: 0 },
+};
+
+// Production layout: 1 board (122×244) → 4 pieces (122×61) → 6 tabloides each → pieces
+// Tabloides per quarter-board: 6
+// Quarter-boards per full board: 4
+// Total tabloides per board: 24
+const TABLOIDES_PER_QUARTER = 6;
+const QUARTERS_PER_BOARD = 4;
+
+// Labor calculation from real payroll data
+// 5 production employees × $2,100/week = $10,500/week
+// Average weekly output: ~8,667 pieces (from production tracking Mar 9-14, 2026)
+// Labor cost per piece: $10,500 / 8,667 ≈ $1.21
+const LABOR = {
+  weeklyPayrollPerEmployee: 2100,
+  productionEmployees: 5,
+  avgWeeklyOutput: 8667,      // pieces across all employees
+  get costPerPiece() {
+    return (this.weeklyPayrollPerEmployee * this.productionEmployees) / this.avgWeeklyOutput;
+  }
+};
+
+// Sale prices from AXKAN catalog (for margin calculation)
+const CATALOG_PRICES = {
+  'iman_chico':     { moq100: 8, moq1000: 6 },
+  'iman_mediano':   { moq100: 11, moq1000: 8 },
+  'iman_grande':    { moq100: 15, moq1000: 12 },
+  'iman_3d':        { moq100: 15, moq1000: 12 },
+  'iman_foil':      { moq100: 13, moq1000: 10 },
+  'llavero':        { moq100: 10, moq1000: 7 },
+  'destapador':     { moq100: 20, moq1000: 15 },
+  'portallaves':    { moq100: 40, moq1000: 40 },
+  'portarretratos': { moq100: 40, moq1000: 40 },
+  'boton':          { moq100: 8, moq1000: 6 },
+};
+
 /**
- * Estimate a hypothetical production cost by fuzzy-matching material names
- * against real raw_materials DB data and building a virtual BOM.
+ * Find the closest standard product to given dimensions
+ */
+function findClosestProduct(widthCm, heightCm, productType) {
+  const area = widthCm * heightCm;
+  const typeLower = (productType || '').toLowerCase();
+
+  // Filter by product type if provided
+  let candidates = Object.entries(PRODUCT_DIMENSIONS);
+  if (typeLower) {
+    const typeFiltered = candidates.filter(([key]) => key.includes(typeLower.replace(/\s+/g, '_')));
+    if (typeFiltered.length > 0) candidates = typeFiltered;
+  }
+
+  // Find closest by area
+  let closest = null;
+  let closestDiff = Infinity;
+  for (const [key, dims] of candidates) {
+    if (!dims.w || !dims.h) continue;
+    const diff = Math.abs(dims.w * dims.h - area);
+    if (diff < closestDiff) {
+      closestDiff = diff;
+      closest = { key, ...dims };
+    }
+  }
+  return closest;
+}
+
+/**
+ * Estimate pieces per tabloide for a custom size based on tabloide area
+ * Tabloide is roughly contained within a 122×61cm quarter-board divided by 6
+ * Approximate tabloide area: ~(40×28cm) = ~1120 cm² usable
+ */
+function estimatePiecesPerTabloide(widthCm, heightCm) {
+  // Approximate tabloide usable dimensions (~40cm × 28cm based on 122×61 / 6 layout)
+  const tabloidW = 40;
+  const tabloidH = 28;
+  const cols = Math.floor(tabloidW / widthCm);
+  const rows = Math.floor(tabloidH / heightCm);
+  // Also try rotated
+  const colsR = Math.floor(tabloidW / heightCm);
+  const rowsR = Math.floor(tabloidH / widthCm);
+  return Math.max(cols * rows, colsR * rowsR, 1);
+}
+
+/**
+ * Estimate a hypothetical production cost using REAL board-based costing.
  *
- * @param {Object} params
- * @param {string} params.description - Human-readable description of the product
- * @param {string[]} params.materials - Array of material name strings to match
- * @param {Object} [params.dimensions] - { width, height } in cm
- * @param {number} [params.layers=1] - Number of layers
- * @param {string|null} [params.finish=null] - Finish type (reserved for future use)
- * @param {number} [params.quantity=100] - Quantity for total cost calculation
- * @returns {Promise<Object>} Cost estimate with breakdown, confidence, and suggested prices
+ * Uses actual MDF board prices (from supplier receipts), real product dimensions
+ * (from axkan.art), and real labor costs (from payroll data) to calculate
+ * accurate per-piece production costs.
  */
 export async function estimateHypotheticalCost({ description, materials, dimensions, layers = 1, finish = null, quantity = 100 }) {
   const round2 = (val) => Math.round(val * 100) / 100;
 
-  // 1. Fetch all active raw materials
+  // 1. Fetch all active raw materials from DB (for non-MDF consumables)
   const result = await query(
     'SELECT id, name, sku, cost_per_unit, unit_type, unit_label FROM raw_materials WHERE is_active = true'
   );
   const allMaterials = result.rows;
 
-  // Default dimensions: standard magnet size 7cm x 5cm
-  const width = (dimensions && dimensions.width) || 7;
-  const height = (dimensions && dimensions.height) || 5;
+  // 2. Determine dimensions
+  const width = (dimensions && dimensions.width) || 7.5;
+  const height = (dimensions && dimensions.height) || 7.5;
+  const pieceArea = width * height;
+
+  // 3. Detect product type from description
+  const descLower = (description || '').toLowerCase();
+  let productType = 'iman_mediano'; // default
+  if (descLower.includes('llavero') || descLower.includes('keychain')) productType = 'llavero';
+  else if (descLower.includes('destapador') || descLower.includes('opener')) productType = 'destapador';
+  else if (descLower.includes('portallaves') || descLower.includes('key holder')) productType = 'portallaves';
+  else if (descLower.includes('portarretrato') || descLower.includes('frame')) productType = 'portarretratos';
+  else if (descLower.includes('3d')) productType = 'iman_3d';
+  else if (descLower.includes('foil')) productType = 'iman_foil';
+  else if (descLower.includes('boton') || descLower.includes('button')) productType = 'boton';
+  else if (descLower.includes('grande') || pieceArea > 80) productType = 'iman_grande';
+  else if (descLower.includes('chico') || descLower.includes('pequeño') || pieceArea <= 30) productType = 'iman_chico';
+
+  // 4. Find closest standard product and MDF thickness
+  const closest = findClosestProduct(width, height, productType);
+  const mdfThickness = closest?.mdf || '3mm';
+  const board = MDF_BOARD[mdfThickness] || MDF_BOARD['3mm'];
+  const numLayers = layers || closest?.layers || 1;
+  const numMagnets = closest?.magnets ?? 1;
+
+  // 5. Calculate MDF cost per piece (board-based)
+  // Board cost per cm²: totalCostPerBoard / (122 * 244)
+  const mdfCostPerCm2 = board.costPerCm2;
+  const mdfCostPerPiece = round2(mdfCostPerCm2 * pieceArea * numLayers);
+
+  // 6. Estimate yield for context
+  const pzasPerTabloide = closest?.pzasPerTabloide || estimatePiecesPerTabloide(width, height);
+  const pzasPerBoard = pzasPerTabloide * TABLOIDES_PER_QUARTER * QUARTERS_PER_BOARD;
 
   const materialBreakdown = [];
   const unmatchedMaterials = [];
   let totalMaterialCost = 0;
 
-  // 2. For each requested material, fuzzy-match to a real raw_material
-  for (const materialName of materials) {
+  // Add MDF as first material
+  materialBreakdown.push({
+    name: `MDF ${mdfThickness}${numLayers > 1 ? ` (×${numLayers} capas)` : ''}`,
+    matchedMaterial: `Tabla ${board.widthCm}×${board.heightCm}cm → ${pieceArea}cm²/pza`,
+    costPerUnit: round2(board.totalCostPerBoard),
+    quantityUsed: round2(pieceArea * numLayers),
+    subtotal: mdfCostPerPiece,
+    detail: `$${board.totalCostPerBoard.toFixed(2)}/tabla ÷ ~${pzasPerBoard} pzas`
+  });
+  totalMaterialCost += mdfCostPerPiece;
+
+  // 7. Match remaining materials from DB (magnets, glue, celofán, etc.)
+  const materialsToMatch = materials.filter(m => {
+    const l = m.toLowerCase();
+    return !l.includes('mdf') && !l.includes('tabla') && !l.includes('board');
+  });
+
+  for (const materialName of materialsToMatch) {
     const lowerName = materialName.toLowerCase();
 
-    // Try exact match first
     let matched = allMaterials.find(
       (m) => m.name.toLowerCase() === lowerName
     );
-
-    // Then fuzzy: either direction includes
     if (!matched) {
       matched = allMaterials.find(
         (m) =>
@@ -352,62 +524,63 @@ export async function estimateHypotheticalCost({ description, materials, dimensi
       continue;
     }
 
-    // 3. Calculate cost based on material type
-    const unitType = (matched.unit_type || '').toLowerCase();
-    const matchedName = matched.name.toLowerCase();
-    const isSheet =
-      unitType.includes('sheet') ||
-      unitType.includes('pliego') ||
-      matchedName.includes('mdf') ||
-      matchedName.includes('vinil') ||
-      matchedName.includes('papel');
-
-    let subtotal;
-    let quantityUsed;
-
-    if (isSheet) {
-      // Area-based cost: (width_cm * height_cm / 10000) * cost_per_unit
-      const areaSqM = (width * height) / 10000;
-      subtotal = round2(areaSqM * parseFloat(matched.cost_per_unit));
-      quantityUsed = round2(areaSqM);
-    } else {
-      // Unit materials: cost_per_unit * 1 per piece
-      subtotal = round2(parseFloat(matched.cost_per_unit) * 1);
-      quantityUsed = 1;
-    }
+    // For magnets, use numMagnets count
+    const isMagnet = lowerName.includes('imán') || lowerName.includes('iman') || lowerName.includes('ferrita') || lowerName.includes('magnet');
+    const qty = isMagnet ? numMagnets : 1;
+    const subtotal = round2(parseFloat(matched.cost_per_unit) * qty);
 
     totalMaterialCost += subtotal;
-
     materialBreakdown.push({
       name: materialName,
       matchedMaterial: matched.name,
       costPerUnit: round2(parseFloat(matched.cost_per_unit)),
-      quantityUsed,
+      quantityUsed: qty,
       subtotal
     });
   }
 
-  // 4. Labor estimate
-  const baseLaborPerPiece = 0.50;
-  const labor = round2(baseLaborPerPiece * (1 + (layers - 1) * 0.3));
+  // 8. Labor cost (from real payroll / production data)
+  const laborBase = round2(LABOR.costPerPiece);
+  const labor = round2(laborBase * (1 + (numLayers - 1) * 0.3));
 
-  // 5. Waste percentage applied to material cost only
-  const wastePercent = 5 + (layers - 1) * 2;
+  // 9. Waste: ~8% for standard, more for complex products
+  const wastePercent = 8 + (numLayers - 1) * 3;
   const wasteCost = round2(totalMaterialCost * (wastePercent / 100));
 
-  // Total cost per unit
+  // 10. Total cost per unit
   const totalCost = round2(totalMaterialCost + wasteCost + labor);
 
-  // 6. Suggested price range
-  const low = round2(totalCost * 2.5);
-  const mid = round2(totalCost * 3.0);
-  const high = round2(totalCost * 3.5);
+  // 11. Price suggestions based on catalog comparison
+  const catalogKey = productType.replace(/_cuadrado|_circular|_alargado/, '');
+  const catalogPrice = CATALOG_PRICES[catalogKey];
+  let suggestedLow, suggestedMid, suggestedHigh;
 
-  // 7. Confidence based on match ratio
-  const totalRequested = materials.length;
+  if (catalogPrice) {
+    // Scale from closest standard product by area ratio
+    const closestArea = closest ? closest.w * closest.h : pieceArea;
+    const areaRatio = pieceArea / closestArea;
+    suggestedLow = round2(catalogPrice.moq1000 * areaRatio);
+    suggestedMid = round2(catalogPrice.moq100 * areaRatio);
+    suggestedHigh = round2(catalogPrice.moq100 * areaRatio * 1.3);
+  } else {
+    suggestedLow = round2(totalCost * 2.5);
+    suggestedMid = round2(totalCost * 3.0);
+    suggestedHigh = round2(totalCost * 3.5);
+  }
+
+  // Ensure suggested prices are above cost
+  suggestedLow = Math.max(suggestedLow, round2(totalCost * 1.5));
+  suggestedMid = Math.max(suggestedMid, round2(totalCost * 2.0));
+  suggestedHigh = Math.max(suggestedHigh, round2(totalCost * 2.5));
+
+  // 12. Margins at suggested prices
+  const marginAtMid = round2(((suggestedMid - totalCost) / suggestedMid) * 100);
+
+  // 13. Confidence
+  const totalRequested = materialsToMatch.length;
   const matchedCount = totalRequested - unmatchedMaterials.length;
   let confidence;
-  if (matchedCount === totalRequested) {
+  if (matchedCount === totalRequested && totalMaterialCost > 0) {
     confidence = 'high';
   } else if (totalRequested > 0 && matchedCount / totalRequested > 0.5) {
     confidence = 'medium';
@@ -417,6 +590,10 @@ export async function estimateHypotheticalCost({ description, materials, dimensi
 
   return {
     description,
+    dimensions: { width, height, area: pieceArea },
+    productType: catalogKey,
+    mdfThickness,
+    layers: numLayers,
     estimatedCostPerUnit: round2(totalCost),
     materialBreakdown,
     laborEstimate: round2(labor),
@@ -425,7 +602,14 @@ export async function estimateHypotheticalCost({ description, materials, dimensi
     totalForQuantity: round2(totalCost * quantity),
     quantity,
     confidence,
-    suggestedPriceRange: { low: round2(low), mid: round2(mid), high: round2(high) },
+    suggestedPriceRange: { low: suggestedLow, mid: suggestedMid, high: suggestedHigh },
+    marginAtMidPrice: marginAtMid,
+    yieldInfo: {
+      pzasPerTabloide,
+      pzasPerBoard,
+      boardsNeeded: Math.ceil(quantity / pzasPerBoard)
+    },
+    closestProduct: closest ? closest.key : null,
     unmatchedMaterials
   };
 }

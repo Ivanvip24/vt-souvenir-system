@@ -951,13 +951,16 @@ function showCostEstimate(data) {
             </div>
         `).join('');
 
+        const dimInfo = data.dimensions ? `${data.dimensions.width}×${data.dimensions.height}cm` : '';
+        const marginColor = (data.marginAtMidPrice || 0) >= 50 ? '#8ab73b' : (data.marginAtMidPrice || 0) >= 30 ? '#f39223' : '#e52421';
+
         html = `
             <div class="ai-quote-result" style="border-left: 3px solid #09adc2;">
                 <div class="ai-quote-header">
                     <span class="ai-quote-icon">🔬</span>
                     <div>
                         <div class="ai-quote-title">Estimación de Costo</div>
-                        <div class="ai-quote-number">${escapeHtml(data.description || 'Producto hipotético')}</div>
+                        <div class="ai-quote-number">${escapeHtml(data.description || 'Producto hipotético')}${dimInfo ? ` <span style="opacity:0.6;">(${dimInfo})</span>` : ''}</div>
                     </div>
                 </div>
 
@@ -968,9 +971,9 @@ function showCostEstimate(data) {
                     </div>
 
                     <div style="font-family: monospace; font-size: 0.85em;">
-                        <div style="padding: 2px 0;">Costo materiales: $${(data.estimatedCostPerUnit - (data.laborEstimate || 0)).toFixed(2)}/pza</div>
+                        <div style="padding: 2px 0;">Costo materiales: $${(data.estimatedCostPerUnit - (data.laborEstimate || 0) - (data.wasteCost || 0)).toFixed(2)}/pza</div>
                         <div style="padding: 2px 0;">Mano de obra: $${(data.laborEstimate || 0).toFixed(2)}/pza</div>
-                        <div style="padding: 2px 0;">Desperdicio: ${data.wastePercent || 5}% (+$${(data.wasteCost || 0).toFixed(2)})</div>
+                        <div style="padding: 2px 0;">Desperdicio: ${data.wastePercent || 8}% (+$${(data.wasteCost || 0).toFixed(2)})</div>
                     </div>
 
                     <div class="ai-quote-total">
@@ -988,6 +991,13 @@ function showCostEstimate(data) {
                     ${data.suggestedPriceRange ? `
                         <div style="text-align: center; margin-top: 8px; padding: 6px 8px; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 0.85em;">
                             Precio sugerido: $${data.suggestedPriceRange.low?.toFixed(2)} — $${data.suggestedPriceRange.high?.toFixed(2)} /pza
+                            ${data.marginAtMidPrice ? `<br><span style="color: ${marginColor};">Margen al precio medio: ${data.marginAtMidPrice}%</span>` : ''}
+                        </div>
+                    ` : ''}
+
+                    ${data.yieldInfo ? `
+                        <div style="margin-top: 6px; font-size: 0.8em; opacity: 0.7; text-align: center;">
+                            ~${data.yieldInfo.pzasPerTabloide} pzas/tabloide · ~${data.yieldInfo.pzasPerBoard} pzas/tabla${data.yieldInfo.boardsNeeded ? ` · ${data.yieldInfo.boardsNeeded} tabla${data.yieldInfo.boardsNeeded > 1 ? 's' : ''} para ${data.quantity} pzas` : ''}
                         </div>
                     ` : ''}
 
