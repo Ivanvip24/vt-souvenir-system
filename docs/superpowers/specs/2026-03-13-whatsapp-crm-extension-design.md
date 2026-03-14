@@ -42,7 +42,7 @@ A Chrome extension (Manifest V3) that injects a sidebar into WhatsApp Web, givin
 | Service worker | `background.js` | JWT storage, all API calls, auth state management |
 | Content script | `content.js` | Injects into WhatsApp Web, detects phone, renders sidebar |
 | Popup | `popup.html`, `popup.js` | Admin login form, connection status, logout |
-| Sidebar UI | `sidebar.html`, `sidebar.css` | Sidebar template injected as Shadow DOM |
+| Sidebar UI | `sidebar.js`, `sidebar.css` (inlined) | Sidebar template and styles built in JS, injected into Shadow DOM |
 | Manifest | `manifest.json` | Manifest V3 config, permissions, content script matching |
 
 ### Data Flow
@@ -126,7 +126,9 @@ Client data cached in memory for the session. Switching back to a previous chat 
 - Right side of WhatsApp Web, 320px wide
 - Small floating toggle button (AXKAN jaguar icon) on the right edge
 - Click toggle to open/close sidebar
-- When open, WhatsApp's chat area compresses to make room (no overlap)
+- When open, WhatsApp's main app container gets a `margin-right: 320px` to compress the chat area
+- Target WhatsApp's `#app` or root `._app` wrapper for the margin (selectors may change with updates)
+- **Fallback:** If the compression target selector is not found, the sidebar overlays on top of the right edge with a slight shadow, covering part of the chat. This gracefully degrades rather than breaking.
 - Open/closed state persisted in `chrome.storage.local`
 
 ### Layout (Top to Bottom)
@@ -143,13 +145,16 @@ Client data cached in memory for the session. Switching back to a previous chat 
 
 | Status | Color |
 |--------|-------|
-| New | Blue |
+| Pending / New | Blue |
 | Design | Purple |
-| Printing | Orange |
+| Production / Printing | Orange |
 | Cutting | Yellow |
-| Shipping | Teal |
+| Counting | Indigo |
+| Shipping / In Transit | Teal |
 | Delivered | Green |
 | Cancelled | Red |
+
+Any unrecognized status renders as a gray badge with the raw status text.
 
 ### Visual Style
 
@@ -182,13 +187,17 @@ Client data cached in memory for the session. Switching back to a previous chat 
 
 ### Variable Resolution
 
+All variables use `{varName}` syntax. Monetary values are prefixed with `$` in the template text itself (not in the variable syntax).
+
 - `{name}` — client name from lookup
 - `{orderNumber}` — selected order's number (e.g., ORD-20260313-1101)
 - `{tracking}` — tracking number from shipping labels
 - `{carrier}` — carrier name from shipping labels
-- `{remaining}` — total price minus deposit paid
-- `${total}` — order total price
-- `${deposit}` — deposit amount
+- `{remaining}` — formatted remaining balance (total minus deposit paid)
+- `{total}` — formatted order total price
+- `{deposit}` — formatted deposit amount
+
+Example: template text `"El total es ${total}"` means the literal `$` character followed by the resolved `{total}` variable (e.g., renders as `"El total es $400.00"`).
 
 If a variable can't be resolved (e.g., no tracking yet), the template button is disabled or the variable shows as `[sin rastreo]`.
 
@@ -214,10 +223,33 @@ If a variable can't be resolved (e.g., no tracking yet), the template button is 
 ### Submit Flow
 
 1. Files upload first via `POST /api/client/upload-file` -> returns Google Drive URLs
-2. Order creates via `POST /api/orders` with file URLs attached
+2. Order creates via `POST /api/orders` with the following request body:
+
+```json
+{
+  "clientName": "Maria Gonzalez",
+  "clientPhone": "5512345678",
+  "clientEmail": "maria@email.com",
+  "items": [
+    {
+      "productId": 4,
+      "productName": "Imanes de MDF",
+      "quantity": 50,
+      "size": "5x5cm",
+      "unitPrice": 8.00,
+      "design": "Custom logo"
+    }
+  ],
+  "eventType": "Boda",
+  "notes": "Optional client notes"
+}
+```
+
 3. File attachments link via `POST /api/orders/:orderId/items/:itemId/attachment`
 4. Success: shows order number, auto-refreshes order list
 5. "Share confirmation" button pastes: "Hola {name}! Tu pedido {orderNumber} ha sido registrado. El total es ${total}, con un anticipo de ${deposit}."
+
+**Field notes:** `unitPrice` comes from the product catalog response. `totalPrice` and `depositAmount` are calculated server-side. The `items` array can contain multiple items for multi-product orders.
 
 ### For New Clients
 
@@ -252,12 +284,16 @@ Client gets created alongside the order (the submit endpoint handles this).
 
 All endpoints already exist. No new backend routes needed.
 
+**Note:** `GET /api/clients/:id` returns order summaries only (id, number, date, total, status). When a user expands an order card, fetch full details from `GET /api/orders/:orderId` which includes items, tracking, deposit, attachments, etc.
+
+**Note:** Endpoints marked "None" for auth are public (designed for the client-facing order form). The extension calls them through `background.js` for CORS/isolation reasons, not for auth. The JWT header is not required on these calls.
+
 | Feature | Endpoint | Auth |
 |---------|----------|------|
 | Login | `POST /api/admin/login` | None (returns JWT) |
 | Find client by phone | `GET /api/clients/search?phone=` | JWT |
-| Client details + orders | `GET /api/clients/:id` | JWT |
-| Order details | `GET /api/orders/:orderId` | JWT |
+| Client summary + order list | `GET /api/clients/:id` | JWT |
+| Full order details (on expand) | `GET /api/orders/:orderId` | JWT |
 | Product catalog | `GET /api/client/products` | None |
 | Create order | `POST /api/orders` | JWT |
 | Upload design file | `POST /api/client/upload-file` | None |
@@ -273,9 +309,7 @@ frontend/chrome-extension-whatsapp-crm/
   manifest.json
   background.js          # Service worker: auth, API calls
   content.js             # WhatsApp Web injection, phone detection, sidebar mount
-  sidebar.html           # Sidebar template
-  sidebar.css            # Sidebar styles (loaded inside Shadow DOM)
-  sidebar.js             # Sidebar logic: rendering, events, templates, orders, uploads
+  sidebar.js             # Sidebar UI: HTML/CSS inlined as JS strings, rendering, events, templates, orders, uploads
   popup.html             # Login popup
   popup.js               # Login logic
   popup.css              # Login popup styles
@@ -284,6 +318,8 @@ frontend/chrome-extension-whatsapp-crm/
     icon-48.png
     icon-128.png
 ```
+
+**Note:** Sidebar HTML and CSS are inlined as template strings inside `sidebar.js` rather than loaded from separate files. This avoids needing `web_accessible_resources` in the manifest (which would expose extension files to the host page). The popup files (`popup.html`, `popup.css`) don't need this treatment because they run in the extension's own context, not the content script.
 
 ---
 
@@ -310,6 +346,21 @@ frontend/chrome-extension-whatsapp-crm/
   }
 }
 ```
+
+---
+
+## Error & Loading States
+
+| State | UI Behavior |
+|-------|-------------|
+| Backend unreachable (Render cold start) | Loading spinner with "Conectando al servidor..." text. Retry automatically every 5 seconds, up to 3 attempts. Then show "No se pudo conectar" with manual retry button. |
+| API call in progress | Subtle loading indicator (pulsing dots) in the relevant section. Sidebar remains interactive. |
+| Client lookup fails | "Error buscando cliente" with retry button. |
+| Order creation fails | Red toast notification inside sidebar with error message. Form stays filled so user can retry. |
+| File upload fails | Red indicator on the specific file with "Reintentar" link. Other uploads unaffected. |
+| JWT expired (401) | Banner at top of sidebar: "Sesion expirada" with link that opens the popup for re-login. |
+| Order created but Notion sync fails | Show order number (success) with a small warning: "Pedido creado, sync a Notion pendiente." Not blocking. |
+| No orders found for client | Friendly empty state: "Sin pedidos" with prominent "Nuevo Pedido" button. |
 
 ---
 
