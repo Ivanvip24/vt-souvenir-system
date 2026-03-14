@@ -14,6 +14,7 @@ import { generateBrandedReceipt, getBrandedReceiptUrl } from '../services/brande
 import { generateProductImage, buildProductMockupPrompt } from '../services/gemini-image.js';
 import { estimateHypotheticalCost, listAvailableMaterials } from '../services/pricing-engine.js';
 import { generateWeeklyInsights, getProductOpportunities } from '../services/rd-insights.js';
+import { loadBrandContent } from '../services/knowledge-ai.js';
 
 const router = express.Router();
 
@@ -1871,22 +1872,125 @@ router.post('/chat', async (req, res) => {
 // MOBILE AI CHAT — Lightweight endpoint with tool_use
 // =====================================================
 
-async function getMobileBusinessContext() {
-  try {
-    const stats = await query(`
-      SELECT
-        COUNT(CASE WHEN status IN ('pending','New') THEN 1 END) as pending_orders,
-        COUNT(CASE WHEN status IN ('Design','Printing','Cutting','Counting') THEN 1 END) as in_production,
-        COUNT(CASE WHEN status = 'Shipping' THEN 1 END) as in_shipping,
-        COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE THEN total_price END), 0) as revenue_today,
-        COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '30 days' THEN total_price END), 0) as revenue_30d,
-        COUNT(CASE WHEN created_at >= CURRENT_DATE THEN 1 END) as orders_today
-      FROM orders WHERE status NOT IN ('cancelled','Cancelled')
-    `);
-    return stats.rows[0] || {};
-  } catch (e) {
-    return {};
+// ── Brand knowledge cache (refreshes on server restart or /api/knowledge/ai/reload) ──
+let _brandSummary = null;
+
+function extractBrandFacts(fullContext) {
+  if (!fullContext) return '';
+  const facts = [];
+  // Colors
+  const colorMatch = fullContext.match(/Rosa Mexicano[^\n]*#[0-9a-fA-F]{6}/gi);
+  if (colorMatch) {
+    facts.push('COLORES: Rosa Mexicano #e72a88, Verde Selva #8ab73b, Naranja #f39223, Turquesa #09adc2, Rojo #e52421, Oro Maya #D4A574');
+  } else {
+    facts.push('COLORES: Rosa Mexicano #e72a88, Verde Selva #8ab73b, Naranja #f39223, Turquesa #09adc2, Rojo #e52421, Oro Maya #D4A574');
   }
+  // Typography
+  facts.push('TIPOGRAFÍA: RL AQVA (títulos), Prenton RP Cond (body)');
+  // Product types
+  facts.push('PRODUCTOS: Imanes MDF (planos/3D), Llaveros MDF, Destapadores MDF, Botones metálicos');
+  // Brand values
+  facts.push('VALORES: Orgullo mexicano, Autenticidad cultural, Calidad premium, Accesibilidad, Durabilidad');
+  // Test AXKAN
+  facts.push('TEST AXKAN (5 preguntas para decisiones): ¿Genera orgullo? ¿Es culturalmente auténtico? ¿Es premium? ¿Es accesible? ¿Durará?');
+  // Voice
+  facts.push('VOZ: Cálida, orgullosa, directa. B2C=emocional/cercana, B2B=profesional/datos');
+  // Catalog URL
+  facts.push('CATÁLOGO: vtanunciando.com | PEDIDOS: axkan-pedidos.vercel.app | SOCIAL: @axkan.mx');
+  // Pricing basics from brand knowledge
+  facts.push('PRECIO BASE: Imán plano $8 MXN/pz (millar), MOQ 100pz, descuentos por volumen');
+  return facts.join('\n');
+}
+
+async function getBrandSummary() {
+  if (_brandSummary) return _brandSummary;
+  try {
+    const brand = await loadBrandContent();
+    _brandSummary = extractBrandFacts(brand.fullContext);
+  } catch { _brandSummary = ''; }
+  return _brandSummary;
+}
+
+function fmt$(v) { return '$' + Number(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+function buildMobileSystemPrompt(ctx, brandSummary) {
+  const now = new Date();
+  const date = now.toLocaleDateString('es-MX', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  const os = ctx.orderStats || {};
+  const cs = ctx.clientStats || {};
+  const ms = ctx.materialStats || {};
+  const ss = ctx.supplierStats || {};
+  const ps = ctx.paymentStats || {};
+
+  let prompt = `Eres el asistente de AXKAN, empresa mexicana de souvenirs personalizados. Responde en español, breve y directo. Usa herramientas tool_use para consultas detalladas.
+FECHA: ${date}
+
+PEDIDOS: total=${os.total_orders||0} | 30d=${os.orders_last_30_days||0} | 7d=${os.orders_last_7_days||0} | pendientes=${os.pending_orders||0} | completados=${os.completed_orders||0}
+INGRESOS: total=${fmt$(os.total_revenue)} | 30d=${fmt$(os.revenue_last_30_days)} | 7d=${fmt$(os.revenue_last_7_days)} | hoy=${fmt$(os.revenue_today)} | promedio=${fmt$(os.avg_order_value)}
+CLIENTES: total=${cs.total_clients||0} | nuevos30d=${cs.new_clients_30_days||0}
+MATERIALES: ${ms.total_materials||0} registrados, ${ms.low_stock_count||0} stock bajo
+PROVEEDORES: ${ss.total_suppliers||0} | recibos=${ss.total_receipts||0} | compras=${fmt$(ss.total_purchases)}
+PAGOS PENDIENTES: ${ps.pending_final_payments||0} pagos, ${fmt$(ps.pending_amount)} pendiente`;
+
+  // Monthly revenue
+  if (ctx.monthlyRevenue?.length) {
+    prompt += '\nINGRESOS/MES: ' + ctx.monthlyRevenue.map(m => `${m.month}:${fmt$(m.revenue)}(${m.order_count})`).join(' | ');
+  }
+  // Top clients
+  if (ctx.topClients?.length) {
+    prompt += '\nTOP CLIENTES: ' + ctx.topClients.map((c, i) => `${i+1}.${c.name}:${fmt$(c.total_spent)}(${c.order_count}ped)`).join(' ');
+  }
+  // Top products
+  if (ctx.topProducts?.length) {
+    prompt += '\nTOP PRODUCTOS: ' + ctx.topProducts.map((p, i) => `${i+1}.${p.product_name}:${p.total_quantity}u,${fmt$(p.total_revenue)}`).join(' ');
+  }
+  // BOM / Production costs
+  if (ctx.productCosts?.length) {
+    prompt += '\nBOM(producto|venta|costo|margen): ' + ctx.productCosts.map(p =>
+      `${p.product_name}|${fmt$(p.current_price)}|${fmt$(p.current_cost)}|${parseFloat(p.margin_pct||0).toFixed(1)}%`
+    ).join(' · ');
+  }
+  // Raw materials
+  if (ctx.rawMaterials?.length) {
+    prompt += '\nMATERIALES(nombre|costo/u|stock): ' + ctx.rawMaterials.slice(0, 15).map(m =>
+      `${m.name}|$${parseFloat(m.cost_per_unit||0).toFixed(2)}/${m.unit_label||'u'}|${m.current_stock||0}`
+    ).join(' · ');
+  }
+  // Recent orders
+  if (ctx.recentOrders?.length) {
+    prompt += '\nRECIENTES: ' + ctx.recentOrders.slice(0, 5).map(o =>
+      `#${o.order_number}:${o.client_name},${fmt$(o.total_price)},${o.status}`
+    ).join(' | ');
+  }
+
+  // Hardcoded knowledge (compact)
+  prompt += `
+
+NÓMINA SEMANAL: Majo=$2,500|Chris=$2,500|Sarahí=$2,500|Alicia=$2,800|Luz=$2,300|Montserrat=$2,000|Belinda=$2,000|Iván=$7,500|Alejandra=$5,000|Daniel=$5,000 TOTAL=$34,600/sem=$138,400/mes
+BONOS: hasta $1,000/mes/empleado (puntualidad $500+productividad $500). Max=$10,000/mes
+RENTAS: Casa Iván=$10,200|Casa Padres=$10,900|Negocio=$30,000 TOTAL=$51,100/mes
+GASTOS FIJOS: min=$189,500/mes($47,375/sem,$6,317/día,$790/hora) max=$199,500/mes(con bonos)
+PRODUCCIÓN: 3 láser, 18pz/tabloide, 85 tabloides/máq/día, 30K pz/máq/mes, 91,800 total/mes, $8/pz, max=$720K/mes
+META: 4.6 millares/día, 1.6 millares/día/vendedor(3 vendedores), 43 tablas montaje/día
+PROBLEMAS: 1.Fallas en recolecciones 2.Proveedores lentos(laminado/papel) 3.Falta personal montaje/acabados
+RAPPICARD: corte=15, pago=9 mes sig, tasa≈5%/mes, mejor compra=día 16(52d gracia), peor=día 14-15(24d)`;
+
+  // Brand knowledge
+  if (brandSummary) {
+    prompt += '\n\nMARCA AXKAN:\n' + brandSummary;
+  }
+
+  // R&D insights
+  if (ctx.rdInsights?.insights?.length) {
+    prompt += '\nI+D SEMANAL: ' + ctx.rdInsights.insights.map(i => `[${i.type}]${i.title}`).join(' | ');
+  }
+
+  // Rules
+  prompt += `
+
+REGLAS: Responde 2-4 oraciones max. Datos primero. Sin "¡Claro!" ni relleno. Formatea $ con comas. No ASCII art.`;
+
+  return prompt;
 }
 
 const MOBILE_TOOLS = [
@@ -2057,7 +2161,7 @@ async function executeMobileTool(toolName, toolInput) {
 /**
  * POST /api/ai-assistant/mobile-chat
  * Mobile-optimized AI chat with Claude tool_use
- * Uses Haiku 3.5 for speed + cost efficiency
+ * Full knowledge (business + brand) with token-optimized prompt
  */
 router.post('/mobile-chat', async (req, res) => {
   try {
@@ -2073,23 +2177,10 @@ router.post('/mobile-chat', async (req, res) => {
 
     console.log(`📱 Mobile AI: "${message.substring(0, 50)}..."`);
 
-    // Get lightweight business context
-    const ctx = await getMobileBusinessContext();
-
-    // Build compact system prompt
-    const systemPrompt = `Eres el asistente móvil de AXKAN, una empresa mexicana de souvenirs personalizados (imanes MDF, llaveros, destapadores).
-Responde SIEMPRE en español. Sé breve y directo (2-4 oraciones máximo). Usa datos reales de las herramientas.
-
-DATOS EN VIVO:
-- Pedidos pendientes: ${ctx.pending_orders || 0}
-- En producción: ${ctx.in_production || 0}
-- En envío: ${ctx.in_shipping || 0}
-- Ingresos hoy: $${Number(ctx.revenue_today || 0).toLocaleString('es-MX')}
-- Ingresos 30 días: $${Number(ctx.revenue_30d || 0).toLocaleString('es-MX')}
-- Pedidos hoy: ${ctx.orders_today || 0}
-
-Formatea números monetarios con $ y comas. No uses emojis excesivos. Ve directo al dato.
-Si te preguntan algo que requiere datos actualizados, USA las herramientas disponibles.`;
+    // Get full business context (same as desktop) + brand knowledge
+    const ctx = await getBusinessContext();
+    const brandSummary = await getBrandSummary();
+    const systemPrompt = buildMobileSystemPrompt(ctx, brandSummary);
 
     // Build messages array from history
     const messages = [];
@@ -2106,7 +2197,7 @@ Si te preguntan algo que requiere datos actualizados, USA las herramientas dispo
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     let response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
+      max_tokens: 1500,
       system: systemPrompt,
       messages,
       tools: MOBILE_TOOLS
@@ -2143,7 +2234,7 @@ Si te preguntan algo que requiere datos actualizados, USA las herramientas dispo
 
       response = await anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
+        max_tokens: 1500,
         system: systemPrompt,
         messages,
         tools: MOBILE_TOOLS
