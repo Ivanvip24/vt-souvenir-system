@@ -46,6 +46,7 @@ import * as orderAlerts from '../agents/alerts/order-alerts.js';
 import * as skydropxService from '../services/skydropx.js';
 import * as pickupScheduler from '../services/pickup-scheduler.js';
 import { initializeCepRetryScheduler, stopCepRetryScheduler } from '../services/cep-retry-scheduler.js';
+import { initializeShippingNotificationScheduler, stopShippingNotificationScheduler } from '../services/shipping-notification-scheduler.js';
 import * as facebookMarketplace from '../services/facebook-marketplace.js';
 import * as facebookScheduler from '../services/facebook-scheduler.js';
 import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
@@ -83,6 +84,7 @@ const ALLOWED_ORIGINS = [
   'https://shipping.t1.com',
   'https://axkan.art',
   'https://www.axkan.art',
+  'https://app.axkan.art',
   'https://client-order-form-v2.vercel.app',
   process.env.FRONTEND_URL,
   ...(process.env.EXTRA_CORS_ORIGINS ? process.env.EXTRA_CORS_ORIGINS.split(',') : [])
@@ -5659,6 +5661,9 @@ async function startServer() {
     // Initialize Push Notification Service
     pushService.initializePushService();
 
+    // Initialize Shipping Notification Scheduler (checks Skydropx for in-transit shipments)
+    initializeShippingNotificationScheduler();
+
     // Initialize Facebook Marketplace Scheduler (daily at 9 AM)
     await facebookScheduler.initFacebookScheduler();
 
@@ -5867,6 +5872,7 @@ process.on('SIGTERM', () => {
   console.log('\n🛑 Received SIGTERM signal, shutting down gracefully...');
   analyticsAgent.scheduler.stopAllJobs();
   stopCepRetryScheduler();
+  stopShippingNotificationScheduler();
   process.exit(0);
 });
 
@@ -5874,6 +5880,7 @@ process.on('SIGINT', () => {
   console.log('\n🛑 Received SIGINT signal, shutting down gracefully...');
   analyticsAgent.scheduler.stopAllJobs();
   stopCepRetryScheduler();
+  stopShippingNotificationScheduler();
   process.exit(0);
 });
 
