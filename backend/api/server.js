@@ -85,6 +85,8 @@ const ALLOWED_ORIGINS = [
   'https://axkan.art',
   'https://www.axkan.art',
   'https://app.axkan.art',
+  'https://pedidos.axkan.art',
+  'https://mobile-app-mauve-ten.vercel.app',
   'https://client-order-form-v2.vercel.app',
   process.env.FRONTEND_URL,
   ...(process.env.EXTRA_CORS_ORIGINS ? process.env.EXTRA_CORS_ORIGINS.split(',') : [])
