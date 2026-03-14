@@ -206,6 +206,18 @@
                 </div>
             </div>
 
+            <!-- AI CHAT VIEW -->
+            <div id="view-ai" class="view">
+                <div id="ai-chat-messages" class="ai-chat-messages"></div>
+                <div id="ai-chips" class="ai-chips"></div>
+                <div id="ai-input-bar" class="ai-input-bar">
+                    <input type="text" id="ai-input" placeholder="Pregunta algo..." autocomplete="off">
+                    <button id="ai-send-btn" aria-label="Enviar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </div>
+            </div>
+
         </main>
 
         <!-- TAB BAR -->
@@ -225,6 +237,10 @@
             <button class="tab" data-view="tasks">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                 <span>Tareas</span>
+            </button>
+            <button class="tab" data-view="ai">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.9 1.8 5.4 4.3 6.5l.7.3V18h4v-2.2l.7-.3C18.2 14.4 19 11.9 19 9a7 7 0 0 0-7-7z"/><line x1="9" y1="21" x2="15" y2="21"/><line x1="10" y1="24" x2="14" y2="24"/></svg>
+                <span>AI</span>
             </button>
         </nav>
     </div>

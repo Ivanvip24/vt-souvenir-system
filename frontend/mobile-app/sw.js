@@ -1,4 +1,4 @@
-var CACHE_NAME = 'axkan-command-v2';
+var CACHE_NAME = 'axkan-command-v4';
 var SHELL_FILES = [
     '/',
     '/index.html',

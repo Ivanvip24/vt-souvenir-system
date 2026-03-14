@@ -1867,6 +1867,310 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+// =====================================================
+// MOBILE AI CHAT — Lightweight endpoint with tool_use
+// =====================================================
+
+async function getMobileBusinessContext() {
+  try {
+    const stats = await query(`
+      SELECT
+        COUNT(CASE WHEN status IN ('pending','New') THEN 1 END) as pending_orders,
+        COUNT(CASE WHEN status IN ('Design','Printing','Cutting','Counting') THEN 1 END) as in_production,
+        COUNT(CASE WHEN status = 'Shipping' THEN 1 END) as in_shipping,
+        COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE THEN total_price END), 0) as revenue_today,
+        COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '30 days' THEN total_price END), 0) as revenue_30d,
+        COUNT(CASE WHEN created_at >= CURRENT_DATE THEN 1 END) as orders_today
+      FROM orders WHERE status NOT IN ('cancelled','Cancelled')
+    `);
+    return stats.rows[0] || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+const MOBILE_TOOLS = [
+  {
+    name: 'get_revenue',
+    description: 'Obtener datos de ingresos/ventas de un periodo. Siempre usa esta herramienta cuando pregunten por ventas, ingresos, o dinero.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        period: { type: 'string', enum: ['today', 'week', 'month', '30days'], description: 'Periodo a consultar' }
+      },
+      required: ['period']
+    }
+  },
+  {
+    name: 'get_orders_by_status',
+    description: 'Obtener pedidos filtrados por estatus. Usa para consultas de pedidos pendientes, en produccion, enviados, etc.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', enum: ['New', 'Design', 'Printing', 'Cutting', 'Counting', 'Shipping', 'Delivered', 'all'], description: 'Estatus del pedido' },
+        limit: { type: 'number', description: 'Maximo de resultados (default 10)' }
+      },
+      required: ['status']
+    }
+  },
+  {
+    name: 'search_client',
+    description: 'Buscar un cliente por nombre, ciudad o telefono',
+    input_schema: {
+      type: 'object',
+      properties: {
+        searchTerm: { type: 'string', description: 'Termino de busqueda' }
+      },
+      required: ['searchTerm']
+    }
+  },
+  {
+    name: 'get_order_detail',
+    description: 'Obtener detalle completo de un pedido por numero de orden',
+    input_schema: {
+      type: 'object',
+      properties: {
+        orderNumber: { type: 'string', description: 'Numero de orden (ej: 001, 145)' }
+      },
+      required: ['orderNumber']
+    }
+  },
+  {
+    name: 'get_top_products',
+    description: 'Obtener los productos mas vendidos',
+    input_schema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Cantidad de productos (default 5)' }
+      }
+    }
+  },
+  {
+    name: 'get_top_clients',
+    description: 'Obtener los mejores clientes por ingresos',
+    input_schema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Cantidad de clientes (default 5)' }
+      }
+    }
+  },
+  {
+    name: 'get_task_summary',
+    description: 'Obtener resumen de tareas por estatus y departamento',
+    input_schema: {
+      type: 'object',
+      properties: {}
+    }
+  }
+];
+
+async function executeMobileTool(toolName, toolInput) {
+  switch (toolName) {
+    case 'get_revenue': {
+      const intervals = {
+        today: 'CURRENT_DATE',
+        week: "CURRENT_DATE - INTERVAL '7 days'",
+        month: "CURRENT_DATE - INTERVAL '30 days'",
+        '30days': "CURRENT_DATE - INTERVAL '30 days'"
+      };
+      const since = intervals[toolInput.period] || 'CURRENT_DATE';
+      const result = await query(`
+        SELECT
+          COUNT(*) as order_count,
+          COALESCE(SUM(total_price), 0) as revenue,
+          COALESCE(SUM(profit), 0) as profit,
+          COALESCE(AVG(total_price), 0) as avg_order,
+          COALESCE(SUM(total_production_cost), 0) as costs
+        FROM orders
+        WHERE created_at >= ${since}
+          AND status NOT IN ('cancelled','Cancelled')
+      `);
+      return result.rows[0];
+    }
+    case 'get_orders_by_status': {
+      const limit = toolInput.limit || 10;
+      let whereClause = "status NOT IN ('cancelled','Cancelled')";
+      if (toolInput.status !== 'all') {
+        whereClause = `status = '${toolInput.status.replace(/'/g, "''")}'`;
+      }
+      const result = await query(`
+        SELECT o.order_number, c.name as client_name, o.total_price, o.status, o.created_at
+        FROM orders o LEFT JOIN clients c ON o.client_id = c.id
+        WHERE ${whereClause}
+        ORDER BY o.created_at DESC
+        LIMIT ${parseInt(limit)}
+      `);
+      return { orders: result.rows, count: result.rows.length };
+    }
+    case 'search_client': {
+      return await findClientByName(toolInput.searchTerm);
+    }
+    case 'get_order_detail': {
+      const orderNum = toolInput.orderNumber.replace(/\D/g, '');
+      const orderResult = await query(`
+        SELECT o.*, c.name as client_name, c.phone as client_phone, c.city as client_city, c.state as client_state
+        FROM orders o LEFT JOIN clients c ON o.client_id = c.id
+        WHERE o.order_number = $1
+      `, [orderNum]);
+      if (!orderResult.rows[0]) return { error: 'Pedido no encontrado' };
+      const items = await query(`
+        SELECT product_name, quantity, unit_price, line_total
+        FROM order_items WHERE order_id = $1
+      `, [orderResult.rows[0].id]);
+      return { order: orderResult.rows[0], items: items.rows };
+    }
+    case 'get_top_products': {
+      const limit = toolInput.limit || 5;
+      const result = await query(`
+        SELECT product_name, SUM(quantity) as total_qty, COALESCE(SUM(line_total), 0) as total_revenue
+        FROM order_items GROUP BY product_name ORDER BY total_revenue DESC LIMIT $1
+      `, [parseInt(limit)]);
+      return result.rows;
+    }
+    case 'get_top_clients': {
+      const limit = toolInput.limit || 5;
+      const result = await query(`
+        SELECT c.name, c.city, COUNT(o.id) as order_count, COALESCE(SUM(o.total_price), 0) as total_spent
+        FROM clients c LEFT JOIN orders o ON c.id = o.client_id
+        GROUP BY c.id, c.name, c.city ORDER BY total_spent DESC LIMIT $1
+      `, [parseInt(limit)]);
+      return result.rows;
+    }
+    case 'get_task_summary': {
+      const result = await query(`
+        SELECT
+          COUNT(*) as total,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+          COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress,
+          COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
+          COUNT(CASE WHEN priority = 'urgent' AND status != 'completed' THEN 1 END) as urgent
+        FROM tasks
+      `);
+      return result.rows[0];
+    }
+    default:
+      return { error: 'Tool not found' };
+  }
+}
+
+/**
+ * POST /api/ai-assistant/mobile-chat
+ * Mobile-optimized AI chat with Claude tool_use
+ * Uses Haiku 3.5 for speed + cost efficiency
+ */
+router.post('/mobile-chat', async (req, res) => {
+  try {
+    const { message, sessionId, history } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ success: false, error: 'Mensaje vacío' });
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(500).json({ success: false, error: 'AI no configurado' });
+    }
+
+    console.log(`📱 Mobile AI: "${message.substring(0, 50)}..."`);
+
+    // Get lightweight business context
+    const ctx = await getMobileBusinessContext();
+
+    // Build compact system prompt
+    const systemPrompt = `Eres el asistente móvil de AXKAN, una empresa mexicana de souvenirs personalizados (imanes MDF, llaveros, destapadores).
+Responde SIEMPRE en español. Sé breve y directo (2-4 oraciones máximo). Usa datos reales de las herramientas.
+
+DATOS EN VIVO:
+- Pedidos pendientes: ${ctx.pending_orders || 0}
+- En producción: ${ctx.in_production || 0}
+- En envío: ${ctx.in_shipping || 0}
+- Ingresos hoy: $${Number(ctx.revenue_today || 0).toLocaleString('es-MX')}
+- Ingresos 30 días: $${Number(ctx.revenue_30d || 0).toLocaleString('es-MX')}
+- Pedidos hoy: ${ctx.orders_today || 0}
+
+Formatea números monetarios con $ y comas. No uses emojis excesivos. Ve directo al dato.
+Si te preguntan algo que requiere datos actualizados, USA las herramientas disponibles.`;
+
+    // Build messages array from history
+    const messages = [];
+    if (history && Array.isArray(history)) {
+      for (const msg of history.slice(-10)) {
+        if (msg.role && msg.content) {
+          messages.push({ role: msg.role, content: msg.content });
+        }
+      }
+    }
+    messages.push({ role: 'user', content: message.trim() });
+
+    // Call Claude Haiku with tools
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    let response = await anthropic.messages.create({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages,
+      tools: MOBILE_TOOLS
+    });
+
+    // Tool use loop (max 3 iterations)
+    const toolsUsed = [];
+    let iterations = 0;
+
+    while (response.stop_reason === 'tool_use' && iterations < 3) {
+      iterations++;
+      const toolBlocks = response.content.filter(b => b.type === 'tool_use');
+      const toolResults = [];
+
+      for (const toolBlock of toolBlocks) {
+        console.log(`  🔧 Tool: ${toolBlock.name}(${JSON.stringify(toolBlock.input)})`);
+        let result;
+        try {
+          result = await executeMobileTool(toolBlock.name, toolBlock.input);
+        } catch (e) {
+          result = { error: e.message };
+        }
+        toolsUsed.push({ tool: toolBlock.name, input: toolBlock.input, data: result });
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolBlock.id,
+          content: JSON.stringify(result)
+        });
+      }
+
+      // Continue conversation with tool results
+      messages.push({ role: 'assistant', content: response.content });
+      messages.push({ role: 'user', content: toolResults });
+
+      response = await anthropic.messages.create({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages,
+        tools: MOBILE_TOOLS
+      });
+    }
+
+    // Extract final text
+    const textBlock = response.content.find(b => b.type === 'text');
+
+    res.json({
+      success: true,
+      data: {
+        message: textBlock?.text || 'Sin respuesta',
+        toolsUsed: toolsUsed.map(t => ({ tool: t.tool, data: t.data })),
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Mobile AI error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error interno del asistente'
+    });
+  }
+});
+
 /**
  * POST /api/ai-assistant/clear
  * Clear conversation history

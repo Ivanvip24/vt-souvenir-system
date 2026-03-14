@@ -14,6 +14,19 @@ let taskStats = null;
 let currentFilter = 'all';
 let currentTaskFilter = 'all';
 let refreshTimer = null;
+let aiMessages = [];
+let aiSessionId = 'mobile_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+let aiIsTyping = false;
+let aiInitialized = false;
+
+const AI_CHIPS = [
+    { label: 'Revenue hoy', msg: '¿Cuánto vendimos hoy?' },
+    { label: 'Pendientes', msg: '¿Cuántos pedidos están pendientes?' },
+    { label: 'Top productos', msg: '¿Cuáles son los productos más vendidos?' },
+    { label: 'En producción', msg: '¿Qué pedidos están en producción?' },
+    { label: 'Top clientes', msg: '¿Quiénes son los mejores clientes?' },
+    { label: 'Tareas urgentes', msg: '¿Hay tareas urgentes o bloqueadas?' },
+];
 
 // ── Status color map ──
 const STATUS_COLORS = {
@@ -686,6 +699,7 @@ function switchView(viewName) {
     $('#view-' + viewName).classList.add('active');
     $('.tab[data-view="' + viewName + '"]').classList.add('active');
     hideOrderDetail();
+    if (viewName === 'ai') renderAIChat();
 }
 
 // ── Event Binding ──
@@ -738,6 +752,122 @@ function urlBase64ToUint8Array(base64String) {
         outputArray[i] = rawData.charCodeAt(i);
     }
     return outputArray;
+}
+
+// ── AI Chat ──
+
+function renderAIChat() {
+    if (aiInitialized) return;
+    aiInitialized = true;
+
+    var container = $('#ai-chat-messages');
+    // Welcome message — static SVG icon (no user data)
+    var welcomeIcon = el('div', { className: 'ai-welcome-icon' });
+    welcomeIcon.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--rosa)" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.9 1.8 5.4 4.3 6.5l.7.3V18h4v-2.2l.7-.3C18.2 14.4 19 11.9 19 9a7 7 0 0 0-7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>';
+
+    var welcome = el('div', { className: 'ai-welcome' }, [
+        welcomeIcon,
+        el('h3', {}, ['AXKAN AI']),
+        el('p', {}, ['Pregúntame sobre pedidos, ventas, clientes o la marca.'])
+    ]);
+    container.appendChild(welcome);
+
+    // Render chips
+    var chipsContainer = $('#ai-chips');
+    AI_CHIPS.forEach(function(chip) {
+        var btn = el('button', { className: 'ai-chip' }, [chip.label]);
+        btn.addEventListener('click', function() {
+            if (!aiIsTyping) sendAIMessage(chip.msg);
+        });
+        chipsContainer.appendChild(btn);
+    });
+}
+
+function appendAIMessage(role, content) {
+    var container = $('#ai-chat-messages');
+    var msgEl = el('div', { className: 'ai-msg ' + role });
+
+    if (role === 'assistant' || role === 'error') {
+        // Parse simple markdown-like formatting
+        var lines = content.split('\n');
+        lines.forEach(function(line, i) {
+            if (i > 0) msgEl.appendChild(document.createElement('br'));
+            // Bold text between **
+            var parts = line.split(/\*\*(.*?)\*\*/g);
+            parts.forEach(function(part, j) {
+                if (j % 2 === 1) {
+                    msgEl.appendChild(el('strong', {}, [safeText(part)]));
+                } else {
+                    msgEl.appendChild(document.createTextNode(safeText(part)));
+                }
+            });
+        });
+    } else {
+        msgEl.appendChild(document.createTextNode(safeText(content)));
+    }
+
+    container.appendChild(msgEl);
+    container.scrollTop = container.scrollHeight;
+    return msgEl;
+}
+
+function showAITyping() {
+    var container = $('#ai-chat-messages');
+    var typing = el('div', { className: 'ai-typing', id: 'ai-typing-indicator' }, [
+        el('span'), el('span'), el('span')
+    ]);
+    container.appendChild(typing);
+    container.scrollTop = container.scrollHeight;
+}
+
+function hideAITyping() {
+    var indicator = $('#ai-typing-indicator');
+    if (indicator) indicator.remove();
+}
+
+async function sendAIMessage(text) {
+    if (aiIsTyping || !text.trim()) return;
+
+    // Remove welcome message on first send
+    var welcome = document.querySelector('.ai-welcome');
+    if (welcome) welcome.remove();
+
+    // Add user message
+    appendAIMessage('user', text);
+    aiMessages.push({ role: 'user', content: text });
+
+    // Show typing
+    aiIsTyping = true;
+    $('#ai-send-btn').disabled = true;
+    showAITyping();
+
+    try {
+        var response = await apiFetch('/ai-assistant/mobile-chat', {
+            method: 'POST',
+            body: JSON.stringify({
+                message: text,
+                sessionId: aiSessionId,
+                history: aiMessages.slice(-10)
+            })
+        });
+
+        hideAITyping();
+
+        if (response.success && response.data) {
+            // Show tool tags if tools were used
+            var msgText = response.data.message;
+            appendAIMessage('assistant', msgText);
+            aiMessages.push({ role: 'assistant', content: msgText });
+        } else {
+            appendAIMessage('error', response.error || 'Error al procesar la consulta');
+        }
+    } catch (e) {
+        hideAITyping();
+        appendAIMessage('error', 'Error de conexión. Intenta de nuevo.');
+    }
+
+    aiIsTyping = false;
+    $('#ai-send-btn').disabled = false;
 }
 
 // ── Init ──
@@ -800,6 +930,24 @@ function init() {
 
     // Logout
     $('#logout-btn').addEventListener('click', logout);
+
+    // AI chat
+    $('#ai-send-btn').addEventListener('click', function() {
+        var text = $('#ai-input').value.trim();
+        if (text && !aiIsTyping) {
+            sendAIMessage(text);
+            $('#ai-input').value = '';
+        }
+    });
+    $('#ai-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            var text = this.value.trim();
+            if (text && !aiIsTyping) {
+                sendAIMessage(text);
+                this.value = '';
+            }
+        }
+    });
 
     // Online/offline
     window.addEventListener('online', function() { updateConnectionStatus(true); });
