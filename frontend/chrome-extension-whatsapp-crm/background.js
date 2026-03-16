@@ -35,17 +35,28 @@ async function handleMessage(msg) {
 // ── Auth ─────────────────────────────────────────────────
 
 async function handleLogin(username, password) {
-  const res = await fetch(`${API_BASE}/api/admin/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-  const data = await res.json();
-  if (data.success && data.token) {
-    await chrome.storage.local.set({ jwt: data.token, user: data.user });
-    return { success: true, user: data.user };
+  console.log('[AXKAN CRM] Login attempt for:', username);
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    console.log('[AXKAN CRM] Login response status:', res.status);
+    if (!res.ok && res.status >= 500) {
+      return { success: false, error: `Server error (${res.status}) — backend may be waking up, try again in 30s` };
+    }
+    const data = await res.json();
+    console.log('[AXKAN CRM] Login response:', JSON.stringify({ success: data.success, hasToken: !!data.token, error: data.error }));
+    if (data.success && data.token) {
+      await chrome.storage.local.set({ jwt: data.token, user: data.user });
+      return { success: true, user: data.user };
+    }
+    return { success: false, error: data.error || 'Login failed' };
+  } catch (err) {
+    console.error('[AXKAN CRM] Login fetch error:', err.message);
+    return { success: false, error: 'Cannot reach server — check connection or try again' };
   }
-  return { success: false, error: data.error || 'Login failed' };
 }
 
 async function handleLogout() {
@@ -66,11 +77,15 @@ async function getToken() {
 // ── API Proxy ────────────────────────────────────────────
 
 async function proxyApiCall(method, endpoint, body, requiresAuth) {
+  console.log('[AXKAN CRM] API call:', method || 'GET', endpoint);
   const headers = { 'Content-Type': 'application/json' };
 
   if (requiresAuth !== false) {
     const token = await getToken();
-    if (!token) return { success: false, error: 'Not authenticated', authExpired: true };
+    if (!token) {
+      console.warn('[AXKAN CRM] No token — auth expired');
+      return { success: false, error: 'Not authenticated', authExpired: true };
+    }
     headers['Authorization'] = `Bearer ${token}`;
   }
 
@@ -79,14 +94,26 @@ async function proxyApiCall(method, endpoint, body, requiresAuth) {
     options.body = JSON.stringify(body);
   }
 
-  const res = await fetch(`${API_BASE}${endpoint}`, options);
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, options);
+    console.log('[AXKAN CRM] API response:', res.status, endpoint);
 
-  if (res.status === 401) {
-    return { success: false, error: 'Session expired', authExpired: true };
+    if (res.status === 401) {
+      return { success: false, error: 'Session expired', authExpired: true };
+    }
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('[AXKAN CRM] API error:', res.status, text.substring(0, 200));
+      return { success: false, error: `Server error (${res.status})` };
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error('[AXKAN CRM] API fetch error:', err.message);
+    return { success: false, error: 'Cannot reach server' };
   }
-
-  const data = await res.json();
-  return data;
 }
 
 // ── File Upload Proxy ────────────────────────────────────

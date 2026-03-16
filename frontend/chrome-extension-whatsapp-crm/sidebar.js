@@ -265,13 +265,36 @@ var AxkanSidebar = {
     this.panel.className = 'sidebar';
     this.container.appendChild(this.panel);
 
-    // Auth banner
+    // Auth banner + inline login form
     this.authBanner = document.createElement('div');
     this.authBanner.className = 'auth-banner';
-    var reloginLink = document.createElement('a');
-    reloginLink.textContent = 'Iniciar sesion';
-    this.authBanner.appendChild(document.createTextNode('Sesion expirada. '));
-    this.authBanner.appendChild(reloginLink);
+    this.authBanner.style.cssText = 'padding:16px;background:#7f1d1d;display:none;';
+    var authTitle = document.createElement('div');
+    authTitle.style.cssText = 'color:#fca5a5;font-size:12px;margin-bottom:10px;text-align:center;';
+    authTitle.textContent = 'Inicia sesion para continuar';
+    this.authBanner.appendChild(authTitle);
+
+    this.authUser = document.createElement('input');
+    this.authUser.type = 'text';
+    this.authUser.placeholder = 'Usuario';
+    this.authUser.style.cssText = 'width:100%;padding:8px 10px;background:#1a1a2e;border:1px solid #333;border-radius:6px;color:#e0e0e0;font-size:12px;outline:none;margin-bottom:6px;';
+    this.authBanner.appendChild(this.authUser);
+
+    this.authPass = document.createElement('input');
+    this.authPass.type = 'password';
+    this.authPass.placeholder = 'Contrasena';
+    this.authPass.style.cssText = 'width:100%;padding:8px 10px;background:#1a1a2e;border:1px solid #333;border-radius:6px;color:#e0e0e0;font-size:12px;outline:none;margin-bottom:6px;';
+    this.authBanner.appendChild(this.authPass);
+
+    this.authLoginBtn = document.createElement('button');
+    this.authLoginBtn.textContent = 'Iniciar sesion';
+    this.authLoginBtn.style.cssText = 'width:100%;padding:8px;background:#e72a88;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;';
+    this.authBanner.appendChild(this.authLoginBtn);
+
+    this.authError = document.createElement('div');
+    this.authError.style.cssText = 'color:#fca5a5;font-size:11px;margin-top:6px;text-align:center;display:none;';
+    this.authBanner.appendChild(this.authError);
+
     this.panel.appendChild(this.authBanner);
 
     // Header
@@ -347,13 +370,26 @@ var AxkanSidebar = {
     this.phoneInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') self.searchBtn.click();
     });
-    reloginLink.addEventListener('click', function() {
-      chrome.runtime.sendMessage({ type: 'CHECK_AUTH' });
+    // Sidebar login handler
+    this.authLoginBtn.addEventListener('click', function() { self.handleSidebarLogin(); });
+    this.authPass.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') self.handleSidebarLogin();
     });
 
     // Restore sidebar state
     chrome.storage.local.get('sidebarOpen', function(data) {
       if (data.sidebarOpen) self.toggle(true);
+    });
+
+    // Check if already logged in
+    this.config.sendMessage({ type: 'CHECK_AUTH' }).then(function(res) {
+      if (res && res.authenticated) {
+        console.log('[AXKAN CRM] Already authenticated');
+        self.authBanner.style.display = 'none';
+      } else {
+        console.log('[AXKAN CRM] Not authenticated — showing login');
+        self.showAuthExpired();
+      }
     });
 
     // Pre-load products
@@ -392,6 +428,7 @@ var AxkanSidebar = {
 
   onPhoneDetected: function(phone) {
     var self = this;
+    this._detectedPhone = phone;
 
     // Check cache
     var cached = this.config.getClientCache()[phone];
@@ -523,6 +560,80 @@ var AxkanSidebar = {
 
   showAuthExpired: function() {
     this.authBanner.style.display = 'block';
+    this.authError.style.display = 'none';
+    this.authUser.value = '';
+    this.authPass.value = '';
+    this.authLoginBtn.disabled = false;
+    this.authLoginBtn.textContent = 'Iniciar sesion';
+    // Clear loading state from content area
+    this.contentArea.textContent = '';
+    var div = document.createElement('div');
+    div.className = 'loading';
+    div.style.color = '#888';
+    div.appendChild(document.createTextNode('Inicia sesion para ver los datos del cliente'));
+    this.contentArea.appendChild(div);
+  },
+
+  _loginRetries: 0,
+
+  handleSidebarLogin: function() {
+    var self = this;
+    var username = this.authUser.value.trim();
+    var password = this.authPass.value;
+
+    if (!username || !password) {
+      this.authError.textContent = 'Ingresa usuario y contrasena';
+      this.authError.style.display = 'block';
+      return;
+    }
+
+    this.authLoginBtn.disabled = true;
+    this.authLoginBtn.textContent = 'Conectando...';
+    this.authError.style.display = 'none';
+    this._loginRetries = 0;
+
+    this._attemptLogin(username, password);
+  },
+
+  _attemptLogin: function(username, password) {
+    var self = this;
+    console.log('[AXKAN CRM] Login attempt', (this._loginRetries + 1), 'for:', username);
+
+    this.config.sendMessage({ type: 'LOGIN', username: username, password: password }).then(function(res) {
+      console.log('[AXKAN CRM] Login response:', JSON.stringify(res));
+
+      if (res && res.success) {
+        self.authBanner.style.display = 'none';
+        self.showToast('Sesion iniciada');
+        var phone = self._detectedPhone || (self.clientData && (self.clientData._phone || self.clientData.phone)) || self.phoneInput.value.replace(/\D/g, '');
+        if (phone && phone.length >= 10) {
+          console.log('[AXKAN CRM] Login success, re-fetching client for:', phone);
+          self.onPhoneDetected(phone);
+        }
+        return;
+      }
+
+      var errorMsg = (res && res.error) || 'Error al iniciar sesion';
+      var isServerError = errorMsg.indexOf('500') !== -1 || errorMsg.indexOf('Cannot reach') !== -1 || errorMsg.indexOf('waking') !== -1;
+
+      // Auto-retry on server errors (Render cold start)
+      if (isServerError && self._loginRetries < 3) {
+        self._loginRetries++;
+        self.authLoginBtn.textContent = 'Despertando servidor... (' + self._loginRetries + '/3)';
+        self.authError.textContent = 'Servidor iniciando, reintentando...';
+        self.authError.style.display = 'block';
+        self.authError.style.color = '#fbbf24';
+        setTimeout(function() { self._attemptLogin(username, password); }, 5000);
+        return;
+      }
+
+      console.error('[AXKAN CRM] Login failed:', errorMsg);
+      self.authError.textContent = errorMsg;
+      self.authError.style.display = 'block';
+      self.authError.style.color = '#fca5a5';
+      self.authLoginBtn.disabled = false;
+      self.authLoginBtn.textContent = 'Iniciar sesion';
+    });
   },
 
   showToast: function(msg, type) {

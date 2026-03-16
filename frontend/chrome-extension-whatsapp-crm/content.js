@@ -115,25 +115,44 @@
   // ── Phone Extraction ───────────────────────────────────
 
   function extractPhoneFromChat() {
-    // Look for the conversation header (second header in WhatsApp Web — first is the app header)
+    // Strategy 1: Scan ALL headers for a phone number
+    // WhatsApp Business Web has 4+ headers; the conversation header varies by version
     var headers = document.querySelectorAll('header');
-    var chatHeader = headers.length > 1 ? headers[1] : headers[0];
-    if (!chatHeader) return null;
+    for (var i = 0; i < headers.length; i++) {
+      var headerText = headers[i].textContent || '';
 
-    var headerText = chatHeader.textContent || '';
+      // Skip group chats
+      if (headerText.indexOf('participante') !== -1 || headerText.indexOf('participant') !== -1 ||
+          headerText.indexOf('miembro') !== -1 || headerText.indexOf('member') !== -1) {
+        continue;
+      }
 
-    // Check if this is a group chat
-    if (headerText.indexOf('participante') !== -1 || headerText.indexOf('participant') !== -1) {
-      return null;
+      var phoneMatch = headerText.match(/\+?\d[\d\s\-()]{8,}/);
+      if (phoneMatch) {
+        var normalized = normalizePhone(phoneMatch[0]);
+        if (normalized) {
+          console.log('[AXKAN CRM] Phone found in header', i, ':', phoneMatch[0], '->', normalized);
+          return normalized;
+        }
+      }
     }
 
-    // Look for phone number patterns
-    var phoneMatch = headerText.match(/\+?\d[\d\s\-()]{8,}/);
-    if (phoneMatch) {
-      return normalizePhone(phoneMatch[0]);
+    // Strategy 2: Look for the conversation panel title span directly
+    var titleSpan = document.querySelector('[data-testid="conversation-info-header-chat-title"] span[title]') ||
+                    document.querySelector('[data-testid="conversation-header"] span[title]');
+    if (titleSpan) {
+      var titleText = titleSpan.getAttribute('title') || titleSpan.textContent || '';
+      var titleMatch = titleText.match(/\+?\d[\d\s\-()]{8,}/);
+      if (titleMatch) {
+        var normalized2 = normalizePhone(titleMatch[0]);
+        if (normalized2) {
+          console.log('[AXKAN CRM] Phone found in title span:', titleMatch[0], '->', normalized2);
+          return normalized2;
+        }
+      }
     }
 
-    // Strategy 2: contact info panel
+    // Strategy 3: contact info panel
     var contactInfo = document.querySelector('[data-testid="contact-info-drawer"]');
     if (contactInfo) {
       var infoText = contactInfo.textContent || '';

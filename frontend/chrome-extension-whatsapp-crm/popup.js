@@ -18,27 +18,49 @@ chrome.runtime.sendMessage({ type: 'CHECK_AUTH' }, (res) => {
   }
 });
 
-// Login
+// Login with auto-retry on server errors (Render cold start)
+let retryCount = 0;
+const MAX_RETRIES = 2;
+let savedUsername = '';
+let savedPassword = '';
+
 loginForm.addEventListener('submit', (e) => {
   e.preventDefault();
   loginError.hidden = true;
   loginBtn.disabled = true;
   loginBtn.textContent = 'Conectando...';
 
-  const username = document.getElementById('username').value;
-  const password = document.getElementById('password').value;
+  savedUsername = document.getElementById('username').value;
+  savedPassword = document.getElementById('password').value;
+  retryCount = 0;
 
-  chrome.runtime.sendMessage({ type: 'LOGIN', username, password }, (res) => {
+  attemptLogin();
+});
+
+function attemptLogin() {
+  chrome.runtime.sendMessage({ type: 'LOGIN', username: savedUsername, password: savedPassword }, (res) => {
     if (res && res.success) {
       showLoggedIn(res.user);
-    } else {
-      loginError.textContent = (res && res.error) || 'Error al iniciar sesion';
-      loginError.hidden = false;
-      loginBtn.disabled = false;
-      loginBtn.textContent = 'Iniciar sesion';
+      return;
     }
+
+    const errorMsg = (res && res.error) || 'Error al iniciar sesion';
+    const isServerError = errorMsg.includes('Server error') || errorMsg.includes('Cannot reach') || errorMsg.includes('waking');
+
+    // Auto-retry on server errors (cold start)
+    if (isServerError && retryCount < MAX_RETRIES) {
+      retryCount++;
+      loginBtn.textContent = `Servidor despertando... intento ${retryCount + 1}/${MAX_RETRIES + 1}`;
+      setTimeout(attemptLogin, 5000);
+      return;
+    }
+
+    loginError.textContent = errorMsg;
+    loginError.hidden = false;
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Iniciar sesion';
   });
-});
+}
 
 // Logout
 logoutBtn.addEventListener('click', () => {
