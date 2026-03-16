@@ -104,6 +104,10 @@ app.use(cors({
     if (ALLOWED_ORIGINS.includes(origin)) {
       return callback(null, true);
     }
+    // Allow Chrome extensions (AXKAN CRM sidebar)
+    if (origin && origin.startsWith('chrome-extension://')) {
+      return callback(null, true);
+    }
     console.warn(`⚠️ CORS blocked origin: ${origin}`);
     callback(new Error('Not allowed by CORS'));
   },
