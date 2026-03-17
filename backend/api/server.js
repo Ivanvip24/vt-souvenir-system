@@ -480,7 +480,11 @@ app.use('/api/gallery', authMiddleware, galleryRoutes);
 app.use('/api/notes', authMiddleware, notesRoutes);
 app.use('/api/knowledge', authMiddleware, knowledgeRoutes);
 app.use('/api/leads', authMiddleware, leadRoutes);
-app.use('/api/whatsapp', authMiddleware, whatsappRoutes);
+// WhatsApp webhook must be public (Meta sends no JWT) — skip auth for /webhook only
+app.use('/api/whatsapp', (req, res, next) => {
+  if (req.path === '/webhook') return next();
+  return authMiddleware(req, res, next);
+}, whatsappRoutes);
 app.use('/api/whatsapp', authMiddleware, whatsappTemplateRoutes);
 // T1 routes — sync endpoint accepts sync key, all others require JWT
 app.use('/api/t1', (req, res, next) => {
