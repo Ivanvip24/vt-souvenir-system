@@ -10,6 +10,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { query } from '../shared/database.js';
 import { createOrderBothSystems } from '../agents/notion-agent/sync.js';
+import { parseQuoteRequest, generateQuotePDF } from './quote-generator.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = join(__dirname, '..', 'chatbot_whatsapp');
@@ -241,6 +242,19 @@ function parseAIResponse(responseText) {
   }
   cleanReply = cleanReply.replace(/\[SEND_DOCUMENT\].*?\[\/SEND_DOCUMENT\]/gs, '').trim();
 
+  // Extract GENERATE_QUOTE block
+  let generateQuoteData = null;
+  const quoteGenMatch = cleanReply.match(/\[GENERATE_QUOTE\](.*?)\[\/GENERATE_QUOTE\]/s);
+  if (quoteGenMatch) {
+    try {
+      generateQuoteData = JSON.parse(quoteGenMatch[1].trim());
+      intent = 'quote_generation';
+    } catch (err) {
+      console.error('🟢 WhatsApp AI: Failed to parse GENERATE_QUOTE JSON:', err.message);
+    }
+    cleanReply = cleanReply.replace(/\[GENERATE_QUOTE\].*?\[\/GENERATE_QUOTE\]/s, '').trim();
+  }
+
   // Extract REACT block (emoji reaction)
   let reactionEmoji = null;
   const reactMatch = cleanReply.match(/\[REACT\](.*?)\[\/REACT\]/s);
@@ -290,7 +304,7 @@ function parseAIResponse(responseText) {
     cleanReply = cleanReply.replace(/\[SEND_FLOW\].*?\[\/SEND_FLOW\]/s, '').trim();
   }
 
-  return { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, reactionEmoji, locationRequest, carouselRequest, flowRequest };
+  return { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest };
 }
 
 /**
@@ -406,7 +420,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     const client = getClient();
     const response = await client.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 500,
+      max_tokens: 700,
       system: systemPrompt,
       messages: sanitizedMessages
     });
@@ -414,7 +428,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     const rawReply = response.content[0].text;
 
     // Parse the response for intent and order blocks
-    const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, reactionEmoji, locationRequest, carouselRequest, flowRequest } = parseAIResponse(rawReply);
+    const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest } = parseAIResponse(rawReply);
 
     let actionTaken = null;
     let orderData = null;
@@ -441,6 +455,47 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
           orderData: null,
           actionTaken: 'order_failed'
         };
+      }
+    }
+
+    // Generate quote PDF if GENERATE_QUOTE was triggered
+    if (generateQuoteData) {
+      try {
+        const quoteText = generateQuoteData.text || '';
+        const clientName = generateQuoteData.clientName || null;
+
+        // Parse the text into structured items
+        const parsedItems = parseQuoteRequest(quoteText);
+
+        if (parsedItems.length > 0) {
+          // Generate the PDF — save to public catalogs/quotes/ directory
+          const quoteResult = await generateQuotePDF({
+            clientName,
+            items: parsedItems,
+            validityDays: 3,
+            outputDir: join(__dirname, '../catalogs/quotes')
+          });
+
+          // Build public URL for WhatsApp to fetch
+          const backendUrl = process.env.BACKEND_URL
+            || process.env.RENDER_EXTERNAL_URL
+            || 'https://vt-souvenir-backend.onrender.com';
+          const pdfUrl = `${backendUrl}/catalogs/quotes/${quoteResult.filename}`;
+
+          // Add to documents to send
+          documentsToSend.push({
+            url: pdfUrl,
+            caption: `Cotización ${quoteResult.quoteNumber} — Total: ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(quoteResult.total)}`,
+            filename: `Cotizacion-AXKAN-${quoteResult.quoteNumber}.pdf`
+          });
+
+          actionTaken = actionTaken || 'quote_generated';
+          console.log(`🟢 WhatsApp AI: Quote generated — ${quoteResult.quoteNumber}, ${quoteResult.itemCount} items, total: $${quoteResult.total}`);
+        } else {
+          console.warn('🟢 WhatsApp AI: GENERATE_QUOTE triggered but no valid items parsed from:', quoteText);
+        }
+      } catch (quoteError) {
+        console.error('🟢 WhatsApp AI: Quote generation failed:', quoteError.message);
       }
     }
 
@@ -475,8 +530,21 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       }).filter(Boolean);
     }
 
+    // Final safety net: strip ANY remaining action tags that weren't caught by parsing
+    // (handles edge cases: truncated tokens, smart quotes, invisible chars, etc.)
+    let finalReply = cleanReply
+      .replace(/\[\/?\w+\]\s*\{[^}]*\}\s*\[\/\w+\]/g, '')  // [TAG]{...}[/TAG]
+      .replace(/\[\w+\][^[]*\[\/\w+\]/g, '')                 // [TAG]...[/TAG]
+      .replace(/\[GENERATE_QUOTE\].*$/s, '')                  // unclosed [GENERATE_QUOTE]...
+      .replace(/\[CREATE_ORDER\].*$/s, '')                    // unclosed [CREATE_ORDER]...
+      .replace(/\[SEND_\w+\].*$/s, '')                        // unclosed [SEND_...]...
+      .replace(/\[REACT\].*$/s, '')                           // unclosed [REACT]...
+      .replace(/\[REQUEST_LOCATION\].*$/s, '')                // unclosed [REQUEST_LOCATION]...
+      .replace(/\[SEND_FLOW\].*$/s, '')                       // unclosed [SEND_FLOW]...
+      .trim();
+
     return {
-      reply: cleanReply,
+      reply: finalReply,
       intent: intent,
       orderData: orderData,
       actionTaken: actionTaken,
