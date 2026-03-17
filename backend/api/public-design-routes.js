@@ -7,8 +7,15 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import Stripe from 'stripe';
 import { query } from '../shared/database.js';
+
+// Lazy-load Stripe to avoid crashing server if package not available
+let Stripe;
+try {
+  Stripe = (await import('stripe')).default;
+} catch (e) {
+  console.warn('⚠️ stripe package not installed — design subscription routes will be limited');
+}
 
 const router = express.Router();
 
