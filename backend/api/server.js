@@ -70,9 +70,12 @@ app.set('trust proxy', 1);
 
 // Helmet - security headers (CSP, HSTS, X-Frame-Options, etc.)
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for now (frontend loads CDN scripts)
+  contentSecurityPolicy: false, // Disable CSP (frontend loads CDN scripts/fonts)
   crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  hsts: { maxAge: 31536000, includeSubDomains: true },
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 
 // CORS - restrict to known origins only
@@ -116,10 +119,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Sync-Key']
 }));
 
-// Rate limiting - global (100 requests per 15 minutes per IP)
+// Rate limiting - global (150 requests per 15 minutes per IP)
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 150,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Demasiadas solicitudes, intenta más tarde' }

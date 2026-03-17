@@ -2121,13 +2121,8 @@ const MOBILE_TOOLS = [
 async function executeMobileTool(toolName, toolInput) {
   switch (toolName) {
     case 'get_revenue': {
-      const intervals = {
-        today: 'CURRENT_DATE',
-        week: "CURRENT_DATE - INTERVAL '7 days'",
-        month: "CURRENT_DATE - INTERVAL '30 days'",
-        '30days': "CURRENT_DATE - INTERVAL '30 days'"
-      };
-      const since = intervals[toolInput.period] || 'CURRENT_DATE';
+      const dayMap = { today: 0, week: 7, month: 30, '30days': 30 };
+      const days = dayMap[toolInput.period] ?? 0;
       const result = await query(`
         SELECT
           COUNT(*) as order_count,
@@ -2136,24 +2131,32 @@ async function executeMobileTool(toolName, toolInput) {
           COALESCE(AVG(total_price), 0) as avg_order,
           COALESCE(SUM(total_production_cost), 0) as costs
         FROM orders
-        WHERE created_at >= ${since}
+        WHERE created_at >= CURRENT_DATE - ($1 || ' days')::INTERVAL
           AND status NOT IN ('cancelled','Cancelled')
-      `);
+      `, [days]);
       return result.rows[0];
     }
     case 'get_orders_by_status': {
-      const limit = toolInput.limit || 10;
-      let whereClause = "status NOT IN ('cancelled','Cancelled')";
-      if (toolInput.status !== 'all') {
-        whereClause = `status = '${toolInput.status.replace(/'/g, "''")}'`;
+      const validStatuses = ['pending_review','approved','production','shipped','delivered','pending','New','Design','Printing','Cutting','Counting','Shipping','Delivered'];
+      const safeLimit = Math.min(Math.max(parseInt(toolInput.limit) || 10, 1), 50);
+      if (toolInput.status === 'all' || !toolInput.status) {
+        const result = await query(`
+          SELECT o.order_number, c.name as client_name, o.total_price, o.status, o.created_at
+          FROM orders o LEFT JOIN clients c ON o.client_id = c.id
+          WHERE status NOT IN ('cancelled','Cancelled')
+          ORDER BY o.created_at DESC LIMIT $1
+        `, [safeLimit]);
+        return { orders: result.rows, count: result.rows.length };
+      }
+      if (!validStatuses.includes(toolInput.status)) {
+        return { error: 'Status inválido' };
       }
       const result = await query(`
         SELECT o.order_number, c.name as client_name, o.total_price, o.status, o.created_at
         FROM orders o LEFT JOIN clients c ON o.client_id = c.id
-        WHERE ${whereClause}
-        ORDER BY o.created_at DESC
-        LIMIT ${parseInt(limit)}
-      `);
+        WHERE o.status = $1
+        ORDER BY o.created_at DESC LIMIT $2
+      `, [toolInput.status, safeLimit]);
       return { orders: result.rows, count: result.rows.length };
     }
     case 'search_client': {

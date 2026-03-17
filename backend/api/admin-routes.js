@@ -61,11 +61,11 @@ router.post('/login', async (req, res) => {
     }
 
     if (passwordValid) {
-      // Generate JWT token
+      // Generate JWT token (7d for mobile PWA convenience)
       const token = jwt.sign(
-        { username, role: 'admin' },
+        { username, role: 'admin', iat: Math.floor(Date.now() / 1000) },
         JWT_SECRET,
-        { expiresIn: '30d' }
+        { expiresIn: '7d' }
       );
 
       res.json({
@@ -427,7 +427,7 @@ router.post('/create-manager', authMiddleware, async (req, res) => {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
 
     // Create manager
     const result = await query(
@@ -513,7 +513,7 @@ router.post('/run-gallery-archive-migration', authMiddleware, async (req, res) =
 // EMPLOYEE MANAGEMENT (Admin only)
 // ========================================
 
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = 12;
 
 /**
  * GET /api/admin/employees
