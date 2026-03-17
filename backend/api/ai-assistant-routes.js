@@ -642,47 +642,52 @@ Cuando pregunten sobre producción, capacidad, problemas operativos, o metas:
 - Si preguntan cuánto debe vender cada vendedor: 1.6 millares/día (1,600 piezas)
 - Si preguntan la meta diaria de montaje: 43 tablas = 258 tabloides
 
-### FINANZAS PERSONALES — RAPPICARD (Tarjeta de Crédito):
+### FINANZAS PERSONALES — TARJETAS DE CRÉDITO (3 tarjetas):
 
-**Datos de la tarjeta:**
-- Emisor: RappiCard (Banorte)
-- Fecha de corte: día **15** de cada mes
-- Fecha límite de pago: día **9** del mes siguiente (22 días después del corte)
-- Tasa de interés anual (CAT aproximado): ~60% anual / ~5% mensual
-- Estatus actual: Al corriente
+**Resumen de tarjetas:**
 
-**Ciclo de facturación (cómo funciona):**
-- **Día 16 al 15 del mes siguiente** = un ciclo de facturación
-- Las compras hechas del 16 al 15 aparecen en el estado de cuenta del día 15
-- El pago de ese corte vence el día 9 del mes siguiente
-- Si pagas el total antes del día 9, **NO pagas intereses**
+| Tarjeta | Corte | Fecha Límite Pago | CAT sin IVA | Tasa Anual | Tasa Mensual | Anualidad |
+|---------|-------|--------------------|-------------|------------|--------------|-----------|
+| **BBVA Azul** | día **2** | día **23** del mismo mes | 72.8% | 50.22% | ~4.19% | $748/año |
+| **DiDi Card** | día **7** | día **23** del mismo mes | 124.1% | 82.37% | ~6.86% | $0 |
+| **RappiCard** | día **15** | día **9** del mes siguiente | 100.8% | 71.4% | ~5.95% | $0 |
 
-**Lógica de "mejor momento para comprar":**
-- **MEJOR día para comprar: día 16** (justo después del corte) — tienes ~52 días para pagar sin intereses (del 16 al 9 del mes siguiente al corte)
-- **PEOR día para comprar: día 14-15** (justo antes del corte) — solo tienes ~24 días para pagar
-- **Regla general:** Cuanto más cerca del día 16 compres, más tiempo tienes para pagar sin intereses
-- Del 16 al 30: excelente (40-52 días de gracia)
-- Del 1 al 10: bueno (30-39 días de gracia)
-- Del 11 al 15: peor momento (24-29 días de gracia)
+**Prioridad de pago (método avalancha — paga primero la de mayor interés):**
+1. **DiDi** (6.86%/mes) — la más cara en intereses
+2. **RappiCard** (5.95%/mes) — segunda más cara
+3. **BBVA** (4.19%/mes) — la más barata en intereses
+
+**Calendario de pagos:**
+- Día 2 → BBVA corte
+- Día 7 → DiDi corte
+- Día 9 → RappiCard fecha límite de pago
+- Día 15 → RappiCard corte
+- Día 23 → BBVA + DiDi ambas fecha límite de pago
+
+**Lógica de "mejor tarjeta para comprar HOY":**
+Compra justo DESPUÉS del corte para maximizar días de gracia (~50 días sin intereses):
+- **Días 3-7**: Usa **BBVA** (corte fue el 2, ~50 días de gracia)
+- **Días 8-14**: Usa **DiDi** (corte fue el 7, ~45 días de gracia)
+- **Días 16-1**: Usa **RappiCard** (corte fue el 15, ~53 días de gracia)
 
 **Cálculo de intereses (si NO paga el total):**
-- Tasa mensual ≈ 5% sobre saldo promedio diario
-- Si compra $X y paga mínimo:
-  - Interés mensual ≈ $X × 0.05
-  - IVA sobre interés: × 1.16
-  - Interés + IVA ≈ $X × 0.058
-- Ejemplo: Compra de $10,000 pagando mínimo → ~$580/mes en intereses
-- A 3 MSI (meses sin intereses): $0 en intereses pero $3,333.33/mes
-- A 6 MSI: $0 en intereses pero $1,666.67/mes
-- A 12 MSI: $0 en intereses pero $833.33/mes
+- DiDi: $10,000 saldo → ~$686/mes + IVA = ~$796/mes en intereses
+- RappiCard: $10,000 saldo → ~$595/mes + IVA = ~$690/mes en intereses
+- BBVA: $10,000 saldo → ~$419/mes + IVA = ~$486/mes en intereses
+- Fórmula: Saldo × tasa mensual × 1.16 (IVA)
 
-**Cuando pregunten sobre la tarjeta o compras personales:**
-- Calcula cuántos días de gracia quedan según la fecha actual
-- Recomienda si es buen momento o si conviene esperar al día 16
-- Si preguntan intereses, calcula con la tasa del 5% mensual + IVA
-- Si hay opción de MSI, siempre menciónalo como alternativa
-- Compara: pago total vs mínimo vs MSI
-- Sé directo: "Hoy es buen/mal día para comprar" con la razón
+**Cuando pregunten "tengo $X para pagar, ¿a cuál le pago?":**
+1. Si alguna tarjeta está en riesgo de pago tardío (fecha límite cercana), paga esa primero
+2. Luego aplica avalancha: DiDi > RappiCard > BBVA
+3. Si todas están al corriente y sin saldo pendiente, no hay urgencia
+
+**Cuando pregunten "quiero comprar X, ¿con cuál tarjeta?":**
+1. Revisa la fecha actual y compara con los cortes
+2. Recomienda la tarjeta cuyo corte acaba de pasar (máxima gracia)
+3. Si paga totalero (sin saldo pendiente), el cashback importa: DiDi 1-6%, RappiCard hasta 5%
+4. Si tiene saldo pendiente, evita usar esa tarjeta y usa otra
+5. Si hay opción de MSI, menciónalo como alternativa
+6. Sé directo: "Hoy usa [tarjeta] porque [razón]"
 
 ## ROL ADICIONAL: DIRECTOR DE I+D Y OPERACIONES
 
@@ -2022,7 +2027,9 @@ GASTOS FIJOS: min=$189,500/mes($47,375/sem,$6,317/día,$790/hora) max=$199,500/m
 PRODUCCIÓN: 3 láser, 18pz/tabloide, 85 tabloides/máq/día, 30K pz/máq/mes, 91,800 total/mes, $8/pz, max=$720K/mes
 META: 4.6 millares/día, 1.6 millares/día/vendedor(3 vendedores), 43 tablas montaje/día
 PROBLEMAS: 1.Fallas en recolecciones 2.Proveedores lentos(laminado/papel) 3.Falta personal montaje/acabados
-RAPPICARD: corte=15, pago=9 mes sig, tasa≈5%/mes, mejor compra=día 16(52d gracia), peor=día 14-15(24d)`;
+TARJETAS: BBVA(corte=2,pago=23,4.19%/mes,CAT72.8%,anualidad$748) | DiDi(corte=7,pago=23,6.86%/mes,CAT124.1%,$0anualidad) | RappiCard(corte=15,pago=9 mes sig,5.95%/mes,CAT100.8%,$0anualidad)
+PAGO PRIORIDAD: DiDi>RappiCard>BBVA (avalancha: mayor interés primero)
+COMPRA HOY: días3-7→BBVA | días8-14→DiDi | días16-1→RappiCard (compra después del corte=más gracia)`;
 
   // Brand knowledge
   if (brandSummary) {
