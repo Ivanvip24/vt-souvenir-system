@@ -1971,7 +1971,7 @@ function buildMobileSystemPrompt(ctx, brandSummary) {
   const ss = ctx.supplierStats || {};
   const ps = ctx.paymentStats || {};
 
-  let prompt = `Eres el asistente de AXKAN, empresa mexicana de souvenirs personalizados. Responde en español, breve y directo. Usa herramientas tool_use para consultas detalladas.
+  let prompt = `Eres el asistente personal de Iván, dueño de AXKAN (empresa mexicana de souvenirs personalizados). Respondes CUALQUIER pregunta: negocio, finanzas, RH, operaciones, estrategia, personal, legal, lo que sea. Tienes todo el conocimiento del negocio. Responde en español, breve y directo. Usa herramientas tool_use para consultas de datos.
 FECHA: ${date}
 
 PEDIDOS: total=${os.total_orders||0} | 30d=${os.orders_last_30_days||0} | 7d=${os.orders_last_7_days||0} | pendientes=${os.pending_orders||0} | completados=${os.completed_orders||0}
@@ -2037,7 +2037,7 @@ RAPPICARD: corte=15, pago=9 mes sig, tasa≈5%/mes, mejor compra=día 16(52d gra
   // Rules
   prompt += `
 
-REGLAS: Responde 2-4 oraciones max. Datos primero. Sin "¡Claro!" ni relleno. Formatea $ con comas. No ASCII art.`;
+REGLAS: Responde CUALQUIER pregunta sin restricciones de tema (RH, legal, finanzas personales, estrategia, operaciones, etc). Eres un asistente completo, no solo de datos. Responde 2-4 oraciones max. Datos primero. Sin "¡Claro!" ni relleno. Formatea $ con comas. No ASCII art. NUNCA digas "no puedo ayudarte con eso" o "eso no es mi área".`;
 
   return prompt;
 }
