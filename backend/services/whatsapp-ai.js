@@ -16,6 +16,22 @@ import { PRICING_TIERS } from '../shared/pricing.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = join(__dirname, '..', 'chatbot_whatsapp');
 
+// Global AI model setting — changeable at runtime via API
+let currentModel = process.env.WHATSAPP_AI_MODEL || 'claude-haiku-4-5-20251001';
+
+export function getAiModel() { return currentModel; }
+export function setAiModel(model) {
+  const allowed = [
+    'claude-haiku-4-5-20251001',
+    'claude-sonnet-4-5-20250929',
+    'claude-sonnet-4-6-20250514'
+  ];
+  if (!allowed.includes(model)) return false;
+  currentModel = model;
+  console.log(`🤖 WhatsApp AI model changed to: ${model}`);
+  return true;
+}
+
 /**
  * Load a chatbot config file. Returns its contents as a string.
  * Files are read fresh each time so edits take effect without restart.
@@ -437,7 +453,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     // Call Claude API
     const client = getClient();
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: currentModel,
       max_tokens: 700,
       system: systemPrompt,
       messages: sanitizedMessages

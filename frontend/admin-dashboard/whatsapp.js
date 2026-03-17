@@ -1412,6 +1412,53 @@ function renderWhatsApp() {
 
   listPanel.appendChild(listHeader);
 
+  // AI Model selector
+  var modelRow = document.createElement('div');
+  modelRow.style.cssText = 'padding:8px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;background:#fafafa;';
+  var modelLabel = document.createElement('span');
+  modelLabel.style.cssText = 'font-size:11px;color:#888;font-weight:600;white-space:nowrap;';
+  modelLabel.textContent = '\uD83E\uDD16 Modelo:';
+  modelRow.appendChild(modelLabel);
+  var modelSelect = document.createElement('select');
+  modelSelect.id = 'wa-model-select';
+  modelSelect.style.cssText = 'flex:1;font-size:12px;padding:4px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#333;cursor:pointer;';
+  var models = [
+    { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5 (barato)' },
+    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5 (medio)' },
+    { value: 'claude-sonnet-4-6-20250514', label: 'Sonnet 4.6 (mejor)' }
+  ];
+  for (var mi = 0; mi < models.length; mi++) {
+    var opt = document.createElement('option');
+    opt.value = models[mi].value;
+    opt.textContent = models[mi].label;
+    modelSelect.appendChild(opt);
+  }
+  modelSelect.onchange = function() {
+    var chosen = modelSelect.value;
+    fetch('/api/whatsapp/ai-model', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      body: JSON.stringify({ model: chosen })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.success) {
+        modelSelect.style.borderColor = '#25d366';
+        setTimeout(function() { modelSelect.style.borderColor = '#e5e7eb'; }, 1500);
+      }
+    });
+  };
+  modelRow.appendChild(modelSelect);
+  listPanel.appendChild(modelRow);
+
+  // Load current model setting
+  fetch('/api/whatsapp/ai-model', {
+    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    if (data.model) {
+      var sel = document.getElementById('wa-model-select');
+      if (sel) sel.value = data.model;
+    }
+  });
+
   var convListDiv = document.createElement('div');
   convListDiv.className = 'wa-conv-list';
   convListDiv.id = 'wa-conv-list';

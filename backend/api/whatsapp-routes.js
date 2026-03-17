@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
-import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn } from '../services/whatsapp-ai.js';
+import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn, getAiModel, setAiModel } from '../services/whatsapp-ai.js';
 import { sendWhatsAppMessage, sendWhatsAppListMessage, sendWhatsAppButtonMessage, sendWhatsAppCTAMessage, sendWhatsAppReaction, sendWhatsAppLocationRequest, sendWhatsAppCarousel, sendWhatsAppFlow } from '../services/whatsapp-api.js';
 import {
   downloadWhatsAppMedia,
@@ -520,6 +520,21 @@ router.patch('/conversations/:id/settings', authMiddleware, async (req, res) => 
     console.error('🟢 WhatsApp settings update error:', err);
     res.status(500).json({ success: false, error: 'Failed to update settings' });
   }
+});
+
+// ---------------------------------------------------------------------------
+// 7b. GET/PATCH /ai-model — Get or change the WhatsApp AI model (auth required)
+// ---------------------------------------------------------------------------
+router.get('/ai-model', authMiddleware, (req, res) => {
+  res.json({ success: true, model: getAiModel() });
+});
+
+router.patch('/ai-model', authMiddleware, (req, res) => {
+  const { model } = req.body;
+  if (!model) return res.status(400).json({ success: false, error: 'model is required' });
+  const ok = setAiModel(model);
+  if (!ok) return res.status(400).json({ success: false, error: 'Invalid model. Allowed: claude-haiku-4-5-20251001, claude-sonnet-4-5-20250929, claude-sonnet-4-6-20250514' });
+  res.json({ success: true, model: getAiModel() });
 });
 
 // ---------------------------------------------------------------------------
