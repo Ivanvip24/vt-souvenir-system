@@ -1435,7 +1435,7 @@ function renderWhatsApp() {
   }
   modelSelect.onchange = function() {
     var chosen = modelSelect.value;
-    fetch('/api/whatsapp/ai-model', {
+    fetch(API_BASE + '/whatsapp/ai-model', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
       body: JSON.stringify({ model: chosen })
@@ -1450,7 +1450,7 @@ function renderWhatsApp() {
   listPanel.appendChild(modelRow);
 
   // Load current model setting
-  fetch('/api/whatsapp/ai-model', {
+  fetch(API_BASE + '/whatsapp/ai-model', {
     headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
   }).then(function(r) { return r.json(); }).then(function(data) {
     if (data.model) {
