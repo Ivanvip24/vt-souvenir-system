@@ -21,10 +21,12 @@ function escapeHtmlCP(str) {
 // =====================================================
 
 document.addEventListener('keydown', (e) => {
-    // Open command palette with ⌘K or Ctrl+K
+    // Open AI assistant directly with ⌘K or Ctrl+K
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        openCommandPalette();
+        if (typeof openAiChatModal === 'function') {
+            openAiChatModal();
+        }
     }
 
     // Close with Escape
