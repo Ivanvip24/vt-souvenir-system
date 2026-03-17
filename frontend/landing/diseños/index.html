@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diseños Premium | AXKAN — Galería de Diseños Mexicanos</title>
+  <meta name="description" content="Explora nuestra galería de diseños premium inspirados en México. Suscríbete para descargar archivos originales de alta resolución para tus proyectos.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/png" href="../assets/LOGO-01.png">
+  <link rel="stylesheet" href="/shared-nav-footer.css">
+
+  <meta property="og:title" content="AXKAN Diseños Premium — Galería de Arte Mexicano">
+  <meta property="og:description" content="Diseños premium inspirados en la cultura mexicana. Suscríbete para descargar originales en alta resolución.">
+  <meta property="og:image" content="/assets/LOGO-03.png">
+  <meta property="og:type" content="website">
+
+<style>
+/* ═══════════════════════════════════════════
+   AXKAN DISEÑOS — Editorial Gallery
+   Aesthetic: Luxury magazine meets Mexican craft
+   ═══════════════════════════════════════════ */
+
+:root {
+  --rosa: #e72a88;
+  --rosa-soft: #fdf0f6;
+  --rosa-glow: rgba(231, 42, 136, 0.12);
+  --ink: #1a1216;
+  --ink-mid: #4a3f44;
+  --ink-light: #8a7e83;
+  --sand: #f8f5f2;
+  --cream: #fffcfa;
+  --gold: #D4A574;
+  --verde: #8ab73b;
+  --cyan: #09adc2;
+  --naranja: #f39223;
+  --rojo: #e52421;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── HERO STRIP ─────────────────────────── */
+
+.gallery-hero {
+  position: relative;
+  padding: 140px 2rem 60px;
+  background: var(--ink);
+  overflow: hidden;
+}
+
+.gallery-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 80%, rgba(231,42,136,0.15), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(9,173,194,0.1), transparent);
+  pointer-events: none;
+}
+
+.gallery-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 120px;
+  background: linear-gradient(to top, var(--cream), transparent);
+  pointer-events: none;
+}
+
+.hero-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(231,42,136,0.12);
+  border: 1px solid rgba(231,42,136,0.2);
+  color: var(--rosa);
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  animation: fadeSlideUp 0.6s ease both;
+}
+
+.hero-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.gallery-hero h1 {
+  font-family: 'RL Aqva', 'Arial Black', sans-serif;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  color: white;
+  line-height: 1.05;
+  margin-bottom: 1rem;
+  animation: fadeSlideUp 0.6s ease 0.1s both;
+}
+
+.gallery-hero h1 span {
+  color: var(--rosa);
+}
+
+.hero-sub {
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.55);
+  max-width: 540px;
+  margin: 0 auto;
+  line-height: 1.6;
+  animation: fadeSlideUp 0.6s ease 0.2s both;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── TOOLBAR ────────────────────────────── */
+
+.gallery-toolbar {
+  position: sticky;
+  top: 70px;
+  z-index: 50;
+  background: rgba(255,252,250,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: 0 2rem;
+  transition: box-shadow 0.3s ease;
+}
+
+.gallery-toolbar.toolbar--shadow {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+
+.toolbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 56px;
+}
+
+.toolbar-cats {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 8px 0;
+  flex: 1;
+}
+
+.toolbar-cats::-webkit-scrollbar { display: none; }
+
+.cat-tab {
+  flex-shrink: 0;
+  padding: 7px 18px;
+  border-radius: 100px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink-mid);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.cat-tab:hover {
+  background: var(--rosa-soft);
+  color: var(--rosa);
+}
+
+.cat-tab.active {
+  background: var(--rosa);
+  color: white;
+  border-color: var(--rosa);
+  box-shadow: 0 2px 10px rgba(231,42,136,0.25);
+}
+
+.toolbar-search {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.toolbar-search input {
+  width: 200px;
+  padding: 8px 14px 8px 36px;
+  border: 1.5px solid rgba(0,0,0,0.1);
+  border-radius: 100px;
+  background: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s ease, width 0.3s ease;
+}
+
+.toolbar-search input:focus {
+  border-color: var(--rosa);
+  width: 260px;
+}
+
+.toolbar-search input::placeholder {
+  color: var(--ink-light);
+}
+
+.toolbar-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--ink-light);
+  pointer-events: none;
+}
+
+/* ── USER BAR ───────────────────────────── */
+
+.user-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-login, .btn-subscribe, .btn-user {
+  padding: 7px 18px;
+  border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-login {
+  background: transparent;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  color: var(--ink-mid);
+}
+
+.btn-login:hover {
+  border-color: var(--rosa);
+  color: var(--rosa);
+}
+
+.btn-subscribe {
+  background: var(--rosa);
+  color: white;
+}
+
+.btn-subscribe:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(231,42,136,0.35);
+}
+
+.btn-user {
+  background: var(--rosa-soft);
+  color: var(--rosa);
+  display: none;
+}
+
+.btn-user:hover {
+  background: var(--rosa);
+  color: white;
+}
+
+/* ── MAIN GALLERY ───────────────────────── */
+
+.gallery-main {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+
+.gallery-count {
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  margin-bottom: 1.25rem;
+}
+
+.gallery-count strong {
+  color: var(--ink);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ── DESIGN CARD ────────────────────────── */
+
+.design-card {
+  position: relative;
+  background: white;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.06);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.design-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+}
+
+.card-image-wrap {
+  position: relative;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: var(--sand);
+}
+
+.card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.design-card:hover .card-image-wrap img {
+  transform: scale(1.06);
+}
+
+/* Lock overlay for non-subscribers */
+.card-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26,18,22,0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.design-card:hover .card-lock-overlay {
+  opacity: 1;
+}
+
+.card-lock-overlay svg {
+  width: 28px;
+  height: 28px;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.card-lock-overlay span {
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Download button for subscribers */
+.card-download-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--rosa);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.3s ease, background 0.2s ease;
+  z-index: 2;
+}
+
+.design-card:hover .card-download-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-download-btn:hover {
+  background: #c51f72;
+}
+
+.card-download-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.card-body {
+  padding: 14px 16px 16px;
+}
+
+.card-category {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rosa);
+  margin-bottom: 4px;
+}
+
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.card-tag {
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--sand);
+  color: var(--ink-light);
+}
+
+/* ── EMPTY STATE ────────────────────────── */
+
+.gallery-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  display: none;
+}
+
+.gallery-empty svg {
+  width: 64px;
+  height: 64px;
+  color: var(--ink-light);
+  margin-bottom: 1rem;
+}
+
+.gallery-empty h3 {
+  font-family: 'RL Aqva', 'Arial Black', sans-serif;
+  font-size: 1.4rem;
+  color: var(--ink-mid);
+  margin-bottom: 0.5rem;
+}
+
+.gallery-empty p {
+  color: var(--ink-light);
+  font-size: 0.9rem;
+}
+
+/* ── LOADING ────────────────────────────── */
+
+.gallery-loading {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--sand);
+  border-top-color: var(--rosa);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 0.85rem;
+  color: var(--ink-light);
+}
+
+/* ── SUBSCRIBE BANNER ───────────────────── */
+
+.subscribe-banner {
+  max-width: 1320px;
+  margin: 0 auto 3rem;
+  padding: 0 2rem;
+}
+
+.subscribe-banner-inner {
+  background: var(--ink);
+  border-radius: var(--radius-lg);
+  padding: 3rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.subscribe-banner-inner::before {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(231,42,136,0.2), transparent);
+  right: -80px;
+  top: -80px;
+  pointer-events: none;
+}
+
+.subscribe-text h2 {
+  font-family: 'RL Aqva', 'Arial Black', sans-serif;
+  font-size: 1.8rem;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.subscribe-text h2 span {
+  color: var(--rosa);
+}
+
+.subscribe-text p {
+  color: rgba(255,255,255,0.55);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.subscribe-text ul {
+  list-style: none;
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.subscribe-text li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.85rem;
+}
+
+.subscribe-text li svg {
+  width: 16px;
+  height: 16px;
+  color: var(--verde);
+  flex-shrink: 0;
+}
+
+.btn-subscribe-big {
+  padding: 14px 36px;
+  border-radius: 100px;
+  background: var(--rosa);
+  color: white;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-subscribe-big:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(231,42,136,0.4);
+}
+
+/* ── AUTH MODAL ─────────────────────────── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(26,18,22,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.modal-box {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  animation: modalIn 0.3s ease both;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--sand);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-mid);
+  transition: background 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #eee;
+}
+
+.modal-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-title {
+  font-family: 'RL Aqva', 'Arial Black', sans-serif;
+  font-size: 1.5rem;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+
+.modal-subtitle {
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  margin-bottom: 1.5rem;
+}
+
+.modal-form label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-mid);
+  margin-bottom: 4px;
+}
+
+.modal-form input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid rgba(0,0,0,0.1);
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  color: var(--ink);
+  outline: none;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.modal-form input:focus {
+  border-color: var(--rosa);
+}
+
+.modal-form .btn-submit {
+  width: 100%;
+  padding: 12px;
+  border-radius: 100px;
+  background: var(--rosa);
+  color: white;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-form .btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(231,42,136,0.35);
+}
+
+.modal-form .btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.modal-switch {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  color: var(--ink-light);
+}
+
+.modal-switch button {
+  background: none;
+  border: none;
+  color: var(--rosa);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+}
+
+.modal-switch button:hover {
+  text-decoration: underline;
+}
+
+.modal-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+
+/* ── RESPONSIVE ─────────────────────────── */
+
+@media (max-width: 768px) {
+  .gallery-hero {
+    padding: 120px 1.5rem 50px;
+  }
+
+  .gallery-hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero-sub {
+    font-size: 0.95rem;
+  }
+
+  .gallery-toolbar {
+    padding: 0 1rem;
+    top: 60px;
+  }
+
+  .toolbar-inner {
+    flex-wrap: wrap;
+    padding: 8px 0;
+  }
+
+  .toolbar-cats {
+    order: 2;
+    width: 100%;
+    padding-bottom: 8px;
+  }
+
+  .toolbar-search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toolbar-search input {
+    width: 100%;
+  }
+
+  .toolbar-search input:focus {
+    width: 100%;
+  }
+
+  .user-bar {
+    order: 1;
+  }
+
+  .gallery-main {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .subscribe-banner {
+    padding: 0 1rem;
+  }
+
+  .subscribe-banner-inner {
+    grid-template-columns: 1fr;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .subscribe-text ul {
+    justify-content: center;
+  }
+
+  .btn-subscribe-big {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-bar .btn-subscribe {
+    display: none;
+  }
+}
+
+/* ── ANIMATIONS ─────────────────────────── */
+
+.design-card {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: cardIn 0.4s ease both;
+}
+
+.design-card:nth-child(1) { animation-delay: 0s; }
+.design-card:nth-child(2) { animation-delay: 0.05s; }
+.design-card:nth-child(3) { animation-delay: 0.1s; }
+.design-card:nth-child(4) { animation-delay: 0.15s; }
+.design-card:nth-child(5) { animation-delay: 0.2s; }
+.design-card:nth-child(6) { animation-delay: 0.25s; }
+.design-card:nth-child(7) { animation-delay: 0.3s; }
+.design-card:nth-child(8) { animation-delay: 0.35s; }
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════
+       SHARED NAVIGATION
+       ════════════════════════════════════════ -->
+  <nav class="site-nav nav--scrolled">
+    <a href="/" class="nav-logo-link">
+      <img src="/assets/LOGO-03.png" alt="AXKAN" class="nav-logo">
+    </a>
+    <ul class="nav-links">
+      <li><a href="/productos">Productos</a></li>
+      <li><a href="/#calidad">Calidad</a></li>
+      <li><a href="/diseños">Diseños</a></li>
+      <li><a href="/#mayoreo">Mayoreo</a></li>
+      <li><a href="/envio">Envío</a></li>
+      <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
+    </ul>
+    <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
+  <div class="site-mobile-menu" aria-hidden="true">
+    <a href="/productos">Productos</a>
+    <a href="/#calidad">Calidad</a>
+    <a href="/diseños">Diseños</a>
+    <a href="/#mayoreo">Mayoreo</a>
+    <a href="/envio">Envío</a>
+    <a href="/pedidos" class="nav-cta">Hacer Pedido</a>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       HERO
+       ════════════════════════════════════════ -->
+  <section class="gallery-hero">
+    <div class="hero-inner">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Galería Premium
+      </div>
+      <h1>Diseños que <span>capturan</span> la esencia de México</h1>
+      <p class="hero-sub">Explora nuestra colección de arte mexicano premium. Suscríbete para descargar archivos originales en alta resolución.</p>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       TOOLBAR (sticky)
+       ════════════════════════════════════════ -->
+  <div class="gallery-toolbar" id="galleryToolbar">
+    <div class="toolbar-inner">
+      <div class="toolbar-search">
+        <svg class="toolbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Buscar diseños...">
+      </div>
+      <div class="toolbar-cats" id="categoryTabs"></div>
+      <div class="user-bar" id="userBar">
+        <button class="btn-login" id="btnLogin">Iniciar Sesión</button>
+        <button class="btn-subscribe" id="btnSubscribeSmall">Suscribirse</button>
+        <button class="btn-user" id="btnUser"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       GALLERY GRID
+       ════════════════════════════════════════ -->
+  <main class="gallery-main">
+    <p class="gallery-count" id="galleryCount"></p>
+    <div class="gallery-grid" id="galleryGrid"></div>
+
+    <div class="gallery-loading" id="galleryLoading">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Cargando diseños...</p>
+    </div>
+
+    <div class="gallery-empty" id="galleryEmpty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <h3>Sin resultados</h3>
+      <p>No encontramos diseños con esos filtros. Prueba otra búsqueda.</p>
+    </div>
+  </main>
+
+  <!-- ════════════════════════════════════════
+       SUBSCRIBE BANNER
+       ════════════════════════════════════════ -->
+  <section class="subscribe-banner" id="subscribeBanner">
+    <div class="subscribe-banner-inner">
+      <div class="subscribe-text">
+        <h2>Acceso <span>Premium</span> a todos los diseños</h2>
+        <p>Descarga archivos originales en alta resolución, sin marcas de agua, listos para tu negocio.</p>
+        <ul>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Descargas ilimitadas
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Sin marcas de agua
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Nuevos diseños cada semana
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Alta resolución
+          </li>
+        </ul>
+      </div>
+      <button class="btn-subscribe-big" id="btnSubscribeBig">Suscribirse Ahora</button>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       AUTH MODAL
+       ════════════════════════════════════════ -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title" id="modalTitle">Iniciar Sesión</h2>
+      <p class="modal-subtitle" id="modalSubtitle">Accede a tu cuenta de AXKAN Diseños</p>
+      <div class="modal-error" id="modalError"></div>
+      <form class="modal-form" id="authForm">
+        <div id="nameField" style="display:none">
+          <label for="authName">Nombre</label>
+          <input type="text" id="authName" placeholder="Tu nombre">
+        </div>
+        <div>
+          <label for="authEmail">Correo Electrónico</label>
+          <input type="email" id="authEmail" placeholder="tu@correo.com" required>
+        </div>
+        <div>
+          <label for="authPassword">Contraseña</label>
+          <input type="password" id="authPassword" placeholder="Tu contraseña" required minlength="6">
+        </div>
+        <button type="submit" class="btn-submit" id="authSubmit">Iniciar Sesión</button>
+      </form>
+      <div class="modal-switch" id="modalSwitch">
+        <span id="switchText">¿No tienes cuenta? </span>
+        <button id="switchBtn">Crear cuenta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SHARED FOOTER
+       ════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="site-footer-content">
+      <div class="site-footer-brand">
+        <img src="/assets/LETTERS.png" alt="AXKAN" style="height:40px;width:auto;">
+        <p>Souvenirs premium que capturan la esencia de México. Diseñado y producido con orgullo en México.</p>
+        <div class="site-footer-social">
+          <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
+          <a href="https://www.tiktok.com/@axkan_oficial" target="_blank" aria-label="TikTok"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.98a8.18 8.18 0 004.76 1.52V7.05a4.84 4.84 0 01-1-.36z"/></svg></a>
+          <a href="https://www.facebook.com/AxkanOficial" target="_blank" aria-label="Facebook"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+          <a href="https://wa.me/525538253251" target="_blank" aria-label="WhatsApp"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          <a href="https://www.youtube.com/@AxkanOficial" target="_blank" aria-label="YouTube"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+        </div>
+      </div>
+
+      <div class="site-footer-mega">
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Productos</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/productos/imanes-mdf">Imanes MDF</a></li>
+            <li><a href="/productos/llaveros-mdf">Llaveros MDF</a></li>
+            <li><a href="/productos/portallaves-mdf">Portallaves</a></li>
+            <li><a href="/productos/destapadores-mdf">Destapadores</a></li>
+            <li><a href="/productos/portarretratos-mdf">Portarretratos</a></li>
+            <li><a href="/productos" class="site-footer-see-all">Ver Todos →</a></li>
+          </ul>
+        </div>
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Diseños</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/diseños">Catálogo de Diseños</a></li>
+            <li><a href="/diseños/huasteca-potosina/historia">Huasteca Potosina</a></li>
+            <li><a href="/diseños/chichen-itza/historia">Chichén Itzá</a></li>
+          </ul>
+        </div>
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Formularios</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/cuestionario">Cuestionario Inicial</a></li>
+            <li><a href="/pedidos">Hacer Pedido</a></li>
+            <li><a href="/envio">Datos de Envío</a></li>
+            <li><a href="/midiseño">Mi Diseño</a></li>
+            <li><a href="/seguimiento">Seguimiento de Pedido</a></li>
+          </ul>
+        </div>
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Recursos</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/faq">Preguntas Frecuentes</a></li>
+            <li><a href="/ubicacion">Ubicación</a></li>
+            <li><a href="/brand">Manual de Marca</a></li>
+            <li><a href="mailto:informacion@axkan.art">informacion@axkan.art</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="site-footer-bottom">
+      <span>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</span>
+      <div class="site-footer-bottom-social">
+        <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
+        <a href="https://wa.me/525538253251" target="_blank" aria-label="WhatsApp"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ════════════════════════════════════════
+       APPLICATION LOGIC (Safe DOM — no innerHTML)
+       ════════════════════════════════════════ -->
+  <script>
+  (function() {
+    'use strict';
+
+    // ── Config ───────────────────────────────
+    var API_BASE = '/api/public/designs';
+
+    // ── State ────────────────────────────────
+    var designs = [];
+    var categories = [];
+    var activeCategory = null;
+    var searchQuery = '';
+    var subscriber = null;
+    var token = localStorage.getItem('axkan_design_token') || null;
+    var isLoginMode = true;
+
+    // ── DOM References ───────────────────────
+    var galleryGrid = document.getElementById('galleryGrid');
+    var galleryLoading = document.getElementById('galleryLoading');
+    var galleryEmpty = document.getElementById('galleryEmpty');
+    var galleryCount = document.getElementById('galleryCount');
+    var categoryTabs = document.getElementById('categoryTabs');
+    var searchInput = document.getElementById('searchInput');
+    var authModal = document.getElementById('authModal');
+    var authForm = document.getElementById('authForm');
+    var modalTitle = document.getElementById('modalTitle');
+    var modalSubtitle = document.getElementById('modalSubtitle');
+    var modalError = document.getElementById('modalError');
+    var nameField = document.getElementById('nameField');
+    var switchText = document.getElementById('switchText');
+    var switchBtn = document.getElementById('switchBtn');
+    var authSubmit = document.getElementById('authSubmit');
+    var btnLogin = document.getElementById('btnLogin');
+    var btnSubscribeSmall = document.getElementById('btnSubscribeSmall');
+    var btnUser = document.getElementById('btnUser');
+    var btnSubscribeBig = document.getElementById('btnSubscribeBig');
+
+    // ── API Helpers ──────────────────────────
+
+    function apiGet(path) {
+      var headers = {};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return fetch(API_BASE + path, { headers: headers })
+        .then(function(r) { return r.json(); });
+    }
+
+    function apiPost(path, body) {
+      var headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return fetch(API_BASE + path, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+      }).then(function(r) { return r.json(); });
+    }
+
+    // ── Category Tabs (safe DOM) ─────────────
+
+    function renderCategories() {
+      while (categoryTabs.firstChild) categoryTabs.removeChild(categoryTabs.firstChild);
+
+      var allTab = document.createElement('button');
+      allTab.className = 'cat-tab' + (activeCategory === null ? ' active' : '');
+      allTab.textContent = 'Todos';
+      allTab.addEventListener('click', function() {
+        activeCategory = null;
+        renderCategories();
+        renderDesigns();
+      });
+      categoryTabs.appendChild(allTab);
+
+      categories.forEach(function(cat) {
+        var tab = document.createElement('button');
+        tab.className = 'cat-tab' + (activeCategory === cat.id ? ' active' : '');
+        tab.textContent = cat.name;
+        tab.addEventListener('click', function() {
+          activeCategory = cat.id;
+          renderCategories();
+          renderDesigns();
+        });
+        categoryTabs.appendChild(tab);
+      });
+    }
+
+    // ── Design Cards (safe DOM) ──────────────
+
+    function createLockSVG() {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '2');
+      svg.setAttribute('stroke-linecap', 'round');
+      var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', '3');
+      rect.setAttribute('y', '11');
+      rect.setAttribute('width', '18');
+      rect.setAttribute('height', '11');
+      rect.setAttribute('rx', '2');
+      svg.appendChild(rect);
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M7 11V7a5 5 0 0110 0v4');
+      svg.appendChild(path);
+      return svg;
+    }
+
+    function createDownloadSVG() {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '2.5');
+      svg.setAttribute('stroke-linecap', 'round');
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4');
+      svg.appendChild(path);
+      var polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      polyline.setAttribute('points', '7 10 12 15 17 10');
+      svg.appendChild(polyline);
+      var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', '12');
+      line.setAttribute('y1', '15');
+      line.setAttribute('x2', '12');
+      line.setAttribute('y2', '3');
+      svg.appendChild(line);
+      return svg;
+    }
+
+    function createDesignCard(design) {
+      var card = document.createElement('div');
+      card.className = 'design-card';
+
+      // Image wrapper
+      var imageWrap = document.createElement('div');
+      imageWrap.className = 'card-image-wrap';
+
+      var img = document.createElement('img');
+      img.src = design.preview_url || '/assets/LOGO-01.png';
+      img.alt = design.name || 'Diseño AXKAN';
+      img.loading = 'lazy';
+      imageWrap.appendChild(img);
+
+      var isActive = subscriber && subscriber.subscription_status === 'active';
+
+      if (isActive) {
+        // Download button
+        var dlBtn = document.createElement('button');
+        dlBtn.className = 'card-download-btn';
+        dlBtn.style.display = 'flex';
+        dlBtn.title = 'Descargar original';
+        dlBtn.appendChild(createDownloadSVG());
+        dlBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          downloadDesign(design.id);
+        });
+        imageWrap.appendChild(dlBtn);
+      } else {
+        // Lock overlay
+        var lockOverlay = document.createElement('div');
+        lockOverlay.className = 'card-lock-overlay';
+        lockOverlay.appendChild(createLockSVG());
+        var lockText = document.createElement('span');
+        lockText.textContent = 'Suscríbete para descargar';
+        lockOverlay.appendChild(lockText);
+        imageWrap.appendChild(lockOverlay);
+      }
+
+      card.appendChild(imageWrap);
+
+      // Card body
+      var body = document.createElement('div');
+      body.className = 'card-body';
+
+      var catLabel = document.createElement('div');
+      catLabel.className = 'card-category';
+      catLabel.textContent = design.category_name || 'Sin categoría';
+      body.appendChild(catLabel);
+
+      var title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = design.name || 'Diseño';
+      body.appendChild(title);
+
+      if (design.tags && design.tags.length > 0) {
+        var tagsWrap = document.createElement('div');
+        tagsWrap.className = 'card-tags';
+        var tagsToShow = design.tags.slice(0, 3);
+        tagsToShow.forEach(function(tagText) {
+          var tag = document.createElement('span');
+          tag.className = 'card-tag';
+          tag.textContent = tagText;
+          tagsWrap.appendChild(tag);
+        });
+        body.appendChild(tagsWrap);
+      }
+
+      card.appendChild(body);
+      return card;
+    }
+
+    function renderDesigns() {
+      var filtered = designs.filter(function(d) {
+        if (activeCategory && d.category_id !== activeCategory) return false;
+        if (searchQuery) {
+          var q = searchQuery.toLowerCase();
+          var nameMatch = (d.name || '').toLowerCase().indexOf(q) !== -1;
+          var catMatch = (d.category_name || '').toLowerCase().indexOf(q) !== -1;
+          var tagMatch = (d.tags || []).some(function(t) {
+            return t.toLowerCase().indexOf(q) !== -1;
+          });
+          if (!nameMatch && !catMatch && !tagMatch) return false;
+        }
+        return true;
+      });
+
+      // Clear grid
+      while (galleryGrid.firstChild) galleryGrid.removeChild(galleryGrid.firstChild);
+
+      if (filtered.length === 0) {
+        galleryEmpty.style.display = 'block';
+        galleryCount.textContent = '';
+      } else {
+        galleryEmpty.style.display = 'none';
+        var countStrong = document.createElement('strong');
+        countStrong.textContent = filtered.length;
+        galleryCount.textContent = '';
+        galleryCount.appendChild(countStrong);
+        galleryCount.appendChild(document.createTextNode(
+          filtered.length === 1 ? ' diseño disponible' : ' diseños disponibles'
+        ));
+
+        filtered.forEach(function(design) {
+          galleryGrid.appendChild(createDesignCard(design));
+        });
+      }
+    }
+
+    // ── Download ─────────────────────────────
+
+    function downloadDesign(designId) {
+      apiGet('/' + designId + '/download')
+        .then(function(data) {
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+          if (data.download_url) {
+            var a = document.createElement('a');
+            a.href = data.download_url;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        })
+        .catch(function() {
+          alert('Error al descargar. Inténtalo de nuevo.');
+        });
+    }
+
+    // ── Auth UI ──────────────────────────────
+
+    function updateUI() {
+      if (subscriber) {
+        btnLogin.style.display = 'none';
+        btnUser.style.display = 'inline-flex';
+        btnUser.textContent = subscriber.name || subscriber.email.split('@')[0];
+
+        if (subscriber.subscription_status === 'active') {
+          btnSubscribeSmall.style.display = 'none';
+          document.getElementById('subscribeBanner').style.display = 'none';
+        } else {
+          btnSubscribeSmall.style.display = 'inline-flex';
+          btnSubscribeSmall.textContent = 'Suscribirse';
+        }
+      } else {
+        btnLogin.style.display = 'inline-flex';
+        btnSubscribeSmall.style.display = 'inline-flex';
+        btnUser.style.display = 'none';
+        document.getElementById('subscribeBanner').style.display = 'block';
+      }
+
+      // Re-render cards to update lock/download state
+      renderDesigns();
+    }
+
+    function showModal(login) {
+      isLoginMode = login;
+      if (login) {
+        modalTitle.textContent = 'Iniciar Sesión';
+        modalSubtitle.textContent = 'Accede a tu cuenta de AXKAN Diseños';
+        nameField.style.display = 'none';
+        authSubmit.textContent = 'Iniciar Sesión';
+        switchText.textContent = '¿No tienes cuenta? ';
+        switchBtn.textContent = 'Crear cuenta';
+      } else {
+        modalTitle.textContent = 'Crear Cuenta';
+        modalSubtitle.textContent = 'Regístrate para acceder a diseños premium';
+        nameField.style.display = 'block';
+        authSubmit.textContent = 'Crear Cuenta';
+        switchText.textContent = '¿Ya tienes cuenta? ';
+        switchBtn.textContent = 'Iniciar Sesión';
+      }
+      modalError.style.display = 'none';
+      authModal.classList.add('active');
+    }
+
+    function hideModal() {
+      authModal.classList.remove('active');
+      authForm.reset();
+      modalError.style.display = 'none';
+    }
+
+    // ── Auth Actions ─────────────────────────
+
+    function doAuth(e) {
+      e.preventDefault();
+      authSubmit.disabled = true;
+      modalError.style.display = 'none';
+
+      var email = document.getElementById('authEmail').value.trim();
+      var password = document.getElementById('authPassword').value;
+
+      if (isLoginMode) {
+        apiPost('/auth/login', { email: email, password: password })
+          .then(function(data) {
+            authSubmit.disabled = false;
+            if (data.error) {
+              modalError.textContent = data.error;
+              modalError.style.display = 'block';
+              return;
+            }
+            token = data.token;
+            subscriber = data.subscriber;
+            localStorage.setItem('axkan_design_token', token);
+            hideModal();
+            updateUI();
+          })
+          .catch(function() {
+            authSubmit.disabled = false;
+            modalError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+            modalError.style.display = 'block';
+          });
+      } else {
+        var name = document.getElementById('authName').value.trim();
+        apiPost('/auth/register', { email: email, password: password, name: name })
+          .then(function(data) {
+            authSubmit.disabled = false;
+            if (data.error) {
+              modalError.textContent = data.error;
+              modalError.style.display = 'block';
+              return;
+            }
+            token = data.token;
+            subscriber = data.subscriber;
+            localStorage.setItem('axkan_design_token', token);
+            hideModal();
+            updateUI();
+          })
+          .catch(function() {
+            authSubmit.disabled = false;
+            modalError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+            modalError.style.display = 'block';
+          });
+      }
+    }
+
+    // ── Stripe Subscribe ─────────────────────
+
+    function doSubscribe() {
+      if (!subscriber) {
+        showModal(false);
+        return;
+      }
+      apiPost('/subscribe', {})
+        .then(function(data) {
+          if (data.url) {
+            window.location.href = data.url;
+          } else if (data.error) {
+            alert(data.error);
+          }
+        })
+        .catch(function() {
+          alert('Error al conectar con el servicio de pago.');
+        });
+    }
+
+    // ── Initialize ───────────────────────────
+
+    function init() {
+      // Check existing token
+      if (token) {
+        apiGet('/auth/me')
+          .then(function(data) {
+            if (data.subscriber) {
+              subscriber = data.subscriber;
+            } else {
+              token = null;
+              localStorage.removeItem('axkan_design_token');
+            }
+            updateUI();
+          })
+          .catch(function() {
+            token = null;
+            localStorage.removeItem('axkan_design_token');
+            updateUI();
+          });
+      }
+
+      // Load categories
+      apiGet('/categories')
+        .then(function(data) {
+          categories = data.categories || [];
+          renderCategories();
+        })
+        .catch(function() {
+          categories = [];
+          renderCategories();
+        });
+
+      // Load designs
+      galleryLoading.style.display = 'block';
+      apiGet('/')
+        .then(function(data) {
+          galleryLoading.style.display = 'none';
+          designs = data.designs || [];
+          renderDesigns();
+        })
+        .catch(function() {
+          galleryLoading.style.display = 'none';
+          designs = [];
+          renderDesigns();
+        });
+    }
+
+    // ── Event Bindings ───────────────────────
+
+    btnLogin.addEventListener('click', function() { showModal(true); });
+    btnSubscribeSmall.addEventListener('click', doSubscribe);
+    btnSubscribeBig.addEventListener('click', doSubscribe);
+    btnUser.addEventListener('click', function() {
+      if (subscriber && subscriber.subscription_status === 'active') {
+        apiPost('/portal', {})
+          .then(function(data) {
+            if (data.url) window.location.href = data.url;
+          });
+      } else {
+        doSubscribe();
+      }
+    });
+
+    document.getElementById('modalClose').addEventListener('click', hideModal);
+    authModal.addEventListener('click', function(e) {
+      if (e.target === authModal) hideModal();
+    });
+    switchBtn.addEventListener('click', function() {
+      showModal(!isLoginMode);
+    });
+    authForm.addEventListener('submit', doAuth);
+
+    // Search
+    var searchDebounce = null;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(function() {
+        searchQuery = searchInput.value.trim();
+        renderDesigns();
+      }, 300);
+    });
+
+    // Toolbar shadow
+    var toolbar = document.getElementById('galleryToolbar');
+    var heroSection = document.querySelector('.gallery-hero');
+    if (toolbar && heroSection) {
+      var toolbarObserver = new IntersectionObserver(function(entries) {
+        toolbar.classList.toggle('toolbar--shadow', !entries[0].isIntersecting);
+      }, { threshold: 0 });
+      toolbarObserver.observe(heroSection);
+    }
+
+    init();
+
+    // ── Nav + Mobile Menu JS ─────────────────
+    var hamburger = document.querySelector('.nav-hamburger');
+    var mobileMenu = document.querySelector('.site-mobile-menu');
+
+    if (hamburger && mobileMenu) {
+      hamburger.addEventListener('click', function() {
+        var isActive = hamburger.classList.toggle('active');
+        mobileMenu.classList.toggle('active');
+        hamburger.setAttribute('aria-expanded', isActive);
+        mobileMenu.setAttribute('aria-hidden', !isActive);
+        document.body.style.overflow = isActive ? 'hidden' : '';
+      });
+
+      mobileMenu.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function() {
+          hamburger.classList.remove('active');
+          mobileMenu.classList.remove('active');
+          hamburger.setAttribute('aria-expanded', 'false');
+          mobileMenu.setAttribute('aria-hidden', 'true');
+          document.body.style.overflow = '';
+        });
+      });
+    }
+  })();
+  </script>
+</body>
+</html>
