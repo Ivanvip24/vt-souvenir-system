@@ -83,9 +83,6 @@ export function getSystemPrompt(products) {
   const mediaHandling = loadConfig('media-handling.md');
   const responseExamples = loadConfig('response-examples.md');
 
-  // Debug: log what the bot sees
-  console.log('📋 CATALOG LINES FOR BOT:\n' + catalogLines);
-
   return `${identity}
 
 ${brandVoice}
