@@ -63,6 +63,7 @@ router.get('/products', async (req, res) => {
         description,
         category,
         base_price,
+        wholesale_price,
         dimensions,
         image_url,
         display_order

@@ -43,6 +43,7 @@ async function runAllMigrations() {
     await runMigration('015-whatsapp-features.sql');
     await runMigration('016-add-payment-notes.sql');
     await runMigration('017-add-push-subscriptions.sql');
+    await runMigration('011-product-price-tiers.sql');
 
     console.log('\n✨ All migrations completed successfully!');
 

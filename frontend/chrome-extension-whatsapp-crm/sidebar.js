@@ -1520,9 +1520,12 @@ var AxkanSidebar = {
       this.productsCache.forEach(function(p) {
         var opt = document.createElement('option');
         opt.value = p.id;
-        opt.textContent = p.name + ' - ' + formatCurrency(p.base_price || p.basePrice || p.price || 0);
+        var retailPrice = p.base_price || p.basePrice || p.price || 0;
+        var bulkPrice = p.wholesale_price || p.wholesalePrice || retailPrice;
+        opt.textContent = p.name + ' - ' + formatCurrency(retailPrice) + (Number(bulkPrice) < Number(retailPrice) ? ' / ' + formatCurrency(bulkPrice) + ' (1000+)' : '');
         opt.dataset.name = p.name;
-        opt.dataset.price = p.base_price || p.basePrice || p.price || 0;
+        opt.dataset.price = retailPrice;
+        opt.dataset.wholesalePrice = bulkPrice;
         productSelect.appendChild(opt);
       });
     }
@@ -1540,6 +1543,17 @@ var AxkanSidebar = {
     qtyInput.min = '1';
     qtyInput.value = '50';
     qtyInput.placeholder = '50';
+
+    // Auto-switch price tier based on quantity
+    qtyInput.addEventListener('input', function() {
+      var qty = parseInt(qtyInput.value) || 0;
+      var selectedOption = productSelect.options[productSelect.selectedIndex];
+      if (selectedOption && selectedOption.value) {
+        var retail = Number(selectedOption.dataset.price) || 0;
+        var bulk = Number(selectedOption.dataset.wholesalePrice) || retail;
+        selectedOption.dataset.activePrice = qty >= 1000 ? bulk : retail;
+      }
+    });
     qtyGroup.appendChild(qtyLabel);
     qtyGroup.appendChild(qtyInput);
     row.appendChild(qtyGroup);
@@ -1633,12 +1647,16 @@ var AxkanSidebar = {
       var fileInput = row.querySelector('input[type="file"]');
       if (!select.value) return;
       var selectedOption = select.options[select.selectedIndex];
+      var itemQty = Number(qty.value) || 50;
+      var retailP = Number(selectedOption.dataset.price) || 0;
+      var bulkP = Number(selectedOption.dataset.wholesalePrice) || retailP;
+      var activePrice = itemQty >= 1000 ? bulkP : retailP;
       items.push({
         productId: Number(select.value),
         productName: selectedOption.dataset.name || '',
-        quantity: Number(qty.value) || 50,
+        quantity: itemQty,
         size: size.value || '',
-        unitPrice: Number(selectedOption.dataset.price) || 0
+        unitPrice: activePrice
       });
       if (fileInput && fileInput.files.length) {
         fileUploads.push({ index: idx, file: fileInput.files[0] });

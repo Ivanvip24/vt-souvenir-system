@@ -5845,6 +5845,25 @@ async function startServer() {
       console.warn('⚠️  Warning: AI knowledge loading failed:', aiError.message);
     }
 
+    // Auto-migration: add wholesale_price to products
+    try {
+      await query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS wholesale_price DECIMAL(10, 2)`);
+      const wpCheck = await query(`SELECT COUNT(*) FROM products WHERE wholesale_price IS NULL`);
+      if (parseInt(wpCheck.rows[0].count) > 0) {
+        await query(`UPDATE products SET base_price = 11.00, wholesale_price = 8.00 WHERE id = 4`);
+        await query(`UPDATE products SET base_price = 15.00, wholesale_price = 12.00 WHERE id = 6`);
+        await query(`UPDATE products SET base_price = 13.00, wholesale_price = 10.00 WHERE id = 7`);
+        await query(`UPDATE products SET base_price = 10.00, wholesale_price = 8.00 WHERE id = 5`);
+        await query(`UPDATE products SET base_price = 20.00, wholesale_price = 17.00 WHERE id = 8`);
+        await query(`UPDATE products SET base_price = 8.00, wholesale_price = 6.00 WHERE id = 9`);
+        await query(`UPDATE products SET base_price = 45.00, wholesale_price = 45.00 WHERE id = 10`);
+        await query(`UPDATE products SET wholesale_price = base_price WHERE wholesale_price IS NULL`);
+        console.log('✅ Product price tiers migration applied');
+      }
+    } catch (mErr) {
+      console.warn('⚠️  Price tiers migration:', mErr.message);
+    }
+
     // Start server
     app.listen(PORT, () => {
       console.log('\n' + '='.repeat(60));
