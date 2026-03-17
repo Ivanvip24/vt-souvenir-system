@@ -557,37 +557,36 @@ function sanitizeMessageHistory(messages) {
 // Conversation Insights — AI-powered analysis for the admin dashboard
 // ---------------------------------------------------------------------------
 
-const INSIGHTS_SYSTEM_PROMPT = `Eres un analista de conversaciones de venta de souvenirs personalizados (marca AXKAN).
-Analiza la conversacion y extrae insights accionables para el administrador.
+const INSIGHTS_SYSTEM_PROMPT = `Extrae SOLO datos concretos de esta conversacion de venta de souvenirs AXKAN. NO analices, NO resumas — solo extrae hechos.
 
-Responde UNICAMENTE con JSON valido, sin markdown, sin backticks, sin texto adicional.
-El formato es:
+Responde UNICAMENTE con JSON valido, sin markdown, sin backticks.
 {
   "insights": [
     {
-      "category": "order|product|urgency|followup|risk|info",
-      "icon": "emoji apropiado",
-      "text": "Insight concreto y accionable en espanol, maximo 2 oraciones",
+      "category": "categoria",
+      "icon": "emoji",
+      "text": "dato concreto, maximo 1 oracion corta",
       "priority": "high|medium|low"
     }
   ]
 }
 
-Categorias:
-- "order": Detalles de pedido (cantidades, productos, precios mencionados)
-- "product": Interes en productos especificos o personalizacion
-- "urgency": Fechas limite, eventos proximos, urgencia
-- "followup": Acciones pendientes o informacion que falta recopilar
-- "risk": Senales de insatisfaccion, quejas, o riesgo de perder la venta
-- "info": Datos del cliente (nombre, ubicacion, tipo de evento/negocio)
+SOLO incluye una categoria si hay DATO CONCRETO mencionado en la conversacion. Si no se menciono, NO la incluyas.
 
-Reglas:
-- Maximo 8 insights, minimo 1
-- Prioriza lo accionable: que puede hacer el admin AHORA
-- Se directo y especifico (no "el cliente pregunto por productos", sino "Cliente interesado en 200 imanes para boda el 15 de marzo")
-- Si hay un pedido en proceso, incluye el resumen como primer insight con priority "high"
-- Si la conversacion es solo un saludo o muy corta, da 1-2 insights indicando la etapa temprana
-- Responde SOLO con el JSON, nada mas`;
+Categorias permitidas (usa SOLO las que apliquen):
+- "pedido": Producto + cantidad confirmados. Ej: "500 imanes MDF + 200 llaveros" (priority: high)
+- "disenos": Cuantos disenos necesita. Ej: "8 disenos diferentes" (priority: high)
+- "deposito": Si ya pago anticipo o deposito. Ej: "Deposito de $2,750 recibido" o "Pendiente de deposito" (priority: high)
+- "entrega": Fecha limite o evento. Ej: "Boda 15 marzo — entrega antes del 12" (priority: high)
+- "envio": Ciudad/estado de envio. Ej: "Envio a Monterrey, NL" (priority: medium)
+- "riesgo": SOLO si hay queja real o el cliente dijo que se va. Ej: "Cliente molesto por tiempo de entrega" (priority: high)
+
+REGLAS ESTRICTAS:
+- Maximo 4 insights
+- Si la conversacion es solo saludo o pregunta inicial, responde con array VACIO: {"insights": []}
+- NO incluyas: "cliente interesado en...", "conversacion en etapa...", "falta recopilar...", "bot presento opciones..."
+- Solo HECHOS CONCRETOS con numeros, fechas o datos especificos
+- Si no hay datos concretos todavia, devuelve array vacio`;
 
 /**
  * Generate AI-powered insights for a WhatsApp conversation.
