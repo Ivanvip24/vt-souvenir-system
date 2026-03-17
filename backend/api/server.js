@@ -5702,6 +5702,8 @@ async function startServer() {
         await query(`CREATE INDEX IF NOT EXISTS idx_download_log_subscriber ON design_download_log(subscriber_id)`);
         await query(`CREATE INDEX IF NOT EXISTS idx_download_log_design ON design_download_log(design_id)`);
         await query(`CREATE INDEX IF NOT EXISTS idx_download_log_date ON design_download_log(downloaded_at)`);
+        // Mark all active designs as public (one-time seed)
+        await query(`UPDATE design_gallery SET is_public = true WHERE (is_archived = false OR is_archived IS NULL) AND is_public = false`);
         console.log('✅ Design subscriptions tables ready');
       } catch (e) {
         console.warn('⚠️ Design subscriptions migration skipped:', e.message);
