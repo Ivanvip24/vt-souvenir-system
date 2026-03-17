@@ -1102,6 +1102,55 @@ Cuando el usuario pida abrir, ver o crear las cuentas de un cliente, trackear su
 
 El sistema buscará al cliente y abrirá automáticamente el panel de cuentas dentro del popup del cliente.
 
+## ANÁLISIS DE IMAGEN: ORDEN DE COMPRA (CONTEO DE PRODUCCIÓN)
+
+Cuando el usuario suba una imagen de una **Orden de Compra AXKAN** (hoja de conteo de producción), debes analizarla y calcular el total del pedido.
+
+**Cómo identificar una Orden de Compra:**
+- Título "AXKAN ORDEN DE COMPRA" en la parte superior
+- Muestra el nombre del pedido/destino, número de diseños y fecha
+- Tiene tarjetas de productos con fotos, cada una mostrando:
+  - **Tipo:** (destapador, imán, llavero, etc.)
+  - **Requeridos:** cantidad pedida originalmente
+  - **Contados:** cantidad real producida/contada
+
+**Cómo calcular el total:**
+
+1. **Lee cada tarjeta de producto** de la imagen:
+   - Identifica el tipo de producto
+   - Lee la cantidad "Requeridos" (pedido original)
+   - Lee la cantidad "Contados" (producción real)
+
+2. **Calcula extras por producto:**
+   - Si Contados > Requeridos → hay extras (Contados - Requeridos)
+   - Si Contados < Requeridos → hay faltantes (Requeridos - Contados)
+   - Si Contados = Requeridos → exacto
+
+3. **Usa la LISTA DE PRECIOS OFICIAL** (arriba) para el precio unitario según el tipo de producto
+   - NO busques en la base de datos — usa solo los precios de lista
+   - Para determinar el rango de precio, usa la cantidad TOTAL contada de ese tipo de producto
+
+4. **Presenta el resultado en este formato:**
+
+📋 **Análisis de Orden de Compra: [NOMBRE DEL PEDIDO]**
+📅 Fecha: [fecha de la orden]
+
+| Producto | Requeridos | Contados | Extras | Precio/u | Subtotal |
+|----------|-----------|----------|--------|----------|----------|
+| [tipo]   | [req]     | [cont]   | +X/-X  | $XX.XX   | $X,XXX   |
+
+**Desglose:**
+- Pedido base (requeridos): $X,XXX.XX
+- Piezas extra: X piezas → $XXX.XX
+- **TOTAL A COBRAR: $X,XXX.XX** (basado en piezas contadas)
+
+5. **Reglas de precio para extras:**
+   - Las piezas extra se cobran al **mismo precio unitario** que las requeridas
+   - El total se calcula sobre las piezas CONTADAS (lo que realmente se entrega)
+   - Si hay faltantes, resta esas piezas del total
+
+6. **Si no puedes leer algún dato claramente**, menciónalo y pide confirmación.
+
 ## IMPORTANTE PARA ACCIONES:
 - Para CREAR PEDIDO: SIEMPRE incluye el bloque action inmediatamente, sin preguntar
 - El bloque action debe estar en JSON válido
@@ -1170,7 +1219,7 @@ router.post('/chat', async (req, res) => {
       if (message && message.trim()) {
         userContent.push({ type: 'text', text: message });
       } else {
-        userContent.push({ type: 'text', text: 'Describe esta imagen.' });
+        userContent.push({ type: 'text', text: 'Analiza esta imagen. Si es una Orden de Compra AXKAN, calcula el total del pedido con el desglose de piezas requeridas vs contadas y extras.' });
       }
     } else {
       userContent = message;
