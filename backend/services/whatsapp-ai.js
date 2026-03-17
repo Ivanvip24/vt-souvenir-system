@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 import { query } from '../shared/database.js';
 import { createOrderBothSystems } from '../agents/notion-agent/sync.js';
 import { parseQuoteRequest, generateQuotePDF } from './quote-generator.js';
+import { PRICING_TIERS } from '../shared/pricing.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = join(__dirname, '..', 'chatbot_whatsapp');
@@ -50,9 +51,26 @@ function getClient() {
  */
 export function getSystemPrompt(products) {
   const catalogLines = products.map(p => {
-    const price = parseFloat(p.base_price);
+    const nameLower = p.name.toLowerCase();
+    // Look up tiered pricing from the official source of truth
+    // Prefer exact match, then partial match
+    let priceDisplay;
+    const matchedKey = Object.keys(PRICING_TIERS).find(key => nameLower === key)
+      || Object.keys(PRICING_TIERS).find(key => nameLower.includes(key) || key.includes(nameLower));
+    if (matchedKey) {
+      const tiers = PRICING_TIERS[matchedKey];
+      if (tiers.length > 1) {
+        priceDisplay = tiers.map(t =>
+          `${t.min}${t.max === Infinity ? '+' : '-' + t.max}: $${t.price.toFixed(2)}`
+        ).join(' / ');
+      } else {
+        priceDisplay = `$${tiers[0].price.toFixed(2)}`;
+      }
+    } else {
+      priceDisplay = `$${parseFloat(p.base_price).toFixed(2)}`;
+    }
     const hasImage = p.image_url ? ' [FOTO DISPONIBLE]' : '';
-    return `- ${p.name}: $${price.toFixed(2)} MXN${p.description ? ` — ${p.description}` : ''}${p.category ? ` (${p.category})` : ''}${hasImage}`;
+    return `- ${p.name}: ${priceDisplay} MXN${p.description ? ` — ${p.description}` : ''}${p.category ? ` (${p.category})` : ''}${hasImage}`;
   }).join('\n');
 
   // Load all config sections from chatbot-config/ directory

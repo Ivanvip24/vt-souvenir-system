@@ -25,18 +25,25 @@ CUANDO HAY INTERÉS — avanza natural:
 - Ya tiene cantidad → Ofrece hacer resumen o cotización
 - Ya está listo → Manda link de pedidos o crea el pedido
 
-PRECIOS (mayoreo):
+PRECIOS (mayoreo) — FUENTE OFICIAL, SIEMPRE USA ESTOS:
 | Producto | 100-999 pzas | 1000+ pzas |
 |----------|-------------|-----------|
-| Imanes MDF chicos | $11 | $8 |
-| Imanes MDF grandes | $15 | $12 |
+| Imanes de MDF (Chico) | $8 | $6 |
+| Imanes de MDF (Mediano) — DEFAULT | $11 | $8 |
+| Imanes de MDF (Grande) | $15 | $12 |
 | Imán 3D MDF | $15 | $12 |
-| Imán con Foil | $13 | $10 |
-| Llaveros MDF | $10 | $8 |
+| Imán con Foil | $15 | $12 |
+| Llaveros MDF | $10 | $7 |
 | Destapadores MDF | $20 | $17 |
 | Botones Metálicos | $8 | $6 |
-| Portallaves MDF | $45 | $45 |
+| Portallaves MDF | $40 | $40 |
 | Portarretratos MDF | $40 | $40 |
+
+IMPORTANTE — PRECIOS:
+- Cuando el cliente dice "imanes" sin especificar tamaño, el precio es $11 (mediano, el default)
+- "Imanes de MDF" sin tamaño = MEDIANO = $11
+- NUNCA uses el precio del catálogo inyectado si contradice esta tabla — ESTA TABLA MANDA
+- Chico $8 / Mediano $11 / Grande $15 — memoriza esto
 
 TIEMPOS DE ENTREGA:
 | Cantidad | Días |
