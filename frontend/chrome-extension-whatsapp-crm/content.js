@@ -6,12 +6,22 @@
 (function() {
   'use strict';
 
-  var SIDEBAR_WIDTH = 320;
+  var DEFAULT_SIDEBAR_WIDTH = 300;
+  var MIN_SIDEBAR_WIDTH = 240;
+  var MAX_SIDEBAR_WIDTH = 420;
+  var sidebarWidth = DEFAULT_SIDEBAR_WIDTH;
   var sidebarHost = null;
   var sidebarReady = false;
   var currentPhone = null;
   var observer = null;
   var clientCache = {};
+
+  // Restore saved width
+  chrome.storage.local.get('sidebarWidth', function(data) {
+    if (data.sidebarWidth && data.sidebarWidth >= MIN_SIDEBAR_WIDTH && data.sidebarWidth <= MAX_SIDEBAR_WIDTH) {
+      sidebarWidth = data.sidebarWidth;
+    }
+  });
 
   console.log('[AXKAN CRM] Content script loaded');
 
@@ -57,10 +67,12 @@
     if (typeof AxkanSidebar !== 'undefined') {
       AxkanSidebar.init(shadow, {
         onToggle: handleSidebarToggle,
+        onResize: handleSidebarResize,
         sendMessage: sendToBackground,
         pasteToWhatsApp: pasteToWhatsAppInput,
         getClientCache: function() { return clientCache; },
-        setClientCache: function(phone, data) { clientCache[phone] = data; }
+        setClientCache: function(phone, data) { clientCache[phone] = data; },
+        getWidth: function() { return sidebarWidth; }
       });
       sidebarReady = true;
     } else {
@@ -68,19 +80,40 @@
     }
   }
 
-  // ── Sidebar Toggle ─────────────────────────────────────
+  // ── Sidebar Toggle & Resize ────────────────────────────
+
+  function applySidebarWidth(isOpen, animate) {
+    var app = document.getElementById('app') || document.querySelector('._app');
+    var w = isOpen ? sidebarWidth : 0;
+    if (app) {
+      if (animate) {
+        app.style.transition = 'width 0.3s ease';
+        sidebarHost.style.transition = 'width 0.3s ease';
+      } else {
+        app.style.transition = 'none';
+        sidebarHost.style.transition = 'none';
+      }
+      // Use width instead of marginRight so WhatsApp's internal flex layout reflows correctly
+      app.style.width = isOpen ? 'calc(100% - ' + w + 'px)' : '';
+      app.style.marginRight = '0';
+    }
+    sidebarHost.style.width = w + 'px';
+    // Tell sidebar the current width so it can size its panel
+    if (sidebarReady && AxkanSidebar.setSidebarWidth) {
+      AxkanSidebar.setSidebarWidth(w);
+    }
+  }
 
   function handleSidebarToggle(isOpen) {
-    var app = document.getElementById('app') || document.querySelector('._app');
-    if (app) {
-      app.style.marginRight = isOpen ? SIDEBAR_WIDTH + 'px' : '0';
-      app.style.transition = 'margin-right 0.3s ease';
-    } else {
-      // Fallback: overlay with shadow
-      sidebarHost.style.boxShadow = isOpen ? '-4px 0 20px rgba(0,0,0,0.3)' : 'none';
-    }
-    sidebarHost.style.width = isOpen ? SIDEBAR_WIDTH + 'px' : '0';
+    applySidebarWidth(isOpen, true);
     chrome.storage.local.set({ sidebarOpen: isOpen });
+  }
+
+  function handleSidebarResize(newWidth) {
+    newWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
+    sidebarWidth = Math.round(newWidth);
+    applySidebarWidth(true, false);
+    chrome.storage.local.set({ sidebarWidth: sidebarWidth });
   }
 
   // ── Observe Chat Changes ───────────────────────────────

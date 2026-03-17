@@ -30,23 +30,23 @@ var TEMPLATES = [
 // ── Inlined CSS ──────────────────────────────────────────
 
 var SIDEBAR_CSS = '\
-:host { all: initial; }\
+:host { all: initial; --sidebar-w: 300px; }\
 * { margin: 0; padding: 0; box-sizing: border-box; }\
 \
 .axkan-toggle {\
   position: fixed; top: 50%; right: 0; transform: translateY(-50%);\
-  width: 40px; height: 40px; background: #e72a88; color: white;\
+  width: 36px; height: 36px; background: #e72a88; color: white;\
   border: none; border-radius: 10px 0 0 10px; cursor: pointer;\
-  font-size: 18px; font-weight: bold; z-index: 2;\
+  font-size: 16px; font-weight: bold; z-index: 2;\
   display: flex; align-items: center; justify-content: center;\
   box-shadow: -2px 0 8px rgba(0,0,0,0.2);\
   transition: right 0.3s ease;\
 }\
-.axkan-toggle.open { right: 320px; }\
+.axkan-toggle.open { right: var(--sidebar-w); }\
 \
 .sidebar {\
   position: fixed; top: 0; right: 0;\
-  width: 320px; height: 100vh;\
+  width: var(--sidebar-w); height: 100vh;\
   background: #1a1a2e; color: #e0e0e0;\
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\
   font-size: 13px;\
@@ -56,6 +56,12 @@ var SIDEBAR_CSS = '\
   overflow: hidden;\
 }\
 .sidebar.open { transform: translateX(0); }\
+\
+.resize-handle {\
+  position: absolute; top: 0; left: 0; width: 5px; height: 100%;\
+  cursor: col-resize; z-index: 3; background: transparent;\
+}\
+.resize-handle:hover, .resize-handle.active { background: #e72a88; }\
 \
 .sidebar-header {\
   padding: 14px 16px;\
@@ -265,6 +271,11 @@ var AxkanSidebar = {
     this.panel.className = 'sidebar';
     this.container.appendChild(this.panel);
 
+    // Resize drag handle (left edge of sidebar)
+    this.resizeHandle = document.createElement('div');
+    this.resizeHandle.className = 'resize-handle';
+    this.panel.appendChild(this.resizeHandle);
+
     // Auth banner + inline login form
     this.authBanner = document.createElement('div');
     this.authBanner.className = 'auth-banner';
@@ -376,6 +387,34 @@ var AxkanSidebar = {
       if (e.key === 'Enter') self.handleSidebarLogin();
     });
 
+    // Resize drag handler
+    (function() {
+      var dragging = false;
+      self.resizeHandle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        dragging = true;
+        self.resizeHandle.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var newWidth = window.innerWidth - e.clientX;
+        if (self.config.onResize) self.config.onResize(newWidth);
+      });
+      document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        self.resizeHandle.classList.remove('active');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+    })();
+
+    // Apply initial width from storage
+    var initialWidth = this.config.getWidth ? this.config.getWidth() : 300;
+    this.setSidebarWidth(initialWidth);
+
     // Restore sidebar state
     chrome.storage.local.get('sidebarOpen', function(data) {
       if (data.sidebarOpen) self.toggle(true);
@@ -398,13 +437,18 @@ var AxkanSidebar = {
     console.log('[AXKAN CRM] Sidebar initialized');
   },
 
-  // ── Toggle ───────────────────────────────────────────
+  // ── Toggle & Resize ─────────────────────────────────
 
   toggle: function(forceState) {
     this.isOpen = forceState !== undefined ? forceState : !this.isOpen;
     this.panel.classList.toggle('open', this.isOpen);
     this.toggleBtn.classList.toggle('open', this.isOpen);
     this.config.onToggle(this.isOpen);
+  },
+
+  setSidebarWidth: function(w) {
+    if (!w || w <= 0) return;
+    this.shadow.host.style.setProperty('--sidebar-w', w + 'px');
   },
 
   // ── Products ─────────────────────────────────────────
