@@ -48,6 +48,7 @@ import * as pickupScheduler from '../services/pickup-scheduler.js';
 import { initializeCepRetryScheduler, stopCepRetryScheduler } from '../services/cep-retry-scheduler.js';
 import { initializeShippingNotificationScheduler, stopShippingNotificationScheduler } from '../services/shipping-notification-scheduler.js';
 import * as facebookMarketplace from '../services/facebook-marketplace.js';
+import publicDesignRoutes from './public-design-routes.js';
 import * as facebookScheduler from '../services/facebook-scheduler.js';
 import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
 import { generateCatalogPDF, getCatalogUrl } from '../services/catalog-generator.js';
@@ -173,7 +174,11 @@ app.use('/api/client/info', clientInfoLimiter);
 app.use('/api/client/orders/lookup', clientInfoLimiter);
 
 // Body parsing - reduced limit to prevent memory abuse
-app.use(express.json({ limit: '10mb' }));
+// Skip JSON parsing for Stripe webhook (needs raw body for signature verification)
+app.use((req, res, next) => {
+  if (req.path === '/api/public/designs/webhook') return next();
+  express.json({ limit: '10mb' })(req, res, next);
+});
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Request logging
@@ -213,6 +218,13 @@ if (!fs.existsSync(catalogsPath)) {
 }
 app.use('/catalogs', express.static(catalogsPath));
 console.log(`📁 Serving catalogs from: ${catalogsPath}`);
+
+// WhatsApp-generated quotes (public, no auth — WhatsApp needs direct access)
+const whatsappQuotesPath = path.join(__dirname, '../catalogs/quotes');
+if (!fs.existsSync(whatsappQuotesPath)) {
+  fs.mkdirSync(whatsappQuotesPath, { recursive: true });
+}
+console.log(`📁 WhatsApp quotes served publicly at: /catalogs/quotes/`);
 
 // Branded Receipt PDFs
 const brandedReceiptsPath = path.join(__dirname, '../branded-receipts');
@@ -282,6 +294,11 @@ app.get('/api/catalog/download', async (req, res) => {
     res.status(500).json({ success: false, error: 'Error al generar catálogo' });
   }
 });
+
+// ========================================
+// PUBLIC DESIGN GALLERY (no auth — subscriber auth is internal)
+// ========================================
+app.use('/api/public/designs', publicDesignRoutes);
 
 // ========================================
 // CLIENT-FACING ROUTES
@@ -5651,6 +5668,44 @@ async function startServer() {
 
     if (!dbConnected) {
       console.error('⚠️  Warning: Database connection failed. Some features may not work.');
+    }
+
+    // Run design subscriptions migration (idempotent — all IF NOT EXISTS)
+    if (dbConnected) {
+      try {
+        await query(`ALTER TABLE design_gallery ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_design_gallery_public ON design_gallery(is_public)`);
+        await query(`
+          CREATE TABLE IF NOT EXISTS design_subscribers (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            name VARCHAR(255),
+            subscription_status VARCHAR(50) DEFAULT 'free',
+            stripe_customer_id VARCHAR(255),
+            stripe_subscription_id VARCHAR(255),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+          )
+        `);
+        await query(`CREATE INDEX IF NOT EXISTS idx_design_subscribers_email ON design_subscribers(email)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_design_subscribers_stripe ON design_subscribers(stripe_customer_id)`);
+        await query(`
+          CREATE TABLE IF NOT EXISTS design_download_log (
+            id SERIAL PRIMARY KEY,
+            subscriber_id INTEGER REFERENCES design_subscribers(id) ON DELETE SET NULL,
+            design_id INTEGER REFERENCES design_gallery(id) ON DELETE SET NULL,
+            downloaded_at TIMESTAMPTZ DEFAULT NOW(),
+            ip_address VARCHAR(45)
+          )
+        `);
+        await query(`CREATE INDEX IF NOT EXISTS idx_download_log_subscriber ON design_download_log(subscriber_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_download_log_design ON design_download_log(design_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_download_log_date ON design_download_log(downloaded_at)`);
+        console.log('✅ Design subscriptions tables ready');
+      } catch (e) {
+        console.warn('⚠️ Design subscriptions migration skipped:', e.message);
+      }
     }
 
     // Initialize Email Service
