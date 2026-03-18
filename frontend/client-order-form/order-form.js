@@ -2364,21 +2364,36 @@ async function handleStripePayment() {
   const stripeBtn = document.getElementById('stripe-pay-btn');
   const returnNotice = document.getElementById('stripe-return-notice');
 
-  // Open Stripe IMMEDIATELY — must be synchronous with user click or popup blockers will block it
+  // If button is still disabled (countdown phase), do nothing
+  if (stripeBtn && stripeBtn.dataset.ready !== 'true') {
+    // First click: show warning, disable button, start countdown
+    if (returnNotice) {
+      returnNotice.style.display = 'block';
+      returnNotice.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    stripeBtn.disabled = true;
+    stripeBtn.style.opacity = '0.4';
+    stripeBtn.style.cursor = 'not-allowed';
+    stripeBtn.textContent = 'Espera 2s...';
+
+    setTimeout(() => {
+      stripeBtn.disabled = false;
+      stripeBtn.dataset.ready = 'true';
+      stripeBtn.style.opacity = '1';
+      stripeBtn.style.cursor = 'pointer';
+      stripeBtn.textContent = '💳 Abrir Stripe para pagar';
+      stripeBtn.style.animation = 'pulse 0.5s ease';
+    }, 2000);
+
+    return;
+  }
+
+  // Second click (after countdown): open Stripe directly — no popup blocker issue
   window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
 
-  // Show the return banner and update button after opening
-  if (returnNotice) {
-    returnNotice.style.display = 'block';
-    setTimeout(() => {
-      returnNotice.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300);
-  }
-
-  if (stripeBtn) {
-    stripeBtn.textContent = 'Abrir Stripe de nuevo';
-    stripeBtn.style.opacity = '0.7';
-  }
+  stripeBtn.textContent = '💳 Abrir Stripe de nuevo';
+  stripeBtn.style.opacity = '0.7';
 }
 
 async function handleOrderSubmit() {
