@@ -361,6 +361,17 @@ function updateBulkActionsBar() {
     } else {
         bar.classList.add('hidden');
     }
+
+    // Sync select-all checkbox state
+    const selectAllCb = document.getElementById('select-all-checkbox');
+    if (selectAllCb) {
+        const visibleCheckboxes = Array.from(document.querySelectorAll('#my-tasks-list .task-checkbox')).filter(cb => {
+            const card = cb.closest('.task-card');
+            return card && card.style.display !== 'none';
+        });
+        selectAllCb.checked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
+        selectAllCb.indeterminate = !selectAllCb.checked && visibleCheckboxes.some(cb => cb.checked);
+    }
 }
 
 async function bulkComplete() {
@@ -407,9 +418,56 @@ async function bulkCancel() {
     }
 }
 
+async function bulkStart() {
+    const taskIds = Array.from(window.selectedTasks);
+    if (taskIds.length === 0) return;
+
+    const confirmMsg = `¿Iniciar ${taskIds.length} tarea${taskIds.length > 1 ? 's' : ''}?`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        let successCount = 0;
+        for (const taskId of taskIds) {
+            const data = await apiPost(`/tasks/${taskId}/start`, {});
+            if (data.success) successCount++;
+        }
+
+        showToast(`${successCount} tarea${successCount > 1 ? 's' : ''} iniciada${successCount > 1 ? 's' : ''}`, 'success');
+        clearSelection();
+        loadMyTasks();
+    } catch (error) {
+        showToast('Error al iniciar tareas', 'error');
+    }
+}
+
+function toggleSelectAll() {
+    const selectAllCb = document.getElementById('select-all-checkbox');
+    const checkboxes = document.querySelectorAll('#my-tasks-list .task-checkbox');
+    // Only select visible (not filtered-out) tasks
+    const visibleCheckboxes = Array.from(checkboxes).filter(cb => {
+        const card = cb.closest('.task-card');
+        return card && card.style.display !== 'none';
+    });
+
+    if (selectAllCb.checked) {
+        visibleCheckboxes.forEach(cb => {
+            cb.checked = true;
+            window.selectedTasks.add(parseInt(cb.dataset.taskId));
+        });
+    } else {
+        visibleCheckboxes.forEach(cb => {
+            cb.checked = false;
+            window.selectedTasks.delete(parseInt(cb.dataset.taskId));
+        });
+    }
+    updateBulkActionsBar();
+}
+
 function clearSelection() {
     window.selectedTasks.clear();
     document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = false);
+    const selectAllCb = document.getElementById('select-all-checkbox');
+    if (selectAllCb) selectAllCb.checked = false;
     updateBulkActionsBar();
 }
 

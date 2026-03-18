@@ -134,10 +134,24 @@
                     <button class="filter-btn" data-status="completed">Completadas</button>
                 </div>
 
+                <!-- Select All Row -->
+                <div class="select-all-row" id="select-all-row">
+                    <label class="select-all-label">
+                        <input type="checkbox" id="select-all-checkbox" onclick="toggleSelectAll()">
+                        <span>Seleccionar todas</span>
+                    </label>
+                </div>
+
                 <!-- Bulk Actions Bar -->
                 <div id="bulk-actions-bar" class="bulk-actions-bar hidden">
                     <span id="selected-count">0 seleccionadas</span>
                     <div class="bulk-buttons">
+                        <button class="btn btn-primary btn-sm" onclick="bulkStart()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            Iniciar
+                        </button>
                         <button class="btn btn-success btn-sm" onclick="bulkComplete()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"/>
