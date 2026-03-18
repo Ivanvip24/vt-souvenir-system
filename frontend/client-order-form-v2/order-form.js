@@ -578,6 +578,43 @@ function initializeEventListeners() {
   // Step 3: Products (loaded dynamically)
   document.getElementById('continue-products').addEventListener('click', handleProductsSubmit);
 
+  // Cart bar — click bar area (not the button) to open drawer
+  const cartBar = document.getElementById('cartBar');
+  if (cartBar) {
+    cartBar.addEventListener('click', (e) => {
+      // Don't open drawer if they clicked the Continue button
+      if (e.target.id === 'cartBarContinue') return;
+      toggleCartDrawer(true);
+    });
+  }
+
+  // Cart bar Continue button
+  const cartBarContinue = document.getElementById('cartBarContinue');
+  if (cartBarContinue) {
+    cartBarContinue.addEventListener('click', handleProductsSubmit);
+  }
+
+  // Drawer close button
+  const drawerClose = document.getElementById('cartDrawerClose');
+  if (drawerClose) {
+    drawerClose.addEventListener('click', () => toggleCartDrawer(false));
+  }
+
+  // Drawer overlay click closes drawer
+  const drawerOverlay = document.getElementById('cartDrawerOverlay');
+  if (drawerOverlay) {
+    drawerOverlay.addEventListener('click', () => toggleCartDrawer(false));
+  }
+
+  // Drawer Continue button
+  const drawerContinue = document.getElementById('cartDrawerContinue');
+  if (drawerContinue) {
+    drawerContinue.addEventListener('click', () => {
+      toggleCartDrawer(false);
+      handleProductsSubmit();
+    });
+  }
+
   // Step 4A: Review — continue to payment
   document.getElementById('continue-to-pay').addEventListener('click', handleContinueToPay);
   document.querySelectorAll('input[name="payment"]').forEach(radio => {
@@ -1309,6 +1346,7 @@ async function loadProducts() {
 
     state.products = data.products;
     renderProducts(data.products);
+    buildCategoryTabs();
 
     loading.classList.add('hidden');
   } catch (error) {
@@ -1368,10 +1406,244 @@ function handleProductSearch(e) {
   renderProducts(filteredProducts);
 }
 
+// ==========================================
+// CATEGORY TABS (Task 4)
+// ==========================================
+
+function buildCategoryTabs() {
+  const container = document.getElementById('categoryTabs');
+  if (!container) return;
+  container.textContent = '';
+
+  // Extract unique categories from products
+  const categories = new Set();
+  state.products.forEach(p => {
+    if (p.category) categories.add(p.category);
+  });
+
+  // "Todos" tab
+  const allTab = document.createElement('button');
+  allTab.type = 'button';
+  allTab.className = 'cat-tab active';
+  allTab.textContent = 'Todos';
+  allTab.addEventListener('click', () => filterCategory('all'));
+  container.appendChild(allTab);
+
+  // One tab per category
+  categories.forEach(cat => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'cat-tab';
+    tab.dataset.category = cat;
+    tab.textContent = getCategoryLabel(cat);
+    tab.addEventListener('click', () => filterCategory(cat));
+    container.appendChild(tab);
+  });
+}
+
+window.filterCategory = function(cat) {
+  const tabs = document.querySelectorAll('.cat-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+
+  // Activate the clicked tab
+  if (cat === 'all') {
+    tabs[0].classList.add('active');
+  } else {
+    tabs.forEach(t => {
+      if (t.dataset.category === cat) t.classList.add('active');
+    });
+  }
+
+  // Filter product cards by data-category
+  const cards = document.querySelectorAll('.product-card');
+  cards.forEach(card => {
+    if (cat === 'all' || card.dataset.category === cat) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+};
+
+// ==========================================
+// STICKY CART BAR + DRAWER (Task 5)
+// ==========================================
+
+function updateStickyBar() {
+  const cartBar = document.getElementById('cartBar');
+  if (!cartBar) return;
+
+  const itemCount = Object.keys(state.cart).length;
+  let totalPieces = 0;
+  let subtotal = 0;
+
+  Object.values(state.cart).forEach(({ product, quantity, pricingKey }) => {
+    const { price } = getTieredPrice(product, quantity, pricingKey || null);
+    subtotal += price * quantity;
+    totalPieces += quantity;
+  });
+
+  // Calculate shipping
+  let shipping = 0;
+  if (!state.isStorePickup) {
+    shipping = totalPieces >= SHIPPING_CONFIG.freeShippingThreshold ? 0 : SHIPPING_CONFIG.shippingCost;
+  }
+  const total = subtotal + shipping;
+
+  // Update state.totals
+  state.totals.subtotal = subtotal;
+  state.totals.shipping = shipping;
+  state.totals.total = total;
+  state.totals.deposit = total * 0.5;
+  state.totals.totalPieces = totalPieces;
+
+  // Update bar text
+  const countEl = document.getElementById('cartBarCount');
+  const piecesEl = document.getElementById('cartBarPieces');
+  const totalEl = document.getElementById('cartBarTotal');
+  if (countEl) countEl.textContent = itemCount + (itemCount === 1 ? ' producto' : ' productos');
+  if (piecesEl) piecesEl.textContent = totalPieces + ' pzas';
+  if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
+
+  // Show/hide bar
+  if (itemCount > 0) {
+    cartBar.style.display = 'flex';
+    // Trigger animation after display change
+    requestAnimationFrame(() => cartBar.classList.add('visible'));
+  } else {
+    cartBar.classList.remove('visible');
+    setTimeout(() => { cartBar.style.display = 'none'; }, 350);
+  }
+
+  // Enable/disable the hidden continue button
+  const continueBtn = document.getElementById('continue-products');
+  if (continueBtn) continueBtn.disabled = itemCount === 0;
+}
+
+let cartDrawerOpen = false;
+
+function toggleCartDrawer(forceState) {
+  const overlay = document.getElementById('cartDrawerOverlay');
+  const drawer = document.getElementById('cartDrawer');
+  if (!overlay || !drawer) return;
+
+  const shouldOpen = typeof forceState === 'boolean' ? forceState : !cartDrawerOpen;
+
+  if (shouldOpen) {
+    renderCartDrawer();
+    overlay.style.display = 'block';
+    drawer.style.display = 'flex';
+    requestAnimationFrame(() => {
+      overlay.classList.add('visible');
+      drawer.classList.add('visible');
+    });
+    cartDrawerOpen = true;
+  } else {
+    overlay.classList.remove('visible');
+    drawer.classList.remove('visible');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      drawer.style.display = 'none';
+    }, 350);
+    cartDrawerOpen = false;
+  }
+}
+
+function renderCartDrawer() {
+  const itemsContainer = document.getElementById('cartDrawerItems');
+  const totalsContainer = document.getElementById('cartDrawerTotals');
+  if (!itemsContainer || !totalsContainer) return;
+
+  // Clear
+  itemsContainer.textContent = '';
+  totalsContainer.textContent = '';
+
+  // Render items
+  Object.values(state.cart).forEach(({ product, quantity, pricingKey, variantLabel }) => {
+    const { price } = getTieredPrice(product, quantity, pricingKey || null);
+    const lineTotal = price * quantity;
+    const sizeLabel = variantLabel ? ' (' + variantLabel + ')' : '';
+
+    const row = document.createElement('div');
+    row.className = 'cart-drawer-item';
+
+    const left = document.createElement('div');
+    left.textContent = product.name + sizeLabel + ' x' + quantity;
+
+    const right = document.createElement('div');
+    right.style.fontWeight = '700';
+    right.textContent = '$' + lineTotal.toFixed(2);
+
+    row.appendChild(left);
+    row.appendChild(right);
+    itemsContainer.appendChild(row);
+  });
+
+  // Render totals
+  const { subtotal, shipping, total, deposit, totalPieces } = state.totals;
+
+  // Subtotal row
+  const subRow = document.createElement('div');
+  subRow.className = 'cart-drawer-total-row';
+  const subLabel = document.createElement('span');
+  subLabel.textContent = 'Subtotal';
+  const subValue = document.createElement('span');
+  subValue.textContent = '$' + subtotal.toFixed(2);
+  subRow.appendChild(subLabel);
+  subRow.appendChild(subValue);
+  totalsContainer.appendChild(subRow);
+
+  // Shipping row
+  const shipRow = document.createElement('div');
+  shipRow.className = 'cart-drawer-total-row';
+  const shipLabel = document.createElement('span');
+  shipLabel.textContent = 'Envio';
+  const shipValue = document.createElement('span');
+  if (state.isStorePickup) {
+    shipValue.textContent = 'Recoger en tienda';
+    shipValue.style.color = '#10b981';
+  } else if (shipping === 0 && totalPieces > 0) {
+    shipValue.textContent = 'GRATIS';
+    shipValue.style.color = '#10b981';
+    shipValue.style.fontWeight = '700';
+  } else {
+    shipValue.textContent = '$' + shipping.toFixed(2);
+  }
+  shipRow.appendChild(shipLabel);
+  shipRow.appendChild(shipValue);
+  totalsContainer.appendChild(shipRow);
+
+  // Grand total
+  const grandRow = document.createElement('div');
+  grandRow.className = 'cart-drawer-total-row grand-total';
+  const grandLabel = document.createElement('span');
+  grandLabel.textContent = 'Total';
+  const grandValue = document.createElement('span');
+  grandValue.textContent = '$' + total.toFixed(2);
+  grandRow.appendChild(grandLabel);
+  grandRow.appendChild(grandValue);
+  totalsContainer.appendChild(grandRow);
+
+  // Deposit row
+  const depRow = document.createElement('div');
+  depRow.className = 'cart-drawer-total-row';
+  const depLabel = document.createElement('span');
+  depLabel.textContent = 'Anticipo (50%)';
+  depLabel.style.color = '#999';
+  const depValue = document.createElement('span');
+  depValue.textContent = '$' + deposit.toFixed(2);
+  depValue.style.color = '#e72a88';
+  depValue.style.fontWeight = '700';
+  depRow.appendChild(depLabel);
+  depRow.appendChild(depValue);
+  totalsContainer.appendChild(depRow);
+}
+
 function createProductCard(product) {
   const div = document.createElement('div');
   div.className = 'product-card';
   div.dataset.productId = product.id;
+  div.dataset.category = product.category || 'general';
   div.style.position = 'relative';
 
   const variants = getProductVariants(product);
@@ -1709,6 +1981,7 @@ function updateCartItem(productId, variantKey, quantity) {
 
   updateProductCardState(productId);
   updateOrderTotals();
+  updateStickyBar();
 }
 
 /**
@@ -1804,11 +2077,15 @@ function updateOrderTotals() {
   state.totals.deposit = deposit;
   state.totals.totalPieces = totalPieces;
 
-  // Update UI - sticky footer
-  document.getElementById('order-subtotal').textContent = `$${subtotal.toFixed(2)}`;
-  document.getElementById('order-total').textContent = `$${total.toFixed(2)}`;
-  document.getElementById('deposit-amount').textContent = `$${deposit.toFixed(2)}`;
-  document.getElementById('total-mini').textContent = `$${total.toFixed(2)}`;
+  // Update UI - legacy footer elements (may not exist if using cart bar)
+  const orderSubtotalEl = document.getElementById('order-subtotal');
+  if (orderSubtotalEl) orderSubtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+  const orderTotalEl = document.getElementById('order-total');
+  if (orderTotalEl) orderTotalEl.textContent = `$${total.toFixed(2)}`;
+  const depositAmtEl = document.getElementById('deposit-amount');
+  if (depositAmtEl) depositAmtEl.textContent = `$${deposit.toFixed(2)}`;
+  const totalMiniEl = document.getElementById('total-mini');
+  if (totalMiniEl) totalMiniEl.textContent = `$${total.toFixed(2)}`;
 
   // Update footer shipping display
   const footerShipping = document.getElementById('footer-shipping');
