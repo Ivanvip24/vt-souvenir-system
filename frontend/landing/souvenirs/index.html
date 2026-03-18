@@ -25,10 +25,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- Preload 3D globe assets -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://unpkg.com">
-    <link rel="preload" href="https://unpkg.com/three@0.128.0/build/three.min.js" as="script" crossorigin>
-    <link rel="preload" href="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js" as="script" crossorigin>
+    <!-- 3D globe scripts self-hosted in /landing/vendor/ -->
+    <link rel="preload" href="/landing/vendor/three.min.js" as="script" crossorigin>
+    <link rel="preload" href="/landing/vendor/topojson-client.min.js" as="script" crossorigin>
     <link rel="preload" href="/globe-section.js" as="script">
     <link rel="prefetch" href="https://unpkg.com/world-atlas@2/countries-110m.json" as="fetch" crossorigin>
     <link rel="prefetch" href="/mexico-states.json" as="fetch">
@@ -3879,7 +3878,7 @@
             document.head.appendChild(s);
         }
         var threeScript = document.createElement('script');
-        threeScript.src = 'https://unpkg.com/three@0.128.0/build/three.min.js';
+        threeScript.src = '/landing/vendor/three.min.js';
         threeScript.crossOrigin = 'anonymous';
         threeScript.onload = function() { threeReady = true; if (topoReady) onBothReady(); };
         threeScript.onerror = function() {
@@ -3887,7 +3886,7 @@
             if (l) l.style.display = 'none';
         };
         var topoScript = document.createElement('script');
-        topoScript.src = 'https://unpkg.com/topojson-client@3/dist/topojson-client.min.js';
+        topoScript.src = '/landing/vendor/topojson-client.min.js';
         topoScript.crossOrigin = 'anonymous';
         topoScript.onload = function() { topoReady = true; if (threeReady) onBothReady(); };
         topoScript.onerror = function() { topoReady = true; if (threeReady) onBothReady(); };
