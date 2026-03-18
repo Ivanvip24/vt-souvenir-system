@@ -2364,25 +2364,21 @@ async function handleStripePayment() {
   const stripeBtn = document.getElementById('stripe-pay-btn');
   const returnNotice = document.getElementById('stripe-return-notice');
 
-  // Show the return banner FIRST and scroll to top so it's unmissable
+  // Open Stripe IMMEDIATELY — must be synchronous with user click or popup blockers will block it
+  window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
+
+  // Show the return banner and update button after opening
   if (returnNotice) {
     returnNotice.style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => {
       returnNotice.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 300);
   }
 
-  // Update button to "re-open" style
   if (stripeBtn) {
     stripeBtn.textContent = 'Abrir Stripe de nuevo';
     stripeBtn.style.opacity = '0.7';
   }
-
-  // Open Stripe AFTER a longer delay so the user fully reads the warning
-  setTimeout(() => {
-    window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
-  }, 2500);
 }
 
 async function handleOrderSubmit() {
