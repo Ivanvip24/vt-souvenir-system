@@ -137,3 +137,13 @@ docs/IVAN*.pdf
 
 # Security exercise files
 docs/security-exercise/
+
+# Generated email previews
+backend/agents/analytics-agent/email-preview.html
+backend/agents/analytics-agent/email-proposal-*.html
+
+# Chrome extension dev files
+frontend/chrome-extension-t1-sync/
+docs/gen-recibo-*.js
+docs/generate-*.js
+docs/contrato-trabajo-general.md

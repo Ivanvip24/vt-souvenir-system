@@ -190,13 +190,13 @@ app.use((req, res, next) => {
 // ========================================
 // STATIC FILES - Serve PDF Receipts & Payment Proofs
 // ========================================
-const receiptsPath = path.join(__dirname, '../receipts');
+const receiptsPath = path.join(__dirname, '../order-receipts');
 app.use('/receipts', authMiddleware, express.static(receiptsPath));
-console.log(`📁 Serving receipts from: ${receiptsPath} (auth protected)`);
+console.log(`📁 Serving order receipts from: ${receiptsPath} (auth protected)`);
 
-const paymentReceiptsPath = path.join(__dirname, '../payment-receipts');
+const paymentReceiptsPath = path.join(__dirname, '../payment-verification-receipts');
 app.use('/payment-receipts', authMiddleware, express.static(paymentReceiptsPath));
-console.log(`📁 Serving payment receipts from: ${paymentReceiptsPath} (auth protected)`);
+console.log(`📁 Serving payment verification receipts from: ${paymentReceiptsPath} (auth protected)`);
 
 // Axkan brand assets (knowledge base images) - uses submodule
 const axkanPath = process.env.AXKAN_REPO_PATH || path.join(__dirname, '../assets/axkan');
@@ -1892,7 +1892,7 @@ app.post('/api/orders/:orderId/second-payment', authMiddleware, async (req, res)
       } else {
         // Fallback to local storage if Google Drive not configured
         console.log('⚠️  Google Drive not configured, saving locally');
-        const paymentsDir = path.join(__dirname, '../payment-receipts');
+        const paymentsDir = path.join(__dirname, '../payment-verification-receipts');
         if (!fs.existsSync(paymentsDir)) {
           fs.mkdirSync(paymentsDir, { recursive: true });
         }
