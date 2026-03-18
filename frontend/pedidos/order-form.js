@@ -31,47 +31,36 @@ const STORAGE_KEY = 'souvenir_client_data';
 // Display MOQ shown in labels (marketing value)
 const DISPLAY_MOQ = 100;
 
-// Magnet size configuration - used for the size selector
-const MAGNET_SIZES = {
-  'Ch': {
-    label: 'Chico',
-    key: 'imanes_ch',
-    tiers: [
-      { min: 50, max: 999, price: 8.00 },
-      { min: 1000, max: Infinity, price: 6.00 }
-    ]
-  },
-  'M': {
-    label: 'Mediano',
-    key: 'imanes_m',
-    tiers: [
-      { min: 50, max: 999, price: 11.00 },
-      { min: 1000, max: Infinity, price: 8.00 }
-    ]
-  },
-  'G': {
-    label: 'Grande',
-    key: 'imanes_g',
-    tiers: [
-      { min: 50, max: 999, price: 15.00 },
-      { min: 1000, max: Infinity, price: 12.00 }
-    ]
-  }
+// Product variant configuration - products with multiple size/variant options
+const PRODUCT_VARIANTS = {
+  'imanes de mdf': [
+    { key: 'imanes_ch', label: 'Chico', tiers: [{ min: 50, max: 999, price: 8.00 }, { min: 1000, max: Infinity, price: 6.00 }] },
+    { key: 'imanes_m', label: 'Mediano', tiers: [{ min: 50, max: 999, price: 11.00 }, { min: 1000, max: Infinity, price: 8.00 }] },
+    { key: 'imanes_g', label: 'Grande', tiers: [{ min: 50, max: 999, price: 15.00 }, { min: 1000, max: Infinity, price: 12.00 }] }
+  ]
 };
+
+function getProductVariants(product) {
+  const name = product.name.toLowerCase();
+  for (const [key, variants] of Object.entries(PRODUCT_VARIANTS)) {
+    if (name.includes(key) || key.includes(name)) return variants;
+  }
+  return null;
+}
 
 const PRICING_TIERS = {
   // Match by product name (case-insensitive partial match)
   // Note: min values are actual validation (50), display shows DISPLAY_MOQ (100)
 
-  // Magnet sizes - used dynamically based on size selection
-  'imanes_ch': MAGNET_SIZES['Ch'].tiers,
-  'imanes_m': MAGNET_SIZES['M'].tiers,
-  'imanes_g': MAGNET_SIZES['G'].tiers,
+  // Magnet sizes - referenced by variant key
+  'imanes_ch': PRODUCT_VARIANTS['imanes de mdf'][0].tiers,
+  'imanes_m': PRODUCT_VARIANTS['imanes de mdf'][1].tiers,
+  'imanes_g': PRODUCT_VARIANTS['imanes de mdf'][2].tiers,
 
   // Legacy keys for backwards compatibility
-  'imanes de mdf chico': MAGNET_SIZES['Ch'].tiers,
-  'imanes de mdf grande': MAGNET_SIZES['G'].tiers,
-  'imanes de mdf': MAGNET_SIZES['M'].tiers,
+  'imanes de mdf chico': PRODUCT_VARIANTS['imanes de mdf'][0].tiers,
+  'imanes de mdf grande': PRODUCT_VARIANTS['imanes de mdf'][2].tiers,
+  'imanes de mdf': PRODUCT_VARIANTS['imanes de mdf'][1].tiers,
   'llaveros de mdf': [
     { min: 50, max: 999, price: 10.00 },
     { min: 1000, max: Infinity, price: 8.00 }
@@ -108,7 +97,7 @@ const PRICING_TIERS = {
  * Checks for promo code custom prices first, then falls back to tiered pricing
  * @param {Object} product - The product object
  * @param {number} quantity - The quantity ordered
- * @param {string} [pricingKey] - Optional specific pricing key to use (e.g., for magnet sizes)
+ * @param {string} [pricingKey] - Optional specific pricing key to use (e.g., for product variants)
  * @returns {Object} { price: number, tierInfo: string, savings: number, isPromoPrice: boolean }
  */
 function getTieredPrice(product, quantity, pricingKey = null) {
@@ -130,7 +119,7 @@ function getTieredPrice(product, quantity, pricingKey = null) {
   const productNameLower = product.name.toLowerCase();
   let tiers = null;
 
-  // If a specific pricing key is provided (e.g., for magnet sizes), use it directly
+  // If a specific pricing key is provided (e.g., for product variants), use it directly
   if (pricingKey && PRICING_TIERS[pricingKey]) {
     tiers = PRICING_TIERS[pricingKey];
   } else {
@@ -267,8 +256,7 @@ const state = {
     isReturning: false
   },
   products: [],
-  cart: {}, // { productId: { product, quantity } }
-  magnetSizes: {}, // { productId: 'Ch' | 'M' | 'G' } - Track selected magnet size per product
+  cart: {}, // Composite keys: "productId__variantKey" for variant products, "productId" for non-variant
   order: {
     clientNotes: '',
     salesRep: null // Sales rep from referral link (e.g., ?ref=alejandra)
@@ -599,6 +587,43 @@ function initializeEventListeners() {
 
   // Step 3: Products (loaded dynamically)
   document.getElementById('continue-products').addEventListener('click', handleProductsSubmit);
+
+  // Cart bar — click bar area (not the button) to open drawer
+  const cartBar = document.getElementById('cartBar');
+  if (cartBar) {
+    cartBar.addEventListener('click', (e) => {
+      // Don't open drawer if they clicked the Continue button
+      if (e.target.id === 'cartBarContinue') return;
+      toggleCartDrawer(true);
+    });
+  }
+
+  // Cart bar Continue button
+  const cartBarContinue = document.getElementById('cartBarContinue');
+  if (cartBarContinue) {
+    cartBarContinue.addEventListener('click', handleProductsSubmit);
+  }
+
+  // Drawer close button
+  const drawerClose = document.getElementById('cartDrawerClose');
+  if (drawerClose) {
+    drawerClose.addEventListener('click', () => toggleCartDrawer(false));
+  }
+
+  // Drawer overlay click closes drawer
+  const drawerOverlay = document.getElementById('cartDrawerOverlay');
+  if (drawerOverlay) {
+    drawerOverlay.addEventListener('click', () => toggleCartDrawer(false));
+  }
+
+  // Drawer Continue button
+  const drawerContinue = document.getElementById('cartDrawerContinue');
+  if (drawerContinue) {
+    drawerContinue.addEventListener('click', () => {
+      toggleCartDrawer(false);
+      handleProductsSubmit();
+    });
+  }
 
   // Step 4A: Review — continue to payment
   document.getElementById('continue-to-pay').addEventListener('click', handleContinueToPay);
@@ -1342,6 +1367,7 @@ async function loadProducts() {
 
     state.products = data.products;
     renderProducts(data.products);
+    buildCategoryTabs();
 
     loading.classList.add('hidden');
   } catch (error) {
@@ -1401,125 +1427,436 @@ function handleProductSearch(e) {
   renderProducts(filteredProducts);
 }
 
+// ==========================================
+// CATEGORY TABS (Task 4)
+// ==========================================
+
+function buildCategoryTabs() {
+  const container = document.getElementById('categoryTabs');
+  if (!container) return;
+  container.textContent = '';
+
+  // Extract unique categories from products
+  const categories = new Set();
+  state.products.forEach(p => {
+    if (p.category) categories.add(p.category);
+  });
+
+  // "Todos" tab
+  const allTab = document.createElement('button');
+  allTab.type = 'button';
+  allTab.className = 'cat-tab active';
+  allTab.textContent = 'Todos';
+  allTab.addEventListener('click', () => filterCategory('all'));
+  container.appendChild(allTab);
+
+  // One tab per category
+  categories.forEach(cat => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'cat-tab';
+    tab.dataset.category = cat;
+    tab.textContent = getCategoryLabel(cat);
+    tab.addEventListener('click', () => filterCategory(cat));
+    container.appendChild(tab);
+  });
+}
+
+window.filterCategory = function(cat) {
+  const tabs = document.querySelectorAll('.cat-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+
+  // Activate the clicked tab
+  if (cat === 'all') {
+    tabs[0].classList.add('active');
+  } else {
+    tabs.forEach(t => {
+      if (t.dataset.category === cat) t.classList.add('active');
+    });
+  }
+
+  // Filter product cards by data-category
+  const cards = document.querySelectorAll('.product-card');
+  cards.forEach(card => {
+    if (cat === 'all' || card.dataset.category === cat) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+};
+
+// ==========================================
+// STICKY CART BAR + DRAWER (Task 5)
+// ==========================================
+
+function updateStickyBar() {
+  const cartBar = document.getElementById('cartBar');
+  if (!cartBar) return;
+
+  const itemCount = Object.keys(state.cart).length;
+  let totalPieces = 0;
+  let subtotal = 0;
+
+  Object.values(state.cart).forEach(({ product, quantity, pricingKey }) => {
+    const { price } = getTieredPrice(product, quantity, pricingKey || null);
+    subtotal += price * quantity;
+    totalPieces += quantity;
+  });
+
+  // Calculate shipping
+  let shipping = 0;
+  if (!state.isStorePickup) {
+    shipping = totalPieces >= SHIPPING_CONFIG.freeShippingThreshold ? 0 : SHIPPING_CONFIG.shippingCost;
+  }
+  const total = subtotal + shipping;
+
+  // Update state.totals
+  state.totals.subtotal = subtotal;
+  state.totals.shipping = shipping;
+  state.totals.total = total;
+  state.totals.deposit = total * 0.5;
+  state.totals.totalPieces = totalPieces;
+
+  // Update bar text
+  const countEl = document.getElementById('cartBarCount');
+  const piecesEl = document.getElementById('cartBarPieces');
+  const totalEl = document.getElementById('cartBarTotal');
+  if (countEl) countEl.textContent = itemCount + (itemCount === 1 ? ' producto' : ' productos');
+  if (piecesEl) piecesEl.textContent = totalPieces + ' pzas';
+  if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
+
+  // Show/hide bar
+  if (itemCount > 0) {
+    cartBar.style.display = 'flex';
+    // Trigger animation after display change
+    requestAnimationFrame(() => cartBar.classList.add('visible'));
+  } else {
+    cartBar.classList.remove('visible');
+    setTimeout(() => { cartBar.style.display = 'none'; }, 350);
+  }
+
+  // Enable/disable the hidden continue button
+  const continueBtn = document.getElementById('continue-products');
+  if (continueBtn) continueBtn.disabled = itemCount === 0;
+}
+
+let cartDrawerOpen = false;
+
+function toggleCartDrawer(forceState) {
+  const overlay = document.getElementById('cartDrawerOverlay');
+  const drawer = document.getElementById('cartDrawer');
+  if (!overlay || !drawer) return;
+
+  const shouldOpen = typeof forceState === 'boolean' ? forceState : !cartDrawerOpen;
+
+  if (shouldOpen) {
+    renderCartDrawer();
+    overlay.style.display = 'block';
+    drawer.style.display = 'flex';
+    requestAnimationFrame(() => {
+      overlay.classList.add('visible');
+      drawer.classList.add('visible');
+    });
+    cartDrawerOpen = true;
+  } else {
+    overlay.classList.remove('visible');
+    drawer.classList.remove('visible');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      drawer.style.display = 'none';
+    }, 350);
+    cartDrawerOpen = false;
+  }
+}
+
+function renderCartDrawer() {
+  const itemsContainer = document.getElementById('cartDrawerItems');
+  const totalsContainer = document.getElementById('cartDrawerTotals');
+  if (!itemsContainer || !totalsContainer) return;
+
+  // Clear
+  itemsContainer.textContent = '';
+  totalsContainer.textContent = '';
+
+  // Render items
+  Object.values(state.cart).forEach(({ product, quantity, pricingKey, variantLabel }) => {
+    const { price } = getTieredPrice(product, quantity, pricingKey || null);
+    const lineTotal = price * quantity;
+    const sizeLabel = variantLabel ? ' (' + variantLabel + ')' : '';
+
+    const row = document.createElement('div');
+    row.className = 'cart-drawer-item';
+
+    const left = document.createElement('div');
+    left.textContent = product.name + sizeLabel + ' x' + quantity;
+
+    const right = document.createElement('div');
+    right.style.fontWeight = '700';
+    right.textContent = '$' + lineTotal.toFixed(2);
+
+    row.appendChild(left);
+    row.appendChild(right);
+    itemsContainer.appendChild(row);
+  });
+
+  // Render totals
+  const { subtotal, shipping, total, deposit, totalPieces } = state.totals;
+
+  // Subtotal row
+  const subRow = document.createElement('div');
+  subRow.className = 'cart-drawer-total-row';
+  const subLabel = document.createElement('span');
+  subLabel.textContent = 'Subtotal';
+  const subValue = document.createElement('span');
+  subValue.textContent = '$' + subtotal.toFixed(2);
+  subRow.appendChild(subLabel);
+  subRow.appendChild(subValue);
+  totalsContainer.appendChild(subRow);
+
+  // Shipping row
+  const shipRow = document.createElement('div');
+  shipRow.className = 'cart-drawer-total-row';
+  const shipLabel = document.createElement('span');
+  shipLabel.textContent = 'Envio';
+  const shipValue = document.createElement('span');
+  if (state.isStorePickup) {
+    shipValue.textContent = 'Recoger en tienda';
+    shipValue.style.color = '#10b981';
+  } else if (shipping === 0 && totalPieces > 0) {
+    shipValue.textContent = 'GRATIS';
+    shipValue.style.color = '#10b981';
+    shipValue.style.fontWeight = '700';
+  } else {
+    shipValue.textContent = '$' + shipping.toFixed(2);
+  }
+  shipRow.appendChild(shipLabel);
+  shipRow.appendChild(shipValue);
+  totalsContainer.appendChild(shipRow);
+
+  // Grand total
+  const grandRow = document.createElement('div');
+  grandRow.className = 'cart-drawer-total-row grand-total';
+  const grandLabel = document.createElement('span');
+  grandLabel.textContent = 'Total';
+  const grandValue = document.createElement('span');
+  grandValue.textContent = '$' + total.toFixed(2);
+  grandRow.appendChild(grandLabel);
+  grandRow.appendChild(grandValue);
+  totalsContainer.appendChild(grandRow);
+
+  // Deposit row
+  const depRow = document.createElement('div');
+  depRow.className = 'cart-drawer-total-row';
+  const depLabel = document.createElement('span');
+  depLabel.textContent = 'Anticipo (50%)';
+  depLabel.style.color = '#999';
+  const depValue = document.createElement('span');
+  depValue.textContent = '$' + deposit.toFixed(2);
+  depValue.style.color = '#e72a88';
+  depValue.style.fontWeight = '700';
+  depRow.appendChild(depLabel);
+  depRow.appendChild(depValue);
+  totalsContainer.appendChild(depRow);
+}
+
 function createProductCard(product) {
   const div = document.createElement('div');
   div.className = 'product-card';
   div.dataset.productId = product.id;
-  div.style.position = 'relative'; // For MOQ badge positioning
+  div.dataset.category = product.category || 'general';
+  div.style.position = 'relative';
 
-  const quantity = state.cart[product.id]?.quantity || 0;
-  const basePrice = parseFloat(product.base_price);
-
-  // Check if this is the main "Imanes de MDF" product (for size selector)
+  const variants = getProductVariants(product);
   const productNameLower = product.name.toLowerCase();
-  const isMagnetProduct = productNameLower === 'imanes de mdf';
 
-  // Get selected size for magnets (default to 'M' - Mediano)
-  // Persist default into state so handleQuantityChange picks it up
-  if (isMagnetProduct && !state.magnetSizes[product.id]) {
-    state.magnetSizes[product.id] = 'M';
-  }
-  const selectedSize = state.magnetSizes[product.id] || 'M';
-
-  // Get tiered pricing - show Tier 1 price (minimum quantity) when no items in cart
-  let defaultQuantity = 1;
-  let moq = 100; // Default MOQ
-
-  // For magnets, use the selected size's pricing tier
-  let pricingKey = null;
-  if (isMagnetProduct) {
-    pricingKey = MAGNET_SIZES[selectedSize].key;
-    const tiers = MAGNET_SIZES[selectedSize].tiers;
-    defaultQuantity = tiers[0].min;
-    moq = tiers[0].min;
+  // Determine MOQ for badge display
+  let moq = 50;
+  if (variants) {
+    moq = variants[0].tiers[0].min;
   } else {
-    // Find the minimum quantity for this product to show the wholesale price
     for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
       if (productNameLower.includes(key) || key.includes(productNameLower)) {
-        defaultQuantity = tierArray[0].min; // Use minimum of first tier
         moq = tierArray[0].min;
         break;
       }
     }
   }
-
-  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : defaultQuantity, pricingKey);
-  const subtotal = price * quantity;
-
-  // #11: MOQ badge text - use DISPLAY_MOQ for customer-facing display
   const displayMoq = moq >= 50 ? DISPLAY_MOQ : moq;
-  const moqBadgeText = moq === 1 ? 'Sin mínimo' : `Mín. ${displayMoq} pzas`;
+  const moqBadgeText = moq === 1 ? 'Sin mínimo' : `Min. ${displayMoq} pzas`;
 
-  // Size selector HTML for magnet products
-  const sizeSelectorHTML = isMagnetProduct ? `
-    <div class="size-selector-container">
-      <span class="size-selector-label">Tamano:</span>
-      <div class="size-selector-buttons">
-        <button type="button" class="size-btn ${selectedSize === 'Ch' ? 'selected' : ''}"
-                onclick="selectMagnetSize(${product.id}, 'Ch')" title="Chico">Ch</button>
-        <button type="button" class="size-btn ${selectedSize === 'M' ? 'selected' : ''}"
-                onclick="selectMagnetSize(${product.id}, 'M')" title="Mediano">M</button>
-        <button type="button" class="size-btn ${selectedSize === 'G' ? 'selected' : ''}"
-                onclick="selectMagnetSize(${product.id}, 'G')" title="Grande">G</button>
-      </div>
-    </div>
-  ` : '';
+  // MOQ badge
+  const badge = document.createElement('div');
+  badge.className = 'product-moq-badge';
+  badge.textContent = moqBadgeText;
+  div.appendChild(badge);
 
-  div.innerHTML = `
-    <!-- #11: MOQ Badge -->
-    <div class="product-moq-badge">${moqBadgeText}</div>
+  // Product header (image + name + price)
+  const header = document.createElement('div');
+  header.className = 'product-header';
 
-    <div class="product-header">
-      <img src="${product.image_url || 'https://via.placeholder.com/80'}"
-           alt="${product.name}"
-           class="product-image">
-      <div class="product-info">
-        <div class="product-category">${getCategoryLabel(product.category)}</div>
-        <h3 class="product-name">${product.name}</h3>
-        <div class="product-price">
-          $${price.toFixed(2)} <span>por unidad</span>
-        </div>
-      </div>
-    </div>
+  const img = document.createElement('img');
+  img.src = product.image_url || 'https://via.placeholder.com/80';
+  img.alt = product.name;
+  img.className = 'product-image';
 
-    ${sizeSelectorHTML}
+  const info = document.createElement('div');
+  info.className = 'product-info';
 
-    <!-- Tier Information -->
-    <div class="tier-info" id="tier-${product.id}">
-      ${tierInfo ? `
-        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 16px;">💰</span>
-          <span>${tierInfo}</span>
-        </div>
-      ` : ''}
-    </div>
+  const category = document.createElement('div');
+  category.className = 'product-category';
+  category.textContent = getCategoryLabel(product.category);
 
-    <div class="product-quantity">
-      <label>Cantidad:</label>
-      <div class="quantity-controls">
-        <button type="button" class="quantity-btn" onclick="changeQuantity(${product.id}, -1)">−</button>
-        <input type="number"
-               class="quantity-input"
-               id="qty-${product.id}"
-               value="${quantity}"
-               min="0"
-               onchange="handleQuantityChange(${product.id}, this.value)">
-        <button type="button" class="quantity-btn" onclick="changeQuantity(${product.id}, 1)">+</button>
-      </div>
-    </div>
+  const nameEl = document.createElement('h3');
+  nameEl.className = 'product-name';
+  nameEl.textContent = product.name;
 
-    <div class="product-subtotal ${quantity > 0 ? '' : 'hidden'}" id="subtotal-${product.id}">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span>Subtotal:</span>
-        <strong>$${subtotal.toFixed(2)}</strong>
-      </div>
-      ${savings > 0 ? `
-        <div style="font-size: 12px; color: #059669; margin-top: 4px;">
-          ✓ Ahorras $${savings.toFixed(2)}
-        </div>
-      ` : ''}
-    </div>
-  `;
+  info.appendChild(category);
+  info.appendChild(nameEl);
+
+  // For non-variant products, show a price in the header
+  if (!variants) {
+    const defaultQty = moq || 1;
+    const { price } = getTieredPrice(product, defaultQty);
+    const priceEl = document.createElement('div');
+    priceEl.className = 'product-price';
+    priceEl.textContent = '$' + price.toFixed(2) + ' por unidad';
+    info.appendChild(priceEl);
+  }
+
+  header.appendChild(img);
+  header.appendChild(info);
+  div.appendChild(header);
+
+  // Variant rows or single quantity row
+  if (variants) {
+    const variantContainer = document.createElement('div');
+    variantContainer.className = 'variant-rows';
+
+    variants.forEach(variant => {
+      const cartKey = product.id + '__' + variant.key;
+      const qty = state.cart[cartKey]?.quantity || 0;
+      const { price } = getTieredPrice(product, qty > 0 ? qty : variant.tiers[0].min, variant.key);
+
+      const row = document.createElement('div');
+      row.className = 'variant-row';
+      row.dataset.variantKey = variant.key;
+
+      // Variant label + price
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'variant-label-price';
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'variant-label';
+      labelSpan.textContent = variant.label;
+
+      const priceSpan = document.createElement('span');
+      priceSpan.className = 'variant-price';
+      priceSpan.id = 'vprice-' + product.id + '-' + variant.key;
+      priceSpan.textContent = '$' + price.toFixed(2) + ' c/u';
+
+      labelDiv.appendChild(labelSpan);
+      labelDiv.appendChild(priceSpan);
+
+      // Volume discount hint
+      if (variant.tiers.length > 1) {
+        const hint = document.createElement('div');
+        hint.className = 'variant-discount-hint';
+        hint.textContent = variant.tiers[1].min + '+ pzas: $' + variant.tiers[1].price.toFixed(2);
+        labelDiv.appendChild(hint);
+      }
+
+      // Quantity controls
+      const controls = document.createElement('div');
+      controls.className = 'quantity-controls';
+
+      const minusBtn = document.createElement('button');
+      minusBtn.type = 'button';
+      minusBtn.className = 'quantity-btn';
+      minusBtn.textContent = '\u2212';
+      minusBtn.addEventListener('click', () => handleVariantQty(product.id, variant.key, -1));
+
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'quantity-input';
+      input.id = 'qty-' + product.id + '-' + variant.key;
+      input.value = qty;
+      input.min = '0';
+      input.addEventListener('change', (e) => handleVariantQtyInput(product.id, variant.key, e.target.value));
+
+      const plusBtn = document.createElement('button');
+      plusBtn.type = 'button';
+      plusBtn.className = 'quantity-btn';
+      plusBtn.textContent = '+';
+      plusBtn.addEventListener('click', () => handleVariantQty(product.id, variant.key, 1));
+
+      controls.appendChild(minusBtn);
+      controls.appendChild(input);
+      controls.appendChild(plusBtn);
+
+      row.appendChild(labelDiv);
+      row.appendChild(controls);
+      variantContainer.appendChild(row);
+    });
+
+    div.appendChild(variantContainer);
+  } else {
+    // Single quantity row for non-variant products
+    const cartKey = String(product.id);
+    const qty = state.cart[cartKey]?.quantity || 0;
+
+    const qtyDiv = document.createElement('div');
+    qtyDiv.className = 'product-quantity';
+
+    const label = document.createElement('label');
+    label.textContent = 'Cantidad:';
+
+    const controls = document.createElement('div');
+    controls.className = 'quantity-controls';
+
+    const minusBtn = document.createElement('button');
+    minusBtn.type = 'button';
+    minusBtn.className = 'quantity-btn';
+    minusBtn.textContent = '\u2212';
+    minusBtn.addEventListener('click', () => handleVariantQty(product.id, null, -1));
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'quantity-input';
+    input.id = 'qty-' + product.id;
+    input.value = qty;
+    input.min = '0';
+    input.addEventListener('change', (e) => handleVariantQtyInput(product.id, null, e.target.value));
+
+    const plusBtn = document.createElement('button');
+    plusBtn.type = 'button';
+    plusBtn.className = 'quantity-btn';
+    plusBtn.textContent = '+';
+    plusBtn.addEventListener('click', () => handleVariantQty(product.id, null, 1));
+
+    controls.appendChild(minusBtn);
+    controls.appendChild(input);
+    controls.appendChild(plusBtn);
+
+    qtyDiv.appendChild(label);
+    qtyDiv.appendChild(controls);
+    div.appendChild(qtyDiv);
+  }
+
+  // Tier info area
+  const tierDiv = document.createElement('div');
+  tierDiv.className = 'tier-info';
+  tierDiv.id = 'tier-' + product.id;
+  div.appendChild(tierDiv);
+
+  // Subtotal area (shows combined subtotal across all variants)
+  const subtotalDiv = document.createElement('div');
+  subtotalDiv.className = 'product-subtotal hidden';
+  subtotalDiv.id = 'subtotal-' + product.id;
+  div.appendChild(subtotalDiv);
+
+  // Initialize card state if there are existing cart items
+  updateProductCardState(product.id);
 
   return div;
 }
@@ -1537,106 +1874,61 @@ function getCategoryLabel(category) {
 }
 
 /**
- * Handle magnet size selection
- * Updates the selected size and re-renders the product card with new pricing
+ * Handle +/- button clicks for variant or non-variant products
+ * First click jumps to DISPLAY_MOQ, then increments by 50
  */
-window.selectMagnetSize = function(productId, size) {
-  // Store the selected size
-  state.magnetSizes[productId] = size;
+window.handleVariantQty = function(productId, variantKey, delta) {
+  const cartKey = variantKey ? productId + '__' + variantKey : String(productId);
+  const inputId = variantKey ? 'qty-' + productId + '-' + variantKey : 'qty-' + productId;
+  const input = document.getElementById(inputId);
+  if (!input) return;
 
-  // Get the product
-  const product = state.products.find(p => p.id === productId);
-  if (!product) return;
+  const current = parseInt(input.value) || 0;
+  let newValue;
 
-  // Get the card element
-  const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-  if (!card) return;
-
-  // Update size button styles with animation
-  const buttons = card.querySelectorAll('.size-btn');
-  buttons.forEach(btn => {
-    btn.classList.remove('selected');
-    if (btn.textContent.trim() === size) {
-      btn.classList.add('selected');
+  if (delta > 0) {
+    // Increasing: first click jumps to DISPLAY_MOQ, then +50
+    if (current === 0) {
+      newValue = DISPLAY_MOQ;
+    } else {
+      newValue = current + 50;
     }
-  });
-
-  // Get the new pricing for this size
-  const pricingKey = MAGNET_SIZES[size].key;
-  const tiers = MAGNET_SIZES[size].tiers;
-  const moq = tiers[0].min;
-  const quantity = state.cart[productId]?.quantity || 0;
-  const { price, tierInfo } = getTieredPrice(product, quantity > 0 ? quantity : moq, pricingKey);
-
-  // Update the price display
-  const priceEl = card.querySelector('.product-price');
-  if (priceEl) {
-    priceEl.innerHTML = `$${price.toFixed(2)} <span>por unidad</span>`;
-  }
-
-  // Update the tier info (green box)
-  const tierInfoEl = document.getElementById(`tier-${productId}`);
-  if (tierInfoEl) {
-    tierInfoEl.innerHTML = tierInfo ? `
-      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 16px;">💰</span>
-        <span>${tierInfo}</span>
-      </div>
-    ` : '';
-  }
-
-  // If there's a quantity in the cart, update it with the new size info
-  if (state.cart[productId]) {
-    state.cart[productId].size = size;
-    state.cart[productId].sizeName = MAGNET_SIZES[size].label;
-    state.cart[productId].pricingKey = pricingKey;
-
-    // Recalculate subtotal
-    const subtotal = price * quantity;
-    const subtotalEl = document.getElementById(`subtotal-${productId}`);
-    if (subtotalEl) {
-      subtotalEl.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span>Subtotal (${MAGNET_SIZES[size].label}):</span>
-          <strong>$${subtotal.toFixed(2)}</strong>
-        </div>
-      `;
-    }
-
-    // Update order totals
-    updateOrderTotals();
-  }
-};
-
-window.changeQuantity = function(productId, delta) {
-  const input = document.getElementById(`qty-${productId}`);
-  const newValue = Math.max(0, parseInt(input.value || 0) + delta);
-  input.value = newValue;
-  handleQuantityChange(productId, newValue);
-};
-
-window.handleQuantityChange = function(productId, value) {
-  const quantity = Math.max(0, parseInt(value) || 0);
-  const product = state.products.find(p => p.id === productId);
-
-  if (!product) return;
-
-  // Check if this is a magnet product
-  const productNameLower = product.name.toLowerCase();
-  const isMagnetProduct = productNameLower === 'imanes de mdf';
-
-  // Get selected size for magnets (default to 'M')
-  const selectedSize = state.magnetSizes[productId] || 'M';
-
-  // Check minimum order quantity (MOQ)
-  let moq = 0; // Default no minimum
-  let pricingKey = null;
-
-  if (isMagnetProduct) {
-    // Use the selected size's pricing
-    pricingKey = MAGNET_SIZES[selectedSize].key;
-    moq = MAGNET_SIZES[selectedSize].tiers[0].min;
   } else {
+    // Decreasing: -50, but snap to 0 if below MOQ
+    newValue = current - 50;
+    if (newValue < 50) newValue = 0;
+  }
+
+  input.value = newValue;
+  updateCartItem(productId, variantKey, newValue);
+};
+
+/**
+ * Handle direct quantity input for variant or non-variant products
+ */
+window.handleVariantQtyInput = function(productId, variantKey, value) {
+  const quantity = Math.max(0, parseInt(value) || 0);
+  updateCartItem(productId, variantKey, quantity);
+};
+
+/**
+ * Core cart update logic — validates MOQ, updates state.cart, refreshes UI
+ */
+function updateCartItem(productId, variantKey, quantity) {
+  const product = state.products.find(p => p.id === productId);
+  if (!product) return;
+
+  const cartKey = variantKey ? productId + '__' + variantKey : String(productId);
+  const inputId = variantKey ? 'qty-' + productId + '-' + variantKey : 'qty-' + productId;
+
+  // Determine MOQ from variant tiers or product tiers
+  let moq = 0;
+  let pricingKey = variantKey || null;
+
+  if (variantKey && PRICING_TIERS[variantKey]) {
+    moq = PRICING_TIERS[variantKey][0].min;
+  } else {
+    const productNameLower = product.name.toLowerCase();
     for (const [key, tierArray] of Object.entries(PRICING_TIERS)) {
       if (productNameLower.includes(key) || key.includes(productNameLower)) {
         moq = tierArray[0].min;
@@ -1645,106 +1937,146 @@ window.handleQuantityChange = function(productId, value) {
     }
   }
 
-  // Display MOQ for customer-facing warning (shows 100 instead of actual 50)
   const displayMoq = moq >= 50 ? DISPLAY_MOQ : moq;
 
-  // If quantity is between 1 and MOQ-1, show warning and don't add to cart
+  // Validate MOQ — if between 1 and MOQ-1, show warning
   if (quantity > 0 && quantity < moq) {
-    const input = document.getElementById(`qty-${productId}`);
-    const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-    const tierInfoEl = document.getElementById(`tier-${productId}`);
-
-    // Show MOQ warning - use displayMoq for customer-facing message
+    const tierInfoEl = document.getElementById('tier-' + productId);
     if (tierInfoEl) {
-      tierInfoEl.innerHTML = `
-        <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 16px;">⚠️</span>
-          <span>Mínimo ${displayMoq} piezas para este producto</span>
-        </div>
-      `;
+      tierInfoEl.textContent = '';
+      const warn = document.createElement('div');
+      warn.style.cssText = 'background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;';
+      warn.textContent = 'Minimo ' + displayMoq + ' piezas para este producto';
+      tierInfoEl.appendChild(warn);
     }
-
     // Don't add to cart
-    delete state.cart[productId];
-    const subtotalEl = document.getElementById(`subtotal-${productId}`);
-    if (subtotalEl) {
-      subtotalEl.classList.add('hidden');
-    }
-    card.classList.remove('selected');
+    delete state.cart[cartKey];
+    updateProductCardState(productId);
     updateOrderTotals();
     return;
   }
 
   // Update cart
   if (quantity > 0) {
-    const cartItem = { product, quantity };
-    // Store size info for magnet products
-    if (isMagnetProduct) {
-      cartItem.size = selectedSize;
-      cartItem.sizeName = MAGNET_SIZES[selectedSize].label;
-      cartItem.pricingKey = pricingKey;
+    // Find variant label if applicable
+    let variantLabel = null;
+    const variants = getProductVariants(product);
+    if (variants && variantKey) {
+      const v = variants.find(v => v.key === variantKey);
+      if (v) variantLabel = v.label;
     }
-    state.cart[productId] = cartItem;
+
+    state.cart[cartKey] = {
+      product,
+      quantity,
+      variantKey: variantKey || null,
+      variantLabel: variantLabel,
+      pricingKey: pricingKey
+    };
   } else {
-    delete state.cart[productId];
+    delete state.cart[cartKey];
   }
 
-  // Get tiered pricing for new quantity
-  const { price, tierInfo, savings } = getTieredPrice(product, quantity > 0 ? quantity : moq || 1, pricingKey);
-  const subtotal = price * quantity;
+  // Update input value
+  const input = document.getElementById(inputId);
+  if (input) input.value = quantity;
 
-  // Update UI
-  const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-  const subtotalEl = document.getElementById(`subtotal-${productId}`);
-  const tierInfoEl = document.getElementById(`tier-${productId}`);
-  const priceEl = card.querySelector('.product-price');
-
-  // Update price display
-  if (priceEl) {
-    priceEl.innerHTML = `$${price.toFixed(2)} <span>por unidad</span>`;
+  // Update variant price display if applicable
+  if (variantKey) {
+    const priceSpan = document.getElementById('vprice-' + productId + '-' + variantKey);
+    if (priceSpan) {
+      const { price } = getTieredPrice(product, quantity > 0 ? quantity : moq || 1, pricingKey);
+      priceSpan.textContent = '$' + price.toFixed(2) + ' c/u';
+    }
+  } else {
+    // Update non-variant price display
+    const card = document.querySelector('.product-card[data-product-id="' + productId + '"]');
+    if (card) {
+      const priceEl = card.querySelector('.product-price');
+      if (priceEl) {
+        const { price } = getTieredPrice(product, quantity > 0 ? quantity : moq || 1, pricingKey);
+        priceEl.textContent = '$' + price.toFixed(2) + ' por unidad';
+      }
+    }
   }
 
-  // Update tier info
-  if (tierInfoEl) {
-    tierInfoEl.innerHTML = tierInfo ? `
-      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 16px;">💰</span>
-        <span>${tierInfo}</span>
-      </div>
-    ` : '';
+  updateProductCardState(productId);
+  updateOrderTotals();
+  updateStickyBar();
+}
+
+/**
+ * Recalculates subtotal across all variants of a product and updates card UI
+ */
+function updateProductCardState(productId) {
+  const product = state.products.find(p => p.id === productId);
+  if (!product) return;
+
+  const card = document.querySelector('.product-card[data-product-id="' + productId + '"]');
+  if (!card) return;
+
+  const subtotalEl = document.getElementById('subtotal-' + productId);
+  const tierInfoEl = document.getElementById('tier-' + productId);
+
+  // Sum all cart entries for this product (across all variants)
+  let totalSubtotal = 0;
+  let totalPieces = 0;
+  let hasItems = false;
+  const lineDetails = [];
+
+  for (const [key, item] of Object.entries(state.cart)) {
+    if (key === String(productId) || key.startsWith(productId + '__')) {
+      hasItems = true;
+      const { price } = getTieredPrice(item.product, item.quantity, item.pricingKey || null);
+      const lineTotal = price * item.quantity;
+      totalSubtotal += lineTotal;
+      totalPieces += item.quantity;
+      if (item.variantLabel) {
+        lineDetails.push(item.variantLabel + ': ' + item.quantity + ' x $' + price.toFixed(2));
+      }
+    }
   }
 
-  // Update subtotal
-  if (quantity > 0) {
+  if (hasItems && subtotalEl) {
     card.classList.add('selected');
     subtotalEl.classList.remove('hidden');
-    const sizeLabel = isMagnetProduct ? ` (${MAGNET_SIZES[selectedSize].label})` : '';
-    subtotalEl.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span>Subtotal${sizeLabel}:</span>
-        <strong>$${subtotal.toFixed(2)}</strong>
-      </div>
-      ${savings > 0 ? `
-        <div style="font-size: 12px; color: #059669; margin-top: 4px;">
-          ✓ Ahorras $${savings.toFixed(2)}
-        </div>
-      ` : ''}
-    `;
-  } else {
+    // Build subtotal content with DOM methods
+    subtotalEl.textContent = '';
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = 'Subtotal:';
+    const valueStrong = document.createElement('strong');
+    valueStrong.textContent = '$' + totalSubtotal.toFixed(2);
+    row.appendChild(labelSpan);
+    row.appendChild(valueStrong);
+    subtotalEl.appendChild(row);
+
+    // Show line detail for each variant
+    lineDetails.forEach(detail => {
+      const detailDiv = document.createElement('div');
+      detailDiv.style.cssText = 'font-size: 12px; color: #6b7280; margin-top: 2px;';
+      detailDiv.textContent = detail;
+      subtotalEl.appendChild(detailDiv);
+    });
+  } else if (subtotalEl) {
     card.classList.remove('selected');
     subtotalEl.classList.add('hidden');
   }
 
-  // Update totals
-  updateOrderTotals();
-};
+  // Clear tier info warning if valid quantities
+  if (hasItems && tierInfoEl) {
+    tierInfoEl.textContent = '';
+  }
+}
 
 function updateOrderTotals() {
   let subtotal = 0;
   let totalPieces = 0;
 
   Object.values(state.cart).forEach(({ product, quantity, pricingKey }) => {
-    // Use tiered pricing for each product (with size-specific key for magnets)
+    // Use tiered pricing for each product (with variant-specific key when applicable)
     const { price } = getTieredPrice(product, quantity, pricingKey || null);
     subtotal += price * quantity;
     totalPieces += quantity;
@@ -1766,11 +2098,15 @@ function updateOrderTotals() {
   state.totals.deposit = deposit;
   state.totals.totalPieces = totalPieces;
 
-  // Update UI - sticky footer
-  document.getElementById('order-subtotal').textContent = `$${subtotal.toFixed(2)}`;
-  document.getElementById('order-total').textContent = `$${total.toFixed(2)}`;
-  document.getElementById('deposit-amount').textContent = `$${deposit.toFixed(2)}`;
-  document.getElementById('total-mini').textContent = `$${total.toFixed(2)}`;
+  // Update UI - legacy footer elements (may not exist if using cart bar)
+  const orderSubtotalEl = document.getElementById('order-subtotal');
+  if (orderSubtotalEl) orderSubtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+  const orderTotalEl = document.getElementById('order-total');
+  if (orderTotalEl) orderTotalEl.textContent = `$${total.toFixed(2)}`;
+  const depositAmtEl = document.getElementById('deposit-amount');
+  if (depositAmtEl) depositAmtEl.textContent = `$${deposit.toFixed(2)}`;
+  const totalMiniEl = document.getElementById('total-mini');
+  if (totalMiniEl) totalMiniEl.textContent = `$${total.toFixed(2)}`;
 
   // Update footer shipping display
   const footerShipping = document.getElementById('footer-shipping');
@@ -1830,14 +2166,14 @@ function populateOrderSummary() {
   let totalPieces = 0;
 
   // Generate HTML for each item in cart
-  Object.values(state.cart).forEach(({ product, quantity, pricingKey, sizeName }) => {
+  Object.values(state.cart).forEach(({ product, quantity, pricingKey, variantLabel }) => {
     const { price } = getTieredPrice(product, quantity, pricingKey || null);
     const lineTotal = price * quantity;
     subtotal += lineTotal;
     totalPieces += quantity;
 
-    // Show size info for magnets
-    const sizeLabel = sizeName ? ` (${sizeName})` : '';
+    // Show variant info (e.g., variant label)
+    const sizeLabel = variantLabel ? ` (${variantLabel})` : '';
 
     const itemRow = document.createElement('div');
     itemRow.className = 'order-item-row';
@@ -2370,33 +2706,27 @@ async function handleStripePayment() {
 
   // Two-step Stripe flow: show warning first, then enable button after 2s
   if (stripeBtn && stripeBtn.dataset.ready !== 'true') {
-    // First click: show warning, disable button, start countdown
     if (returnNotice) {
       returnNotice.style.display = 'block';
       returnNotice.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-
     stripeBtn.disabled = true;
     stripeBtn.style.opacity = '0.4';
     stripeBtn.style.cursor = 'not-allowed';
     stripeBtn.textContent = 'Espera 2s...';
-
     setTimeout(() => {
       stripeBtn.disabled = false;
       stripeBtn.dataset.ready = 'true';
       stripeBtn.style.opacity = '1';
       stripeBtn.style.cursor = 'pointer';
-      stripeBtn.textContent = '💳 Abrir Stripe para pagar';
-      stripeBtn.style.animation = 'pulse 0.5s ease';
+      stripeBtn.textContent = '\uD83D\uDCB3 Abrir Stripe para pagar';
     }, 2000);
-
     return;
   }
 
-  // Second click (after countdown): open Stripe directly — no popup blocker issue
+  // Second click: open Stripe directly
   window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
-
-  stripeBtn.textContent = '💳 Abrir Stripe de nuevo';
+  stripeBtn.textContent = '\uD83D\uDCB3 Abrir Stripe de nuevo';
   stripeBtn.style.opacity = '0.7';
 }
 
@@ -2437,12 +2767,12 @@ async function handleOrderSubmit() {
   try {
     // Prepare order data
     const orderData = {
-      // Products with tiered pricing (includes size info for magnets)
-      items: Object.values(state.cart).map(({ product, quantity, pricingKey, sizeName }) => {
+      // Products with tiered pricing (includes variant info when applicable)
+      items: Object.values(state.cart).map(({ product, quantity, pricingKey, variantLabel }) => {
         const { price } = getTieredPrice(product, quantity, pricingKey || null);
         return {
           productId: product.id,
-          productName: sizeName ? `${product.name} (${sizeName})` : product.name,
+          productName: variantLabel ? `${product.name} (${variantLabel})` : product.name,
           quantity,
           unitPrice: price // Send the tiered price to backend
         };
