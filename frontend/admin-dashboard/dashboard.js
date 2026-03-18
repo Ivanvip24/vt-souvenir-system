@@ -1079,10 +1079,18 @@ async function showOrderDetail(orderId) {
   };
   const statusStyle = statusColors[order.approvalStatus] || statusColors['pending_review'];
 
+  // Note: order data is from our own DB, not user input — safe for innerHTML
+  const orderDateObj = new Date(order.createdAt || order.orderDate);
+  const orderDateStr = orderDateObj.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+  const orderTimeStr = orderDateObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
   modalTitle.innerHTML = `
-    ${order.orderNumber}
-    ${order.receiptPdfUrl ? `<a href="${order.receiptPdfUrl}" target="_blank" download style="margin-left: 12px; padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📄 PDF</a>` : ''}
-    <span style="margin-left: 12px; padding: 6px 14px; background: ${statusStyle.bg}; color: ${statusStyle.color}; border: 1px solid ${statusStyle.border}; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase;">${getStatusText(order.approvalStatus)}</span>
+    <div>
+      ${escapeHtml(order.orderNumber)}
+      ${order.receiptPdfUrl ? `<a href="${encodeURI(order.receiptPdfUrl)}" target="_blank" download style="margin-left: 12px; padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📄 PDF</a>` : ''}
+      <span style="margin-left: 12px; padding: 6px 14px; background: ${statusStyle.bg}; color: ${statusStyle.color}; border: 1px solid ${statusStyle.border}; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase;">${escapeHtml(getStatusText(order.approvalStatus))}</span>
+      <div style="font-size: 13px; font-weight: 400; color: #6b7280; margin-top: 4px;">\uD83D\uDCC5 ${escapeHtml(orderDateStr)} \u2014 ${escapeHtml(orderTimeStr)}</div>
+    </div>
   `;
 
   // Calculate profit
