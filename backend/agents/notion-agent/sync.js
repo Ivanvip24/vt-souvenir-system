@@ -344,8 +344,8 @@ export async function createOrderBothSystems(orderData, { skipNotion = false } =
         orderData.status || 'new',
         orderData.department || 'design',
         orderData.priority || 'normal',
-        orderData.subtotal || orderData.totalPrice || 0,
-        orderData.totalPrice,
+        orderData.subtotal || orderData.totalPrice || (orderData.items || []).reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0) || 0,
+        orderData.totalPrice || (orderData.items || []).reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0) || 0,
         orderData.productionCost,
         orderData.notes
       ]
