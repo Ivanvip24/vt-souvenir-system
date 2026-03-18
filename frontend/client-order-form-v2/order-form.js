@@ -97,7 +97,7 @@ const PRICING_TIERS = {
  * Checks for promo code custom prices first, then falls back to tiered pricing
  * @param {Object} product - The product object
  * @param {number} quantity - The quantity ordered
- * @param {string} [pricingKey] - Optional specific pricing key to use (e.g., for magnet sizes)
+ * @param {string} [pricingKey] - Optional specific pricing key to use (e.g., for product variants)
  * @returns {Object} { price: number, tierInfo: string, savings: number, isPromoPrice: boolean }
  */
 function getTieredPrice(product, quantity, pricingKey = null) {
@@ -119,7 +119,7 @@ function getTieredPrice(product, quantity, pricingKey = null) {
   const productNameLower = product.name.toLowerCase();
   let tiers = null;
 
-  // If a specific pricing key is provided (e.g., for magnet sizes), use it directly
+  // If a specific pricing key is provided (e.g., for product variants), use it directly
   if (pricingKey && PRICING_TIERS[pricingKey]) {
     tiers = PRICING_TIERS[pricingKey];
   } else {
@@ -2055,7 +2055,7 @@ function updateOrderTotals() {
   let totalPieces = 0;
 
   Object.values(state.cart).forEach(({ product, quantity, pricingKey }) => {
-    // Use tiered pricing for each product (with size-specific key for magnets)
+    // Use tiered pricing for each product (with variant-specific key when applicable)
     const { price } = getTieredPrice(product, quantity, pricingKey || null);
     subtotal += price * quantity;
     totalPieces += quantity;
@@ -2151,7 +2151,7 @@ function populateOrderSummary() {
     subtotal += lineTotal;
     totalPieces += quantity;
 
-    // Show variant info (e.g., size label for magnets)
+    // Show variant info (e.g., variant label)
     const sizeLabel = variantLabel ? ` (${variantLabel})` : '';
 
     const itemRow = document.createElement('div');
@@ -2741,7 +2741,7 @@ async function handleOrderSubmit() {
   try {
     // Prepare order data
     const orderData = {
-      // Products with tiered pricing (includes size info for magnets)
+      // Products with tiered pricing (includes variant info when applicable)
       items: Object.values(state.cart).map(({ product, quantity, pricingKey, variantLabel }) => {
         const { price } = getTieredPrice(product, quantity, pricingKey || null);
         return {
