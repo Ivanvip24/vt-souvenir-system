@@ -2,6 +2,23 @@ import { Router } from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
 import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn, getAiModel, setAiModel } from '../services/whatsapp-ai.js';
+import { migrate as migrateLabelsArchive } from '../migrations/add-whatsapp-labels-archive.js';
+
+// Run labels/archive migration once on import
+let labelsArchiveMigrated = false;
+async function ensureLabelsArchiveColumns() {
+  if (labelsArchiveMigrated) return;
+  try {
+    await migrateLabelsArchive();
+    labelsArchiveMigrated = true;
+  } catch (err) {
+    if (err.message?.includes('already exists')) {
+      labelsArchiveMigrated = true;
+    } else {
+      console.error('🏷️ Labels/archive migration warning:', err.message);
+    }
+  }
+}
 import { sendWhatsAppMessage, sendWhatsAppListMessage, sendWhatsAppButtonMessage, sendWhatsAppCTAMessage, sendWhatsAppReaction, sendWhatsAppLocationRequest, sendWhatsAppCarousel, sendWhatsAppFlow } from '../services/whatsapp-api.js';
 import {
   downloadWhatsAppMedia,
@@ -154,6 +171,7 @@ router.post('/webhook', (req, res) => {
 
       // Ensure ai_enabled column exists (auto-migration on first call)
       await ensureAiToggleColumn();
+      await ensureLabelsArchiveColumns();
 
       // Get or create conversation
       const convResult = await query(
@@ -399,13 +417,23 @@ router.post('/flow-endpoint', async (req, res) => {
 // ---------------------------------------------------------------------------
 router.get('/conversations', authMiddleware, async (req, res) => {
   try {
+    await ensureLabelsArchiveColumns();
+    const showArchived = req.query.archived === 'true';
     const result = await query(`
       SELECT wc.*,
         (SELECT content FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) as last_message,
-        (SELECT COUNT(*) FROM whatsapp_messages WHERE conversation_id = wc.id) as message_count
+        (SELECT COUNT(*) FROM whatsapp_messages WHERE conversation_id = wc.id) as message_count,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', wl.id, 'name', wl.name, 'color', wl.color))
+           FROM whatsapp_conversation_labels wcl
+           JOIN whatsapp_labels wl ON wl.id = wcl.label_id
+           WHERE wcl.conversation_id = wc.id),
+          '[]'::json
+        ) as labels
       FROM whatsapp_conversations wc
-      ORDER BY wc.last_message_at DESC NULLS LAST
-    `);
+      WHERE (COALESCE(wc.is_archived, false) = $1)
+      ORDER BY wc.is_pinned DESC NULLS LAST, wc.last_message_at DESC NULLS LAST
+    `, [showArchived]);
     res.json({ success: true, data: result.rows });
   } catch (err) {
     console.error('🟢 WhatsApp conversations list error:', err);
@@ -604,6 +632,150 @@ router.get('/health', authMiddleware, async (req, res) => {
       accessToken: process.env.WHATSAPP_ACCESS_TOKEN ? 'configured' : 'MISSING',
     },
   });
+});
+
+// ---------------------------------------------------------------------------
+// 11. GET /labels — List all labels with assignments
+// ---------------------------------------------------------------------------
+router.get('/labels', authMiddleware, async (req, res) => {
+  try {
+    await ensureLabelsArchiveColumns();
+    const labels = await query(`
+      SELECT wl.*,
+        COALESCE(
+          (SELECT json_agg(wcl.conversation_id)
+           FROM whatsapp_conversation_labels wcl
+           WHERE wcl.label_id = wl.id),
+          '[]'::json
+        ) as conversation_ids
+      FROM whatsapp_labels wl
+      ORDER BY wl.created_at ASC
+    `);
+    res.json({ success: true, data: labels.rows });
+  } catch (err) {
+    console.error('🏷️ WhatsApp labels list error:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch labels' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 12. POST /labels — Create a new label
+// ---------------------------------------------------------------------------
+router.post('/labels', authMiddleware, async (req, res) => {
+  try {
+    await ensureLabelsArchiveColumns();
+    const { name, color } = req.body;
+    if (!name || !color) {
+      return res.status(400).json({ success: false, error: 'name and color are required' });
+    }
+    const result = await query(
+      'INSERT INTO whatsapp_labels (name, color) VALUES ($1, $2) RETURNING *',
+      [name.trim().substring(0, 50), color]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('🏷️ WhatsApp create label error:', err);
+    res.status(500).json({ success: false, error: 'Failed to create label' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 13. DELETE /labels/:id — Delete a label
+// ---------------------------------------------------------------------------
+router.delete('/labels/:id', authMiddleware, async (req, res) => {
+  try {
+    await query('DELETE FROM whatsapp_labels WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('🏷️ WhatsApp delete label error:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete label' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 14. POST /conversations/:id/labels/:labelId — Assign label to conversation
+// ---------------------------------------------------------------------------
+router.post('/conversations/:id/labels/:labelId', authMiddleware, async (req, res) => {
+  try {
+    await ensureLabelsArchiveColumns();
+    await query(
+      'INSERT INTO whatsapp_conversation_labels (conversation_id, label_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [req.params.id, req.params.labelId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('🏷️ WhatsApp assign label error:', err);
+    res.status(500).json({ success: false, error: 'Failed to assign label' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 15. DELETE /conversations/:id/labels/:labelId — Remove label from conversation
+// ---------------------------------------------------------------------------
+router.delete('/conversations/:id/labels/:labelId', authMiddleware, async (req, res) => {
+  try {
+    await query(
+      'DELETE FROM whatsapp_conversation_labels WHERE conversation_id = $1 AND label_id = $2',
+      [req.params.id, req.params.labelId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('🏷️ WhatsApp remove label error:', err);
+    res.status(500).json({ success: false, error: 'Failed to remove label' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 16. PATCH /conversations/:id/archive — Toggle archive
+// ---------------------------------------------------------------------------
+router.patch('/conversations/:id/archive', authMiddleware, async (req, res) => {
+  try {
+    await ensureLabelsArchiveColumns();
+    const { is_archived } = req.body;
+    await query(
+      'UPDATE whatsapp_conversations SET is_archived = $1, updated_at = NOW() WHERE id = $2',
+      [!!is_archived, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('📥 WhatsApp archive error:', err);
+    res.status(500).json({ success: false, error: 'Failed to toggle archive' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 17. PATCH /conversations/:id/pin — Toggle pin
+// ---------------------------------------------------------------------------
+router.patch('/conversations/:id/pin', authMiddleware, async (req, res) => {
+  try {
+    await ensureLabelsArchiveColumns();
+    const { is_pinned } = req.body;
+    await query(
+      'UPDATE whatsapp_conversations SET is_pinned = $1, updated_at = NOW() WHERE id = $2',
+      [!!is_pinned, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('📌 WhatsApp pin error:', err);
+    res.status(500).json({ success: false, error: 'Failed to toggle pin' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 18. DELETE /conversations/:id — Delete conversation and all its messages
+// ---------------------------------------------------------------------------
+router.delete('/conversations/:id', authMiddleware, async (req, res) => {
+  try {
+    const convId = req.params.id;
+    // Delete in order: messages -> labels -> conversation
+    await query('DELETE FROM whatsapp_messages WHERE conversation_id = $1', [convId]);
+    await query('DELETE FROM whatsapp_conversation_labels WHERE conversation_id = $1', [convId]);
+    await query('DELETE FROM whatsapp_conversations WHERE id = $1', [convId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('🗑️ WhatsApp delete conversation error:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete conversation' });
+  }
 });
 
 export default router;

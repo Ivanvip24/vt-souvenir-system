@@ -20,7 +20,9 @@ const waState = {
   uploadingImage: false,
   insights: null,
   insightsLoading: false,
-  insightsVisible: true
+  insightsVisible: true,
+  labels: [],
+  showArchived: false
 };
 
 // ==========================================
@@ -1089,6 +1091,146 @@ function injectWhatsAppStyles() {
       margin-bottom: 8px;
       opacity: 0.4;
     }
+
+    /* Context menu */
+    .wa-context-menu {
+      position: fixed;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      border: 1px solid #e5e7eb;
+      padding: 6px 0;
+      z-index: 1000;
+      min-width: 200px;
+      animation: waContextFadeIn 0.12s ease;
+    }
+    @keyframes waContextFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .wa-context-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #333;
+      transition: background 0.1s;
+    }
+    .wa-context-item:hover { background: #f3f4f6; }
+    .wa-context-item.danger { color: #dc2626; }
+    .wa-context-item.danger:hover { background: #fef2f2; }
+    .wa-context-separator {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 4px 0;
+    }
+    .wa-context-submenu {
+      padding: 8px 12px;
+    }
+    .wa-context-submenu-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .wa-label-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.1s;
+    }
+    .wa-label-option:hover { background: #f3f4f6; }
+    .wa-label-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .wa-label-check {
+      margin-left: auto;
+      font-size: 14px;
+    }
+    .wa-new-label-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .wa-new-label-input {
+      flex: 1;
+      font-size: 12px;
+      padding: 4px 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+    }
+    .wa-new-label-color {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0;
+    }
+    .wa-new-label-btn {
+      padding: 4px 8px;
+      background: #e72a88;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Label pills in conversation list */
+    .wa-conv-labels {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 3px;
+    }
+    .wa-conv-label-pill {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    /* Pin indicator */
+    .wa-conv-pin {
+      font-size: 12px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* Archive filter tabs */
+    .wa-archive-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 6px 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .wa-archive-tab {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+      background: none;
+      color: #888;
+      cursor: pointer;
+      border-radius: 12px;
+    }
+    .wa-archive-tab.active { background: #fce4ec; color: #e72a88; }
   `;
   document.head.appendChild(style);
 }
@@ -1184,7 +1326,10 @@ async function loadWhatsAppConversations() {
   }
 
   try {
-    const res = await fetch(API_BASE + '/whatsapp/conversations', {
+    await loadWhatsAppLabels();
+    var convUrl = API_BASE + '/whatsapp/conversations';
+    if (waState.showArchived) convUrl += '?archived=true';
+    const res = await fetch(convUrl, {
       headers: getAuthHeaders()
     });
     const json = await res.json();
@@ -1264,6 +1409,261 @@ async function sendReply(conversationId, message, imageUrl) {
 }
 
 // ==========================================
+// LABELS & CONTEXT MENU ACTIONS
+// ==========================================
+
+async function loadWhatsAppLabels() {
+  try {
+    var res = await fetch(API_BASE + '/whatsapp/labels', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    var data = await res.json();
+    if (data.success) waState.labels = data.data || [];
+  } catch (e) { console.error('Failed to load labels:', e); }
+}
+
+async function togglePinConversation(convId, isPinned) {
+  try {
+    await fetch(API_BASE + '/whatsapp/conversations/' + convId + '/pin', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      body: JSON.stringify({ is_pinned: isPinned })
+    });
+    await reloadConversations();
+  } catch (e) { console.error('Failed to toggle pin:', e); }
+}
+
+async function toggleArchiveConversation(convId, isArchived) {
+  try {
+    await fetch(API_BASE + '/whatsapp/conversations/' + convId + '/archive', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      body: JSON.stringify({ is_archived: isArchived })
+    });
+    await reloadConversations();
+  } catch (e) { console.error('Failed to toggle archive:', e); }
+}
+
+async function deleteConversation(convId) {
+  if (!confirm('Eliminar esta conversacion y todos sus mensajes? Esta accion no se puede deshacer.')) return;
+  try {
+    await fetch(API_BASE + '/whatsapp/conversations/' + convId, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    if (waState.selectedConversationId === convId) {
+      waState.selectedConversationId = null;
+      waState.messages = [];
+    }
+    await reloadConversations();
+  } catch (e) { console.error('Failed to delete conversation:', e); }
+}
+
+async function toggleConversationLabel(convId, labelId, isAssigned) {
+  try {
+    if (isAssigned) {
+      await fetch(API_BASE + '/whatsapp/conversations/' + convId + '/labels/' + labelId, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+    } else {
+      await fetch(API_BASE + '/whatsapp/conversations/' + convId + '/labels/' + labelId, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+    }
+    await loadWhatsAppLabels();
+    await reloadConversations();
+  } catch (e) { console.error('Failed to toggle label:', e); }
+}
+
+async function createNewLabel(name, color) {
+  try {
+    var res = await fetch(API_BASE + '/whatsapp/labels', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      body: JSON.stringify({ name: name, color: color })
+    });
+    var data = await res.json();
+    if (data.success) {
+      await loadWhatsAppLabels();
+    }
+    return data;
+  } catch (e) { console.error('Failed to create label:', e); return null; }
+}
+
+async function reloadConversations() {
+  try {
+    var url = API_BASE + '/whatsapp/conversations';
+    if (waState.showArchived) url += '?archived=true';
+    var res = await fetch(url, { headers: getAuthHeaders() });
+    var json = await res.json();
+    if (json.success) {
+      waState.conversations = json.data || [];
+      waFilterConversations();
+      renderConversationList();
+      updateWaUnreadBadge();
+    }
+  } catch (e) { console.error('Failed to reload conversations:', e); }
+}
+
+function closeContextMenu() {
+  var existing = document.querySelector('.wa-context-menu');
+  if (existing) existing.remove();
+}
+
+function showConversationContextMenu(e, conv) {
+  e.preventDefault();
+  e.stopPropagation();
+  closeContextMenu();
+
+  var menu = document.createElement('div');
+  menu.className = 'wa-context-menu';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+
+  // --- Labels submenu ---
+  var labelItem = document.createElement('div');
+  labelItem.className = 'wa-context-item';
+  labelItem.textContent = '\uD83C\uDFF7\uFE0F Etiquetas';
+  labelItem.addEventListener('click', function(ev) {
+    ev.stopPropagation();
+    // Toggle submenu visibility
+    var sub = menu.querySelector('.wa-context-submenu');
+    if (sub) {
+      sub.style.display = sub.style.display === 'none' ? 'block' : 'none';
+    }
+  });
+  menu.appendChild(labelItem);
+
+  // Labels submenu content
+  var subMenu = document.createElement('div');
+  subMenu.className = 'wa-context-submenu';
+  var subTitle = document.createElement('div');
+  subTitle.className = 'wa-context-submenu-title';
+  subTitle.textContent = 'Etiquetas';
+  subMenu.appendChild(subTitle);
+
+  var convLabels = conv.labels || [];
+  var convLabelIds = convLabels.map(function(l) { return l.id; });
+
+  waState.labels.forEach(function(label) {
+    var isAssigned = convLabelIds.indexOf(label.id) !== -1;
+    var opt = document.createElement('div');
+    opt.className = 'wa-label-option';
+
+    var dot = document.createElement('span');
+    dot.className = 'wa-label-dot';
+    dot.style.background = label.color;
+    opt.appendChild(dot);
+
+    var nameSpan = document.createElement('span');
+    nameSpan.textContent = label.name;
+    opt.appendChild(nameSpan);
+
+    var check = document.createElement('span');
+    check.className = 'wa-label-check';
+    check.textContent = isAssigned ? '\u2705' : '';
+    opt.appendChild(check);
+
+    opt.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      toggleConversationLabel(conv.id, label.id, isAssigned);
+      closeContextMenu();
+    });
+    subMenu.appendChild(opt);
+  });
+
+  // New label form
+  var newRow = document.createElement('div');
+  newRow.className = 'wa-new-label-row';
+
+  var newInput = document.createElement('input');
+  newInput.className = 'wa-new-label-input';
+  newInput.type = 'text';
+  newInput.placeholder = 'Nueva etiqueta...';
+  newInput.maxLength = 50;
+  newRow.appendChild(newInput);
+
+  var colorPicker = document.createElement('input');
+  colorPicker.className = 'wa-new-label-color';
+  colorPicker.type = 'color';
+  colorPicker.value = '#e72a88';
+  newRow.appendChild(colorPicker);
+
+  var addBtn = document.createElement('button');
+  addBtn.className = 'wa-new-label-btn';
+  addBtn.textContent = '+';
+  addBtn.addEventListener('click', function(ev) {
+    ev.stopPropagation();
+    var name = newInput.value.trim();
+    if (!name) return;
+    createNewLabel(name, colorPicker.value).then(function() {
+      closeContextMenu();
+    });
+  });
+  newRow.appendChild(addBtn);
+
+  // Prevent menu close on input clicks
+  newInput.addEventListener('click', function(ev) { ev.stopPropagation(); });
+  colorPicker.addEventListener('click', function(ev) { ev.stopPropagation(); });
+
+  subMenu.appendChild(newRow);
+  menu.appendChild(subMenu);
+
+  // --- Pin/Unpin ---
+  var pinItem = document.createElement('div');
+  pinItem.className = 'wa-context-item';
+  pinItem.textContent = conv.is_pinned ? '\uD83D\uDCCC Desfijar' : '\uD83D\uDCCC Fijar';
+  pinItem.addEventListener('click', function() {
+    togglePinConversation(conv.id, !conv.is_pinned);
+    closeContextMenu();
+  });
+  menu.appendChild(pinItem);
+
+  // --- Archive/Unarchive ---
+  var archiveItem = document.createElement('div');
+  archiveItem.className = 'wa-context-item';
+  archiveItem.textContent = conv.is_archived ? '\uD83D\uDCE5 Desarchivar' : '\uD83D\uDCE5 Archivar';
+  archiveItem.addEventListener('click', function() {
+    toggleArchiveConversation(conv.id, !conv.is_archived);
+    closeContextMenu();
+  });
+  menu.appendChild(archiveItem);
+
+  // --- Separator ---
+  var sep = document.createElement('div');
+  sep.className = 'wa-context-separator';
+  menu.appendChild(sep);
+
+  // --- Delete ---
+  var deleteItem = document.createElement('div');
+  deleteItem.className = 'wa-context-item danger';
+  deleteItem.textContent = '\uD83D\uDDD1\uFE0F Eliminar';
+  deleteItem.addEventListener('click', function() {
+    closeContextMenu();
+    deleteConversation(conv.id);
+  });
+  menu.appendChild(deleteItem);
+
+  document.body.appendChild(menu);
+
+  // Keep menu within viewport
+  var rect = menu.getBoundingClientRect();
+  if (rect.right > window.innerWidth) {
+    menu.style.left = (window.innerWidth - rect.width - 8) + 'px';
+  }
+  if (rect.bottom > window.innerHeight) {
+    menu.style.top = (window.innerHeight - rect.height - 8) + 'px';
+  }
+
+  // Close on click outside
+  setTimeout(function() {
+    document.addEventListener('click', closeContextMenu, { once: true });
+  }, 0);
+}
+
+// ==========================================
 // POLLING
 // ==========================================
 
@@ -1271,7 +1671,9 @@ function startWhatsAppPolling() {
   stopWhatsAppPolling();
   waState.pollingInterval = setInterval(async function() {
     try {
-      const res = await fetch(API_BASE + '/whatsapp/conversations', {
+      var pollUrl = API_BASE + '/whatsapp/conversations';
+      if (waState.showArchived) pollUrl += '?archived=true';
+      const res = await fetch(pollUrl, {
         headers: getAuthHeaders()
       });
       const json = await res.json();
@@ -1333,8 +1735,11 @@ function waFilterConversations() {
       return name.indexOf(q) !== -1 || phone.indexOf(q) !== -1;
     });
   }
-  // Sort by most recent message
+  // Sort by pinned first, then most recent message
   waState.filteredConversations.sort(function(a, b) {
+    var pinA = a.is_pinned ? 1 : 0;
+    var pinB = b.is_pinned ? 1 : 0;
+    if (pinA !== pinB) return pinB - pinA;
     var dateA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
     var dateB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
     return dateB - dateA;
@@ -1459,6 +1864,36 @@ function renderWhatsApp() {
     }
   });
 
+  // Archive tabs
+  var archiveTabs = document.createElement('div');
+  archiveTabs.className = 'wa-archive-tabs';
+
+  var tabAll = document.createElement('button');
+  tabAll.className = 'wa-archive-tab' + (!waState.showArchived ? ' active' : '');
+  tabAll.textContent = 'Todas';
+  tabAll.addEventListener('click', function() {
+    if (!waState.showArchived) return;
+    waState.showArchived = false;
+    reloadConversations();
+    tabAll.classList.add('active');
+    tabArchived.classList.remove('active');
+  });
+  archiveTabs.appendChild(tabAll);
+
+  var tabArchived = document.createElement('button');
+  tabArchived.className = 'wa-archive-tab' + (waState.showArchived ? ' active' : '');
+  tabArchived.textContent = 'Archivadas';
+  tabArchived.addEventListener('click', function() {
+    if (waState.showArchived) return;
+    waState.showArchived = true;
+    reloadConversations();
+    tabArchived.classList.add('active');
+    tabAll.classList.remove('active');
+  });
+  archiveTabs.appendChild(tabArchived);
+
+  listPanel.appendChild(archiveTabs);
+
   var convListDiv = document.createElement('div');
   convListDiv.className = 'wa-conv-list';
   convListDiv.id = 'wa-conv-list';
@@ -1551,6 +1986,12 @@ function buildConversationItemDOM(c) {
   item.className = 'wa-conv-item' + (isActive ? ' active' : '');
   item.setAttribute('data-conv-id', c.id);
 
+  // Right-click context menu
+  item.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    showConversationContextMenu(e, c);
+  });
+
   // Avatar
   var avatar = document.createElement('div');
   avatar.className = 'wa-conv-avatar';
@@ -1569,6 +2010,15 @@ function buildConversationItemDOM(c) {
   nameSpan.className = 'wa-conv-name';
   nameSpan.textContent = displayName;
   headerRow.appendChild(nameSpan);
+
+  // Pin indicator
+  if (c.is_pinned) {
+    var pinSpan = document.createElement('span');
+    pinSpan.className = 'wa-conv-pin';
+    pinSpan.textContent = '\uD83D\uDCCC';
+    pinSpan.title = 'Fijada';
+    headerRow.appendChild(pinSpan);
+  }
 
   // AI-off indicator (red dot)
   if (c.ai_enabled === false) {
@@ -1608,6 +2058,22 @@ function buildConversationItemDOM(c) {
   }
 
   info.appendChild(metaDiv);
+
+  // Label pills
+  var convLabels = c.labels || [];
+  if (convLabels.length > 0) {
+    var labelsDiv = document.createElement('div');
+    labelsDiv.className = 'wa-conv-labels';
+    convLabels.forEach(function(label) {
+      var pill = document.createElement('span');
+      pill.className = 'wa-conv-label-pill';
+      pill.style.background = label.color;
+      pill.textContent = label.name;
+      labelsDiv.appendChild(pill);
+    });
+    info.appendChild(labelsDiv);
+  }
+
   item.appendChild(info);
 
   return item;
