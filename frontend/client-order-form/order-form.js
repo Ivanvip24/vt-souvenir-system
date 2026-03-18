@@ -2364,7 +2364,7 @@ async function handleStripePayment() {
   const stripeBtn = document.getElementById('stripe-pay-btn');
   const returnNotice = document.getElementById('stripe-return-notice');
 
-  // If button is still disabled (countdown phase), do nothing
+  // Two-step Stripe flow: show warning first, then enable button after 2s
   if (stripeBtn && stripeBtn.dataset.ready !== 'true') {
     // First click: show warning, disable button, start countdown
     if (returnNotice) {
