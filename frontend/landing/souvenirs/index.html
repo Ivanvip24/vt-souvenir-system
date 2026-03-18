@@ -323,8 +323,9 @@
       .index-card:hover { transform: translateY(-4px); }
       .index-card.hidden { display: none; }
       .card-carousel { position: relative; overflow: hidden; aspect-ratio: 1; background: #f5f0eb; }
+      .card-carousel::after { content: 'AXKAN.ART'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: clamp(28px, 6vw, 48px); font-weight: 900; color: rgba(231, 42, 136, 0.18); letter-spacing: 6px; pointer-events: none; z-index: 2; text-shadow: 0 0 20px rgba(231,42,136,0.08); transform: rotate(-25deg); white-space: nowrap; }
       .card-strip { display: flex; height: 100%; will-change: transform; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
-      .card-strip img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; }
+      .card-strip img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; -webkit-user-drag: none; user-select: none; pointer-events: none; }
       .carousel-arr { position: absolute; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(255,255,255,0.85); color: #333; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.25s ease, background 0.2s; z-index: 3; box-shadow: 0 2px 8px rgba(0,0,0,0.15); line-height: 1; padding: 0 0 2px; }
       .carousel-arr:hover { background: white; }
       .carousel-prev { left: 8px; }
@@ -3731,6 +3732,18 @@
 
     <script>
     (function() {
+      // Image protection — prevent right-click, drag, and save
+      document.addEventListener('contextmenu', function(e) {
+        if (e.target.closest('.card-carousel') || e.target.closest('.dg-card-img')) {
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('dragstart', function(e) {
+        if (e.target.tagName === 'IMG' && e.target.closest('.card-strip, .dg-card-img')) {
+          e.preventDefault();
+        }
+      });
+
       // Hamburger menu
       var hamburger = document.querySelector('.nav-hamburger');
       var mobileMenu = document.querySelector('.mobile-menu');
