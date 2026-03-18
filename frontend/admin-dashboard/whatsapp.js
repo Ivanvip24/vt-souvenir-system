@@ -1095,36 +1095,56 @@ function injectWhatsAppStyles() {
     /* Context menu */
     .wa-context-menu {
       position: fixed;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      border: 1px solid #e5e7eb;
-      padding: 6px 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid rgba(0,0,0,0.06);
+      padding: 8px;
       z-index: 1000;
-      min-width: 200px;
-      animation: waContextFadeIn 0.12s ease;
+      min-width: 220px;
+      animation: waContextFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes waContextFadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
+      from { opacity: 0; transform: scale(0.92) translateY(-4px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
     .wa-context-item {
-      padding: 8px 16px;
+      padding: 10px 14px;
       font-size: 13px;
+      font-weight: 500;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 10px;
-      color: #333;
-      transition: background 0.1s;
+      gap: 12px;
+      color: #1a1a1a;
+      border-radius: 8px;
+      transition: all 0.12s ease;
+      letter-spacing: -0.01em;
     }
-    .wa-context-item:hover { background: #f3f4f6; }
+    .wa-context-item:hover { background: #f0f0f0; transform: translateX(2px); }
+    .wa-context-item:active { transform: scale(0.98); }
+    .wa-context-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .wa-context-icon.labels { background: linear-gradient(135deg, #fce4ec, #f3e5f5); }
+    .wa-context-icon.pin { background: linear-gradient(135deg, #fff3e0, #fff8e1); }
+    .wa-context-icon.archive { background: linear-gradient(135deg, #e3f2fd, #e8eaf6); }
+    .wa-context-icon.delete { background: linear-gradient(135deg, #ffebee, #fce4ec); }
     .wa-context-item.danger { color: #dc2626; }
-    .wa-context-item.danger:hover { background: #fef2f2; }
+    .wa-context-item.danger:hover { background: #fff1f1; }
     .wa-context-separator {
       height: 1px;
-      background: #e5e7eb;
-      margin: 4px 0;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+      margin: 6px 8px;
     }
     .wa-context-submenu {
       padding: 8px 12px;
@@ -1525,7 +1545,11 @@ function showConversationContextMenu(e, conv) {
   // --- Labels submenu ---
   var labelItem = document.createElement('div');
   labelItem.className = 'wa-context-item';
-  labelItem.textContent = '\uD83C\uDFF7\uFE0F Etiquetas';
+  var labelIcon = document.createElement('span');
+  labelIcon.className = 'wa-context-icon labels';
+  labelIcon.textContent = '\uD83C\uDFF7\uFE0F';
+  labelItem.appendChild(labelIcon);
+  labelItem.appendChild(document.createTextNode('Etiquetas'));
   labelItem.addEventListener('click', function(ev) {
     ev.stopPropagation();
     // Toggle submenu visibility
@@ -1614,7 +1638,11 @@ function showConversationContextMenu(e, conv) {
   // --- Pin/Unpin ---
   var pinItem = document.createElement('div');
   pinItem.className = 'wa-context-item';
-  pinItem.textContent = conv.is_pinned ? '\uD83D\uDCCC Desfijar' : '\uD83D\uDCCC Fijar';
+  var pinIcon = document.createElement('span');
+  pinIcon.className = 'wa-context-icon pin';
+  pinIcon.textContent = '\uD83D\uDCCC';
+  pinItem.appendChild(pinIcon);
+  pinItem.appendChild(document.createTextNode(conv.is_pinned ? 'Desfijar' : 'Fijar'));
   pinItem.addEventListener('click', function() {
     togglePinConversation(conv.id, !conv.is_pinned);
     closeContextMenu();
@@ -1624,7 +1652,11 @@ function showConversationContextMenu(e, conv) {
   // --- Archive/Unarchive ---
   var archiveItem = document.createElement('div');
   archiveItem.className = 'wa-context-item';
-  archiveItem.textContent = conv.is_archived ? '\uD83D\uDCE5 Desarchivar' : '\uD83D\uDCE5 Archivar';
+  var archiveIcon = document.createElement('span');
+  archiveIcon.className = 'wa-context-icon archive';
+  archiveIcon.textContent = '\uD83D\uDCE5';
+  archiveItem.appendChild(archiveIcon);
+  archiveItem.appendChild(document.createTextNode(conv.is_archived ? 'Desarchivar' : 'Archivar'));
   archiveItem.addEventListener('click', function() {
     toggleArchiveConversation(conv.id, !conv.is_archived);
     closeContextMenu();
@@ -1639,7 +1671,11 @@ function showConversationContextMenu(e, conv) {
   // --- Delete ---
   var deleteItem = document.createElement('div');
   deleteItem.className = 'wa-context-item danger';
-  deleteItem.textContent = '\uD83D\uDDD1\uFE0F Eliminar';
+  var deleteIcon = document.createElement('span');
+  deleteIcon.className = 'wa-context-icon delete';
+  deleteIcon.textContent = '\uD83D\uDDD1\uFE0F';
+  deleteItem.appendChild(deleteIcon);
+  deleteItem.appendChild(document.createTextNode('Eliminar'));
   deleteItem.addEventListener('click', function() {
     closeContextMenu();
     deleteConversation(conv.id);
