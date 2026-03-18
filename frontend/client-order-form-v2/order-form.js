@@ -555,13 +555,19 @@ function initializeEventListeners() {
   document.getElementById('continue-info').addEventListener('click', handleInfoSubmit);
 
   // Postal code auto-fill for Mexico
-  // Use multiple events for mobile compatibility (input doesn't always fire on mobile keyboards)
+  // Trigger IMMEDIATELY when 5 digits are typed (no debounce for the happy path)
   const postalInput = document.getElementById('client-postal');
   if (postalInput) {
-    postalInput.addEventListener('input', debounce(handlePostalCodeLookup, 500));
+    var postalHandler = function() {
+      var val = postalInput.value.trim();
+      if (val.length === 5 && /^\d{5}$/.test(val)) {
+        handlePostalCodeLookup();
+      }
+    };
+    postalInput.addEventListener('input', postalHandler);
+    postalInput.addEventListener('keyup', postalHandler);
     postalInput.addEventListener('change', handlePostalCodeLookup);
     postalInput.addEventListener('blur', handlePostalCodeLookup);
-    postalInput.addEventListener('keyup', debounce(handlePostalCodeLookup, 500));
   }
 
   // Add character counter for references field (#9: increased to 150)
@@ -1072,6 +1078,7 @@ function prefillClientInfo() {
 
 // Track last postal code to detect changes
 let lastPostalCode = '';
+let postalLookupInProgress = false;
 
 /**
  * Auto-fill city, state, and colonia from Mexican postal code
@@ -1080,6 +1087,10 @@ let lastPostalCode = '';
 async function handlePostalCodeLookup() {
   const postalInput = document.getElementById('client-postal');
   const postal = postalInput.value.trim();
+
+  // Prevent duplicate calls
+  if (postal === lastPostalCode && postal.length === 5) return;
+  if (postalLookupInProgress) return;
 
   const cityInput = document.getElementById('client-city');
   const stateInput = document.getElementById('client-state');
@@ -1110,6 +1121,7 @@ async function handlePostalCodeLookup() {
 
   // Show loading state
   postalInput.style.borderColor = '#f59e0b';
+  postalLookupInProgress = true;
 
   try {
     // Use the free Zippopotam.us API for Mexico
@@ -1165,8 +1177,9 @@ async function handlePostalCodeLookup() {
 
   } catch (error) {
     console.log('Postal code lookup failed, user can fill manually:', error.message);
-    // Silent fail - user can fill manually
     postalInput.style.borderColor = '';
+  } finally {
+    postalLookupInProgress = false;
   }
 }
 
