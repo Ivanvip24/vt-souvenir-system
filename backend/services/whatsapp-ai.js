@@ -17,7 +17,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = join(__dirname, '..', 'chatbot_whatsapp');
 
 // Global AI model setting — changeable at runtime via API
-let currentModel = process.env.WHATSAPP_AI_MODEL || 'claude-haiku-4-5-20251001';
+let currentModel = process.env.WHATSAPP_AI_MODEL || 'claude-sonnet-4-5-20250929';
 
 export function getAiModel() { return currentModel; }
 export function setAiModel(model) {
