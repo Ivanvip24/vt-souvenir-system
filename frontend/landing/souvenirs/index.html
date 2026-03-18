@@ -26,11 +26,11 @@
 
     <!-- Preload 3D globe assets -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" as="script" crossorigin>
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js" as="script" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preload" href="https://unpkg.com/three@0.128.0/build/three.min.js" as="script" crossorigin>
+    <link rel="preload" href="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js" as="script" crossorigin>
     <link rel="preload" href="/globe-section.js" as="script">
-    <link rel="prefetch" href="https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json" as="fetch" crossorigin>
+    <link rel="prefetch" href="https://unpkg.com/world-atlas@2/countries-110m.json" as="fetch" crossorigin>
     <link rel="prefetch" href="/mexico-states.json" as="fetch">
 
     <script type="application/ld+json">
@@ -3879,7 +3879,7 @@
             document.head.appendChild(s);
         }
         var threeScript = document.createElement('script');
-        threeScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';
+        threeScript.src = 'https://unpkg.com/three@0.128.0/build/three.min.js';
         threeScript.crossOrigin = 'anonymous';
         threeScript.onload = function() { threeReady = true; if (topoReady) onBothReady(); };
         threeScript.onerror = function() {
@@ -3887,7 +3887,7 @@
             if (l) l.style.display = 'none';
         };
         var topoScript = document.createElement('script');
-        topoScript.src = 'https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js';
+        topoScript.src = 'https://unpkg.com/topojson-client@3/dist/topojson-client.min.js';
         topoScript.crossOrigin = 'anonymous';
         topoScript.onload = function() { topoReady = true; if (threeReady) onBothReady(); };
         topoScript.onerror = function() { topoReady = true; if (threeReady) onBothReady(); };
