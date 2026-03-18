@@ -555,9 +555,13 @@ function initializeEventListeners() {
   document.getElementById('continue-info').addEventListener('click', handleInfoSubmit);
 
   // Postal code auto-fill for Mexico
+  // Use multiple events for mobile compatibility (input doesn't always fire on mobile keyboards)
   const postalInput = document.getElementById('client-postal');
   if (postalInput) {
     postalInput.addEventListener('input', debounce(handlePostalCodeLookup, 500));
+    postalInput.addEventListener('change', handlePostalCodeLookup);
+    postalInput.addEventListener('blur', handlePostalCodeLookup);
+    postalInput.addEventListener('keyup', debounce(handlePostalCodeLookup, 500));
   }
 
   // Add character counter for references field (#9: increased to 150)
