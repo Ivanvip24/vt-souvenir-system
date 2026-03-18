@@ -13,18 +13,18 @@
     {
       "source": "/",
       "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
-      "destination": "/client-order-form/index.html"
+      "destination": "/pedidos/index.html"
     },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
-      "destination": "/client-order-form/:path*"
+      "destination": "/pedidos/:path*"
     },
-    { "source": "/styles.css", "destination": "/client-order-form/styles.css" },
-    { "source": "/order-form.js", "destination": "/client-order-form/order-form.js" },
-    { "source": "/logo.png", "destination": "/client-order-form/logo.png" },
-    { "source": "/favicon.png", "destination": "/client-order-form/favicon.png" },
-    { "source": "/tutorial.mp4", "destination": "/client-order-form/tutorial.mp4" },
+    { "source": "/styles.css", "destination": "/pedidos/styles.css" },
+    { "source": "/order-form.js", "destination": "/pedidos/order-form.js" },
+    { "source": "/logo.png", "destination": "/pedidos/logo.png" },
+    { "source": "/favicon.png", "destination": "/pedidos/favicon.png" },
+    { "source": "/tutorial.mp4", "destination": "/pedidos/tutorial.mp4" },
     { "source": "/brand", "destination": "/brand-manual-web/index.html" },
     { "source": "/marca", "destination": "/brand-manual-web/index.html" },
     { "source": "/", "destination": "/landing/index.html" },
@@ -64,10 +64,10 @@
     { "source": "/destination-images.json", "destination": "/landing/destination-images.json" },
     { "source": "/mexico-states.json", "destination": "/landing/mexico-states.json" },
     { "source": "/ecuador-provinces.json", "destination": "/landing/ecuador-provinces.json" },
-    { "source": "/pedidos", "destination": "/client-order-form/index.html" },
-    { "source": "/pedidos/:path*", "destination": "/client-order-form/:path*" },
-    { "source": "/order-form", "destination": "/client-order-form/index.html" },
-    { "source": "/order-form/:path*", "destination": "/client-order-form/:path*" },
+    { "source": "/pedidos", "destination": "/pedidos/index.html" },
+    { "source": "/pedidos/:path*", "destination": "/pedidos/:path*" },
+    { "source": "/order-form", "destination": "/pedidos/index.html" },
+    { "source": "/order-form/:path*", "destination": "/pedidos/:path*" },
     { "source": "/cuestionario", "destination": "/lead-form/index.html" },
     { "source": "/cuestionario/:path*", "destination": "/lead-form/:path*" },
     { "source": "/midiseño", "destination": "/configurador/index.html" },
