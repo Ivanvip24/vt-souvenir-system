@@ -491,7 +491,11 @@ app.post('/api/facebook/mark-uploaded', authMiddleware, async (req, res) => {
 // ========================================
 // EMPLOYEE DASHBOARD ROUTES
 // ========================================
-app.use('/api/employees', authMiddleware, employeeRoutes);
+// Employee login/verify must be public; other employee routes use their own employeeAuth middleware
+app.use('/api/employees', (req, res, next) => {
+  if (req.path === '/login' || req.path === '/verify') return next();
+  return authMiddleware(req, res, next);
+}, employeeRoutes);
 app.use('/api/tasks', authMiddleware, taskRoutes);
 app.use('/api/gallery', authMiddleware, galleryRoutes);
 app.use('/api/notes', authMiddleware, notesRoutes);
