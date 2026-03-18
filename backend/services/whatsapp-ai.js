@@ -283,10 +283,28 @@ function parseAIResponse(responseText) {
     try {
       generateQuoteData = JSON.parse(quoteGenMatch[1].trim());
       intent = 'quote_generation';
+      console.log('🟢 WhatsApp AI: GENERATE_QUOTE parsed successfully:', JSON.stringify(generateQuoteData));
     } catch (err) {
       console.error('🟢 WhatsApp AI: Failed to parse GENERATE_QUOTE JSON:', err.message);
     }
     cleanReply = cleanReply.replace(/\[GENERATE_QUOTE\].*?\[\/GENERATE_QUOTE\]/s, '').trim();
+  } else if (cleanReply.includes('[GENERATE_QUOTE]')) {
+    // Truncated tag — try to salvage the JSON
+    console.warn('⚠️ WhatsApp AI: GENERATE_QUOTE tag was truncated (no closing tag). Attempting recovery...');
+    const truncatedMatch = cleanReply.match(/\[GENERATE_QUOTE\]\s*(\{.*)/s);
+    if (truncatedMatch) {
+      let jsonStr = truncatedMatch[1].trim();
+      // Try to fix incomplete JSON by closing it
+      if (!jsonStr.endsWith('}')) jsonStr += '"}';
+      try {
+        generateQuoteData = JSON.parse(jsonStr);
+        intent = 'quote_generation';
+        console.log('🟢 WhatsApp AI: Recovered truncated GENERATE_QUOTE:', JSON.stringify(generateQuoteData));
+      } catch (e) {
+        console.error('⚠️ WhatsApp AI: Could not recover truncated GENERATE_QUOTE JSON:', jsonStr);
+      }
+    }
+    cleanReply = cleanReply.replace(/\[GENERATE_QUOTE\].*$/s, '').trim();
   }
 
   // Extract REACT block (emoji reaction)
@@ -454,7 +472,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     const client = getClient();
     const response = await client.messages.create({
       model: currentModel,
-      max_tokens: 700,
+      max_tokens: 1500,
       system: systemPrompt,
       messages: sanitizedMessages
     });
