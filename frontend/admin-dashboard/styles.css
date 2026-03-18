@@ -2155,6 +2155,32 @@ textarea:disabled {
 }
 
 /* ==========================================
+   PRIVACY TOGGLE BUTTON
+   ========================================== */
+
+.privacy-toggle-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.privacy-toggle-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.privacy-toggle-btn.privacy-active {
+  background: rgba(231, 42, 136, 0.3);
+  border-color: rgba(231, 42, 136, 0.5);
+}
+
+/* ==========================================
    NOTIFICATION BELL & DROPDOWN
    ========================================== */
 

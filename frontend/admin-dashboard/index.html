@@ -100,6 +100,10 @@
                 <span class="command-placeholder">Buscar o ejecutar comando...</span>
                 <kbd class="kbd-shortcut">⌘K</kbd>
             </div>
+            <button class="privacy-toggle-btn" id="privacy-toggle-btn" onclick="togglePrivacyMode()" aria-label="Ocultar datos sensibles" title="Ocultar/mostrar datos">
+                <i data-lucide="eye" class="icon-sm" id="privacy-icon-visible"></i>
+                <i data-lucide="eye-off" class="icon-sm" id="privacy-icon-hidden" style="display:none;"></i>
+            </button>
             <div class="header-stats">
                 <div class="stat-card">
                     <span class="stat-label">Pendientes</span>

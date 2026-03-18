@@ -1160,10 +1160,13 @@ function showMultipleQuotesResult(data) {
         return;
     }
 
-    const formatCurrency = (amount) => new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency: 'MXN'
-    }).format(amount);
+    const formatCurrency = (amount) => {
+        if (typeof privacyMode !== 'undefined' && privacyMode) return '******';
+        return new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN'
+        }).format(amount);
+    };
 
     // Build comparison cards for each quote
     const quoteCards = data.quotes.map((quote, index) => {

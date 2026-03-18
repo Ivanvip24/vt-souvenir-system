@@ -123,6 +123,7 @@ function renderAnalyticsSummary() {
   if (!container) return;
 
   const formatCurrency = (value) => {
+    if (typeof privacyMode !== 'undefined' && privacyMode) return '******';
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: 'MXN',

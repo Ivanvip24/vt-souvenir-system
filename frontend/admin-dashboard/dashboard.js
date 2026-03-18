@@ -89,6 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
     checkStartupAlerts();
   }); // Load alerts widget + show daily popup
 
+  // Apply privacy mode if it was previously enabled
+  applyPrivacyMode();
+
   // Auto-refresh every 30 seconds
   setInterval(loadOrders, 30000);
   setInterval(loadOrderAlerts, 60000); // Refresh alerts every minute
@@ -1342,7 +1345,7 @@ async function showOrderDetail(orderId) {
           ${order.items.map(item => `
             <tr>
               <td style="padding: 6px 0;">${escapeHtml(item.productName)}</td>
-              <td style="text-align: center; padding: 6px 0;">${item.quantity} pzas</td>
+              <td style="text-align: center; padding: 6px 0;">${formatSensitive(item.quantity)} pzas</td>
               <td style="text-align: right; padding: 6px 0;">${formatCurrency(item.unitPrice)}</td>
               <td style="text-align: right; padding: 6px 0; font-weight: 600;">${formatCurrency(item.lineTotal)}</td>
               <td style="text-align: center; padding: 6px 0; white-space: nowrap;">
@@ -1718,7 +1721,7 @@ function updateStats() {
   }).length;
 
   // Update header stats
-  document.getElementById('pending-count').textContent = pendingCount;
+  document.getElementById('pending-count').textContent = privacyMode ? '***' : pendingCount;
 
   // Show second payment notification badge if there are pending confirmations
   const secondPaymentBadge = document.getElementById('second-payment-badge');
@@ -2607,8 +2610,57 @@ function getProductionStatusText(status) {
   return map[status] || status;
 }
 
+// Privacy mode state
+let privacyMode = localStorage.getItem('axkan_privacy_mode') === 'true';
+
 function formatCurrency(amount) {
+  if (privacyMode) return '******';
   return `$${parseFloat(amount).toFixed(2)}`;
+}
+
+function formatSensitive(value) {
+  if (privacyMode) return '***';
+  return value;
+}
+
+function togglePrivacyMode() {
+  privacyMode = !privacyMode;
+  localStorage.setItem('axkan_privacy_mode', privacyMode.toString());
+  applyPrivacyMode();
+  // Re-render current data so formatCurrency picks up the new state
+  loadOrders();
+}
+window.togglePrivacyMode = togglePrivacyMode;
+
+function applyPrivacyMode() {
+  const btn = document.getElementById('privacy-toggle-btn');
+  const iconVisible = document.getElementById('privacy-icon-visible');
+  const iconHidden = document.getElementById('privacy-icon-hidden');
+  if (privacyMode) {
+    btn.classList.add('privacy-active');
+    iconVisible.style.display = 'none';
+    iconHidden.style.display = '';
+    // Mask header stats and any elements with data-sensitive
+    document.getElementById('today-revenue').textContent = '******';
+    document.getElementById('pending-count').textContent = '***';
+    document.querySelectorAll('[data-sensitive]').forEach(el => {
+      if (!el.dataset.originalValue) el.dataset.originalValue = el.textContent;
+      el.textContent = '******';
+    });
+  } else {
+    btn.classList.remove('privacy-active');
+    iconVisible.style.display = '';
+    iconHidden.style.display = 'none';
+    // Restore elements with data-sensitive
+    document.querySelectorAll('[data-sensitive]').forEach(el => {
+      if (el.dataset.originalValue) {
+        el.textContent = el.dataset.originalValue;
+        delete el.dataset.originalValue;
+      }
+    });
+  }
+  // Re-init lucide icons for the swapped icon
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function formatDate(dateString) {
@@ -5504,6 +5556,7 @@ async function viewSalespersonOrders(salespersonName) {
  * Format currency helper
  */
 function formatCurrency(amount) {
+  if (privacyMode) return '******';
   return new Intl.NumberFormat('es-MX', {
     style: 'currency',
     currency: 'MXN'
