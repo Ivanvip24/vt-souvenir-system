@@ -122,3 +122,18 @@ SYSTEM_ACTIVE.md
 .vercel
 backend/quotes/*.pdf
 .env*.local
+
+# Generated catalogs
+backend/catalogs/*.pdf
+
+# Vercel metadata
+.vercel/
+
+# Personal documents
+docs/AXKAN-*.docx
+docs/AXKAN-*.pdf
+docs/IVAN*.docx
+docs/IVAN*.pdf
+
+# Security exercise files
+docs/security-exercise/
