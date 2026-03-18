@@ -260,7 +260,7 @@ router.post('/webhook', (req, res) => {
       for (const doc of documentsToSend) {
         try {
           if (doc.url) {
-            await sendWhatsAppDocument(waId, doc.url, doc.caption || '', doc.filename || 'documento.pdf');
+            await sendWhatsAppDocument(waId, doc.url, doc.filename || 'documento.pdf', doc.caption || '');
           }
         } catch (docErr) {
           console.error('🟢 WhatsApp document send error:', docErr.message);
