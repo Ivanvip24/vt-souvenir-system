@@ -12,18 +12,15 @@
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>AXKAN - Souvenirs Personalizados</title>
-    <link rel="icon" type="image/png" href="/pedidos/favicon.png">
+    <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="preload" href="/fonts/rl-aqva-black.otf" as="font" type="font/otf" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 
     <style>body{background:#0a0a0f;margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#f1f5f9;}@media(prefers-color-scheme:light){body{background:#fafafa;color:#1a1a1a;}}</style>
-    <link rel="stylesheet" href="/pedidos/styles.css?v=2">
+    <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
     <!-- Animated Background -->
@@ -41,7 +38,7 @@
 
     <nav class="mobile-menu" id="mobile-menu">
         <div class="mobile-menu-header">
-            <img src="/pedidos/logo.png" alt="AXKAN" class="mobile-menu-logo">
+            <img src="./logo.png" alt="AXKAN" class="mobile-menu-logo">
             <button class="mobile-menu-close" onclick="closeMobileMenu()" aria-label="Cerrar menú">✕</button>
         </div>
 
@@ -105,7 +102,7 @@
 
             <div class="header">
                 <div class="logo">
-                    <a href="https://axkan.art"><img src="/pedidos/logo.png" alt="AXKAN Logo"></a>
+                    <a href="https://axkan.art"><img src="./logo.png" alt="AXKAN Logo"></a>
                 </div>
                 <h1>Souvenirs Personalizados</h1>
                 <p class="subtitle">Imanes, Llaveros, Destapadores, Botones y más</p>
@@ -164,6 +161,11 @@
                     Ver Productos →
                 </button>
 
+                <div style="text-align: center; margin-top: 16px;">
+                    <button id="btn-lookup-orders" class="btn-text-link">
+                        📦 ¿Ya hiciste un pedido? <span style="text-decoration: underline;">Rastrear pedido</span>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -385,43 +387,40 @@
                 <p>Cargando productos...</p>
             </div>
 
-            <div class="category-tabs" id="categoryTabs"></div>
-
             <div id="products-container" class="products-grid"></div>
 
             <!-- Shipping indicator - shows free shipping progress -->
             <div id="shipping-indicator" class="shipping-indicator"></div>
 
-            <!-- Sticky Cart Bar (fixed bottom) -->
-            <div class="cart-bar" id="cartBar" style="display:none">
-                <div class="cart-bar-left">
-                    <span class="cart-bar-icon">🛒</span>
-                    <span id="cartBarCount">0 productos</span>
-                    <span class="cart-bar-dot">&bull;</span>
-                    <span id="cartBarPieces">0 pzas</span>
+            <div class="sticky-footer">
+                <div class="summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <strong id="order-subtotal">$0.00</strong>
+                    </div>
+                    <div class="summary-row" id="footer-shipping-row">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span>🚚 Envío:</span>
+                            <button type="button" id="pickup-toggle-footer" onclick="toggleStorePickup()"
+                                    style="font-size: 10px; padding: 4px 8px; border-radius: 12px; border: 1px solid #10b981; background: transparent; color: #10b981; cursor: pointer; white-space: nowrap;">
+                                🏪 Recoger en tienda
+                            </button>
+                        </div>
+                        <strong id="footer-shipping">$0.00</strong>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>Total:</span>
+                        <strong id="order-total">$0.00</strong>
+                    </div>
+                    <div class="summary-row deposit">
+                        <span>Anticipo (50%):</span>
+                        <strong id="deposit-amount">$0.00</strong>
+                    </div>
                 </div>
-                <div class="cart-bar-right">
-                    <span class="cart-bar-total" id="cartBarTotal">$0</span>
-                    <button type="button" class="cart-bar-btn" id="cartBarContinue">Continuar &rarr;</button>
-                </div>
+                <button id="continue-products" class="btn btn-primary btn-large" disabled>
+                    Ir al Pago
+                </button>
             </div>
-
-            <!-- Cart Drawer Overlay -->
-            <div class="cart-drawer-overlay" id="cartDrawerOverlay" style="display:none"></div>
-
-            <!-- Cart Drawer Panel -->
-            <div class="cart-drawer" id="cartDrawer" style="display:none">
-                <div class="cart-drawer-header">
-                    <h3>Tu Pedido</h3>
-                    <button type="button" class="cart-drawer-close" id="cartDrawerClose">&#10005;</button>
-                </div>
-                <div class="cart-drawer-items" id="cartDrawerItems"></div>
-                <div class="cart-drawer-totals" id="cartDrawerTotals"></div>
-                <button type="button" class="cart-drawer-btn" id="cartDrawerContinue">Continuar &rarr;</button>
-            </div>
-
-            <!-- Hidden continue button for step navigation (used by handleProductsSubmit) -->
-            <button id="continue-products" style="display:none" disabled></button>
         </section>
 
         <!-- STEP 4A: Review Order & Choose Payment Method -->
@@ -791,7 +790,7 @@
 
                 <!-- AXKAN brand footer -->
                 <div class="success-brand-footer">
-                    <img src="/pedidos/logo.png" alt="AXKAN" class="success-brand-logo">
+                    <img src="./logo.png" alt="AXKAN" class="success-brand-logo">
                     <p class="success-brand-tagline">Recuerdos Hechos Souvenir</p>
                 </div>
 
@@ -855,7 +854,7 @@
                        muted
                        preload="auto"
                        poster="./logo.png">
-                    <source src="/pedidos/tutorial.mp4" type="video/mp4">
+                    <source src="./tutorial.mp4" type="video/mp4">
                 </video>
             </div>
         </div>
@@ -972,7 +971,7 @@
     })();
     </script>
 
-    <script src="/pedidos/order-form.js?v=2"></script>
+    <script src="./order-form.js"></script>
 
     <!-- Mobile Menu Script -->
     <script>

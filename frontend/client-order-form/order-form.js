@@ -417,7 +417,7 @@ function showReferralIndicator(salesRep) {
   inner.style.cssText = `
     position: fixed;
     top: 12px;
-    left: 12px;
+    right: 12px;
     z-index: 1000;
     background: linear-gradient(135deg, #10b981, #059669);
     color: white;
@@ -651,6 +651,10 @@ function showStep(stepNumber) {
   }
 
   // Special actions per step
+  // Show referral badge only on step 1
+  var refBadge = document.getElementById('referral-badge');
+  if (refBadge) refBadge.style.display = stepNumber === 1 ? '' : 'none';
+
   if (stepNumber === 1.5) {
     populateConfirmationData();
   } else if (stepNumber === 2) {
