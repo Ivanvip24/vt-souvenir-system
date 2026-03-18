@@ -496,11 +496,12 @@ app.use('/api/employees', (req, res, next) => {
   if (req.path === '/login' || req.path === '/verify') return next();
   return authMiddleware(req, res, next);
 }, employeeRoutes);
-app.use('/api/tasks', authMiddleware, taskRoutes);
-app.use('/api/gallery', authMiddleware, galleryRoutes);
-app.use('/api/notes', authMiddleware, notesRoutes);
-app.use('/api/knowledge', authMiddleware, knowledgeRoutes);
-app.use('/api/leads', authMiddleware, leadRoutes);
+// These routes use their own employeeAuth middleware — no admin auth needed
+app.use('/api/tasks', taskRoutes);
+app.use('/api/gallery', galleryRoutes);
+app.use('/api/notes', notesRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/leads', leadRoutes);
 // WhatsApp webhook must be public (Meta sends no JWT) — skip auth for /webhook only
 app.use('/api/whatsapp', (req, res, next) => {
   if (req.path === '/webhook') return next();

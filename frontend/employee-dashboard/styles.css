@@ -772,11 +772,13 @@ textarea {
 .bulk-actions-bar {
     background: var(--gray-800);
     color: var(--white);
-    padding: 12px 20px;
+    padding: 12px 16px;
     border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-bottom: 16px;
     animation: slideDown 0.2s ease;
 }
@@ -803,7 +805,8 @@ textarea {
 
 .bulk-buttons {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .btn-sm {
