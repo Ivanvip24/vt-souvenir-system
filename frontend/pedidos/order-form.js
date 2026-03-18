@@ -404,26 +404,25 @@ function showReferralIndicator(salesRep) {
   const inner = document.createElement('div');
   inner.style.cssText = `
     position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 1000;
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.4);
+    bottom: 8px;
+    left: 8px;
+    z-index: 80;
+    background: rgba(0,0,0,0.45);
+    color: rgba(255,255,255,0.7);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 6px;
-    animation: slideInLeft 0.4s ease-out;
+    gap: 4px;
+    backdrop-filter: blur(4px);
   `;
 
   // Create icon
   const icon = document.createElement('span');
-  icon.style.fontSize = '14px';
-  icon.textContent = '🎯';
+  icon.style.fontSize = '10px';
+  icon.textContent = '🔗';
 
   // Create text
   const text = document.createElement('span');
