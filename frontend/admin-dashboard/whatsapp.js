@@ -1630,13 +1630,168 @@ function injectWhatsAppStyles() {
       color: white !important;
     }
 
+    .wa-sales-word-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 16px;
+      align-items: center;
+      min-height: 80px;
+    }
+
+    .wa-sales-word-pill {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .wa-sales-comparison-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid #f0f0f0;
+    }
+
+    .wa-sales-comparison-card h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin: 0 0 16px 0;
+    }
+
+    .wa-sales-comparison-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .wa-sales-comparison-label {
+      font-size: 12px;
+      color: #888;
+      width: 70px;
+      flex-shrink: 0;
+      font-weight: 600;
+    }
+
+    .wa-sales-comparison-bar {
+      flex: 1;
+      height: 24px;
+      border-radius: 6px;
+      position: relative;
+      min-width: 40px;
+    }
+
+    .wa-sales-comparison-val {
+      font-size: 13px;
+      font-weight: 700;
+      width: 60px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .wa-sales-insight-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid #f0f0f0;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .wa-sales-insight-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .wa-sales-insight-text {
+      font-size: 14px;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    .wa-sales-insight-text strong {
+      color: #e72a88;
+    }
+
+    .wa-sales-peak-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .wa-sales-peak-table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: #f8f8f8;
+      font-weight: 600;
+      color: #555;
+      border-bottom: 2px solid #eee;
+    }
+
+    .wa-sales-peak-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+    }
+
+    .wa-sales-peak-table tr:hover { background: #fafafa; }
+
+    .wa-sales-peak-highlight {
+      background: #fef3f8 !important;
+      font-weight: 600;
+    }
+
+    .wa-sales-grid-5 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .wa-sales-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .wa-sales-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .wa-sales-insights-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+      .wa-sales-grid-5 { grid-template-columns: repeat(3, 1fr); }
+    }
+
     @media (max-width: 900px) {
       .wa-sales-grid { grid-template-columns: repeat(2, 1fr); }
       .wa-sales-charts-row { grid-template-columns: 1fr; }
+      .wa-sales-grid-5 { grid-template-columns: repeat(2, 1fr); }
+      .wa-sales-grid-3 { grid-template-columns: 1fr; }
+      .wa-sales-grid-2 { grid-template-columns: 1fr; }
+      .wa-sales-insights-row { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 480px) {
       .wa-sales-grid { grid-template-columns: 1fr; }
+      .wa-sales-grid-5 { grid-template-columns: 1fr; }
       .wa-sales-dashboard { padding: 14px; }
     }
   `;
@@ -4841,15 +4996,34 @@ function renderSalesDashboard(container, data) {
   waState.salesCharts = {};
 
   var overview = data.overview || {};
-  var revenue = data.revenue || {};
-  var messagesToClose = data.messagesToClose || [];
-  var responseTimes = data.responseTimes || {};
-  var hourlyDistribution = data.hourlyDistribution || [];
-  var intents = data.intents || [];
-  var dailyVolume = data.dailyVolume || [];
-  var lengthAnalysis = data.lengthAnalysis || {};
-  var topPhrases = data.topPhrases || [];
-  var senderBreakdown = data.senderBreakdown || {};
+  var messageStats = data.messageStats || {};
+  var responseTimePatterns = data.responseTimePatterns || {};
+  var hourlyActivity = data.hourlyActivity || [];
+  var dailyActivity = data.dailyActivity || [];
+  var conversationDepth = data.conversationDepth || {};
+  var topWords = data.topWords || {};
+  var messageTypes = data.messageTypes || [];
+  var conversationOutcomes = data.conversationOutcomes || {};
+  var clientResponsePatterns = data.clientResponsePatterns || {};
+  var firstMessageAnalysis = data.firstMessageAnalysis || {};
+  var emojiUsage = data.emojiUsage || {};
+  var linksSent = data.linksSent || {};
+  var peakEngagement = data.peakEngagement || [];
+  var conversationVelocity = data.conversationVelocity || {};
+
+  // Helper: safe number
+  function safeNum(v, decimals) {
+    if (v === null || v === undefined || isNaN(v)) return '-';
+    var n = Number(v);
+    if (decimals !== undefined) return n.toFixed(decimals);
+    return String(Math.round(n));
+  }
+
+  // Helper: safe percentage
+  function safePct(v) {
+    if (v === null || v === undefined || isNaN(v)) return '-';
+    return Number(v).toFixed(1) + '%';
+  }
 
   // --- Header with refresh button ---
   var header = document.createElement('div');
@@ -4869,107 +5043,125 @@ function renderSalesDashboard(container, data) {
   header.appendChild(refreshBtn);
   container.appendChild(header);
 
-  // --- Row 1: KPI Cards ---
+  // === ROW 1: 5 KPI Cards ===
   var kpiGrid = document.createElement('div');
-  kpiGrid.className = 'wa-sales-grid';
+  kpiGrid.className = 'wa-sales-grid-5';
+
+  var avgMsgsToClose = conversationOutcomes.with_order ? safeNum(conversationOutcomes.with_order.avg_messages) : '-';
+  var avgRespBuckets = (responseTimePatterns.buckets || []);
+  var totalRespCount = 0;
+  var weightedRespTime = 0;
+  avgRespBuckets.forEach(function(b) {
+    // Estimate midpoint of bucket for weighted avg
+    var mid = 0;
+    var bk = b.bucket || '';
+    if (bk.indexOf('<10') >= 0) mid = 5;
+    else if (bk.indexOf('10-30') >= 0) mid = 20;
+    else if (bk.indexOf('30-60') >= 0) mid = 45;
+    else if (bk.indexOf('1-5') >= 0) mid = 180;
+    else if (bk.indexOf('5-15') >= 0) mid = 600;
+    else if (bk.indexOf('15-60') >= 0) mid = 2250;
+    else if (bk.indexOf('>60') >= 0 || bk.indexOf('60+') >= 0) mid = 5400;
+    else mid = 30;
+    var cnt = b.count || 0;
+    totalRespCount += cnt;
+    weightedRespTime += mid * cnt;
+  });
+  var avgRespTime = totalRespCount > 0 ? weightedRespTime / totalRespCount : null;
 
   kpiGrid.appendChild(createSalesCard(
-    'CLOSE RATE',
-    (overview.closeRate || 0) + '%',
-    'pink',
-    overview.totalOrders ? overview.totalOrders + ' pedidos cerrados' : null
-  ));
-  kpiGrid.appendChild(createSalesCard(
-    'REVENUE',
-    '$' + (revenue.totalRevenue || 0).toLocaleString(),
-    'green',
-    revenue.period || 'Total'
-  ));
-  kpiGrid.appendChild(createSalesCard(
-    'AVG ORDER',
-    '$' + (revenue.avgOrderValue || 0).toLocaleString(),
-    'blue',
-    revenue.totalOrders ? revenue.totalOrders + ' ordenes' : null
-  ));
-  kpiGrid.appendChild(createSalesCard(
     'CONVERSACIONES',
-    String(overview.totalConversations || 0),
+    safeNum(overview.totalConversations),
     'orange',
-    overview.activeConversations ? overview.activeConversations + ' activas' : null
+    overview.totalClients ? overview.totalClients + ' clientes' : null
+  ));
+  kpiGrid.appendChild(createSalesCard(
+    'TOTAL MENSAJES',
+    safeNum(overview.totalMessages),
+    'blue',
+    null
+  ));
+  kpiGrid.appendChild(createSalesCard(
+    'CLOSE RATE',
+    safePct(overview.closeRate),
+    'pink',
+    overview.conversationsWithOrders ? overview.conversationsWithOrders + ' con pedido' : null
+  ));
+  kpiGrid.appendChild(createSalesCard(
+    'MSGS TO CLOSE',
+    avgMsgsToClose,
+    'green',
+    'Promedio mensajes para cerrar'
+  ));
+  kpiGrid.appendChild(createSalesCard(
+    'RESP. TIME',
+    formatSalesTime(avgRespTime),
+    'blue',
+    'Tiempo respuesta promedio'
   ));
 
   container.appendChild(kpiGrid);
 
-  // --- Row 2: Funnel ---
-  var funnelSection = document.createElement('div');
-  funnelSection.className = 'wa-sales-section';
+  // === ROW 2: Section title ===
+  var textPatternsSection = document.createElement('div');
+  textPatternsSection.className = 'wa-sales-section';
+  var textPatternsTitle = document.createElement('div');
+  textPatternsTitle.className = 'wa-sales-section-title';
+  textPatternsTitle.textContent = '\uD83D\uDCCA Patrones de Texto';
+  textPatternsSection.appendChild(textPatternsTitle);
+  container.appendChild(textPatternsSection);
 
-  var funnelTitle = document.createElement('div');
-  funnelTitle.className = 'wa-sales-section-title';
-  funnelTitle.textContent = '\uD83D\uDD73\uFE0F Funnel de Conversion';
-  funnelSection.appendChild(funnelTitle);
+  // === ROW 3: Word Clouds (2 columns) ===
+  var wordCloudRow = document.createElement('div');
+  wordCloudRow.className = 'wa-sales-charts-row';
 
-  var funnelRow = document.createElement('div');
-  funnelRow.className = 'wa-sales-funnel';
+  // Helper: build word cloud
+  function buildWordCloud(title, words, colorGood, colorBad) {
+    var card = document.createElement('div');
+    card.className = 'wa-sales-chart-card';
+    var h4 = document.createElement('h4');
+    h4.textContent = title;
+    card.appendChild(h4);
 
-  var totalConvs = overview.totalConversations || 0;
-  var linkedClients = overview.linkedToClient || 0;
-  var totalOrders = overview.totalOrders || 0;
+    var cloudDiv = document.createElement('div');
+    cloudDiv.className = 'wa-sales-word-cloud';
 
-  var funnelSteps = [
-    { value: totalConvs, label: 'Conversaciones' },
-    { value: linkedClients, label: 'Vinculados a Cliente', pct: totalConvs ? Math.round(linkedClients / totalConvs * 100) + '%' : '-' },
-    { value: totalOrders, label: 'Pedidos', pct: linkedClients ? Math.round(totalOrders / linkedClients * 100) + '%' : '-' }
-  ];
-
-  funnelSteps.forEach(function(step, i) {
-    if (i > 0) {
-      var arrow = document.createElement('div');
-      arrow.className = 'wa-sales-funnel-arrow';
-      arrow.textContent = '\u2192';
-      funnelRow.appendChild(arrow);
+    if (!words || words.length === 0) {
+      var noData = document.createElement('span');
+      noData.style.cssText = 'color:#aaa;font-size:13px;';
+      noData.textContent = 'Sin datos';
+      cloudDiv.appendChild(noData);
+      card.appendChild(cloudDiv);
+      return card;
     }
-    var stepEl = document.createElement('div');
-    stepEl.className = 'wa-sales-funnel-step';
 
-    var stepVal = document.createElement('div');
-    stepVal.className = 'step-value';
-    stepVal.textContent = step.value;
-    stepEl.appendChild(stepVal);
+    var maxCount = 1;
+    words.forEach(function(w) { if ((w.count || 0) > maxCount) maxCount = w.count; });
 
-    var stepLbl = document.createElement('div');
-    stepLbl.className = 'step-label';
-    stepLbl.textContent = step.label + (step.pct ? ' (' + step.pct + ')' : '');
-    stepEl.appendChild(stepLbl);
+    var top20 = words.slice(0, 20);
+    top20.forEach(function(w) {
+      var pill = document.createElement('span');
+      pill.className = 'wa-sales-word-pill';
+      var ratio = Math.max(0.3, (w.count || 1) / maxCount);
+      var fontSize = Math.round(12 + ratio * 12);
+      var bgColor = ratio > 0.5 ? colorGood : colorBad;
+      pill.style.cssText = 'font-size:' + fontSize + 'px;background:' + bgColor + ';';
+      pill.textContent = w.word || '';
+      cloudDiv.appendChild(pill);
+    });
 
-    funnelRow.appendChild(stepEl);
-  });
+    card.appendChild(cloudDiv);
+    return card;
+  }
 
-  funnelSection.appendChild(funnelRow);
-  container.appendChild(funnelSection);
+  wordCloudRow.appendChild(buildWordCloud('Palabras AI (Top 20)', topWords.aiWords || [], '#8ab73b', '#e72a88'));
+  wordCloudRow.appendChild(buildWordCloud('Palabras Cliente (Top 20)', topWords.clientWords || [], '#09adc2', '#f39223'));
+  container.appendChild(wordCloudRow);
 
-  // --- Row 3: Efficiency Cards ---
-  var effGrid = document.createElement('div');
-  effGrid.className = 'wa-sales-grid';
-  effGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-
-  // messagesToClose can be array or single object — handle both
-  var mtc = Array.isArray(messagesToClose) ? messagesToClose[0] || {} : (messagesToClose || {});
-  var avgClosedMsgs = Math.round(mtc.avg_messages_closed || mtc.avgMessagesClosed || 0) || '-';
-  var avgLostMsgs = Math.round(mtc.avg_messages_lost || mtc.avgMessagesLost || 0) || '-';
-  var avgRespTime = responseTimes.avg_response_seconds || responseTimes.avgResponseTime || responseTimes.avg || null;
-
-  effGrid.appendChild(createSalesCard('MSGS TO CLOSE', String(avgClosedMsgs), 'green', 'Promedio mensajes para cerrar'));
-  effGrid.appendChild(createSalesCard('MSGS TO LOSE', String(avgLostMsgs), 'pink', 'Promedio mensajes antes de perder'));
-  effGrid.appendChild(createSalesCard('RESP. TIME', formatSalesTime(avgRespTime), 'blue', 'Tiempo respuesta promedio'));
-
-  container.appendChild(effGrid);
-
-  // --- Row 4: Charts - Hourly + Intents ---
+  // === ROW 4: Hourly + Daily charts ===
   var chartsRow1 = document.createElement('div');
   chartsRow1.className = 'wa-sales-charts-row';
 
-  // Hourly activity
   var hourlyCard = document.createElement('div');
   hourlyCard.className = 'wa-sales-chart-card';
   var hourlyH4 = document.createElement('h4');
@@ -4980,151 +5172,401 @@ function renderSalesDashboard(container, data) {
   hourlyCard.appendChild(hourlyCanvas);
   chartsRow1.appendChild(hourlyCard);
 
-  // Intent distribution
-  var intentCard = document.createElement('div');
-  intentCard.className = 'wa-sales-chart-card';
-  var intentH4 = document.createElement('h4');
-  intentH4.textContent = 'Distribucion de Intenciones';
-  intentCard.appendChild(intentH4);
-  var intentCanvas = document.createElement('canvas');
-  intentCanvas.id = 'salesIntentChart';
-  intentCard.appendChild(intentCanvas);
-  chartsRow1.appendChild(intentCard);
-
-  container.appendChild(chartsRow1);
-
-  // --- Row 5: Charts - Daily Volume + Length Analysis ---
-  var chartsRow2 = document.createElement('div');
-  chartsRow2.className = 'wa-sales-charts-row';
-
-  // Daily volume
   var dailyCard = document.createElement('div');
   dailyCard.className = 'wa-sales-chart-card';
   var dailyH4 = document.createElement('h4');
-  dailyH4.textContent = 'Volumen Diario (30 dias)';
+  dailyH4.textContent = 'Actividad por D\u00eda';
   dailyCard.appendChild(dailyH4);
   var dailyCanvas = document.createElement('canvas');
   dailyCanvas.id = 'salesDailyChart';
   dailyCard.appendChild(dailyCanvas);
-  chartsRow2.appendChild(dailyCard);
+  chartsRow1.appendChild(dailyCard);
 
-  // Length analysis
-  var lengthCard = document.createElement('div');
-  lengthCard.className = 'wa-sales-chart-card';
-  var lengthH4 = document.createElement('h4');
-  lengthH4.textContent = 'Analisis de Longitud de Mensajes';
-  lengthCard.appendChild(lengthH4);
-  var lengthCanvas = document.createElement('canvas');
-  lengthCanvas.id = 'salesLengthChart';
-  lengthCard.appendChild(lengthCanvas);
-  chartsRow2.appendChild(lengthCard);
+  container.appendChild(chartsRow1);
+
+  // === ROW 5: 3 Comparison Cards "Cerradas vs Perdidas" ===
+  var compSection = document.createElement('div');
+  compSection.className = 'wa-sales-section';
+  var compTitle = document.createElement('div');
+  compTitle.className = 'wa-sales-section-title';
+  compTitle.textContent = '\u2694\uFE0F Cerradas vs Perdidas';
+  compSection.appendChild(compTitle);
+  container.appendChild(compSection);
+
+  var compGrid = document.createElement('div');
+  compGrid.className = 'wa-sales-grid-3';
+
+  // Helper: comparison card
+  function buildComparisonCard(title, closedVal, closedLabel, lostVal, lostLabel, unit) {
+    var card = document.createElement('div');
+    card.className = 'wa-sales-comparison-card';
+    var h4 = document.createElement('h4');
+    h4.textContent = title;
+    card.appendChild(h4);
+
+    var cNum = Number(closedVal) || 0;
+    var lNum = Number(lostVal) || 0;
+    var maxVal = Math.max(cNum, lNum, 1);
+
+    // Closed row
+    var row1 = document.createElement('div');
+    row1.className = 'wa-sales-comparison-row';
+    var lbl1 = document.createElement('div');
+    lbl1.className = 'wa-sales-comparison-label';
+    lbl1.textContent = closedLabel;
+    row1.appendChild(lbl1);
+    var bar1 = document.createElement('div');
+    bar1.className = 'wa-sales-comparison-bar';
+    bar1.style.cssText = 'background:#8ab73b;width:' + Math.round(cNum / maxVal * 100) + '%;';
+    row1.appendChild(bar1);
+    var val1 = document.createElement('div');
+    val1.className = 'wa-sales-comparison-val';
+    val1.style.color = '#8ab73b';
+    val1.textContent = (closedVal !== null && closedVal !== undefined && !isNaN(closedVal)) ? (unit ? Number(closedVal).toFixed(1) + unit : safeNum(closedVal)) : '-';
+    row1.appendChild(val1);
+    card.appendChild(row1);
+
+    // Lost row
+    var row2 = document.createElement('div');
+    row2.className = 'wa-sales-comparison-row';
+    var lbl2 = document.createElement('div');
+    lbl2.className = 'wa-sales-comparison-label';
+    lbl2.textContent = lostLabel;
+    row2.appendChild(lbl2);
+    var bar2 = document.createElement('div');
+    bar2.className = 'wa-sales-comparison-bar';
+    bar2.style.cssText = 'background:#e72a88;width:' + Math.round(lNum / maxVal * 100) + '%;';
+    row2.appendChild(bar2);
+    var val2 = document.createElement('div');
+    val2.className = 'wa-sales-comparison-val';
+    val2.style.color = '#e72a88';
+    val2.textContent = (lostVal !== null && lostVal !== undefined && !isNaN(lostVal)) ? (unit ? Number(lostVal).toFixed(1) + unit : safeNum(lostVal)) : '-';
+    row2.appendChild(val2);
+    card.appendChild(row2);
+
+    return card;
+  }
+
+  var closedOutcome = conversationOutcomes.with_order || {};
+  var lostOutcome = conversationOutcomes.without_order || {};
+
+  // Avg message length comparison
+  var closedAvgLen = (Number(closedOutcome.avg_client_length || 0) + Number(closedOutcome.avg_ai_length || 0)) / 2;
+  var lostAvgLen = (Number(lostOutcome.avg_client_length || 0) + Number(lostOutcome.avg_ai_length || 0)) / 2;
+  compGrid.appendChild(buildComparisonCard(
+    'Longitud Promedio de Mensaje',
+    closedAvgLen, 'Cerrada',
+    lostAvgLen, 'Perdida',
+    ' chars'
+  ));
+
+  // Avg client response time
+  var closedRespPatterns = clientResponsePatterns.with_order || {};
+  var lostRespPatterns = clientResponsePatterns.without_order || {};
+  compGrid.appendChild(buildComparisonCard(
+    'Tiempo Respuesta Cliente',
+    closedRespPatterns.avg_seconds, 'Cerrada',
+    lostRespPatterns.avg_seconds, 'Perdida',
+    's'
+  ));
+
+  // Conversation velocity
+  var closedVelocity = conversationVelocity.with_order || {};
+  var lostVelocity = conversationVelocity.without_order || {};
+  compGrid.appendChild(buildComparisonCard(
+    'Velocidad de Conversaci\u00f3n',
+    closedVelocity.avg_msgs_per_hour, 'Cerrada',
+    lostVelocity.avg_msgs_per_hour, 'Perdida',
+    ' msg/h'
+  ));
+
+  container.appendChild(compGrid);
+
+  // === ROW 6: Conversation Depth + Message Types ===
+  var chartsRow2 = document.createElement('div');
+  chartsRow2.className = 'wa-sales-charts-row';
+
+  // Conversation depth horizontal bar
+  var depthCard = document.createElement('div');
+  depthCard.className = 'wa-sales-chart-card';
+  var depthH4 = document.createElement('h4');
+  depthH4.textContent = 'Profundidad de Conversaci\u00f3n';
+  depthCard.appendChild(depthH4);
+  var depthCanvas = document.createElement('canvas');
+  depthCanvas.id = 'salesDepthChart';
+  depthCard.appendChild(depthCanvas);
+  chartsRow2.appendChild(depthCard);
+
+  // Message types doughnut
+  var typesCard = document.createElement('div');
+  typesCard.className = 'wa-sales-chart-card';
+  var typesH4 = document.createElement('h4');
+  typesH4.textContent = 'Tipos de Mensaje';
+  typesCard.appendChild(typesH4);
+  var typesCanvas = document.createElement('canvas');
+  typesCanvas.id = 'salesTypesChart';
+  typesCard.appendChild(typesCanvas);
+  chartsRow2.appendChild(typesCard);
 
   container.appendChild(chartsRow2);
 
-  // --- Row 6: Top Phrases Table ---
-  if (topPhrases.length > 0) {
-    var phrasesSection = document.createElement('div');
-    phrasesSection.className = 'wa-sales-section';
+  // === ROW 7: Response Time + First Message ===
+  var chartsRow3 = document.createElement('div');
+  chartsRow3.className = 'wa-sales-charts-row';
 
-    var phrasesTitle = document.createElement('div');
-    phrasesTitle.className = 'wa-sales-section-title';
-    phrasesTitle.textContent = '\uD83D\uDCAC Frases Mas Usadas';
-    phrasesSection.appendChild(phrasesTitle);
+  // Response time buckets
+  var respTimeCard = document.createElement('div');
+  respTimeCard.className = 'wa-sales-chart-card';
+  var respTimeH4 = document.createElement('h4');
+  respTimeH4.textContent = 'Tiempo de Respuesta';
+  respTimeCard.appendChild(respTimeH4);
+  var respTimeCanvas = document.createElement('canvas');
+  respTimeCanvas.id = 'salesRespTimeChart';
+  respTimeCard.appendChild(respTimeCanvas);
+  chartsRow3.appendChild(respTimeCard);
 
-    var phrasesCard = document.createElement('div');
-    phrasesCard.className = 'wa-sales-chart-card';
+  // First message comparison card
+  var firstMsgCard = document.createElement('div');
+  firstMsgCard.className = 'wa-sales-comparison-card';
+  var firstMsgH4 = document.createElement('h4');
+  firstMsgH4.textContent = 'Primer Mensaje del AI';
+  firstMsgCard.appendChild(firstMsgH4);
 
-    var table = document.createElement('table');
-    table.className = 'wa-sales-phrases-table';
+  var fmClosed = firstMessageAnalysis.with_order || {};
+  var fmLost = firstMessageAnalysis.without_order || {};
 
-    var thead = document.createElement('thead');
-    var headerRow = document.createElement('tr');
-    ['Frase', 'Veces usado', 'Tiempo respuesta promedio'].forEach(function(txt) {
-      var th = document.createElement('th');
-      th.textContent = txt;
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
+  // First msg length comparison
+  var fmLenTitle = document.createElement('div');
+  fmLenTitle.style.cssText = 'font-size:12px;color:#888;font-weight:600;margin-bottom:8px;margin-top:8px;';
+  fmLenTitle.textContent = 'Longitud del primer mensaje';
+  firstMsgCard.appendChild(fmLenTitle);
 
-    var tbody = document.createElement('tbody');
-    topPhrases.forEach(function(phrase) {
-      var row = document.createElement('tr');
+  var fmLenClosed = document.createElement('div');
+  fmLenClosed.className = 'wa-sales-comparison-row';
+  var fmLenCLbl = document.createElement('div');
+  fmLenCLbl.className = 'wa-sales-comparison-label';
+  fmLenCLbl.textContent = 'Cerrada';
+  fmLenClosed.appendChild(fmLenCLbl);
+  var fmLenCVal = document.createElement('div');
+  fmLenCVal.className = 'wa-sales-comparison-val';
+  fmLenCVal.style.color = '#8ab73b';
+  fmLenCVal.textContent = fmClosed.avg_length ? safeNum(fmClosed.avg_length) + ' chars' : '-';
+  fmLenClosed.appendChild(fmLenCVal);
+  firstMsgCard.appendChild(fmLenClosed);
 
-      var tdPhrase = document.createElement('td');
-      tdPhrase.textContent = phrase.phrase || phrase.text || '';
-      row.appendChild(tdPhrase);
+  var fmLenLost = document.createElement('div');
+  fmLenLost.className = 'wa-sales-comparison-row';
+  var fmLenLLbl = document.createElement('div');
+  fmLenLLbl.className = 'wa-sales-comparison-label';
+  fmLenLLbl.textContent = 'Perdida';
+  fmLenLost.appendChild(fmLenLLbl);
+  var fmLenLVal = document.createElement('div');
+  fmLenLVal.className = 'wa-sales-comparison-val';
+  fmLenLVal.style.color = '#e72a88';
+  fmLenLVal.textContent = fmLost.avg_length ? safeNum(fmLost.avg_length) + ' chars' : '-';
+  fmLenLost.appendChild(fmLenLVal);
+  firstMsgCard.appendChild(fmLenLost);
 
-      var tdCount = document.createElement('td');
-      tdCount.textContent = phrase.count || 0;
-      row.appendChild(tdCount);
+  // First msg response time comparison
+  var fmRtTitle = document.createElement('div');
+  fmRtTitle.style.cssText = 'font-size:12px;color:#888;font-weight:600;margin-bottom:8px;margin-top:16px;';
+  fmRtTitle.textContent = 'Tiempo de respuesta al primer mensaje';
+  firstMsgCard.appendChild(fmRtTitle);
 
-      var tdTime = document.createElement('td');
-      tdTime.textContent = formatSalesTime(phrase.avgResponseTime || phrase.avgTime);
-      row.appendChild(tdTime);
+  var fmRtClosed = document.createElement('div');
+  fmRtClosed.className = 'wa-sales-comparison-row';
+  var fmRtCLbl = document.createElement('div');
+  fmRtCLbl.className = 'wa-sales-comparison-label';
+  fmRtCLbl.textContent = 'Cerrada';
+  fmRtClosed.appendChild(fmRtCLbl);
+  var fmRtCVal = document.createElement('div');
+  fmRtCVal.className = 'wa-sales-comparison-val';
+  fmRtCVal.style.color = '#8ab73b';
+  fmRtCVal.textContent = fmClosed.avg_response_time ? formatSalesTime(fmClosed.avg_response_time) : '-';
+  fmRtClosed.appendChild(fmRtCVal);
+  firstMsgCard.appendChild(fmRtClosed);
 
-      tbody.appendChild(row);
-    });
-    table.appendChild(tbody);
+  var fmRtLost = document.createElement('div');
+  fmRtLost.className = 'wa-sales-comparison-row';
+  var fmRtLLbl = document.createElement('div');
+  fmRtLLbl.className = 'wa-sales-comparison-label';
+  fmRtLLbl.textContent = 'Perdida';
+  fmRtLost.appendChild(fmRtLLbl);
+  var fmRtLVal = document.createElement('div');
+  fmRtLVal.className = 'wa-sales-comparison-val';
+  fmRtLVal.style.color = '#e72a88';
+  fmRtLVal.textContent = fmLost.avg_response_time ? formatSalesTime(fmLost.avg_response_time) : '-';
+  fmRtLost.appendChild(fmRtLVal);
+  firstMsgCard.appendChild(fmRtLost);
 
-    phrasesCard.appendChild(table);
-    phrasesSection.appendChild(phrasesCard);
-    container.appendChild(phrasesSection);
+  chartsRow3.appendChild(firstMsgCard);
+  container.appendChild(chartsRow3);
+
+  // === ROW 8: Insight Cards (Emojis + Links) ===
+  var insightsRow = document.createElement('div');
+  insightsRow.className = 'wa-sales-insights-row';
+
+  function buildInsightCard(icon, text) {
+    var card = document.createElement('div');
+    card.className = 'wa-sales-insight-card';
+    var iconEl = document.createElement('div');
+    iconEl.className = 'wa-sales-insight-icon';
+    iconEl.textContent = icon;
+    card.appendChild(iconEl);
+    var textEl = document.createElement('div');
+    textEl.className = 'wa-sales-insight-text';
+    textEl.textContent = text;
+    card.appendChild(textEl);
+    return card;
   }
 
-  // --- Row 7: Sender Breakdown ---
-  var senderSection = document.createElement('div');
-  senderSection.className = 'wa-sales-section';
+  var emojiWith = emojiUsage.with_emoji || {};
+  var emojiWithout = emojiUsage.without_emoji || {};
+  var emojiText = 'Conversaciones con emoji: ' + safePct(emojiWith.close_rate) + ' close rate (' + safeNum(emojiWith.count) + ' convs) vs sin emoji: ' + safePct(emojiWithout.close_rate) + ' close rate (' + safeNum(emojiWithout.count) + ' convs)';
+  insightsRow.appendChild(buildInsightCard('\uD83D\uDE00', emojiText));
 
-  var senderTitle = document.createElement('div');
-  senderTitle.className = 'wa-sales-section-title';
-  senderTitle.textContent = '\uD83D\uDCE8 Desglose de Mensajes por Remitente';
-  senderSection.appendChild(senderTitle);
+  var linksWithData = linksSent.with_links || {};
+  var linksWithoutData = linksSent.without_links || {};
+  var linksText = 'Conversaciones con links: ' + safePct(linksWithData.close_rate) + ' close rate (' + safeNum(linksWithData.count) + ' convs) vs sin links: ' + safePct(linksWithoutData.close_rate) + ' close rate (' + safeNum(linksWithoutData.count) + ' convs)';
+  insightsRow.appendChild(buildInsightCard('\uD83D\uDD17', linksText));
 
-  var senderGrid = document.createElement('div');
-  senderGrid.className = 'wa-sales-grid';
-  senderGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  container.appendChild(insightsRow);
 
-  var totalMsgs = (senderBreakdown.client || 0) + (senderBreakdown.ai || 0) + (senderBreakdown.admin || 0);
-  var clientPct = totalMsgs ? Math.round((senderBreakdown.client || 0) / totalMsgs * 100) : 0;
-  var aiPct = totalMsgs ? Math.round((senderBreakdown.ai || 0) / totalMsgs * 100) : 0;
-  var adminPct = totalMsgs ? Math.round((senderBreakdown.admin || 0) / totalMsgs * 100) : 0;
+  // === ROW 9: Peak Hours Table ===
+  var peakSection = document.createElement('div');
+  peakSection.className = 'wa-sales-section';
+  var peakTitle = document.createElement('div');
+  peakTitle.className = 'wa-sales-section-title';
+  peakTitle.textContent = '\u23F0 Horas Pico de Engagement';
+  peakSection.appendChild(peakTitle);
+  container.appendChild(peakSection);
 
-  senderGrid.appendChild(createSalesCard('CLIENTE', clientPct + '%', 'orange', (senderBreakdown.client || 0).toLocaleString() + ' mensajes'));
-  senderGrid.appendChild(createSalesCard('AI', aiPct + '%', 'green', (senderBreakdown.ai || 0).toLocaleString() + ' mensajes'));
-  senderGrid.appendChild(createSalesCard('ADMIN', adminPct + '%', 'blue', (senderBreakdown.admin || 0).toLocaleString() + ' mensajes'));
+  var peakCard = document.createElement('div');
+  peakCard.className = 'wa-sales-chart-card';
 
-  senderSection.appendChild(senderGrid);
-  container.appendChild(senderSection);
+  if (peakEngagement.length > 0) {
+    // Sort by close_rate descending
+    var sortedPeak = peakEngagement.slice().sort(function(a, b) {
+      return (Number(b.close_rate) || 0) - (Number(a.close_rate) || 0);
+    });
 
-  // --- Render Charts ---
-  renderSalesCharts(hourlyDistribution, intents, dailyVolume, lengthAnalysis);
+    var peakTable = document.createElement('table');
+    peakTable.className = 'wa-sales-peak-table';
+
+    var peakThead = document.createElement('thead');
+    var peakHeaderRow = document.createElement('tr');
+    ['Hora', 'Mensajes', 'Close Rate'].forEach(function(txt) {
+      var th = document.createElement('th');
+      th.textContent = txt;
+      peakHeaderRow.appendChild(th);
+    });
+    peakThead.appendChild(peakHeaderRow);
+    peakTable.appendChild(peakThead);
+
+    var peakTbody = document.createElement('tbody');
+    sortedPeak.forEach(function(row, idx) {
+      var tr = document.createElement('tr');
+      if (idx < 3) tr.className = 'wa-sales-peak-highlight';
+
+      var tdHour = document.createElement('td');
+      tdHour.textContent = (row.hour !== null && row.hour !== undefined) ? row.hour + ':00' : '-';
+      tr.appendChild(tdHour);
+
+      var tdMsgs = document.createElement('td');
+      tdMsgs.textContent = safeNum(row.total);
+      tr.appendChild(tdMsgs);
+
+      var tdRate = document.createElement('td');
+      tdRate.textContent = safePct(row.close_rate);
+      if (idx < 3) tdRate.style.color = '#e72a88';
+      tr.appendChild(tdRate);
+
+      peakTbody.appendChild(tr);
+    });
+    peakTable.appendChild(peakTbody);
+    peakCard.appendChild(peakTable);
+  } else {
+    var noDataPeak = document.createElement('div');
+    noDataPeak.style.cssText = 'padding:20px;color:#aaa;text-align:center;font-size:13px;';
+    noDataPeak.textContent = 'Sin datos';
+    peakCard.appendChild(noDataPeak);
+  }
+
+  container.appendChild(peakCard);
+
+  // === Render all Chart.js charts ===
+  _renderSalesCharts(hourlyActivity, dailyActivity, conversationDepth, messageTypes, responseTimePatterns);
 }
 
-function renderSalesCharts(hourlyDistribution, intents, dailyVolume, lengthAnalysis) {
-  // Hourly activity chart
+function _renderSalesCharts(hourlyActivity, dailyActivity, conversationDepth, messageTypes, responseTimePatterns) {
+  var brandColors = ['#e72a88', '#8ab73b', '#f39223', '#09adc2', '#e52421', '#D4A574'];
+
+  // --- Hourly Activity (stacked bar, inbound/outbound) ---
   var hourlyCtx = document.getElementById('salesHourlyChart');
   if (hourlyCtx) {
     var hours = [];
-    var hourlyCounts = [];
+    var inboundCounts = [];
+    var outboundCounts = [];
     for (var h = 0; h < 24; h++) {
       hours.push(h + ':00');
-      var found = hourlyDistribution.find(function(item) { return item.hour === h; });
-      hourlyCounts.push(found ? found.count : 0);
+      var found = (hourlyActivity || []).find(function(item) { return Number(item.hour) === h; });
+      inboundCounts.push(found ? (Number(found.inbound_count) || 0) : 0);
+      outboundCounts.push(found ? (Number(found.outbound_count) || 0) : 0);
     }
     waState.salesCharts.hourly = new Chart(hourlyCtx.getContext('2d'), {
       type: 'bar',
       data: {
         labels: hours,
-        datasets: [{
-          data: hourlyCounts,
-          backgroundColor: '#e72a88',
-          borderRadius: 4
-        }]
+        datasets: [
+          { label: 'Entrantes', data: inboundCounts, backgroundColor: '#09adc2', borderRadius: 4 },
+          { label: 'Salientes', data: outboundCounts, backgroundColor: '#e72a88', borderRadius: 4 }
+        ]
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  }
+
+  // --- Daily Activity (bar, 7 days) ---
+  var dailyCtx = document.getElementById('salesDailyChart');
+  if (dailyCtx) {
+    var dayNames = ['Lun', 'Mar', 'Mi\u00e9', 'Jue', 'Vie', 'S\u00e1b', 'Dom'];
+    var dailyLabels = [];
+    var dailyInbound = [];
+    var dailyTotal = [];
+
+    if (dailyActivity && dailyActivity.length > 0) {
+      // Map day data — assume day field is 0-6 (Mon-Sun) or day name
+      for (var d = 0; d < 7; d++) {
+        dailyLabels.push(dayNames[d]);
+        var found = dailyActivity.find(function(item) { return Number(item.day) === d; });
+        dailyTotal.push(found ? (Number(found.total_messages) || 0) : 0);
+        dailyInbound.push(found ? (Number(found.inbound_count) || 0) : 0);
+      }
+    } else {
+      dailyLabels = dayNames;
+      dailyTotal = [0, 0, 0, 0, 0, 0, 0];
+      dailyInbound = [0, 0, 0, 0, 0, 0, 0];
+    }
+
+    waState.salesCharts.daily = new Chart(dailyCtx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: dailyLabels,
+        datasets: [
+          { label: 'Total', data: dailyTotal, backgroundColor: '#f39223', borderRadius: 4 },
+          { label: 'Entrantes', data: dailyInbound, backgroundColor: '#09adc2', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
         scales: {
           x: { grid: { display: false } },
           y: { beginAtZero: true, ticks: { precision: 0 } }
@@ -5133,20 +5575,50 @@ function renderSalesCharts(hourlyDistribution, intents, dailyVolume, lengthAnaly
     });
   }
 
-  // Intent distribution doughnut
-  var intentCtx = document.getElementById('salesIntentChart');
-  if (intentCtx && intents.length) {
-    var intentLabels = intents.map(function(i) { return i.intent || i.label || 'Otro'; });
-    var intentCounts = intents.map(function(i) { return i.count || 0; });
-    var intentColors = ['#e72a88', '#8ab73b', '#f39223', '#09adc2', '#e52421', '#D4A574', '#6366f1', '#ec4899'];
+  // --- Conversation Depth (horizontal bar, color-coded by outcome) ---
+  var depthCtx = document.getElementById('salesDepthChart');
+  if (depthCtx) {
+    var depthDist = (conversationDepth && conversationDepth.distribution) || [];
+    if (depthDist.length > 0) {
+      var depthLabels = depthDist.map(function(d) { return d.range || '-'; });
+      var depthWithOrder = depthDist.map(function(d) { return Number(d.with_order) || 0; });
+      var depthWithoutOrder = depthDist.map(function(d) { return Number(d.without_order) || 0; });
 
-    waState.salesCharts.intents = new Chart(intentCtx.getContext('2d'), {
+      waState.salesCharts.depth = new Chart(depthCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: depthLabels,
+          datasets: [
+            { label: 'Con pedido', data: depthWithOrder, backgroundColor: '#8ab73b', borderRadius: 4 },
+            { label: 'Sin pedido', data: depthWithoutOrder, backgroundColor: '#e72a88', borderRadius: 4 }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+          scales: {
+            x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+            y: { stacked: true, grid: { display: false } }
+          }
+        }
+      });
+    }
+  }
+
+  // --- Message Types (doughnut) ---
+  var typesCtx = document.getElementById('salesTypesChart');
+  if (typesCtx && messageTypes && messageTypes.length > 0) {
+    var typeLabels = messageTypes.map(function(t) { return t.message_type || 'otro'; });
+    var typeCounts = messageTypes.map(function(t) { return Number(t.count) || 0; });
+
+    waState.salesCharts.types = new Chart(typesCtx.getContext('2d'), {
       type: 'doughnut',
       data: {
-        labels: intentLabels,
+        labels: typeLabels,
         datasets: [{
-          data: intentCounts,
-          backgroundColor: intentColors.slice(0, intentLabels.length)
+          data: typeCounts,
+          backgroundColor: brandColors.slice(0, typeLabels.length)
         }]
       },
       options: {
@@ -5158,95 +5630,33 @@ function renderSalesCharts(hourlyDistribution, intents, dailyVolume, lengthAnaly
     });
   }
 
-  // Daily volume line chart
-  var dailyCtx = document.getElementById('salesDailyChart');
-  if (dailyCtx && dailyVolume.length) {
-    var dailyLabels = dailyVolume.map(function(d) {
-      var dt = new Date(d.date);
-      return (dt.getMonth() + 1) + '/' + dt.getDate();
-    });
-    var dailyCounts = dailyVolume.map(function(d) { return d.count || d.messages || 0; });
+  // --- Response Time Buckets (bar) ---
+  var respCtx = document.getElementById('salesRespTimeChart');
+  if (respCtx) {
+    var respBuckets = (responseTimePatterns && responseTimePatterns.buckets) || [];
+    if (respBuckets.length > 0) {
+      var respLabels = respBuckets.map(function(b) { return b.bucket || '-'; });
+      var respCounts = respBuckets.map(function(b) { return Number(b.count) || 0; });
 
-    waState.salesCharts.daily = new Chart(dailyCtx.getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: dailyLabels,
-        datasets: [{
-          data: dailyCounts,
-          borderColor: '#09adc2',
-          backgroundColor: 'rgba(9,173,194,0.1)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false } },
-          y: { beginAtZero: true, ticks: { precision: 0 } }
-        }
-      }
-    });
-  }
-
-  // Length analysis grouped bar
-  var lengthCtx = document.getElementById('salesLengthChart');
-  if (lengthCtx && lengthAnalysis) {
-    var lengthCategories = Object.keys(lengthAnalysis);
-    if (lengthCategories.length > 0) {
-      var firstVal = lengthAnalysis[lengthCategories[0]];
-      if (typeof firstVal === 'object' && firstVal !== null) {
-        // Grouped format: { client: { short: X, medium: X, long: X }, ai: {...} }
-        var senders = lengthCategories;
-        var buckets = Object.keys(firstVal);
-        var datasets = buckets.map(function(bucket, idx) {
-          var colors = ['#e72a88', '#8ab73b', '#f39223', '#09adc2'];
-          return {
-            label: bucket,
-            data: senders.map(function(s) { return lengthAnalysis[s][bucket] || 0; }),
-            backgroundColor: colors[idx % colors.length],
+      waState.salesCharts.respTime = new Chart(respCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: respLabels,
+          datasets: [{
+            data: respCounts,
+            backgroundColor: '#09adc2',
             borderRadius: 4
-          };
-        });
-        waState.salesCharts.length = new Chart(lengthCtx.getContext('2d'), {
-          type: 'bar',
-          data: { labels: senders, datasets: datasets },
-          options: {
-            responsive: true,
-            plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
-            scales: {
-              x: { grid: { display: false } },
-              y: { beginAtZero: true, ticks: { precision: 0 } }
-            }
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, ticks: { precision: 0 } }
           }
-        });
-      } else {
-        // Simple format: { short: X, medium: X, long: X }
-        var labels = lengthCategories;
-        var vals = labels.map(function(l) { return lengthAnalysis[l] || 0; });
-        var barColors = ['#e72a88', '#8ab73b', '#f39223', '#09adc2'];
-        waState.salesCharts.length = new Chart(lengthCtx.getContext('2d'), {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              data: vals,
-              backgroundColor: barColors.slice(0, labels.length),
-              borderRadius: 4
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { grid: { display: false } },
-              y: { beginAtZero: true, ticks: { precision: 0 } }
-            }
-          }
-        });
-      }
+        }
+      });
     }
   }
 }

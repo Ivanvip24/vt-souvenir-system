@@ -1308,244 +1308,428 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     // 1. Overview
     const overview = await safeQuery(`
       SELECT
-        COUNT(*) AS total_conversations,
-        COUNT(client_id) AS linked_to_client,
-        COUNT(DISTINCT CASE WHEN EXISTS (
+        COUNT(DISTINCT wc.id) AS total_conversations,
+        COALESCE((SELECT COUNT(*) FROM whatsapp_messages), 0) AS total_messages,
+        COUNT(DISTINCT wc.client_id) FILTER (WHERE wc.client_id IS NOT NULL) AS total_clients,
+        COUNT(DISTINCT wc.id) FILTER (WHERE EXISTS (
           SELECT 1 FROM orders o WHERE o.client_id = wc.client_id
-        ) THEN wc.id END) AS order_conversations
-      FROM whatsapp_conversations wc
-    `);
-
-    // 2. Revenue from WhatsApp conversations
-    const revenue = await safeQuery(`
-      SELECT
-        COUNT(DISTINCT o.id) AS total_orders,
-        COALESCE(SUM(o.total_price), 0) AS total_revenue,
-        COALESCE(AVG(o.total_price), 0) AS avg_order_value,
-        COALESCE(SUM(o.profit), 0) AS total_profit
-      FROM orders o
-      WHERE o.client_id IN (
-        SELECT DISTINCT client_id FROM whatsapp_conversations WHERE client_id IS NOT NULL
-      )
-    `);
-
-    // 3. Close rate
-    const closeRate = await safeQuery(`
-      SELECT
-        COUNT(*) AS total,
-        COUNT(CASE WHEN EXISTS (
-          SELECT 1 FROM orders o WHERE o.client_id = wc.client_id
-        ) THEN 1 END) AS closed,
+        )) AS conversations_with_orders,
         CASE WHEN COUNT(*) > 0
           THEN ROUND(
-            COUNT(CASE WHEN EXISTS (
+            COUNT(DISTINCT wc.id) FILTER (WHERE EXISTS (
               SELECT 1 FROM orders o WHERE o.client_id = wc.client_id
-            ) THEN 1 END)::numeric / COUNT(*)::numeric * 100, 2
-          )
-          ELSE 0
-        END AS close_rate_pct
+            ))::numeric / COUNT(DISTINCT wc.id)::numeric * 100, 2
+          ) ELSE 0
+        END AS close_rate
       FROM whatsapp_conversations wc
-      WHERE wc.client_id IS NOT NULL
     `);
 
-    // 4. Messages to close — avg messages for closed vs lost, avg duration
-    const messagesToClose = await safeQuery(`
+    // 2. Message stats — totals and avg length by sender
+    const messageStatsBySender = await safeQuery(`
       SELECT
-        COALESCE(AVG(CASE WHEN has_order THEN msg_count END), 0) AS avg_messages_closed,
-        COALESCE(AVG(CASE WHEN NOT has_order THEN msg_count END), 0) AS avg_messages_lost,
-        COALESCE(AVG(duration_hours), 0) AS avg_duration_hours
-      FROM (
-        SELECT
-          wc.id,
-          (SELECT COUNT(*) FROM whatsapp_messages wm WHERE wm.conversation_id = wc.id) AS msg_count,
-          EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) AS has_order,
-          EXTRACT(EPOCH FROM (wc.last_message_at - wc.created_at)) / 3600.0 AS duration_hours
-        FROM whatsapp_conversations wc
-        WHERE wc.client_id IS NOT NULL
-      ) sub
+        sender,
+        COUNT(*) AS total,
+        ROUND(AVG(LENGTH(COALESCE(content, '')))::numeric, 1) AS avg_length
+      FROM whatsapp_messages
+      GROUP BY sender
+      ORDER BY total DESC
     `);
 
-    // 5. Intent distribution (exclude 'general')
-    const intentDistribution = await safeQuery(`
-      SELECT intent, COUNT(*) AS count
-      FROM whatsapp_conversations
-      WHERE intent IS NOT NULL AND intent != 'general'
-      GROUP BY intent
-      ORDER BY count DESC
+    const messageStatsByDirection = await safeQuery(`
+      SELECT direction, COUNT(*) AS total
+      FROM whatsapp_messages
+      GROUP BY direction
     `);
 
-    // 6. Response times — avg and median seconds between inbound and AI reply
-    const responseTimes = await safeQuery(`
+    // 3. Avg message length by sender AND by outcome
+    const avgMessageLength = await safeQuery(`
       SELECT
-        COALESCE(AVG(response_seconds), 0) AS avg_response_seconds,
-        COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY response_seconds), 0) AS median_response_seconds
-      FROM (
+        wm.sender,
+        CASE WHEN EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) THEN 'has_order' ELSE 'no_order' END AS outcome,
+        ROUND(AVG(LENGTH(COALESCE(wm.content, '')))::numeric, 1) AS avg_length,
+        COUNT(*) AS message_count
+      FROM whatsapp_messages wm
+      JOIN whatsapp_conversations wc ON wc.id = wm.conversation_id
+      GROUP BY wm.sender, outcome
+      ORDER BY wm.sender, outcome
+    `);
+
+    // 4. Response time patterns — bucket AI/admin reply times
+    const responseTimePatterns = await safeQuery(`
+      WITH response_times AS (
         SELECT
-          EXTRACT(EPOCH FROM (reply.created_at - inbound.created_at)) AS response_seconds
-        FROM whatsapp_messages inbound
+          wm_in.conversation_id,
+          EXTRACT(EPOCH FROM (reply.created_at - wm_in.created_at)) AS seconds
+        FROM whatsapp_messages wm_in
         JOIN LATERAL (
           SELECT created_at
           FROM whatsapp_messages
-          WHERE conversation_id = inbound.conversation_id
+          WHERE conversation_id = wm_in.conversation_id
             AND direction = 'outbound'
-            AND sender = 'ai'
-            AND created_at > inbound.created_at
+            AND created_at > wm_in.created_at
           ORDER BY created_at ASC
           LIMIT 1
         ) reply ON true
-        WHERE inbound.direction = 'inbound'
-      ) sub
-      WHERE response_seconds > 0 AND response_seconds < 3600
+        WHERE wm_in.direction = 'inbound' AND wm_in.sender = 'client'
+      ),
+      bucketed AS (
+        SELECT
+          conversation_id,
+          AVG(seconds) AS avg_seconds
+        FROM response_times
+        WHERE seconds > 0 AND seconds < 86400
+        GROUP BY conversation_id
+      )
+      SELECT
+        CASE
+          WHEN avg_seconds < 10 THEN '<10s'
+          WHEN avg_seconds < 30 THEN '10-30s'
+          WHEN avg_seconds < 60 THEN '30-60s'
+          WHEN avg_seconds < 300 THEN '1-5min'
+          ELSE '5min+'
+        END AS bucket,
+        COUNT(*) AS conversation_count
+      FROM bucketed
+      GROUP BY bucket
+      ORDER BY MIN(avg_seconds)
     `);
 
-    // 7. Hourly distribution (Mexico City timezone)
-    const hourlyDistribution = await safeQuery(`
+    // 5. Hourly activity — Mexico City timezone, split by direction
+    const hourlyActivity = await safeQuery(`
       SELECT
-        EXTRACT(HOUR FROM created_at AT TIME ZONE 'America/Mexico_City') AS hour,
-        COUNT(*) AS total_messages,
-        COUNT(CASE WHEN direction = 'inbound' THEN 1 END) AS inbound_count,
-        COUNT(CASE WHEN direction = 'outbound' THEN 1 END) AS outbound_count
+        EXTRACT(HOUR FROM created_at AT TIME ZONE 'America/Mexico_City')::int AS hour,
+        COUNT(*) FILTER (WHERE direction = 'inbound') AS inbound,
+        COUNT(*) FILTER (WHERE direction = 'outbound') AS outbound,
+        COUNT(*) AS total
       FROM whatsapp_messages
       GROUP BY hour
       ORDER BY hour
     `);
 
-    // 8. Top AI phrases — first 100 chars of AI messages with fastest client responses
-    const topAiPhrases = await safeQuery(`
+    // 6. Daily activity — day of week, split by direction
+    const dailyActivity = await safeQuery(`
       SELECT
-        LEFT(ai_msg.content, 100) AS phrase,
-        COUNT(*) AS times_used,
-        ROUND(AVG(EXTRACT(EPOCH FROM (next_client.created_at - ai_msg.created_at)))::numeric, 1) AS avg_response_seconds
-      FROM whatsapp_messages ai_msg
-      JOIN LATERAL (
-        SELECT created_at
-        FROM whatsapp_messages
-        WHERE conversation_id = ai_msg.conversation_id
-          AND direction = 'inbound'
-          AND created_at > ai_msg.created_at
-        ORDER BY created_at ASC
-        LIMIT 1
-      ) next_client ON true
-      WHERE ai_msg.direction = 'outbound'
-        AND ai_msg.sender = 'ai'
-        AND ai_msg.message_type = 'text'
-        AND LENGTH(ai_msg.content) > 10
-      GROUP BY LEFT(ai_msg.content, 100)
-      HAVING COUNT(*) >= 2
-      ORDER BY avg_response_seconds ASC
-      LIMIT 20
+        EXTRACT(DOW FROM created_at AT TIME ZONE 'America/Mexico_City')::int AS day_of_week,
+        COUNT(*) FILTER (WHERE direction = 'inbound') AS inbound,
+        COUNT(*) FILTER (WHERE direction = 'outbound') AS outbound,
+        COUNT(*) AS total
+      FROM whatsapp_messages
+      GROUP BY day_of_week
+      ORDER BY day_of_week
     `);
 
-    // 9. Message length analysis
-    const messageLengthAnalysis = await safeQuery(`
+    // 7. Conversation depth — message count distribution by outcome
+    const conversationDepth = await safeQuery(`
+      SELECT
+        CASE
+          WHEN msg_count BETWEEN 1 AND 5 THEN '1-5'
+          WHEN msg_count BETWEEN 6 AND 10 THEN '6-10'
+          WHEN msg_count BETWEEN 11 AND 20 THEN '11-20'
+          WHEN msg_count BETWEEN 21 AND 50 THEN '21-50'
+          ELSE '50+'
+        END AS depth_bucket,
+        CASE WHEN has_order THEN 'has_order' ELSE 'no_order' END AS outcome,
+        COUNT(*) AS conversation_count
+      FROM (
+        SELECT
+          wc.id,
+          (SELECT COUNT(*) FROM whatsapp_messages wm WHERE wm.conversation_id = wc.id) AS msg_count,
+          EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) AS has_order
+        FROM whatsapp_conversations wc
+      ) sub
+      GROUP BY depth_bucket, outcome
+      ORDER BY MIN(msg_count), outcome
+    `);
+
+    // 8. Question frequency — messages containing '?' by sender
+    const questionFrequency = await safeQuery(`
       SELECT
         sender,
-        CASE
-          WHEN LENGTH(COALESCE(content, '')) < 50 THEN 'corto'
-          WHEN LENGTH(COALESCE(content, '')) BETWEEN 50 AND 150 THEN 'medio'
-          ELSE 'largo'
-        END AS category,
+        COUNT(*) FILTER (WHERE content LIKE '%?%') AS questions,
+        COUNT(*) AS total,
+        CASE WHEN COUNT(*) > 0
+          THEN ROUND(COUNT(*) FILTER (WHERE content LIKE '%?%')::numeric / COUNT(*)::numeric * 100, 2)
+          ELSE 0
+        END AS question_ratio_pct
+      FROM whatsapp_messages
+      WHERE content IS NOT NULL
+      GROUP BY sender
+      ORDER BY sender
+    `);
+
+    // 9. Top words — most frequent words (>3 chars, excluding Spanish stopwords)
+    const STOPWORDS_SQL = `'que','para','con','los','las','una','del','por','como','este','esta','pero','más','todo','tiene','están','hay','ser','son','https','sobre','puede','cuando','donde','otros','favor','haber','hacer','entre','desde','hasta','también','todos','estos','estas','mucho','muchas','esto','esos','esas','solo','cada','algo','otra','otro','usted','ustedes','bien','aquí','allí','después','antes','cual','cuál','ahora','muy','menos','nuestro','nuestra'`;
+
+    const topWordsAi = await safeQuery(`
+      SELECT LOWER(word) AS word, COUNT(*) AS count
+      FROM whatsapp_messages wm,
+        LATERAL unnest(string_to_array(
+          regexp_replace(LOWER(COALESCE(wm.content, '')), '[^a-záéíóúñü\\s]', '', 'g'), ' '
+        )) AS word
+      WHERE wm.sender = 'ai'
+        AND LENGTH(word) > 3
+        AND LOWER(word) NOT IN (${STOPWORDS_SQL})
+      GROUP BY LOWER(word)
+      ORDER BY count DESC
+      LIMIT 30
+    `);
+
+    const topWordsClient = await safeQuery(`
+      SELECT LOWER(word) AS word, COUNT(*) AS count
+      FROM whatsapp_messages wm,
+        LATERAL unnest(string_to_array(
+          regexp_replace(LOWER(COALESCE(wm.content, '')), '[^a-záéíóúñü\\s]', '', 'g'), ' '
+        )) AS word
+      WHERE wm.sender = 'client'
+        AND LENGTH(word) > 3
+        AND LOWER(word) NOT IN (${STOPWORDS_SQL})
+      GROUP BY LOWER(word)
+      ORDER BY count DESC
+      LIMIT 30
+    `);
+
+    // 10. Message type breakdown
+    const messageTypes = await safeQuery(`
+      SELECT
+        COALESCE(message_type, 'unknown') AS message_type,
         COUNT(*) AS count
       FROM whatsapp_messages
-      GROUP BY sender, category
-      ORDER BY sender, category
+      GROUP BY message_type
+      ORDER BY count DESC
     `);
 
-    // 10. Daily volume — new conversations per day, last 30 days
-    const dailyVolume = await safeQuery(`
+    // 11. Conversation outcomes — detailed stats by outcome
+    const conversationOutcomes = await safeQuery(`
       SELECT
-        DATE(created_at AT TIME ZONE 'America/Mexico_City') AS day,
-        COUNT(*) AS new_conversations
-      FROM whatsapp_conversations
-      WHERE created_at >= NOW() - INTERVAL '30 days'
-      GROUP BY day
-      ORDER BY day
+        CASE WHEN has_order THEN 'has_order' ELSE 'no_order' END AS outcome,
+        COUNT(*) AS conversations,
+        ROUND(COALESCE(AVG(msg_count), 0)::numeric, 1) AS avg_messages,
+        ROUND(COALESCE(AVG(duration_hours), 0)::numeric, 2) AS avg_duration_hours,
+        ROUND(COALESCE(AVG(client_avg_len), 0)::numeric, 1) AS avg_client_msg_length,
+        ROUND(COALESCE(AVG(ai_avg_len), 0)::numeric, 1) AS avg_ai_msg_length
+      FROM (
+        SELECT
+          wc.id,
+          EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) AS has_order,
+          (SELECT COUNT(*) FROM whatsapp_messages wm WHERE wm.conversation_id = wc.id) AS msg_count,
+          EXTRACT(EPOCH FROM (wc.last_message_at - wc.created_at)) / 3600.0 AS duration_hours,
+          (SELECT AVG(LENGTH(COALESCE(content, ''))) FROM whatsapp_messages wm WHERE wm.conversation_id = wc.id AND wm.sender = 'client') AS client_avg_len,
+          (SELECT AVG(LENGTH(COALESCE(content, ''))) FROM whatsapp_messages wm WHERE wm.conversation_id = wc.id AND wm.sender = 'ai') AS ai_avg_len
+        FROM whatsapp_conversations wc
+      ) sub
+      GROUP BY outcome
     `);
 
-    // 11. Sender breakdown
-    const senderBreakdown = await safeQuery(`
-      SELECT sender, COUNT(*) AS message_count
-      FROM whatsapp_messages
-      GROUP BY sender
-      ORDER BY message_count DESC
+    // 12. Client response patterns — how fast clients reply after AI, by outcome
+    const clientResponsePatterns = await safeQuery(`
+      SELECT
+        CASE WHEN EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) THEN 'has_order' ELSE 'no_order' END AS outcome,
+        ROUND(AVG(seconds)::numeric, 1) AS avg_client_response_seconds,
+        COUNT(*) AS sample_size
+      FROM (
+        SELECT
+          wm_ai.conversation_id,
+          EXTRACT(EPOCH FROM (next_client.created_at - wm_ai.created_at)) AS seconds
+        FROM whatsapp_messages wm_ai
+        JOIN LATERAL (
+          SELECT created_at
+          FROM whatsapp_messages
+          WHERE conversation_id = wm_ai.conversation_id
+            AND direction = 'inbound'
+            AND sender = 'client'
+            AND created_at > wm_ai.created_at
+          ORDER BY created_at ASC
+          LIMIT 1
+        ) next_client ON true
+        WHERE wm_ai.direction = 'outbound'
+          AND wm_ai.sender = 'ai'
+      ) sub
+      JOIN whatsapp_conversations wc ON wc.id = sub.conversation_id
+      WHERE seconds > 0 AND seconds < 86400
+      GROUP BY outcome
     `);
 
-    // 12. Word frequency in closed deals vs lost
-    const wordFrequency = await safeQuery(`
-      WITH closed_words AS (
+    // 13. First message analysis — first AI response characteristics by outcome
+    const firstMessageAnalysis = await safeQuery(`
+      SELECT
+        CASE WHEN EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) THEN 'has_order' ELSE 'no_order' END AS outcome,
+        ROUND(AVG(LENGTH(COALESCE(first_ai.content, '')))::numeric, 1) AS avg_first_ai_length,
+        ROUND(AVG(EXTRACT(EPOCH FROM (first_ai.created_at - wc.created_at)))::numeric, 1) AS avg_seconds_to_first_response,
+        COUNT(*) AS conversations
+      FROM whatsapp_conversations wc
+      JOIN LATERAL (
+        SELECT content, created_at
+        FROM whatsapp_messages
+        WHERE conversation_id = wc.id
+          AND sender = 'ai'
+        ORDER BY created_at ASC
+        LIMIT 1
+      ) first_ai ON true
+      GROUP BY outcome
+    `);
+
+    // 14. Emoji usage — messages with emojis by sender, and close rates
+    const emojiUsage = await safeQuery(`
+      WITH emoji_flags AS (
         SELECT
-          LOWER(word) AS word,
-          COUNT(*) AS count
+          wm.conversation_id,
+          wm.sender,
+          CASE WHEN wm.content ~ '[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF\U0001F900-\U0001F9FF\u2600-\u26FF\u2700-\u27BF\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF]' THEN true ELSE false END AS has_emoji
         FROM whatsapp_messages wm
-        JOIN whatsapp_conversations wc ON wc.id = wm.conversation_id
-        JOIN orders o ON o.client_id = wc.client_id
-        , LATERAL unnest(string_to_array(regexp_replace(LOWER(wm.content), '[^a-záéíóúñü\\s]', '', 'g'), ' ')) AS word
-        WHERE wm.sender = 'ai'
-          AND LENGTH(word) > 4
-          AND word NOT IN ('https', 'sobre', 'tiene', 'puede', 'están', 'están', 'cuando', 'donde', 'tiene', 'otros', 'favor', 'haber', 'hacer', 'entre', 'desde', 'hasta', 'también', 'todos', 'estos', 'estas', 'mucho', 'muchas')
-        GROUP BY LOWER(word)
-        ORDER BY count DESC
-        LIMIT 30
-      ),
-      lost_words AS (
-        SELECT
-          LOWER(word) AS word,
-          COUNT(*) AS count
-        FROM whatsapp_messages wm
-        JOIN whatsapp_conversations wc ON wc.id = wm.conversation_id
-        , LATERAL unnest(string_to_array(regexp_replace(LOWER(wm.content), '[^a-záéíóúñü\\s]', '', 'g'), ' ')) AS word
-        WHERE wm.sender = 'ai'
-          AND wc.client_id IS NOT NULL
-          AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id)
-          AND LENGTH(word) > 4
-          AND word NOT IN ('https', 'sobre', 'tiene', 'puede', 'están', 'están', 'cuando', 'donde', 'tiene', 'otros', 'favor', 'haber', 'hacer', 'entre', 'desde', 'hasta', 'también', 'todos', 'estos', 'estas', 'mucho', 'muchas')
-        GROUP BY LOWER(word)
-        ORDER BY count DESC
-        LIMIT 30
+        WHERE wm.content IS NOT NULL
       )
       SELECT
-        json_agg(json_build_object('word', cw.word, 'count', cw.count)) AS closed_deal_words,
-        (SELECT json_agg(json_build_object('word', lw.word, 'count', lw.count)) FROM lost_words lw) AS lost_deal_words
-      FROM closed_words cw
+        sender,
+        COUNT(*) FILTER (WHERE has_emoji) AS messages_with_emoji,
+        COUNT(*) AS total_messages,
+        ROUND(COUNT(*) FILTER (WHERE has_emoji)::numeric / GREATEST(COUNT(*), 1)::numeric * 100, 2) AS emoji_pct
+      FROM emoji_flags
+      GROUP BY sender
+      ORDER BY sender
     `);
 
-    // 13. Conversation learning log — completed conversations (last message >24hrs ago)
-    const conversationLog = await safeQuery(`
+    const emojiCloseRate = await safeQuery(`
+      WITH conv_emoji AS (
+        SELECT
+          wc.id,
+          EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) AS has_order,
+          EXISTS (
+            SELECT 1 FROM whatsapp_messages wm
+            WHERE wm.conversation_id = wc.id
+              AND wm.content ~ '[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF\U0001F900-\U0001F9FF\u2600-\u26FF\u2700-\u27BF\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF]'
+          ) AS has_emoji_messages
+        FROM whatsapp_conversations wc
+      )
       SELECT
-        wc.id,
-        wc.client_name,
-        wc.intent,
-        CASE WHEN EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) THEN 'order' ELSE 'lost' END AS outcome,
-        (SELECT COUNT(*) FROM whatsapp_messages wm WHERE wm.conversation_id = wc.id) AS total_messages,
-        EXTRACT(EPOCH FROM (wc.last_message_at - wc.created_at)) / 3600.0 AS duration_hours,
-        wc.created_at,
-        wc.last_message_at
-      FROM whatsapp_conversations wc
-      WHERE wc.last_message_at < NOW() - INTERVAL '24 hours'
-        AND wc.client_id IS NOT NULL
-      ORDER BY wc.last_message_at DESC
-      LIMIT 50
+        CASE WHEN has_emoji_messages THEN 'with_emoji' ELSE 'without_emoji' END AS category,
+        COUNT(*) AS conversations,
+        COUNT(*) FILTER (WHERE has_order) AS with_orders,
+        CASE WHEN COUNT(*) > 0
+          THEN ROUND(COUNT(*) FILTER (WHERE has_order)::numeric / COUNT(*)::numeric * 100, 2)
+          ELSE 0
+        END AS close_rate_pct
+      FROM conv_emoji
+      GROUP BY category
+    `);
+
+    // 15. Links sent — messages with URLs, and close rates
+    const linksSent = await safeQuery(`
+      SELECT
+        sender,
+        COUNT(*) FILTER (WHERE content ~ 'https?://') AS messages_with_links,
+        COUNT(*) AS total_messages
+      FROM whatsapp_messages
+      WHERE content IS NOT NULL
+      GROUP BY sender
+      ORDER BY sender
+    `);
+
+    const linksCloseRate = await safeQuery(`
+      WITH conv_links AS (
+        SELECT
+          wc.id,
+          EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) AS has_order,
+          EXISTS (
+            SELECT 1 FROM whatsapp_messages wm
+            WHERE wm.conversation_id = wc.id AND wm.content ~ 'https?://'
+          ) AS has_links
+        FROM whatsapp_conversations wc
+      )
+      SELECT
+        CASE WHEN has_links THEN 'with_links' ELSE 'without_links' END AS category,
+        COUNT(*) AS conversations,
+        COUNT(*) FILTER (WHERE has_order) AS with_orders,
+        CASE WHEN COUNT(*) > 0
+          THEN ROUND(COUNT(*) FILTER (WHERE has_order)::numeric / COUNT(*)::numeric * 100, 2)
+          ELSE 0
+        END AS close_rate_pct
+      FROM conv_links
+      GROUP BY category
+    `);
+
+    // 16. Peak engagement — close rate by hour of day
+    const peakEngagement = await safeQuery(`
+      WITH conv_hours AS (
+        SELECT
+          wc.id,
+          EXTRACT(HOUR FROM wc.created_at AT TIME ZONE 'America/Mexico_City')::int AS hour,
+          EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) AS has_order
+        FROM whatsapp_conversations wc
+      )
+      SELECT
+        hour,
+        COUNT(*) AS conversations,
+        COUNT(*) FILTER (WHERE has_order) AS with_orders,
+        CASE WHEN COUNT(*) > 0
+          THEN ROUND(COUNT(*) FILTER (WHERE has_order)::numeric / COUNT(*)::numeric * 100, 2)
+          ELSE 0
+        END AS close_rate_pct
+      FROM conv_hours
+      GROUP BY hour
+      ORDER BY hour
+    `);
+
+    // 17. Conversation velocity — avg messages per hour, by outcome
+    const conversationVelocity = await safeQuery(`
+      SELECT
+        CASE WHEN has_order THEN 'has_order' ELSE 'no_order' END AS outcome,
+        ROUND(AVG(CASE WHEN duration_hours > 0 THEN msg_count / duration_hours ELSE msg_count END)::numeric, 2) AS avg_messages_per_hour,
+        COUNT(*) AS conversations
+      FROM (
+        SELECT
+          wc.id,
+          (SELECT COUNT(*) FROM whatsapp_messages wm WHERE wm.conversation_id = wc.id) AS msg_count,
+          EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) AS has_order,
+          GREATEST(EXTRACT(EPOCH FROM (wc.last_message_at - wc.created_at)) / 3600.0, 0.01) AS duration_hours
+        FROM whatsapp_conversations wc
+      ) sub
+      GROUP BY outcome
     `);
 
     res.json({
       success: true,
       data: {
-        overview: overview.rows[0],
-        revenue: revenue.rows[0],
-        closeRate: closeRate.rows[0],
-        messagesToClose: messagesToClose.rows[0],
-        intentDistribution: intentDistribution.rows,
-        responseTimes: responseTimes.rows[0],
-        hourlyDistribution: hourlyDistribution.rows,
-        topAiPhrases: topAiPhrases.rows,
-        messageLengthAnalysis: messageLengthAnalysis.rows,
-        dailyVolume: dailyVolume.rows,
-        senderBreakdown: senderBreakdown.rows,
-        wordFrequency: {
-          closedDeals: wordFrequency.rows[0]?.closed_deal_words || [],
-          lostDeals: wordFrequency.rows[0]?.lost_deal_words || []
+        overview: {
+          totalConversations: parseInt(overview.rows[0]?.total_conversations || 0),
+          totalMessages: parseInt(overview.rows[0]?.total_messages || 0),
+          totalClients: parseInt(overview.rows[0]?.total_clients || 0),
+          conversationsWithOrders: parseInt(overview.rows[0]?.conversations_with_orders || 0),
+          closeRate: parseFloat(overview.rows[0]?.close_rate || 0)
         },
-        conversationLog: conversationLog.rows
+        messageStats: {
+          bySender: messageStatsBySender.rows,
+          byDirection: messageStatsByDirection.rows,
+          avgLengthBySender: avgMessageLength.rows
+        },
+        responseTimePatterns: {
+          buckets: responseTimePatterns.rows
+        },
+        hourlyActivity: hourlyActivity.rows,
+        dailyActivity: dailyActivity.rows,
+        conversationDepth: {
+          distribution: conversationDepth.rows
+        },
+        questionFrequency: {
+          bySender: questionFrequency.rows
+        },
+        topWords: {
+          aiWords: topWordsAi.rows,
+          clientWords: topWordsClient.rows
+        },
+        messageTypes: messageTypes.rows,
+        conversationOutcomes: conversationOutcomes.rows,
+        clientResponsePatterns: clientResponsePatterns.rows,
+        firstMessageAnalysis: firstMessageAnalysis.rows,
+        emojiUsage: {
+          bySender: emojiUsage.rows,
+          closeRates: emojiCloseRate.rows
+        },
+        linksSent: {
+          bySender: linksSent.rows,
+          closeRates: linksCloseRate.rows
+        },
+        peakEngagement: peakEngagement.rows,
+        conversationVelocity: conversationVelocity.rows
       }
     });
   } catch (err) {
