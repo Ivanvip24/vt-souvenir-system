@@ -500,7 +500,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     const rawReply = response.content[0].text;
 
     // Parse the response for intent and order blocks
-    const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest } = parseAIResponse(rawReply);
+    const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest, paymentReceiptDetected } = parseAIResponse(rawReply);
 
     let actionTaken = null;
     let orderData = null;
