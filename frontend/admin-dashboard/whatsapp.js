@@ -22,6 +22,8 @@ const waState = {
   insightsLoading: false,
   insightsVisible: true,
   labels: [],
+  multiSelect: false,
+  selectedConvIds: [],
   showArchived: false
 };
 
@@ -1092,6 +1094,86 @@ function injectWhatsAppStyles() {
       opacity: 0.4;
     }
 
+    /* Multi-select mode */
+    .wa-multiselect-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #fce4ec, #f3e5f5);
+      border-bottom: 1px solid #f0e0e8;
+      animation: waContextFadeIn 0.18s ease;
+    }
+    .wa-multiselect-count {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e72a88;
+      flex: 1;
+    }
+    .wa-multiselect-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .wa-multiselect-btn:active { transform: scale(0.95); }
+    .wa-multiselect-btn.delete {
+      background: #dc2626;
+      color: white;
+    }
+    .wa-multiselect-btn.delete:hover { background: #b91c1c; }
+    .wa-multiselect-btn.archive {
+      background: #3b82f6;
+      color: white;
+    }
+    .wa-multiselect-btn.archive:hover { background: #2563eb; }
+    .wa-multiselect-btn.cancel {
+      background: #f3f4f6;
+      color: #666;
+    }
+    .wa-multiselect-btn.cancel:hover { background: #e5e7eb; }
+    .wa-multiselect-btn.select-all {
+      background: transparent;
+      color: #e72a88;
+      border: 1px solid #e72a88;
+    }
+    .wa-conv-checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .wa-conv-checkbox.checked {
+      background: #e72a88;
+      border-color: #e72a88;
+    }
+    .wa-conv-checkbox.checked::after {
+      content: '\u2713';
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .wa-select-toggle {
+      padding: 4px 10px;
+      background: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #888;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .wa-select-toggle:hover { background: #f3f4f6; color: #333; }
+
     /* Context menu */
     .wa-context-menu {
       position: fixed;
@@ -1527,6 +1609,61 @@ async function reloadConversations() {
   } catch (e) { console.error('Failed to reload conversations:', e); }
 }
 
+// ==========================================
+// MULTI-SELECT BULK ACTIONS
+// ==========================================
+
+function updateMultiSelectUI() {
+  // Update count
+  var countEl = document.getElementById('wa-ms-count');
+  if (countEl) countEl.textContent = waState.selectedConvIds.length + ' seleccionados';
+
+  // Update checkboxes
+  var items = document.querySelectorAll('.wa-conv-item');
+  items.forEach(function(item) {
+    var convId = parseInt(item.getAttribute('data-conv-id'));
+    var cb = item.querySelector('.wa-conv-checkbox');
+    if (cb) {
+      if (waState.selectedConvIds.indexOf(convId) !== -1) {
+        cb.classList.add('checked');
+      } else {
+        cb.classList.remove('checked');
+      }
+    }
+  });
+}
+
+async function bulkAction(action) {
+  var ids = waState.selectedConvIds;
+  if (ids.length === 0) return;
+
+  if (action === 'delete') {
+    if (!confirm('Eliminar ' + ids.length + ' conversaciones? Esta accion no se puede deshacer.')) return;
+  }
+
+  var token = localStorage.getItem('token');
+  var promises = ids.map(function(id) {
+    if (action === 'delete') {
+      return fetch(API_BASE + '/whatsapp/conversations/' + id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+    } else if (action === 'archive') {
+      return fetch(API_BASE + '/whatsapp/conversations/' + id + '/archive', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ is_archived: true })
+      });
+    }
+  });
+
+  await Promise.all(promises);
+  waState.multiSelect = false;
+  waState.selectedConvIds = [];
+  waState.selectedConversationId = null;
+  reloadConversations();
+}
+
 function closeContextMenu() {
   var existing = document.querySelector('.wa-context-menu');
   if (existing) existing.remove();
@@ -1928,7 +2065,68 @@ function renderWhatsApp() {
   });
   archiveTabs.appendChild(tabArchived);
 
+  // Select toggle button
+  var selectToggle = document.createElement('button');
+  selectToggle.className = 'wa-select-toggle';
+  selectToggle.textContent = 'Seleccionar';
+  selectToggle.style.marginLeft = 'auto';
+  selectToggle.addEventListener('click', function() {
+    waState.multiSelect = !waState.multiSelect;
+    waState.selectedConvIds = [];
+    renderWhatsApp();
+  });
+  archiveTabs.appendChild(selectToggle);
+
   listPanel.appendChild(archiveTabs);
+
+  // Multi-select toolbar (shown when in select mode)
+  if (waState.multiSelect) {
+    var msBar = document.createElement('div');
+    msBar.className = 'wa-multiselect-bar';
+
+    var msCount = document.createElement('span');
+    msCount.className = 'wa-multiselect-count';
+    msCount.id = 'wa-ms-count';
+    msCount.textContent = waState.selectedConvIds.length + ' seleccionados';
+    msBar.appendChild(msCount);
+
+    var selectAllBtn = document.createElement('button');
+    selectAllBtn.className = 'wa-multiselect-btn select-all';
+    selectAllBtn.textContent = 'Todos';
+    selectAllBtn.addEventListener('click', function() {
+      if (waState.selectedConvIds.length === waState.filteredConversations.length) {
+        waState.selectedConvIds = [];
+      } else {
+        waState.selectedConvIds = waState.filteredConversations.map(function(c) { return c.id; });
+      }
+      updateMultiSelectUI();
+    });
+    msBar.appendChild(selectAllBtn);
+
+    var archiveBtn = document.createElement('button');
+    archiveBtn.className = 'wa-multiselect-btn archive';
+    archiveBtn.textContent = '\uD83D\uDCE5 Archivar';
+    archiveBtn.addEventListener('click', function() { bulkAction('archive'); });
+    msBar.appendChild(archiveBtn);
+
+    var deleteBtn = document.createElement('button');
+    deleteBtn.className = 'wa-multiselect-btn delete';
+    deleteBtn.textContent = '\uD83D\uDDD1 Eliminar';
+    deleteBtn.addEventListener('click', function() { bulkAction('delete'); });
+    msBar.appendChild(deleteBtn);
+
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'wa-multiselect-btn cancel';
+    cancelBtn.textContent = '\u2715';
+    cancelBtn.addEventListener('click', function() {
+      waState.multiSelect = false;
+      waState.selectedConvIds = [];
+      renderWhatsApp();
+    });
+    msBar.appendChild(cancelBtn);
+
+    listPanel.appendChild(msBar);
+  }
 
   var convListDiv = document.createElement('div');
   convListDiv.className = 'wa-conv-list';
@@ -2027,6 +2225,26 @@ function buildConversationItemDOM(c) {
     e.preventDefault();
     showConversationContextMenu(e, c);
   });
+
+  // Checkbox (multi-select mode)
+  if (waState.multiSelect) {
+    var isChecked = waState.selectedConvIds.indexOf(c.id) !== -1;
+    var checkbox = document.createElement('div');
+    checkbox.className = 'wa-conv-checkbox' + (isChecked ? ' checked' : '');
+    checkbox.addEventListener('click', (function(convId) {
+      return function(e) {
+        e.stopPropagation();
+        var idx = waState.selectedConvIds.indexOf(convId);
+        if (idx === -1) {
+          waState.selectedConvIds.push(convId);
+        } else {
+          waState.selectedConvIds.splice(idx, 1);
+        }
+        updateMultiSelectUI();
+      };
+    })(c.id));
+    item.appendChild(checkbox);
+  }
 
   // Avatar
   var avatar = document.createElement('div');
@@ -2645,6 +2863,13 @@ function bindConversationClickEvents() {
   items.forEach(function(item) {
     item.addEventListener('click', function() {
       var convId = parseInt(this.getAttribute('data-conv-id'), 10);
+      if (waState.multiSelect) {
+        var idx = waState.selectedConvIds.indexOf(convId);
+        if (idx === -1) { waState.selectedConvIds.push(convId); }
+        else { waState.selectedConvIds.splice(idx, 1); }
+        updateMultiSelectUI();
+        return;
+      }
       selectConversation(convId);
     });
   });
