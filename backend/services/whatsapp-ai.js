@@ -694,6 +694,7 @@ Responde UNICAMENTE con JSON valido, sin markdown, sin backticks.
 SOLO incluye una categoria si hay DATO CONCRETO mencionado en la conversacion. Si no se menciono, NO la incluyas.
 
 Categorias permitidas (usa SOLO las que apliquen):
+- "nombre": SIEMPRE primero si el cliente dijo su nombre. Ej: "Lupita Flores" (priority: high, icon: "👤")
 - "pedido": Producto + cantidad confirmados. Ej: "500 imanes MDF + 200 llaveros" (priority: high)
 - "disenos": Cuantos disenos necesita. Ej: "8 disenos diferentes" (priority: high)
 - "deposito": Si ya pago anticipo o deposito. Ej: "Deposito de $2,750 recibido" o "Pendiente de deposito" (priority: high)
@@ -702,7 +703,8 @@ Categorias permitidas (usa SOLO las que apliquen):
 - "riesgo": SOLO si hay queja real o el cliente dijo que se va. Ej: "Cliente molesto por tiempo de entrega" (priority: high)
 
 REGLAS ESTRICTAS:
-- Maximo 4 insights
+- "nombre" SIEMPRE va primero si el cliente lo dio. Busca frases como "me llamo...", "soy...", "mi nombre es...", o cuando responden a "cual es su nombre?"
+- Maximo 5 insights
 - Si la conversacion es solo saludo o pregunta inicial, responde con array VACIO: {"insights": []}
 - NO incluyas: "cliente interesado en...", "conversacion en etapa...", "falta recopilar...", "bot presento opciones..."
 - Solo HECHOS CONCRETOS con numeros, fechas o datos especificos
