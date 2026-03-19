@@ -450,6 +450,51 @@ router.get('/conversations', authMiddleware, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// 3b. GET /conversations/search — Universal search (MUST be before :id routes)
+// ---------------------------------------------------------------------------
+router.get('/conversations/search', authMiddleware, async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    if (!q) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const searchPattern = '%' + q + '%';
+    const result = await query(`
+      SELECT DISTINCT wc.id, wc.wa_id, wc.client_name, wc.last_message_at, wc.unread_count,
+        wc.is_pinned, wc.is_archived, wc.intent, wc.ai_enabled,
+        (SELECT content FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) as last_message,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', wl.id, 'name', wl.name, 'color', wl.color))
+           FROM whatsapp_conversation_labels wcl
+           JOIN whatsapp_labels wl ON wl.id = wcl.label_id
+           WHERE wcl.conversation_id = wc.id),
+          '[]'::json
+        ) as labels,
+        (SELECT content FROM whatsapp_messages
+         WHERE conversation_id = wc.id AND content ILIKE $1
+         ORDER BY created_at DESC LIMIT 1) as matching_message
+      FROM whatsapp_conversations wc
+      LEFT JOIN whatsapp_messages wm ON wm.conversation_id = wc.id
+      LEFT JOIN whatsapp_conversation_labels wcl2 ON wcl2.conversation_id = wc.id
+      LEFT JOIN whatsapp_labels wl2 ON wl2.id = wcl2.label_id
+      WHERE
+        wc.client_name ILIKE $1
+        OR wc.wa_id ILIKE $1
+        OR wm.content ILIKE $1
+        OR wl2.name ILIKE $1
+      ORDER BY wc.last_message_at DESC NULLS LAST
+      LIMIT 30
+    `, [searchPattern]);
+
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('Search error:', err);
+    res.status(500).json({ success: false, error: 'Search failed' });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // 4. GET /conversations/:id/messages — Get messages for a conversation (auth)
 // ---------------------------------------------------------------------------
 router.get('/conversations/:id/messages', authMiddleware, async (req, res) => {
@@ -532,50 +577,6 @@ router.put('/conversations/:id/read', authMiddleware, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// 5b. GET /conversations/search — Universal search across names, phones, messages, labels
-// ---------------------------------------------------------------------------
-router.get('/conversations/search', authMiddleware, async (req, res) => {
-  try {
-    const q = (req.query.q || '').trim();
-    if (!q || q.length < 2) {
-      return res.json({ success: true, data: [] });
-    }
-
-    const searchPattern = '%' + q + '%';
-    const result = await query(`
-      SELECT DISTINCT wc.id, wc.wa_id, wc.client_name, wc.last_message_at, wc.unread_count,
-        wc.is_pinned, wc.is_archived, wc.intent, wc.ai_enabled,
-        (SELECT content FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) as last_message,
-        COALESCE(
-          (SELECT json_agg(json_build_object('id', wl.id, 'name', wl.name, 'color', wl.color))
-           FROM whatsapp_conversation_labels wcl
-           JOIN whatsapp_labels wl ON wl.id = wcl.label_id
-           WHERE wcl.conversation_id = wc.id),
-          '[]'::json
-        ) as labels,
-        (SELECT content FROM whatsapp_messages
-         WHERE conversation_id = wc.id AND content ILIKE $1
-         ORDER BY created_at DESC LIMIT 1) as matching_message
-      FROM whatsapp_conversations wc
-      LEFT JOIN whatsapp_messages wm ON wm.conversation_id = wc.id
-      LEFT JOIN whatsapp_conversation_labels wcl2 ON wcl2.conversation_id = wc.id
-      LEFT JOIN whatsapp_labels wl2 ON wl2.id = wcl2.label_id
-      WHERE
-        wc.client_name ILIKE $1
-        OR wc.wa_id ILIKE $1
-        OR wm.content ILIKE $1
-        OR wl2.name ILIKE $1
-      ORDER BY wc.last_message_at DESC NULLS LAST
-      LIMIT 30
-    `, [searchPattern]);
-
-    res.json({ success: true, data: result.rows });
-  } catch (err) {
-    console.error('Search error:', err);
-    res.status(500).json({ success: false, error: 'Search failed' });
-  }
-});
-
 // ---------------------------------------------------------------------------
 // 6b. PUT /conversations/:id/unread — Mark conversation as unread (auth required)
 // ---------------------------------------------------------------------------

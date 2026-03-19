@@ -3136,10 +3136,10 @@ function bindWhatsAppEvents() {
       waFilterConversations();
       renderConversationList();
 
-      // Debounced server search for deep message search
+      // Debounced server search for deep message search — starts from 1 character
       clearTimeout(searchTimeout);
       var q = this.value.trim();
-      if (q.length >= 2) {
+      if (q.length >= 1) {
         searchTimeout = setTimeout(function() {
           fetch(API_BASE + '/whatsapp/conversations/search?q=' + encodeURIComponent(q), {
             headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
@@ -3150,7 +3150,7 @@ function bindWhatsAppEvents() {
               renderConversationList();
             }
           });
-        }, 400);
+        }, 200);
       }
     });
   }
