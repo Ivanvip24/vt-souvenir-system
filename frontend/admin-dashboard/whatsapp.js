@@ -2566,9 +2566,12 @@ function renderWhatsApp() {
     modelSelect.id = 'wa-model-select';
     modelSelect.style.cssText = 'width:100%;font-size:13px;padding:6px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;color:#333;cursor:pointer;';
     var models = [
-      { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5 (barato)' },
-      { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5 (medio)' },
-      { value: 'claude-sonnet-4-6-20250514', label: 'Sonnet 4.6 (mejor)' }
+      { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini ($3/mes)' },
+      { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano ($1/mes)' },
+      { value: 'gpt-4o-mini', label: 'GPT-4o Mini ($2/mes)' },
+      { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku ($9/mes)' },
+      { value: 'claude-sonnet-4-5-20250929', label: 'Claude Sonnet ($45/mes)' },
+      { value: 'claude-sonnet-4-6-20250514', label: 'Claude Sonnet 4.6 ($45/mes)' }
     ];
     for (var mi = 0; mi < models.length; mi++) {
       var opt = document.createElement('option');

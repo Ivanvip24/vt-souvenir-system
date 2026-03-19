@@ -5,6 +5,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -17,7 +18,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = join(__dirname, '..', 'chatbot_whatsapp');
 
 // Global AI model setting — changeable at runtime via API
-let currentModel = process.env.WHATSAPP_AI_MODEL || 'claude-haiku-4-5-20251001';
+let currentModel = process.env.WHATSAPP_AI_MODEL || 'gpt-4.1-mini';
 let globalAiEnabled = true;
 
 export function getGlobalAiEnabled() { return globalAiEnabled; }
@@ -28,7 +29,10 @@ export function setAiModel(model) {
   const allowed = [
     'claude-haiku-4-5-20251001',
     'claude-sonnet-4-5-20250929',
-    'claude-sonnet-4-6-20250514'
+    'claude-sonnet-4-6-20250514',
+    'gpt-4.1-mini',
+    'gpt-4.1-nano',
+    'gpt-4o-mini'
   ];
   if (!allowed.includes(model)) return false;
   currentModel = model;
@@ -51,17 +55,30 @@ function loadConfig(filename) {
 
 // Initialize Anthropic client lazily
 let anthropic = null;
+let openaiClient = null;
+
+function isOpenAiModel(model) {
+  return model && (model.startsWith('gpt-') || model.startsWith('o1') || model.startsWith('o3'));
+}
 
 function getClient() {
   if (!anthropic) {
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY not configured');
     }
-    anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY
-    });
+    anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   }
   return anthropic;
+}
+
+function getOpenAiClient() {
+  if (!openaiClient) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY not configured');
+    }
+    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return openaiClient;
 }
 
 /**
@@ -488,16 +505,48 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     // Ensure messages alternate properly (Claude requires user/assistant alternation)
     const sanitizedMessages = sanitizeMessageHistory(messages);
 
-    // Call Claude API
-    const client = getClient();
-    const response = await client.messages.create({
-      model: currentModel,
-      max_tokens: 1500,
-      system: systemPrompt,
-      messages: sanitizedMessages
-    });
+    // Call AI API (Claude or OpenAI depending on model)
+    let rawReply;
 
-    const rawReply = response.content[0].text;
+    if (isOpenAiModel(currentModel)) {
+      // OpenAI API call
+      const oai = getOpenAiClient();
+      // Convert Claude-format messages to OpenAI format
+      const oaiMessages = [
+        { role: 'system', content: systemPrompt },
+        ...sanitizedMessages.map(m => {
+          // Handle image content (Claude uses array format, OpenAI uses different)
+          if (Array.isArray(m.content)) {
+            const parts = m.content.map(part => {
+              if (part.type === 'text') return { type: 'text', text: part.text };
+              if (part.type === 'image' && part.source?.type === 'base64') {
+                return { type: 'image_url', image_url: { url: `data:${part.source.media_type};base64,${part.source.data}` } };
+              }
+              return { type: 'text', text: part.text || '' };
+            });
+            return { role: m.role, content: parts };
+          }
+          return { role: m.role, content: m.content };
+        })
+      ];
+
+      const oaiResponse = await oai.chat.completions.create({
+        model: currentModel,
+        max_tokens: 1500,
+        messages: oaiMessages
+      });
+      rawReply = oaiResponse.choices[0].message.content;
+    } else {
+      // Claude API call
+      const client = getClient();
+      const response = await client.messages.create({
+        model: currentModel,
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: sanitizedMessages
+      });
+      rawReply = response.content[0].text;
+    }
 
     // Parse the response for intent and order blocks
     const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest, paymentReceiptDetected } = parseAIResponse(rawReply);
