@@ -2065,11 +2065,17 @@ function waFilterConversations() {
   var q = waState.searchQuery.toLowerCase().trim();
   if (!q) {
     waState.filteredConversations = waState.conversations.slice();
+    waState.searchResults = null;
+  } else if (waState.searchResults) {
+    // Use server search results if available
+    waState.filteredConversations = waState.searchResults;
   } else {
+    // Instant local filter on name/phone while server search loads
     waState.filteredConversations = waState.conversations.filter(function(c) {
       var name = (c.client_name || '').toLowerCase();
       var phone = (c.wa_id || '').toLowerCase();
-      return name.indexOf(q) !== -1 || phone.indexOf(q) !== -1;
+      var labelMatch = (c.labels || []).some(function(l) { return l.name.toLowerCase().indexOf(q) !== -1; });
+      return name.indexOf(q) !== -1 || phone.indexOf(q) !== -1 || labelMatch;
     });
   }
   // Sort: expired follow-ups first, then pinned, then most recent message
@@ -2418,6 +2424,10 @@ function buildConversationItemDOM(c) {
     rawPreview = '\uD83C\uDFA4 Audio';
   } else if (rawPreview.startsWith('[Documento')) {
     rawPreview = '\uD83D\uDCC4 Documento';
+  }
+  // If server search found a matching message, show that instead
+  if (c.matching_message && waState.searchQuery && waState.searchResults) {
+    rawPreview = '\uD83D\uDD0D ' + c.matching_message;
   }
   var preview = waTruncate(rawPreview, 50);
   var time = waTimeAgo(c.last_message_at);
@@ -3099,12 +3109,33 @@ function scrollChatToBottom() {
 // ==========================================
 
 function bindWhatsAppEvents() {
-  // Search input
+  // Search input — local filter + server search
   var searchInput = document.getElementById('wa-search');
+  var searchTimeout = null;
   if (searchInput) {
     searchInput.addEventListener('input', function() {
       waState.searchQuery = this.value;
+      waState.searchResults = null;
+      // Instant local filter
+      waFilterConversations();
       renderConversationList();
+
+      // Debounced server search for deep message search
+      clearTimeout(searchTimeout);
+      var q = this.value.trim();
+      if (q.length >= 2) {
+        searchTimeout = setTimeout(function() {
+          fetch(API_BASE + '/whatsapp/conversations/search?q=' + encodeURIComponent(q), {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
+          }).then(function(r) { return r.json(); }).then(function(data) {
+            if (data.success && waState.searchQuery.trim() === q) {
+              waState.searchResults = data.data;
+              waFilterConversations();
+              renderConversationList();
+            }
+          });
+        }, 400);
+      }
     });
   }
 
