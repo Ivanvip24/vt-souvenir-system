@@ -378,6 +378,30 @@ router.post('/webhook', (req, res) => {
         [conversationId, outboundWaId, replyText, JSON.stringify(outboundMetadata)]
       );
 
+      // Store each sent image as a separate message (so admin dashboard can display them)
+      for (var imgIdx = 0; imgIdx < imagesToSend.length; imgIdx++) {
+        var sentImg = imagesToSend[imgIdx];
+        if (sentImg.imageUrl) {
+          await query(
+            `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, media_url, metadata)
+             VALUES ($1, $2, 'outbound', 'ai', 'image', $3, $4, $5)`,
+            [conversationId, 'ai_img_' + Date.now() + '_' + imgIdx, sentImg.productName || '', sentImg.imageUrl, JSON.stringify({ type: 'product_image' })]
+          );
+        }
+      }
+
+      // Store each sent document as a separate message
+      for (var docIdx = 0; docIdx < documentsToSend.length; docIdx++) {
+        var sentDoc = documentsToSend[docIdx];
+        if (sentDoc.url) {
+          await query(
+            `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, media_url, metadata)
+             VALUES ($1, $2, 'outbound', 'ai', 'document', $3, $4, $5)`,
+            [conversationId, 'ai_doc_' + Date.now() + '_' + docIdx, sentDoc.caption || sentDoc.filename || 'Documento', sentDoc.url, JSON.stringify({ type: 'document', filename: sentDoc.filename || 'documento.pdf' })]
+          );
+        }
+      }
+
       // Update conversation intent and summary
       await query(
         'UPDATE whatsapp_conversations SET intent = $1, ai_summary = $2 WHERE id = $3',
