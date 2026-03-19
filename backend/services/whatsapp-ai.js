@@ -506,6 +506,24 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
           items: orderJson.items,
           total: orderJson.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
         };
+        // Auto-set follow-up timer based on quantity ordered
+        try {
+          const totalPieces = orderJson.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+          let followUpDays;
+          if (totalPieces >= 1000) followUpDays = 45;
+          else if (totalPieces >= 600) followUpDays = 30;
+          else if (totalPieces >= 300) followUpDays = 21;
+          else followUpDays = 14;
+          const followUpDate = new Date();
+          followUpDate.setDate(followUpDate.getDate() + followUpDays);
+          await query(
+            'UPDATE whatsapp_conversations SET follow_up_at = $1 WHERE wa_id = $2',
+            [followUpDate.toISOString(), waId]
+          );
+          console.log(`⏱ Follow-up set: ${followUpDays} days for ${totalPieces} pieces (${waId})`);
+        } catch (fuErr) {
+          console.error('⏱ Follow-up timer error:', fuErr.message);
+        }
       } catch (orderError) {
         console.error('🟢 WhatsApp AI: Order creation failed:', orderError.message);
         actionTaken = 'order_failed';
