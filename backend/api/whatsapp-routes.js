@@ -299,9 +299,17 @@ router.post('/webhook', (req, res) => {
           };
         }
         else if (message.type === 'reaction') {
-          // Emoji reactions — silently ignore, don't process or store
-          console.log('🟢 WhatsApp reaction received — ignoring');
-          return;
+          // Emoji reaction — store it but don't trigger AI response
+          var emoji = message.reaction?.emoji || '👍';
+          var reactedMsgId = message.reaction?.message_id || null;
+          console.log('🟢 WhatsApp reaction: ' + emoji + ' on message ' + reactedMsgId);
+          // Save reaction to DB so admin can see it
+          await query(
+            `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, metadata)
+             VALUES ($1, $2, 'inbound', 'client', 'reaction', $3, $4)`,
+            [conversationId, waMessageId, emoji, JSON.stringify({ type: 'reaction', emoji: emoji, reacted_to: reactedMsgId })]
+          );
+          return; // Don't trigger AI
         }
         else {
           messageText = `[Mensaje tipo ${message.type} recibido]`;

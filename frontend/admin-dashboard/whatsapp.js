@@ -3360,6 +3360,10 @@ function buildMessagesDOM(parentEl) {
         locCaptionDiv.textContent = contentText;
         contentDiv.appendChild(locCaptionDiv);
       }
+    } else if (msgType === 'reaction') {
+      // Emoji reaction — show as small centered emoji
+      contentDiv.style.cssText = 'text-align:center;font-size:28px;padding:4px 0;';
+      contentDiv.textContent = contentText || '\uD83D\uDC4D';
     } else {
       // Text message (default) - render WhatsApp-style formatting
       waRenderRichText(contentDiv, contentText);
