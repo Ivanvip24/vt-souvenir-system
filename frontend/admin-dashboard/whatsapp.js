@@ -2668,20 +2668,7 @@ function renderWhatsApp() {
   });
   archiveTabs.appendChild(selectToggle);
 
-  var salesTab = document.createElement('button');
-  salesTab.className = 'wa-archive-tab' + (waState.salesView ? ' wa-sales-tab-active' : '');
-  salesTab.id = 'wa-sales-tab';
-  salesTab.textContent = '\uD83D\uDCCA Sales AI';
-  salesTab.addEventListener('click', function() {
-    if (waState.salesView) return;
-    waState.salesView = true;
-    tabAll.classList.remove('active');
-    tabArchived.classList.remove('active');
-    salesTab.classList.add('wa-sales-tab-active');
-    showSalesDashboard();
-    loadSalesAnalytics();
-  });
-  archiveTabs.appendChild(salesTab);
+  // Sales AI tab removed — now accessible via sidebar sub-item
 
   listPanel.appendChild(archiveTabs);
 
