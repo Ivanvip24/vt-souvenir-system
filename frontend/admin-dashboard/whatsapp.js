@@ -20,7 +20,7 @@ const waState = {
   uploadingImage: false,
   insights: null,
   insightsLoading: false,
-  insightsVisible: true,
+  insightsVisible: false,
   labels: [],
   multiSelect: false,
   selectedConvIds: [],
@@ -655,10 +655,13 @@ function injectWhatsAppStyles() {
       width: 320px;
       min-width: 280px;
       border-left: 1px solid #e5e7eb;
-      display: flex;
+      display: none;
       flex-direction: column;
       background: #fff;
       overflow-y: auto;
+    }
+    .wa-insights-panel.wa-insights-visible {
+      display: flex;
     }
     .wa-insights-header {
       padding: 16px;
@@ -776,7 +779,7 @@ function injectWhatsAppStyles() {
       justify-content: center;
     }
     .wa-insights-toggle {
-      display: none;
+      display: inline-flex;
       background: none;
       border: 1px solid #e5e7eb;
       border-radius: 8px;
@@ -793,26 +796,19 @@ function injectWhatsAppStyles() {
       border-color: #e72a88;
       color: #e72a88;
     }
-    @media (max-width: 1100px) {
+    .wa-insights-toggle.active {
+      background: #fce4ec;
+      border-color: #e72a88;
+      color: #e72a88;
+    }
+    @media (max-width: 768px) {
       .wa-insights-panel {
-        display: none;
         position: absolute;
         right: 0;
         top: 0;
         bottom: 0;
         z-index: 20;
         box-shadow: -4px 0 12px rgba(0,0,0,0.1);
-        width: 300px;
-      }
-      .wa-insights-panel.wa-insights-visible {
-        display: flex;
-      }
-      .wa-insights-toggle {
-        display: inline-flex;
-      }
-    }
-    @media (max-width: 768px) {
-      .wa-insights-panel {
         width: 100%;
       }
     }
@@ -2575,9 +2571,9 @@ function buildChatViewDOM(parentEl) {
 
   // Insights toggle button (visible on small screens)
   var insightsToggle = document.createElement('button');
-  insightsToggle.className = 'wa-insights-toggle';
+  insightsToggle.className = 'wa-insights-toggle' + (waState.insightsVisible ? ' active' : '');
   insightsToggle.id = 'wa-insights-toggle';
-  insightsToggle.title = 'Ver insights';
+  insightsToggle.title = waState.insightsVisible ? 'Ocultar insights' : 'Ver insights';
   insightsToggle.textContent = '\u2728 Insights';
   header.appendChild(insightsToggle);
 
