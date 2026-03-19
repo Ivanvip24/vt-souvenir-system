@@ -117,6 +117,22 @@ function injectWhatsAppStyles() {
       padding-left: 13px;
     }
 
+    .wa-conv-item.unread {
+      background: #fefce8;
+    }
+    .wa-conv-item.unread .wa-conv-name {
+      font-weight: 800;
+      color: #000;
+    }
+    .wa-conv-item.unread .wa-conv-preview {
+      color: #333;
+      font-weight: 600;
+    }
+    .wa-conv-item.unread .wa-conv-time {
+      color: #e72a88;
+      font-weight: 600;
+    }
+
     .wa-conv-avatar {
       width: 44px;
       height: 44px;
@@ -2436,7 +2452,7 @@ function buildConversationItemDOM(c) {
   var initials = waGetInitials(displayName);
 
   var item = document.createElement('div');
-  item.className = 'wa-conv-item' + (isActive ? ' active' : '');
+  item.className = 'wa-conv-item' + (isActive ? ' active' : '') + (unread > 0 ? ' unread' : '');
   item.setAttribute('data-conv-id', c.id);
 
   // Right-click context menu
