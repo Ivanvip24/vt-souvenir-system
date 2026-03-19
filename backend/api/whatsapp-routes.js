@@ -575,7 +575,25 @@ router.post('/webhook', (req, res) => {
       );
 
       // Auto-create draft order when payment receipt is detected
-      if (aiResult.paymentReceiptDetected && mediaContext?.type === 'image') {
+      // Detect payment receipt: either AI tagged it OR image came with payment-related caption/context
+      let isPaymentReceipt = aiResult.paymentReceiptDetected;
+      if (!isPaymentReceipt && mediaContext?.type === 'image') {
+        // Server-side detection: check if message text or recent messages suggest payment
+        const paymentKeywords = /comprobante|transferencia|pago|pagué|pague|deposito|depósito|anticipo|envié|envie|recibo|voucher|oxxo|spei|transf/i;
+        if (paymentKeywords.test(messageText)) {
+          isPaymentReceipt = true;
+        } else {
+          // Check last 5 messages for payment context
+          const recentMsgs = await query(
+            `SELECT content FROM whatsapp_messages WHERE conversation_id = $1 AND direction = 'inbound' ORDER BY created_at DESC LIMIT 5`,
+            [conversationId]
+          );
+          for (const rm of recentMsgs.rows) {
+            if (paymentKeywords.test(rm.content || '')) { isPaymentReceipt = true; break; }
+          }
+        }
+      }
+      if (isPaymentReceipt && mediaContext?.type === 'image') {
         try {
           console.log(`📦 Payment receipt detected from ${waId} — creating WhatsApp draft order...`);
 
