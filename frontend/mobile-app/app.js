@@ -26,6 +26,8 @@ let waCurrentMessages = [];
 let waSending = false;
 let waPollingTimer = null;
 let waSearchTerm = '';
+let waLabels = [];
+let waTemplates = [];
 
 const AI_CHIPS = [
     { label: 'Revenue hoy', msg: '¿Cuánto vendimos hoy?' },
@@ -201,6 +203,8 @@ async function loadAllData() {
             apiFetch('/admin/tasks?limit=100'),
             apiFetch('/admin/tasks/stats'),
             apiFetch('/whatsapp/conversations'),
+            apiFetch('/whatsapp/labels'),
+            apiFetch('/whatsapp/templates'),
         ]);
 
         if (results[0].status === 'fulfilled' && results[0].value.success) {
@@ -220,6 +224,12 @@ async function loadAllData() {
         }
         if (results[5].status === 'fulfilled' && results[5].value.success) {
             waConversations = results[5].value.data || [];
+        }
+        if (results[6].status === 'fulfilled' && results[6].value.success) {
+            waLabels = results[6].value.data || [];
+        }
+        if (results[7].status === 'fulfilled') {
+            waTemplates = results[7].value.templates || [];
         }
 
         renderHome();
@@ -456,6 +466,26 @@ function showOrderDetail(order) {
         ])
     ]));
 
+    // ── Approve / Reject Actions ──
+    if (order.approvalStatus === 'pending_review') {
+        var approveBtn = el('button', { className: 'action-btn approve' }, [
+            el('svg', {}),
+            el('span', { textContent: 'Aprobar' })
+        ]);
+        // SVG for approve button
+        approveBtn.querySelector('svg').outerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+        approveBtn.addEventListener('click', function() { handleApproveOrder(order); });
+
+        var rejectBtn = el('button', { className: 'action-btn reject' }, [
+            el('svg', {}),
+            el('span', { textContent: 'Rechazar' })
+        ]);
+        rejectBtn.querySelector('svg').outerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        rejectBtn.addEventListener('click', function() { handleRejectOrder(order); });
+
+        content.appendChild(el('div', { className: 'action-bar' }, [approveBtn, rejectBtn]));
+    }
+
     // Client section
     content.appendChild(buildDetailSection('Cliente', [
         buildDetailRow('Nombre', order.clientName || '—'),
@@ -463,6 +493,61 @@ function showOrderDetail(order) {
         buildDetailRow('Ciudad', order.clientCity || '—'),
         buildDetailRow('Estado', order.clientState || '—'),
     ]));
+
+    // ── Payment Section ──
+    var depositStatus = order.depositPaid ? 'Pagado' : 'Pendiente';
+    var depositCls = order.depositPaid ? 'approved' : 'pending';
+    var remaining = Math.max(0, (Number(order.totalPrice) || 0) - (Number(order.depositAmount) || 0));
+
+    var paymentRows = [
+        el('div', { className: 'detail-row' }, [
+            el('span', { className: 'detail-key', textContent: 'Anticipo' }),
+            el('div', { style: { display: 'flex', alignItems: 'center', gap: '6px' } }, [
+                el('span', { className: 'detail-value', textContent: formatMoney(order.depositAmount) }),
+                el('span', { className: 'status-badge ' + depositCls, textContent: depositStatus })
+            ])
+        ]),
+        buildDetailRow('Restante', formatMoney(remaining)),
+    ];
+
+    // Payment proof link
+    if (order.paymentProofUrl) {
+        var proofLink = el('a', {
+            className: 'payment-proof-link',
+            href: order.paymentProofUrl,
+            target: '_blank',
+            textContent: 'Ver comprobante anticipo'
+        });
+        paymentRows.push(el('div', { className: 'detail-row' }, [
+            el('span', { className: 'detail-key', textContent: 'Comprobante' }),
+            proofLink
+        ]));
+    }
+
+    // Second payment proof
+    if (order.secondPaymentProofUrl) {
+        var proof2Link = el('a', {
+            className: 'payment-proof-link',
+            href: order.secondPaymentProofUrl,
+            target: '_blank',
+            textContent: 'Ver comprobante final'
+        });
+        paymentRows.push(el('div', { className: 'detail-row' }, [
+            el('span', { className: 'detail-key', textContent: '2do Pago' }),
+            proof2Link
+        ]));
+    }
+
+    // Confirm second payment button (if order approved but not delivered and has second proof)
+    if (order.approvalStatus === 'approved' && order.status !== 'Delivered' && order.secondPaymentProofUrl) {
+        var confirmBtn = el('button', { className: 'action-btn approve full-width' }, [
+            el('span', { textContent: 'Confirmar 2do Pago' })
+        ]);
+        confirmBtn.addEventListener('click', function() { handleConfirmSecondPayment(order); });
+        paymentRows.push(confirmBtn);
+    }
+
+    content.appendChild(buildDetailSection('Pagos', paymentRows));
 
     // Financial section
     var totalVal = el('span', { className: 'detail-value', textContent: formatMoney(order.totalPrice) });
@@ -475,7 +560,6 @@ function showOrderDetail(order) {
         el('div', { className: 'detail-row' }, [el('span', { className: 'detail-key', textContent: 'Total' }), totalVal]),
         buildDetailRow('Costo Prod.', formatMoney(order.productionCost)),
         el('div', { className: 'detail-row' }, [el('span', { className: 'detail-key', textContent: 'Utilidad' }), profitVal]),
-        buildDetailRow('Anticipo', formatMoney(order.depositAmount) + ' ' + (order.depositPaid ? '✓' : '✗')),
     ]));
 
     // Items
@@ -530,6 +614,87 @@ function showOrderDetail(order) {
     }
 
     sheet.classList.add('active');
+}
+
+// ── Approve/Reject Handlers ──
+async function handleApproveOrder(order) {
+    var depositAmount = Number(order.depositAmount) || (Number(order.totalPrice) * 0.5);
+    if (!confirm('¿Aprobar pedido #' + (order.orderNumber || order.id) + '?\nAnticipo: ' + formatMoney(depositAmount))) return;
+
+    try {
+        var resp = await apiFetch('/orders/' + order.id + '/approve', {
+            method: 'POST',
+            body: JSON.stringify({ actualDepositAmount: depositAmount })
+        });
+        if (resp.success) {
+            order.approvalStatus = 'approved';
+            order.status = 'in_production';
+            order.depositPaid = true;
+            showOrderDetail(order);
+            loadAllData();
+            showToast('Pedido aprobado');
+        } else {
+            showToast(resp.message || 'Error al aprobar', true);
+        }
+    } catch(e) {
+        showToast('Error de conexión', true);
+    }
+}
+
+async function handleRejectOrder(order) {
+    var reason = prompt('Razón del rechazo (opcional):');
+    if (reason === null) return; // cancelled
+
+    try {
+        var resp = await apiFetch('/orders/' + order.id + '/reject', {
+            method: 'POST',
+            body: JSON.stringify({ reason: reason || '' })
+        });
+        if (resp.success) {
+            order.approvalStatus = 'rejected';
+            order.status = 'Cancelled';
+            showOrderDetail(order);
+            loadAllData();
+            showToast('Pedido rechazado');
+        } else {
+            showToast(resp.message || 'Error al rechazar', true);
+        }
+    } catch(e) {
+        showToast('Error de conexión', true);
+    }
+}
+
+async function handleConfirmSecondPayment(order) {
+    if (!confirm('¿Confirmar segundo pago de #' + (order.orderNumber || order.id) + '?')) return;
+
+    try {
+        var resp = await apiFetch('/orders/' + order.id + '/confirm-second-payment', { method: 'POST' });
+        if (resp.success) {
+            order.status = 'Delivered';
+            showOrderDetail(order);
+            loadAllData();
+            showToast('Pago confirmado — pedido completado');
+        } else {
+            showToast(resp.message || 'Error', true);
+        }
+    } catch(e) {
+        showToast('Error de conexión', true);
+    }
+}
+
+// ── Toast notification ──
+function showToast(msg, isError) {
+    var existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    var toast = el('div', { className: 'toast' + (isError ? ' error' : '') }, [
+        el('span', { textContent: msg })
+    ]);
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.classList.add('visible'); }, 10);
+    setTimeout(function() {
+        toast.classList.remove('visible');
+        setTimeout(function() { toast.remove(); }, 300);
+    }, 2500);
 }
 
 function buildDetailSection(title, children) {
@@ -895,10 +1060,151 @@ async function toggleWaAi() {
             body: JSON.stringify({ ai_enabled: newVal })
         });
     } catch(e) {
-        // Revert on error
         waCurrentConv.ai_enabled = !newVal;
         updateAiToggleBtn(!newVal);
     }
+}
+
+// ── WhatsApp: Pin / Archive ──
+async function toggleWaPin() {
+    if (!waCurrentConv) return;
+    var newVal = !waCurrentConv.is_pinned;
+    try {
+        var resp = await apiFetch('/whatsapp/conversations/' + waCurrentConv.id + '/pin', {
+            method: 'PATCH',
+            body: JSON.stringify({ is_pinned: newVal })
+        });
+        if (resp.success) {
+            waCurrentConv.is_pinned = newVal;
+            showToast(newVal ? 'Fijado' : 'Desfijado');
+            renderWhatsApp();
+        }
+    } catch(e) { showToast('Error', true); }
+}
+
+async function toggleWaArchive() {
+    if (!waCurrentConv) return;
+    var newVal = !waCurrentConv.is_archived;
+    try {
+        var resp = await apiFetch('/whatsapp/conversations/' + waCurrentConv.id + '/archive', {
+            method: 'PATCH',
+            body: JSON.stringify({ is_archived: newVal })
+        });
+        if (resp.success) {
+            waCurrentConv.is_archived = newVal;
+            showToast(newVal ? 'Archivado' : 'Desarchivado');
+            if (newVal) closeWaChat(); // go back to list
+            renderWhatsApp();
+        }
+    } catch(e) { showToast('Error', true); }
+}
+
+// ── WhatsApp: Labels ──
+function showWaLabelPicker() {
+    if (!waCurrentConv) return;
+    var overlay = document.querySelector('.wa-label-overlay');
+    if (overlay) { overlay.remove(); return; }
+
+    var convLabels = (waCurrentConv.labels || []).map(function(l) { return l.id || l; });
+
+    overlay = el('div', { className: 'wa-label-overlay' });
+    var panel = el('div', { className: 'wa-label-panel' });
+
+    panel.appendChild(el('div', { className: 'wa-label-panel-title', textContent: 'Etiquetas' }));
+
+    if (waLabels.length === 0) {
+        panel.appendChild(el('p', { style: { fontSize: '13px', color: 'var(--muted)', padding: '12px' }, textContent: 'Sin etiquetas. Crea una desde el dashboard.' }));
+    } else {
+        waLabels.forEach(function(label) {
+            var isActive = convLabels.indexOf(label.id) >= 0;
+            var dot = el('div', { className: 'wa-label-dot' });
+            dot.style.background = label.color || '#999';
+
+            var row = el('div', { className: 'wa-label-row' + (isActive ? ' active' : '') }, [
+                dot,
+                el('span', { textContent: label.name }),
+                isActive ? el('span', { className: 'wa-label-check', textContent: '✓' }) : null
+            ].filter(Boolean));
+
+            row.addEventListener('click', function() {
+                toggleWaLabel(label.id, !isActive);
+                overlay.remove();
+            });
+            panel.appendChild(row);
+        });
+    }
+
+    var closeBtn = el('button', { className: 'wa-label-close', textContent: 'Cerrar' });
+    closeBtn.addEventListener('click', function() { overlay.remove(); });
+    panel.appendChild(closeBtn);
+
+    overlay.appendChild(panel);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+}
+
+async function toggleWaLabel(labelId, add) {
+    if (!waCurrentConv) return;
+    try {
+        if (add) {
+            await apiFetch('/whatsapp/conversations/' + waCurrentConv.id + '/labels/' + labelId, { method: 'POST' });
+            if (!waCurrentConv.labels) waCurrentConv.labels = [];
+            waCurrentConv.labels.push({ id: labelId });
+            showToast('Etiqueta agregada');
+        } else {
+            await apiFetch('/whatsapp/conversations/' + waCurrentConv.id + '/labels/' + labelId, { method: 'DELETE' });
+            waCurrentConv.labels = (waCurrentConv.labels || []).filter(function(l) { return (l.id || l) !== labelId; });
+            showToast('Etiqueta removida');
+        }
+        renderWhatsApp();
+    } catch(e) { showToast('Error', true); }
+}
+
+// ── WhatsApp: Quick Reply Templates ──
+function showWaTemplates() {
+    if (!waCurrentConv) return;
+    var overlay = document.querySelector('.wa-tpl-overlay');
+    if (overlay) { overlay.remove(); return; }
+
+    overlay = el('div', { className: 'wa-label-overlay' });
+    var panel = el('div', { className: 'wa-label-panel' });
+
+    panel.appendChild(el('div', { className: 'wa-label-panel-title', textContent: 'Respuestas Rápidas' }));
+
+    // Built-in quick replies
+    var quickReplies = [
+        { name: 'Saludo', text: '¡Hola! Gracias por contactarnos. ¿En qué te puedo ayudar?' },
+        { name: 'Precios', text: 'Con gusto te paso los precios. ¿Qué tipo de producto te interesa y cuántas piezas necesitas?' },
+        { name: 'Pago recibido', text: '¡Listo! Ya recibimos tu pago. Te mantengo al tanto del avance.' },
+        { name: 'En producción', text: 'Tu pedido ya está en producción. Te aviso cuando esté listo para envío.' },
+        { name: 'Enviado', text: '¡Tu pedido va en camino! Te paso la guía de rastreo en un momento.' },
+    ];
+
+    // Add backend templates
+    waTemplates.forEach(function(tpl) {
+        quickReplies.push({ name: tpl.name, text: tpl.body || tpl.body_text || '' });
+    });
+
+    quickReplies.forEach(function(qr) {
+        var row = el('div', { className: 'wa-tpl-row' }, [
+            el('span', { className: 'wa-tpl-name', textContent: qr.name }),
+            el('span', { className: 'wa-tpl-preview', textContent: qr.text.substring(0, 50) + (qr.text.length > 50 ? '...' : '') })
+        ]);
+        row.addEventListener('click', function() {
+            $('#wa-reply-input').value = qr.text;
+            $('#wa-reply-input').focus();
+            overlay.remove();
+        });
+        panel.appendChild(row);
+    });
+
+    var closeBtn = el('button', { className: 'wa-label-close', textContent: 'Cerrar' });
+    closeBtn.addEventListener('click', function() { overlay.remove(); });
+    panel.appendChild(closeBtn);
+
+    overlay.appendChild(panel);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
 }
 
 // ── Render: Tasks ──
@@ -1259,6 +1565,10 @@ function init() {
         if (e.key === 'Enter') sendWaReply();
     });
     $('#wa-ai-toggle').addEventListener('click', toggleWaAi);
+    $('#wa-pin-btn').addEventListener('click', toggleWaPin);
+    $('#wa-archive-btn').addEventListener('click', toggleWaArchive);
+    $('#wa-label-btn').addEventListener('click', showWaLabelPicker);
+    $('#wa-tpl-btn').addEventListener('click', showWaTemplates);
     var waSearchDebounce;
     $('#wa-search').addEventListener('input', function() {
         clearTimeout(waSearchDebounce);

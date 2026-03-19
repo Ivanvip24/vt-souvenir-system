@@ -993,6 +993,106 @@ input, button {
 }
 
 /* ============================================
+   ORDER ACTION BUTTONS (Approve/Reject)
+   ============================================ */
+.action-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease-spring), opacity 0.2s;
+    border: none;
+}
+
+.action-btn:active {
+    transform: scale(0.96);
+}
+
+.action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.action-btn.approve {
+    background: var(--verde);
+    color: #fff;
+}
+
+.action-btn.reject {
+    background: var(--rojo);
+    color: #fff;
+}
+
+.action-btn.full-width {
+    margin-top: 10px;
+}
+
+/* Payment proof link */
+.payment-proof-link {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--turquesa);
+    text-decoration: none;
+    padding: 4px 10px;
+    background: var(--turquesa-dim);
+    border-radius: 6px;
+    transition: opacity 0.15s;
+}
+
+.payment-proof-link:active {
+    opacity: 0.7;
+}
+
+/* ============================================
+   TOAST NOTIFICATION
+   ============================================ */
+.toast {
+    position: fixed;
+    bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px);
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a2e;
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s var(--ease-out);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast.error {
+    background: var(--rojo);
+}
+
+/* ============================================
    WHATSAPP VIEW
    ============================================ */
 
@@ -1774,4 +1874,169 @@ input, button {
 #ai-send-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+}
+
+/* ============================================
+   WHATSAPP CHAT ACTIONS BAR
+   ============================================ */
+.wa-chat-actions {
+    display: flex;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-shrink: 0;
+}
+
+.wa-chat-actions::-webkit-scrollbar { display: none; }
+
+.wa-action-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.wa-action-chip:active {
+    transform: scale(0.95);
+    background: var(--rosa-dim);
+    border-color: var(--rosa);
+    color: var(--rosa);
+}
+
+/* ============================================
+   WHATSAPP LABEL PICKER & TEMPLATE PICKER
+   ============================================ */
+.wa-label-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 300;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.wa-label-panel {
+    width: 100%;
+    max-width: 400px;
+    max-height: 60vh;
+    background: var(--surface);
+    border-radius: 16px 16px 0 0;
+    padding: 16px;
+    padding-bottom: calc(16px + var(--safe-bottom));
+    overflow-y: auto;
+    animation: slideUp 0.3s var(--ease-out);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.wa-label-panel-title {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.wa-label-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.wa-label-row:active {
+    background: var(--surface-2);
+}
+
+.wa-label-row.active {
+    background: var(--rosa-dim);
+}
+
+.wa-label-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.wa-label-check {
+    margin-left: auto;
+    color: var(--rosa);
+    font-weight: 700;
+}
+
+.wa-label-close {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+/* Template picker rows */
+.wa-tpl-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.wa-tpl-row:active {
+    background: var(--surface-2);
+}
+
+.wa-tpl-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.wa-tpl-preview {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
