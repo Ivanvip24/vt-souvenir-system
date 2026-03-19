@@ -3698,16 +3698,22 @@ function buildInsightsPanelDOM(parentEl) {
         }
       }
 
-      // Extract design themes/keys from conversation messages
+      // Extract design themes/keys + client images from conversation messages
       var designKeys = [];
       var designDetails = [];
+      var clientImages = [];
       var msgs = waState.messages || [];
       for (var m = 0; m < msgs.length; m++) {
-        if (msgs[m].direction !== 'inbound') continue;
-        var txt = msgs[m].content || '';
+        var msg = msgs[m];
+        if (msg.direction !== 'inbound') continue;
+        var txt = msg.content || '';
         // Look for design descriptions
         if (txt.match(/mariposa|iglesia|catedral|piramide|playa|monte|cafe|mezcal|talavera|guelaguetza|mercado|comida|artesania|folklore|danza|mole|chocolate|barro|alebrije|cascada|cenote|ruina|templo|volcan|laguna|rio|sierra|selva|desierto/i)) {
           designDetails.push(txt);
+        }
+        // Collect all client images as reference
+        if (msg.message_type === 'image' && msg.media_url) {
+          clientImages.push(msg.media_url);
         }
       }
 
@@ -3740,18 +3746,58 @@ function buildInsightsPanelDOM(parentEl) {
       params.set('decoration', '8');
       params.set('ratio', 'square');
 
-      // Build keys from design details
+      // Build DESTINATION key value
       if (destination) {
-        params.set('keys', destination);
+        params.set('keys_destination', destination);
       }
 
-      // Build instructions from full conversation context
-      var conv = waState.conversations.find(function(c) { return c.id === waState.selectedConversationId; });
-      var instructions = 'Diseno para ' + (clientName || 'cliente');
-      if (destination) instructions += ' de ' + destination;
-      if (theme) instructions += '. Tema: ' + theme;
-      if (designDetails.length > 0) instructions += '. Detalles del cliente: ' + designDetails.join('; ');
-      params.set('instructions', instructions);
+      // Build DESIGN ELEMENTS keys from conversation details
+      var designElements = [];
+      for (var dm = 0; dm < msgs.length; dm++) {
+        if (msgs[dm].direction !== 'inbound') continue;
+        var dtxt = (msgs[dm].content || '').toLowerCase();
+        // Extract specific design elements mentioned
+        var elementPatterns = [
+          /mariposa[s]?\s*monarca[s]?/i, /iglesia[s]?/i, /catedral/i, /piramide[s]?/i,
+          /playa[s]?/i, /monte\s*alban/i, /cafe[s]?/i, /mezcal/i, /talavera/i,
+          /guelaguetza/i, /mercado[s]?/i, /artesania[s]?/i, /alebrije[s]?/i,
+          /cascada[s]?/i, /cenote[s]?/i, /volcan/i, /danza/i, /mole/i,
+          /chocolate/i, /barro\s*negro/i, /templo[s]?/i, /ruina[s]?/i,
+          /flor(?:es)?\s*(?:de\s*)?(?:cempasuchil|muerto)/i, /calavera[s]?/i,
+          /nopal(?:es)?/i, /agave/i, /sarape/i, /bordado[s]?/i, /tejido[s]?/i,
+          /parroquia/i, /kiosco/i, /fuente/i, /jardin/i, /rio/i, /lago/i,
+          /sierra/i, /selva/i, /desierto/i, /palapa/i, /hamaca/i
+        ];
+        elementPatterns.forEach(function(pat) {
+          var match = msgs[dm].content.match(pat);
+          if (match && designElements.indexOf(match[0]) === -1) {
+            designElements.push(match[0]);
+          }
+        });
+      }
+      if (designElements.length > 0) {
+        params.set('keys_elements', designElements.join(', '));
+      }
+
+      // Build instructions — ONLY about destination/design, NO client info
+      var instructions = '';
+      if (destination) instructions += 'Souvenir design for ' + destination + '. ';
+      if (theme) instructions += theme + '. ';
+      if (designElements.length > 0) instructions += 'Key elements: ' + designElements.join(', ') + '. ';
+      if (designDetails.length > 0) {
+        // Clean client details — remove names, keep design context
+        var cleanDetails = designDetails.map(function(d) {
+          return d.replace(/(?:me llamo|soy|mi nombre es)\s+\w+/gi, '').trim();
+        }).filter(function(d) { return d.length > 5; });
+        if (cleanDetails.length > 0) instructions += cleanDetails.join('. ');
+      }
+      if (!instructions) instructions = 'Custom souvenir magnet design';
+      params.set('instructions', instructions.trim());
+
+      // Pass client reference images (up to 5)
+      if (clientImages.length > 0) {
+        params.set('images', clientImages.slice(0, 5).join(','));
+      }
 
       var url = 'http://localhost:3001?' + params.toString();
       window.open(url, '_blank');
