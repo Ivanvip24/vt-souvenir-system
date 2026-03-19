@@ -1018,8 +1018,14 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
   try {
     await ensureSalesColumns();
 
+    // Safe query wrapper — returns empty result on failure
+    async function safeQuery(sql, params = []) {
+      try { return await query(sql, params); }
+      catch (e) { console.error('📊 Query failed:', e.message); return { rows: [] }; }
+    }
+
     // 1. Overview
-    const overview = await query(`
+    const overview = await safeQuery(`
       SELECT
         COUNT(*) AS total_conversations,
         COUNT(client_id) AS linked_to_client,
@@ -1030,7 +1036,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 2. Revenue from WhatsApp conversations
-    const revenue = await query(`
+    const revenue = await safeQuery(`
       SELECT
         COUNT(DISTINCT o.id) AS total_orders,
         COALESCE(SUM(o.total_price), 0) AS total_revenue,
@@ -1043,7 +1049,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 3. Close rate
-    const closeRate = await query(`
+    const closeRate = await safeQuery(`
       SELECT
         COUNT(*) AS total,
         COUNT(CASE WHEN EXISTS (
@@ -1062,7 +1068,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 4. Messages to close — avg messages for closed vs lost, avg duration
-    const messagesToClose = await query(`
+    const messagesToClose = await safeQuery(`
       SELECT
         COALESCE(AVG(CASE WHEN has_order THEN msg_count END), 0) AS avg_messages_closed,
         COALESCE(AVG(CASE WHEN NOT has_order THEN msg_count END), 0) AS avg_messages_lost,
@@ -1079,7 +1085,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 5. Intent distribution (exclude 'general')
-    const intentDistribution = await query(`
+    const intentDistribution = await safeQuery(`
       SELECT intent, COUNT(*) AS count
       FROM whatsapp_conversations
       WHERE intent IS NOT NULL AND intent != 'general'
@@ -1088,7 +1094,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 6. Response times — avg and median seconds between inbound and AI reply
-    const responseTimes = await query(`
+    const responseTimes = await safeQuery(`
       SELECT
         COALESCE(AVG(response_seconds), 0) AS avg_response_seconds,
         COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY response_seconds), 0) AS median_response_seconds
@@ -1112,7 +1118,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 7. Hourly distribution (Mexico City timezone)
-    const hourlyDistribution = await query(`
+    const hourlyDistribution = await safeQuery(`
       SELECT
         EXTRACT(HOUR FROM created_at AT TIME ZONE 'America/Mexico_City') AS hour,
         COUNT(*) AS total_messages,
@@ -1124,7 +1130,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 8. Top AI phrases — first 100 chars of AI messages with fastest client responses
-    const topAiPhrases = await query(`
+    const topAiPhrases = await safeQuery(`
       SELECT
         LEFT(ai_msg.content, 100) AS phrase,
         COUNT(*) AS times_used,
@@ -1150,7 +1156,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 9. Message length analysis
-    const messageLengthAnalysis = await query(`
+    const messageLengthAnalysis = await safeQuery(`
       SELECT
         sender,
         CASE
@@ -1165,7 +1171,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 10. Daily volume — new conversations per day, last 30 days
-    const dailyVolume = await query(`
+    const dailyVolume = await safeQuery(`
       SELECT
         DATE(created_at AT TIME ZONE 'America/Mexico_City') AS day,
         COUNT(*) AS new_conversations
@@ -1176,7 +1182,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 11. Sender breakdown
-    const senderBreakdown = await query(`
+    const senderBreakdown = await safeQuery(`
       SELECT sender, COUNT(*) AS message_count
       FROM whatsapp_messages
       GROUP BY sender
@@ -1184,7 +1190,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 12. Word frequency in closed deals vs lost
-    const wordFrequency = await query(`
+    const wordFrequency = await safeQuery(`
       WITH closed_words AS (
         SELECT
           LOWER(word) AS word,
@@ -1223,7 +1229,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     `);
 
     // 13. Conversation learning log — completed conversations (last message >24hrs ago)
-    const conversationLog = await query(`
+    const conversationLog = await safeQuery(`
       SELECT
         wc.id,
         wc.client_name,
