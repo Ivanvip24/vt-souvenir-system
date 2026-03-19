@@ -2242,7 +2242,7 @@ function startWhatsAppPolling() {
     } catch (err) {
       console.error('WhatsApp polling error:', err);
     }
-  }, 5000);
+  }, 15000);
 }
 
 function stopWhatsAppPolling() {
