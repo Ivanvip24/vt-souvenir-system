@@ -21,6 +21,15 @@ async function ensureLabelsArchiveColumns() {
 }
 import { sendWhatsAppMessage, sendWhatsAppListMessage, sendWhatsAppButtonMessage, sendWhatsAppCTAMessage, sendWhatsAppReaction, sendWhatsAppLocationRequest, sendWhatsAppCarousel, sendWhatsAppFlow } from '../services/whatsapp-api.js';
 import {
+  parseAssignment,
+  createTask,
+  completeTask,
+  getPendingTasks,
+  getDesignerByPhone,
+  getDesignerByName,
+  deliverDesignPiece
+} from '../services/designer-task-tracker.js';
+import {
   downloadWhatsAppMedia,
   uploadMediaToCloudinary,
   sendWhatsAppImage,
@@ -30,6 +39,144 @@ import {
 } from '../services/whatsapp-media.js';
 
 const router = Router();
+
+// ---------------------------------------------------------------------------
+// Designer Task Tracking — detect assignments from Ivan, completions from designers
+// ---------------------------------------------------------------------------
+const IVAN_PHONE = (process.env.IVAN_WHATSAPP_NUMBER || '').replace(/\D/g, '').slice(-10);
+
+const DESIGNER_NAME_RE = /\b(sarahi|sarahí|majo)\b/i;
+const TASK_KEYWORD_RE = /\b(arm|arma|armado|armados|dis|diseño|diseña|diseños|diseñar)\b/i;
+const COMPLETION_RE = /^(listo|ya|terminé|termine|sí|si|done|ya quedó|ya quedo)$/i;
+const COMPLETION_ALL_RE = /^listo\s+todas$/i;
+
+async function handleDesignerMessage(waId, text, imageUrl) {
+  if (!text && !imageUrl) return null;
+
+  const senderLast10 = waId.replace(/\D/g, '').slice(-10);
+  const isIvan = IVAN_PHONE && senderLast10 === IVAN_PHONE;
+  const normalText = (text || '').trim();
+  const lowerText = normalText.toLowerCase();
+
+  // ---- Manager commands (from Ivan) ----
+  if (isIvan) {
+    // "pendientes" — list all pending tasks
+    if (lowerText === 'pendientes') {
+      const tasks = await getPendingTasks();
+      if (tasks.length === 0) {
+        return { handled: true, reply: '✓ No hay tareas pendientes' };
+      }
+      const lines = tasks.map(t => {
+        const qty = t.quantity ? ` (${t.quantity})` : '';
+        const dest = t.destination ? ` — ${t.destination}` : '';
+        return `• ${t.designer_name}: ${t.task_type} ${t.product_type || ''}${qty}${dest} [${t.status}]`;
+      });
+      return { handled: true, reply: `📋 Pendientes:\n${lines.join('\n')}` };
+    }
+
+    // "status sarahi" / "status majo"
+    const statusMatch = lowerText.match(/^status\s+(sarahi|sarahí|majo)$/i);
+    if (statusMatch) {
+      const designer = await getDesignerByName(statusMatch[1]);
+      if (!designer) {
+        return { handled: true, reply: `No encontré a ${statusMatch[1]}` };
+      }
+      const tasks = await getPendingTasks(designer.id);
+      if (tasks.length === 0) {
+        return { handled: true, reply: `✓ ${designer.name} no tiene tareas pendientes` };
+      }
+      const lines = tasks.map(t => {
+        const qty = t.quantity ? ` (${t.quantity})` : '';
+        const dest = t.destination ? ` — ${t.destination}` : '';
+        const pieces = t.pieces && t.pieces.length > 0
+          ? `\n  Piezas: ${t.pieces.map(p => `${p.piece_name} [${p.status}]`).join(', ')}`
+          : '';
+        return `• ${t.task_type} ${t.product_type || ''}${qty}${dest} [${t.status}]${pieces}`;
+      });
+      return { handled: true, reply: `📋 ${designer.name}:\n${lines.join('\n')}` };
+    }
+
+    // Task assignment detection: must contain designer name + task keyword
+    if (DESIGNER_NAME_RE.test(normalText) && TASK_KEYWORD_RE.test(normalText)) {
+      const parsed = await parseAssignment(normalText, imageUrl);
+      const task = await createTask(parsed, imageUrl);
+      const qty = task.quantity ? ` ${task.quantity}` : '';
+      const dest = task.destination ? ` — ${task.destination}` : '';
+      const desc = task.product_type || (task.pieces && task.pieces.length > 0 ? task.pieces.join(', ') : task.task_type);
+      return { handled: true, reply: `✓ Tarea para ${task.designer_name}: ${task.task_type}${qty} ${desc}${dest}` };
+    }
+
+    // Not a designer-related message from Ivan
+    return null;
+  }
+
+  // ---- Designer responses (from Sarahi or Majo) ----
+  const designer = await getDesignerByPhone(waId);
+  if (!designer) return null; // Not a known designer — let normal AI handle it
+
+  // "listo todas" — mark ALL pending tasks as done
+  if (COMPLETION_ALL_RE.test(lowerText)) {
+    const tasks = await getPendingTasks(designer.id);
+    if (tasks.length === 0) {
+      return { handled: true, reply: '✓ No tienes tareas pendientes' };
+    }
+    for (const t of tasks) {
+      await completeTask(t.id);
+    }
+    return { handled: true, reply: `✓ ${tasks.length} tareas completadas` };
+  }
+
+  // "listo", "ya", "terminé", etc. — mark most recent pending task as done
+  if (COMPLETION_RE.test(lowerText)) {
+    const tasks = await getPendingTasks(designer.id);
+    if (tasks.length === 0) {
+      return { handled: true, reply: '✓ No tienes tareas pendientes' };
+    }
+    const latest = tasks[0]; // most recent (ordered by assigned_at DESC)
+    await completeTask(latest.id);
+    const desc = latest.product_type || latest.task_type;
+    const qty = latest.quantity ? ` (${latest.quantity})` : '';
+    return { handled: true, reply: `✓ Tarea completada: ${desc}${qty}` };
+  }
+
+  // A bare number — if they have a pending armado task, update quantity and mark done
+  const numberMatch = lowerText.match(/^(\d+)$/);
+  if (numberMatch) {
+    const tasks = await getPendingTasks(designer.id);
+    const armadoTask = tasks.find(t => t.task_type === 'armado');
+    if (armadoTask) {
+      const actualQty = parseInt(numberMatch[1]);
+      // Update quantity with actual count and complete
+      await query(
+        'UPDATE designer_tasks SET quantity = $1, updated_at = NOW() WHERE id = $2',
+        [actualQty, armadoTask.id]
+      );
+      await completeTask(armadoTask.id);
+      const desc = armadoTask.product_type || 'armado';
+      return { handled: true, reply: `✓ Tarea completada: ${desc} (${actualQty})` };
+    }
+    // No armado task — fall through to normal AI
+    return null;
+  }
+
+  // An image — if they have a pending diseño task, deliver the first undelivered piece
+  if (imageUrl) {
+    const tasks = await getPendingTasks(designer.id);
+    const designTask = tasks.find(t => t.task_type === 'diseño' && t.pieces && t.pieces.length > 0);
+    if (designTask) {
+      const undelivered = designTask.pieces.find(p => p.status !== 'delivered');
+      if (undelivered) {
+        const piece = await deliverDesignPiece(designTask.id, undelivered.piece_name, imageUrl);
+        return { handled: true, reply: `✓ Pieza entregada: ${piece.piece_name}` };
+      }
+    }
+    // No pending design task with undelivered pieces — fall through
+    return null;
+  }
+
+  // Not a recognized designer command — let normal AI handle it
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // 1. GET /webhook — Meta verification handshake (no auth)
@@ -213,6 +360,25 @@ router.post('/webhook', (req, res) => {
         'UPDATE whatsapp_conversations SET unread_count = unread_count + 1 WHERE id = $1',
         [conversationId]
       );
+
+      // --- Designer Task Tracking ---
+      try {
+        const designerResult = await handleDesignerMessage(waId, messageText, mediaUrl);
+        if (designerResult?.handled) {
+          // Send confirmation and skip normal AI processing
+          await sendWhatsAppMessage(waId, designerResult.reply);
+          // Store outbound message
+          await query(
+            `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content)
+             VALUES ($1, $2, 'outbound', 'system', 'text', $3)`,
+            [conversationId, `designer_${Date.now()}`, designerResult.reply]
+          );
+          return; // Skip AI processing
+        }
+      } catch (designerErr) {
+        console.error('📋 Designer task error:', designerErr.message);
+        // Don't block normal flow on error
+      }
 
       // Skip AI processing if ai_enabled is false for this conversation
       if (aiEnabled === false) {
@@ -491,17 +657,15 @@ router.post('/webhook', (req, res) => {
 
             const orderResult = await query(
               `INSERT INTO orders (order_number, client_id, status, approval_status, total_price, total_production_cost,
-               notes, order_date, event_type, shipping_city, shipping_state, payment_proof_url)
-               VALUES ($1, $2, 'whatsapp_draft', 'pending_review', $3, 0, $4, NOW(), $5, $6, $7, $8)
+               notes, order_date, event_type, payment_proof_url)
+               VALUES ($1, $2, 'whatsapp_draft', 'pending_review', $3, 0, $4, NOW(), $5, $6)
                RETURNING id`,
               [
                 orderNumber,
                 clientId,
                 totalPrice,
-                'Pedido creado automáticamente desde WhatsApp. wa_conv_' + conversationId + '. Revisar detalles.',
+                'Pedido creado desde WhatsApp. wa_conv_' + conversationId + '. Destino: ' + (destination || 'No especificado') + '. Revisar detalles.',
                 eventType || null,
-                destination || null,
-                destination || null,
                 mediaContext.mediaUrl || null
               ]
             );
