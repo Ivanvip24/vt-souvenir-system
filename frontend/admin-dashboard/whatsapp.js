@@ -1517,7 +1517,7 @@ async function sendReply(conversationId, message, imageUrl) {
 async function loadWhatsAppLabels() {
   try {
     var res = await fetch(API_BASE + '/whatsapp/labels', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
     });
     var data = await res.json();
     if (data.success) waState.labels = data.data || [];
@@ -1528,7 +1528,7 @@ async function togglePinConversation(convId, isPinned) {
   try {
     await fetch(API_BASE + '/whatsapp/conversations/' + convId + '/pin', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') },
       body: JSON.stringify({ is_pinned: isPinned })
     });
     await reloadConversations();
@@ -1539,7 +1539,7 @@ async function toggleArchiveConversation(convId, isArchived) {
   try {
     await fetch(API_BASE + '/whatsapp/conversations/' + convId + '/archive', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') },
       body: JSON.stringify({ is_archived: isArchived })
     });
     await reloadConversations();
@@ -1551,7 +1551,7 @@ async function deleteConversation(convId) {
   try {
     await fetch(API_BASE + '/whatsapp/conversations/' + convId, {
       method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
     });
     if (waState.selectedConversationId === convId) {
       waState.selectedConversationId = null;
@@ -1566,12 +1566,12 @@ async function toggleConversationLabel(convId, labelId, isAssigned) {
     if (isAssigned) {
       await fetch(API_BASE + '/whatsapp/conversations/' + convId + '/labels/' + labelId, {
         method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
       });
     } else {
       await fetch(API_BASE + '/whatsapp/conversations/' + convId + '/labels/' + labelId, {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
       });
     }
     await loadWhatsAppLabels();
@@ -1583,7 +1583,7 @@ async function createNewLabel(name, color) {
   try {
     var res = await fetch(API_BASE + '/whatsapp/labels', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') },
       body: JSON.stringify({ name: name, color: color })
     });
     var data = await res.json();
@@ -1641,7 +1641,7 @@ async function bulkAction(action) {
     if (!confirm('Eliminar ' + ids.length + ' conversaciones? Esta accion no se puede deshacer.')) return;
   }
 
-  var token = localStorage.getItem('token');
+  var token = localStorage.getItem('admin_token');
   var promises = ids.map(function(id) {
     if (action === 'delete') {
       return fetch(API_BASE + '/whatsapp/conversations/' + id, {
@@ -2015,7 +2015,7 @@ function renderWhatsApp() {
     var chosen = modelSelect.value;
     fetch(API_BASE + '/whatsapp/ai-model', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') },
       body: JSON.stringify({ model: chosen })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.success) {
@@ -2029,7 +2029,7 @@ function renderWhatsApp() {
 
   // Load current model setting
   fetch(API_BASE + '/whatsapp/ai-model', {
-    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
   }).then(function(r) { return r.json(); }).then(function(data) {
     if (data.model) {
       var sel = document.getElementById('wa-model-select');
