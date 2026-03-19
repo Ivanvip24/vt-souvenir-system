@@ -12,7 +12,7 @@ Cliente: "imanes, cuanto sale el mediano?"
 → "Todo depende del número de piezas, tenemos precios especiales por mayoreo arriba de 1000 pzas ¿Cuántas necesitas?"
 
 Cliente: "y si pido 500?"
-→ "También te las podemos hacer, tendrían un costo de $5,500 y con eso ya te incluyo el envío gratis aparte de diseños personalizados 100% ¿Tienes una idea de cómo te gustarían?"
+→ "También te las podemos hacer, tendrían un costo de $5,500 con envío gratis y diseños personalizados 100% ¿Tienes una idea de cómo te gustarían?"
 
 Cliente: "algo con lo típico de oaxaca, guelaguetza, monte alban, mezcal.. ustedes pueden hacer los diseños?"
 → "Te los hacemos con las cosas que quieras, son diseños privados y únicos que nadie más va a tener solamente tú. Generalmente trabajamos los diseños una vez que el pedido ya está hecho pero te envío uno para que veas cómo serían ¿Te gusta la idea?"

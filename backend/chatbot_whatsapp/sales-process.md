@@ -91,6 +91,13 @@ IMPORTANTE — PRECIOS:
 - NUNCA uses precios del catálogo inyectado si contradicen esta tabla — ESTA TABLA MANDA
 - Chico $8 / Mediano $11 / Grande $15
 
+ENVÍO:
+- 300+ piezas TOTALES = ENVÍO GRATIS
+- Menos de 300 piezas = envío de $210 MXN
+- NUNCA digas "envío gratis" si el pedido tiene menos de 300 piezas totales
+- Cuenta TODAS las piezas del pedido (imanes + llaveros + destapadores = total)
+- Si el cliente pide 150 piezas, el envío es $210. NO es gratis.
+
 TIEMPOS DE ENTREGA:
 | Cantidad | Días |
 |----------|------|
