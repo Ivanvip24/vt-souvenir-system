@@ -218,7 +218,23 @@ function switchView(viewName) {
   // Initialize WhatsApp conversations when switching to whatsapp view
   if (viewName === 'whatsapp' && typeof loadWhatsAppConversations === 'function') {
     loadWhatsAppConversations();
-  } else if (viewName !== 'whatsapp' && typeof stopWhatsAppPolling === 'function') {
+    // Hide sales dashboard if returning to main WhatsApp
+    if (typeof hideSalesDashboard === 'function') hideSalesDashboard();
+  } else if (viewName === 'sales-ai') {
+    // Sales AI is a sub-view of WhatsApp — show WhatsApp view then switch to Sales tab
+    const waView = document.getElementById('whatsapp-view');
+    if (waView) waView.classList.add('active');
+    if (typeof loadWhatsAppConversations === 'function') loadWhatsAppConversations();
+    // Trigger the Sales AI tab after a brief delay to let WhatsApp render
+    setTimeout(function() {
+      if (typeof showSalesDashboard === 'function') showSalesDashboard();
+      if (typeof loadSalesAnalytics === 'function') loadSalesAnalytics();
+      // Update tab active states
+      document.querySelectorAll('.wa-archive-tab').forEach(function(t) { t.classList.remove('active'); });
+      var salesTab = document.querySelector('.wa-archive-tab[data-tab="sales"]');
+      if (salesTab) salesTab.classList.add('active');
+    }, 300);
+  } else if (viewName !== 'whatsapp' && viewName !== 'sales-ai' && typeof stopWhatsAppPolling === 'function') {
     stopWhatsAppPolling();
   }
 }
