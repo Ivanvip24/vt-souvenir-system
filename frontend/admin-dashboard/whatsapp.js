@@ -2977,6 +2977,106 @@ function bindChatEvents() {
       this.style.height = 'auto';
       this.style.height = Math.min(this.scrollHeight, 100) + 'px';
     });
+
+    // Paste image from clipboard (Ctrl+V / Cmd+V)
+    input.addEventListener('paste', function(e) {
+      var items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          e.preventDefault();
+          var file = items[i].getAsFile();
+          if (file) attachImageFile(file);
+          return;
+        }
+      }
+    });
+  }
+
+  // Drag and drop images onto the chat area
+  var chatPanel = document.getElementById('wa-chat-panel');
+  if (chatPanel) {
+    chatPanel.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      chatPanel.style.outline = '2px dashed #e72a88';
+      chatPanel.style.outlineOffset = '-4px';
+    });
+
+    chatPanel.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      chatPanel.style.outline = '';
+      chatPanel.style.outlineOffset = '';
+    });
+
+    chatPanel.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      chatPanel.style.outline = '';
+      chatPanel.style.outlineOffset = '';
+
+      var files = e.dataTransfer && e.dataTransfer.files;
+      if (!files || files.length === 0) return;
+
+      var file = files[0];
+      if (file.type.indexOf('image') === -1) return;
+      attachImageFile(file);
+    });
+  }
+}
+
+/**
+ * Attach an image file from paste or drag-drop (reuses existing preview logic)
+ */
+function attachImageFile(file) {
+  if (file.size > 10 * 1024 * 1024) {
+    if (typeof window.showToast === 'function') {
+      window.showToast('La imagen es muy grande (max 10MB)', 'error');
+    }
+    return;
+  }
+
+  waState.pendingImageFile = file;
+
+  // Show preview strip
+  var strip = document.getElementById('wa-img-preview-strip');
+  if (strip) {
+    strip.textContent = '';
+    strip.style.display = 'flex';
+
+    var thumb = document.createElement('img');
+    thumb.className = 'wa-img-preview-thumb';
+    thumb.src = URL.createObjectURL(file);
+    strip.appendChild(thumb);
+
+    var info = document.createElement('div');
+    info.className = 'wa-img-preview-info';
+    var nameDiv = document.createElement('div');
+    nameDiv.className = 'wa-img-preview-name';
+    nameDiv.textContent = file.name || 'Imagen pegada';
+    info.appendChild(nameDiv);
+    var sizeDiv = document.createElement('div');
+    sizeDiv.textContent = (file.size / 1024 < 1024)
+      ? Math.round(file.size / 1024) + ' KB'
+      : (file.size / 1024 / 1024).toFixed(1) + ' MB';
+    info.appendChild(sizeDiv);
+    strip.appendChild(info);
+
+    var removeBtn = document.createElement('button');
+    removeBtn.className = 'wa-img-remove-btn';
+    removeBtn.title = 'Quitar imagen';
+    removeBtn.textContent = '\u00D7';
+    removeBtn.addEventListener('click', clearPendingImage);
+    strip.appendChild(removeBtn);
+  }
+
+  // Highlight image button
+  var imgBtn = document.getElementById('wa-img-btn');
+  if (imgBtn) {
+    imgBtn.style.background = '#e72a88';
+    imgBtn.style.color = '#fff';
+    imgBtn.style.borderColor = '#e72a88';
+    imgBtn.title = 'Imagen adjunta (click para quitar)';
   }
 }
 
