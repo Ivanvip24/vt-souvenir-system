@@ -575,22 +575,28 @@ router.post('/webhook', (req, res) => {
       );
 
       // Auto-create draft order when payment receipt is detected
-      // Detect payment receipt: either AI tagged it OR image came with payment-related caption/context
+      // Detect payment receipt via focused Claude Vision call (separate from chat AI)
       let isPaymentReceipt = aiResult.paymentReceiptDetected;
-      if (!isPaymentReceipt && mediaContext?.type === 'image') {
-        // Server-side detection: check if message text or recent messages suggest payment
-        const paymentKeywords = /comprobante|transferencia|pago|pagué|pague|deposito|depósito|anticipo|envié|envie|recibo|voucher|oxxo|spei|transf/i;
-        if (paymentKeywords.test(messageText)) {
-          isPaymentReceipt = true;
-        } else {
-          // Check last 5 messages for payment context
-          const recentMsgs = await query(
-            `SELECT content FROM whatsapp_messages WHERE conversation_id = $1 AND direction = 'inbound' ORDER BY created_at DESC LIMIT 5`,
-            [conversationId]
-          );
-          for (const rm of recentMsgs.rows) {
-            if (paymentKeywords.test(rm.content || '')) { isPaymentReceipt = true; break; }
-          }
+      if (!isPaymentReceipt && mediaContext?.type === 'image' && mediaContext.imageBase64) {
+        try {
+          const Anthropic = (await import('@anthropic-ai/sdk')).default;
+          const visionClient = new Anthropic();
+          const visionResponse = await visionClient.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 10,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: mediaContext.imageMimeType || 'image/jpeg', data: mediaContext.imageBase64 } },
+                { type: 'text', text: 'Is this image a payment receipt, bank transfer confirmation, or payment proof? Answer ONLY "yes" or "no".' }
+              ]
+            }]
+          });
+          const answer = (visionResponse.content[0].text || '').toLowerCase().trim();
+          isPaymentReceipt = answer.startsWith('yes') || answer.startsWith('sí') || answer.startsWith('si');
+          if (isPaymentReceipt) console.log('🧾 Claude Vision confirmed: image is a payment receipt');
+        } catch (visionErr) {
+          console.error('🧾 Receipt vision check failed:', visionErr.message);
         }
       }
       if (isPaymentReceipt && mediaContext?.type === 'image') {
