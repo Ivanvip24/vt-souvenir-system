@@ -4777,18 +4777,28 @@ async function loadSalesAnalytics() {
   container.innerHTML = '<div class="wa-sales-loading">\uD83D\uDCCA Cargando inteligencia de ventas...</div>';
 
   try {
-    var res = await fetch(API_BASE + '/whatsapp/sales-analytics', {
+    var url = API_BASE + '/whatsapp/sales-analytics';
+    console.log('📊 Fetching sales analytics from:', url);
+    var res = await fetch(url, {
       headers: getAuthHeaders()
     });
+    console.log('📊 Response status:', res.status);
+    if (!res.ok) {
+      var errText = await res.text();
+      console.error('📊 Error response:', errText);
+      container.textContent = 'Error ' + res.status + ': ' + (errText || 'No se pudieron cargar los datos');
+      return;
+    }
     var json = await res.json();
     if (json.success) {
       waState.salesData = json.data;
       renderSalesDashboard(container, json.data);
     } else {
-      container.innerHTML = '<div class="wa-sales-loading">Error: ' + (json.error || 'No se pudieron cargar los datos') + '</div>';
+      container.textContent = 'Error: ' + (json.error || 'No se pudieron cargar los datos');
     }
   } catch (e) {
-    container.innerHTML = '<div class="wa-sales-loading">Error cargando analytics</div>';
+    console.error('📊 Sales analytics error:', e);
+    container.textContent = 'Error cargando analytics: ' + e.message;
   }
 }
 
