@@ -733,28 +733,55 @@ input, button {
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 0 20px;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.1s, background 0.2s;
+    z-index: 1;
+}
+
+.swipe-reveal svg {
+    flex-shrink: 0;
+}
+
+.swipe-label {
     font-family: var(--font-mono);
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 2px;
-    color: #fff;
-    opacity: 0;
-    transition: opacity 0.1s;
-    z-index: 1;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
+    transition: transform 0.15s;
 }
 
 .swipe-reveal.approve {
     left: 0;
-    background: var(--verde);
+    background: rgba(138, 183, 59, 0.85);
     justify-content: flex-start;
 }
 
 .swipe-reveal.reject {
     right: 0;
-    background: var(--rojo);
+    background: rgba(229, 36, 33, 0.85);
     justify-content: flex-end;
+}
+
+/* Stage 2: ready to confirm — brighter, pulsing */
+.swipe-reveal.ready {
+    background: var(--verde);
+}
+
+.swipe-reveal.reject.ready {
+    background: var(--rojo);
+}
+
+.swipe-reveal.ready .swipe-label {
+    animation: swipePulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes swipePulse {
+    from { transform: scale(1); opacity: 0.9; }
+    to { transform: scale(1.05); opacity: 1; }
 }
 
 .order-card-top {

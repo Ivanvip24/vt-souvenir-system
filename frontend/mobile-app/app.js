@@ -402,15 +402,15 @@ function buildOrderCard(order, index) {
         // Reveal backgrounds
         var approveReveal = el('div', { className: 'swipe-reveal approve' }, [
             el('svg', {}),
-            el('span', { textContent: 'APROBAR' })
+            el('span', { className: 'swipe-label', textContent: 'APROBAR →' })
         ]);
-        approveReveal.querySelector('svg').outerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+        approveReveal.querySelector('svg').outerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
 
         var rejectReveal = el('div', { className: 'swipe-reveal reject' }, [
-            el('span', { textContent: 'RECHAZAR' }),
+            el('span', { className: 'swipe-label', textContent: '← RECHAZAR' }),
             el('svg', {})
         ]);
-        rejectReveal.querySelector('svg').outerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        rejectReveal.querySelector('svg').outerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
 
         wrapper.appendChild(approveReveal);
         wrapper.appendChild(rejectReveal);
@@ -427,12 +427,20 @@ function buildOrderCard(order, index) {
     return card;
 }
 
-// ── Swipe Gesture for Order Cards ──
+// ── Swipe Gesture for Order Cards (two-stage) ──
+// Stage 1: Swipe reveals the action (APROBAR / RECHAZAR)
+// Stage 2: Keep swiping past confirm threshold to execute
 function initSwipeGesture(wrapper, card, order) {
     var startX = 0, startY = 0, currentX = 0;
     var isDragging = false, isHorizontal = null;
-    var THRESHOLD = 100; // px to trigger action
-    var MAX_SWIPE = 160;
+    var REVEAL = 70;     // px — shows the action label
+    var CONFIRM = 160;   // px — triggers the action
+    var MAX_SWIPE = 220;
+
+    var approveEl = wrapper.querySelector('.swipe-reveal.approve');
+    var rejectEl = wrapper.querySelector('.swipe-reveal.reject');
+    var approveLbl = approveEl.querySelector('.swipe-label');
+    var rejectLbl = rejectEl.querySelector('.swipe-label');
 
     card.addEventListener('touchstart', function(e) {
         var touch = e.touches[0];
@@ -450,25 +458,29 @@ function initSwipeGesture(wrapper, card, order) {
         var dx = touch.clientX - startX;
         var dy = touch.clientY - startY;
 
-        // Determine direction on first significant move
         if (isHorizontal === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
             isHorizontal = Math.abs(dx) > Math.abs(dy);
         }
-
-        if (!isHorizontal) return; // vertical scroll, ignore
+        if (!isHorizontal) return;
 
         e.preventDefault();
         currentX = Math.max(-MAX_SWIPE, Math.min(MAX_SWIPE, dx));
         card.style.transform = 'translateX(' + currentX + 'px)';
 
-        // Show/scale reveal backgrounds
-        var pct = Math.min(1, Math.abs(currentX) / THRESHOLD);
+        var absx = Math.abs(currentX);
+        var pctReveal = Math.min(1, absx / REVEAL);
+        var pastConfirm = absx >= CONFIRM;
+
         if (currentX > 0) {
-            wrapper.querySelector('.swipe-reveal.approve').style.opacity = pct;
-            wrapper.querySelector('.swipe-reveal.reject').style.opacity = 0;
-        } else {
-            wrapper.querySelector('.swipe-reveal.reject').style.opacity = pct;
-            wrapper.querySelector('.swipe-reveal.approve').style.opacity = 0;
+            approveEl.style.opacity = pctReveal;
+            rejectEl.style.opacity = 0;
+            if (approveLbl) approveLbl.textContent = pastConfirm ? 'SOLTAR PARA APROBAR' : 'APROBAR →';
+            approveEl.classList.toggle('ready', pastConfirm);
+        } else if (currentX < 0) {
+            rejectEl.style.opacity = pctReveal;
+            approveEl.style.opacity = 0;
+            if (rejectLbl) rejectLbl.textContent = pastConfirm ? 'SOLTAR PARA RECHAZAR' : '← RECHAZAR';
+            rejectEl.classList.toggle('ready', pastConfirm);
         }
     }, { passive: false });
 
@@ -476,13 +488,22 @@ function initSwipeGesture(wrapper, card, order) {
         if (!isDragging) return;
         isDragging = false;
 
-        card.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+        card.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s';
+        var absx = Math.abs(currentX);
 
-        if (isHorizontal && Math.abs(currentX) >= THRESHOLD) {
-            // Animate off screen then trigger action
+        if (isHorizontal && absx >= CONFIRM) {
+            // Stage 2 reached — execute action
             var direction = currentX > 0 ? 1 : -1;
-            card.style.transform = 'translateX(' + (direction * 300) + 'px)';
+            card.style.transform = 'translateX(' + (direction * 350) + 'px)';
             card.style.opacity = '0';
+            wrapper.style.transition = 'height 0.3s 0.15s, margin 0.3s 0.15s, opacity 0.2s 0.15s';
+            wrapper.style.overflow = 'hidden';
+
+            setTimeout(function() {
+                wrapper.style.height = '0px';
+                wrapper.style.marginBottom = '0px';
+                wrapper.style.opacity = '0';
+            }, 100);
 
             setTimeout(function() {
                 if (direction > 0) {
@@ -490,16 +511,20 @@ function initSwipeGesture(wrapper, card, order) {
                 } else {
                     handleRejectOrder(order);
                 }
-            }, 250);
+            }, 350);
         } else {
             // Snap back
             card.style.transform = 'translateX(0)';
-            wrapper.querySelector('.swipe-reveal.approve').style.opacity = 0;
-            wrapper.querySelector('.swipe-reveal.reject').style.opacity = 0;
+            approveEl.style.opacity = 0;
+            rejectEl.style.opacity = 0;
+            approveEl.classList.remove('ready');
+            rejectEl.classList.remove('ready');
+            if (approveLbl) approveLbl.textContent = 'APROBAR →';
+            if (rejectLbl) rejectLbl.textContent = '← RECHAZAR';
         }
 
-        // Also allow tap to open detail
-        if (isHorizontal === false || (isHorizontal === null && Math.abs(currentX) < 5)) {
+        // Tap to open detail (no horizontal movement)
+        if (isHorizontal === false || (isHorizontal === null && absx < 5)) {
             var o = allOrders.find(function(x) { return String(x.id) === String(order.id); });
             if (o) showOrderDetail(o);
         }
