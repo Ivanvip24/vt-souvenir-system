@@ -291,6 +291,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_conversations (
   ai_summary TEXT,
   unread_count INTEGER DEFAULT 0,
   last_message_at TIMESTAMP,
+  follow_up_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -298,6 +299,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_conversations (
 CREATE INDEX IF NOT EXISTS idx_wa_conv_wa_id ON whatsapp_conversations(wa_id);
 CREATE INDEX IF NOT EXISTS idx_wa_conv_status ON whatsapp_conversations(status);
 CREATE INDEX IF NOT EXISTS idx_wa_conv_client ON whatsapp_conversations(client_id);
+CREATE INDEX IF NOT EXISTS idx_wa_conv_follow_up ON whatsapp_conversations(follow_up_at);
 
 -- =====================================================
 -- WHATSAPP MESSAGES TABLE

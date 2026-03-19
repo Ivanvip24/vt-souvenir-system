@@ -45,6 +45,7 @@ async function runAllMigrations() {
     await runMigration('017-add-push-subscriptions.sql');
     await runMigration('011-product-price-tiers.sql');
     await runMigration('018-design-subscriptions.sql');
+    await runMigration('019-add-follow-up-at.sql');
 
     console.log('\n✨ All migrations completed successfully!');
 
