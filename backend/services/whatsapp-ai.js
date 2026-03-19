@@ -360,7 +360,18 @@ function parseAIResponse(responseText) {
     cleanReply = cleanReply.replace(/\[SEND_FLOW\].*?\[\/SEND_FLOW\]/s, '').trim();
   }
 
-  return { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest };
+  // Extract PAYMENT_RECEIPT detection
+  let paymentReceiptDetected = false;
+  const receiptMatch = cleanReply.match(/\[PAYMENT_RECEIPT\](.*?)\[\/PAYMENT_RECEIPT\]/s);
+  if (receiptMatch) {
+    try {
+      const receiptData = JSON.parse(receiptMatch[1].trim());
+      paymentReceiptDetected = !!receiptData.detected;
+    } catch (err) {}
+    cleanReply = cleanReply.replace(/\[PAYMENT_RECEIPT\].*?\[\/PAYMENT_RECEIPT\]/s, '').trim();
+  }
+
+  return { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest, paymentReceiptDetected };
 }
 
 /**
@@ -635,6 +646,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       locationRequest: locationRequest || null,
       carouselCards,
       flowRequest: flowRequest || null,
+      paymentReceiptDetected: paymentReceiptDetected || false,
     };
 
   } catch (error) {

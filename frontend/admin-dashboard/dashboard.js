@@ -1106,6 +1106,7 @@ async function showOrderDetail(orderId) {
 
   // Set modal title with PDF download button and status badge
   const statusColors = {
+    'whatsapp_draft': { bg: '#dbeafe', color: '#1e40af', border: '#3b82f6' },
     'pending_review': { bg: '#fef3c7', color: '#92400e', border: '#f59e0b' },
     'approved': { bg: '#d1fae5', color: '#065f46', border: '#10b981' },
     'needs_changes': { bg: '#fee2e2', color: '#991b1b', border: '#ef4444' },
@@ -2621,13 +2622,15 @@ function getStatusText(status) {
     'pending_review': 'Pendiente',
     'approved': 'Aprobado',
     'needs_changes': 'Requiere Cambios',
-    'rejected': 'Rechazado'
+    'rejected': 'Rechazado',
+    'whatsapp_draft': '\u26A0\uFE0F WhatsApp — Revisar'
   };
   return map[status] || status;
 }
 
 function getProductionStatusText(status) {
   const map = {
+    'whatsapp_draft': 'WhatsApp — Revisar',
     'new': 'Nuevo',
     'pending': 'Pendiente',
     'design': 'En Diseño',

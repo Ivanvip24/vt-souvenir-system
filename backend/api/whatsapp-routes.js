@@ -407,6 +407,123 @@ router.post('/webhook', (req, res) => {
         'UPDATE whatsapp_conversations SET intent = $1, ai_summary = $2 WHERE id = $3',
         [intent, summary, conversationId]
       );
+
+      // Auto-create draft order when payment receipt is detected
+      if (aiResult.paymentReceiptDetected && mediaContext?.type === 'image') {
+        try {
+          console.log(`📦 Payment receipt detected from ${waId} — creating WhatsApp draft order...`);
+
+          // Get client info from conversation
+          const convInfo = await query(
+            'SELECT client_name, wa_id, client_id FROM whatsapp_conversations WHERE id = $1',
+            [conversationId]
+          );
+          const conv = convInfo.rows[0];
+
+          // Get conversation history to extract order details
+          const history = await query(
+            `SELECT content, direction FROM whatsapp_messages
+             WHERE conversation_id = $1 AND content IS NOT NULL
+             ORDER BY created_at ASC`,
+            [conversationId]
+          );
+
+          // Extract order context from conversation
+          let productName = 'Imanes de MDF';
+          let quantity = 100;
+          let destination = '';
+          let eventType = '';
+
+          for (const msg of history.rows) {
+            const txt = (msg.content || '').toLowerCase();
+            // Extract quantity
+            const qtyMatch = txt.match(/(\d{2,5})\s*(imanes|llaveros|destapadores|botones|piezas|pzas)/i);
+            if (qtyMatch) quantity = parseInt(qtyMatch[1]);
+            // Extract product
+            if (txt.includes('llavero')) productName = 'Llaveros de MDF';
+            else if (txt.includes('destapador')) productName = 'Destapador de MDF';
+            else if (txt.includes('boton') || txt.includes('botón')) productName = 'Botones Metálicos';
+            else if (txt.includes('3d')) productName = 'Imán 3D MDF 3mm';
+            else if (txt.includes('foil')) productName = 'Imán de MDF con Foil';
+            // Extract destination
+            const destMatch = txt.match(/(?:envio|envío|a|de|para|desde)\s+([A-ZÁÉÍÓÚa-záéíóú\s,]{3,30}?)(?:\s*[,.]|\s*$)/i);
+            if (destMatch && msg.direction === 'inbound') destination = destMatch[1].trim();
+            // Extract event
+            if (txt.match(/boda/i)) eventType = 'Boda';
+            else if (txt.match(/bautiz/i)) eventType = 'Bautizo';
+            else if (txt.match(/xv|quincea/i)) eventType = 'XV Años';
+            else if (txt.match(/tienda|negocio/i)) eventType = 'Negocio';
+          }
+
+          // Get product from DB for pricing
+          const productResult = await query(
+            'SELECT id, name, base_price FROM products WHERE LOWER(name) LIKE $1 LIMIT 1',
+            ['%' + productName.toLowerCase().split(' ')[0] + '%']
+          );
+          const product = productResult.rows[0];
+          const unitPrice = product ? parseFloat(product.base_price) : 11.00;
+          const totalPrice = unitPrice * quantity;
+
+          // Check if a draft order already exists for this conversation
+          const existingDraft = await query(
+            `SELECT id FROM orders WHERE notes LIKE $1 AND status = 'whatsapp_draft'`,
+            ['%wa_conv_' + conversationId + '%']
+          );
+
+          if (existingDraft.rows.length === 0) {
+            // Find or create client
+            let clientId = conv.client_id;
+            if (!clientId) {
+              const clientResult = await query(
+                `INSERT INTO clients (name, phone, created_at)
+                 VALUES ($1, $2, NOW())
+                 ON CONFLICT (phone) DO UPDATE SET name = EXCLUDED.name
+                 RETURNING id`,
+                [conv.client_name || waId, waId]
+              );
+              clientId = clientResult.rows[0].id;
+              // Link client to conversation
+              await query('UPDATE whatsapp_conversations SET client_id = $1 WHERE id = $2', [clientId, conversationId]);
+            }
+
+            // Create draft order
+            const orderNumber = 'WA-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+
+            const orderResult = await query(
+              `INSERT INTO orders (order_number, client_id, status, approval_status, total_price, total_production_cost,
+               notes, order_date, event_type, shipping_city, shipping_state, payment_proof_url)
+               VALUES ($1, $2, 'whatsapp_draft', 'pending_review', $3, 0, $4, NOW(), $5, $6, $7, $8)
+               RETURNING id`,
+              [
+                orderNumber,
+                clientId,
+                totalPrice,
+                'Pedido creado automáticamente desde WhatsApp. wa_conv_' + conversationId + '. Revisar detalles.',
+                eventType || null,
+                destination || null,
+                destination || null,
+                mediaContext.mediaUrl || null
+              ]
+            );
+
+            // Create order item
+            if (product) {
+              await query(
+                `INSERT INTO order_items (order_id, product_id, quantity, unit_price, production_cost_per_unit)
+                 VALUES ($1, $2, $3, $4, 0)`,
+                [orderResult.rows[0].id, product.id, quantity, unitPrice]
+              );
+            }
+
+            console.log(`📦 WhatsApp draft order created: ${orderNumber} — ${quantity}x ${productName} = $${totalPrice} for ${conv.client_name || waId}`);
+          } else {
+            console.log(`📦 Draft order already exists for conversation ${conversationId}, skipping`);
+          }
+        } catch (draftErr) {
+          console.error('📦 WhatsApp draft order error:', draftErr.message);
+          // Don't fail the whole webhook — draft creation is best-effort
+        }
+      }
     } catch (err) {
       console.error('🟢 WhatsApp webhook error:', err);
     }
