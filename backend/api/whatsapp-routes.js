@@ -3,6 +3,7 @@ import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
 import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn, getAiModel, setAiModel, getGlobalAiEnabled, setGlobalAiEnabled } from '../services/whatsapp-ai.js';
 import { migrate as migrateLabelsArchive } from '../migrations/add-whatsapp-labels-archive.js';
+import Anthropic from '@anthropic-ai/sdk';
 
 // Run labels/archive migration once on import
 let labelsArchiveMigrated = false;
@@ -579,7 +580,6 @@ router.post('/webhook', (req, res) => {
       let isPaymentReceipt = aiResult.paymentReceiptDetected;
       if (!isPaymentReceipt && mediaContext?.type === 'image' && mediaContext.imageBase64) {
         try {
-          const Anthropic = (await import('@anthropic-ai/sdk')).default;
           const visionClient = new Anthropic();
           const visionResponse = await visionClient.messages.create({
             model: 'claude-haiku-4-5-20251001',
