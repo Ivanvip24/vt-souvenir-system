@@ -532,6 +532,22 @@ router.put('/conversations/:id/read', authMiddleware, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// 6b. PUT /conversations/:id/unread — Mark conversation as unread (auth required)
+// ---------------------------------------------------------------------------
+router.put('/conversations/:id/unread', authMiddleware, async (req, res) => {
+  try {
+    await query(
+      'UPDATE whatsapp_conversations SET unread_count = 1 WHERE id = $1',
+      [req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Mark unread error:', err);
+    res.status(500).json({ success: false, error: 'Failed to mark as unread' });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // 7. PATCH /conversations/:id/settings — Update conversation settings (auth required)
 // ---------------------------------------------------------------------------
 router.patch('/conversations/:id/settings', authMiddleware, async (req, res) => {
@@ -861,6 +877,45 @@ router.delete('/conversations/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('🗑️ WhatsApp delete conversation error:', err);
     res.status(500).json({ success: false, error: 'Failed to delete conversation' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 19. PATCH /conversations/:id/follow-up — Set/clear follow-up timer
+// ---------------------------------------------------------------------------
+router.patch('/conversations/:id/follow-up', authMiddleware, async (req, res) => {
+  try {
+    const convId = req.params.id;
+    const { days, date, clear } = req.body;
+
+    let followUpAt = null;
+
+    if (clear) {
+      followUpAt = null;
+    } else if (days && typeof days === 'number' && days > 0) {
+      // Set follow_up_at to N days from now
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      followUpAt = d.toISOString();
+    } else if (date) {
+      followUpAt = new Date(date).toISOString();
+    } else {
+      return res.status(400).json({ success: false, error: 'Provide days, date, or clear:true' });
+    }
+
+    const result = await query(
+      'UPDATE whatsapp_conversations SET follow_up_at = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [followUpAt, convId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('⏱ WhatsApp follow-up error:', err);
+    res.status(500).json({ success: false, error: 'Failed to set follow-up' });
   }
 });
 

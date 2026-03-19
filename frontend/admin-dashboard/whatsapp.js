@@ -1352,6 +1352,80 @@ function injectWhatsAppStyles() {
       border-radius: 12px;
     }
     .wa-archive-tab.active { background: #fce4ec; color: #e72a88; }
+
+    /* ===== Follow-up Button & Dropdown ===== */
+    .wa-followup-btn {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      color: #ea580c;
+      font-weight: 600;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .wa-followup-btn:hover { background: #ffedd5; border-color: #ea580c; }
+
+    .wa-followup-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 4px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      z-index: 100;
+      min-width: 140px;
+      overflow: hidden;
+    }
+    .wa-followup-dropdown-item {
+      display: block;
+      width: 100%;
+      padding: 8px 14px;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+      font-size: 13px;
+      color: #374151;
+      transition: background 0.15s;
+    }
+    .wa-followup-dropdown-item:hover { background: #f3f4f6; }
+    .wa-followup-dropdown-item.danger { color: #dc2626; }
+    .wa-followup-dropdown-item.danger:hover { background: #fef2f2; }
+
+    /* ===== Follow-up Badge in Conversation List ===== */
+    .wa-followup-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 4px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .wa-followup-badge.pending {
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #fed7aa;
+    }
+    .wa-followup-badge.expired {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      animation: wa-followup-pulse 2s ease-in-out infinite;
+    }
+    @keyframes wa-followup-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -1523,11 +1597,27 @@ async function markConversationRead(conversationId) {
       method: 'PUT',
       headers: getAuthHeaders()
     });
-    const conv = waState.conversations.find(function(c) { return c.id === conversationId; });
+    var conv = waState.conversations.find(function(c) { return c.id === conversationId; });
     if (conv) conv.unread_count = 0;
     updateWaUnreadBadge();
+    renderConversationList();
   } catch (err) {
     console.error('Error marking read:', err);
+  }
+}
+
+async function markConversationUnread(conversationId) {
+  try {
+    await fetch(API_BASE + '/whatsapp/conversations/' + conversationId + '/unread', {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
+    });
+    var conv = waState.conversations.find(function(c) { return c.id === conversationId; });
+    if (conv) conv.unread_count = 1;
+    updateWaUnreadBadge();
+    renderConversationList();
+  } catch (err) {
+    console.error('Error marking unread:', err);
   }
 }
 
@@ -1827,6 +1917,25 @@ function showConversationContextMenu(e, conv) {
   subMenu.appendChild(newRow);
   menu.appendChild(subMenu);
 
+  // --- Mark as read/unread ---
+  var unreadItem = document.createElement('div');
+  unreadItem.className = 'wa-context-item';
+  var unreadIcon = document.createElement('span');
+  unreadIcon.className = 'wa-context-icon';
+  unreadIcon.style.background = 'linear-gradient(135deg, #dbeafe, #e0e7ff)';
+  unreadIcon.textContent = conv.unread_count > 0 ? '\uD83D\uDC41' : '\uD83D\uDD35';
+  unreadItem.appendChild(unreadIcon);
+  unreadItem.appendChild(document.createTextNode(conv.unread_count > 0 ? 'Marcar como leido' : 'Marcar como no leido'));
+  unreadItem.addEventListener('click', function() {
+    if (conv.unread_count > 0) {
+      markConversationRead(conv.id);
+    } else {
+      markConversationUnread(conv.id);
+    }
+    closeContextMenu();
+  });
+  menu.appendChild(unreadItem);
+
   // --- Pin/Unpin ---
   var pinItem = document.createElement('div');
   pinItem.className = 'wa-context-item';
@@ -1963,8 +2072,14 @@ function waFilterConversations() {
       return name.indexOf(q) !== -1 || phone.indexOf(q) !== -1;
     });
   }
-  // Sort by pinned first, then most recent message
+  // Sort: expired follow-ups first, then pinned, then most recent message
+  var now = new Date();
   waState.filteredConversations.sort(function(a, b) {
+    // Expired follow-ups rise to top
+    var fuExpA = a.follow_up_at && new Date(a.follow_up_at) <= now ? 1 : 0;
+    var fuExpB = b.follow_up_at && new Date(b.follow_up_at) <= now ? 1 : 0;
+    if (fuExpA !== fuExpB) return fuExpB - fuExpA;
+
     var pinA = a.is_pinned ? 1 : 0;
     var pinB = b.is_pinned ? 1 : 0;
     if (pinA !== pinB) return pinB - pinA;
@@ -2376,6 +2491,24 @@ function buildConversationItemDOM(c) {
     headerRow.appendChild(aiOffDot);
   }
 
+  // Follow-up badge
+  if (c.follow_up_at) {
+    var fuDate = new Date(c.follow_up_at);
+    var now = new Date();
+    var fuBadge = document.createElement('span');
+    if (fuDate <= now) {
+      fuBadge.className = 'wa-followup-badge expired';
+      fuBadge.textContent = '\uD83D\uDD14 Follow up';
+      fuBadge.title = 'Follow-up vencido';
+    } else {
+      var diffDays = Math.ceil((fuDate - now) / (1000 * 60 * 60 * 24));
+      fuBadge.className = 'wa-followup-badge pending';
+      fuBadge.textContent = '\u23F1 ' + diffDays + 'd';
+      fuBadge.title = 'Follow-up en ' + diffDays + ' dia(s)';
+    }
+    headerRow.appendChild(fuBadge);
+  }
+
   var timeSpan = document.createElement('span');
   timeSpan.className = 'wa-conv-time';
   timeSpan.textContent = time;
@@ -2568,6 +2701,30 @@ function buildChatViewDOM(parentEl) {
   recapBtn.title = 'AI recapitula mensajes perdidos y responde';
   recapBtn.textContent = '\u21BB Recap';
   header.appendChild(recapBtn);
+
+  // Follow-up button with dropdown
+  var followUpWrap = document.createElement('div');
+  followUpWrap.style.cssText = 'position:relative;display:inline-block;';
+
+  var followUpBtn = document.createElement('button');
+  followUpBtn.className = 'wa-followup-btn';
+  followUpBtn.id = 'wa-followup-btn';
+  followUpBtn.title = 'Programar follow-up';
+  // Show current follow-up state
+  if (conv.follow_up_at) {
+    var fuD = new Date(conv.follow_up_at);
+    var fuNow = new Date();
+    if (fuD <= fuNow) {
+      followUpBtn.textContent = '\uD83D\uDD14 Vencido';
+    } else {
+      var fuDiff = Math.ceil((fuD - fuNow) / (1000 * 60 * 60 * 24));
+      followUpBtn.textContent = '\u23F1 ' + fuDiff + 'd';
+    }
+  } else {
+    followUpBtn.textContent = '\u23F1 Follow-up';
+  }
+  followUpWrap.appendChild(followUpBtn);
+  header.appendChild(followUpWrap);
 
   // Insights toggle button (visible on small screens)
   var insightsToggle = document.createElement('button');
@@ -3638,6 +3795,99 @@ function bindInsightsEvents() {
         setTimeout(function() { recapBtn.textContent = '\u21BB Recap'; recapBtn.disabled = false; }, 2000);
       }
     });
+  }
+
+  // Follow-up button — dropdown to set follow-up timer
+  var followUpBtn = document.getElementById('wa-followup-btn');
+  if (followUpBtn) {
+    followUpBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      // Toggle dropdown
+      var existing = document.getElementById('wa-followup-dropdown');
+      if (existing) {
+        existing.remove();
+        return;
+      }
+      var dropdown = document.createElement('div');
+      dropdown.className = 'wa-followup-dropdown';
+      dropdown.id = 'wa-followup-dropdown';
+
+      var options = [
+        { label: '7 dias', days: 7 },
+        { label: '14 dias', days: 14 },
+        { label: '21 dias', days: 21 },
+        { label: '30 dias', days: 30 }
+      ];
+
+      options.forEach(function(opt) {
+        var btn = document.createElement('button');
+        btn.className = 'wa-followup-dropdown-item';
+        btn.textContent = '\u23F1 ' + opt.label;
+        btn.addEventListener('click', function() {
+          setFollowUp(waState.selectedConversationId, { days: opt.days });
+          dropdown.remove();
+        });
+        dropdown.appendChild(btn);
+      });
+
+      // Clear option
+      var clearBtn = document.createElement('button');
+      clearBtn.className = 'wa-followup-dropdown-item danger';
+      clearBtn.textContent = '\u2716 Quitar';
+      clearBtn.addEventListener('click', function() {
+        setFollowUp(waState.selectedConversationId, { clear: true });
+        dropdown.remove();
+      });
+      dropdown.appendChild(clearBtn);
+
+      followUpBtn.parentElement.appendChild(dropdown);
+
+      // Close on outside click
+      function closeDropdown(ev) {
+        if (!dropdown.contains(ev.target) && ev.target !== followUpBtn) {
+          dropdown.remove();
+          document.removeEventListener('click', closeDropdown);
+        }
+      }
+      setTimeout(function() {
+        document.addEventListener('click', closeDropdown);
+      }, 0);
+    });
+  }
+}
+
+async function setFollowUp(conversationId, body) {
+  try {
+    var res = await fetch(API_BASE + '/whatsapp/conversations/' + conversationId + '/follow-up', {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(body)
+    });
+    var data = await res.json();
+    if (data.success) {
+      // Update local state
+      var conv = waState.conversations.find(function(c) { return c.id === conversationId; });
+      if (conv) {
+        conv.follow_up_at = data.data.follow_up_at;
+      }
+      // Re-render
+      renderConversationList();
+      if (waState.selectedConversationId === conversationId) {
+        loadMessages(conversationId);
+      }
+      if (typeof window.showToast === 'function') {
+        window.showToast(body.clear ? 'Follow-up eliminado' : 'Follow-up programado', 'success');
+      }
+    } else {
+      if (typeof window.showToast === 'function') {
+        window.showToast('Error: ' + (data.error || 'No se pudo actualizar'), 'error');
+      }
+    }
+  } catch (e) {
+    console.error('Follow-up error:', e);
+    if (typeof window.showToast === 'function') {
+      window.showToast('Error de conexion', 'error');
+    }
   }
 }
 
