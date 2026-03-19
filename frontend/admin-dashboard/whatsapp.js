@@ -859,6 +859,23 @@ function injectWhatsAppStyles() {
     .ai-on .wa-ai-toggle-dot { background: #16a34a; }
     .ai-off .wa-ai-toggle-dot { background: #dc2626; }
 
+    /* ===== Recap Button ===== */
+    .wa-recap-btn {
+      background: #f0f4ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      color: #4f46e5;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .wa-recap-btn:hover { background: #e0e7ff; border-color: #4f46e5; }
+    .wa-recap-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
     /* AI-off indicator in conversation list */
     .wa-conv-ai-off {
       display: inline-block;
@@ -1295,17 +1312,23 @@ function injectWhatsAppStyles() {
     /* Label pills in conversation list */
     .wa-conv-labels {
       display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      margin-top: 3px;
+      gap: 3px;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      flex-shrink: 1;
+      min-width: 0;
     }
     .wa-conv-label-pill {
-      font-size: 10px;
-      padding: 1px 6px;
-      border-radius: 8px;
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 6px;
       color: #fff;
       font-weight: 600;
-      line-height: 1.5;
+      line-height: 1.4;
+      white-space: nowrap;
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* Pin indicator */
@@ -1368,6 +1391,27 @@ function waFormatTime(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+}
+
+// WhatsApp rich text renderer — safely renders **bold**, *italic*, ~strikethrough~, _italic_, URLs, and newlines
+function waRenderRichText(container, text) {
+  if (!text) return;
+  // Escape HTML entities first for safety
+  var escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // WhatsApp formatting: **bold**, *bold* (single), _italic_, ~strikethrough~
+  var formatted = escaped
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<strong>$1</strong>')
+    .replace(/_(.+?)_/g, '<em>$1</em>')
+    .replace(/~(.+?)~/g, '<del>$1</del>')
+    // URLs → clickable links
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#09adc2;text-decoration:underline;">$1</a>')
+    // Newlines → <br>
+    .replace(/\n/g, '<br>');
+  // Use a template element for safe parsing (no script execution)
+  var template = document.createElement('template');
+  template.innerHTML = formatted;
+  container.appendChild(template.content);
 }
 
 function waFormatDate(dateStr) {
@@ -2349,7 +2393,7 @@ function buildConversationItemDOM(c) {
 
   info.appendChild(metaDiv);
 
-  // Label pills
+  // Label pills — inline next to name
   var convLabels = c.labels || [];
   if (convLabels.length > 0) {
     var labelsDiv = document.createElement('div');
@@ -2361,7 +2405,7 @@ function buildConversationItemDOM(c) {
       pill.textContent = label.name;
       labelsDiv.appendChild(pill);
     });
-    info.appendChild(labelsDiv);
+    headerRow.insertBefore(labelsDiv, timeSpan);
   }
 
   item.appendChild(info);
@@ -2502,6 +2546,14 @@ function buildChatViewDOM(parentEl) {
   aiToggle.appendChild(aiDot);
   aiToggle.appendChild(document.createTextNode(aiEnabled ? ' AI ON' : ' AI OFF'));
   header.appendChild(aiToggle);
+
+  // Recap button — AI catches up on missed messages
+  var recapBtn = document.createElement('button');
+  recapBtn.className = 'wa-recap-btn';
+  recapBtn.id = 'wa-recap-btn';
+  recapBtn.title = 'AI recapitula mensajes perdidos y responde';
+  recapBtn.textContent = '\u21BB Recap';
+  header.appendChild(recapBtn);
 
   // Insights toggle button (visible on small screens)
   var insightsToggle = document.createElement('button');
@@ -2750,12 +2802,8 @@ function buildMessagesDOM(parentEl) {
         contentDiv.appendChild(locCaptionDiv);
       }
     } else {
-      // Text message (default) - handle newlines
-      var lines = contentText.split('\n');
-      for (var j = 0; j < lines.length; j++) {
-        if (j > 0) contentDiv.appendChild(document.createElement('br'));
-        contentDiv.appendChild(document.createTextNode(lines[j]));
-      }
+      // Text message (default) - render WhatsApp-style formatting
+      waRenderRichText(contentDiv, contentText);
     }
 
     // Flow response rendering
@@ -3475,6 +3523,35 @@ function bindInsightsEvents() {
       if (!conv) return;
       var currentlyEnabled = conv.ai_enabled !== false;
       toggleAiEnabled(waState.selectedConversationId, !currentlyEnabled);
+    });
+  }
+
+  // Recap button
+  var recapBtn = document.getElementById('wa-recap-btn');
+  if (recapBtn) {
+    recapBtn.addEventListener('click', async function() {
+      if (!waState.selectedConversationId) return;
+      recapBtn.disabled = true;
+      recapBtn.textContent = '\u231B Recapitulando...';
+      try {
+        var res = await fetch(API_BASE + '/whatsapp/conversations/' + waState.selectedConversationId + '/recap', {
+          method: 'POST',
+          headers: getAuthHeaders()
+        });
+        var data = await res.json();
+        if (data.success) {
+          recapBtn.textContent = '\u2705 Enviado';
+          setTimeout(function() { recapBtn.textContent = '\u21BB Recap'; recapBtn.disabled = false; }, 2000);
+          // Reload messages to show the new AI response
+          loadMessages(waState.selectedConversationId);
+        } else {
+          recapBtn.textContent = '\u274C Error';
+          setTimeout(function() { recapBtn.textContent = '\u21BB Recap'; recapBtn.disabled = false; }, 2000);
+        }
+      } catch (e) {
+        recapBtn.textContent = '\u274C Error';
+        setTimeout(function() { recapBtn.textContent = '\u21BB Recap'; recapBtn.disabled = false; }, 2000);
+      }
     });
   }
 }

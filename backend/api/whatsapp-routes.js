@@ -558,6 +558,76 @@ router.patch('/conversations/:id/settings', authMiddleware, async (req, res) => 
 });
 
 // ---------------------------------------------------------------------------
+// 7a. POST /conversations/:id/recap — AI catches up on missed messages (auth required)
+// ---------------------------------------------------------------------------
+router.post('/conversations/:id/recap', authMiddleware, async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+
+    // Get conversation info
+    const convResult = await query(
+      'SELECT id, wa_id, client_name FROM whatsapp_conversations WHERE id = $1',
+      [conversationId]
+    );
+    if (convResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+    const conv = convResult.rows[0];
+
+    // Get the last inbound message to use as the trigger for AI processing
+    const lastMsg = await query(
+      `SELECT content FROM whatsapp_messages
+       WHERE conversation_id = $1 AND direction = 'inbound'
+       ORDER BY created_at DESC LIMIT 1`,
+      [conversationId]
+    );
+
+    if (lastMsg.rows.length === 0) {
+      return res.json({ success: false, error: 'No client messages to recap' });
+    }
+
+    const lastMessageText = lastMsg.rows[0].content || '';
+
+    // Process with AI — buildConversationHistory inside will load all stored messages
+    const aiResult = await processIncomingMessage(
+      conversationId,
+      conv.wa_id,
+      '[RECAP] El cliente envió mensajes mientras la IA estaba desactivada. El último mensaje fue: "' + lastMessageText + '". Responde naturalmente retomando la conversación basándote en todo el historial.',
+      null
+    );
+
+    if (aiResult.skipped || !aiResult.reply) {
+      return res.json({ success: false, error: aiResult.reason || 'AI did not generate a response' });
+    }
+
+    // Send the recap reply to the client
+    await sendWhatsAppMessage(conv.wa_id, aiResult.reply);
+
+    // Store outbound message
+    const outboundWaId = 'recap_' + Date.now();
+    await query(
+      `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, metadata)
+       VALUES ($1, $2, 'outbound', 'ai', 'text', $3, $4)`,
+      [conversationId, outboundWaId, aiResult.reply, JSON.stringify({ type: 'recap', intent: aiResult.intent })]
+    );
+
+    // Update conversation summary
+    if (aiResult.intent) {
+      await query(
+        'UPDATE whatsapp_conversations SET intent = $1, ai_summary = $2, updated_at = NOW() WHERE id = $3',
+        [aiResult.intent, aiResult.summary || null, conversationId]
+      );
+    }
+
+    console.log(`🔄 Recap sent for conversation ${conversationId} (${conv.client_name || conv.wa_id})`);
+    res.json({ success: true, reply: aiResult.reply });
+  } catch (err) {
+    console.error('🔄 Recap error:', err);
+    res.status(500).json({ success: false, error: 'Recap failed' });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // 7b. GET/PATCH /ai-model — Get or change the WhatsApp AI model (auth required)
 // ---------------------------------------------------------------------------
 router.get('/ai-model', authMiddleware, (req, res) => {
