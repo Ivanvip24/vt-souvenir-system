@@ -244,8 +244,8 @@
             transition: color 0.4s ease, transform 0.2s;
             display: flex;
             align-items: center;
-            margin-left: auto;
-            margin-right: 8px;
+            margin: 0;
+            padding: 6px;
         }
         .nav.nav--scrolled .nav-search-btn { color: var(--gray-800); }
         .nav-search-btn:hover { color: var(--rosa-mexicano); transform: scale(1.1); }
@@ -1870,10 +1870,8 @@
             <li><a href="/diseños">Diseños</a></li>
             <li><a href="/envio">Envío</a></li>
             <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
+            <li><button class="nav-search-btn" aria-label="Buscar" id="navSearchBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button></li>
         </ul>
-        <button class="nav-search-btn" aria-label="Buscar" id="navSearchBtn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </button>
         <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
             <span></span>
             <span></span>
