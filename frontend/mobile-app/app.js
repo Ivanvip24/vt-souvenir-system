@@ -19,6 +19,14 @@ let aiSessionId = 'mobile_' + Date.now() + '_' + Math.random().toString(36).subs
 let aiIsTyping = false;
 let aiInitialized = false;
 
+// WhatsApp state
+let waConversations = [];
+let waCurrentConv = null;
+let waCurrentMessages = [];
+let waSending = false;
+let waPollingTimer = null;
+let waSearchTerm = '';
+
 const AI_CHIPS = [
     { label: 'Revenue hoy', msg: '¿Cuánto vendimos hoy?' },
     { label: 'Pendientes', msg: '¿Cuántos pedidos están pendientes?' },
@@ -192,6 +200,7 @@ async function loadAllData() {
             apiFetch('/analytics/dashboard?startDate=' + getTodayISO() + '&endDate=' + getTodayISO()),
             apiFetch('/admin/tasks?limit=100'),
             apiFetch('/admin/tasks/stats'),
+            apiFetch('/whatsapp/conversations'),
         ]);
 
         if (results[0].status === 'fulfilled' && results[0].value.success) {
@@ -209,11 +218,15 @@ async function loadAllData() {
         if (results[4].status === 'fulfilled' && results[4].value.success) {
             taskStats = results[4].value;
         }
+        if (results[5].status === 'fulfilled' && results[5].value.success) {
+            waConversations = results[5].value.data || [];
+        }
 
         renderHome();
         renderOrders();
-        renderPipeline();
+        renderWhatsApp();
         renderTasks();
+        updateWaBadge();
     } catch(e) {
         updateConnectionStatus(false);
     }
@@ -536,71 +549,355 @@ function hideOrderDetail() {
     $('#order-detail').classList.remove('active');
 }
 
-// ── Render: Pipeline ──
-function renderPipeline() {
-    var statusOrder = ['New', 'Design', 'Printing', 'Cutting', 'Counting', 'Shipping', 'Delivered'];
-    var counts = {};
-    var revenue = {};
+// ── Render: WhatsApp ──
+function renderWhatsApp() {
+    var listEl = $('#wa-conversations');
+    var emptyEl = $('#wa-empty');
+    listEl.replaceChildren();
 
-    allOrders.forEach(function(o) {
-        if (o.status && o.archiveStatus !== 'cancelado') {
-            counts[o.status] = (counts[o.status] || 0) + 1;
-            revenue[o.status] = (revenue[o.status] || 0) + (Number(o.totalPrice) || 0);
-        }
-    });
+    var filtered = waConversations.slice();
 
-    var colsEl = $('#pipeline-columns');
-    colsEl.replaceChildren();
-
-    statusOrder.forEach(function(status) {
-        var count = counts[status] || 0;
-        var rev = revenue[status] || 0;
-        var info = STATUS_COLORS[status] || { bg: '#555', label: status };
-
-        var colorBar = el('div', { className: 'pipeline-col-color' });
-        colorBar.style.background = info.bg;
-
-        colsEl.appendChild(el('div', { className: 'pipeline-col' }, [
-            colorBar,
-            el('div', { className: 'pipeline-col-info' }, [
-                el('div', { className: 'pipeline-col-name', textContent: info.label }),
-                el('div', { className: 'pipeline-col-sub', textContent: formatMoney(rev) })
-            ]),
-            el('div', { className: 'pipeline-col-count', textContent: String(count) })
-        ]));
-    });
-
-    // Department breakdown
-    var deptEl = $('#dept-breakdown');
-    deptEl.replaceChildren();
-
-    if (taskStats && taskStats.byDepartment && taskStats.byDepartment.length > 0) {
-        var maxCount = Math.max.apply(null, taskStats.byDepartment.map(function(d) { return d.count; }).concat([1]));
-        var deptColors = { design: 'var(--turquesa)', production: 'var(--naranja)', shipping: 'var(--rosa)' };
-
-        taskStats.byDepartment.forEach(function(dept) {
-            var color = deptColors[dept.department] || 'var(--muted)';
-            var pct = (dept.count / maxCount * 100);
-
-            var barFill = el('div', { className: 'dept-bar-fill' });
-            barFill.style.width = pct + '%';
-            barFill.style.background = color;
-
-            deptEl.appendChild(el('div', { className: 'dept-card' }, [
-                el('div', { className: 'dept-name', textContent: dept.department }),
-                el('div', { className: 'dept-bar-wrap' }, [barFill]),
-                el('div', { className: 'dept-stats' }, [
-                    el('span', {}, ['Total: ', el('strong', { textContent: String(dept.count) })]),
-                    el('span', {}, ['Pendiente: ', el('strong', { textContent: String(dept.pending || 0) })]),
-                    el('span', {}, ['En proceso: ', el('strong', { textContent: String(dept.in_progress || 0) })]),
-                ])
-            ]));
+    // Search filter
+    if (waSearchTerm) {
+        var s = waSearchTerm.toLowerCase();
+        filtered = filtered.filter(function(c) {
+            return (c.client_name || '').toLowerCase().indexOf(s) >= 0 ||
+                   (c.wa_id || '').indexOf(s) >= 0;
         });
+    }
+
+    // Sort: pinned first, then by last_message_at desc
+    filtered.sort(function(a, b) {
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        return new Date(b.last_message_at || b.created_at) - new Date(a.last_message_at || a.created_at);
+    });
+
+    if (filtered.length === 0) {
+        emptyEl.classList.remove('hidden');
     } else {
-        var msg = el('p', { textContent: 'Sin datos de departamentos' });
-        msg.style.color = 'var(--muted)';
-        msg.style.fontSize = '13px';
-        deptEl.appendChild(msg);
+        emptyEl.classList.add('hidden');
+        filtered.forEach(function(conv) {
+            listEl.appendChild(buildConvCard(conv));
+        });
+    }
+}
+
+function buildConvCard(conv) {
+    var unread = conv.unread_count || 0;
+    var lastMsg = conv.last_message || '';
+    var lastTime = conv.last_message_at ? formatTimeAgo(conv.last_message_at) : '';
+
+    // Truncate last message
+    if (lastMsg.length > 60) lastMsg = lastMsg.substring(0, 60) + '...';
+
+    var nameEl = el('span', { className: 'wa-conv-name', textContent: conv.client_name || conv.wa_id || 'Desconocido' });
+
+    var topRow = el('div', { className: 'wa-conv-top' }, [
+        nameEl,
+        el('span', { className: 'wa-conv-time' + (unread > 0 ? ' unread' : ''), textContent: lastTime })
+    ]);
+
+    var bottomChildren = [
+        el('span', { className: 'wa-conv-preview', textContent: lastMsg || 'Sin mensajes' })
+    ];
+
+    if (unread > 0) {
+        bottomChildren.push(el('span', { className: 'wa-conv-badge', textContent: String(unread > 99 ? '99+' : unread) }));
+    }
+
+    var bottomRow = el('div', { className: 'wa-conv-bottom' }, bottomChildren);
+
+    var indicators = [];
+    if (conv.is_pinned) {
+        var pin = el('span', { className: 'wa-conv-pin' });
+        pin.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>';
+        indicators.push(pin);
+    }
+    if (!conv.ai_enabled) {
+        indicators.push(el('span', { className: 'wa-conv-ai-off', textContent: 'AI OFF' }));
+    }
+
+    var card = el('div', { className: 'wa-conv-card' + (unread > 0 ? ' has-unread' : '') }, [
+        el('div', { className: 'wa-conv-avatar', textContent: getInitials(conv.client_name || conv.wa_id || '?') }),
+        el('div', { className: 'wa-conv-body' }, [
+            topRow,
+            bottomRow,
+            indicators.length > 0 ? el('div', { className: 'wa-conv-indicators' }, indicators) : null
+        ].filter(Boolean))
+    ]);
+
+    card.addEventListener('click', function() {
+        openWaChat(conv);
+    });
+
+    return card;
+}
+
+function getInitials(name) {
+    var parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+}
+
+function formatTimeAgo(dateStr) {
+    var d = new Date(dateStr);
+    var now = new Date();
+    var diffMs = now - d;
+    var diffMin = Math.floor(diffMs / 60000);
+    var diffHr = Math.floor(diffMs / 3600000);
+    var diffDay = Math.floor(diffMs / 86400000);
+
+    if (diffMin < 1) return 'ahora';
+    if (diffMin < 60) return diffMin + 'min';
+    if (diffHr < 24) return diffHr + 'h';
+    if (diffDay < 7) return diffDay + 'd';
+    return formatDate(dateStr);
+}
+
+function updateWaBadge() {
+    var total = 0;
+    waConversations.forEach(function(c) { total += (c.unread_count || 0); });
+    var badge = $('#wa-tab-badge');
+    if (total > 0) {
+        badge.textContent = total > 99 ? '99+' : String(total);
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+// ── WhatsApp Chat View ──
+async function openWaChat(conv) {
+    waCurrentConv = conv;
+    $('#wa-chat-name').textContent = conv.client_name || conv.wa_id || 'Desconocido';
+    $('#wa-chat-status').textContent = conv.ai_enabled ? 'AI activo' : 'AI pausado';
+    updateAiToggleBtn(conv.ai_enabled);
+
+    // Show chat sheet
+    $('#wa-chat').classList.add('active');
+
+    // Show loading
+    var msgContainer = $('#wa-messages');
+    msgContainer.replaceChildren();
+    msgContainer.appendChild(el('div', { className: 'wa-loading' }, [
+        el('span'), el('span'), el('span')
+    ]));
+
+    // Load messages
+    try {
+        var resp = await apiFetch('/whatsapp/conversations/' + conv.id + '/messages');
+        if (resp.success) {
+            waCurrentMessages = resp.data || [];
+            renderWaMessages();
+
+            // Mark as read
+            if (conv.unread_count > 0) {
+                conv.unread_count = 0;
+                apiFetch('/whatsapp/conversations/' + conv.id + '/read', { method: 'PUT' });
+                updateWaBadge();
+                renderWhatsApp();
+            }
+        }
+    } catch(e) {
+        msgContainer.replaceChildren();
+        msgContainer.appendChild(el('div', { className: 'wa-error', textContent: 'Error al cargar mensajes' }));
+    }
+
+    // Start polling for new messages
+    startWaPolling();
+}
+
+function closeWaChat() {
+    $('#wa-chat').classList.remove('active');
+    waCurrentConv = null;
+    waCurrentMessages = [];
+    stopWaPolling();
+}
+
+function startWaPolling() {
+    stopWaPolling();
+    waPollingTimer = setInterval(async function() {
+        if (!waCurrentConv) return;
+        try {
+            var resp = await apiFetch('/whatsapp/conversations/' + waCurrentConv.id + '/messages');
+            if (resp.success && resp.data) {
+                var newCount = resp.data.length;
+                var oldCount = waCurrentMessages.length;
+                if (newCount !== oldCount) {
+                    waCurrentMessages = resp.data;
+                    renderWaMessages();
+                    // Mark as read
+                    apiFetch('/whatsapp/conversations/' + waCurrentConv.id + '/read', { method: 'PUT' });
+                }
+            }
+        } catch(e) { /* silent */ }
+    }, 5000);
+}
+
+function stopWaPolling() {
+    if (waPollingTimer) {
+        clearInterval(waPollingTimer);
+        waPollingTimer = null;
+    }
+}
+
+function renderWaMessages() {
+    var container = $('#wa-messages');
+    container.replaceChildren();
+
+    if (waCurrentMessages.length === 0) {
+        container.appendChild(el('div', { className: 'wa-no-messages', textContent: 'Sin mensajes aún' }));
+        return;
+    }
+
+    var lastDate = '';
+    waCurrentMessages.forEach(function(msg) {
+        // Date separator
+        var msgDate = msg.created_at ? new Date(msg.created_at).toLocaleDateString('es-MX') : '';
+        if (msgDate !== lastDate) {
+            lastDate = msgDate;
+            container.appendChild(el('div', { className: 'wa-date-sep' }, [
+                el('span', { textContent: formatDateLabel(msg.created_at) })
+            ]));
+        }
+
+        var isOutbound = msg.direction === 'outbound';
+        var bubbleCls = 'wa-bubble ' + (isOutbound ? 'outbound' : 'inbound');
+
+        // Sender tag for outbound
+        var senderTag = null;
+        if (isOutbound && msg.sender === 'ai') {
+            senderTag = el('span', { className: 'wa-sender-tag ai', textContent: 'AI' });
+        } else if (isOutbound && msg.sender === 'admin') {
+            senderTag = el('span', { className: 'wa-sender-tag admin', textContent: 'Admin' });
+        }
+
+        var bubbleChildren = [];
+        if (senderTag) bubbleChildren.push(senderTag);
+
+        // Media content
+        if (msg.message_type === 'image' && msg.media_url) {
+            var img = el('img', { className: 'wa-bubble-img', src: msg.media_url, alt: 'Imagen' });
+            img.addEventListener('click', function() { window.open(msg.media_url, '_blank'); });
+            bubbleChildren.push(img);
+        }
+
+        if (msg.message_type === 'audio') {
+            var audioText = '🎵 Audio';
+            if (msg.metadata && msg.metadata.transcription) {
+                audioText = '🎵 ' + msg.metadata.transcription;
+            }
+            bubbleChildren.push(el('span', { className: 'wa-audio-tag', textContent: audioText }));
+        }
+
+        if (msg.message_type === 'location' && msg.metadata) {
+            bubbleChildren.push(el('span', { className: 'wa-location-tag', textContent: '📍 ' + (msg.metadata.name || msg.metadata.address || 'Ubicación') }));
+        }
+
+        if (msg.message_type === 'document') {
+            bubbleChildren.push(el('span', { className: 'wa-doc-tag', textContent: '📄 Documento' }));
+        }
+
+        if (msg.message_type === 'sticker') {
+            if (msg.media_url) {
+                bubbleChildren.push(el('img', { className: 'wa-bubble-sticker', src: msg.media_url, alt: 'Sticker' }));
+            } else {
+                bubbleChildren.push(el('span', { textContent: '🏷️ Sticker' }));
+            }
+        }
+
+        // Text content
+        if (msg.content) {
+            bubbleChildren.push(el('span', { className: 'wa-bubble-text', textContent: msg.content }));
+        }
+
+        // Time
+        var time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '';
+        bubbleChildren.push(el('span', { className: 'wa-bubble-time', textContent: time }));
+
+        container.appendChild(el('div', { className: bubbleCls }, bubbleChildren));
+    });
+
+    // Scroll to bottom
+    container.scrollTop = container.scrollHeight;
+}
+
+function formatDateLabel(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    var now = new Date();
+    var diff = Math.floor((now - d) / 86400000);
+    if (diff === 0) return 'Hoy';
+    if (diff === 1) return 'Ayer';
+    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+async function sendWaReply() {
+    if (waSending || !waCurrentConv) return;
+    var input = $('#wa-reply-input');
+    var text = input.value.trim();
+    if (!text) return;
+
+    waSending = true;
+    $('#wa-send-btn').disabled = true;
+    input.value = '';
+
+    // Optimistic add
+    var tempMsg = {
+        id: 'temp_' + Date.now(),
+        direction: 'outbound',
+        sender: 'admin',
+        message_type: 'text',
+        content: text,
+        created_at: new Date().toISOString()
+    };
+    waCurrentMessages.push(tempMsg);
+    renderWaMessages();
+
+    try {
+        var resp = await apiFetch('/whatsapp/conversations/' + waCurrentConv.id + '/reply', {
+            method: 'POST',
+            body: JSON.stringify({ message: text })
+        });
+        if (!resp.success) {
+            // Remove temp message on failure
+            waCurrentMessages = waCurrentMessages.filter(function(m) { return m.id !== tempMsg.id; });
+            renderWaMessages();
+            alert('Error al enviar: ' + (resp.error || 'desconocido'));
+        }
+    } catch(e) {
+        waCurrentMessages = waCurrentMessages.filter(function(m) { return m.id !== tempMsg.id; });
+        renderWaMessages();
+    }
+
+    waSending = false;
+    $('#wa-send-btn').disabled = false;
+    input.focus();
+}
+
+function updateAiToggleBtn(enabled) {
+    var btn = $('#wa-ai-toggle');
+    btn.classList.toggle('active', enabled);
+    btn.title = enabled ? 'AI activo — click para pausar' : 'AI pausado — click para activar';
+    $('#wa-chat-status').textContent = enabled ? 'AI activo' : 'AI pausado';
+}
+
+async function toggleWaAi() {
+    if (!waCurrentConv) return;
+    var newVal = !waCurrentConv.ai_enabled;
+    updateAiToggleBtn(newVal);
+    waCurrentConv.ai_enabled = newVal;
+
+    try {
+        await apiFetch('/whatsapp/conversations/' + waCurrentConv.id + '/settings', {
+            method: 'PATCH',
+            body: JSON.stringify({ ai_enabled: newVal })
+        });
+    } catch(e) {
+        // Revert on error
+        waCurrentConv.ai_enabled = !newVal;
+        updateAiToggleBtn(!newVal);
     }
 }
 
@@ -700,6 +997,12 @@ function switchView(viewName) {
     $('.tab[data-view="' + viewName + '"]').classList.add('active');
     hideOrderDetail();
     if (viewName === 'ai') renderAIChat();
+    if (viewName === 'whatsapp') {
+        renderWhatsApp();
+        closeWaChat();
+    } else {
+        stopWaPolling();
+    }
 }
 
 // ── Event Binding ──
@@ -947,6 +1250,22 @@ function init() {
                 this.value = '';
             }
         }
+    });
+
+    // WhatsApp
+    $('#wa-chat-back').addEventListener('click', closeWaChat);
+    $('#wa-send-btn').addEventListener('click', sendWaReply);
+    $('#wa-reply-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') sendWaReply();
+    });
+    $('#wa-ai-toggle').addEventListener('click', toggleWaAi);
+    var waSearchDebounce;
+    $('#wa-search').addEventListener('input', function() {
+        clearTimeout(waSearchDebounce);
+        waSearchDebounce = setTimeout(function() {
+            waSearchTerm = $('#wa-search').value.trim();
+            renderWhatsApp();
+        }, 200);
     });
 
     // Online/offline

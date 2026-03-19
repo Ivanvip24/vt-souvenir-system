@@ -175,15 +175,49 @@
                 <div id="detail-content" class="detail-content"></div>
             </div>
 
-            <!-- PIPELINE VIEW -->
-            <div id="view-pipeline" class="view">
-                <div class="section-block no-top">
-                    <h2 class="section-title">STATUS PIPELINE</h2>
-                    <div id="pipeline-columns" class="pipeline-columns"></div>
+            <!-- WHATSAPP VIEW -->
+            <div id="view-whatsapp" class="view">
+                <!-- Conversation List -->
+                <div id="wa-conv-list" class="wa-conv-list">
+                    <div class="filters-bar">
+                        <div class="search-wrap">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="search" id="wa-search" placeholder="Buscar conversación..." class="search-input">
+                        </div>
+                    </div>
+                    <div id="wa-conversations" class="order-list">
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                    </div>
+                    <div id="wa-empty" class="empty-state hidden">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        <p>Sin conversaciones</p>
+                    </div>
                 </div>
-                <div class="section-block">
-                    <h2 class="section-title">POR DEPARTAMENTO</h2>
-                    <div id="dept-breakdown" class="dept-breakdown"></div>
+
+                <!-- Chat View (slides over conversation list) -->
+                <div id="wa-chat" class="wa-chat-sheet">
+                    <div class="wa-chat-header">
+                        <button id="wa-chat-back" class="detail-back">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                            <span>Chats</span>
+                        </button>
+                        <div class="wa-chat-info">
+                            <span id="wa-chat-name" class="wa-chat-name"></span>
+                            <span id="wa-chat-status" class="wa-chat-status"></span>
+                        </div>
+                        <button id="wa-ai-toggle" class="wa-ai-toggle" title="Toggle AI">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 2.9 1.8 5.4 4.3 6.5l.7.3V18h4v-2.2l.7-.3C18.2 14.4 19 11.9 19 9a7 7 0 0 0-7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+                        </button>
+                    </div>
+                    <div id="wa-messages" class="wa-messages"></div>
+                    <div id="wa-reply-bar" class="wa-reply-bar">
+                        <input type="text" id="wa-reply-input" placeholder="Escribe un mensaje..." autocomplete="off">
+                        <button id="wa-send-btn" aria-label="Enviar">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -230,9 +264,10 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                 <span>Pedidos</span>
             </button>
-            <button class="tab" data-view="pipeline">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                <span>Pipeline</span>
+            <button class="tab" data-view="whatsapp">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                <span>WA</span>
+                <span id="wa-tab-badge" class="wa-tab-badge hidden"></span>
             </button>
             <button class="tab" data-view="tasks">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
