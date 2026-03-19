@@ -2027,68 +2027,24 @@ function renderWhatsApp() {
   var listPanel = document.createElement('div');
   listPanel.className = 'wa-list-panel';
 
+  // --- Clean header: search + AI toggle + settings ---
   var listHeader = document.createElement('div');
   listHeader.className = 'wa-list-header';
-
-  var titleDiv = document.createElement('div');
-  titleDiv.className = 'wa-list-title';
-  var titleIcon = document.createElement('i');
-  titleIcon.setAttribute('data-lucide', 'message-circle');
-  titleIcon.style.cssText = 'width:20px;height:20px;color:#25d366;';
-  titleDiv.appendChild(titleIcon);
-  titleDiv.appendChild(document.createTextNode(' Conversaciones'));
-  listHeader.appendChild(titleDiv);
+  listHeader.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #f0f0f0;';
 
   var searchInput = document.createElement('input');
   searchInput.type = 'text';
   searchInput.className = 'wa-search-input';
   searchInput.id = 'wa-search';
-  searchInput.placeholder = 'Buscar por nombre...';
+  searchInput.placeholder = 'Buscar...';
   searchInput.value = waState.searchQuery;
+  searchInput.style.cssText = 'flex:1;font-size:13px;padding:8px 12px;border:none;background:#f5f5f7;border-radius:10px;outline:none;';
   listHeader.appendChild(searchInput);
 
-  listPanel.appendChild(listHeader);
-
-  // AI Model selector
-  var modelRow = document.createElement('div');
-  modelRow.style.cssText = 'padding:8px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;background:#fafafa;';
-  var modelLabel = document.createElement('span');
-  modelLabel.style.cssText = 'font-size:11px;color:#888;font-weight:600;white-space:nowrap;';
-  modelLabel.textContent = '\uD83E\uDD16 Modelo:';
-  modelRow.appendChild(modelLabel);
-  var modelSelect = document.createElement('select');
-  modelSelect.id = 'wa-model-select';
-  modelSelect.style.cssText = 'flex:1;font-size:12px;padding:4px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#333;cursor:pointer;';
-  var models = [
-    { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5 (barato)' },
-    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5 (medio)' },
-    { value: 'claude-sonnet-4-6-20250514', label: 'Sonnet 4.6 (mejor)' }
-  ];
-  for (var mi = 0; mi < models.length; mi++) {
-    var opt = document.createElement('option');
-    opt.value = models[mi].value;
-    opt.textContent = models[mi].label;
-    modelSelect.appendChild(opt);
-  }
-  modelSelect.onchange = function() {
-    var chosen = modelSelect.value;
-    fetch(API_BASE + '/whatsapp/ai-model', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') },
-      body: JSON.stringify({ model: chosen })
-    }).then(function(r) { return r.json(); }).then(function(data) {
-      if (data.success) {
-        modelSelect.style.borderColor = '#25d366';
-        setTimeout(function() { modelSelect.style.borderColor = '#e5e7eb'; }, 1500);
-      }
-    });
-  };
-  modelRow.appendChild(modelSelect);
-
-  // Global AI kill switch
+  // Global AI toggle
   var aiGlobalBtn = document.createElement('button');
   aiGlobalBtn.id = 'wa-global-ai-btn';
-  aiGlobalBtn.style.cssText = 'padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:none;white-space:nowrap;transition:all 0.15s;';
+  aiGlobalBtn.style.cssText = 'padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:none;white-space:nowrap;transition:all 0.15s;';
   aiGlobalBtn.addEventListener('click', function() {
     var currentState = aiGlobalBtn.dataset.enabled === 'true';
     var newState = !currentState;
@@ -2100,18 +2056,80 @@ function renderWhatsApp() {
       if (data.success) updateGlobalAiButton(data.globalAiEnabled);
     });
   });
-  modelRow.appendChild(aiGlobalBtn);
+  listHeader.appendChild(aiGlobalBtn);
 
-  listPanel.appendChild(modelRow);
+  // Settings gear (model selector in popover)
+  var settingsBtn = document.createElement('button');
+  settingsBtn.style.cssText = 'width:32px;height:32px;border-radius:8px;border:none;background:#f5f5f7;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background 0.15s;flex-shrink:0;';
+  settingsBtn.textContent = '\u2699\uFE0F';
+  settingsBtn.title = 'Configuracion IA';
+  settingsBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var existing = document.getElementById('wa-settings-popover');
+    if (existing) { existing.remove(); return; }
 
-  // Load current model + global AI state
+    var pop = document.createElement('div');
+    pop.id = 'wa-settings-popover';
+    pop.style.cssText = 'position:absolute;top:52px;right:12px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.12);border:1px solid #e5e7eb;padding:12px;z-index:100;min-width:200px;';
+
+    var popLabel = document.createElement('div');
+    popLabel.style.cssText = 'font-size:11px;color:#888;font-weight:600;margin-bottom:6px;';
+    popLabel.textContent = 'MODELO DE IA';
+    pop.appendChild(popLabel);
+
+    var modelSelect = document.createElement('select');
+    modelSelect.id = 'wa-model-select';
+    modelSelect.style.cssText = 'width:100%;font-size:13px;padding:6px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;color:#333;cursor:pointer;';
+    var models = [
+      { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5 (barato)' },
+      { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5 (medio)' },
+      { value: 'claude-sonnet-4-6-20250514', label: 'Sonnet 4.6 (mejor)' }
+    ];
+    for (var mi = 0; mi < models.length; mi++) {
+      var opt = document.createElement('option');
+      opt.value = models[mi].value;
+      opt.textContent = models[mi].label;
+      modelSelect.appendChild(opt);
+    }
+    modelSelect.onchange = function() {
+      fetch(API_BASE + '/whatsapp/ai-model', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') },
+        body: JSON.stringify({ model: modelSelect.value })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+          modelSelect.style.borderColor = '#25d366';
+          setTimeout(function() { modelSelect.style.borderColor = '#e5e7eb'; }, 1500);
+        }
+      });
+    };
+    pop.appendChild(modelSelect);
+
+    // Close on outside click
+    setTimeout(function() {
+      document.addEventListener('click', function closePopover(ev) {
+        if (!pop.contains(ev.target)) { pop.remove(); document.removeEventListener('click', closePopover); }
+      });
+    }, 10);
+
+    listHeader.style.position = 'relative';
+    listHeader.appendChild(pop);
+
+    // Load current model
+    fetch(API_BASE + '/whatsapp/ai-model', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.model) modelSelect.value = data.model;
+    });
+  });
+  listHeader.appendChild(settingsBtn);
+
+  listPanel.appendChild(listHeader);
+
+  // Load AI state
   fetch(API_BASE + '/whatsapp/ai-model', {
     headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
   }).then(function(r) { return r.json(); }).then(function(data) {
-    if (data.model) {
-      var sel = document.getElementById('wa-model-select');
-      if (sel) sel.value = data.model;
-    }
     if (typeof data.globalAiEnabled !== 'undefined') {
       updateGlobalAiButton(data.globalAiEnabled);
     }
