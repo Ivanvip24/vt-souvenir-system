@@ -3443,6 +3443,77 @@ function buildInsightsPanelDOM(parentEl) {
     }
 
     content.appendChild(list);
+
+    // "Generar Diseño" button — extracts context from insights and opens prompt app
+    var designBtn = document.createElement('button');
+    designBtn.style.cssText = 'margin:12px 16px;padding:10px 16px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;justify-content:center;transition:all 0.15s;';
+    designBtn.textContent = '\uD83C\uDFA8 Generar Diseno';
+    designBtn.addEventListener('mouseenter', function() { designBtn.style.transform = 'scale(1.02)'; });
+    designBtn.addEventListener('mouseleave', function() { designBtn.style.transform = 'scale(1)'; });
+    designBtn.addEventListener('click', function() {
+      // Extract design context from insights + conversation
+      var destination = '';
+      var theme = '';
+      var quantity = '';
+      var clientName = '';
+      var productType = 'magnet';
+
+      if (waState.insights) {
+        waState.insights.forEach(function(ins) {
+          var t = (ins.text || '').toLowerCase();
+          if (ins.category === 'nombre') clientName = ins.text;
+          if (ins.category === 'envio' || t.match(/envi|destino|ciudad/)) {
+            destination = ins.text.replace(/^envio a\s*/i, '').replace(/^envi.*?:\s*/i, '');
+          }
+          if (ins.category === 'pedido') {
+            var qMatch = ins.text.match(/(\d+)\s*(imanes|llaveros|destapadores|botones)/i);
+            if (qMatch) { quantity = qMatch[1]; }
+            if (t.includes('llavero')) productType = 'keychain';
+            if (t.includes('destapador')) productType = 'opener';
+          }
+          if (ins.category === 'disenos' || t.match(/dise/)) {
+            theme = ins.text;
+          }
+        });
+      }
+
+      // Also check conversation messages for design context
+      if (!destination || !theme) {
+        var msgs = waState.messages || [];
+        for (var m = msgs.length - 1; m >= 0; m--) {
+          var msg = msgs[m];
+          if (msg.direction !== 'inbound') continue;
+          var txt = (msg.content || '').toLowerCase();
+          if (!destination && txt.match(/de\s+([\w\s]+?)(?:\s*,|\s*$)/)) {
+            var destMatch = txt.match(/(?:de|para|desde)\s+([A-Z][\w\s,]+)/i);
+            if (destMatch) destination = destMatch[1].trim();
+          }
+          if (!theme && txt.match(/mariposa|guelaguetza|iglesia|playa|piramide|catedral|monte alban|cafe|mezcal|talavera/i)) {
+            theme = msg.content;
+          }
+        }
+      }
+
+      // Build URL params
+      var params = new URLSearchParams();
+      if (destination) params.set('destination', destination);
+      if (theme) params.set('theme', theme);
+      if (quantity) params.set('quantity', quantity);
+      if (clientName) params.set('client', clientName);
+      if (productType) params.set('product', productType);
+
+      // Build instructions from conversation context
+      var conv = waState.conversations.find(function(c) { return c.id === waState.selectedConversationId; });
+      var instructions = 'Diseno para ' + (clientName || 'cliente');
+      if (destination) instructions += ' de ' + destination;
+      if (theme) instructions += '. Tema: ' + theme;
+      params.set('instructions', instructions);
+
+      var url = 'http://localhost:3001?' + params.toString();
+      window.open(url, '_blank');
+    });
+    content.appendChild(designBtn);
+
   } else {
     var emptyDiv = document.createElement('div');
     emptyDiv.className = 'wa-insights-empty';
