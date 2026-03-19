@@ -588,13 +588,12 @@ function initializeEventListeners() {
   // Step 3: Products (loaded dynamically)
   document.getElementById('continue-products').addEventListener('click', handleProductsSubmit);
 
-  // Cart bar — click bar area (not the button) to open drawer
+  // Cart bar — click bar area goes to continue
   const cartBar = document.getElementById('cartBar');
   if (cartBar) {
     cartBar.addEventListener('click', (e) => {
-      // Don't open drawer if they clicked the Continue button
       if (e.target.id === 'cartBarContinue') return;
-      toggleCartDrawer(true);
+      handleProductsSubmit();
     });
   }
 
@@ -604,26 +603,7 @@ function initializeEventListeners() {
     cartBarContinue.addEventListener('click', handleProductsSubmit);
   }
 
-  // Drawer close button
-  const drawerClose = document.getElementById('cartDrawerClose');
-  if (drawerClose) {
-    drawerClose.addEventListener('click', () => toggleCartDrawer(false));
-  }
-
-  // Drawer overlay click closes drawer
-  const drawerOverlay = document.getElementById('cartDrawerOverlay');
-  if (drawerOverlay) {
-    drawerOverlay.addEventListener('click', () => toggleCartDrawer(false));
-  }
-
-  // Drawer Continue button
-  const drawerContinue = document.getElementById('cartDrawerContinue');
-  if (drawerContinue) {
-    drawerContinue.addEventListener('click', () => {
-      toggleCartDrawer(false);
-      handleProductsSubmit();
-    });
-  }
+  // (Cart drawer removed — no longer needed)
 
   // Step 4A: Review — continue to payment
   document.getElementById('continue-to-pay').addEventListener('click', handleContinueToPay);
