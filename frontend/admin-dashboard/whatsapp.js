@@ -3682,19 +3682,59 @@ function buildInsightsPanelDOM(parentEl) {
         }
       }
 
-      // Build URL params
+      // Extract design themes/keys from conversation messages
+      var designKeys = [];
+      var designDetails = [];
+      var msgs = waState.messages || [];
+      for (var m = 0; m < msgs.length; m++) {
+        if (msgs[m].direction !== 'inbound') continue;
+        var txt = msgs[m].content || '';
+        // Look for design descriptions
+        if (txt.match(/mariposa|iglesia|catedral|piramide|playa|monte|cafe|mezcal|talavera|guelaguetza|mercado|comida|artesania|folklore|danza|mole|chocolate|barro|alebrije|cascada|cenote|ruina|templo|volcan|laguna|rio|sierra|selva|desierto/i)) {
+          designDetails.push(txt);
+        }
+      }
+
+      // Calculate variations based on quantity
+      var numVariations = 1;
+      var qNum = parseInt(quantity) || 0;
+      if (qNum >= 1000) numVariations = 10;
+      else if (qNum >= 500) numVariations = 5;
+      else if (qNum >= 200) numVariations = 3;
+
+      // Determine crazymeter (conservative for business, creative for events)
+      var crazymeter = 5;
+      var isEvent = false;
+      msgs.forEach(function(msg) {
+        var t = (msg.content || '').toLowerCase();
+        if (t.match(/boda|xv|bautizo|quincea|fiesta|cumple/)) { isEvent = true; crazymeter = 6; }
+        if (t.match(/tienda|negocio|vend|comerci/)) { crazymeter = 4; }
+      });
+
+      // Build URL params — ALL fields
       var params = new URLSearchParams();
       if (destination) params.set('destination', destination);
       if (theme) params.set('theme', theme);
       if (quantity) params.set('quantity', quantity);
       if (clientName) params.set('client', clientName);
       if (productType) params.set('product', productType);
+      params.set('variations', String(numVariations));
+      params.set('crazymeter', String(crazymeter));
+      params.set('level', isEvent ? '6' : '5');
+      params.set('decoration', '8');
+      params.set('ratio', 'square');
 
-      // Build instructions from conversation context
+      // Build keys from design details
+      if (destination) {
+        params.set('keys', destination);
+      }
+
+      // Build instructions from full conversation context
       var conv = waState.conversations.find(function(c) { return c.id === waState.selectedConversationId; });
       var instructions = 'Diseno para ' + (clientName || 'cliente');
       if (destination) instructions += ' de ' + destination;
       if (theme) instructions += '. Tema: ' + theme;
+      if (designDetails.length > 0) instructions += '. Detalles del cliente: ' + designDetails.join('; ');
       params.set('instructions', instructions);
 
       var url = 'http://localhost:3001?' + params.toString();
