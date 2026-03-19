@@ -1594,6 +1594,21 @@ async function createNewLabel(name, color) {
   } catch (e) { console.error('Failed to create label:', e); return null; }
 }
 
+function updateGlobalAiButton(enabled) {
+  var btn = document.getElementById('wa-global-ai-btn');
+  if (!btn) return;
+  btn.dataset.enabled = enabled ? 'true' : 'false';
+  if (enabled) {
+    btn.style.background = '#10b981';
+    btn.style.color = '#fff';
+    btn.textContent = 'AI ON';
+  } else {
+    btn.style.background = '#ef4444';
+    btn.style.color = '#fff';
+    btn.textContent = 'AI OFF';
+  }
+}
+
 async function reloadConversations() {
   try {
     var url = API_BASE + '/whatsapp/conversations';
@@ -2025,15 +2040,36 @@ function renderWhatsApp() {
     });
   };
   modelRow.appendChild(modelSelect);
+
+  // Global AI kill switch
+  var aiGlobalBtn = document.createElement('button');
+  aiGlobalBtn.id = 'wa-global-ai-btn';
+  aiGlobalBtn.style.cssText = 'padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:none;white-space:nowrap;transition:all 0.15s;';
+  aiGlobalBtn.addEventListener('click', function() {
+    var currentState = aiGlobalBtn.dataset.enabled === 'true';
+    var newState = !currentState;
+    fetch(API_BASE + '/whatsapp/ai-global', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') },
+      body: JSON.stringify({ enabled: newState })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.success) updateGlobalAiButton(data.globalAiEnabled);
+    });
+  });
+  modelRow.appendChild(aiGlobalBtn);
+
   listPanel.appendChild(modelRow);
 
-  // Load current model setting
+  // Load current model + global AI state
   fetch(API_BASE + '/whatsapp/ai-model', {
     headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
   }).then(function(r) { return r.json(); }).then(function(data) {
     if (data.model) {
       var sel = document.getElementById('wa-model-select');
       if (sel) sel.value = data.model;
+    }
+    if (typeof data.globalAiEnabled !== 'undefined') {
+      updateGlobalAiButton(data.globalAiEnabled);
     }
   });
 

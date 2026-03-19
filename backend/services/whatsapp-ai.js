@@ -18,6 +18,10 @@ const CONFIG_DIR = join(__dirname, '..', 'chatbot_whatsapp');
 
 // Global AI model setting — changeable at runtime via API
 let currentModel = process.env.WHATSAPP_AI_MODEL || 'claude-haiku-4-5-20251001';
+let globalAiEnabled = true;
+
+export function getGlobalAiEnabled() { return globalAiEnabled; }
+export function setGlobalAiEnabled(enabled) { globalAiEnabled = !!enabled; console.log(`🤖 Global AI ${globalAiEnabled ? 'ENABLED' : 'DISABLED'}`); return globalAiEnabled; }
 
 export function getAiModel() { return currentModel; }
 export function setAiModel(model) {
@@ -425,6 +429,11 @@ async function executeOrderCreation(orderJson, waId, products) {
  */
 export async function processIncomingMessage(conversationId, waId, messageText, mediaContext = null) {
   try {
+    // Check global AI kill switch
+    if (!globalAiEnabled) {
+      return { reply: null, intent: null, skipped: true, reason: 'global_ai_disabled' };
+    }
+
     // Load product catalog from database
     const products = await loadProductCatalog();
 

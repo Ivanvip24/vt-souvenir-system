@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
-import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn, getAiModel, setAiModel } from '../services/whatsapp-ai.js';
+import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn, getAiModel, setAiModel, getGlobalAiEnabled, setGlobalAiEnabled } from '../services/whatsapp-ai.js';
 import { migrate as migrateLabelsArchive } from '../migrations/add-whatsapp-labels-archive.js';
 
 // Run labels/archive migration once on import
@@ -222,6 +222,13 @@ router.post('/webhook', (req, res) => {
 
       // Get AI reply (pass media context for vision/audio processing)
       const aiResult = await processIncomingMessage(conversationId, waId, messageText, mediaContext);
+
+      // If AI is globally disabled, skip replying entirely
+      if (aiResult.skipped) {
+        console.log(`🤖 AI disabled globally — skipping reply to ${waId}`);
+        return;
+      }
+
       const replyText = aiResult.reply;
       const intent = aiResult.intent || null;
       const summary = aiResult.summary || null;
@@ -554,7 +561,14 @@ router.patch('/conversations/:id/settings', authMiddleware, async (req, res) => 
 // 7b. GET/PATCH /ai-model — Get or change the WhatsApp AI model (auth required)
 // ---------------------------------------------------------------------------
 router.get('/ai-model', authMiddleware, (req, res) => {
-  res.json({ success: true, model: getAiModel() });
+  res.json({ success: true, model: getAiModel(), globalAiEnabled: getGlobalAiEnabled() });
+});
+
+router.patch('/ai-global', authMiddleware, (req, res) => {
+  const { enabled } = req.body;
+  if (typeof enabled !== 'boolean') return res.status(400).json({ success: false, error: 'enabled must be boolean' });
+  const result = setGlobalAiEnabled(enabled);
+  res.json({ success: true, globalAiEnabled: result });
 });
 
 router.patch('/ai-model', authMiddleware, (req, res) => {
