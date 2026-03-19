@@ -123,7 +123,7 @@
 
   function loadWorldData() {
     if (typeof topojson === 'undefined') return Promise.resolve();
-    return fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json')
+    return fetch('/landing/vendor/countries-110m.json')
       .then(function (r) { return r.json(); })
       .then(function (topo) {
         if (topo.objects && topo.objects.countries) {
