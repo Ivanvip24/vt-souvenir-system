@@ -24,7 +24,10 @@ const waState = {
   labels: [],
   multiSelect: false,
   selectedConvIds: [],
-  showArchived: false
+  showArchived: false,
+  salesView: false,
+  salesData: null,
+  salesCharts: {}
 };
 
 // ==========================================
@@ -1466,6 +1469,176 @@ function injectWhatsAppStyles() {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.6; }
     }
+
+    /* Sales AI Dashboard */
+    .wa-sales-dashboard {
+      padding: 24px;
+      overflow-y: auto;
+      height: 100%;
+      background: #fafafa;
+    }
+
+    .wa-sales-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .wa-sales-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid #f0f0f0;
+    }
+
+    .wa-sales-card-label {
+      font-size: 12px;
+      color: #888;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .wa-sales-card-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1a1a1a;
+      letter-spacing: -1px;
+    }
+
+    .wa-sales-card-value.pink { color: #e72a88; }
+    .wa-sales-card-value.green { color: #16a34a; }
+    .wa-sales-card-value.blue { color: #3b82f6; }
+    .wa-sales-card-value.orange { color: #f59e0b; }
+
+    .wa-sales-card-sub {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    .wa-sales-section {
+      margin-bottom: 24px;
+    }
+
+    .wa-sales-section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wa-sales-charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .wa-sales-chart-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid #f0f0f0;
+    }
+
+    .wa-sales-chart-card h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 12px;
+    }
+
+    .wa-sales-chart-card canvas {
+      max-height: 220px;
+    }
+
+    .wa-sales-phrases-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .wa-sales-phrases-table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: #f8f8f8;
+      font-weight: 600;
+      color: #555;
+      border-bottom: 2px solid #eee;
+    }
+
+    .wa-sales-phrases-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+    }
+
+    .wa-sales-phrases-table tr:hover { background: #fafafa; }
+
+    .wa-sales-funnel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 0;
+    }
+
+    .wa-sales-funnel-step {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #f0f0f0;
+    }
+
+    .wa-sales-funnel-step .step-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: #1a1a1a;
+    }
+
+    .wa-sales-funnel-step .step-label {
+      font-size: 11px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .wa-sales-funnel-arrow {
+      font-size: 20px;
+      color: #ccc;
+    }
+
+    .wa-sales-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .wa-sales-tab-active {
+      background: linear-gradient(135deg, #e72a88, #c2185b) !important;
+      color: white !important;
+    }
+
+    @media (max-width: 900px) {
+      .wa-sales-grid { grid-template-columns: repeat(2, 1fr); }
+      .wa-sales-charts-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .wa-sales-grid { grid-template-columns: 1fr; }
+      .wa-sales-dashboard { padding: 14px; }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -2300,11 +2473,15 @@ function renderWhatsApp() {
   tabAll.className = 'wa-archive-tab' + (!waState.showArchived ? ' active' : '');
   tabAll.textContent = 'Todas';
   tabAll.addEventListener('click', function() {
-    if (!waState.showArchived) return;
+    if (!waState.showArchived && !waState.salesView) return;
     waState.showArchived = false;
+    waState.salesView = false;
+    hideSalesDashboard();
     reloadConversations();
     tabAll.classList.add('active');
     tabArchived.classList.remove('active');
+    var salesTab = document.getElementById('wa-sales-tab');
+    if (salesTab) salesTab.classList.remove('wa-sales-tab-active');
   });
   archiveTabs.appendChild(tabAll);
 
@@ -2312,11 +2489,15 @@ function renderWhatsApp() {
   tabArchived.className = 'wa-archive-tab' + (waState.showArchived ? ' active' : '');
   tabArchived.textContent = 'Archivadas';
   tabArchived.addEventListener('click', function() {
-    if (waState.showArchived) return;
+    if (waState.showArchived && !waState.salesView) return;
     waState.showArchived = true;
+    waState.salesView = false;
+    hideSalesDashboard();
     reloadConversations();
     tabArchived.classList.add('active');
     tabAll.classList.remove('active');
+    var salesTab = document.getElementById('wa-sales-tab');
+    if (salesTab) salesTab.classList.remove('wa-sales-tab-active');
   });
   archiveTabs.appendChild(tabArchived);
 
@@ -2331,6 +2512,21 @@ function renderWhatsApp() {
     renderWhatsApp();
   });
   archiveTabs.appendChild(selectToggle);
+
+  var salesTab = document.createElement('button');
+  salesTab.className = 'wa-archive-tab' + (waState.salesView ? ' wa-sales-tab-active' : '');
+  salesTab.id = 'wa-sales-tab';
+  salesTab.textContent = '\uD83D\uDCCA Sales AI';
+  salesTab.addEventListener('click', function() {
+    if (waState.salesView) return;
+    waState.salesView = true;
+    tabAll.classList.remove('active');
+    tabArchived.classList.remove('active');
+    salesTab.classList.add('wa-sales-tab-active');
+    showSalesDashboard();
+    loadSalesAnalytics();
+  });
+  archiveTabs.appendChild(salesTab);
 
   listPanel.appendChild(archiveTabs);
 
@@ -4524,6 +4720,524 @@ async function sendTemplateFromUI() {
     resultEl.textContent = data.error ? '\u274C ' + data.error : '\u2705 Enviado correctamente';
   } catch (err) {
     resultEl.textContent = '\u274C Error: ' + err.message;
+  }
+}
+
+// ==========================================
+// SALES AI DASHBOARD
+// ==========================================
+
+function showSalesDashboard() {
+  var layout = document.getElementById('wa-layout');
+  if (!layout) return;
+  var listPanel = layout.querySelector('.wa-list-panel');
+  var chatPanel = document.getElementById('wa-chat-panel');
+  var insightsPanel = document.getElementById('wa-insights-panel');
+  if (listPanel) listPanel.style.display = 'none';
+  if (chatPanel) chatPanel.style.display = 'none';
+  if (insightsPanel) insightsPanel.style.display = 'none';
+
+  var container = document.getElementById('wa-sales-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'wa-sales-container';
+    container.className = 'wa-sales-dashboard';
+    container.style.flex = '1';
+    layout.appendChild(container);
+  }
+  container.style.display = 'block';
+}
+
+function hideSalesDashboard() {
+  var layout = document.getElementById('wa-layout');
+  if (!layout) return;
+  var listPanel = layout.querySelector('.wa-list-panel');
+  var chatPanel = document.getElementById('wa-chat-panel');
+  var insightsPanel = document.getElementById('wa-insights-panel');
+  if (listPanel) listPanel.style.display = '';
+  if (chatPanel) chatPanel.style.display = '';
+  if (insightsPanel) insightsPanel.style.display = '';
+
+  var container = document.getElementById('wa-sales-container');
+  if (container) container.style.display = 'none';
+}
+
+async function loadSalesAnalytics() {
+  var container = document.getElementById('wa-sales-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'wa-sales-container';
+    container.className = 'wa-sales-dashboard';
+    container.style.flex = '1';
+    var layout = document.getElementById('wa-layout');
+    if (layout) layout.appendChild(container);
+  }
+
+  container.style.display = 'block';
+  container.innerHTML = '<div class="wa-sales-loading">\uD83D\uDCCA Cargando inteligencia de ventas...</div>';
+
+  try {
+    var res = await fetch(API_BASE + '/whatsapp/sales-analytics', {
+      headers: getAuthHeaders()
+    });
+    var json = await res.json();
+    if (json.success) {
+      waState.salesData = json.data;
+      renderSalesDashboard(container, json.data);
+    } else {
+      container.innerHTML = '<div class="wa-sales-loading">Error: ' + (json.error || 'No se pudieron cargar los datos') + '</div>';
+    }
+  } catch (e) {
+    container.innerHTML = '<div class="wa-sales-loading">Error cargando analytics</div>';
+  }
+}
+
+function formatSalesTime(seconds) {
+  if (!seconds && seconds !== 0) return '-';
+  if (seconds < 60) return Math.round(seconds) + 's';
+  if (seconds < 3600) return Math.round(seconds / 60) + 'min';
+  return Math.round(seconds / 3600 * 10) / 10 + 'h';
+}
+
+function createSalesCard(label, value, colorClass, sub) {
+  var card = document.createElement('div');
+  card.className = 'wa-sales-card';
+
+  var labelEl = document.createElement('div');
+  labelEl.className = 'wa-sales-card-label';
+  labelEl.textContent = label;
+  card.appendChild(labelEl);
+
+  var valEl = document.createElement('div');
+  valEl.className = 'wa-sales-card-value ' + (colorClass || '');
+  valEl.textContent = value;
+  card.appendChild(valEl);
+
+  if (sub) {
+    var subEl = document.createElement('div');
+    subEl.className = 'wa-sales-card-sub';
+    subEl.textContent = sub;
+    card.appendChild(subEl);
+  }
+
+  return card;
+}
+
+function renderSalesDashboard(container, data) {
+  container.textContent = '';
+
+  // Destroy old charts
+  Object.values(waState.salesCharts).forEach(function(c) { if (c && c.destroy) c.destroy(); });
+  waState.salesCharts = {};
+
+  var overview = data.overview || {};
+  var revenue = data.revenue || {};
+  var messagesToClose = data.messagesToClose || [];
+  var responseTimes = data.responseTimes || {};
+  var hourlyDistribution = data.hourlyDistribution || [];
+  var intents = data.intents || [];
+  var dailyVolume = data.dailyVolume || [];
+  var lengthAnalysis = data.lengthAnalysis || {};
+  var topPhrases = data.topPhrases || [];
+  var senderBreakdown = data.senderBreakdown || {};
+
+  // --- Header with refresh button ---
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;';
+
+  var titleEl = document.createElement('h2');
+  titleEl.style.cssText = 'font-size:22px;font-weight:800;color:#1a1a1a;margin:0;';
+  titleEl.textContent = '\uD83D\uDCCA Sales AI Dashboard';
+  header.appendChild(titleEl);
+
+  var refreshBtn = document.createElement('button');
+  refreshBtn.style.cssText = 'padding:8px 16px;border:1px solid #e5e7eb;border-radius:10px;background:white;cursor:pointer;font-size:13px;font-weight:600;color:#555;';
+  refreshBtn.textContent = '\u21BB Actualizar';
+  refreshBtn.addEventListener('click', function() {
+    loadSalesAnalytics();
+  });
+  header.appendChild(refreshBtn);
+  container.appendChild(header);
+
+  // --- Row 1: KPI Cards ---
+  var kpiGrid = document.createElement('div');
+  kpiGrid.className = 'wa-sales-grid';
+
+  kpiGrid.appendChild(createSalesCard(
+    'CLOSE RATE',
+    (overview.closeRate || 0) + '%',
+    'pink',
+    overview.totalOrders ? overview.totalOrders + ' pedidos cerrados' : null
+  ));
+  kpiGrid.appendChild(createSalesCard(
+    'REVENUE',
+    '$' + (revenue.totalRevenue || 0).toLocaleString(),
+    'green',
+    revenue.period || 'Total'
+  ));
+  kpiGrid.appendChild(createSalesCard(
+    'AVG ORDER',
+    '$' + (revenue.avgOrderValue || 0).toLocaleString(),
+    'blue',
+    revenue.totalOrders ? revenue.totalOrders + ' ordenes' : null
+  ));
+  kpiGrid.appendChild(createSalesCard(
+    'CONVERSACIONES',
+    String(overview.totalConversations || 0),
+    'orange',
+    overview.activeConversations ? overview.activeConversations + ' activas' : null
+  ));
+
+  container.appendChild(kpiGrid);
+
+  // --- Row 2: Funnel ---
+  var funnelSection = document.createElement('div');
+  funnelSection.className = 'wa-sales-section';
+
+  var funnelTitle = document.createElement('div');
+  funnelTitle.className = 'wa-sales-section-title';
+  funnelTitle.textContent = '\uD83D\uDD73\uFE0F Funnel de Conversion';
+  funnelSection.appendChild(funnelTitle);
+
+  var funnelRow = document.createElement('div');
+  funnelRow.className = 'wa-sales-funnel';
+
+  var totalConvs = overview.totalConversations || 0;
+  var linkedClients = overview.linkedToClient || 0;
+  var totalOrders = overview.totalOrders || 0;
+
+  var funnelSteps = [
+    { value: totalConvs, label: 'Conversaciones' },
+    { value: linkedClients, label: 'Vinculados a Cliente', pct: totalConvs ? Math.round(linkedClients / totalConvs * 100) + '%' : '-' },
+    { value: totalOrders, label: 'Pedidos', pct: linkedClients ? Math.round(totalOrders / linkedClients * 100) + '%' : '-' }
+  ];
+
+  funnelSteps.forEach(function(step, i) {
+    if (i > 0) {
+      var arrow = document.createElement('div');
+      arrow.className = 'wa-sales-funnel-arrow';
+      arrow.textContent = '\u2192';
+      funnelRow.appendChild(arrow);
+    }
+    var stepEl = document.createElement('div');
+    stepEl.className = 'wa-sales-funnel-step';
+
+    var stepVal = document.createElement('div');
+    stepVal.className = 'step-value';
+    stepVal.textContent = step.value;
+    stepEl.appendChild(stepVal);
+
+    var stepLbl = document.createElement('div');
+    stepLbl.className = 'step-label';
+    stepLbl.textContent = step.label + (step.pct ? ' (' + step.pct + ')' : '');
+    stepEl.appendChild(stepLbl);
+
+    funnelRow.appendChild(stepEl);
+  });
+
+  funnelSection.appendChild(funnelRow);
+  container.appendChild(funnelSection);
+
+  // --- Row 3: Efficiency Cards ---
+  var effGrid = document.createElement('div');
+  effGrid.className = 'wa-sales-grid';
+  effGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+
+  var closedMsgs = messagesToClose.filter(function(m) { return m.outcome === 'closed'; });
+  var lostMsgs = messagesToClose.filter(function(m) { return m.outcome === 'lost'; });
+  var avgClosedMsgs = closedMsgs.length ? Math.round(closedMsgs.reduce(function(s, m) { return s + (m.avgMessages || 0); }, 0) / closedMsgs.length) : '-';
+  var avgLostMsgs = lostMsgs.length ? Math.round(lostMsgs.reduce(function(s, m) { return s + (m.avgMessages || 0); }, 0) / lostMsgs.length) : '-';
+  var avgRespTime = responseTimes.avgResponseTime || responseTimes.avg || null;
+
+  effGrid.appendChild(createSalesCard('MSGS TO CLOSE', String(avgClosedMsgs), 'green', 'Promedio mensajes para cerrar'));
+  effGrid.appendChild(createSalesCard('MSGS TO LOSE', String(avgLostMsgs), 'pink', 'Promedio mensajes antes de perder'));
+  effGrid.appendChild(createSalesCard('RESP. TIME', formatSalesTime(avgRespTime), 'blue', 'Tiempo respuesta promedio'));
+
+  container.appendChild(effGrid);
+
+  // --- Row 4: Charts - Hourly + Intents ---
+  var chartsRow1 = document.createElement('div');
+  chartsRow1.className = 'wa-sales-charts-row';
+
+  // Hourly activity
+  var hourlyCard = document.createElement('div');
+  hourlyCard.className = 'wa-sales-chart-card';
+  var hourlyH4 = document.createElement('h4');
+  hourlyH4.textContent = 'Actividad por Hora';
+  hourlyCard.appendChild(hourlyH4);
+  var hourlyCanvas = document.createElement('canvas');
+  hourlyCanvas.id = 'salesHourlyChart';
+  hourlyCard.appendChild(hourlyCanvas);
+  chartsRow1.appendChild(hourlyCard);
+
+  // Intent distribution
+  var intentCard = document.createElement('div');
+  intentCard.className = 'wa-sales-chart-card';
+  var intentH4 = document.createElement('h4');
+  intentH4.textContent = 'Distribucion de Intenciones';
+  intentCard.appendChild(intentH4);
+  var intentCanvas = document.createElement('canvas');
+  intentCanvas.id = 'salesIntentChart';
+  intentCard.appendChild(intentCanvas);
+  chartsRow1.appendChild(intentCard);
+
+  container.appendChild(chartsRow1);
+
+  // --- Row 5: Charts - Daily Volume + Length Analysis ---
+  var chartsRow2 = document.createElement('div');
+  chartsRow2.className = 'wa-sales-charts-row';
+
+  // Daily volume
+  var dailyCard = document.createElement('div');
+  dailyCard.className = 'wa-sales-chart-card';
+  var dailyH4 = document.createElement('h4');
+  dailyH4.textContent = 'Volumen Diario (30 dias)';
+  dailyCard.appendChild(dailyH4);
+  var dailyCanvas = document.createElement('canvas');
+  dailyCanvas.id = 'salesDailyChart';
+  dailyCard.appendChild(dailyCanvas);
+  chartsRow2.appendChild(dailyCard);
+
+  // Length analysis
+  var lengthCard = document.createElement('div');
+  lengthCard.className = 'wa-sales-chart-card';
+  var lengthH4 = document.createElement('h4');
+  lengthH4.textContent = 'Analisis de Longitud de Mensajes';
+  lengthCard.appendChild(lengthH4);
+  var lengthCanvas = document.createElement('canvas');
+  lengthCanvas.id = 'salesLengthChart';
+  lengthCard.appendChild(lengthCanvas);
+  chartsRow2.appendChild(lengthCard);
+
+  container.appendChild(chartsRow2);
+
+  // --- Row 6: Top Phrases Table ---
+  if (topPhrases.length > 0) {
+    var phrasesSection = document.createElement('div');
+    phrasesSection.className = 'wa-sales-section';
+
+    var phrasesTitle = document.createElement('div');
+    phrasesTitle.className = 'wa-sales-section-title';
+    phrasesTitle.textContent = '\uD83D\uDCAC Frases Mas Usadas';
+    phrasesSection.appendChild(phrasesTitle);
+
+    var phrasesCard = document.createElement('div');
+    phrasesCard.className = 'wa-sales-chart-card';
+
+    var table = document.createElement('table');
+    table.className = 'wa-sales-phrases-table';
+
+    var thead = document.createElement('thead');
+    var headerRow = document.createElement('tr');
+    ['Frase', 'Veces usado', 'Tiempo respuesta promedio'].forEach(function(txt) {
+      var th = document.createElement('th');
+      th.textContent = txt;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    topPhrases.forEach(function(phrase) {
+      var row = document.createElement('tr');
+
+      var tdPhrase = document.createElement('td');
+      tdPhrase.textContent = phrase.phrase || phrase.text || '';
+      row.appendChild(tdPhrase);
+
+      var tdCount = document.createElement('td');
+      tdCount.textContent = phrase.count || 0;
+      row.appendChild(tdCount);
+
+      var tdTime = document.createElement('td');
+      tdTime.textContent = formatSalesTime(phrase.avgResponseTime || phrase.avgTime);
+      row.appendChild(tdTime);
+
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+
+    phrasesCard.appendChild(table);
+    phrasesSection.appendChild(phrasesCard);
+    container.appendChild(phrasesSection);
+  }
+
+  // --- Row 7: Sender Breakdown ---
+  var senderSection = document.createElement('div');
+  senderSection.className = 'wa-sales-section';
+
+  var senderTitle = document.createElement('div');
+  senderTitle.className = 'wa-sales-section-title';
+  senderTitle.textContent = '\uD83D\uDCE8 Desglose de Mensajes por Remitente';
+  senderSection.appendChild(senderTitle);
+
+  var senderGrid = document.createElement('div');
+  senderGrid.className = 'wa-sales-grid';
+  senderGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+
+  var totalMsgs = (senderBreakdown.client || 0) + (senderBreakdown.ai || 0) + (senderBreakdown.admin || 0);
+  var clientPct = totalMsgs ? Math.round((senderBreakdown.client || 0) / totalMsgs * 100) : 0;
+  var aiPct = totalMsgs ? Math.round((senderBreakdown.ai || 0) / totalMsgs * 100) : 0;
+  var adminPct = totalMsgs ? Math.round((senderBreakdown.admin || 0) / totalMsgs * 100) : 0;
+
+  senderGrid.appendChild(createSalesCard('CLIENTE', clientPct + '%', 'orange', (senderBreakdown.client || 0).toLocaleString() + ' mensajes'));
+  senderGrid.appendChild(createSalesCard('AI', aiPct + '%', 'green', (senderBreakdown.ai || 0).toLocaleString() + ' mensajes'));
+  senderGrid.appendChild(createSalesCard('ADMIN', adminPct + '%', 'blue', (senderBreakdown.admin || 0).toLocaleString() + ' mensajes'));
+
+  senderSection.appendChild(senderGrid);
+  container.appendChild(senderSection);
+
+  // --- Render Charts ---
+  renderSalesCharts(hourlyDistribution, intents, dailyVolume, lengthAnalysis);
+}
+
+function renderSalesCharts(hourlyDistribution, intents, dailyVolume, lengthAnalysis) {
+  // Hourly activity chart
+  var hourlyCtx = document.getElementById('salesHourlyChart');
+  if (hourlyCtx) {
+    var hours = [];
+    var hourlyCounts = [];
+    for (var h = 0; h < 24; h++) {
+      hours.push(h + ':00');
+      var found = hourlyDistribution.find(function(item) { return item.hour === h; });
+      hourlyCounts.push(found ? found.count : 0);
+    }
+    waState.salesCharts.hourly = new Chart(hourlyCtx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: hours,
+        datasets: [{
+          data: hourlyCounts,
+          backgroundColor: '#e72a88',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  }
+
+  // Intent distribution doughnut
+  var intentCtx = document.getElementById('salesIntentChart');
+  if (intentCtx && intents.length) {
+    var intentLabels = intents.map(function(i) { return i.intent || i.label || 'Otro'; });
+    var intentCounts = intents.map(function(i) { return i.count || 0; });
+    var intentColors = ['#e72a88', '#8ab73b', '#f39223', '#09adc2', '#e52421', '#D4A574', '#6366f1', '#ec4899'];
+
+    waState.salesCharts.intents = new Chart(intentCtx.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: intentLabels,
+        datasets: [{
+          data: intentCounts,
+          backgroundColor: intentColors.slice(0, intentLabels.length)
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right', labels: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // Daily volume line chart
+  var dailyCtx = document.getElementById('salesDailyChart');
+  if (dailyCtx && dailyVolume.length) {
+    var dailyLabels = dailyVolume.map(function(d) {
+      var dt = new Date(d.date);
+      return (dt.getMonth() + 1) + '/' + dt.getDate();
+    });
+    var dailyCounts = dailyVolume.map(function(d) { return d.count || d.messages || 0; });
+
+    waState.salesCharts.daily = new Chart(dailyCtx.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: dailyLabels,
+        datasets: [{
+          data: dailyCounts,
+          borderColor: '#09adc2',
+          backgroundColor: 'rgba(9,173,194,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  }
+
+  // Length analysis grouped bar
+  var lengthCtx = document.getElementById('salesLengthChart');
+  if (lengthCtx && lengthAnalysis) {
+    var lengthCategories = Object.keys(lengthAnalysis);
+    if (lengthCategories.length > 0) {
+      var firstVal = lengthAnalysis[lengthCategories[0]];
+      if (typeof firstVal === 'object' && firstVal !== null) {
+        // Grouped format: { client: { short: X, medium: X, long: X }, ai: {...} }
+        var senders = lengthCategories;
+        var buckets = Object.keys(firstVal);
+        var datasets = buckets.map(function(bucket, idx) {
+          var colors = ['#e72a88', '#8ab73b', '#f39223', '#09adc2'];
+          return {
+            label: bucket,
+            data: senders.map(function(s) { return lengthAnalysis[s][bucket] || 0; }),
+            backgroundColor: colors[idx % colors.length],
+            borderRadius: 4
+          };
+        });
+        waState.salesCharts.length = new Chart(lengthCtx.getContext('2d'), {
+          type: 'bar',
+          data: { labels: senders, datasets: datasets },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+          }
+        });
+      } else {
+        // Simple format: { short: X, medium: X, long: X }
+        var labels = lengthCategories;
+        var vals = labels.map(function(l) { return lengthAnalysis[l] || 0; });
+        var barColors = ['#e72a88', '#8ab73b', '#f39223', '#09adc2'];
+        waState.salesCharts.length = new Chart(lengthCtx.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: vals,
+              backgroundColor: barColors.slice(0, labels.length),
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+          }
+        });
+      }
+    }
   }
 }
 

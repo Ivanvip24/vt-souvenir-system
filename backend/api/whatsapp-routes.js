@@ -989,4 +989,425 @@ router.patch('/conversations/:id/follow-up', authMiddleware, async (req, res) =>
   }
 });
 
+// ---------------------------------------------------------------------------
+// Auto-migration: add sales_learned_at and sales_data columns
+// ---------------------------------------------------------------------------
+let salesColumnsMigrated = false;
+async function ensureSalesColumns() {
+  if (salesColumnsMigrated) return;
+  try {
+    await query(`
+      ALTER TABLE whatsapp_conversations
+      ADD COLUMN IF NOT EXISTS sales_learned_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS sales_data JSONB
+    `);
+    salesColumnsMigrated = true;
+  } catch (err) {
+    if (err.message?.includes('already exists')) {
+      salesColumnsMigrated = true;
+    } else {
+      console.error('📊 Sales columns migration warning:', err.message);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 20. GET /sales-analytics — Comprehensive WhatsApp sales intelligence (auth)
+// ---------------------------------------------------------------------------
+router.get('/sales-analytics', authMiddleware, async (req, res) => {
+  try {
+    await ensureSalesColumns();
+
+    // 1. Overview
+    const overview = await query(`
+      SELECT
+        COUNT(*) AS total_conversations,
+        COUNT(client_id) AS linked_to_client,
+        COUNT(DISTINCT CASE WHEN EXISTS (
+          SELECT 1 FROM orders o WHERE o.client_id = wc.client_id
+        ) THEN wc.id END) AS order_conversations
+      FROM whatsapp_conversations wc
+    `);
+
+    // 2. Revenue from WhatsApp conversations
+    const revenue = await query(`
+      SELECT
+        COUNT(DISTINCT o.id) AS total_orders,
+        COALESCE(SUM(o.total_price), 0) AS total_revenue,
+        COALESCE(AVG(o.total_price), 0) AS avg_order_value,
+        COALESCE(SUM(o.profit), 0) AS total_profit
+      FROM orders o
+      WHERE o.client_id IN (
+        SELECT DISTINCT client_id FROM whatsapp_conversations WHERE client_id IS NOT NULL
+      )
+    `);
+
+    // 3. Close rate
+    const closeRate = await query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(CASE WHEN EXISTS (
+          SELECT 1 FROM orders o WHERE o.client_id = wc.client_id
+        ) THEN 1 END) AS closed,
+        CASE WHEN COUNT(*) > 0
+          THEN ROUND(
+            COUNT(CASE WHEN EXISTS (
+              SELECT 1 FROM orders o WHERE o.client_id = wc.client_id
+            ) THEN 1 END)::numeric / COUNT(*)::numeric * 100, 2
+          )
+          ELSE 0
+        END AS close_rate_pct
+      FROM whatsapp_conversations wc
+      WHERE wc.client_id IS NOT NULL
+    `);
+
+    // 4. Messages to close — avg messages for closed vs lost, avg duration
+    const messagesToClose = await query(`
+      SELECT
+        COALESCE(AVG(CASE WHEN has_order THEN msg_count END), 0) AS avg_messages_closed,
+        COALESCE(AVG(CASE WHEN NOT has_order THEN msg_count END), 0) AS avg_messages_lost,
+        COALESCE(AVG(duration_hours), 0) AS avg_duration_hours
+      FROM (
+        SELECT
+          wc.id,
+          (SELECT COUNT(*) FROM whatsapp_messages wm WHERE wm.conversation_id = wc.id) AS msg_count,
+          EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) AS has_order,
+          EXTRACT(EPOCH FROM (wc.last_message_at - wc.created_at)) / 3600.0 AS duration_hours
+        FROM whatsapp_conversations wc
+        WHERE wc.client_id IS NOT NULL
+      ) sub
+    `);
+
+    // 5. Intent distribution (exclude 'general')
+    const intentDistribution = await query(`
+      SELECT intent, COUNT(*) AS count
+      FROM whatsapp_conversations
+      WHERE intent IS NOT NULL AND intent != 'general'
+      GROUP BY intent
+      ORDER BY count DESC
+    `);
+
+    // 6. Response times — avg and median seconds between inbound and AI reply
+    const responseTimes = await query(`
+      SELECT
+        COALESCE(AVG(response_seconds), 0) AS avg_response_seconds,
+        COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY response_seconds), 0) AS median_response_seconds
+      FROM (
+        SELECT
+          EXTRACT(EPOCH FROM (reply.created_at - inbound.created_at)) AS response_seconds
+        FROM whatsapp_messages inbound
+        JOIN LATERAL (
+          SELECT created_at
+          FROM whatsapp_messages
+          WHERE conversation_id = inbound.conversation_id
+            AND direction = 'outbound'
+            AND sender = 'ai'
+            AND created_at > inbound.created_at
+          ORDER BY created_at ASC
+          LIMIT 1
+        ) reply ON true
+        WHERE inbound.direction = 'inbound'
+      ) sub
+      WHERE response_seconds > 0 AND response_seconds < 3600
+    `);
+
+    // 7. Hourly distribution (Mexico City timezone)
+    const hourlyDistribution = await query(`
+      SELECT
+        EXTRACT(HOUR FROM created_at AT TIME ZONE 'America/Mexico_City') AS hour,
+        COUNT(*) AS total_messages,
+        COUNT(CASE WHEN direction = 'inbound' THEN 1 END) AS inbound_count,
+        COUNT(CASE WHEN direction = 'outbound' THEN 1 END) AS outbound_count
+      FROM whatsapp_messages
+      GROUP BY hour
+      ORDER BY hour
+    `);
+
+    // 8. Top AI phrases — first 100 chars of AI messages with fastest client responses
+    const topAiPhrases = await query(`
+      SELECT
+        LEFT(ai_msg.content, 100) AS phrase,
+        COUNT(*) AS times_used,
+        ROUND(AVG(EXTRACT(EPOCH FROM (next_client.created_at - ai_msg.created_at)))::numeric, 1) AS avg_response_seconds
+      FROM whatsapp_messages ai_msg
+      JOIN LATERAL (
+        SELECT created_at
+        FROM whatsapp_messages
+        WHERE conversation_id = ai_msg.conversation_id
+          AND direction = 'inbound'
+          AND created_at > ai_msg.created_at
+        ORDER BY created_at ASC
+        LIMIT 1
+      ) next_client ON true
+      WHERE ai_msg.direction = 'outbound'
+        AND ai_msg.sender = 'ai'
+        AND ai_msg.message_type = 'text'
+        AND LENGTH(ai_msg.content) > 10
+      GROUP BY LEFT(ai_msg.content, 100)
+      HAVING COUNT(*) >= 2
+      ORDER BY avg_response_seconds ASC
+      LIMIT 20
+    `);
+
+    // 9. Message length analysis
+    const messageLengthAnalysis = await query(`
+      SELECT
+        sender,
+        CASE
+          WHEN LENGTH(COALESCE(content, '')) < 50 THEN 'corto'
+          WHEN LENGTH(COALESCE(content, '')) BETWEEN 50 AND 150 THEN 'medio'
+          ELSE 'largo'
+        END AS category,
+        COUNT(*) AS count
+      FROM whatsapp_messages
+      GROUP BY sender, category
+      ORDER BY sender, category
+    `);
+
+    // 10. Daily volume — new conversations per day, last 30 days
+    const dailyVolume = await query(`
+      SELECT
+        DATE(created_at AT TIME ZONE 'America/Mexico_City') AS day,
+        COUNT(*) AS new_conversations
+      FROM whatsapp_conversations
+      WHERE created_at >= NOW() - INTERVAL '30 days'
+      GROUP BY day
+      ORDER BY day
+    `);
+
+    // 11. Sender breakdown
+    const senderBreakdown = await query(`
+      SELECT sender, COUNT(*) AS message_count
+      FROM whatsapp_messages
+      GROUP BY sender
+      ORDER BY message_count DESC
+    `);
+
+    // 12. Word frequency in closed deals vs lost
+    const wordFrequency = await query(`
+      WITH closed_words AS (
+        SELECT
+          LOWER(word) AS word,
+          COUNT(*) AS count
+        FROM whatsapp_messages wm
+        JOIN whatsapp_conversations wc ON wc.id = wm.conversation_id
+        JOIN orders o ON o.client_id = wc.client_id
+        , LATERAL unnest(string_to_array(regexp_replace(LOWER(wm.content), '[^a-záéíóúñü\\s]', '', 'g'), ' ')) AS word
+        WHERE wm.sender = 'ai'
+          AND LENGTH(word) > 4
+          AND word NOT IN ('https', 'sobre', 'tiene', 'puede', 'están', 'están', 'cuando', 'donde', 'tiene', 'otros', 'favor', 'haber', 'hacer', 'entre', 'desde', 'hasta', 'también', 'todos', 'estos', 'estas', 'mucho', 'muchas')
+        GROUP BY LOWER(word)
+        ORDER BY count DESC
+        LIMIT 30
+      ),
+      lost_words AS (
+        SELECT
+          LOWER(word) AS word,
+          COUNT(*) AS count
+        FROM whatsapp_messages wm
+        JOIN whatsapp_conversations wc ON wc.id = wm.conversation_id
+        , LATERAL unnest(string_to_array(regexp_replace(LOWER(wm.content), '[^a-záéíóúñü\\s]', '', 'g'), ' ')) AS word
+        WHERE wm.sender = 'ai'
+          AND wc.client_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id)
+          AND LENGTH(word) > 4
+          AND word NOT IN ('https', 'sobre', 'tiene', 'puede', 'están', 'están', 'cuando', 'donde', 'tiene', 'otros', 'favor', 'haber', 'hacer', 'entre', 'desde', 'hasta', 'también', 'todos', 'estos', 'estas', 'mucho', 'muchas')
+        GROUP BY LOWER(word)
+        ORDER BY count DESC
+        LIMIT 30
+      )
+      SELECT
+        json_agg(json_build_object('word', cw.word, 'count', cw.count)) AS closed_deal_words,
+        (SELECT json_agg(json_build_object('word', lw.word, 'count', lw.count)) FROM lost_words lw) AS lost_deal_words
+      FROM closed_words cw
+    `);
+
+    // 13. Conversation learning log — completed conversations (last message >24hrs ago)
+    const conversationLog = await query(`
+      SELECT
+        wc.id,
+        wc.client_name,
+        wc.intent,
+        CASE WHEN EXISTS (SELECT 1 FROM orders o WHERE o.client_id = wc.client_id) THEN 'order' ELSE 'lost' END AS outcome,
+        (SELECT COUNT(*) FROM whatsapp_messages wm WHERE wm.conversation_id = wc.id) AS total_messages,
+        EXTRACT(EPOCH FROM (wc.last_message_at - wc.created_at)) / 3600.0 AS duration_hours,
+        wc.created_at,
+        wc.last_message_at
+      FROM whatsapp_conversations wc
+      WHERE wc.last_message_at < NOW() - INTERVAL '24 hours'
+        AND wc.client_id IS NOT NULL
+      ORDER BY wc.last_message_at DESC
+      LIMIT 50
+    `);
+
+    res.json({
+      success: true,
+      data: {
+        overview: overview.rows[0],
+        revenue: revenue.rows[0],
+        closeRate: closeRate.rows[0],
+        messagesToClose: messagesToClose.rows[0],
+        intentDistribution: intentDistribution.rows,
+        responseTimes: responseTimes.rows[0],
+        hourlyDistribution: hourlyDistribution.rows,
+        topAiPhrases: topAiPhrases.rows,
+        messageLengthAnalysis: messageLengthAnalysis.rows,
+        dailyVolume: dailyVolume.rows,
+        senderBreakdown: senderBreakdown.rows,
+        wordFrequency: {
+          closedDeals: wordFrequency.rows[0]?.closed_deal_words || [],
+          lostDeals: wordFrequency.rows[0]?.lost_deal_words || []
+        },
+        conversationLog: conversationLog.rows
+      }
+    });
+  } catch (err) {
+    console.error('📊 WhatsApp sales analytics error:', err);
+    res.status(500).json({ success: false, error: 'Failed to generate sales analytics' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 21. POST /sales-analytics/learn — Analyze recent conversations for learning
+// ---------------------------------------------------------------------------
+router.post('/sales-analytics/learn', authMiddleware, async (req, res) => {
+  try {
+    await ensureSalesColumns();
+
+    // Get last 50 conversations that haven't been analyzed yet
+    const unanalyzed = await query(`
+      SELECT wc.id, wc.wa_id, wc.client_name, wc.client_id, wc.intent,
+             wc.created_at, wc.last_message_at
+      FROM whatsapp_conversations wc
+      WHERE wc.sales_learned_at IS NULL
+        AND wc.last_message_at < NOW() - INTERVAL '24 hours'
+      ORDER BY wc.last_message_at DESC
+      LIMIT 50
+    `);
+
+    if (unanalyzed.rows.length === 0) {
+      return res.json({ success: true, data: { analyzed: 0, message: 'No new conversations to analyze' } });
+    }
+
+    const results = [];
+
+    for (const conv of unanalyzed.rows) {
+      // Determine outcome
+      let outcome = 'no_client';
+      if (conv.client_id) {
+        const orderCheck = await query(
+          'SELECT id, total_price FROM orders WHERE client_id = $1 LIMIT 1',
+          [conv.client_id]
+        );
+        outcome = orderCheck.rows.length > 0 ? 'order' : 'lost';
+      }
+
+      // Get message stats
+      const msgStats = await query(`
+        SELECT
+          COUNT(*) AS total_messages,
+          COALESCE(AVG(LENGTH(content)), 0) AS avg_length,
+          COUNT(CASE WHEN sender = 'ai' THEN 1 END) AS ai_messages,
+          COUNT(CASE WHEN sender = 'client' THEN 1 END) AS client_messages,
+          COUNT(CASE WHEN sender = 'admin' THEN 1 END) AS admin_messages
+        FROM whatsapp_messages
+        WHERE conversation_id = $1
+      `, [conv.id]);
+
+      // Get response times for this conversation
+      const convResponseTimes = await query(`
+        SELECT
+          COALESCE(AVG(response_seconds), 0) AS avg_response_seconds
+        FROM (
+          SELECT
+            EXTRACT(EPOCH FROM (reply.created_at - inbound.created_at)) AS response_seconds
+          FROM whatsapp_messages inbound
+          JOIN LATERAL (
+            SELECT created_at
+            FROM whatsapp_messages
+            WHERE conversation_id = inbound.conversation_id
+              AND direction = 'outbound'
+              AND sender = 'ai'
+              AND created_at > inbound.created_at
+            ORDER BY created_at ASC
+            LIMIT 1
+          ) reply ON true
+          WHERE inbound.direction = 'inbound'
+            AND inbound.conversation_id = $1
+        ) sub
+        WHERE response_seconds > 0 AND response_seconds < 3600
+      `, [conv.id]);
+
+      // Extract key AI phrases that preceded client engagement (fast replies)
+      const keyPhrases = await query(`
+        SELECT LEFT(ai_msg.content, 150) AS phrase
+        FROM whatsapp_messages ai_msg
+        JOIN LATERAL (
+          SELECT created_at
+          FROM whatsapp_messages
+          WHERE conversation_id = ai_msg.conversation_id
+            AND direction = 'inbound'
+            AND created_at > ai_msg.created_at
+          ORDER BY created_at ASC
+          LIMIT 1
+        ) next_client ON true
+        WHERE ai_msg.conversation_id = $1
+          AND ai_msg.sender = 'ai'
+          AND ai_msg.message_type = 'text'
+          AND LENGTH(ai_msg.content) > 10
+        ORDER BY EXTRACT(EPOCH FROM (next_client.created_at - ai_msg.created_at)) ASC
+        LIMIT 5
+      `, [conv.id]);
+
+      const salesData = {
+        outcome,
+        totalMessages: parseInt(msgStats.rows[0].total_messages),
+        avgMessageLength: Math.round(parseFloat(msgStats.rows[0].avg_length)),
+        aiMessages: parseInt(msgStats.rows[0].ai_messages),
+        clientMessages: parseInt(msgStats.rows[0].client_messages),
+        adminMessages: parseInt(msgStats.rows[0].admin_messages),
+        avgResponseSeconds: Math.round(parseFloat(convResponseTimes.rows[0].avg_response_seconds)),
+        durationHours: conv.last_message_at && conv.created_at
+          ? Math.round((new Date(conv.last_message_at) - new Date(conv.created_at)) / 3600000 * 10) / 10
+          : 0,
+        keyPhrases: keyPhrases.rows.map(r => r.phrase),
+        intent: conv.intent,
+        analyzedAt: new Date().toISOString()
+      };
+
+      // Store analysis
+      await query(
+        `UPDATE whatsapp_conversations
+         SET sales_data = $1, sales_learned_at = NOW()
+         WHERE id = $2`,
+        [JSON.stringify(salesData), conv.id]
+      );
+
+      results.push({
+        conversationId: conv.id,
+        clientName: conv.client_name,
+        outcome,
+        totalMessages: salesData.totalMessages
+      });
+    }
+
+    // Summary stats
+    const orderCount = results.filter(r => r.outcome === 'order').length;
+    const lostCount = results.filter(r => r.outcome === 'lost').length;
+    const noClientCount = results.filter(r => r.outcome === 'no_client').length;
+
+    res.json({
+      success: true,
+      data: {
+        analyzed: results.length,
+        outcomes: { order: orderCount, lost: lostCount, no_client: noClientCount },
+        conversations: results
+      }
+    });
+  } catch (err) {
+    console.error('📊 WhatsApp sales learning error:', err);
+    res.status(500).json({ success: false, error: 'Failed to run sales learning' });
+  }
+});
+
 export default router;
