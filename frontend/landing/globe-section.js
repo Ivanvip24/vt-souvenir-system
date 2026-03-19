@@ -1146,7 +1146,7 @@
 
       var html = '';
       if (imageUrl) {
-        html += '<img class="destination-card-image" src="' + imageUrl + '" alt="Souvenirs ' + d.name + '" loading="lazy">';
+        html += '<div class="dest-img-wrap"><img class="destination-card-image" src="' + imageUrl + '" alt="Souvenirs ' + d.name + '" loading="lazy"></div>';
       }
       html += '<div class="destination-card-info">';
       html += '<div class="destination-card-name">' + d.name + '</div>';

@@ -323,7 +323,8 @@
       .index-card:hover { transform: translateY(-4px); }
       .index-card.hidden { display: none; }
       .card-carousel { position: relative; overflow: hidden; aspect-ratio: 1; background: #f5f0eb; }
-      .card-carousel::after { content: 'axkan.art'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-family: var(--font-body); font-size: clamp(11px, 2.5vw, 15px); font-weight: 500; color: rgba(0, 0, 0, 0.80); letter-spacing: 3px; pointer-events: none; z-index: 4; white-space: nowrap; text-transform: lowercase; }
+      .card-carousel::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 25%, rgba(255,255,255,0.6) 60%, rgba(255,255,255,0.85) 100%); z-index: 3; pointer-events: none; }
+      .card-carousel::after { content: ''; position: absolute; inset: 0; background: url('/assets/axkan/JAGUAR.png') center/50% no-repeat; opacity: 0.15; z-index: 4; pointer-events: none; mix-blend-mode: multiply; }
       .card-strip { display: flex; height: 100%; will-change: transform; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
       .card-strip img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; -webkit-user-drag: none; user-select: none; pointer-events: none; }
       .carousel-arr { position: absolute; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(255,255,255,0.85); color: #333; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.25s ease, background 0.2s; z-index: 3; box-shadow: 0 2px 8px rgba(0,0,0,0.15); line-height: 1; padding: 0 0 2px; }
@@ -389,7 +390,10 @@
       .destinations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
       .destination-card { background: white; border: 1px solid #eee; border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); text-decoration: none; color: #1f1f1f; display: block; }
       .destination-card:hover { border-color: var(--rosa-mexicano); transform: translateY(-6px); box-shadow: 0 12px 30px rgba(231, 42, 136, 0.15); }
-      .destination-card-image { width: 100%; aspect-ratio: 16/10; object-fit: cover; }
+      .destination-card .dest-img-wrap { position: relative; overflow: hidden; }
+      .destination-card .dest-img-wrap::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 25%, rgba(255,255,255,0.6) 60%, rgba(255,255,255,0.85) 100%); z-index: 2; pointer-events: none; }
+      .destination-card .dest-img-wrap::after { content: ''; position: absolute; inset: 0; background: url('/assets/axkan/JAGUAR.png') center/45% no-repeat; opacity: 0.15; z-index: 3; pointer-events: none; mix-blend-mode: multiply; }
+      .destination-card-image { width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block; pointer-events: none; -webkit-user-drag: none; user-select: none; }
       .destination-card-info { padding: 1rem; }
       .destination-card-name { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 0.25rem; }
       .destination-card-state { font-size: 0.8rem; color: #888; }
@@ -3890,7 +3894,7 @@
         function onBothReady() {
             if (!threeReady) return;
             var s = document.createElement('script');
-            s.src = '/globe-section.js?v=12';
+            s.src = '/globe-section.js?v=13';
             document.head.appendChild(s);
         }
         var threeScript = document.createElement('script');
