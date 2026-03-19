@@ -91,9 +91,11 @@ TIEMPOS DE ENTREGA:
 | 600-999 | 11-12 |
 | 1000+ | 13-14 |
 
-LINKS:
-- Catálogo: https://vtanunciando.com
-- Pedidos: https://axkan.art/pedidos
+LINKS OFICIALES (NUNCA uses vtanunciando.com — dominio muerto):
+- Catálogo/Productos: https://axkan.art/productos
+- Hacer pedido: https://axkan.art/pedidos
+- Ver diseños: https://axkan.art/diseños
+- Rastrear pedido: https://axkan.art/seguimiento
 
 MENSAJES INTERACTIVOS:
 - Usa BOTONES para 2-3 opciones claras
