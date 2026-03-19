@@ -106,7 +106,14 @@ function initializeNavigation() {
   const navButtons = document.querySelectorAll('.nav-item');
   navButtons.forEach(btn => {
     btn.addEventListener('click', () => {
+      const section = btn.closest('.nav-section');
       const view = btn.dataset.view;
+
+      // If this nav-item has sub-items, toggle expand on first click
+      if (section) {
+        section.classList.toggle('expanded');
+      }
+
       switchView(view);
 
       // Update active state for main items
@@ -121,7 +128,8 @@ function initializeNavigation() {
   // Sub nav items (like Calendar under Pedidos)
   const subNavButtons = document.querySelectorAll('.nav-sub-item');
   subNavButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const view = btn.dataset.view;
       switchView(view);
 
@@ -133,6 +141,13 @@ function initializeNavigation() {
       navButtons.forEach(b => b.classList.remove('active'));
     });
   });
+
+  // Auto-expand the section that contains the active view on load
+  const activeItem = document.querySelector('.nav-item.active');
+  if (activeItem) {
+    const section = activeItem.closest('.nav-section');
+    if (section) section.classList.add('expanded');
+  }
 }
 
 function switchView(viewName) {
