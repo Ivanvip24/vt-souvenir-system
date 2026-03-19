@@ -4953,11 +4953,11 @@ function renderSalesDashboard(container, data) {
   effGrid.className = 'wa-sales-grid';
   effGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
 
-  var closedMsgs = messagesToClose.filter(function(m) { return m.outcome === 'closed'; });
-  var lostMsgs = messagesToClose.filter(function(m) { return m.outcome === 'lost'; });
-  var avgClosedMsgs = closedMsgs.length ? Math.round(closedMsgs.reduce(function(s, m) { return s + (m.avgMessages || 0); }, 0) / closedMsgs.length) : '-';
-  var avgLostMsgs = lostMsgs.length ? Math.round(lostMsgs.reduce(function(s, m) { return s + (m.avgMessages || 0); }, 0) / lostMsgs.length) : '-';
-  var avgRespTime = responseTimes.avgResponseTime || responseTimes.avg || null;
+  // messagesToClose can be array or single object — handle both
+  var mtc = Array.isArray(messagesToClose) ? messagesToClose[0] || {} : (messagesToClose || {});
+  var avgClosedMsgs = Math.round(mtc.avg_messages_closed || mtc.avgMessagesClosed || 0) || '-';
+  var avgLostMsgs = Math.round(mtc.avg_messages_lost || mtc.avgMessagesLost || 0) || '-';
+  var avgRespTime = responseTimes.avg_response_seconds || responseTimes.avgResponseTime || responseTimes.avg || null;
 
   effGrid.appendChild(createSalesCard('MSGS TO CLOSE', String(avgClosedMsgs), 'green', 'Promedio mensajes para cerrar'));
   effGrid.appendChild(createSalesCard('MSGS TO LOSE', String(avgLostMsgs), 'pink', 'Promedio mensajes antes de perder'));
