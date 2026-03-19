@@ -309,58 +309,71 @@ function injectWhatsAppStyles() {
     .wa-messages-area {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 20px 24px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
+      background: #fafafa;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e72a88' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
     }
 
     .wa-msg {
-      max-width: 75%;
+      max-width: 70%;
       padding: 10px 14px;
-      border-radius: 14px;
+      border-radius: 16px;
       font-size: 14px;
-      line-height: 1.45;
+      line-height: 1.5;
       word-wrap: break-word;
       position: relative;
+      animation: waMsgIn 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    @keyframes waMsgIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .wa-msg-inbound {
       align-self: flex-start;
-      background: #e8e8e8;
+      background: #f3f4f6;
       color: #1a1a1a;
       border-bottom-left-radius: 4px;
     }
 
     .wa-msg-ai {
       align-self: flex-end;
-      background: #fce4ec;
+      background: linear-gradient(135deg, #fff5f9, #fce4ec);
       color: #1a1a1a;
       border-bottom-right-radius: 4px;
+      border: 1px solid rgba(231, 42, 136, 0.08);
     }
 
     .wa-msg-admin {
       align-self: flex-end;
-      background: #e72a88;
+      background: linear-gradient(135deg, #e72a88, #d4247a);
       color: #fff;
       border-bottom-right-radius: 4px;
+      box-shadow: 0 2px 8px rgba(231, 42, 136, 0.2);
     }
 
     .wa-msg-time {
       font-size: 10px;
-      margin-top: 4px;
-      opacity: 0.6;
+      margin-top: 5px;
+      opacity: 0.5;
+      letter-spacing: 0.02em;
     }
 
     .wa-msg-admin .wa-msg-time {
-      opacity: 0.75;
+      opacity: 0.7;
     }
 
     .wa-msg-sender {
       font-size: 10px;
-      font-weight: 600;
-      margin-bottom: 2px;
-      opacity: 0.7;
+      font-weight: 700;
+      margin-bottom: 3px;
+      opacity: 0.5;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     /* Input area */
@@ -516,23 +529,29 @@ function injectWhatsAppStyles() {
 
     /* Media elements in messages */
     .wa-msg-media-img {
-      max-width: 250px;
-      border-radius: 8px;
+      max-width: 220px;
+      border-radius: 12px;
       cursor: pointer;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       display: block;
+      transition: transform 0.15s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .wa-msg-media-img:hover {
+      transform: scale(1.02);
     }
 
     .wa-msg-audio {
       max-width: 250px;
       margin-bottom: 4px;
       display: block;
+      border-radius: 20px;
     }
 
     .wa-msg-transcription {
       font-size: 12px;
       font-style: italic;
-      opacity: 0.7;
+      opacity: 0.5;
       margin-bottom: 4px;
       line-height: 1.3;
     }
@@ -540,28 +559,33 @@ function injectWhatsAppStyles() {
     .wa-msg-doc-link {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 6px 10px;
-      background: rgba(0,0,0,0.05);
-      border-radius: 8px;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 10px;
       text-decoration: none;
       color: inherit;
       font-size: 13px;
+      font-weight: 500;
       margin-bottom: 4px;
       word-break: break-all;
+      transition: all 0.15s;
     }
 
     .wa-msg-admin .wa-msg-doc-link {
-      background: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.15);
       color: #fff;
     }
 
     .wa-msg-doc-link:hover {
-      background: rgba(0,0,0,0.1);
+      background: rgba(0,0,0,0.08);
+      transform: translateY(-1px);
     }
 
     .wa-msg-admin .wa-msg-doc-link:hover {
-      background: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.2);
     }
 
     .wa-msg-thumbnails {
