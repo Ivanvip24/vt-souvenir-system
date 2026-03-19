@@ -234,6 +234,171 @@
             box-shadow: 0 4px 15px rgba(231, 42, 136, 0.4);
         }
 
+        /* Search Button in Nav */
+        .nav-search-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            color: rgba(255,255,255,0.9);
+            transition: color 0.4s ease, transform 0.2s;
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+            margin-right: 8px;
+        }
+        .nav.nav--scrolled .nav-search-btn { color: var(--gray-800); }
+        .nav-search-btn:hover { color: var(--rosa-mexicano); transform: scale(1.1); }
+
+        /* Search Overlay */
+        .search-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .search-overlay.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        .search-overlay.visible { opacity: 1; }
+
+        .search-overlay-inner {
+            width: 100%;
+            max-width: 640px;
+            padding: 80px 24px 40px;
+        }
+
+        .search-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f5f5f7;
+            border: 2px solid #e0e0e4;
+            border-radius: 16px;
+            padding: 14px 18px;
+            transition: border-color 0.2s;
+        }
+        .search-bar-wrap:focus-within {
+            border-color: var(--rosa-mexicano);
+        }
+
+        #searchInput {
+            flex: 1;
+            border: none;
+            background: none;
+            font-family: var(--font-body);
+            font-size: 18px;
+            color: #1a1a2e;
+            outline: none;
+        }
+        #searchInput::placeholder { color: #aaa; }
+
+        .search-close {
+            background: #e0e0e4;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-family: var(--font-body);
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .search-close:hover { background: #d0d0d4; }
+
+        .search-results {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .search-category {
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #999;
+            padding: 16px 8px 6px;
+        }
+
+        .search-result {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .search-result:hover { background: #f0f0f2; }
+
+        .search-result-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #f0f0f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .search-result-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .search-result-info { flex: 1; min-width: 0; }
+        .search-result-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .search-result-meta {
+            font-size: 13px;
+            color: #999;
+            margin-top: 1px;
+        }
+        .search-result-arrow {
+            color: #ccc;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+
+        .search-empty {
+            text-align: center;
+            padding: 40px 16px;
+            color: #999;
+            font-size: 15px;
+        }
+        .search-hint {
+            text-align: center;
+            padding: 32px 16px;
+            color: #bbb;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .search-overlay-inner { padding: 60px 16px 24px; }
+            #searchInput { font-size: 16px; }
+            .nav-search-btn { margin-right: 4px; }
+        }
+
         /* Hamburger Menu Button */
         .nav-hamburger {
             display: none;
@@ -1706,12 +1871,27 @@
             <li><a href="/envio">Envío</a></li>
             <li><a href="/pedidos" class="nav-cta">Hacer Pedido</a></li>
         </ul>
+        <button class="nav-search-btn" aria-label="Buscar" id="navSearchBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
         <button class="nav-hamburger" aria-label="Abrir menú" aria-expanded="false">
             <span></span>
             <span></span>
             <span></span>
         </button>
     </nav>
+
+    <!-- Universal Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-overlay-inner">
+            <div class="search-bar-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="search" id="searchInput" placeholder="Buscar productos, destinos..." autocomplete="off" autofocus>
+                <button class="search-close" id="searchClose">Esc</button>
+            </div>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
 
     <!-- Mobile Menu Overlay -->
     <div class="mobile-menu" aria-hidden="true">
@@ -2225,6 +2405,172 @@
                 });
             });
         }
+
+        // ── Universal Search ──
+        const SEARCH_DATA = [
+            // Products
+            { type: 'producto', name: 'Imanes MDF', desc: 'Desde $8/pieza · Corte láser', url: '/productos/imanes-mdf', img: 'https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=200' },
+            { type: 'producto', name: 'Llaveros MDF', desc: 'Desde $7/pieza · Argolla reforzada', url: '/productos/llaveros-mdf', img: 'https://vtanunciando.com/cdn/shop/files/mockup-llavero.png?v=1744307278&width=200' },
+            { type: 'producto', name: 'Imán 3D', desc: '$15/pieza · Efecto tridimensional', url: '/productos/imanes-3d', img: 'https://vtanunciando.com/cdn/shop/files/tamasopo.png?v=1738361050&width=200' },
+            { type: 'producto', name: 'Imán con Foil', desc: 'Desde $13/pieza · Acabado dorado', url: '/productos/imanes-foil', img: 'https://vtanunciando.com/cdn/shop/files/IMAN-FOIL-MOCKUP---vtweb.png?v=1738362023&width=200' },
+            { type: 'producto', name: 'Destapadores MDF', desc: 'Desde $17/pieza · Funcional y decorativo', url: '/productos/destapadores-mdf', img: 'https://vtanunciando.com/cdn/shop/files/DESTAPADOR---VTWEB.png?v=1741044542&width=200' },
+            { type: 'producto', name: 'Botones Metálicos', desc: '$8/pieza · Pines coleccionables', url: '/productos/botones', img: 'https://vtanunciando.com/cdn/shop/files/fotobotones.png?v=1738362415&width=200' },
+            { type: 'producto', name: 'Portallaves MDF', desc: '$34-$40/pieza · Decoración hogar', url: '/productos/portallaves-mdf', img: 'https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?v=1736017105&width=200' },
+            { type: 'producto', name: 'Portarretratos MDF', desc: '$40/pieza · Marco con soporte', url: '/productos/portarretratos-mdf', img: 'https://res.cloudinary.com/dg1owvdhw/image/upload/v1771364794/products/portarretratos-mdf-axkan.png' },
+            { type: 'producto', name: 'Souvenir Box', desc: '$2,250/caja · Paquete completo', url: '/productos/souvenir-box', img: 'https://vtanunciando.com/cdn/shop/files/final-bundle-vtweb2.png?v=1738361702&width=200' },
+            // Destinations
+            { type: 'destino', name: 'Cancún', desc: 'Souvenirs de Cancún', url: '/souvenirs/cancun/', img: '' },
+            { type: 'destino', name: 'Ciudad de México', desc: 'Souvenirs de CDMX', url: '/souvenirs/ciudad-de-mexico/', img: '' },
+            { type: 'destino', name: 'Oaxaca', desc: 'Souvenirs de Oaxaca', url: '/souvenirs/oaxaca/', img: '' },
+            { type: 'destino', name: 'Guanajuato', desc: 'Souvenirs de Guanajuato', url: '/souvenirs/guanajuato/', img: '' },
+            { type: 'destino', name: 'Los Cabos', desc: 'Souvenirs de Los Cabos', url: '/souvenirs/los-cabos/', img: '' },
+            { type: 'destino', name: 'Playa del Carmen', desc: 'Souvenirs de Playa del Carmen', url: '/souvenirs/playa-del-carmen/', img: '' },
+            { type: 'destino', name: 'Puerto Vallarta', desc: 'Souvenirs de Puerto Vallarta', url: '/souvenirs/puerto-vallarta/', img: '' },
+            { type: 'destino', name: 'San Miguel de Allende', desc: 'Souvenirs de San Miguel', url: '/souvenirs/san-miguel-de-allende/', img: '' },
+            { type: 'destino', name: 'Mérida', desc: 'Souvenirs de Mérida', url: '/souvenirs/merida/', img: '' },
+            { type: 'destino', name: 'Tulum', desc: 'Souvenirs de Tulum', url: '/souvenirs/tulum/', img: '' },
+            { type: 'destino', name: 'Guadalajara', desc: 'Souvenirs de Guadalajara', url: '/souvenirs/guadalajara/', img: '' },
+            { type: 'destino', name: 'Monterrey', desc: 'Souvenirs de Monterrey', url: '/souvenirs/monterrey/', img: '' },
+            { type: 'destino', name: 'Chichén Itzá', desc: 'Souvenirs de Chichén Itzá', url: '/souvenirs/chichen-itza/', img: '' },
+            { type: 'destino', name: 'Huasteca Potosina', desc: 'Souvenirs de la Huasteca', url: '/souvenirs/huasteca-potosina/', img: '' },
+            { type: 'destino', name: 'Puebla', desc: 'Souvenirs de Puebla', url: '/souvenirs/puebla/', img: '' },
+            { type: 'destino', name: 'Querétaro', desc: 'Souvenirs de Querétaro', url: '/souvenirs/queretaro/', img: '' },
+            { type: 'destino', name: 'Mazatlán', desc: 'Souvenirs de Mazatlán', url: '/souvenirs/mazatlan/', img: '' },
+            { type: 'destino', name: 'Cozumel', desc: 'Souvenirs de Cozumel', url: '/souvenirs/cozumel/', img: '' },
+            { type: 'destino', name: 'Taxco', desc: 'Souvenirs de Taxco', url: '/souvenirs/taxco/', img: '' },
+            { type: 'destino', name: 'Holbox', desc: 'Souvenirs de Holbox', url: '/souvenirs/holbox/', img: '' },
+            // Pages
+            { type: 'página', name: 'Hacer Pedido', desc: 'Formulario de pedido', url: '/pedidos', img: '' },
+            { type: 'página', name: 'Todos los Productos', desc: 'Catálogo completo', url: '/productos', img: '' },
+            { type: 'página', name: 'Diseños y Destinos', desc: 'Galería de diseños', url: '/diseños', img: '' },
+            { type: 'página', name: 'Rastrear Pedido', desc: 'Seguimiento de tu orden', url: '/order-tracking/', img: '' },
+            { type: 'página', name: 'Información de Envío', desc: 'Costos y tiempos', url: '/envio', img: '' },
+        ];
+
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const searchBtn = document.getElementById('navSearchBtn');
+        const searchCloseBtn = document.getElementById('searchClose');
+
+        function openSearch() {
+            searchOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            requestAnimationFrame(() => {
+                searchOverlay.classList.add('visible');
+                searchInput.focus();
+            });
+            renderSearchHint();
+        }
+
+        function closeSearch() {
+            searchOverlay.classList.remove('visible');
+            document.body.style.overflow = '';
+            setTimeout(() => {
+                searchOverlay.classList.remove('active');
+                searchInput.value = '';
+                searchResults.innerHTML = '';
+            }, 300);
+        }
+
+        function renderSearchHint() {
+            searchResults.innerHTML = '<div class="search-hint">Busca productos como "imanes", destinos como "Cancún", o "hacer pedido"</div>';
+        }
+
+        function doSearch(query) {
+            if (!query.trim()) { renderSearchHint(); return; }
+            const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const matches = SEARCH_DATA.filter(item => {
+                const name = item.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const desc = item.desc.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                return name.includes(q) || desc.includes(q);
+            });
+
+            searchResults.innerHTML = '';
+            if (matches.length === 0) {
+                searchResults.innerHTML = '<div class="search-empty">Sin resultados para "' + query + '"</div>';
+                return;
+            }
+
+            // Group by type
+            const groups = {};
+            matches.forEach(m => {
+                if (!groups[m.type]) groups[m.type] = [];
+                groups[m.type].push(m);
+            });
+
+            const typeLabels = { producto: 'Productos', destino: 'Destinos', 'página': 'Páginas' };
+            const typeIcons = { destino: '📍', 'página': '📄' };
+
+            Object.keys(groups).forEach(type => {
+                const label = document.createElement('div');
+                label.className = 'search-category';
+                label.textContent = typeLabels[type] || type;
+                searchResults.appendChild(label);
+
+                groups[type].forEach(item => {
+                    const a = document.createElement('a');
+                    a.className = 'search-result';
+                    a.href = item.url;
+
+                    const iconDiv = document.createElement('div');
+                    iconDiv.className = 'search-result-icon';
+                    if (item.img) {
+                        const img = document.createElement('img');
+                        img.src = item.img;
+                        img.alt = item.name;
+                        img.loading = 'lazy';
+                        iconDiv.appendChild(img);
+                    } else {
+                        iconDiv.textContent = typeIcons[type] || '→';
+                        iconDiv.style.fontSize = '20px';
+                    }
+
+                    const info = document.createElement('div');
+                    info.className = 'search-result-info';
+                    const nameEl = document.createElement('div');
+                    nameEl.className = 'search-result-name';
+                    nameEl.textContent = item.name;
+                    const metaEl = document.createElement('div');
+                    metaEl.className = 'search-result-meta';
+                    metaEl.textContent = item.desc;
+                    info.appendChild(nameEl);
+                    info.appendChild(metaEl);
+
+                    const arrow = document.createElement('span');
+                    arrow.className = 'search-result-arrow';
+                    arrow.textContent = '→';
+
+                    a.appendChild(iconDiv);
+                    a.appendChild(info);
+                    a.appendChild(arrow);
+                    searchResults.appendChild(a);
+                });
+            });
+        }
+
+        if (searchBtn) searchBtn.addEventListener('click', openSearch);
+        if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearch);
+        if (searchOverlay) searchOverlay.addEventListener('click', function(e) {
+            if (e.target === searchOverlay) closeSearch();
+        });
+        if (searchInput) {
+            let searchDebounce;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchDebounce);
+                searchDebounce = setTimeout(() => doSearch(this.value), 150);
+            });
+        }
+        // Keyboard: Cmd/Ctrl+K to open, Esc to close
+        document.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                openSearch();
+            }
+            if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {
+                closeSearch();
+            }
+        });
     </script>
 
     <!-- ═══════════════════════════════════════════════════════════
