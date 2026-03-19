@@ -2933,5 +2933,53 @@
             window.deferredInstallPrompt = e;
         });
     </script>
+
+    <!-- Global Escape Key Handler -->
+    <script>
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Escape') return;
+
+            // 1. Close context menus (WhatsApp right-click)
+            var ctx = document.querySelector('.wa-context-menu');
+            if (ctx) { ctx.remove(); return; }
+
+            // 2. Exit multi-select mode
+            if (typeof waState !== 'undefined' && waState.multiSelect) {
+                waState.multiSelect = false;
+                waState.selectedConvIds = [];
+                if (typeof renderWhatsApp === 'function') renderWhatsApp();
+                return;
+            }
+
+            // 3. Close media panel
+            var mediaPanel = document.getElementById('wa-media-panel-overlay');
+            if (mediaPanel) { mediaPanel.remove(); return; }
+
+            // 4. Close templates panel
+            var tplPanel = document.getElementById('wa-templates-panel');
+            if (tplPanel && tplPanel.style.display !== 'none') { tplPanel.style.display = 'none'; return; }
+
+            // 5. Close any open modal (order detail, client lookup, etc.)
+            var modals = document.querySelectorAll('.modal:not(.hidden)');
+            if (modals.length > 0) {
+                var lastModal = modals[modals.length - 1];
+                lastModal.classList.add('hidden');
+                return;
+            }
+
+            // 6. Close AI assistant chat
+            var aiChat = document.getElementById('ai-chat-modal');
+            if (aiChat && aiChat.style.display !== 'none' && aiChat.style.display !== '') {
+                aiChat.style.display = 'none';
+                return;
+            }
+
+            // 7. Close command palette
+            if (typeof commandPaletteOpen !== 'undefined' && commandPaletteOpen) {
+                if (typeof closeCommandPalette === 'function') closeCommandPalette();
+                return;
+            }
+        });
+    </script>
 </body>
 </html>
