@@ -229,7 +229,8 @@ router.post('/webhook', (req, res) => {
         return;
       }
 
-      const replyText = aiResult.reply;
+      // Convert markdown **bold** to WhatsApp *bold* format
+      const replyText = (aiResult.reply || '').replace(/\*\*(.+?)\*\*/g, '*$1*');
       const intent = aiResult.intent || null;
       const summary = aiResult.summary || null;
       const imagesToSend = aiResult.imagesToSend || [];
@@ -600,15 +601,16 @@ router.post('/conversations/:id/recap', authMiddleware, async (req, res) => {
       return res.json({ success: false, error: aiResult.reason || 'AI did not generate a response' });
     }
 
-    // Send the recap reply to the client
-    await sendWhatsAppMessage(conv.wa_id, aiResult.reply);
+    // Convert markdown **bold** to WhatsApp *bold* and send
+    const recapReply = (aiResult.reply || '').replace(/\*\*(.+?)\*\*/g, '*$1*');
+    await sendWhatsAppMessage(conv.wa_id, recapReply);
 
     // Store outbound message
     const outboundWaId = 'recap_' + Date.now();
     await query(
       `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, metadata)
        VALUES ($1, $2, 'outbound', 'ai', 'text', $3, $4)`,
-      [conversationId, outboundWaId, aiResult.reply, JSON.stringify({ type: 'recap', intent: aiResult.intent })]
+      [conversationId, outboundWaId, recapReply, JSON.stringify({ type: 'recap', intent: aiResult.intent })]
     );
 
     // Update conversation summary
