@@ -298,6 +298,11 @@ router.post('/webhook', (req, res) => {
             address: loc.address || null
           };
         }
+        else if (message.type === 'reaction') {
+          // Emoji reactions — silently ignore, don't process or store
+          console.log('🟢 WhatsApp reaction received — ignoring');
+          return;
+        }
         else {
           messageText = `[Mensaje tipo ${message.type} recibido]`;
         }
