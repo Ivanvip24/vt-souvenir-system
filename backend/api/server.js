@@ -50,6 +50,8 @@ import { initializeShippingNotificationScheduler, stopShippingNotificationSchedu
 import * as facebookMarketplace from '../services/facebook-marketplace.js';
 import publicDesignRoutes from './public-design-routes.js';
 import * as facebookScheduler from '../services/facebook-scheduler.js';
+import { initializeDesignerScheduler, stopDesignerScheduler } from '../services/designer-scheduler.js';
+import designerTaskRoutes from './designer-routes.js';
 import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
 import { generateCatalogPDF, getCatalogUrl } from '../services/catalog-generator.js';
 import pushService from '../services/push-notification.js';
@@ -241,6 +243,14 @@ if (!fs.existsSync(labelsPath)) {
 }
 app.use('/labels', authMiddleware, express.static(labelsPath));
 console.log(`📁 Serving labels from: ${labelsPath} (auth protected)`);
+
+// Designer Reports PDFs
+const designerReportsPath = path.join(__dirname, '../designer-reports');
+if (!fs.existsSync(designerReportsPath)) {
+  fs.mkdirSync(designerReportsPath, { recursive: true });
+}
+app.use('/designer-reports', authMiddleware, express.static(designerReportsPath));
+console.log(`📁 Serving designer reports from: ${designerReportsPath} (auth protected)`);
 
 // ========================================
 // HEALTH CHECK
@@ -502,6 +512,7 @@ app.use('/api/gallery', galleryRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/designer-tasks', designerTaskRoutes);
 // WhatsApp webhook must be public (Meta sends no JWT) — skip auth for /webhook only
 app.use('/api/whatsapp', (req, res, next) => {
   if (req.path === '/webhook') return next();
@@ -5742,6 +5753,18 @@ async function startServer() {
     // Initialize Facebook Marketplace Scheduler (daily at 9 AM)
     await facebookScheduler.initFacebookScheduler();
 
+    // Run designer tracking migration (creates tables if not exist + seeds designers)
+    try {
+      const { migrate: migrateDesignerTracking } = await import('../migrations/add-designer-tracking.js');
+      await migrateDesignerTracking();
+      console.log('✅ Designer tracking tables ready');
+    } catch (dtErr) {
+      console.warn('⚠️  Designer tracking migration:', dtErr.message);
+    }
+
+    // Initialize Designer Task Tracking Scheduler (follow-ups + reports)
+    initializeDesignerScheduler();
+
     // Ensure is_store_pickup column exists (for store pickup feature)
     try {
       await query(`
@@ -5967,6 +5990,7 @@ process.on('SIGTERM', () => {
   analyticsAgent.scheduler.stopAllJobs();
   stopCepRetryScheduler();
   stopShippingNotificationScheduler();
+  stopDesignerScheduler();
   process.exit(0);
 });
 
@@ -5975,6 +5999,7 @@ process.on('SIGINT', () => {
   analyticsAgent.scheduler.stopAllJobs();
   stopCepRetryScheduler();
   stopShippingNotificationScheduler();
+  stopDesignerScheduler();
   process.exit(0);
 });
 

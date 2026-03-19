@@ -68,7 +68,9 @@ Mensaje: "${text}"`
       messages: [{ role: 'user', content }]
     });
 
-    const rawText = response.content[0].text.trim();
+    let rawText = response.content[0].text.trim();
+    // Strip markdown code fences if present
+    rawText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
     const parsed = JSON.parse(rawText);
     return parsed;
 
