@@ -429,8 +429,7 @@ router.post('/webhook', (req, res) => {
         return;
       }
 
-      // Check if image is a payment receipt BEFORE calling AI
-      // If it is, we handle it separately and skip the AI response
+      // Check if image is a payment receipt (parallel to AI processing)
       let receiptHandled = false;
       if (mediaContext?.type === 'image' && mediaContext.imageBase64) {
         try {
@@ -448,7 +447,7 @@ router.post('/webhook', (req, res) => {
           });
           const answer = (visionResponse.content[0].text || '').toLowerCase().trim();
           if (answer.startsWith('yes') || answer.startsWith('sí') || answer.startsWith('si')) {
-            console.log('🧾 Claude Vision confirmed: image is a payment receipt — skipping AI, handling as order');
+            console.log('🧾 Claude Vision confirmed: image is a payment receipt');
             receiptHandled = true;
           }
         } catch (visionErr) {
@@ -456,24 +455,7 @@ router.post('/webhook', (req, res) => {
         }
       }
 
-      // If receipt detected, handle it and skip AI
-      if (receiptHandled) {
-        // Send simple confirmation (no AI response)
-        await sendWhatsAppMessage(waId, 'Recibí tu comprobante, estoy procesando tu pedido 👍');
-
-        // Store outbound message
-        await query(
-          `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content)
-           VALUES ($1, $2, 'outbound', 'system', 'text', $3)`,
-          [conversationId, 'receipt_' + Date.now(), 'Recibí tu comprobante, estoy procesando tu pedido 👍']
-        );
-
-        // Run draft order / second payment logic (moved from below)
-        // ... will be handled in the receipt processing section below
-
-      } else {
-
-      // Get AI reply (pass media context for vision/audio processing)
+      // ALWAYS run AI — it analyzes the image and responds naturally
       const aiResult = await processIncomingMessage(conversationId, waId, messageText, mediaContext);
 
       // If AI is globally disabled, skip replying entirely
@@ -486,10 +468,10 @@ router.post('/webhook', (req, res) => {
       const replyText = (aiResult.reply || '').replace(/\*\*(.+?)\*\*/g, '*$1*');
       const intent = aiResult.intent || null;
       const summary = aiResult.summary || null;
-      const imagesToSend = aiResult.imagesToSend || [];
+      const imagesToSend = receiptHandled ? [] : (aiResult.imagesToSend || []); // No quote images if receipt
       const listsToSend = aiResult.listsToSend || [];
       const buttonsToSend = aiResult.buttonsToSend || [];
-      const documentsToSend = aiResult.documentsToSend || [];
+      const documentsToSend = receiptHandled ? [] : (aiResult.documentsToSend || []); // No quote PDFs if receipt
 
       // Send text reply via Meta API
       await sendWhatsAppMessage(waId, replyText);
@@ -666,9 +648,7 @@ router.post('/webhook', (req, res) => {
         console.error('📊 Auto-coaching error:', err.message)
       );
 
-      } // close else (non-receipt AI processing)
-
-      // Draft order creation — runs when receipt was detected earlier
+      // Draft order creation — runs when receipt was detected
       if (receiptHandled && mediaContext?.type === 'image') {
         try {
           // First check: is this a SECOND payment for an existing order?
