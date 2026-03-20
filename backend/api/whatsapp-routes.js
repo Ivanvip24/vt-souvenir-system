@@ -664,7 +664,13 @@ router.post('/webhook', (req, res) => {
             ['%' + productName.toLowerCase().split(' ')[0] + '%']
           );
           const product = productResult.rows[0];
-          const unitPrice = product ? parseFloat(product.base_price) : 11.00;
+          // Use tiered pricing: 100-999 = standard price, 1000+ = millar price
+          let unitPrice = 11.00; // default mediano
+          if (product) {
+            const { calculateTieredPrice } = await import('../shared/pricing.js');
+            const pricing = calculateTieredPrice(product.name, quantity, product.base_price);
+            unitPrice = pricing.unitPrice || parseFloat(product.base_price);
+          }
           const totalPrice = unitPrice * quantity;
 
           // Check if a draft order already exists for this conversation
