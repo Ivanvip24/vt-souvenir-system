@@ -619,11 +619,18 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
           let pdfUrl;
           try {
             const { readFileSync } = await import('fs');
+            const { v2: cloudinary } = await import('cloudinary');
             const pdfPath = quoteResult.filepath || join(__dirname, '../catalogs/quotes', quoteResult.filename);
             const pdfBuffer = readFileSync(pdfPath);
-            const { uploadMediaToCloudinary } = await import('./whatsapp-media.js');
-            const cloudResult = await uploadMediaToCloudinary(pdfBuffer, 'application/pdf', 'whatsapp-quotes');
-            pdfUrl = cloudResult.url;
+            const base64 = pdfBuffer.toString('base64');
+            const dataUri = `data:application/pdf;base64,${base64}`;
+            const cloudResult = await cloudinary.uploader.upload(dataUri, {
+              folder: 'whatsapp-quotes',
+              resource_type: 'raw',
+              access_mode: 'public',
+              public_id: quoteResult.filename.replace('.pdf', '')
+            });
+            pdfUrl = cloudResult.secure_url;
             console.log(`☁️ Quote PDF uploaded to Cloudinary: ${pdfUrl}`);
           } catch (uploadErr) {
             console.error('☁️ Cloudinary upload failed, using local URL:', uploadErr.message);
