@@ -745,6 +745,10 @@ router.post('/webhook', (req, res) => {
             }
 
             console.log(`📦 WhatsApp draft order created: ${orderNumber} — ${quantity}x ${productName} = $${totalPrice} for ${conv.client_name || waId}`);
+
+            // Send order confirmation to client via WhatsApp
+            const confirmMsg = `Tu pedido fue registrado: *${orderNumber}*\n${quantity} ${productName} — $${totalPrice.toLocaleString('es-MX')}\nEn breve revisamos tu comprobante y te confirmamos`;
+            await sendWhatsAppMessage(waId, confirmMsg);
           } else {
             console.log(`📦 Draft order already exists for conversation ${conversationId}, skipping`);
           }
