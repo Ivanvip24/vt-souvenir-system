@@ -884,6 +884,50 @@ router.post('/webhook', (req, res) => {
               }
 
               console.log(`📦 Order confirmation + data collection sent: ${orderNumber} (hasAddress: ${hasAddress}, hasEmail: ${hasEmail})`);
+
+              // AI verification: check receipt amount matches anticipo
+              try {
+                const expectedAnticipo = depositAmount;
+                const vClient = new Anthropic();
+                const vResp = await vClient.messages.create({
+                  model: 'claude-haiku-4-5-20251001',
+                  max_tokens: 20,
+                  messages: [{
+                    role: 'user',
+                    content: [
+                      { type: 'image', source: { type: 'base64', media_type: mediaContext.imageMimeType || 'image/jpeg', data: mediaContext.imageBase64 } },
+                      { type: 'text', text: 'What is the payment amount in this receipt? Reply ONLY the number. Example: "7500"' }
+                    ]
+                  }]
+                });
+                const receiptAmountStr = (vResp.content[0].text || '').replace(/[^0-9.]/g, '');
+                const receiptAmount = parseFloat(receiptAmountStr);
+
+                if (receiptAmount && receiptAmount >= expectedAnticipo * 0.9) {
+                  // Amount matches (within 10% tolerance) — auto-approve
+                  await query(
+                    `UPDATE orders SET approval_status = 'approved', status = 'new', deposit_paid = true, updated_at = NOW() WHERE id = $1`,
+                    [orderResult.rows[0].id]
+                  );
+                  console.log(`✅ Auto-approved order ${orderNumber}: receipt $${receiptAmount} >= anticipo $${expectedAnticipo}`);
+
+                  // Notify you (Ivan) via WhatsApp
+                  const ivanPhone = process.env.IVAN_WHATSAPP_NUMBER || '5215538253251';
+                  try {
+                    await sendWhatsAppMessage(ivanPhone,
+                      `🔔 Pedido auto-aprobado:\n*${orderNumber}*\n${quantity} ${productName} — $${totalPrice.toLocaleString('es-MX')}\nAnticipo: $${receiptAmount.toLocaleString('es-MX')}\nCliente: ${conv.client_name || waId}`
+                    );
+                  } catch (notifyErr) {
+                    console.error('📦 Failed to notify Ivan:', notifyErr.message);
+                  }
+                } else {
+                  console.log(`⚠️ Receipt amount $${receiptAmount} doesn't match anticipo $${expectedAnticipo} — pending manual review`);
+                }
+              } catch (verifyErr) {
+                console.error('🧾 Receipt verification failed:', verifyErr.message);
+                // Keep as pending_review if verification fails
+              }
+
             } catch (confirmErr) {
               console.error('📦 Failed to send order confirmation:', confirmErr.message);
             }
