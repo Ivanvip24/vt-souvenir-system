@@ -3583,7 +3583,7 @@ async function loadCoachingPills(conversationId) {
   if (!container) return;
 
   try {
-    var response = await fetch('/api/coaching/conversations/' + conversationId + '/pills', {
+    var response = await fetch(API_BASE + '/coaching/conversations/' + conversationId + '/pills', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
     });
     var data = await response.json();
@@ -3658,7 +3658,7 @@ function renderCoachingPills(container, pills) {
       el.style.transform = 'scale(0.9)';
       setTimeout(function() { el.remove(); }, 200);
 
-      fetch('/api/coaching/pills/' + pillId + '/ignore', {
+      fetch(API_BASE + '/coaching/pills/' + pillId + '/ignore', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
       }).catch(function(err) { console.error('Dismiss pill error:', err); });
@@ -4131,7 +4131,7 @@ async function handleSendMessage() {
       var pillEl = document.querySelector('.wa-coaching-pill[data-pill-id="' + pillId + '"]');
       if (pillEl) pillEl.remove();
       // Notify backend
-      fetch('/api/coaching/pills/' + pillId + '/follow', {
+      fetch(API_BASE + '/coaching/pills/' + pillId + '/follow', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
