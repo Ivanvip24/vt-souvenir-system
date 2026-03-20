@@ -429,6 +429,50 @@ router.post('/webhook', (req, res) => {
         return;
       }
 
+      // Check if image is a payment receipt BEFORE calling AI
+      // If it is, we handle it separately and skip the AI response
+      let receiptHandled = false;
+      if (mediaContext?.type === 'image' && mediaContext.imageBase64) {
+        try {
+          const visionClient = new Anthropic();
+          const visionResponse = await visionClient.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 10,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: mediaContext.imageMimeType || 'image/jpeg', data: mediaContext.imageBase64 } },
+                { type: 'text', text: 'Is this image a payment receipt, bank transfer confirmation, or payment proof? Answer ONLY "yes" or "no".' }
+              ]
+            }]
+          });
+          const answer = (visionResponse.content[0].text || '').toLowerCase().trim();
+          if (answer.startsWith('yes') || answer.startsWith('sí') || answer.startsWith('si')) {
+            console.log('🧾 Claude Vision confirmed: image is a payment receipt — skipping AI, handling as order');
+            receiptHandled = true;
+          }
+        } catch (visionErr) {
+          console.error('🧾 Receipt vision check failed:', visionErr.message);
+        }
+      }
+
+      // If receipt detected, handle it and skip AI
+      if (receiptHandled) {
+        // Send simple confirmation (no AI response)
+        await sendWhatsAppMessage(waId, 'Recibí tu comprobante, estoy procesando tu pedido 👍');
+
+        // Store outbound message
+        await query(
+          `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content)
+           VALUES ($1, $2, 'outbound', 'system', 'text', $3)`,
+          [conversationId, 'receipt_' + Date.now(), 'Recibí tu comprobante, estoy procesando tu pedido 👍']
+        );
+
+        // Run draft order / second payment logic (moved from below)
+        // ... will be handled in the receipt processing section below
+
+      } else {
+
       // Get AI reply (pass media context for vision/audio processing)
       const aiResult = await processIncomingMessage(conversationId, waId, messageText, mediaContext);
 
@@ -622,31 +666,10 @@ router.post('/webhook', (req, res) => {
         console.error('📊 Auto-coaching error:', err.message)
       );
 
-      // Auto-create draft order when payment receipt is detected
-      // Detect payment receipt via focused Claude Vision call (separate from chat AI)
-      let isPaymentReceipt = aiResult.paymentReceiptDetected;
-      if (!isPaymentReceipt && mediaContext?.type === 'image' && mediaContext.imageBase64) {
-        try {
-          const visionClient = new Anthropic();
-          const visionResponse = await visionClient.messages.create({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 10,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'image', source: { type: 'base64', media_type: mediaContext.imageMimeType || 'image/jpeg', data: mediaContext.imageBase64 } },
-                { type: 'text', text: 'Is this image a payment receipt, bank transfer confirmation, or payment proof? Answer ONLY "yes" or "no".' }
-              ]
-            }]
-          });
-          const answer = (visionResponse.content[0].text || '').toLowerCase().trim();
-          isPaymentReceipt = answer.startsWith('yes') || answer.startsWith('sí') || answer.startsWith('si');
-          if (isPaymentReceipt) console.log('🧾 Claude Vision confirmed: image is a payment receipt');
-        } catch (visionErr) {
-          console.error('🧾 Receipt vision check failed:', visionErr.message);
-        }
-      }
-      if (isPaymentReceipt && mediaContext?.type === 'image') {
+      } // close else (non-receipt AI processing)
+
+      // Draft order creation — runs when receipt was detected earlier
+      if (receiptHandled && mediaContext?.type === 'image') {
         try {
           // First check: is this a SECOND payment for an existing order?
           // Only match if a "cobrar saldo" message was sent in this conversation recently (last 7 days)
