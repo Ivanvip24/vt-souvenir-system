@@ -453,6 +453,56 @@ export async function sendWhatsAppFlow(to, flowId, flowToken, body, ctaText = 'C
 }
 
 /**
+ * Send a WhatsApp template message (for initiating conversations outside 24h window).
+ *
+ * @param {string} to - Recipient phone number (e.g. "5215538253251")
+ * @param {string} templateName - Approved template name (e.g. "designer_daily_followup")
+ * @param {string} languageCode - Template language (e.g. "es_MX")
+ * @param {Array} bodyParameters - Array of parameter values for body variables
+ * @returns {Promise<{success: boolean, data?: object, error?: string}>}
+ */
+export async function sendWhatsAppTemplate(to, templateName, languageCode = 'es_MX', bodyParameters = []) {
+  try {
+    const components = [];
+    if (bodyParameters.length > 0) {
+      components.push({
+        type: 'body',
+        parameters: bodyParameters.map(val => ({ type: 'text', text: String(val) }))
+      });
+    }
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      to,
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: languageCode },
+        ...(components.length > 0 && { components })
+      }
+    };
+
+    const response = await metaApiFetch(
+      `${WHATSAPP_API_BASE}/${getPhoneNumberId()}/messages`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }
+    );
+    const data = await response.json();
+    if (data.error) {
+      console.error('🟢 WhatsApp template send error:', data.error);
+      return { success: false, error: data.error };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('🟢 WhatsApp template send failed:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * Check if the WhatsApp token is currently known to be dead.
  */
 export function isTokenDead() {

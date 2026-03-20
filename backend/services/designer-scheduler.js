@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { query } from '../shared/database.js';
-import { sendWhatsAppMessage } from './whatsapp-api.js';
+import { sendWhatsAppMessage, sendWhatsAppTemplate } from './whatsapp-api.js';
 import { sendWhatsAppDocument } from './whatsapp-media.js';
 
 let scheduledJobs = [];
@@ -21,8 +21,7 @@ export async function sendDailyFollowUp() {
         dt.description AS task_description
       FROM designer_tasks dt
       JOIN designers d ON d.id = dt.designer_id
-      WHERE dt.status = 'pending'
-        AND dt.created_at::date = CURRENT_DATE
+      WHERE dt.status IN ('pending', 'correction')
       ORDER BY d.id, dt.created_at
     `);
 
@@ -51,12 +50,25 @@ export async function sendDailyFollowUp() {
         continue;
       }
 
-      const taskList = designer.tasks.map(t => `- ${t}`).join('\n');
-      const message = `Hola ${designer.name}, tienes ${designer.tasks.length} tarea(s) pendiente(s):\n${taskList}\n\u00bfYa terminaste alguna? Responde 'listo [tarea]' o 'listo todas'`;
-
       try {
-        await sendWhatsAppMessage(designer.phone, message);
-        console.log(`📋 Follow-up sent to ${designer.name} (${designer.tasks.length} tasks)`);
+        // Try template message first (works outside 24h window)
+        const templateResult = await sendWhatsAppTemplate(
+          designer.phone,
+          'designer_daily_followup',
+          'es_MX',
+          [designer.name, String(designer.tasks.length)]
+        );
+
+        if (templateResult.success) {
+          console.log(`📋 Template follow-up sent to ${designer.name} (${designer.tasks.length} tasks)`);
+        } else {
+          // Fallback to regular message (only works within 24h window)
+          console.log(`📋 Template failed for ${designer.name}, trying regular message...`);
+          const taskList = designer.tasks.map(t => `- ${t}`).join('\n');
+          const message = `Hola ${designer.name}, tienes ${designer.tasks.length} tarea(s) pendiente(s):\n${taskList}\n\u00bfYa terminaste alguna? Responde "listo" cuando termines o "pendientes" para ver el detalle.`;
+          await sendWhatsAppMessage(designer.phone, message);
+          console.log(`📋 Regular follow-up sent to ${designer.name}`);
+        }
       } catch (err) {
         console.error(`❌ Failed to send follow-up to ${designer.name}:`, err.message);
       }
