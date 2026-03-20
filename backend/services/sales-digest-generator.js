@@ -7,6 +7,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -538,10 +539,24 @@ export async function generateSalesDigestPDF(data) {
       // ── Finalize
       doc.end();
 
-      stream.on('finish', () => {
-        const url = `${getBaseUrl()}/sales-digests/${filename}`;
-        console.log(`\u2705 Sales digest generated: ${filename}`);
-        resolve({ filepath, filename, url });
+      stream.on('finish', async () => {
+        try {
+          // Upload to Cloudinary for public URL (WhatsApp needs public HTTPS)
+          const uploadResult = await cloudinary.uploader.upload(filepath, {
+            resource_type: 'raw',
+            folder: 'sales-digests',
+            public_id: filename.replace('.pdf', ''),
+            overwrite: true
+          });
+          const url = uploadResult.secure_url;
+          console.log(`\u2705 Sales digest uploaded: ${url}`);
+          resolve({ filepath, filename, url, pdfUrl: url });
+        } catch (uploadErr) {
+          // Fallback to local URL
+          const url = `${getBaseUrl()}/sales-digests/${filename}`;
+          console.log(`\u2705 Sales digest generated (local): ${filename}`);
+          resolve({ filepath, filename, url, pdfUrl: url });
+        }
       });
 
       stream.on('error', reject);
