@@ -4,6 +4,7 @@ import { authMiddleware } from './admin-routes.js';
 import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn, getAiModel, setAiModel, getGlobalAiEnabled, setGlobalAiEnabled } from '../services/whatsapp-ai.js';
 import { migrate as migrateLabelsArchive } from '../migrations/add-whatsapp-labels-archive.js';
 import Anthropic from '@anthropic-ai/sdk';
+import { analyzeConversation } from '../services/sales-coach.js';
 
 // Run labels/archive migration once on import
 let labelsArchiveMigrated = false;
@@ -614,6 +615,11 @@ router.post('/webhook', (req, res) => {
       await query(
         'UPDATE whatsapp_conversations SET intent = $1, ai_summary = $2 WHERE id = $3',
         [intent, summary, conversationId]
+      );
+
+      // Auto-generate coaching pill for this conversation (non-blocking)
+      analyzeConversation(conversationId).catch(err =>
+        console.error('📊 Auto-coaching error:', err.message)
       );
 
       // Auto-create draft order when payment receipt is detected

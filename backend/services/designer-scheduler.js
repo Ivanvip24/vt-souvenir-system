@@ -147,6 +147,21 @@ export async function triggerWeeklyReport() {
 export function initializeDesignerScheduler() {
   console.log('📋 Initializing Designer Task Tracking Scheduler...');
 
+  // 0. Sales coaching batch analysis — every 30 min
+  const coachingJob = cron.schedule('*/30 * * * *', async () => {
+    try {
+      const { analyzeAllActive } = await import('./sales-coach.js');
+      await analyzeAllActive();
+    } catch (err) {
+      console.error('📊 Sales coaching batch error:', err.message);
+    }
+  }, {
+    timezone: 'America/Mexico_City',
+    scheduled: true
+  });
+  scheduledJobs.push(coachingJob);
+  console.log('  ✅ Sales coaching: every 30 min');
+
   // 1. Daily follow-up — 6 PM Mexico City
   const followUpJob = cron.schedule('0 18 * * *', () => {
     sendDailyFollowUp();
