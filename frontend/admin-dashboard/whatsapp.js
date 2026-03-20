@@ -2464,6 +2464,8 @@ function startWhatsAppPolling() {
         if (waState.selectedConversationId) {
           const ok = await fetchConversationMessages(waState.selectedConversationId);
           if (ok) renderChatMessages();
+          // Refresh coaching pills too
+          if (typeof loadCoachingPills === 'function') loadCoachingPills(waState.selectedConversationId);
         }
       }
     } catch (err) {

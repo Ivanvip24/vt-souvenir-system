@@ -384,6 +384,14 @@ router.post('/webhook', (req, res) => {
           if (followedCoaching.rows.length > 0) {
               console.log(`📊 Sales coaching: client responded to ${followedCoaching.rows[0].coaching_type} advice (coaching #${followedCoaching.rows[0].id})`);
           }
+          // Also expire stale pending pills — new message means context changed
+          await query(`
+              UPDATE sales_coaching
+              SET status = 'expired', expired_at = NOW()
+              WHERE conversation_id = $1
+                AND status = 'pending'
+                AND created_at < NOW() - INTERVAL '30 minutes'
+          `, [conversationId]);
       } catch (coachErr) {
           // Non-blocking — don't interrupt message flow
           console.error('📊 Sales coaching tracking error:', coachErr.message);
