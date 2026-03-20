@@ -755,10 +755,20 @@ router.post('/webhook', (req, res) => {
           let eventType = '';
 
           for (const msg of history.rows) {
+            if (msg.direction !== 'inbound') continue; // Only parse client messages
             const txt = (msg.content || '').toLowerCase();
-            // Extract quantity
-            const qtyMatch = txt.match(/(\d{2,5})\s*(imanes|llaveros|destapadores|botones|piezas|pzas)/i);
-            if (qtyMatch) quantity = parseInt(qtyMatch[1]);
+            // Extract quantity — multiple patterns
+            // "300 imanes", "imanes 2000", "quiero 500", "son 1000", "2000 piezas", just "2000"
+            const qtyPatterns = [
+              /(\d{2,5})\s*(?:imanes|llaveros|destapadores|botones|piezas|pzas|magnetos)/i,
+              /(?:imanes|llaveros|destapadores|botones|magnetos)[\s\w]*?(\d{2,5})/i,
+              /(?:quiero|necesito|son|serian|serían|pido|dame|mándame)\s*(\d{2,5})/i,
+              /(\d{3,5})\s*(?:$|[.,!?])/
+            ];
+            for (const pat of qtyPatterns) {
+              const m = txt.match(pat);
+              if (m) { quantity = parseInt(m[1]); break; }
+            }
             // Extract product
             if (txt.includes('llavero')) productName = 'Llaveros de MDF';
             else if (txt.includes('destapador')) productName = 'Destapador de MDF';
