@@ -179,6 +179,129 @@ router.get('/stats', async (req, res) => {
 });
 
 // =====================================================
+// GET /dashboard
+// Priority list + scoreboard for Sales AI dashboard
+// =====================================================
+router.get('/dashboard', async (req, res) => {
+  try {
+    // --- Priority lists ---
+    const [coldLeads, readyToClose, waitingReply] = await Promise.all([
+      query(`
+        SELECT wc.id as conversation_id, wc.client_name,
+          EXTRACT(EPOCH FROM (NOW() - wc.last_message_at))/3600 as hours_since,
+          (SELECT content FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) as last_message,
+          (SELECT coaching_type FROM sales_coaching WHERE conversation_id = wc.id AND status = 'pending' LIMIT 1) as pill_type
+        FROM whatsapp_conversations wc
+        WHERE wc.last_message_at > NOW() - INTERVAL '7 days'
+          AND (SELECT direction FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) = 'outbound'
+          AND wc.last_message_at < NOW() - INTERVAL '2 hours'
+        ORDER BY wc.last_message_at ASC
+        LIMIT 20
+      `),
+      query(`
+        SELECT sc.conversation_id, wc.client_name,
+          sc.suggested_message, sc.context,
+          EXTRACT(EPOCH FROM (NOW() - wc.last_message_at))/3600 as hours_since,
+          (SELECT content FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) as last_message
+        FROM sales_coaching sc
+        JOIN whatsapp_conversations wc ON wc.id = sc.conversation_id
+        WHERE sc.coaching_type = 'ready_to_close' AND sc.status = 'pending'
+        ORDER BY sc.created_at DESC
+        LIMIT 10
+      `),
+      query(`
+        SELECT wc.id as conversation_id, wc.client_name,
+          EXTRACT(EPOCH FROM (NOW() - wc.last_message_at))/3600 as hours_since,
+          (SELECT content FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) as last_message
+        FROM whatsapp_conversations wc
+        WHERE wc.last_message_at > NOW() - INTERVAL '48 hours'
+          AND (SELECT direction FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) = 'inbound'
+        ORDER BY wc.last_message_at ASC
+        LIMIT 20
+      `)
+    ]);
+
+    // --- Scoreboard (last 7 days) ---
+    const [kpis, revenue, byType, weeklyTrend] = await Promise.all([
+      query(`
+        SELECT
+          COUNT(*)::int as total_pills,
+          COUNT(*) FILTER (WHERE status = 'followed')::int as followed,
+          COUNT(*) FILTER (WHERE client_responded = true)::int as responses,
+          COUNT(*) FILTER (WHERE resulted_in_order = true)::int as orders
+        FROM sales_coaching
+        WHERE created_at > NOW() - INTERVAL '7 days'
+      `),
+      query(`
+        SELECT COALESCE(SUM(o.total_price), 0) as revenue
+        FROM sales_coaching sc
+        JOIN orders o ON o.id = sc.order_id
+        WHERE sc.resulted_in_order = true AND sc.created_at > NOW() - INTERVAL '7 days'
+      `),
+      query(`
+        SELECT coaching_type,
+          COUNT(*)::int as sent,
+          COUNT(*) FILTER (WHERE client_responded = true)::int as responded,
+          ROUND(COUNT(*) FILTER (WHERE client_responded = true)::numeric / NULLIF(COUNT(*), 0), 2) as rate
+        FROM sales_coaching
+        WHERE created_at > NOW() - INTERVAL '7 days'
+        GROUP BY coaching_type
+      `),
+      query(`
+        SELECT
+          date_trunc('week', created_at) as week,
+          COUNT(*)::int as sent,
+          COUNT(*) FILTER (WHERE client_responded = true)::int as responded,
+          ROUND(COUNT(*) FILTER (WHERE client_responded = true)::numeric / NULLIF(COUNT(*), 0), 2) as rate
+        FROM sales_coaching
+        WHERE created_at > NOW() - INTERVAL '28 days'
+        GROUP BY date_trunc('week', created_at)
+        ORDER BY week
+      `)
+    ]);
+
+    const kpiRow = kpis.rows[0] || { total_pills: 0, followed: 0, responses: 0, orders: 0 };
+    const revenueRow = revenue.rows[0] || { revenue: 0 };
+
+    res.json({
+      success: true,
+      priorities: {
+        coldLeads: coldLeads.rows,
+        readyToClose: readyToClose.rows,
+        waitingReply: waitingReply.rows
+      },
+      scoreboard: {
+        totalPills: kpiRow.total_pills,
+        followed: kpiRow.followed,
+        responses: kpiRow.responses,
+        orders: kpiRow.orders,
+        revenue: parseFloat(revenueRow.revenue),
+        byType: byType.rows,
+        weeklyTrend: weeklyTrend.rows
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// =====================================================
+// POST /digest
+// Trigger sales digest manually
+// =====================================================
+router.post('/digest', async (req, res) => {
+  try {
+    const { triggerSalesDigest } = await import('../services/designer-scheduler.js');
+    const result = await triggerSalesDigest();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('Error triggering sales digest:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // GET /conversations/active
 // Conversations needing analysis (new messages since last coaching)
 // =====================================================

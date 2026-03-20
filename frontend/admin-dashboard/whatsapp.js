@@ -1514,6 +1514,7 @@ function injectWhatsAppStyles() {
     .wa-sales-card-value.green { color: #16a34a; }
     .wa-sales-card-value.blue { color: #3b82f6; }
     .wa-sales-card-value.orange { color: #f59e0b; }
+    .wa-sales-card-value.cyan { color: #09adc2; }
 
     .wa-sales-card-sub {
       font-size: 11px;
@@ -1794,6 +1795,136 @@ function injectWhatsAppStyles() {
       .wa-sales-grid { grid-template-columns: 1fr; }
       .wa-sales-grid-5 { grid-template-columns: 1fr; }
       .wa-sales-dashboard { padding: 14px; }
+    }
+
+    /* Priority list & scoreboard */
+    .wa-sales-priorities {
+        margin-bottom: 24px;
+    }
+
+    .wa-sales-section-header {
+        font-size: 13px;
+        font-weight: 700;
+        color: #888;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .wa-priority-group {
+        margin-bottom: 16px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .wa-priority-group-header {
+        font-size: 14px;
+        font-weight: 600;
+        padding: 10px 16px;
+        color: #333;
+    }
+
+    .wa-priority-count {
+        color: #999;
+        font-weight: 400;
+    }
+
+    .wa-priority-group.wa-priority-cold .wa-priority-group-header { background: #FFF3F0; }
+    .wa-priority-group.wa-priority-close .wa-priority-group-header { background: #F1F8E9; }
+    .wa-priority-group.wa-priority-waiting .wa-priority-group-header { background: #FFF8E1; }
+
+    .wa-priority-row {
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #f5f5f5;
+        transition: background 0.15s;
+    }
+
+    .wa-priority-row:hover {
+        background: #f8f8f8;
+    }
+
+    .wa-priority-row:last-child {
+        border-bottom: none;
+    }
+
+    .wa-priority-name {
+        font-weight: 600;
+        color: #333;
+        min-width: 140px;
+        font-size: 14px;
+    }
+
+    .wa-priority-detail {
+        flex: 1;
+        color: #888;
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 0 12px;
+    }
+
+    .wa-priority-arrow {
+        color: #ccc;
+        font-size: 18px;
+        font-weight: 300;
+    }
+
+    .wa-sales-scoreboard {
+        margin-bottom: 24px;
+    }
+
+    .wa-coaching-type-breakdown {
+        margin-top: 16px;
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .wa-coaching-type-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f5f5f5;
+    }
+
+    .wa-coaching-type-row:last-child {
+        border-bottom: none;
+    }
+
+    .wa-coaching-type-label {
+        min-width: 150px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #555;
+    }
+
+    .wa-coaching-type-bar-wrap {
+        flex: 1;
+        height: 8px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .wa-coaching-type-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #E91E63, #8ab73b);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .wa-coaching-type-stat {
+        min-width: 120px;
+        text-align: right;
+        font-size: 13px;
+        color: #888;
     }
 
     /* Coaching pills */
@@ -5149,6 +5280,19 @@ async function loadSalesAnalytics() {
     var json = await res.json();
     if (json.success) {
       waState.salesData = json.data;
+
+      // Fetch coaching dashboard data
+      try {
+        var coachingRes = await fetch(API_BASE + '/coaching/dashboard', {
+          headers: getAuthHeaders()
+        });
+        var coachingData = coachingRes.ok ? await coachingRes.json() : { success: false };
+        waState.coachingDashboard = coachingData.success ? coachingData : null;
+      } catch (ce) {
+        console.warn('Coaching dashboard fetch failed:', ce.message);
+        waState.coachingDashboard = null;
+      }
+
       renderSalesDashboard(container, json.data);
     } else {
       container.textContent = 'Error: ' + (json.error || 'No se pudieron cargar los datos');
@@ -5188,6 +5332,53 @@ function createSalesCard(label, value, colorClass, sub) {
   }
 
   return card;
+}
+
+function buildPriorityGroup(emoji, title, items, type) {
+  var group = document.createElement('div');
+  group.className = 'wa-priority-group wa-priority-' + type;
+
+  var header = document.createElement('div');
+  header.className = 'wa-priority-group-header';
+  header.innerHTML = emoji + ' ' + title + ' <span class="wa-priority-count">(' + items.length + ')</span>';
+  group.appendChild(header);
+
+  items.forEach(function(item) {
+    var row = document.createElement('div');
+    row.className = 'wa-priority-row';
+    row.dataset.conversationId = item.conversation_id || item.conversationId;
+
+    var name = document.createElement('span');
+    name.className = 'wa-priority-name';
+    name.textContent = item.client_name || item.clientName || 'Sin nombre';
+
+    var detail = document.createElement('span');
+    detail.className = 'wa-priority-detail';
+    var hrs = item.hours_since || item.hoursSince;
+    if (hrs !== undefined) {
+      detail.textContent = Math.round(hrs) + 'h \u2022 ' + ((item.last_message || item.lastMessage || '').substring(0, 40));
+    } else {
+      detail.textContent = (item.context || item.last_message || item.lastMessage || '').substring(0, 50);
+    }
+
+    var arrow = document.createElement('span');
+    arrow.className = 'wa-priority-arrow';
+    arrow.textContent = '\u2192';
+
+    row.appendChild(name);
+    row.appendChild(detail);
+    row.appendChild(arrow);
+
+    // Click to open conversation
+    row.addEventListener('click', function() {
+      hideSalesDashboard();
+      selectConversation(parseInt(row.dataset.conversationId));
+    });
+
+    group.appendChild(row);
+  });
+
+  return group;
 }
 
 function renderSalesDashboard(container, data) {
@@ -5244,6 +5435,95 @@ function renderSalesDashboard(container, data) {
   });
   header.appendChild(refreshBtn);
   container.appendChild(header);
+
+  // --- Priority List ---
+  var prioritySection = document.createElement('div');
+  prioritySection.className = 'wa-sales-priorities';
+
+  var coachData = waState.coachingDashboard;
+  if (coachData) {
+    var prios = coachData.priorities || {};
+    var coldLeads = prios.coldLeads || [];
+    var readyToClose = prios.readyToClose || [];
+    var waitingReply = prios.waitingReply || [];
+
+    // Header
+    var prioHeader = document.createElement('div');
+    prioHeader.className = 'wa-sales-section-header';
+    prioHeader.textContent = 'PRIORIDADES DE HOY';
+    prioritySection.appendChild(prioHeader);
+
+    // Cold leads group
+    if (coldLeads.length > 0) {
+      var coldGroup = buildPriorityGroup('\uD83D\uDD34', 'Leads Fr\u00edos', coldLeads, 'cold');
+      prioritySection.appendChild(coldGroup);
+    }
+
+    // Ready to close group
+    if (readyToClose.length > 0) {
+      var closeGroup = buildPriorityGroup('\uD83D\uDFE2', 'Listos para Cerrar', readyToClose, 'close');
+      prioritySection.appendChild(closeGroup);
+    }
+
+    // Waiting reply group
+    if (waitingReply.length > 0) {
+      var waitGroup = buildPriorityGroup('\uD83D\uDFE1', 'Esperando Tu Respuesta', waitingReply, 'waiting');
+      prioritySection.appendChild(waitGroup);
+    }
+  }
+  container.appendChild(prioritySection);
+
+  // --- Scoreboard ---
+  if (coachData && coachData.scoreboard) {
+    var sb = coachData.scoreboard;
+    var scoreSection = document.createElement('div');
+    scoreSection.className = 'wa-sales-scoreboard';
+
+    // Section header
+    var sbHeader = document.createElement('div');
+    sbHeader.className = 'wa-sales-section-header';
+    sbHeader.textContent = 'RENDIMIENTO DE COACHING';
+    scoreSection.appendChild(sbHeader);
+
+    // KPI cards row
+    var coachKpiRow = document.createElement('div');
+    coachKpiRow.className = 'wa-sales-grid-5';
+    coachKpiRow.appendChild(createSalesCard('Pills Enviados', sb.totalPills || 0, 'cyan'));
+    coachKpiRow.appendChild(createSalesCard('Seguidos', sb.followed || 0, 'green'));
+    coachKpiRow.appendChild(createSalesCard('Respuestas', sb.responses || 0, 'pink'));
+    coachKpiRow.appendChild(createSalesCard('Pedidos', sb.orders || 0, 'orange'));
+    coachKpiRow.appendChild(createSalesCard('Revenue', '$' + ((sb.revenue || 0).toLocaleString('es-MX')), 'green'));
+    scoreSection.appendChild(coachKpiRow);
+
+    // By type breakdown
+    var byType = sb.byType || [];
+    if (byType.length > 0) {
+      var typeSection = document.createElement('div');
+      typeSection.className = 'wa-coaching-type-breakdown';
+
+      var typeIcons = { cold_lead: '\uD83D\uDD25', change_technique: '\uD83D\uDD04', ready_to_close: '\u2705', missing_info: '\u2753' };
+      var typeNames = { cold_lead: 'Seguimiento', change_technique: 'Cambio t\u00e9cnica', ready_to_close: 'Cerrar venta', missing_info: 'Info faltante' };
+
+      byType.forEach(function(t) {
+        var typeRow = document.createElement('div');
+        typeRow.className = 'wa-coaching-type-row';
+
+        var pct = Math.round((t.rate || 0) * 100);
+        typeRow.innerHTML =
+          '<div class="wa-coaching-type-label">' + (typeIcons[t.type] || '\uD83D\uDCCA') + ' ' + (typeNames[t.type] || t.type) + '</div>' +
+          '<div class="wa-coaching-type-bar-wrap">' +
+            '<div class="wa-coaching-type-bar" style="width: ' + pct + '%"></div>' +
+          '</div>' +
+          '<div class="wa-coaching-type-stat">' + (t.sent || 0) + ' \u2192 ' + (t.responded || 0) + ' (' + pct + '%)</div>';
+
+        typeSection.appendChild(typeRow);
+      });
+
+      scoreSection.appendChild(typeSection);
+    }
+
+    container.appendChild(scoreSection);
+  }
 
   // === ROW 1: 5 KPI Cards ===
   var kpiGrid = document.createElement('div');

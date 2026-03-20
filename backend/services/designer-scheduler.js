@@ -142,6 +142,110 @@ export async function triggerWeeklyReport() {
 }
 
 /**
+ * Generate and send daily sales digest to Ivan via WhatsApp.
+ */
+export async function triggerSalesDigest() {
+  try {
+    console.log('📊 Generating sales digest...');
+
+    // --- Query priority counts ---
+    const [coldLeads, waitingReply, readyToClose, kpis, revenue] = await Promise.all([
+      query(`
+        SELECT COUNT(*)::int as count
+        FROM whatsapp_conversations wc
+        WHERE wc.last_message_at > NOW() - INTERVAL '7 days'
+          AND (SELECT direction FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) = 'outbound'
+          AND wc.last_message_at < NOW() - INTERVAL '24 hours'
+      `),
+      query(`
+        SELECT COUNT(*)::int as count
+        FROM whatsapp_conversations wc
+        WHERE wc.last_message_at > NOW() - INTERVAL '48 hours'
+          AND (SELECT direction FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) = 'inbound'
+      `),
+      query(`
+        SELECT COUNT(*)::int as count
+        FROM sales_coaching
+        WHERE coaching_type = 'ready_to_close' AND status = 'pending'
+      `),
+      query(`
+        SELECT
+          COUNT(*)::int as total_pills,
+          COUNT(*) FILTER (WHERE client_responded = true)::int as responses
+        FROM sales_coaching
+        WHERE created_at > NOW() - INTERVAL '1 day'
+      `),
+      query(`
+        SELECT COALESCE(SUM(o.total_price), 0) as revenue
+        FROM sales_coaching sc
+        JOIN orders o ON o.id = sc.order_id
+        WHERE sc.resulted_in_order = true AND sc.created_at > NOW() - INTERVAL '7 days'
+      `)
+    ]);
+
+    const coldCount = coldLeads.rows[0]?.count || 0;
+    const waitingCount = waitingReply.rows[0]?.count || 0;
+    const closeCount = readyToClose.rows[0]?.count || 0;
+    const pillsSent = kpis.rows[0]?.total_pills || 0;
+    const responsesCount = kpis.rows[0]?.responses || 0;
+    const responseRate = pillsSent > 0 ? Math.round((responsesCount / pillsSent) * 100) : 0;
+    const revenueAmount = parseFloat(revenue.rows[0]?.revenue || 0);
+
+    const today = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Mexico_City' });
+
+    // --- WhatsApp text summary ---
+    const textMessage = [
+      `📊 *Resumen de Ventas — ${today}*`,
+      '',
+      `🔴 ${coldCount} leads fríos (sin respuesta 24h+)`,
+      `🟡 ${waitingCount} esperando tu respuesta`,
+      `🟢 ${closeCount} listos para cerrar`,
+      '',
+      `💬 Ayer: ${pillsSent} pills enviados, ${responsesCount} respuestas (${responseRate}%)`,
+      `💰 Revenue potencial: $${revenueAmount.toLocaleString('es-MX')}`,
+      '',
+      `📎 Reporte completo adjunto`
+    ].join('\n');
+
+    const ivanPhone = process.env.IVAN_WHATSAPP_NUMBER;
+    if (!ivanPhone) {
+      console.log('⚠️ IVAN_WHATSAPP_NUMBER not set, skipping sales digest delivery');
+      return { success: true, delivered: false, textMessage };
+    }
+
+    // Send text summary
+    await sendWhatsAppMessage(ivanPhone, textMessage);
+
+    // Generate and send PDF
+    let pdfDelivered = false;
+    try {
+      const { generateSalesDigestPDF } = await import('./sales-digest-generator.js');
+      const { pdfUrl, filename } = await generateSalesDigestPDF({
+        date: today,
+        coldLeads: coldCount,
+        waitingReply: waitingCount,
+        readyToClose: closeCount,
+        pillsSent,
+        responses: responsesCount,
+        responseRate,
+        revenue: revenueAmount
+      });
+      await sendWhatsAppDocument(ivanPhone, pdfUrl, filename, 'Resumen de ventas diario');
+      pdfDelivered = true;
+      console.log('📊 Sales digest PDF sent to Ivan');
+    } catch (pdfErr) {
+      console.error('⚠️ PDF generation failed, text summary was still sent:', pdfErr.message);
+    }
+
+    console.log('📊 Sales digest sent to Ivan');
+    return { success: true, delivered: true, pdfDelivered, textMessage };
+  } catch (err) {
+    console.error('❌ Error generating sales digest:', err.message);
+    throw err;
+  }
+}
+
+/**
  * Initialize all designer tracking cron jobs.
  */
 export function initializeDesignerScheduler() {
@@ -161,6 +265,16 @@ export function initializeDesignerScheduler() {
   });
   scheduledJobs.push(coachingJob);
   console.log('  ✅ Sales coaching: every 30 min');
+
+  // 0b. Sales digest — 9 AM Mexico City
+  const salesDigestJob = cron.schedule('0 9 * * *', () => {
+    triggerSalesDigest();
+  }, {
+    timezone: 'America/Mexico_City',
+    scheduled: true
+  });
+  scheduledJobs.push(salesDigestJob);
+  console.log('  ✅ Sales digest: 9:00 AM (Mexico City)');
 
   // 1. Daily follow-up — 6 PM Mexico City
   const followUpJob = cron.schedule('0 18 * * *', () => {
@@ -192,7 +306,7 @@ export function initializeDesignerScheduler() {
   scheduledJobs.push(weeklyReportJob);
   console.log('  ✅ Weekly report: Sunday 9:00 AM (Mexico City)');
 
-  console.log('📋 Designer scheduler initialized (3 jobs)');
+  console.log('📋 Designer scheduler initialized (5 jobs)');
 }
 
 /**
