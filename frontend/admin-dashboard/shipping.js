@@ -51,6 +51,18 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function formatClientDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const day = d.getDate();
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  const hours = d.getHours().toString().padStart(2, '0');
+  const mins = d.getMinutes().toString().padStart(2, '0');
+  return `${day} ${month} ${year}, ${hours}:${mins}`;
+}
+
 /**
  * Copy text to clipboard and show visual feedback
  */
@@ -297,6 +309,7 @@ function renderShippingTable() {
           ? `<div class="address-card-orders">${client.order_count} pedido${client.order_count > 1 ? 's' : ''}</div>`
           : ''
         }
+        <div class="address-card-date">${formatClientDate(client.created_at)}</div>
       </div>
     `;
   }).join('');
@@ -334,6 +347,7 @@ function renderShippingList() {
         <td class="col-street">${escapeHtml(street + streetNum)}</td>
         <td class="col-colonia">${escapeHtml(client.colonia || '')}</td>
         <td class="col-cp">${escapeHtml(postal)}</td>
+        <td class="col-date">${formatClientDate(client.created_at)}</td>
       </tr>
     `;
   }).join('');

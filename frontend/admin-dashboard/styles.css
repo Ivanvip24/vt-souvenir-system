@@ -6170,6 +6170,14 @@ textarea:disabled {
   margin-top: 2px;
 }
 
+.address-card-date {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #f3f4f6;
+}
+
 /* Select mode card checkbox */
 .address-card-checkbox {
   position: absolute;
