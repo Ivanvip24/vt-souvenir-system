@@ -752,17 +752,22 @@ router.post('/webhook', (req, res) => {
             // Create order item
             if (product) {
               await query(
-                `INSERT INTO order_items (order_id, product_id, quantity, unit_price, production_cost_per_unit)
-                 VALUES ($1, $2, $3, $4, 0)`,
-                [orderResult.rows[0].id, product.id, quantity, unitPrice]
+                `INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, unit_cost)
+                 VALUES ($1, $2, $3, $4, $5, 0)`,
+                [orderResult.rows[0].id, product.id, product.name, quantity, unitPrice]
               );
             }
 
             console.log(`📦 WhatsApp draft order created: ${orderNumber} — ${quantity}x ${productName} = $${totalPrice} for ${conv.client_name || waId}`);
 
-            // Send order confirmation to client via WhatsApp
-            const confirmMsg = `Tu pedido fue registrado: *${orderNumber}*\n${quantity} ${productName} — $${totalPrice.toLocaleString('es-MX')}\nEn breve revisamos tu comprobante y te confirmamos`;
-            await sendWhatsAppMessage(waId, confirmMsg);
+            // Send order confirmation to client via WhatsApp (send immediately, before anything else can fail)
+            try {
+              const confirmMsg = `Recibí tu comprobante 👍\n\nTu folio de pedido: *${orderNumber}*\n${quantity} ${productName} — $${totalPrice.toLocaleString('es-MX')}\n\nEstamos revisando tu pago, te confirmo en breve.`;
+              await sendWhatsAppMessage(waId, confirmMsg);
+              console.log(`📦 Order confirmation sent: ${orderNumber}`);
+            } catch (confirmErr) {
+              console.error('📦 Failed to send order confirmation:', confirmErr.message);
+            }
           } else {
             console.log(`📦 Draft order already exists for conversation ${conversationId}, skipping`);
           }
