@@ -692,6 +692,9 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
 
     // Resolve product image URLs for SEND_IMAGE requests
     const resolvedImages = (imagesToSend || []).map(img => {
+      // If image already has a URL (e.g., quote image from Cloudinary), use it directly
+      if (img.imageUrl) return img;
+      // Otherwise, look up product image from catalog
       const nameLower = (img.productName || '').toLowerCase();
       const match = products.find(p => p.name.toLowerCase() === nameLower)
         || products.find(p => nameLower.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(nameLower));
