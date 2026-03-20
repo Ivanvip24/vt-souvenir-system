@@ -673,12 +673,9 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
               imageUrl: quoteImageUrl
             });
           }
-          // Also add PDF as document (backup, can be downloaded)
-          documentsToSend.push({
-            url: pdfUrl,
-            caption: `Cotización ${quoteResult.quoteNumber} — Total: ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(quoteResult.total)}`,
-            filename: `Cotizacion-AXKAN-${quoteResult.quoteNumber}.pdf`
-          });
+          // PDF stored on Cloudinary for records but NOT sent to client
+          // Only sent if client explicitly asks for the PDF
+          console.log(`📄 Quote PDF saved on Cloudinary (not sent): ${pdfUrl}`);
 
           actionTaken = actionTaken || 'quote_generated';
           console.log(`🟢 WhatsApp AI: Quote generated — ${quoteResult.quoteNumber}, ${quoteResult.itemCount} items, total: $${quoteResult.total}`);
