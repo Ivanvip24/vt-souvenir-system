@@ -1079,11 +1079,25 @@ function renderWaMessages() {
         }
 
         if (msg.message_type === 'audio') {
-            var audioText = '🎵 Audio';
-            if (msg.metadata && msg.metadata.transcription) {
-                audioText = '🎵 ' + msg.metadata.transcription;
+            var audioUrl = msg.media_url || (msg.metadata && msg.metadata.cloudinaryUrl) || '';
+            if (audioUrl) {
+                var audioEl = document.createElement('audio');
+                audioEl.controls = true;
+                audioEl.preload = 'none';
+                audioEl.className = 'wa-audio-player';
+                var source = document.createElement('source');
+                source.src = audioUrl;
+                source.type = 'audio/ogg';
+                audioEl.appendChild(source);
+                var source2 = document.createElement('source');
+                source2.src = audioUrl;
+                source2.type = 'audio/mpeg';
+                audioEl.appendChild(source2);
+                bubbleChildren.push(audioEl);
             }
-            bubbleChildren.push(el('span', { className: 'wa-audio-tag', textContent: audioText }));
+            if (msg.metadata && msg.metadata.transcription) {
+                bubbleChildren.push(el('span', { className: 'wa-audio-tag', textContent: '📝 ' + msg.metadata.transcription }));
+            }
         }
 
         if (msg.message_type === 'location' && msg.metadata) {

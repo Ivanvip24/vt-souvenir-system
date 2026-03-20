@@ -1507,7 +1507,20 @@ input, button {
     object-fit: contain;
 }
 
-.wa-audio-tag, .wa-location-tag, .wa-doc-tag {
+.wa-audio-player {
+    width: 100%;
+    max-width: 260px;
+    height: 40px;
+    border-radius: 20px;
+}
+
+.wa-audio-tag {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.wa-location-tag, .wa-doc-tag {
     font-size: 13px;
     color: var(--text-secondary);
 }
