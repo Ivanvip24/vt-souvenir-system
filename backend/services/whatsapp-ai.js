@@ -615,11 +615,23 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
             outputDir: join(__dirname, '../catalogs/quotes')
           });
 
-          // Build public URL for WhatsApp to fetch
-          const backendUrl = process.env.BACKEND_URL
-            || process.env.RENDER_EXTERNAL_URL
-            || 'https://vt-souvenir-backend.onrender.com';
-          const pdfUrl = `${backendUrl}/catalogs/quotes/${quoteResult.filename}`;
+          // Upload PDF to Cloudinary for persistent storage
+          let pdfUrl;
+          try {
+            const { readFileSync } = await import('fs');
+            const pdfPath = join(__dirname, '../catalogs/quotes', quoteResult.filename);
+            const pdfBuffer = readFileSync(pdfPath);
+            const { uploadMediaToCloudinary } = await import('./whatsapp-media.js');
+            const cloudResult = await uploadMediaToCloudinary(pdfBuffer, 'application/pdf', 'whatsapp-quotes');
+            pdfUrl = cloudResult.url;
+            console.log(`☁️ Quote PDF uploaded to Cloudinary: ${pdfUrl}`);
+          } catch (uploadErr) {
+            console.error('☁️ Cloudinary upload failed, using local URL:', uploadErr.message);
+            const backendUrl = process.env.BACKEND_URL
+              || process.env.RENDER_EXTERNAL_URL
+              || 'https://vt-souvenir-backend.onrender.com';
+            pdfUrl = `${backendUrl}/catalogs/quotes/${quoteResult.filename}`;
+          }
 
           // Add to documents to send
           documentsToSend.push({
