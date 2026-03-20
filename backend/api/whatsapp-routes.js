@@ -692,15 +692,17 @@ router.post('/webhook', (req, res) => {
             // Create draft order
             const orderNumber = 'WA-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
+            const depositAmount = totalPrice * 0.5;
             const orderResult = await query(
-              `INSERT INTO orders (order_number, client_id, status, approval_status, total_price, total_production_cost,
-               notes, order_date, event_type, payment_proof_url)
-               VALUES ($1, $2, 'whatsapp_draft', 'pending_review', $3, 0, $4, NOW(), $5, $6)
+              `INSERT INTO orders (order_number, client_id, status, approval_status, subtotal, total_price, total_production_cost,
+               deposit_amount, notes, order_date, event_type, payment_proof_url)
+               VALUES ($1, $2, 'whatsapp_draft', 'pending_review', $3, $3, 0, $4, $5, NOW(), $6, $7)
                RETURNING id`,
               [
                 orderNumber,
                 clientId,
                 totalPrice,
+                depositAmount,
                 'Pedido creado desde WhatsApp. wa_conv_' + conversationId + '. Destino: ' + (destination || 'No especificado') + '. Revisar detalles.',
                 eventType || null,
                 mediaContext.mediaUrl || null
