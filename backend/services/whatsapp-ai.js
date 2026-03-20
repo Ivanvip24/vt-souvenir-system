@@ -619,7 +619,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
           let pdfUrl;
           try {
             const { readFileSync } = await import('fs');
-            const pdfPath = join(__dirname, '../catalogs/quotes', quoteResult.filename);
+            const pdfPath = quoteResult.filepath || join(__dirname, '../catalogs/quotes', quoteResult.filename);
             const pdfBuffer = readFileSync(pdfPath);
             const { uploadMediaToCloudinary } = await import('./whatsapp-media.js');
             const cloudResult = await uploadMediaToCloudinary(pdfBuffer, 'application/pdf', 'whatsapp-quotes');
