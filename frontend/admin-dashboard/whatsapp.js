@@ -5418,24 +5418,6 @@ function renderSalesDashboard(container, data) {
     return Number(v).toFixed(1) + '%';
   }
 
-  // --- Header with refresh button ---
-  var header = document.createElement('div');
-  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;';
-
-  var titleEl = document.createElement('h2');
-  titleEl.style.cssText = 'font-size:22px;font-weight:800;color:#1a1a1a;margin:0;';
-  titleEl.textContent = '\uD83D\uDCCA Sales AI Dashboard';
-  header.appendChild(titleEl);
-
-  var refreshBtn = document.createElement('button');
-  refreshBtn.style.cssText = 'padding:8px 16px;border:1px solid #e5e7eb;border-radius:10px;background:white;cursor:pointer;font-size:13px;font-weight:600;color:#555;';
-  refreshBtn.textContent = '\u21BB Actualizar';
-  refreshBtn.addEventListener('click', function() {
-    loadSalesAnalytics();
-  });
-  header.appendChild(refreshBtn);
-  container.appendChild(header);
-
   // --- Priority List ---
   var prioritySection = document.createElement('div');
   prioritySection.className = 'wa-sales-priorities';
