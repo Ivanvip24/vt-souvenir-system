@@ -693,9 +693,9 @@ router.post('/webhook', (req, res) => {
           }
           const totalPrice = unitPrice * quantity;
 
-          // Check if a draft order already exists for this conversation
+          // Check if a draft order was RECENTLY created for this conversation (within last hour)
           const existingDraft = await query(
-            `SELECT id FROM orders WHERE notes LIKE $1 AND status = 'whatsapp_draft'`,
+            `SELECT id FROM orders WHERE notes LIKE $1 AND status = 'whatsapp_draft' AND created_at > NOW() - INTERVAL '1 hour'`,
             ['%wa_conv_' + conversationId + '%']
           );
 
