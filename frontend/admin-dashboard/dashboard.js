@@ -1185,7 +1185,7 @@ async function showOrderDetail(orderId) {
                 </div>
               </div>
               ${order.clientPhone ? `
-                <button onclick="copyToClipboard('${order.clientPhone}', 'Teléfono')"
+                <button onclick="copyToClipboard('${escapeHtml(String(order.clientPhone || ''))}', 'Teléfono')"
                   style="background: var(--gray-100); border: none; border-radius: 6px; padding: 6px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
                   onmouseover="this.style.background='var(--primary)'; this.querySelector('svg').style.fill='white';"
                   onmouseout="this.style.background='var(--gray-100)'; this.querySelector('svg').style.fill='var(--gray-600)';"
@@ -3385,7 +3385,23 @@ function copyToClipboard(text, label = 'Texto') {
       setTimeout(() => notification.remove(), 300);
     }, 1500);
   }).catch(err => {
-    console.error('Failed to copy:', err);
+    // Fallback: use textarea method
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      var n2 = document.createElement('div');
+      n2.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#10B981;color:white;padding:12px 24px;border-radius:8px;font-weight:600;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+      n2.textContent = label + ' copiado';
+      document.body.appendChild(n2);
+      setTimeout(function() { n2.remove(); }, 1500);
+    } catch (e) {
+      alert('No se pudo copiar. El texto es: ' + text);
+    }
+    document.body.removeChild(ta);
   });
 }
 
