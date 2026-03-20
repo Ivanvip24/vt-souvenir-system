@@ -760,11 +760,34 @@ router.post('/webhook', (req, res) => {
 
             console.log(`📦 WhatsApp draft order created: ${orderNumber} — ${quantity}x ${productName} = $${totalPrice} for ${conv.client_name || waId}`);
 
-            // Send order confirmation to client via WhatsApp (send immediately, before anything else can fail)
+            // Send order confirmation + smart data collection
             try {
-              const confirmMsg = `Recibí tu comprobante 👍\n\nTu folio de pedido: *${orderNumber}*\n${quantity} ${productName} — $${totalPrice.toLocaleString('es-MX')}\n\nEstamos revisando tu pago, te confirmo en breve.`;
-              await sendWhatsAppMessage(waId, confirmMsg);
-              console.log(`📦 Order confirmation sent: ${orderNumber}`);
+              // 1. Send order folio
+              await sendWhatsAppMessage(waId, `Tu pedido fue registrado: *${orderNumber}*\n${quantity} ${productName} — $${totalPrice.toLocaleString('es-MX')}`);
+
+              // 2. Check if existing or new client — smart address flow
+              const clientData = await query(
+                `SELECT name, email, phone, street, street_number, colonia, city, state, postal_code, reference_notes
+                 FROM clients WHERE id = $1`,
+                [clientId]
+              );
+              const clientInfo = clientData.rows[0];
+              const hasAddress = clientInfo && clientInfo.street && clientInfo.city && clientInfo.postal_code;
+              const hasEmail = clientInfo && clientInfo.email;
+
+              if (hasAddress) {
+                // Existing client with address — confirm it
+                const addrParts = [clientInfo.street, clientInfo.street_number, clientInfo.colonia, clientInfo.city, clientInfo.state, 'CP ' + clientInfo.postal_code].filter(Boolean);
+                await sendWhatsAppMessage(waId, `¿Te envío a esta dirección?\n${addrParts.join(', ')}`);
+              } else {
+                // Missing address — ask email if needed + send form
+                if (!hasEmail) {
+                  await sendWhatsAppMessage(waId, '¿Cuál es tu correo electrónico?');
+                }
+                await sendWhatsAppMessage(waId, `Para completar tu envío, llena tus datos aquí:\nhttps://axkan.art/pedidos`);
+              }
+
+              console.log(`📦 Order confirmation + data collection sent: ${orderNumber} (hasAddress: ${hasAddress}, hasEmail: ${hasEmail})`);
             } catch (confirmErr) {
               console.error('📦 Failed to send order confirmation:', confirmErr.message);
             }
