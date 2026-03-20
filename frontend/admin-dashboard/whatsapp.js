@@ -3694,10 +3694,15 @@ function bindWhatsAppEvents() {
           }).then(function(r) { return r.json(); }).then(function(data) {
             if (data.success && waState.searchQuery.trim() === q) {
               waState.searchResults = data.data;
+              // Don't call renderConversationList (it re-filters), just rebuild DOM directly
               waFilterConversations();
-              renderConversationList();
+              var list = document.getElementById('wa-conv-list');
+              if (list) {
+                buildConversationListDOM(list);
+                bindConversationClickEvents();
+              }
             }
-          });
+          }).catch(function(err) { console.error('Search error:', err); });
         }, 200);
       }
     });

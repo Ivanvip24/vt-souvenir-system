@@ -831,9 +831,9 @@ router.get('/conversations/search', authMiddleware, async (req, res) => {
 
     const searchPattern = '%' + q + '%';
     const result = await query(`
-      SELECT DISTINCT wc.id, wc.wa_id, wc.client_name, wc.last_message_at, wc.unread_count,
-        wc.is_pinned, wc.is_archived, wc.intent, wc.ai_enabled,
+      SELECT DISTINCT ON (wc.id) wc.*,
         (SELECT content FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) as last_message,
+        (SELECT COUNT(*) FROM whatsapp_messages WHERE conversation_id = wc.id) as message_count,
         COALESCE(
           (SELECT json_agg(json_build_object('id', wl.id, 'name', wl.name, 'color', wl.color))
            FROM whatsapp_conversation_labels wcl
@@ -853,7 +853,7 @@ router.get('/conversations/search', authMiddleware, async (req, res) => {
         OR wc.wa_id ILIKE $1
         OR wm.content ILIKE $1
         OR wl2.name ILIKE $1
-      ORDER BY wc.last_message_at DESC NULLS LAST
+      ORDER BY wc.id, wc.last_message_at DESC NULLS LAST
       LIMIT 30
     `, [searchPattern]);
 
