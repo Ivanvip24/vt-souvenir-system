@@ -640,7 +640,40 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
             pdfUrl = `${backendUrl}/catalogs/quotes/${quoteResult.filename}`;
           }
 
-          // Add to documents to send
+          // Convert PDF to image and send as WhatsApp image (easier to view on phone)
+          let quoteImageUrl = null;
+          try {
+            const { readFileSync: readFS } = await import('fs');
+            const { pdf } = await import('pdf-to-img');
+            const pdfPathForImg = quoteResult.filepath || join(__dirname, '../catalogs/quotes', quoteResult.filename);
+            const pdfDoc = await pdf(pdfPathForImg, { scale: 2 });
+            // Get first page as PNG buffer
+            for await (const page of pdfDoc) {
+              const { v2: cloudImg } = await import('cloudinary');
+              const imgBase64 = Buffer.from(page).toString('base64');
+              const imgDataUri = `data:image/png;base64,${imgBase64}`;
+              const imgResult = await cloudImg.uploader.upload(imgDataUri, {
+                folder: 'whatsapp-quotes-img',
+                public_id: quoteResult.filename.replace('.pdf', ''),
+                resource_type: 'image'
+              });
+              quoteImageUrl = imgResult.secure_url;
+              console.log(`🖼️ Quote image uploaded to Cloudinary: ${quoteImageUrl}`);
+              break; // Only first page
+            }
+          } catch (imgErr) {
+            console.error('🖼️ PDF to image conversion failed:', imgErr.message);
+          }
+
+          // Send as image (client sees it inline) + keep PDF on Cloudinary for records
+          if (quoteImageUrl) {
+            // Send image to WhatsApp (client sees quote as picture)
+            imagesToSend.push({
+              productName: `Cotización ${quoteResult.quoteNumber}`,
+              imageUrl: quoteImageUrl
+            });
+          }
+          // Also add PDF as document (backup, can be downloaded)
           documentsToSend.push({
             url: pdfUrl,
             caption: `Cotización ${quoteResult.quoteNumber} — Total: ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(quoteResult.total)}`,
