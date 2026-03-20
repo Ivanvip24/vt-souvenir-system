@@ -34,6 +34,7 @@ import leadRoutes from './lead-routes.js';
 import whatsappRoutes from './whatsapp-routes.js';
 import whatsappTemplateRoutes from './whatsapp-template-routes.js';
 import t1Routes from './t1-routes.js';
+import coachingRoutes from './coaching-routes.js';
 import * as knowledgeIndex from '../services/knowledge-index.js';
 import * as knowledgeAI from '../services/knowledge-ai.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
@@ -513,6 +514,7 @@ app.use('/api/notes', notesRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/designer-tasks', designerTaskRoutes);
+app.use('/api/coaching', coachingRoutes);
 // WhatsApp webhook must be public (Meta sends no JWT) — skip auth for /webhook only
 app.use('/api/whatsapp', (req, res, next) => {
   if (req.path === '/webhook') return next();
@@ -5760,6 +5762,15 @@ async function startServer() {
       console.log('✅ Designer tracking tables ready');
     } catch (dtErr) {
       console.warn('⚠️  Designer tracking migration:', dtErr.message);
+    }
+
+    // Run sales coaching migration
+    try {
+      const { migrate: migrateSalesCoaching } = await import('../migrations/add-sales-coaching.js');
+      await migrateSalesCoaching();
+      console.log('✅ Sales coaching tables ready');
+    } catch (scErr) {
+      console.warn('⚠️  Sales coaching migration:', scErr.message);
     }
 
     // Initialize Designer Task Tracking Scheduler (follow-ups + reports)

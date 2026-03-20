@@ -369,6 +369,26 @@ router.post('/webhook', (req, res) => {
         [conversationId, waMessageId, message.type, messageText, mediaUrl, messageMetadata ? JSON.stringify(messageMetadata) : null]
       );
 
+      // --- Sales Coaching: Track client response after followed advice ---
+      try {
+          const followedCoaching = await query(`
+              UPDATE sales_coaching
+              SET client_responded = true, client_responded_at = NOW()
+              WHERE conversation_id = $1
+                AND status = 'followed'
+                AND client_responded IS NULL
+                AND followed_at > NOW() - INTERVAL '24 hours'
+              RETURNING id, coaching_type
+          `, [conversationId]);
+
+          if (followedCoaching.rows.length > 0) {
+              console.log(`📊 Sales coaching: client responded to ${followedCoaching.rows[0].coaching_type} advice (coaching #${followedCoaching.rows[0].id})`);
+          }
+      } catch (coachErr) {
+          // Non-blocking — don't interrupt message flow
+          console.error('📊 Sales coaching tracking error:', coachErr.message);
+      }
+
       // Increment unread count
       await query(
         'UPDATE whatsapp_conversations SET unread_count = unread_count + 1 WHERE id = $1',

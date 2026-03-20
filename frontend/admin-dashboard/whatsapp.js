@@ -27,7 +27,8 @@ const waState = {
   showArchived: false,
   salesView: false,
   salesData: null,
-  salesCharts: {}
+  salesCharts: {},
+  pendingCoachingPillId: null
 };
 
 // ==========================================
@@ -1794,6 +1795,77 @@ function injectWhatsAppStyles() {
       .wa-sales-grid-5 { grid-template-columns: 1fr; }
       .wa-sales-dashboard { padding: 14px; }
     }
+
+    /* Coaching pills */
+    .wa-coaching-pills {
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border-top: 1px solid #f0f0f0;
+      background: #fafafa;
+      flex-shrink: 0;
+    }
+    .wa-coaching-pills::-webkit-scrollbar { display: none; }
+    .wa-coaching-pills:empty { display: none; }
+
+    .wa-coaching-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .wa-coaching-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    .wa-coaching-pill:active { transform: scale(0.97); }
+
+    .wa-coaching-pill.cold_lead {
+      background: #fff3e0;
+      border: 1.5px solid #f39223;
+      color: #e65100;
+    }
+    .wa-coaching-pill.change_technique {
+      background: #fce4ec;
+      border: 1.5px solid #e72a88;
+      color: #ad1457;
+    }
+    .wa-coaching-pill.ready_to_close {
+      background: #f1f8e9;
+      border: 1.5px solid #8ab73b;
+      color: #558b2f;
+    }
+    .wa-coaching-pill.missing_info {
+      background: #e0f7fa;
+      border: 1.5px solid #09adc2;
+      color: #00838f;
+    }
+
+    .wa-coaching-pill-icon { font-size: 14px; flex-shrink: 0; }
+    .wa-coaching-pill-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wa-coaching-pill-dismiss {
+      margin-left: 4px;
+      opacity: 0.5;
+      cursor: pointer;
+      font-size: 12px;
+      flex-shrink: 0;
+      padding: 2px;
+      border-radius: 50%;
+    }
+    .wa-coaching-pill-dismiss:hover { opacity: 1; background: rgba(0,0,0,0.1); }
+    .wa-coaching-pill-time { font-size: 11px; opacity: 0.6; margin-left: 4px; flex-shrink: 0; }
   `;
   document.head.appendChild(style);
 }
@@ -3170,6 +3242,12 @@ function buildChatViewDOM(parentEl) {
   previewStrip.style.display = 'none';
   parentEl.appendChild(previewStrip);
 
+  // --- Coaching pills container ---
+  var coachingPillsContainer = document.createElement('div');
+  coachingPillsContainer.className = 'wa-coaching-pills';
+  coachingPillsContainer.id = 'coaching-pills-container';
+  parentEl.appendChild(coachingPillsContainer);
+
   // --- Input area ---
   var inputArea = document.createElement('div');
   inputArea.className = 'wa-input-area';
@@ -3487,6 +3565,107 @@ function scrollChatToBottom() {
   if (area) {
     area.scrollTop = area.scrollHeight;
   }
+}
+
+// ==========================================
+// COACHING PILLS
+// ==========================================
+
+var COACHING_PILL_ICONS = {
+  cold_lead: '\uD83D\uDD25',
+  change_technique: '\uD83D\uDD04',
+  ready_to_close: '\u2705',
+  missing_info: '\u2753'
+};
+
+async function loadCoachingPills(conversationId) {
+  var container = document.getElementById('coaching-pills-container');
+  if (!container) return;
+
+  try {
+    var response = await fetch('/api/coaching/conversations/' + conversationId + '/pills', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
+    });
+    var data = await response.json();
+
+    if (!data.success || !data.pills || data.pills.length === 0) {
+      container.textContent = '';
+      return;
+    }
+
+    renderCoachingPills(container, data.pills);
+  } catch (err) {
+    console.error('Coaching pills error:', err);
+    container.textContent = '';
+  }
+}
+
+function renderCoachingPills(container, pills) {
+  container.textContent = '';
+
+  pills.forEach(function(pill) {
+    var el = document.createElement('div');
+    var pillType = pill.type || 'cold_lead';
+    el.className = 'wa-coaching-pill ' + pillType;
+    el.setAttribute('data-pill-id', pill.id);
+    el.setAttribute('data-message', pill.suggested_message || '');
+    el.title = (pill.suggested_message || '') + (pill.context ? '\n\n' + pill.context : '');
+
+    var icon = document.createElement('span');
+    icon.className = 'wa-coaching-pill-icon';
+    icon.textContent = COACHING_PILL_ICONS[pillType] || '\uD83D\uDCA1';
+    el.appendChild(icon);
+
+    var text = document.createElement('span');
+    text.className = 'wa-coaching-pill-text';
+    text.textContent = pill.label || pill.suggested_message || '';
+    el.appendChild(text);
+
+    if (pill.time_label) {
+      var time = document.createElement('span');
+      time.className = 'wa-coaching-pill-time';
+      time.textContent = pill.time_label;
+      el.appendChild(time);
+    }
+
+    var dismiss = document.createElement('span');
+    dismiss.className = 'wa-coaching-pill-dismiss';
+    dismiss.setAttribute('data-pill-id', pill.id);
+    dismiss.textContent = '\u00D7';
+    el.appendChild(dismiss);
+
+    // Click pill to fill input
+    el.addEventListener('click', function(e) {
+      if (e.target.classList.contains('wa-coaching-pill-dismiss')) return;
+      var msg = el.getAttribute('data-message');
+      var input = document.getElementById('wa-input');
+      if (input && msg) {
+        input.value = msg;
+        input.focus();
+        // Auto-resize textarea
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+        waState.pendingCoachingPillId = parseInt(el.getAttribute('data-pill-id'), 10);
+      }
+    });
+
+    // Click dismiss
+    dismiss.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var pillId = parseInt(dismiss.getAttribute('data-pill-id'), 10);
+      el.style.transition = 'opacity 0.2s, transform 0.2s';
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.9)';
+      setTimeout(function() { el.remove(); }, 200);
+
+      fetch('/api/coaching/pills/' + pillId + '/ignore', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
+      }).catch(function(err) { console.error('Dismiss pill error:', err); });
+    });
+
+    container.appendChild(el);
+  });
 }
 
 // ==========================================
@@ -3842,6 +4021,10 @@ async function selectConversation(convId) {
     waState.insights = null;
     fetchInsights(convId, false);
 
+    // Load coaching pills for this conversation
+    waState.pendingCoachingPillId = null;
+    loadCoachingPills(convId);
+
     // Remove unread badge from list item
     var listItem = document.querySelector('.wa-conv-item[data-conv-id="' + convId + '"]');
     if (listItem) {
@@ -3940,6 +4123,24 @@ async function handleSendMessage() {
       window.showToast('Error al enviar mensaje', 'error');
     }
   } else {
+    // Track coaching pill follow if a pill was used
+    if (waState.pendingCoachingPillId) {
+      var pillId = waState.pendingCoachingPillId;
+      waState.pendingCoachingPillId = null;
+      // Remove the followed pill from DOM
+      var pillEl = document.querySelector('.wa-coaching-pill[data-pill-id="' + pillId + '"]');
+      if (pillEl) pillEl.remove();
+      // Notify backend
+      fetch('/api/coaching/pills/' + pillId + '/follow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + localStorage.getItem('admin_token')
+        },
+        body: JSON.stringify({ messageSent: message || '' })
+      }).catch(function(err) { console.error('Pill follow error:', err); });
+    }
+
     // Refresh messages from server for accurate data
     var ok = await fetchConversationMessages(waState.selectedConversationId);
     if (ok) renderChatMessages();
