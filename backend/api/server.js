@@ -1535,6 +1535,45 @@ app.post('/api/orders/sync/bulk', authMiddleware, async (req, res) => {
   }
 });
 
+// Cobrar saldo — send WhatsApp message to client asking for remaining payment
+app.post('/api/orders/:orderId/cobrar-saldo', authMiddleware, async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const orderResult = await query(
+      `SELECT o.order_number, o.total_price, o.deposit_amount, c.phone, c.name
+       FROM orders o
+       JOIN clients c ON c.id = o.client_id
+       WHERE o.id = $1`,
+      [orderId]
+    );
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
+    }
+
+    const order = orderResult.rows[0];
+    const pendingAmount = parseFloat(order.total_price) - parseFloat(order.deposit_amount || 0);
+    const clientPhone = (order.phone || '').replace(/\D/g, '');
+
+    if (!clientPhone) {
+      return res.status(400).json({ success: false, error: 'Cliente sin teléfono' });
+    }
+
+    // Format phone for WhatsApp (add 521 prefix if 10 digits)
+    const waPhone = clientPhone.length === 10 ? '52' + clientPhone : clientPhone;
+
+    // Send WhatsApp message
+    const { sendWhatsAppMessage } = await import('./whatsapp-routes.js').then(() => import('../services/whatsapp-api.js'));
+    const msg = `Hola ${order.name}, tu pedido *${order.order_number}* está listo.\n\nEl saldo pendiente es *$${pendingAmount.toLocaleString('es-MX')}*.\n\nEnvíame tu comprobante de pago y te mando la guía de envío.`;
+    await sendWhatsAppMessage(waPhone, msg);
+
+    console.log(`💰 Cobro enviado: ${order.order_number} — $${pendingAmount} a ${waPhone}`);
+    res.json({ success: true, message: 'Mensaje de cobro enviado' });
+  } catch (err) {
+    console.error('💰 Error cobrando saldo:', err);
+    res.status(500).json({ success: false, error: 'Error enviando mensaje' });
+  }
+});
+
 // Approve order
 app.post('/api/orders/:orderId/approve', authMiddleware, async (req, res) => {
   try {

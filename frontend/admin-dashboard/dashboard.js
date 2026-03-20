@@ -1147,6 +1147,24 @@ async function showOrderDetail(orderId) {
     </div>
     ` : ''}
 
+    <!-- Cobrar Saldo Button (show when approved and has remaining balance) -->
+    ${order.approvalStatus === 'approved' && order.totalPrice && order.depositAmount && (order.totalPrice - order.depositAmount) > 0 ? `
+    <div class="detail-section">
+      <div style="background: linear-gradient(135deg, #fef3c7, #fff7ed); border: 1px solid #f59e0b; border-radius: 12px; padding: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-size: 12px; color: #92400e; font-weight: 600;">SALDO PENDIENTE</div>
+            <div style="font-size: 24px; font-weight: 700; color: #b45309;">$${(order.totalPrice - (order.depositAmount || 0)).toLocaleString('es-MX')}</div>
+          </div>
+          <button onclick="cobrarSaldo(${order.id}, '${escapeHtml(order.orderNumber)}', ${order.totalPrice - (order.depositAmount || 0)})"
+            style="padding: 10px 20px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap;">
+            💰 Cobrar Saldo
+          </button>
+        </div>
+      </div>
+    </div>
+    ` : ''}
+
     <!-- Client Information -->
     <div class="detail-section">
       <h3>Información del Cliente</h3>
@@ -1568,6 +1586,26 @@ function closeOrderDetail() {
 
 // Global variable to track the order being approved
 let orderToApprove = null;
+
+async function cobrarSaldo(orderId, orderNumber, pendingAmount) {
+  if (!confirm('¿Enviar mensaje de cobro por $' + pendingAmount.toLocaleString('es-MX') + ' al cliente?')) return;
+
+  try {
+    const res = await fetch(API_BASE + '/orders/' + orderId + '/cobrar-saldo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') }
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (typeof window.showToast === 'function') window.showToast('Mensaje de cobro enviado', 'success');
+      else alert('Mensaje de cobro enviado al cliente');
+    } else {
+      alert('Error: ' + (data.error || 'No se pudo enviar'));
+    }
+  } catch (err) {
+    alert('Error de conexión');
+  }
+}
 
 async function approveOrder(orderId) {
   // Find the order in state - check both filteredOrders and orders

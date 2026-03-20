@@ -648,8 +648,83 @@ router.post('/webhook', (req, res) => {
       }
       if (isPaymentReceipt && mediaContext?.type === 'image') {
         try {
-          console.log(`📦 Payment receipt detected from ${waId} — creating WhatsApp draft order...`);
+          // First check: is this a SECOND payment for an existing order?
+          const existingOrder = await query(
+            `SELECT o.id, o.order_number, o.total_price, o.deposit_amount, o.approval_status, c.name
+             FROM orders o
+             JOIN clients c ON c.id = o.client_id
+             JOIN whatsapp_conversations wc ON wc.client_id = o.client_id
+             WHERE wc.id = $1 AND o.approval_status = 'approved'
+               AND o.second_payment_proof_url IS NULL
+               AND (o.total_price - COALESCE(o.deposit_amount, 0)) > 0
+             ORDER BY o.created_at DESC LIMIT 1`,
+            [conversationId]
+          );
 
+          if (existingOrder.rows.length > 0) {
+            // This is a SECOND payment — verify amount with AI
+            const order = existingOrder.rows[0];
+            const pendingAmount = parseFloat(order.total_price) - parseFloat(order.deposit_amount || 0);
+
+            console.log(`💰 Second payment receipt detected for order ${order.order_number} — pending: $${pendingAmount}`);
+
+            // AI verification: check if receipt is real + amount matches
+            let verificationResult = { verified: false, amount: null };
+            try {
+              const visionClient = new Anthropic();
+              const vResponse = await visionClient.messages.create({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 50,
+                messages: [{
+                  role: 'user',
+                  content: [
+                    { type: 'image', source: { type: 'base64', media_type: mediaContext.imageMimeType || 'image/jpeg', data: mediaContext.imageBase64 } },
+                    { type: 'text', text: `Is this a payment receipt? If yes, what is the amount in MXN? Reply ONLY in this format: "yes AMOUNT" or "no". Example: "yes 8000" or "no"` }
+                  ]
+                }]
+              });
+              const vAnswer = (vResponse.content[0].text || '').toLowerCase().trim();
+              if (vAnswer.startsWith('yes') || vAnswer.startsWith('sí')) {
+                const amountMatch = vAnswer.match(/(\d[\d,]*\.?\d*)/);
+                verificationResult.verified = true;
+                verificationResult.amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null;
+              }
+            } catch (vErr) {
+              console.error('💰 AI verification failed:', vErr.message);
+              verificationResult.verified = true; // Assume valid if AI fails
+            }
+
+            // Save second payment proof
+            await query(
+              `UPDATE orders SET second_payment_proof_url = $1, updated_at = NOW() WHERE id = $2`,
+              [mediaContext.mediaUrl || null, order.id]
+            );
+
+            // Send confirmation
+            if (verificationResult.verified) {
+              const amountStr = verificationResult.amount ? `$${verificationResult.amount.toLocaleString('es-MX')}` : 'tu pago';
+              const matches = verificationResult.amount && Math.abs(verificationResult.amount - pendingAmount) < 100;
+
+              if (matches) {
+                await sendWhatsAppMessage(waId, `Recibí ${amountStr} para el pedido *${order.order_number}*. Pago completo ✅\n\nEn breve te envío la guía de envío.`);
+                // Auto-mark as fully paid
+                await query(`UPDATE orders SET deposit_paid = true, updated_at = NOW() WHERE id = $1`, [order.id]);
+                console.log(`💰 Second payment verified and approved: ${order.order_number} — $${verificationResult.amount}`);
+              } else {
+                await sendWhatsAppMessage(waId, `Recibí tu comprobante para el pedido *${order.order_number}*.\n\nEl saldo pendiente era $${pendingAmount.toLocaleString('es-MX')}. Estamos verificando tu pago.`);
+                console.log(`💰 Second payment received but amount mismatch: got $${verificationResult.amount}, expected $${pendingAmount}`);
+              }
+            } else {
+              await sendWhatsAppMessage(waId, `Recibí tu imagen pero no parece ser un comprobante de pago. ¿Podrías enviar la captura de la transferencia?`);
+            }
+
+            // Skip draft order creation — this was a second payment
+            console.log(`💰 Skipping draft order — handled as second payment for ${order.order_number}`);
+          } else {
+            // No existing approved order — create new draft order
+
+          console.log(`📦 Payment receipt detected from ${waId} — creating WhatsApp draft order...`);
+          try {
           // Get client info from conversation
           const convInfo = await query(
             'SELECT client_name, wa_id, client_id FROM whatsapp_conversations WHERE id = $1',
@@ -794,9 +869,12 @@ router.post('/webhook', (req, res) => {
           } else {
             console.log(`📦 Draft order already exists for conversation ${conversationId}, skipping`);
           }
-        } catch (draftErr) {
-          console.error('📦 WhatsApp draft order error:', draftErr.message);
-          // Don't fail the whole webhook — draft creation is best-effort
+          } catch (draftErr) {
+            console.error('📦 WhatsApp draft order error:', draftErr.message);
+          }
+        } // close else (not second payment — draft order creation)
+        } catch (receiptErr) {
+          console.error('🧾 Receipt processing error:', receiptErr.message);
         }
       }
     } catch (err) {
