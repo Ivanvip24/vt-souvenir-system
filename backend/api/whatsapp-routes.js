@@ -649,6 +649,7 @@ router.post('/webhook', (req, res) => {
       if (isPaymentReceipt && mediaContext?.type === 'image') {
         try {
           // First check: is this a SECOND payment for an existing order?
+          // Only match if a "cobrar saldo" message was sent in this conversation recently (last 7 days)
           const existingOrder = await query(
             `SELECT o.id, o.order_number, o.total_price, o.deposit_amount, o.approval_status, c.name
              FROM orders o
@@ -657,6 +658,13 @@ router.post('/webhook', (req, res) => {
              WHERE wc.id = $1 AND o.approval_status = 'approved'
                AND o.second_payment_proof_url IS NULL
                AND (o.total_price - COALESCE(o.deposit_amount, 0)) > 0
+               AND EXISTS (
+                 SELECT 1 FROM whatsapp_messages wm
+                 WHERE wm.conversation_id = $1
+                   AND wm.direction = 'outbound'
+                   AND wm.content LIKE '%saldo pendiente%'
+                   AND wm.created_at > NOW() - INTERVAL '7 days'
+               )
              ORDER BY o.created_at DESC LIMIT 1`,
             [conversationId]
           );
