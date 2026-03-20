@@ -253,6 +253,14 @@ if (!fs.existsSync(designerReportsPath)) {
 app.use('/designer-reports', authMiddleware, express.static(designerReportsPath));
 console.log(`📁 Serving designer reports from: ${designerReportsPath} (auth protected)`);
 
+// Sales Digests PDFs
+const salesDigestsPath = path.join(__dirname, '../sales-digests');
+if (!fs.existsSync(salesDigestsPath)) {
+  fs.mkdirSync(salesDigestsPath, { recursive: true });
+}
+app.use('/sales-digests', authMiddleware, express.static(salesDigestsPath));
+console.log(`📁 Serving sales digests from: ${salesDigestsPath} (auth protected)`);
+
 // ========================================
 // HEALTH CHECK
 // ========================================
@@ -4467,14 +4475,14 @@ app.get('/api/salespeople', authMiddleware, async (req, res) => {
       FROM salespeople sp
       LEFT JOIN (
         SELECT
-          sales_rep,
+          COALESCE(salesperson_id, (SELECT id FROM salespeople WHERE LOWER(name) = LOWER(o.sales_rep) LIMIT 1)) as sp_id,
           COUNT(*) as total_orders,
           SUM(total_price) as total_sales,
           COUNT(CASE WHEN approval_status = 'pending_review' THEN 1 END) as pending_orders
-        FROM orders
-        WHERE sales_rep IS NOT NULL
-        GROUP BY sales_rep
-      ) stats ON LOWER(sp.name) = LOWER(stats.sales_rep)
+        FROM orders o
+        WHERE sales_rep IS NOT NULL OR salesperson_id IS NOT NULL
+        GROUP BY sp_id
+      ) stats ON sp.id = stats.sp_id
     `;
 
     if (active_only === 'true') {
