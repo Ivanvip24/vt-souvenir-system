@@ -4,6 +4,7 @@
 
 import { Router } from 'express';
 import { authMiddleware } from './admin-routes.js';
+import { query } from '../shared/database.js';
 import {
   listTemplates,
   createTemplate,
@@ -14,6 +15,45 @@ import {
 } from '../services/whatsapp-templates.js';
 
 const router = Router();
+
+// Auto-create templates + broadcasts tables if missing
+let templatesMigrated = false;
+async function ensureTemplatesTables() {
+  if (templatesMigrated) return;
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS whatsapp_templates (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) UNIQUE NOT NULL,
+        category VARCHAR(50) NOT NULL DEFAULT 'MARKETING',
+        language VARCHAR(10) DEFAULT 'es_MX',
+        status VARCHAR(50) DEFAULT 'pending',
+        meta_template_id VARCHAR(100),
+        header_type VARCHAR(20),
+        body_text TEXT NOT NULL,
+        footer_text TEXT,
+        variables JSONB DEFAULT '[]',
+        buttons JSONB DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS whatsapp_broadcasts (
+        id SERIAL PRIMARY KEY,
+        template_id INTEGER REFERENCES whatsapp_templates(id),
+        sent_by VARCHAR(100),
+        recipients JSONB NOT NULL,
+        total_sent INTEGER DEFAULT 0,
+        total_delivered INTEGER DEFAULT 0,
+        total_read INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    templatesMigrated = true;
+    console.log('🟢 WhatsApp templates tables ready');
+  } catch (e) {
+    console.error('🟢 Templates migration error:', e.message);
+  }
+}
+ensureTemplatesTables();
 
 // All routes require auth
 router.use(authMiddleware);
