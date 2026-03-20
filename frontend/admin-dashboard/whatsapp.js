@@ -5429,12 +5429,6 @@ function renderSalesDashboard(container, data) {
     var readyToClose = prios.readyToClose || [];
     var waitingReply = prios.waitingReply || [];
 
-    // Header
-    var prioHeader = document.createElement('div');
-    prioHeader.className = 'wa-sales-section-header';
-    prioHeader.textContent = 'PRIORIDADES DE HOY';
-    prioritySection.appendChild(prioHeader);
-
     // Cold leads group
     if (coldLeads.length > 0) {
       var coldGroup = buildPriorityGroup('\uD83D\uDD34', 'Leads Fr\u00edos', coldLeads, 'cold');
