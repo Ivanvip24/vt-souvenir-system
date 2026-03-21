@@ -220,8 +220,9 @@ export async function triggerSalesDigest() {
     let pdfDelivered = false;
     try {
       const { generateSalesDigestPDF } = await import('./sales-digest-generator.js');
+      const cleanDate = new Date().toISOString().split('T')[0]; // 2026-03-20
       const { pdfUrl, filename } = await generateSalesDigestPDF({
-        date: today,
+        date: cleanDate,
         coldLeads: coldCount,
         waitingReply: waitingCount,
         readyToClose: closeCount,
