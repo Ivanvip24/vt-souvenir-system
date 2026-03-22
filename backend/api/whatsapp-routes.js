@@ -483,7 +483,7 @@ router.post('/webhook', (req, res) => {
         const sc = aiResult.shippingCheckResult;
         let shippingMsg;
         if (!sc.available) {
-          shippingMsg = `⚠️ El código postal ${sc.zip} está en zona de cobertura limitada. Te recomiendo verificar con otra dirección o contactarnos para buscar opciones de envío.`;
+          shippingMsg = `📦 El envío a CP ${sc.zip} tiene un costo especial por ser zona extendida. Déjame verificar el costo exacto y te confirmo.`;
         } else if (sc.isExtended) {
           shippingMsg = `📦 El envío a CP ${sc.zip} tiene un costo de *$${Math.round(sc.price)}* porque es zona extendida. El envío tarda aproximadamente ${sc.days || '5-7'} días hábiles.`;
         } else {
