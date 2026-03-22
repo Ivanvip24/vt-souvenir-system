@@ -3434,7 +3434,7 @@ function buildChatViewDOM(parentEl) {
   var fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.id = 'wa-file-input';
-  fileInput.accept = 'image/jpeg,image/png,image/gif,image/webp,image/heic';
+  fileInput.accept = 'image/jpeg,image/png,image/gif,image/webp,image/heic,application/pdf,.pdf';
   fileInput.style.display = 'none';
   parentEl.appendChild(fileInput);
 
@@ -4077,7 +4077,7 @@ function bindChatEvents() {
       if (!files || files.length === 0) return;
 
       var file = files[0];
-      if (file.type.indexOf('image') === -1) return;
+      if (file.type.indexOf('image') === -1 && file.type !== 'application/pdf') return;
       attachImageFile(file);
     });
   }
@@ -4089,10 +4089,12 @@ function bindChatEvents() {
 function attachImageFile(file) {
   if (file.size > 10 * 1024 * 1024) {
     if (typeof window.showToast === 'function') {
-      window.showToast('La imagen es muy grande (max 10MB)', 'error');
+      window.showToast('El archivo es muy grande (max 10MB)', 'error');
     }
     return;
   }
+
+  var isPdf = file.type === 'application/pdf' || (file.name && file.name.toLowerCase().endsWith('.pdf'));
 
   waState.pendingImageFile = file;
 
@@ -4102,10 +4104,18 @@ function attachImageFile(file) {
     strip.textContent = '';
     strip.style.display = 'flex';
 
-    var thumb = document.createElement('img');
-    thumb.className = 'wa-img-preview-thumb';
-    thumb.src = URL.createObjectURL(file);
-    strip.appendChild(thumb);
+    if (isPdf) {
+      var pdfIcon = document.createElement('div');
+      pdfIcon.className = 'wa-img-preview-thumb';
+      pdfIcon.style.cssText = 'display:flex;align-items:center;justify-content:center;background:#fef2f2;font-size:20px;';
+      pdfIcon.textContent = '\uD83D\uDCC4';
+      strip.appendChild(pdfIcon);
+    } else {
+      var thumb = document.createElement('img');
+      thumb.className = 'wa-img-preview-thumb';
+      thumb.src = URL.createObjectURL(file);
+      strip.appendChild(thumb);
+    }
 
     var info = document.createElement('div');
     info.className = 'wa-img-preview-info';
@@ -4122,7 +4132,7 @@ function attachImageFile(file) {
 
     var removeBtn = document.createElement('button');
     removeBtn.className = 'wa-img-remove-btn';
-    removeBtn.title = 'Quitar imagen';
+    removeBtn.title = 'Quitar archivo';
     removeBtn.textContent = '\u00D7';
     removeBtn.addEventListener('click', clearPendingImage);
     strip.appendChild(removeBtn);
@@ -4134,7 +4144,7 @@ function attachImageFile(file) {
     imgBtn.style.background = '#e72a88';
     imgBtn.style.color = '#fff';
     imgBtn.style.borderColor = '#e72a88';
-    imgBtn.title = 'Imagen adjunta (click para quitar)';
+    imgBtn.title = isPdf ? 'PDF adjunto (click para quitar)' : 'Imagen adjunta (click para quitar)';
   }
 }
 
