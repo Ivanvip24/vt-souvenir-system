@@ -28,7 +28,8 @@ const waState = {
   salesView: false,
   salesData: null,
   salesCharts: {},
-  pendingCoachingPillId: null
+  pendingCoachingPillId: null,
+  filterLabelId: null
 };
 
 // ==========================================
@@ -1397,6 +1398,37 @@ function injectWhatsAppStyles() {
     }
     .wa-archive-tab.active { background: #fce4ec; color: #e72a88; }
 
+    /* Label filter row */
+    .wa-label-filters {
+      display: flex;
+      gap: 6px;
+      padding: 6px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex-wrap: nowrap;
+    }
+    .wa-label-filters::-webkit-scrollbar { display: none; }
+    .wa-label-filter-pill {
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1.5px solid #e0e0e0;
+      background: #fff;
+      color: #666;
+      cursor: pointer;
+      border-radius: 14px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .wa-label-filter-pill:hover { border-color: #ccc; background: #fafafa; }
+    .wa-label-filter-pill.active {
+      color: #fff;
+      border-color: transparent;
+    }
+
     /* ===== Follow-up Button & Dropdown ===== */
     .wa-followup-btn {
       background: #fff7ed;
@@ -2651,6 +2683,13 @@ function waFilterConversations() {
       return name.indexOf(q) !== -1 || phone.indexOf(q) !== -1 || labelMatch;
     });
   }
+  // Apply label filter if active
+  if (waState.filterLabelId) {
+    waState.filteredConversations = waState.filteredConversations.filter(function(c) {
+      return (c.labels || []).some(function(l) { return l.id === waState.filterLabelId; });
+    });
+  }
+
   // Sort: expired follow-ups first, then pinned, then most recent message
   var now = new Date();
   waState.filteredConversations.sort(function(a, b) {
@@ -2879,6 +2918,37 @@ function renderWhatsApp() {
   // Sales AI tab removed — now accessible via sidebar sub-item
 
   listPanel.appendChild(archiveTabs);
+
+  // Label filter pills
+  if (waState.labels && waState.labels.length > 0) {
+    var labelFilters = document.createElement('div');
+    labelFilters.className = 'wa-label-filters';
+
+    waState.labels.forEach(function(label) {
+      var pill = document.createElement('button');
+      pill.className = 'wa-label-filter-pill' + (waState.filterLabelId === label.id ? ' active' : '');
+      pill.textContent = label.name;
+      if (waState.filterLabelId === label.id) {
+        pill.style.background = label.color;
+        pill.style.borderColor = 'transparent';
+      } else {
+        pill.style.borderColor = label.color;
+        pill.style.color = label.color;
+      }
+      pill.addEventListener('click', function() {
+        if (waState.filterLabelId === label.id) {
+          waState.filterLabelId = null;
+        } else {
+          waState.filterLabelId = label.id;
+        }
+        waFilterConversations();
+        renderWhatsApp();
+      });
+      labelFilters.appendChild(pill);
+    });
+
+    listPanel.appendChild(labelFilters);
+  }
 
   // Multi-select toolbar (shown when in select mode)
   if (waState.multiSelect) {
