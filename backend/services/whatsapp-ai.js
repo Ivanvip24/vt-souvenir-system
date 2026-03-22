@@ -214,7 +214,7 @@ function lookupProductionCost(productName, products) {
  * @param {string} responseText - The raw text from Claude
  * @returns {Object} { cleanReply, intent, orderJson }
  */
-function parseAIResponse(responseText) {
+async function parseAIResponse(responseText) {
   let intent = 'general';
   let orderJson = null;
   let cleanReply = responseText;
@@ -341,6 +341,40 @@ function parseAIResponse(responseText) {
     cleanReply = cleanReply.replace(/\[REACT\].*?\[\/REACT\]/s, '').trim();
   }
 
+  // Extract CHECK_SHIPPING block — looks up real shipping cost via Skydropx
+  let shippingCheckResult = null;
+  const shippingMatch = cleanReply.match(/\[CHECK_SHIPPING\](.*?)\[\/CHECK_SHIPPING\]/s);
+  if (shippingMatch) {
+    try {
+      const shippingData = JSON.parse(shippingMatch[1].trim());
+      const zip = shippingData.zip || shippingData.postal_code || shippingData.cp;
+      if (zip) {
+        console.log(`📦 Checking shipping for zip: ${zip}`);
+        const { getQuote } = await import('./skydropx.js');
+        const quote = await getQuote({ zip, city: shippingData.city || '', state: shippingData.state || '' });
+        if (quote.rates && quote.rates.length > 0) {
+          const cheapest = quote.rates[0];
+          const isExtended = cheapest.total_price > 250;
+          shippingCheckResult = {
+            zip,
+            carrier: cheapest.carrier,
+            price: cheapest.total_price,
+            days: cheapest.days,
+            isExtended,
+            available: true
+          };
+          console.log(`📦 Shipping to ${zip}: $${cheapest.total_price} via ${cheapest.carrier} (extended: ${isExtended})`);
+        } else {
+          shippingCheckResult = { zip, available: false, isExtended: true };
+          console.log(`📦 No shipping rates available for zip: ${zip}`);
+        }
+      }
+    } catch (err) {
+      console.error('📦 Shipping check error:', err.message);
+    }
+    cleanReply = cleanReply.replace(/\[CHECK_SHIPPING\].*?\[\/CHECK_SHIPPING\]/s, '').trim();
+  }
+
   // Extract REQUEST_LOCATION block
   let locationRequest = null;
   const locationMatch = cleanReply.match(/\[REQUEST_LOCATION\](.*?)\[\/REQUEST_LOCATION\]/s);
@@ -388,7 +422,7 @@ function parseAIResponse(responseText) {
     cleanReply = cleanReply.replace(/\[PAYMENT_RECEIPT\].*?\[\/PAYMENT_RECEIPT\]/s, '').trim();
   }
 
-  return { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest, paymentReceiptDetected };
+  return { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest, paymentReceiptDetected, shippingCheckResult };
 }
 
 /**
@@ -560,7 +594,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     }
 
     // Parse the response for intent and order blocks
-    const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest, paymentReceiptDetected } = parseAIResponse(rawReply);
+    const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest, paymentReceiptDetected, shippingCheckResult } = await parseAIResponse(rawReply);
 
     let actionTaken = null;
     let orderData = null;
@@ -759,6 +793,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       carouselCards,
       flowRequest: flowRequest || null,
       paymentReceiptDetected: paymentReceiptDetected || false,
+      shippingCheckResult: shippingCheckResult || null,
     };
 
   } catch (error) {

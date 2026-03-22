@@ -478,6 +478,24 @@ router.post('/webhook', (req, res) => {
       // Send text reply via Meta API
       await sendWhatsAppMessage(waId, replyText);
 
+      // Send shipping check result if available
+      if (aiResult.shippingCheckResult) {
+        const sc = aiResult.shippingCheckResult;
+        let shippingMsg;
+        if (!sc.available) {
+          shippingMsg = `⚠️ El código postal ${sc.zip} está en zona de cobertura limitada. Te recomiendo verificar con otra dirección o contactarnos para buscar opciones de envío.`;
+        } else if (sc.isExtended) {
+          shippingMsg = `📦 El envío a CP ${sc.zip} tiene un costo de *$${Math.round(sc.price)}* porque es zona extendida. El envío tarda aproximadamente ${sc.days || '5-7'} días hábiles.`;
+        } else {
+          shippingMsg = `📦 El envío a CP ${sc.zip} tiene un costo de *$${Math.round(sc.price)}* y tarda aproximadamente ${sc.days || '5-7'} días hábiles.`;
+        }
+        try {
+          await sendWhatsAppMessage(waId, shippingMsg);
+        } catch (shipErr) {
+          console.error('📦 Shipping message error:', shipErr.message);
+        }
+      }
+
       // Send product images if AI requested them
       for (const img of imagesToSend) {
         if (img.imageUrl) {
