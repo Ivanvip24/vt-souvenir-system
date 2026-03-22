@@ -137,6 +137,10 @@ TIEMPOS DE ENTREGA:
 | 1000+ | 13-14 |
 + 5-7 días de envío
 
+UBICACIÓN FÍSICA:
+Av. Morelos 26, Artes Gráficas, Venustiano Carranza, 15830 Ciudad de México, CDMX
+Cuando pregunten dónde estamos: "Estamos en Av. Morelos 26, Col. Artes Gráficas, CDMX. Pero enviamos a toda la República 🚚"
+
 LINKS OFICIALES:
 - Catálogo: https://axkan.art/productos
 - Pedido: https://axkan.art/pedidos
