@@ -12,15 +12,8 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB max file size
   },
   fileFilter: (req, file, cb) => {
-    // Accept images and PDFs only
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
-    const isHeic = file.originalname && /\.heic$/i.test(file.originalname);
-
-    if (allowedTypes.includes(file.mimetype) || isHeic) {
-      cb(null, true);
-    } else {
-      cb(new Error('Solo se permiten imágenes (JPG, PNG, GIF, WEBP, HEIC) o archivos PDF'), false);
-    }
+    // Accept all file types (images, PDFs, documents, etc.)
+    cb(null, true);
   }
 });
 

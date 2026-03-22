@@ -3434,7 +3434,7 @@ function buildChatViewDOM(parentEl) {
   var fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.id = 'wa-file-input';
-  fileInput.accept = 'image/jpeg,image/png,image/gif,image/webp,image/heic,application/pdf,.pdf';
+  fileInput.accept = '*/*';
   fileInput.style.display = 'none';
   parentEl.appendChild(fileInput);
 
@@ -3468,7 +3468,7 @@ function buildChatViewDOM(parentEl) {
   imgBtn.id = 'wa-img-btn';
   imgBtn.title = 'Adjuntar imagen';
   var imgBtnIcon = document.createElement('i');
-  imgBtnIcon.setAttribute('data-lucide', 'image');
+  imgBtnIcon.setAttribute('data-lucide', 'paperclip');
   imgBtnIcon.style.cssText = 'width:18px;height:18px;';
   imgBtn.appendChild(imgBtnIcon);
   inputArea.appendChild(imgBtn);
@@ -4077,7 +4077,6 @@ function bindChatEvents() {
       if (!files || files.length === 0) return;
 
       var file = files[0];
-      if (file.type.indexOf('image') === -1 && file.type !== 'application/pdf') return;
       attachImageFile(file);
     });
   }
@@ -4094,7 +4093,7 @@ function attachImageFile(file) {
     return;
   }
 
-  var isPdf = file.type === 'application/pdf' || (file.name && file.name.toLowerCase().endsWith('.pdf'));
+  var isImage = file.type && file.type.indexOf('image') !== -1;
 
   waState.pendingImageFile = file;
 
@@ -4104,17 +4103,17 @@ function attachImageFile(file) {
     strip.textContent = '';
     strip.style.display = 'flex';
 
-    if (isPdf) {
-      var pdfIcon = document.createElement('div');
-      pdfIcon.className = 'wa-img-preview-thumb';
-      pdfIcon.style.cssText = 'display:flex;align-items:center;justify-content:center;background:#fef2f2;font-size:20px;';
-      pdfIcon.textContent = '\uD83D\uDCC4';
-      strip.appendChild(pdfIcon);
-    } else {
+    if (isImage) {
       var thumb = document.createElement('img');
       thumb.className = 'wa-img-preview-thumb';
       thumb.src = URL.createObjectURL(file);
       strip.appendChild(thumb);
+    } else {
+      var fileIcon = document.createElement('div');
+      fileIcon.className = 'wa-img-preview-thumb';
+      fileIcon.style.cssText = 'display:flex;align-items:center;justify-content:center;background:#f3f4f6;font-size:20px;';
+      fileIcon.textContent = '\uD83D\uDCC4';
+      strip.appendChild(fileIcon);
     }
 
     var info = document.createElement('div');
@@ -4144,7 +4143,7 @@ function attachImageFile(file) {
     imgBtn.style.background = '#e72a88';
     imgBtn.style.color = '#fff';
     imgBtn.style.borderColor = '#e72a88';
-    imgBtn.title = isPdf ? 'PDF adjunto (click para quitar)' : 'Imagen adjunta (click para quitar)';
+    imgBtn.title = 'Archivo adjunto (click para quitar)';
   }
 }
 
