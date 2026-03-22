@@ -341,37 +341,10 @@ async function parseAIResponse(responseText) {
     cleanReply = cleanReply.replace(/\[REACT\].*?\[\/REACT\]/s, '').trim();
   }
 
-  // Extract CHECK_SHIPPING block — looks up real shipping cost via Skydropx
+  // Extract CHECK_SHIPPING block — just strip it, shipping info is in the prompt rules
   let shippingCheckResult = null;
   const shippingMatch = cleanReply.match(/\[CHECK_SHIPPING\](.*?)\[\/CHECK_SHIPPING\]/s);
   if (shippingMatch) {
-    try {
-      const shippingData = JSON.parse(shippingMatch[1].trim());
-      const zip = shippingData.zip || shippingData.postal_code || shippingData.cp;
-      if (zip) {
-        console.log(`📦 Checking shipping for zip: ${zip}`);
-        const { getQuote } = await import('./skydropx.js');
-        const quote = await getQuote({ zip, city: shippingData.city || '', state: shippingData.state || '' });
-        if (quote.rates && quote.rates.length > 0) {
-          const cheapest = quote.rates[0];
-          const isExtended = cheapest.total_price > 250;
-          shippingCheckResult = {
-            zip,
-            carrier: cheapest.carrier,
-            price: cheapest.total_price,
-            days: cheapest.days,
-            isExtended,
-            available: true
-          };
-          console.log(`📦 Shipping to ${zip}: $${cheapest.total_price} via ${cheapest.carrier} (extended: ${isExtended})`);
-        } else {
-          shippingCheckResult = { zip, available: false, isExtended: true };
-          console.log(`📦 No shipping rates available for zip: ${zip}`);
-        }
-      }
-    } catch (err) {
-      console.error('📦 Shipping check error:', err.message);
-    }
     cleanReply = cleanReply.replace(/\[CHECK_SHIPPING\].*?\[\/CHECK_SHIPPING\]/s, '').trim();
   }
 
