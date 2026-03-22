@@ -856,6 +856,14 @@ router.post('/webhook', (req, res) => {
 
             console.log(`📦 WhatsApp draft order created: ${orderNumber} — ${quantity}x ${productName} = $${totalPrice} for ${conv.client_name || waId}`);
 
+            // Learn from successful order for sales learning engine (fire-and-forget)
+            try {
+              const { learnFromOrder } = await import('../services/sales-learning-engine.js');
+              learnFromOrder(orderResult.rows[0].id).catch(err =>
+                console.error('🧠 Order learning error:', err.message)
+              );
+            } catch (e) {}
+
             // Send order confirmation + smart data collection
             try {
               // 1. Send order folio
@@ -1111,6 +1119,16 @@ router.post('/conversations/:id/reply', authMiddleware, async (req, res) => {
       'UPDATE whatsapp_conversations SET last_message_at = NOW(), updated_at = NOW() WHERE id = $1',
       [req.params.id]
     );
+
+    // Detect admin correction patterns for sales learning engine (fire-and-forget)
+    if (message) {
+      try {
+        const { detectCorrection } = await import('../services/sales-learning-engine.js');
+        detectCorrection(parseInt(req.params.id), message).catch(err =>
+          console.error('🧠 Correction detection error:', err.message)
+        );
+      } catch (e) {}
+    }
 
     res.json({ success: true });
   } catch (err) {

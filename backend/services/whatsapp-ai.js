@@ -469,7 +469,18 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     const history = await buildConversationHistory(conversationId);
 
     // Build the system prompt with current catalog
-    const systemPrompt = getSystemPrompt(products);
+    let systemPrompt = getSystemPrompt(products);
+
+    // Append dynamic sales learnings (non-blocking — degrades gracefully)
+    try {
+      const { buildDynamicPromptSection } = await import('./sales-learning-engine.js');
+      const dynamicLearnings = await buildDynamicPromptSection();
+      if (dynamicLearnings) {
+        systemPrompt += dynamicLearnings;
+      }
+    } catch (e) {
+      // Non-blocking — sales learning engine may not be available yet
+    }
 
     // Build the new incoming message content based on media context
     let userMessageContent;

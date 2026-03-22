@@ -307,7 +307,22 @@ export function initializeDesignerScheduler() {
   scheduledJobs.push(weeklyReportJob);
   console.log('  ✅ Weekly report: Sunday 9:00 AM (Mexico City)');
 
-  console.log('📋 Designer scheduler initialized (5 jobs)');
+  // 4. Nightly sales pattern analysis — 12 AM Mexico City
+  const nightlyAnalysisJob = cron.schedule('0 0 * * *', async () => {
+    try {
+      const { nightlyPatternAnalysis } = await import('./sales-learning-engine.js');
+      await nightlyPatternAnalysis();
+    } catch (err) {
+      console.error('🧠 Nightly analysis cron error:', err.message);
+    }
+  }, {
+    timezone: 'America/Mexico_City',
+    scheduled: true
+  });
+  scheduledJobs.push(nightlyAnalysisJob);
+  console.log('  ✅ Nightly sales analysis: 12:00 AM (Mexico City)');
+
+  console.log('📋 Designer scheduler initialized (6 jobs)');
 }
 
 /**

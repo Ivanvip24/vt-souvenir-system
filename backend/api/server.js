@@ -5770,6 +5770,26 @@ async function startServer() {
         // Mark all active designs as public (one-time seed)
         await query(`UPDATE design_gallery SET is_public = true WHERE (is_archived = false OR is_archived IS NULL) AND is_public = false`);
         console.log('✅ Design subscriptions tables ready');
+
+        // Credit system tables (020-design-credits)
+        await query(`ALTER TABLE design_subscribers ADD COLUMN IF NOT EXISTS credits_balance INTEGER DEFAULT 0`);
+        await query(`
+          CREATE TABLE IF NOT EXISTS credit_purchases (
+            id SERIAL PRIMARY KEY,
+            subscriber_id INTEGER REFERENCES design_subscribers(id) ON DELETE SET NULL,
+            credits INTEGER NOT NULL,
+            amount_mxn NUMERIC(10,2) NOT NULL,
+            pack_key VARCHAR(50) NOT NULL,
+            stripe_session_id VARCHAR(255),
+            stripe_payment_intent VARCHAR(255),
+            status VARCHAR(50) DEFAULT 'pending',
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          )
+        `);
+        await query(`CREATE INDEX IF NOT EXISTS idx_credit_purchases_subscriber ON credit_purchases(subscriber_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_credit_purchases_stripe ON credit_purchases(stripe_session_id)`);
+        await query(`ALTER TABLE design_download_log ADD COLUMN IF NOT EXISTS credits_spent INTEGER DEFAULT 1`);
+        console.log('✅ Design credits tables ready');
       } catch (e) {
         console.warn('⚠️ Design subscriptions migration skipped:', e.message);
       }
@@ -5818,6 +5838,15 @@ async function startServer() {
       console.log('✅ Sales coaching tables ready');
     } catch (scErr) {
       console.warn('⚠️  Sales coaching migration:', scErr.message);
+    }
+
+    // Run sales learnings migration (learning engine tables)
+    try {
+      const { migrate: migrateSalesLearnings } = await import('../migrations/add-sales-learnings.js');
+      await migrateSalesLearnings();
+      console.log('✅ Sales learnings tables ready');
+    } catch (slErr) {
+      console.warn('⚠️  Sales learnings migration:', slErr.message);
     }
 
     // Initialize Designer Task Tracking Scheduler (follow-ups + reports)
