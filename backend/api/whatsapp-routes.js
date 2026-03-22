@@ -483,7 +483,7 @@ router.post('/webhook', (req, res) => {
         const sc = aiResult.shippingCheckResult;
         let shippingMsg;
         if (sc.isExtended) {
-          shippingMsg = `📦 Tu código postal ${sc.zip} está en zona extendida, el envío tiene un costo adicional. Te confirmo el monto exacto en breve.`;
+          shippingMsg = `📦 Tu código postal ${sc.zip} está en zona extendida, el envío es más caro de lo normal.`;
         } else {
           shippingMsg = `📦 El envío a CP ${sc.zip} es zona normal. En pedidos de 300+ piezas el envío es gratis, de lo contrario son $210.`;
         }
