@@ -341,10 +341,25 @@ async function parseAIResponse(responseText) {
     cleanReply = cleanReply.replace(/\[REACT\].*?\[\/REACT\]/s, '').trim();
   }
 
-  // Extract CHECK_SHIPPING block — just strip it, shipping info is in the prompt rules
+  // Extract CHECK_SHIPPING block — check zip code against zonas extendidas list
   let shippingCheckResult = null;
   const shippingMatch = cleanReply.match(/\[CHECK_SHIPPING\](.*?)\[\/CHECK_SHIPPING\]/s);
   if (shippingMatch) {
+    try {
+      const shippingData = JSON.parse(shippingMatch[1].trim());
+      const zip = String(shippingData.zip || shippingData.postal_code || shippingData.cp || '').trim();
+      if (zip && zip.length === 5) {
+        const { readFileSync } = await import('fs');
+        const { join, dirname } = await import('path');
+        const { fileURLToPath } = await import('url');
+        const zonaData = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'zonas-extendidas.json'), 'utf-8'));
+        const isExtended = zonaData.codes.includes(zip);
+        shippingCheckResult = { zip, isExtended, available: true };
+        console.log(`📦 Shipping check: CP ${zip} — ${isExtended ? 'ZONA EXTENDIDA' : 'zona normal'}`);
+      }
+    } catch (err) {
+      console.error('📦 Shipping check error:', err.message);
+    }
     cleanReply = cleanReply.replace(/\[CHECK_SHIPPING\].*?\[\/CHECK_SHIPPING\]/s, '').trim();
   }
 

@@ -482,12 +482,10 @@ router.post('/webhook', (req, res) => {
       if (aiResult.shippingCheckResult) {
         const sc = aiResult.shippingCheckResult;
         let shippingMsg;
-        if (!sc.available) {
-          shippingMsg = `📦 El envío a CP ${sc.zip} tiene un costo especial por ser zona extendida. Déjame verificar el costo exacto y te confirmo.`;
-        } else if (sc.isExtended) {
-          shippingMsg = `📦 El envío a CP ${sc.zip} tiene un costo de *$${Math.round(sc.price)}* porque es zona extendida. El envío tarda aproximadamente ${sc.days || '5-7'} días hábiles.`;
+        if (sc.isExtended) {
+          shippingMsg = `📦 Tu código postal ${sc.zip} está en zona extendida, el envío tiene un costo adicional. Te confirmo el monto exacto en breve.`;
         } else {
-          shippingMsg = `📦 El envío a CP ${sc.zip} tiene un costo de *$${Math.round(sc.price)}* y tarda aproximadamente ${sc.days || '5-7'} días hábiles.`;
+          shippingMsg = `📦 El envío a CP ${sc.zip} es zona normal. En pedidos de 300+ piezas el envío es gratis, de lo contrario son $210.`;
         }
         try {
           await sendWhatsAppMessage(waId, shippingMsg);
