@@ -1140,6 +1140,23 @@ router.post('/conversations/:id/reply', authMiddleware, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /send — Send a message to any phone number (admin only)
+// ---------------------------------------------------------------------------
+router.post('/send', authMiddleware, async (req, res) => {
+  try {
+    const { to, message } = req.body;
+    if (!to || !message) {
+      return res.status(400).json({ success: false, error: 'to and message are required' });
+    }
+    await sendWhatsAppMessage(to, message);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('🟢 WhatsApp send error:', err);
+    res.status(500).json({ success: false, error: 'Failed to send message' });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // 6. PUT /conversations/:id/read — Mark conversation as read (auth required)
 // ---------------------------------------------------------------------------
 router.put('/conversations/:id/read', authMiddleware, async (req, res) => {
