@@ -302,6 +302,21 @@ router.post('/digest', async (req, res) => {
 });
 
 // =====================================================
+// POST /analyze — Trigger nightly pattern analysis now
+// =====================================================
+router.post('/analyze', async (req, res) => {
+  try {
+    const { nightlyPatternAnalysis } = await import('../services/sales-learning-engine.js');
+    await nightlyPatternAnalysis();
+    const learnings = await query('SELECT id, type, category, insight, confidence, applied FROM sales_learnings ORDER BY created_at DESC');
+    res.json({ success: true, totalLearnings: learnings.rows.length, learnings: learnings.rows });
+  } catch (err) {
+    console.error('Error triggering analysis:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // GET /conversations/active
 // Conversations needing analysis (new messages since last coaching)
 // =====================================================
