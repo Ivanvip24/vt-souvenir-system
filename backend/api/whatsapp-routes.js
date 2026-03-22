@@ -469,8 +469,10 @@ router.post('/webhook', (req, res) => {
       const intent = aiResult.intent || null;
       const summary = aiResult.summary || null;
       const imagesToSend = receiptHandled ? [] : (aiResult.imagesToSend || []); // No quote images if receipt
-      const listsToSend = aiResult.listsToSend || [];
-      const buttonsToSend = aiResult.buttonsToSend || [];
+      // DISABLED: Interactive lists/buttons make clients respond with short generic answers.
+      // Bot should talk like a real person — text only.
+      const listsToSend = [];
+      const buttonsToSend = [];
       const documentsToSend = receiptHandled ? [] : (aiResult.documentsToSend || []); // No quote PDFs if receipt
 
       // Send text reply via Meta API
@@ -550,8 +552,8 @@ router.post('/webhook', (req, res) => {
         }
       }
 
-      // Send product carousel if AI requested one
-      if (aiResult.carouselCards && aiResult.carouselCards.length > 0) {
+      // DISABLED: Carousels make conversations feel automated, not personal.
+      if (false && aiResult.carouselCards && aiResult.carouselCards.length > 0) {
         try {
           await sendWhatsAppCarousel(waId, aiResult.carouselCards);
         } catch (carouselErr) {
