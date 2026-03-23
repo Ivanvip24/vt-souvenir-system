@@ -13,7 +13,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Diseños Premium | AXKAN — Galería de Diseños Mexicanos</title>
-  <meta name="description" content="Explora nuestra galería de diseños premium inspirados en México. Suscríbete para descargar archivos originales de alta resolución para tus proyectos.">
+  <meta name="description" content="Explora nuestra galería de diseños premium inspirados en México. Compra créditos para descargar archivos originales de alta resolución para tus proyectos.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="/landing/shared-nav-footer.css">
 
   <meta property="og:title" content="AXKAN Diseños Premium — Galería de Arte Mexicano">
-  <meta property="og:description" content="Diseños premium inspirados en la cultura mexicana. Suscríbete para descargar originales en alta resolución.">
+  <meta property="og:description" content="Diseños premium inspirados en la cultura mexicana. Compra créditos para descargar originales en alta resolución.">
   <meta property="og:image" content="/assets/LOGO-03.png">
   <meta property="og:type" content="website">
 
@@ -518,7 +518,7 @@ body {
   color: var(--ink-light);
 }
 
-/* ── SUBSCRIBE BANNER ───────────────────── */
+/* ── CREDITS BANNER ────────────────────── */
 
 .subscribe-banner {
   max-width: 1320px;
@@ -526,68 +526,156 @@ body {
   padding: 0 2rem;
 }
 
-.subscribe-banner-inner {
-  background: var(--ink);
-  border-radius: var(--radius-lg);
-  padding: 3rem;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 2rem;
-  position: relative;
-  overflow: hidden;
+.credits-section-inner {
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
-.subscribe-banner-inner::before {
-  content: '';
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(231,42,136,0.2), transparent);
-  right: -80px;
-  top: -80px;
-  pointer-events: none;
-}
-
-.subscribe-text h2 {
+.credits-section-inner h2 {
   font-family: 'RL Aqva', 'Arial Black', sans-serif;
-  font-size: 1.8rem;
-  color: white;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  color: var(--ink);
   margin-bottom: 0.5rem;
 }
 
-.subscribe-text h2 span {
+.credits-section-inner h2 span {
   color: var(--rosa);
 }
 
-.subscribe-text p {
-  color: rgba(255,255,255,0.55);
+.credits-section-inner p {
+  color: var(--ink-light);
   font-size: 0.95rem;
-  line-height: 1.6;
+  max-width: 540px;
+  margin: 0 auto;
 }
 
-.subscribe-text ul {
-  list-style: none;
-  margin-top: 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+.credit-packs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.subscribe-text li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: rgba(255,255,255,0.7);
+.credit-pack-card {
+  background: white;
+  border: 2px solid rgba(0,0,0,0.06);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  cursor: pointer;
+}
+
+.credit-pack-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+  border-color: var(--rosa);
+}
+
+.credit-pack-card.popular {
+  border-color: var(--rosa);
+  box-shadow: 0 8px 30px rgba(231,42,136,0.15);
+}
+
+.pack-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--rosa);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px 16px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pack-credits {
+  font-family: 'RL Aqva', 'Arial Black', sans-serif;
+  font-size: 2.4rem;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.pack-label {
   font-size: 0.85rem;
+  color: var(--ink-light);
+  margin-bottom: 1rem;
 }
 
-.subscribe-text li svg {
-  width: 16px;
-  height: 16px;
+.pack-price {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+
+.pack-price small {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--ink-light);
+}
+
+.pack-per-credit {
+  font-size: 0.78rem;
   color: var(--verde);
-  flex-shrink: 0;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.pack-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border-radius: 100px;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.credit-pack-card .pack-btn {
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.credit-pack-card.popular .pack-btn {
+  background: var(--rosa);
+  color: white;
+}
+
+.pack-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.credit-pack-card.popular .pack-btn:hover {
+  box-shadow: 0 4px 15px rgba(231,42,136,0.35);
+}
+
+/* Credit balance badge in toolbar */
+.credits-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  background: rgba(138,183,59,0.12);
+  color: var(--verde);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.credits-badge svg {
+  width: 12px;
+  height: 12px;
 }
 
 .btn-subscribe-big {
@@ -604,11 +692,7 @@ body {
   white-space: nowrap;
   position: relative;
   z-index: 1;
-}
-
-.btn-subscribe-big:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(231,42,136,0.4);
+  display: none;
 }
 
 /* ── AUTH MODAL ─────────────────────────── */
@@ -827,18 +911,13 @@ body {
     padding: 0 1rem;
   }
 
-  .subscribe-banner-inner {
+  .credit-packs-grid {
     grid-template-columns: 1fr;
-    padding: 2rem;
-    text-align: center;
+    max-width: 340px;
   }
 
-  .subscribe-text ul {
-    justify-content: center;
-  }
-
-  .btn-subscribe-big {
-    width: 100%;
+  .credit-pack-card.popular {
+    order: -1;
   }
 }
 
@@ -918,7 +997,7 @@ body {
         Galería Premium
       </div>
       <h1>Diseños que <span>capturan</span> la esencia de México</h1>
-      <p class="hero-sub">Explora nuestra colección de arte mexicano premium. Suscríbete para descargar archivos originales en alta resolución.</p>
+      <p class="hero-sub">Explora nuestra colección de arte mexicano premium. Compra créditos para descargar archivos originales en alta resolución.</p>
     </div>
   </section>
 
@@ -934,7 +1013,7 @@ body {
       <div class="toolbar-cats" id="categoryTabs"></div>
       <div class="user-bar" id="userBar">
         <button class="btn-login" id="btnLogin">Iniciar Sesión</button>
-        <button class="btn-subscribe" id="btnSubscribeSmall">Suscribirse</button>
+        <button class="btn-subscribe" id="btnSubscribeSmall">Comprar Créditos</button>
         <button class="btn-user" id="btnUser"></button>
       </div>
     </div>
@@ -963,31 +1042,35 @@ body {
        SUBSCRIBE BANNER
        ════════════════════════════════════════ -->
   <section class="subscribe-banner" id="subscribeBanner">
-    <div class="subscribe-banner-inner">
-      <div class="subscribe-text">
-        <h2>Acceso <span>Premium</span> a todos los diseños</h2>
-        <p>Descarga archivos originales en alta resolución, sin marcas de agua, listos para tu negocio.</p>
-        <ul>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Descargas ilimitadas
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Sin marcas de agua
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Nuevos diseños cada semana
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Alta resolución
-          </li>
-        </ul>
-      </div>
-      <button class="btn-subscribe-big" id="btnSubscribeBig">Suscribirse Ahora</button>
+    <div class="credits-section-inner">
+      <h2>Compra <span>créditos</span> para descargar diseños</h2>
+      <p>Cada crédito te permite descargar 1 diseño original en alta resolución, sin marcas de agua.</p>
     </div>
+    <div class="credit-packs-grid" id="creditPacksGrid">
+      <div class="credit-pack-card" data-pack="pack_10">
+        <div class="pack-credits">10</div>
+        <div class="pack-label">créditos</div>
+        <div class="pack-price">$99 <small>MXN</small></div>
+        <div class="pack-per-credit">$9.90 por diseño</div>
+        <button class="pack-btn" onclick="doPurchase('pack_10')">Comprar</button>
+      </div>
+      <div class="credit-pack-card popular" data-pack="pack_25">
+        <div class="pack-badge">Popular</div>
+        <div class="pack-credits">25</div>
+        <div class="pack-label">créditos</div>
+        <div class="pack-price">$199 <small>MXN</small></div>
+        <div class="pack-per-credit">$7.96 por diseño</div>
+        <button class="pack-btn" onclick="doPurchase('pack_25')">Comprar</button>
+      </div>
+      <div class="credit-pack-card" data-pack="pack_50">
+        <div class="pack-credits">50</div>
+        <div class="pack-label">créditos</div>
+        <div class="pack-price">$349 <small>MXN</small></div>
+        <div class="pack-per-credit">$6.98 por diseño</div>
+        <button class="pack-btn" onclick="doPurchase('pack_50')">Comprar</button>
+      </div>
+    </div>
+    <button class="btn-subscribe-big" id="btnSubscribeBig" style="display:none;"></button>
   </section>
 
   <!-- ════════════════════════════════════════
@@ -1247,14 +1330,14 @@ body {
       img.loading = 'lazy';
       imageWrap.appendChild(img);
 
-      var isActive = subscriber && subscriber.subscription_status === 'active';
+      var hasCredits = subscriber && subscriber.credits_balance > 0;
 
-      if (isActive) {
+      if (hasCredits) {
         // Download button
         var dlBtn = document.createElement('button');
         dlBtn.className = 'card-download-btn';
         dlBtn.style.display = 'flex';
-        dlBtn.title = 'Descargar original';
+        dlBtn.title = 'Descargar original (1 crédito)';
         dlBtn.appendChild(createDownloadSVG());
         dlBtn.addEventListener('click', function(e) {
           e.stopPropagation();
@@ -1267,7 +1350,7 @@ body {
         lockOverlay.className = 'card-lock-overlay';
         lockOverlay.appendChild(createLockSVG());
         var lockText = document.createElement('span');
-        lockText.textContent = 'Suscríbete para descargar';
+        lockText.textContent = 'Compra créditos para descargar';
         lockOverlay.appendChild(lockText);
         imageWrap.appendChild(lockOverlay);
       }
@@ -1345,13 +1428,35 @@ body {
     // ── Download ─────────────────────────────
 
     function downloadDesign(designId) {
+      if (!subscriber) {
+        showModal(false);
+        return;
+      }
+      if (subscriber.credits_balance < 1) {
+        var banner = document.getElementById('subscribeBanner');
+        if (banner) banner.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+
       apiGet('/' + designId + '/download')
         .then(function(data) {
           if (data.error) {
-            alert(data.error);
+            if (data.credits_balance === 0) {
+              subscriber.credits_balance = 0;
+              updateUI();
+              var banner = document.getElementById('subscribeBanner');
+              if (banner) banner.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              alert(data.error);
+            }
             return;
           }
           if (data.download_url) {
+            // Update local credit balance
+            if (typeof data.credits_remaining === 'number') {
+              subscriber.credits_balance = data.credits_remaining;
+              updateUI();
+            }
             var a = document.createElement('a');
             a.href = data.download_url;
             a.target = '_blank';
@@ -1369,24 +1474,35 @@ body {
     // ── Auth UI ──────────────────────────────
 
     function updateUI() {
+      // Remove any existing credits badge
+      var existingBadge = document.getElementById('creditsBadge');
+      if (existingBadge) existingBadge.parentNode.removeChild(existingBadge);
+
       if (subscriber) {
         btnLogin.style.display = 'none';
         btnUser.style.display = 'inline-flex';
         btnUser.textContent = subscriber.name || subscriber.email.split('@')[0];
 
-        if (subscriber.subscription_status === 'active') {
+        if (subscriber.credits_balance > 0) {
           btnSubscribeSmall.style.display = 'none';
-          document.getElementById('subscribeBanner').style.display = 'none';
+          // Show credits badge
+          var badge = document.createElement('span');
+          badge.className = 'credits-badge';
+          badge.id = 'creditsBadge';
+          badge.textContent = subscriber.credits_balance + ' crédito' + (subscriber.credits_balance !== 1 ? 's' : '');
+          btnUser.parentNode.insertBefore(badge, btnUser);
         } else {
           btnSubscribeSmall.style.display = 'inline-flex';
-          btnSubscribeSmall.textContent = 'Suscribirse';
+          btnSubscribeSmall.textContent = 'Comprar Créditos';
         }
       } else {
         btnLogin.style.display = 'inline-flex';
         btnSubscribeSmall.style.display = 'inline-flex';
         btnUser.style.display = 'none';
-        document.getElementById('subscribeBanner').style.display = 'block';
       }
+
+      // Always show credits banner (it's the pricing section)
+      document.getElementById('subscribeBanner').style.display = 'block';
 
       // Re-render cards to update lock/download state
       renderDesigns();
@@ -1473,17 +1589,18 @@ body {
       }
     }
 
-    // ── Stripe Subscribe ─────────────────────
+    // ── Credit Purchase ─────────────────────
 
-    function doSubscribe() {
+    // Expose globally for onclick handlers on pack cards
+    window.doPurchase = function(packKey) {
       if (!subscriber) {
         showModal(false);
         return;
       }
-      apiPost('/subscribe', {})
+      apiPost('/credits/purchase', { pack_key: packKey })
         .then(function(data) {
-          if (data.url) {
-            window.location.href = data.url;
+          if (data.checkout_url) {
+            window.location.href = data.checkout_url;
           } else if (data.error) {
             alert(data.error);
           }
@@ -1491,11 +1608,24 @@ body {
         .catch(function() {
           alert('Error al conectar con el servicio de pago.');
         });
-    }
+    };
 
     // ── Initialize ───────────────────────────
 
     function init() {
+      // Check for credits purchase success/cancel
+      var urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('credits') === 'success') {
+        // Show success toast
+        var toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);background:var(--verde,#8ab73b);color:white;padding:12px 28px;border-radius:100px;font-weight:600;font-size:0.9rem;z-index:999;box-shadow:0 8px 30px rgba(0,0,0,0.15);animation:fadeSlideUp 0.4s ease both;';
+        toast.textContent = '¡Créditos agregados exitosamente!';
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; }, 4000);
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 4500);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
       // Check existing token
       if (token) {
         apiGet('/auth/me')
@@ -1544,16 +1674,17 @@ body {
     // ── Event Bindings ───────────────────────
 
     btnLogin.addEventListener('click', function() { showModal(true); });
-    btnSubscribeSmall.addEventListener('click', doSubscribe);
-    btnSubscribeBig.addEventListener('click', doSubscribe);
+    btnSubscribeSmall.addEventListener('click', function() {
+      var banner = document.getElementById('subscribeBanner');
+      if (banner) banner.scrollIntoView({ behavior: 'smooth' });
+    });
     btnUser.addEventListener('click', function() {
-      if (subscriber && subscriber.subscription_status === 'active') {
-        apiPost('/portal', {})
-          .then(function(data) {
-            if (data.url) window.location.href = data.url;
-          });
-      } else {
-        doSubscribe();
+      // Log out
+      if (confirm('¿Cerrar sesión?')) {
+        token = null;
+        subscriber = null;
+        localStorage.removeItem('axkan_design_token');
+        updateUI();
       }
     });
 
@@ -1614,5 +1745,13 @@ body {
   })();
   </script>
 <script src="/landing/global-search.js" defer></script>
+<!-- Floating WhatsApp Button -->
+<a href="https://wa.me/5215538253251?text=Hola!%20Me%20interesan%20los%20productos%20AXKAN" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Contáctanos por WhatsApp">
+    <span class="whatsapp-float-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </span>
+    <span class="whatsapp-float-label">Escríbenos</span>
+</a>
+
 </body>
 </html>
