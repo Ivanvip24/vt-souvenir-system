@@ -144,6 +144,18 @@ function switchView(viewName) {
         case 'department-queue':
             loadDepartmentQueue();
             break;
+        case 'my-designs':
+            // Load designs iframe on first visit
+            var iframe = document.getElementById('designs-iframe');
+            var loading = document.getElementById('designs-loading');
+            if (iframe && !iframe.src.includes('designs.html')) {
+                iframe.src = 'designs.html?embedded=1';
+                iframe.onload = function() {
+                    iframe.style.display = 'block';
+                    if (loading) loading.style.display = 'none';
+                };
+            }
+            break;
         case 'gallery':
             if (typeof loadGallery === 'function') loadGallery();
             break;
