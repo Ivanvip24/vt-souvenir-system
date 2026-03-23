@@ -27,8 +27,8 @@ router.get('/my-designs', employeeAuth, async (req, res) => {
     const result = await query(`
       SELECT da.*,
              o.order_number,
-             oi.product_type,
-             oi.destination,
+             oi.product_name,
+             da.specs->>'destination' as destination,
              oi.quantity,
              e.name as designer_name,
              (SELECT COUNT(*) FROM design_messages dm
@@ -74,8 +74,8 @@ router.get('/order/:orderId/designs', employeeAuth, async (req, res) => {
     const result = await query(`
       SELECT da.*,
              e.name as assigned_to_name,
-             oi.product_type,
-             oi.destination
+             oi.product_name,
+             da.specs->>'destination' as destination
       FROM design_assignments da
       LEFT JOIN employees e ON da.assigned_to = e.id
       LEFT JOIN order_items oi ON da.order_item_id = oi.id
@@ -102,8 +102,8 @@ router.get('/designs/:id', employeeAuth, async (req, res) => {
              o.order_number,
              o.status as order_status,
              o.created_at as order_created_at,
-             oi.product_type,
-             oi.destination,
+             oi.product_name,
+             da.specs->>'destination' as destination,
              oi.quantity,
              oi.custom_text,
              oi.notes as item_notes,
