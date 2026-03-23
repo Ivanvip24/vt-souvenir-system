@@ -47,6 +47,14 @@ async function runAllMigrations() {
     await runMigration('018-design-subscriptions.sql');
     await runMigration('019-add-follow-up-at.sql');
 
+    // JS-based migrations (export { migrate } pattern)
+    try {
+      const { migrate: migrateDesignPortal } = await import('../migrations/add-design-portal.js');
+      await migrateDesignPortal();
+    } catch (e) {
+      console.error('❌ Design Portal migration failed:', e.message);
+    }
+
     console.log('\n✨ All migrations completed successfully!');
 
   } catch (error) {

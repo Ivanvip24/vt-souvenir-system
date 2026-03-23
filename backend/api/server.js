@@ -53,6 +53,7 @@ import publicDesignRoutes from './public-design-routes.js';
 import * as facebookScheduler from '../services/facebook-scheduler.js';
 import { initializeDesignerScheduler, stopDesignerScheduler } from '../services/designer-scheduler.js';
 import designerTaskRoutes from './designer-routes.js';
+import designPortalRoutes from './design-portal-routes.js';
 import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
 import { generateCatalogPDF, getCatalogUrl } from '../services/catalog-generator.js';
 import pushService from '../services/push-notification.js';
@@ -522,6 +523,7 @@ app.use('/api/notes', notesRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/designer-tasks', designerTaskRoutes);
+app.use('/api/design-portal', designPortalRoutes);
 app.use('/api/coaching', coachingRoutes);
 // WhatsApp webhook must be public (Meta sends no JWT) — skip auth for /webhook only
 app.use('/api/whatsapp', (req, res, next) => {

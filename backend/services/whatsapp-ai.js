@@ -484,6 +484,29 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       return { reply: null, intent: null, skipped: true, reason: 'global_ai_disabled' };
     }
 
+    // ---- Design Portal: route client messages to design_messages (non-blocking) ----
+    try {
+      const activeAssignments = await query(
+        `SELECT id, order_id FROM design_assignments WHERE client_phone = $1 AND status NOT IN ('aprobado') LIMIT 1`,
+        [waId]
+      );
+      if (activeAssignments.rows.length > 0) {
+        const assignment = activeAssignments.rows[0];
+        const msgType = (mediaContext?.type === 'image') ? 'image' : 'text';
+        const msgContent = (mediaContext?.type === 'image' && mediaContext.cloudinaryUrl)
+          ? mediaContext.cloudinaryUrl
+          : messageText;
+        await query(
+          `INSERT INTO design_messages (design_assignment_id, order_id, sender_type, sender_name, message_type, content)
+           VALUES ($1, $2, 'client', $3, $4, $5)`,
+          [assignment.id, assignment.order_id, waId, msgType, msgContent]
+        );
+      }
+    } catch (designPortalErr) {
+      // Non-blocking — never break normal message processing
+      console.error('Design portal routing error (non-blocking):', designPortalErr.message);
+    }
+
     // Load product catalog from database
     const products = await loadProductCatalog();
 
