@@ -224,9 +224,11 @@ router.post('/messages/send', employeeAuth, async (req, res) => {
         } else {
           const { sendWhatsAppMessage } = await import('../services/whatsapp-api.js');
           const waResult = await sendWhatsAppMessage(clientPhone, prefixedContent);
-          if (waResult?.messages?.[0]?.id) {
+          console.log('WhatsApp send result:', JSON.stringify(waResult));
+          const waMessageId = waResult?.data?.messages?.[0]?.id || waResult?.messages?.[0]?.id;
+          if (waMessageId) {
             await query(`UPDATE design_messages SET wa_message_id = $1 WHERE id = $2`,
-              [waResult.messages[0].id, savedMessage.id]);
+              [waMessageId, savedMessage.id]);
           }
         }
       } catch (waError) {
