@@ -709,13 +709,54 @@ Cuando Iván pida generar una imagen o mockup de producto, usa:
 \`\`\`
 Estilos disponibles: product_mockup (foto de producto), design_layout (diseño plano), marketing (lifestyle/Instagram)
 
-Cuando pregunte cuánto costaría PRODUCIR un producto nuevo o hipotético que NO existe en el catálogo, usa:
+**CUÁNDO USAR estimate_product_cost (DESGLOSE DE COSTOS):**
+Usa estimate_product_cost cuando el usuario:
+- Pregunte cuánto cuesta PRODUCIR algo ("cuánto nos cuesta", "costo de producción", "cost for us")
+- Pida un **desglose** o breakdown de costos ("dame el desglose", "desglose de costos")
+- Mencione **dimensiones personalizadas** (ej: "imán de 14x14cm", "llavero de 10x5cm")
+- Pregunte por un producto nuevo o hipotético que NO existe en el catálogo
+- Pregunte "cuánto cuesta un imán de X tamaño" con medidas específicas
+- Quiera saber el margen de ganancia o rentabilidad
+
+**Ejemplos que DEBEN disparar estimate_product_cost:**
+- "Cuánto nos cuesta un imán de 14x14?" → estimate_product_cost con dimensions {width:14, height:14}
+- "Dame el desglose de un llavero" → estimate_product_cost
+- "Cuánto me cuesta producir 500 destapadores?" → estimate_product_cost con quantity 500
+- "Cuánto gano con cada imán?" → estimate_product_cost
+- "Quiero saber el costo real de un imán mediano" → estimate_product_cost
+
 \`\`\`action
-{ "type": "estimate_product_cost", "description": "imán 3D con 3 capas", "materials": ["MDF 3mm", "imán", "resina epóxica"], "dimensions": { "width": 7, "height": 5, "unit": "cm" }, "layers": 3, "finish": "resina", "quantity": 100 }
+{ "type": "estimate_product_cost", "description": "imán de 14x14cm", "materials": ["MDF 3mm", "imán de ferrita", "papel glossy", "laminado"], "dimensions": { "width": 14, "height": 14, "unit": "cm" }, "layers": 1, "finish": null, "quantity": 100 }
 \`\`\`
 IMPORTANTE: Usa nombres de materiales del inventario real (lista arriba). El sistema hará fuzzy match.
 
-Para productos EXISTENTES del catálogo, sigue usando calculate_price.
+**Materiales típicos por producto (usa estos como default si el usuario no especifica):**
+- **Imán MDF**: ["MDF 3mm", "imán de ferrita", "papel glossy", "laminado"]
+- **Llavero MDF**: ["MDF 3mm", "argolla para llavero", "papel glossy", "laminado"]
+- **Destapador MDF**: ["MDF 3mm", "destapador metálico", "papel glossy", "laminado"]
+- **Imán 3D**: ["MDF 3mm", "imán de ferrita", "papel glossy", "resina epóxica"]
+- **Portallaves**: ["MDF 6mm", "ganchos para llaves", "papel glossy", "laminado"]
+
+**Después del resultado, presenta así:**
+
+📊 **Desglose de costo — [producto] [dimensiones]**
+
+| Material | Costo/pza |
+|----------|----------|
+| MDF | $X.XX |
+| [material] | $X.XX |
+| Mano de obra | $X.XX |
+| Merma (X%) | $X.XX |
+| **Costo total** | **$X.XX/pza** |
+
+💰 **Precios sugeridos de venta:**
+- Bajo: $X.XX/pza (margen X%)
+- Medio: $X.XX/pza (margen X%)
+- Alto: $X.XX/pza (margen X%)
+
+📦 Costo total para [quantity] piezas: $X,XXX
+
+Para productos EXISTENTES del catálogo a PRECIOS ESTÁNDAR (sin desglose), sigue usando calculate_price.
 
 ## SECCIONES DEL SISTEMA:
 
