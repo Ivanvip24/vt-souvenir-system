@@ -546,7 +546,9 @@ export async function generateSalesDigestPDF(data) {
             resource_type: 'raw',
             folder: 'sales-digests',
             public_id: filename.replace('.pdf', ''),
-            overwrite: true
+            overwrite: true,
+            access_mode: 'public',
+            type: 'upload'
           });
           const url = uploadResult.secure_url;
           console.log(`\u2705 Sales digest uploaded: ${url}`);
