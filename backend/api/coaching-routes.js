@@ -340,6 +340,51 @@ router.post('/learnings', async (req, res) => {
 });
 
 // =====================================================
+// POST /simulate — Simulate a client message and get bot response (no WhatsApp send)
+// =====================================================
+router.post('/simulate', async (req, res) => {
+  try {
+    const { message, conversationId } = req.body;
+    if (!message) return res.status(400).json({ success: false, error: 'message required' });
+
+    const { processIncomingMessage } = await import('../services/whatsapp-ai.js');
+
+    // Use existing conversation or create temp one
+    let convId = conversationId;
+    if (!convId) {
+      const conv = await query(`
+        INSERT INTO whatsapp_conversations (wa_id, client_name, last_message_at)
+        VALUES ('SIM_' || NOW()::text, 'Simulación Test', NOW())
+        RETURNING id
+      `);
+      convId = conv.rows[0].id;
+    }
+
+    // Store client message
+    await query(`
+      INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content)
+      VALUES ($1, 'sim_' || NOW()::text, 'inbound', 'client', 'text', $2)
+    `, [convId, message]);
+
+    // Get AI response (won't send via WhatsApp — just returns the reply)
+    const result = await processIncomingMessage(convId, 'SIM_TEST', message);
+
+    // Store bot response
+    if (result.reply) {
+      await query(`
+        INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content)
+        VALUES ($1, 'sim_bot_' || NOW()::text, 'outbound', 'ai', 'text', $2)
+      `, [convId, result.reply]);
+    }
+
+    res.json({ success: true, conversationId: convId, reply: result.reply, intent: result.intent });
+  } catch (err) {
+    console.error('Simulation error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // POST /digest
 // Trigger sales digest manually
 // =====================================================
