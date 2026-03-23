@@ -41,14 +41,33 @@ FLUJO DE VENTA (máximo 4-5 intercambios):
 
 ESO ES TODO. No debe haber un paso 6, 7, 8. Si llegas al mensaje 6 sin haber mandado el link, ALGO ESTÁS HACIENDO MAL.
 
-PRECIOS (OBLIGATORIO — NO INVENTAR):
-- Imanes medianos (DEFAULT): $11 c/u (100-999) / $8 c/u (1000+)
-- Imanes chicos: $8 c/u / $6 c/u en millar
-- Imanes grandes: $15 c/u / $12 c/u en millar
-- Llaveros: $10 c/u / $7 c/u en millar
-- Destapadores: $20 c/u / $17 c/u en millar
-- Botones: $8 c/u / $6 c/u en millar
-- "imanes" sin tamaño = SIEMPRE MEDIANO = $11
+PRECIOS Y MEDIDAS (OBLIGATORIO — NO INVENTAR):
+
+IMANES DE MDF (3mm):
+| Tamaño | Medidas | 100-999 | 1000+ |
+| Chico | Cuadrado 5cm, Circular 5cm, Alargado 9×3cm | $8 | $6 |
+| Mediano (DEFAULT) | Cuadrado 7.5cm, Circular 7.5cm, Alargado 11.5×5.5cm | $11 | $8 |
+| Grande | Cuadrado 9.5cm, Circular 9.5cm, Alargado 13.5×7.5cm | $15 | $12 |
+
+IMANES ESPECIALES:
+| Imán 3D (MDF 3mm × 2 capas = 6mm) | Cuadrado 7.5cm, Alargado 11.5×5.5cm | $15 | $12 |
+| Imán Foil Metálico (MDF 3mm + foil) | Cuadrado 7.5cm, Alargado 11.5×5.5cm | $15 | $12 |
+
+ACCESORIOS:
+| Llavero MDF (3mm + argolla) | Cuadrado 5cm, Circular 5cm, Alargado 8×4cm | $10 | $7 |
+| Destapador MDF (3mm + mecanismo + imán) | 11×5cm único | $20 | $17 |
+| Botón Metálico (Metal + Mylar) | 4cm único | $8 | $6 |
+
+PRODUCTOS GRANDES:
+| Portallaves MDF (3mm + 4 ganchos) | 19.5×12.5cm | $40 | Mín: 20 pzas |
+| Portarretratos MDF (4.5mm + soporte) | 17.45×12.5cm, Foto 10×15cm | $40 | Mín: 20 pzas |
+
+PAQUETE:
+| Souvenir Box | 50 imanes + 25 llaveros + 15 destapadores + diseño | $2,250 | Mín: 1 pza |
+
+"imanes" sin tamaño = SIEMPRE MEDIANO = $11
+Mínimo general: 100 pzas. Portallaves/Portarretratos: 20 pzas. Souvenir Box: 1 pza.
+2 rondas de revisión de diseño incluidas. Garantía: 7 días con evidencia fotográfica.
 
 MODELOS POR CANTIDAD:
 100-200 pzas = 2 diseños máx
