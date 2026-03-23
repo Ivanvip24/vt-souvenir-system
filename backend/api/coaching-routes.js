@@ -263,6 +263,15 @@ router.get('/dashboard', async (req, res) => {
     const kpiRow = kpis.rows[0] || { total_pills: 0, followed: 0, responses: 0, orders: 0 };
     const revenueRow = revenue.rows[0] || { revenue: 0 };
 
+    // --- Bot learnings / insights ---
+    const learnings = await query(`
+      SELECT type, category, insight, evidence, confidence, times_validated, created_at
+      FROM sales_learnings
+      WHERE applied = true
+      ORDER BY times_validated DESC, created_at DESC
+      LIMIT 20
+    `);
+
     res.json({
       success: true,
       priorities: {
@@ -278,7 +287,8 @@ router.get('/dashboard', async (req, res) => {
         revenue: parseFloat(revenueRow.revenue),
         byType: byType.rows,
         weeklyTrend: weeklyTrend.rows
-      }
+      },
+      learnings: learnings.rows
     });
   } catch (error) {
     console.error('Error fetching dashboard data:', error);

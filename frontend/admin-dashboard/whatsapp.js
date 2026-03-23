@@ -5467,6 +5467,96 @@ function renderSalesDashboard(container, data) {
   Object.values(waState.salesCharts).forEach(function(c) { if (c && c.destroy) c.destroy(); });
   waState.salesCharts = {};
 
+  // === COACHING: Priorities + Scoreboard + Learnings ===
+  var coachData = waState.coachingDashboard;
+  if (coachData) {
+    var prios = coachData.priorities || {};
+    var coldLeads = prios.coldLeads || [];
+    var readyToClose = prios.readyToClose || [];
+    var waitingReply = prios.waitingReply || [];
+
+    // Priority groups
+    if (coldLeads.length > 0) container.appendChild(buildPriorityGroup('\uD83D\uDD34', 'Leads Fr\u00edos', coldLeads, 'cold'));
+    if (readyToClose.length > 0) container.appendChild(buildPriorityGroup('\uD83D\uDFE2', 'Listos para Cerrar', readyToClose, 'close'));
+    if (waitingReply.length > 0) container.appendChild(buildPriorityGroup('\uD83D\uDFE1', 'Esperando Tu Respuesta', waitingReply, 'waiting'));
+
+    // Scoreboard KPIs
+    var sb = coachData.scoreboard;
+    if (sb) {
+      var sbSection = document.createElement('div');
+      sbSection.className = 'wa-sales-scoreboard';
+      var sbHeader = document.createElement('div');
+      sbHeader.className = 'wa-sales-section-header';
+      sbHeader.textContent = 'RENDIMIENTO DE COACHING';
+      sbSection.appendChild(sbHeader);
+
+      var sbGrid = document.createElement('div');
+      sbGrid.className = 'wa-sales-grid-5';
+      sbGrid.appendChild(createSalesCard('PILLS ENVIADOS', sb.totalPills || 0, 'cyan'));
+      sbGrid.appendChild(createSalesCard('SEGUIDOS', sb.followed || 0, 'green'));
+      sbGrid.appendChild(createSalesCard('RESPUESTAS', sb.responses || 0, 'pink'));
+      sbGrid.appendChild(createSalesCard('PEDIDOS', sb.orders || 0, 'orange'));
+      sbGrid.appendChild(createSalesCard('REVENUE', '$' + ((sb.revenue || 0).toLocaleString('es-MX')), 'green'));
+      sbSection.appendChild(sbGrid);
+
+      // By type breakdown
+      var byType = sb.byType || [];
+      if (byType.length > 0) {
+        var typeDiv = document.createElement('div');
+        typeDiv.className = 'wa-coaching-type-breakdown';
+        var typeIcons = { cold_lead: '\uD83D\uDD25', change_technique: '\uD83D\uDD04', ready_to_close: '\u2705', missing_info: '\u2753' };
+        var typeNames = { cold_lead: 'Seguimiento', change_technique: 'Cambio t\u00e9cnica', ready_to_close: 'Cerrar venta', missing_info: 'Info faltante' };
+        byType.forEach(function(t) {
+          var row = document.createElement('div');
+          row.className = 'wa-coaching-type-row';
+          var pct = Math.round((t.rate || 0) * 100);
+          row.innerHTML = '<div class="wa-coaching-type-label">' + (typeIcons[t.type] || '') + ' ' + (typeNames[t.type] || t.type) + '</div>' +
+            '<div class="wa-coaching-type-bar-wrap"><div class="wa-coaching-type-bar" style="width:' + pct + '%"></div></div>' +
+            '<div class="wa-coaching-type-stat">' + (t.sent || 0) + ' \u2192 ' + (t.responded || 0) + ' (' + pct + '%)</div>';
+          typeDiv.appendChild(row);
+        });
+        sbSection.appendChild(typeDiv);
+      }
+      container.appendChild(sbSection);
+    }
+
+    // Learnings section
+    var learnings = coachData.learnings || [];
+    if (learnings.length > 0) {
+      var learnSection = document.createElement('div');
+      learnSection.className = 'wa-sales-scoreboard';
+      var learnHeader = document.createElement('div');
+      learnHeader.className = 'wa-sales-section-header';
+      learnHeader.textContent = '\uD83E\uDDE0 LO QUE EL BOT HA APRENDIDO';
+      learnSection.appendChild(learnHeader);
+
+      var learnList = document.createElement('div');
+      learnList.className = 'wa-coaching-type-breakdown';
+      var catIcons = { correction: '\uD83D\uDEA8', closing_pattern: '\u2705', pattern_insight: '\uD83D\uDCCA' };
+      var catColors = { correction: '#e72a88', closing_pattern: '#8ab73b', pattern_insight: '#09adc2' };
+      learnings.slice(0, 10).forEach(function(l) {
+        var row = document.createElement('div');
+        row.style.cssText = 'padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px;display:flex;align-items:flex-start;gap:8px;';
+        var icon = document.createElement('span');
+        icon.textContent = catIcons[l.type] || '\uD83D\uDCA1';
+        icon.style.flexShrink = '0';
+        var text = document.createElement('span');
+        text.textContent = l.insight;
+        text.style.color = '#555';
+        var badge = document.createElement('span');
+        badge.textContent = l.times_validated > 0 ? '\u00d7' + l.times_validated : '';
+        badge.style.cssText = 'flex-shrink:0;font-size:11px;color:#999;';
+        row.appendChild(icon);
+        row.appendChild(text);
+        row.appendChild(badge);
+        learnList.appendChild(row);
+      });
+      learnSection.appendChild(learnList);
+      container.appendChild(learnSection);
+    }
+  }
+
+  // === ANALYTICS DATA ===
   var overview = data.overview || {};
   var messageStats = data.messageStats || {};
   var responseTimePatterns = data.responseTimePatterns || {};
