@@ -271,7 +271,8 @@ function groupDesignsByOrder() {
             destination: d.destination,
             quantity: d.quantity,
             notes: d.notes || d.design_notes,
-            deadline: d.deadline || d.due_date
+            deadline: d.deadline || d.due_date,
+            designer_name: d.designer_name
         });
 
         if (d.has_unread_client_messages) {
@@ -339,8 +340,15 @@ function renderOrderList() {
         top.appendChild(createEl('span', 'order-date', dueStr));
         item.appendChild(top);
 
-        // Order number
-        item.appendChild(createEl('div', 'order-number', o.order_number));
+        // Order number + designer names for managers
+        var orderInfo = o.order_number;
+        var isManager = state.employee && (state.employee.role === 'manager' || state.employee.role === 'admin');
+        if (isManager && o.designs.length > 0) {
+            var names = [];
+            o.designs.forEach(function(d) { if (d.designer_name && names.indexOf(d.designer_name) === -1) names.push(d.designer_name); });
+            if (names.length > 0) orderInfo += ' · ' + names.join(', ');
+        }
+        item.appendChild(createEl('div', 'order-number', orderInfo));
 
         // Design pills
         var pills = createEl('div', 'order-pills');

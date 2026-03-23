@@ -19,6 +19,10 @@ const router = express.Router();
 router.get('/my-designs', employeeAuth, async (req, res) => {
   try {
     const designerId = req.employee.id;
+    const isManager = req.employee.role === 'manager' || req.employee.role === 'admin';
+
+    const whereClause = isManager ? '' : 'WHERE da.assigned_to = $1';
+    const params = isManager ? [] : [designerId];
 
     const result = await query(`
       SELECT da.*,
@@ -26,6 +30,7 @@ router.get('/my-designs', employeeAuth, async (req, res) => {
              oi.product_type,
              oi.destination,
              oi.quantity,
+             e.name as designer_name,
              (SELECT COUNT(*) FROM design_messages dm
               WHERE dm.order_id = da.order_id
                 AND dm.sender_type = 'client'
@@ -38,7 +43,8 @@ router.get('/my-designs', employeeAuth, async (req, res) => {
       FROM design_assignments da
       LEFT JOIN orders o ON da.order_id = o.id
       LEFT JOIN order_items oi ON da.order_item_id = oi.id
-      WHERE da.assigned_to = $1
+      LEFT JOIN employees e ON da.assigned_to = e.id
+      ${whereClause}
       ORDER BY
         CASE da.status
           WHEN 'cambios' THEN 1
@@ -49,7 +55,7 @@ router.get('/my-designs', employeeAuth, async (req, res) => {
         END,
         da.due_date ASC NULLS LAST,
         da.created_at DESC
-    `, [designerId]);
+    `, params);
 
     res.json({ success: true, designs: result.rows });
   } catch (error) {
