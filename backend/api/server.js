@@ -5851,6 +5851,15 @@ async function startServer() {
       console.warn('⚠️  Sales learnings migration:', slErr.message);
     }
 
+    // Run design portal migration (design_assignments + design_messages)
+    try {
+      const { migrate: migrateDesignPortal } = await import('../migrations/add-design-portal.js');
+      await migrateDesignPortal();
+      console.log('✅ Design portal tables ready');
+    } catch (dpErr) {
+      console.warn('⚠️  Design portal migration:', dpErr.message);
+    }
+
     // Initialize Designer Task Tracking Scheduler (follow-ups + reports)
     initializeDesignerScheduler();
 
