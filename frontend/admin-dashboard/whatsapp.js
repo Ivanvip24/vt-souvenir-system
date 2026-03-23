@@ -5476,7 +5476,6 @@ function renderSalesDashboard(container, data) {
     var waitingReply = prios.waitingReply || [];
 
     // Priority groups
-    if (coldLeads.length > 0) container.appendChild(buildPriorityGroup('\uD83D\uDD34', 'Leads Fr\u00edos', coldLeads, 'cold'));
     if (readyToClose.length > 0) container.appendChild(buildPriorityGroup('\uD83D\uDFE2', 'Listos para Cerrar', readyToClose, 'close'));
     if (waitingReply.length > 0) container.appendChild(buildPriorityGroup('\uD83D\uDFE1', 'Esperando Tu Respuesta', waitingReply, 'waiting'));
 
@@ -5534,7 +5533,7 @@ function renderSalesDashboard(container, data) {
       learnList.className = 'wa-coaching-type-breakdown';
       var catIcons = { correction: '\uD83D\uDEA8', closing_pattern: '\u2705', pattern_insight: '\uD83D\uDCCA' };
       var catColors = { correction: '#e72a88', closing_pattern: '#8ab73b', pattern_insight: '#09adc2' };
-      learnings.slice(0, 10).forEach(function(l) {
+      learnings.slice(0, 15).forEach(function(l) {
         var row = document.createElement('div');
         row.style.cssText = 'padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px;display:flex;align-items:flex-start;gap:8px;';
         var icon = document.createElement('span');
@@ -5542,7 +5541,72 @@ function renderSalesDashboard(container, data) {
         icon.style.flexShrink = '0';
         var text = document.createElement('span');
         text.textContent = l.insight;
-        text.style.color = '#555';
+        text.style.cssText = 'color:#555;flex:1;cursor:pointer;';
+        text.title = 'Click para editar';
+        // Click to edit
+        (function(textEl, learning) {
+          textEl.addEventListener('click', function() {
+            var input = document.createElement('textarea');
+            input.value = learning.insight;
+            input.style.cssText = 'width:100%;min-height:60px;font-size:13px;border:1.5px solid #e72a88;border-radius:8px;padding:8px;font-family:inherit;resize:vertical;';
+            var btnRow = document.createElement('div');
+            btnRow.style.cssText = 'display:flex;gap:8px;margin-top:6px;';
+            var saveBtn = document.createElement('button');
+            saveBtn.textContent = 'Guardar';
+            saveBtn.style.cssText = 'padding:4px 12px;background:#8ab73b;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;';
+            var cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancelar';
+            cancelBtn.style.cssText = 'padding:4px 12px;background:#eee;color:#555;border:none;border-radius:6px;cursor:pointer;font-size:12px;';
+            var deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Eliminar';
+            deleteBtn.style.cssText = 'padding:4px 12px;background:#e72a88;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;margin-left:auto;';
+            btnRow.appendChild(saveBtn);
+            btnRow.appendChild(cancelBtn);
+            btnRow.appendChild(deleteBtn);
+
+            textEl.style.display = 'none';
+            textEl.parentElement.appendChild(input);
+            textEl.parentElement.appendChild(btnRow);
+            input.focus();
+
+            cancelBtn.addEventListener('click', function() {
+              input.remove();
+              btnRow.remove();
+              textEl.style.display = '';
+            });
+
+            saveBtn.addEventListener('click', function() {
+              var newText = input.value.trim();
+              if (!newText) return;
+              fetch(API_BASE + '/coaching/learnings/' + learning.id, {
+                method: 'PUT',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
+                body: JSON.stringify({ insight: newText })
+              }).then(function(r) { return r.json(); }).then(function(d) {
+                if (d.success) {
+                  textEl.textContent = newText;
+                  learning.insight = newText;
+                  input.remove();
+                  btnRow.remove();
+                  textEl.style.display = '';
+                }
+              });
+            });
+
+            deleteBtn.addEventListener('click', function() {
+              if (!confirm('Eliminar esta regla?')) return;
+              fetch(API_BASE + '/coaching/learnings/' + learning.id, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+              }).then(function(r) { return r.json(); }).then(function(d) {
+                if (d.success) {
+                  row.remove();
+                }
+              });
+            });
+          });
+        })(text, l);
+
         var badge = document.createElement('span');
         badge.textContent = l.times_validated > 0 ? '\u00d7' + l.times_validated : '';
         badge.style.cssText = 'flex-shrink:0;font-size:11px;color:#999;';
@@ -5551,6 +5615,23 @@ function renderSalesDashboard(container, data) {
         row.appendChild(badge);
         learnList.appendChild(row);
       });
+
+      // Add new learning button
+      var addBtn = document.createElement('button');
+      addBtn.textContent = '+ Agregar regla';
+      addBtn.style.cssText = 'margin-top:12px;padding:8px 16px;background:#e72a88;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;';
+      addBtn.addEventListener('click', function() {
+        var newInsight = prompt('Nueva regla para el bot:');
+        if (!newInsight || !newInsight.trim()) return;
+        fetch(API_BASE + '/coaching/learnings', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
+          body: JSON.stringify({ insight: newInsight.trim(), type: 'correction', category: 'tone' })
+        }).then(function(r) { return r.json(); }).then(function(d) {
+          if (d.success) loadSalesAnalytics();
+        });
+      });
+      learnSection.appendChild(addBtn);
       learnSection.appendChild(learnList);
       container.appendChild(learnSection);
     }

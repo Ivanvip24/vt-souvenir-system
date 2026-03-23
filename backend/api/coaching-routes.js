@@ -297,6 +297,49 @@ router.get('/dashboard', async (req, res) => {
 });
 
 // =====================================================
+// PUT /learnings/:id — Update a learning's insight text
+// =====================================================
+router.put('/learnings/:id', async (req, res) => {
+  try {
+    const { insight } = req.body;
+    if (!insight) return res.status(400).json({ success: false, error: 'insight is required' });
+    await query('UPDATE sales_learnings SET insight = $1, updated_at = NOW() WHERE id = $2', [insight, req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
+// DELETE /learnings/:id — Remove a learning
+// =====================================================
+router.delete('/learnings/:id', async (req, res) => {
+  try {
+    await query('DELETE FROM sales_learnings WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
+// POST /learnings — Create a new learning (manual rule)
+// =====================================================
+router.post('/learnings', async (req, res) => {
+  try {
+    const { insight, type, category } = req.body;
+    if (!insight) return res.status(400).json({ success: false, error: 'insight is required' });
+    await query(`
+      INSERT INTO sales_learnings (type, category, insight, confidence, auto_adjustable, applied)
+      VALUES ($1, $2, $3, 'high', true, true)
+    `, [type || 'correction', category || 'tone', insight]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // POST /digest
 // Trigger sales digest manually
 // =====================================================
