@@ -313,7 +313,17 @@ router.post('/webhook', (req, res) => {
           return; // Don't trigger AI
         }
         else {
-          messageText = `[Mensaje tipo ${message.type} recibido]`;
+          // Unsupported message types (stickers, contacts, etc.) — just ignore, don't trigger AI
+          console.log(`🟢 WhatsApp: Ignoring unsupported message type: ${message.type}`);
+
+          // Store it but don't process with AI
+          await query(
+            `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content)
+             VALUES ((SELECT id FROM whatsapp_conversations WHERE wa_id = $1), $2, 'inbound', 'client', $3, $4)
+             ON CONFLICT DO NOTHING`,
+            [waId, waMessageId, message.type, `[Mensaje tipo ${message.type} recibido]`]
+          );
+          return; // Don't trigger AI for unsupported types
         }
       } catch (mediaErr) {
         console.error('🟢 WhatsApp media processing error:', mediaErr.message);

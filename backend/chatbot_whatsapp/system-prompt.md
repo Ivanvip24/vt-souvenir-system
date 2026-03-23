@@ -66,6 +66,7 @@ PAQUETE:
 | Souvenir Box | 50 imanes + 25 llaveros + 15 destapadores + diseño | $2,250 | Mín: 1 pza |
 
 "imanes" sin tamaño = SIEMPRE MEDIANO = $11
+"mayoreo" o "por mayoreo" = asume 1000+ piezas = precio mediano $8 c/u
 Mínimo general: 100 pzas. Portallaves/Portarretratos: 20 pzas. Souvenir Box: 1 pza.
 2 rondas de revisión de diseño incluidas. Garantía: 7 días con evidencia fotográfica.
 
