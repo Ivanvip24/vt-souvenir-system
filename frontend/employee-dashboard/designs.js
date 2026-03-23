@@ -733,10 +733,10 @@ async function sendTextMessage(text, designId) {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-            order_id: state.currentOrderId,
-            design_id: designId,
+            orderId: state.currentOrderId,
+            designAssignmentId: designId,
             content: text,
-            message_type: 'text'
+            messageType: 'text'
         })
     });
 
