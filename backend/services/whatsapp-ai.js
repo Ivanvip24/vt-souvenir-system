@@ -22,7 +22,43 @@ let currentModel = process.env.WHATSAPP_AI_MODEL || 'gpt-4.1-mini';
 let globalAiEnabled = true;
 
 export function getGlobalAiEnabled() { return globalAiEnabled; }
-export function setGlobalAiEnabled(enabled) { globalAiEnabled = !!enabled; console.log(`🤖 Global AI ${globalAiEnabled ? 'ENABLED' : 'DISABLED'}`); return globalAiEnabled; }
+export async function setGlobalAiEnabled(enabled) {
+  globalAiEnabled = !!enabled;
+  console.log(`🤖 Global AI ${globalAiEnabled ? 'ENABLED' : 'DISABLED'}`);
+  // Persist to DB so it survives server restarts
+  try {
+    const { query: dbQuery } = await import('../shared/database.js');
+    await dbQuery(`
+      INSERT INTO app_settings (key, value) VALUES ('global_ai_enabled', $1)
+      ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
+    `, [String(globalAiEnabled)]);
+  } catch (e) {
+    console.error('Failed to persist global AI state:', e.message);
+  }
+  return globalAiEnabled;
+}
+
+// Load persisted global AI state on startup
+(async function loadGlobalAiState() {
+  try {
+    const { query: dbQuery } = await import('../shared/database.js');
+    // Create settings table if not exists
+    await dbQuery(`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT,
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    const result = await dbQuery("SELECT value FROM app_settings WHERE key = 'global_ai_enabled'");
+    if (result.rows.length > 0) {
+      globalAiEnabled = result.rows[0].value === 'true';
+      console.log(`🤖 Global AI state loaded from DB: ${globalAiEnabled ? 'ENABLED' : 'DISABLED'}`);
+    }
+  } catch (e) {
+    console.error('Failed to load global AI state:', e.message);
+  }
+})();
 
 export function getAiModel() { return currentModel; }
 export function setAiModel(model) {
