@@ -259,8 +259,8 @@ const salesDigestsPath = path.join(__dirname, '../sales-digests');
 if (!fs.existsSync(salesDigestsPath)) {
   fs.mkdirSync(salesDigestsPath, { recursive: true });
 }
-app.use('/sales-digests', authMiddleware, express.static(salesDigestsPath));
-console.log(`📁 Serving sales digests from: ${salesDigestsPath} (auth protected)`);
+app.use('/sales-digests', express.static(salesDigestsPath));
+console.log(`📁 Serving sales digests from: ${salesDigestsPath} (public — WhatsApp needs direct access)`);
 
 // ========================================
 // HEALTH CHECK

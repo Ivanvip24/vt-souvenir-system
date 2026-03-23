@@ -539,26 +539,11 @@ export async function generateSalesDigestPDF(data) {
       // ── Finalize
       doc.end();
 
-      stream.on('finish', async () => {
-        try {
-          // Upload to Cloudinary for public URL (WhatsApp needs public HTTPS)
-          const uploadResult = await cloudinary.uploader.upload(filepath, {
-            resource_type: 'raw',
-            folder: 'sales-digests',
-            public_id: filename.replace('.pdf', ''),
-            overwrite: true,
-            access_mode: 'public',
-            type: 'upload'
-          });
-          const url = uploadResult.secure_url;
-          console.log(`\u2705 Sales digest uploaded: ${url}`);
-          resolve({ filepath, filename, url, pdfUrl: url });
-        } catch (uploadErr) {
-          // Fallback to local URL
-          const url = `${getBaseUrl()}/sales-digests/${filename}`;
-          console.log(`\u2705 Sales digest generated (local): ${filename}`);
-          resolve({ filepath, filename, url, pdfUrl: url });
-        }
+      stream.on('finish', () => {
+        // Serve directly from backend (no Cloudinary — it blocks raw PDFs)
+        const url = `${getBaseUrl()}/sales-digests/${filename}`;
+        console.log(`\u2705 Sales digest generated: ${url}`);
+        resolve({ filepath, filename, url, pdfUrl: url });
       });
 
       stream.on('error', reject);
