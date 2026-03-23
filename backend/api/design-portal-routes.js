@@ -177,14 +177,20 @@ router.post('/messages/send', employeeAuth, async (req, res) => {
     const designerName = req.employee.name;
     const designerId = req.employee.id;
 
-    // Find the client phone for this order's assignment
-    const assignmentResult = await query(`
-      SELECT client_phone FROM design_assignments
-      WHERE order_id = $1 AND status != 'aprobado'
-      LIMIT 1
-    `, [parseInt(orderId)]);
-
-    const clientPhone = assignmentResult.rows[0]?.client_phone;
+    // Find the client phone — use specific assignment if provided, else match by designer
+    let clientPhone;
+    if (designAssignmentId) {
+      const r = await query(`SELECT client_phone FROM design_assignments WHERE id = $1`, [parseInt(designAssignmentId)]);
+      clientPhone = r.rows[0]?.client_phone;
+    }
+    if (!clientPhone) {
+      const r = await query(`SELECT client_phone FROM design_assignments WHERE order_id = $1 AND assigned_to = $2 AND status != 'aprobado' LIMIT 1`, [parseInt(orderId), designerId]);
+      clientPhone = r.rows[0]?.client_phone;
+    }
+    if (!clientPhone) {
+      const r = await query(`SELECT client_phone FROM design_assignments WHERE order_id = $1 AND status != 'aprobado' LIMIT 1`, [parseInt(orderId)]);
+      clientPhone = r.rows[0]?.client_phone;
+    }
 
     // Save message to DB
     const msgResult = await query(`
