@@ -29,7 +29,8 @@ const waState = {
   salesData: null,
   salesCharts: {},
   pendingCoachingPillId: null,
-  filterLabelId: null
+  filterLabelId: null,
+  filterUnread: false
 };
 
 // ==========================================
@@ -1235,65 +1236,78 @@ function injectWhatsAppStyles() {
     /* Context menu */
     .wa-context-menu {
       position: fixed;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 14px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
-      border: 1px solid rgba(0,0,0,0.06);
-      padding: 8px;
-      z-index: 1000;
-      min-width: 220px;
-      animation: waContextFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      background: #fff;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 12px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 6px;
+      z-index: 10000;
+      min-width: 200px;
+      max-width: 260px;
+      max-height: calc(100vh - 20px);
+      overflow-y: auto;
+      animation: waContextFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wa-context-menu.open-up {
+      animation: waContextFadeInUp 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes waContextFadeIn {
-      from { opacity: 0; transform: scale(0.92) translateY(-4px); }
+      from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes waContextFadeInUp {
+      from { opacity: 0; transform: scale(0.95) translateY(6px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
     }
     .wa-context-item {
-      padding: 10px 14px;
+      padding: 9px 12px;
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       color: #1a1a1a;
       border-radius: 8px;
-      transition: all 0.12s ease;
+      transition: background 0.12s ease;
       letter-spacing: -0.01em;
+      white-space: nowrap;
     }
-    .wa-context-item:hover { background: #f0f0f0; transform: translateX(2px); }
-    .wa-context-item:active { transform: scale(0.98); }
+    .wa-context-item:hover { background: #f5f5f5; }
+    .wa-context-item:active { background: #ebebeb; }
     .wa-context-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
+      font-size: 14px;
       flex-shrink: 0;
     }
-    .wa-context-icon.labels { background: linear-gradient(135deg, #fce4ec, #f3e5f5); }
-    .wa-context-icon.pin { background: linear-gradient(135deg, #fff3e0, #fff8e1); }
-    .wa-context-icon.archive { background: linear-gradient(135deg, #e3f2fd, #e8eaf6); }
-    .wa-context-icon.delete { background: linear-gradient(135deg, #ffebee, #fce4ec); }
+    .wa-context-icon.labels { background: #fce4ec; }
+    .wa-context-icon.read { background: #e8f5e9; }
+    .wa-context-icon.pin { background: #fff8e1; }
+    .wa-context-icon.archive { background: #e3f2fd; }
+    .wa-context-icon.delete { background: #ffebee; }
     .wa-context-item.danger { color: #dc2626; }
-    .wa-context-item.danger:hover { background: #fff1f1; }
+    .wa-context-item.danger:hover { background: #fff5f5; }
     .wa-context-separator {
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
-      margin: 6px 8px;
+      background: #f0f0f0;
+      margin: 4px 8px;
     }
     .wa-context-submenu {
-      padding: 8px 12px;
+      padding: 6px 10px 8px;
     }
     .wa-context-submenu-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: #888;
+      font-size: 10px;
+      font-weight: 700;
+      color: #999;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 6px;
     }
     .wa-label-option {
@@ -2524,8 +2538,7 @@ function showConversationContextMenu(e, conv) {
   var unreadItem = document.createElement('div');
   unreadItem.className = 'wa-context-item';
   var unreadIcon = document.createElement('span');
-  unreadIcon.className = 'wa-context-icon';
-  unreadIcon.style.background = 'linear-gradient(135deg, #dbeafe, #e0e7ff)';
+  unreadIcon.className = 'wa-context-icon read';
   unreadIcon.textContent = conv.unread_count > 0 ? '\uD83D\uDC41' : '\uD83D\uDD35';
   unreadItem.appendChild(unreadIcon);
   unreadItem.appendChild(document.createTextNode(conv.unread_count > 0 ? 'Marcar como leido' : 'Marcar como no leido'));
@@ -2588,13 +2601,30 @@ function showConversationContextMenu(e, conv) {
 
   document.body.appendChild(menu);
 
-  // Keep menu within viewport
+  // Smart positioning: keep menu fully within viewport
   var rect = menu.getBoundingClientRect();
-  if (rect.right > window.innerWidth) {
-    menu.style.left = (window.innerWidth - rect.width - 8) + 'px';
+  var vw = window.innerWidth;
+  var vh = window.innerHeight;
+  var mx = e.clientX;
+  var my = e.clientY;
+  var mw = rect.width;
+  var mh = rect.height;
+
+  // Horizontal: prefer right of cursor, flip to left if needed
+  var posX = mx;
+  if (mx + mw > vw - 10) {
+    posX = Math.max(10, mx - mw);
   }
-  if (rect.bottom > window.innerHeight) {
-    menu.style.top = (window.innerHeight - rect.height - 8) + 'px';
+  menu.style.left = posX + 'px';
+
+  // Vertical: if menu would overflow bottom, open above the cursor
+  if (my + mh > vh - 10) {
+    var topPos = my - mh;
+    if (topPos < 10) topPos = 10;
+    menu.style.top = topPos + 'px';
+    menu.classList.add('open-up');
+  } else {
+    menu.style.top = my + 'px';
   }
 
   // Close on click outside
@@ -2687,6 +2717,12 @@ function waFilterConversations() {
   if (waState.filterLabelId) {
     waState.filteredConversations = waState.filteredConversations.filter(function(c) {
       return (c.labels || []).some(function(l) { return l.id === waState.filterLabelId; });
+    });
+  }
+  // Apply unread filter if active
+  if (waState.filterUnread) {
+    waState.filteredConversations = waState.filteredConversations.filter(function(c) {
+      return c.unread_count > 0;
     });
   }
 
@@ -2946,6 +2982,24 @@ function renderWhatsApp() {
       });
       labelFilters.appendChild(pill);
     });
+
+    // Unread filter pill
+    var unreadPill = document.createElement('button');
+    unreadPill.className = 'wa-label-filter-pill' + (waState.filterUnread ? ' active' : '');
+    unreadPill.textContent = 'No leídos';
+    if (waState.filterUnread) {
+      unreadPill.style.background = '#E91E63';
+      unreadPill.style.borderColor = 'transparent';
+    } else {
+      unreadPill.style.borderColor = '#E91E63';
+      unreadPill.style.color = '#E91E63';
+    }
+    unreadPill.addEventListener('click', function() {
+      waState.filterUnread = !waState.filterUnread;
+      waFilterConversations();
+      renderWhatsApp();
+    });
+    labelFilters.appendChild(unreadPill);
 
     listPanel.appendChild(labelFilters);
   }
