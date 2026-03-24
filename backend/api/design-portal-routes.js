@@ -180,13 +180,11 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
       return res.status(400).json({ success: false, error: 'orderId and file required' });
     }
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary — convert buffer to data URI
+    const b64 = req.file.buffer.toString('base64');
+    const dataUri = `data:${req.file.mimetype};base64,${b64}`;
     const folder = `design-portal/order-${orderId}`;
-    const uploadResult = await uploadImage(req.file.buffer, {
-      folder,
-      resource_type: 'auto',
-      public_id: `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-    });
+    const uploadResult = await uploadImage(dataUri, folder, `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`);
     const fileUrl = uploadResult.secure_url;
 
     const designerName = req.employee.name;
