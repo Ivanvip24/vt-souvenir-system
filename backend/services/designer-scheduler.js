@@ -92,7 +92,9 @@ export async function triggerDailyReport() {
     const { generateDailyReport } = await import('./designer-report-generator.js');
 
     const summary = await getDailySummary();
-    const { pdfUrl, filename } = await generateDailyReport(summary);
+    const reportResult = await generateDailyReport(summary);
+    const pdfUrl = reportResult.pdfUrl || reportResult.url;
+    const filename = reportResult.filename;
 
     const ivanPhone = process.env.IVAN_WHATSAPP_NUMBER;
     if (!ivanPhone) {
@@ -123,7 +125,9 @@ export async function triggerWeeklyReport() {
 
     const summary = await getWeeklySummary();
     const insights = await generateAIInsights(summary);
-    const { pdfUrl, filename } = await generateWeeklyReport(summary, insights);
+    const weeklyResult = await generateWeeklyReport(summary, insights);
+    const pdfUrl = weeklyResult.pdfUrl || weeklyResult.url;
+    const filename = weeklyResult.filename;
 
     const ivanPhone = process.env.IVAN_WHATSAPP_NUMBER;
     if (!ivanPhone) {
