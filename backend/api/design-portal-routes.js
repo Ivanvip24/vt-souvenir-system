@@ -235,6 +235,15 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
         }
       } catch (waError) {
         console.error('WhatsApp file send error:', waError.message);
+        // Fallback: send as text message with the file URL
+        try {
+          const { sendWhatsAppMessage } = await import('../services/whatsapp-api.js');
+          const fallbackText = `*${designerName}:*\n📎 ${req.file.originalname}\n${fileUrl}`;
+          await sendWhatsAppMessage(clientPhone, fallbackText);
+          console.log('WhatsApp fallback text sent with file URL');
+        } catch (fbErr) {
+          console.error('WhatsApp fallback also failed:', fbErr.message);
+        }
       }
     }
 
