@@ -1613,6 +1613,10 @@ function showShippingLabelModal(action) {
                             ${buttonDisabled} ${buttonTitle}>
                         💰 Cotizar Envío
                     </button>
+                    <button id="ai-recotizar-btn" onclick="getShippingQuotes()" class="ai-action-btn secondary"
+                            style="display: none;">
+                        🔄 Recotizar
+                    </button>
                     <button id="ai-create-btn" onclick="executeCreateShippingLabels()" class="ai-action-btn primary"
                             style="display: none;" disabled>
                         📦 Crear Guías
@@ -1724,11 +1728,17 @@ async function getShippingQuotes() {
         return;
     }
 
-    // Show loading state
-    const quoteBtn = document.getElementById('ai-quote-btn');
-    const originalText = quoteBtn.innerHTML;
-    quoteBtn.innerHTML = '⏳ Cotizando...';
-    quoteBtn.disabled = true;
+    // Show loading state — handle both initial quote and recotizar buttons
+    var quoteBtn = document.getElementById('ai-quote-btn');
+    var recotizarBtn = document.getElementById('ai-recotizar-btn');
+    var activeBtn = quoteBtn.style.display !== 'none' ? quoteBtn : recotizarBtn;
+    var originalText = activeBtn.innerHTML;
+    activeBtn.innerHTML = '⏳ Cotizando...';
+    activeBtn.disabled = true;
+
+    // Reset create button while re-quoting
+    var createBtn = document.getElementById('ai-create-btn');
+    if (createBtn) { createBtn.disabled = true; createBtn.style.display = 'none'; }
 
     try {
         const token = localStorage.getItem('admin_token');
@@ -1789,15 +1799,18 @@ async function getShippingQuotes() {
         ratesContainer.innerHTML = ratesHtml;
         ratesSection.style.display = 'block';
 
-        // Hide quote button, show create button (disabled until rate selected)
+        // Show recotizar button, hide original quote button, show create button
         quoteBtn.style.display = 'none';
+        var recotizarBtn = document.getElementById('ai-recotizar-btn');
+        if (recotizarBtn) recotizarBtn.style.display = 'inline-flex';
         document.getElementById('ai-create-btn').style.display = 'inline-flex';
+
 
     } catch (error) {
         console.error('Error getting quotes:', error);
         alert(`Error al cotizar: ${error.message}`);
-        quoteBtn.innerHTML = originalText;
-        quoteBtn.disabled = false;
+        activeBtn.innerHTML = originalText;
+        activeBtn.disabled = false;
     }
 }
 
