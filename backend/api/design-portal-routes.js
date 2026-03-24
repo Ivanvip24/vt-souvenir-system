@@ -221,62 +221,49 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
       clientPhone = r.rows[0]?.client_phone;
     }
 
-    // Send via WhatsApp — upload media directly to WhatsApp API, then send with media_id
+    // Send via WhatsApp using Cloudinary URL (already compressed/optimized)
     if (clientPhone) {
       try {
         const { metaApiFetch, getPhoneNumberId } = await import('../services/whatsapp-api.js');
+        const waCaption = `*${designerName}:*` + (caption ? ` ${caption}` : '');
 
-        // Step 1: Upload file to WhatsApp Media API
-        const FormData = (await import('node-fetch')).default ? null : null; // not needed
-        const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
-        const formData = new globalThis.FormData();
-        formData.append('messaging_product', 'whatsapp');
-        formData.append('file', blob, req.file.originalname);
-        formData.append('type', req.file.mimetype);
+        // Force .jpg extension on Cloudinary URL for WhatsApp compatibility
+        let waImageUrl = fileUrl;
+        if (isImage) {
+          // Replace any double extension and ensure clean .jpg URL
+          waImageUrl = fileUrl.replace(/\.[^/]+$/, '.jpg');
+          if (!waImageUrl.includes('.jpg')) waImageUrl = fileUrl + '.jpg';
+        }
 
-        const uploadResp = await metaApiFetch(`/${getPhoneNumberId()}/media`, {
+        const mediaType = isImage ? 'image' : 'document';
+        const mediaPayload = isImage
+          ? { link: waImageUrl, caption: waCaption }
+          : { link: fileUrl, caption: waCaption, filename: req.file.originalname };
+
+        console.log(`Sending WhatsApp ${mediaType} to ${clientPhone}, url: ${isImage ? waImageUrl : fileUrl}`);
+
+        const sendResp = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
           method: 'POST',
-          body: formData
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: clientPhone,
+            type: mediaType,
+            [mediaType]: mediaPayload
+          })
         });
 
-        if (uploadResp.ok) {
-          const uploadData = await uploadResp.json();
-          const mediaId = uploadData.id;
-          console.log('WhatsApp media uploaded, id:', mediaId);
-
-          // Step 2: Send message with media_id
-          const waCaption = caption ? `*${designerName}:* ${caption}` : `*${designerName}:*`;
-          const mediaType = isImage ? 'image' : 'document';
-          const mediaPayload = isImage
-            ? { id: mediaId, caption: waCaption }
-            : { id: mediaId, caption: waCaption, filename: req.file.originalname };
-
-          const sendResp = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              to: clientPhone,
-              type: mediaType,
-              [mediaType]: mediaPayload
-            })
-          });
-
-          if (sendResp.ok) {
-            const sendData = await sendResp.json();
-            const waMessageId = sendData?.messages?.[0]?.id;
-            if (waMessageId) await query(`UPDATE design_messages SET wa_message_id = $1 WHERE id = $2`, [waMessageId, savedMessage.id]);
-            console.log('WhatsApp media message sent successfully');
-          } else {
-            const errText = await sendResp.text();
-            console.error('WhatsApp media send failed:', errText);
-          }
+        if (sendResp.ok) {
+          const sendData = await sendResp.json();
+          const waMessageId = sendData?.messages?.[0]?.id;
+          if (waMessageId) await query(`UPDATE design_messages SET wa_message_id = $1 WHERE id = $2`, [waMessageId, savedMessage.id]);
+          console.log('WhatsApp media message sent successfully');
         } else {
-          const errText = await uploadResp.text();
-          console.error('WhatsApp media upload failed:', errText);
-          // Fallback: send file URL as text
+          const errText = await sendResp.text();
+          console.error('WhatsApp media send failed:', errText);
+          // Fallback: send as text with link
           const { sendWhatsAppMessage } = await import('../services/whatsapp-api.js');
-          await sendWhatsAppMessage(clientPhone, `*${designerName}:*\n📎 ${req.file.originalname}\n${fileUrl}`);
+          await sendWhatsAppMessage(clientPhone, `${waCaption}\n📎 ${req.file.originalname}\n${fileUrl}`);
         }
       } catch (waError) {
         console.error('WhatsApp file send error:', waError.message);
