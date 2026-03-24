@@ -227,12 +227,13 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
         const { metaApiFetch, getPhoneNumberId } = await import('../services/whatsapp-api.js');
         const waCaption = `*${designerName}:*` + (caption ? ` ${caption}` : '');
 
-        // Force .jpg extension on Cloudinary URL for WhatsApp compatibility
+        // Build a clean, compressed Cloudinary URL for WhatsApp
+        // Cloudinary URLs: .../image/upload/v123/folder/filename.ext
+        // Add transformation for max 1000px, quality 80, force jpg format
         let waImageUrl = fileUrl;
-        if (isImage) {
-          // Replace any double extension and ensure clean .jpg URL
-          waImageUrl = fileUrl.replace(/\.[^/]+$/, '.jpg');
-          if (!waImageUrl.includes('.jpg')) waImageUrl = fileUrl + '.jpg';
+        if (isImage && fileUrl.includes('cloudinary.com')) {
+          waImageUrl = fileUrl.replace('/image/upload/', '/image/upload/w_1000,q_80,f_jpg/');
+          console.log('Cloudinary compressed URL:', waImageUrl);
         }
 
         const mediaType = isImage ? 'image' : 'document';
