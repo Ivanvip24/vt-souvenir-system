@@ -21,7 +21,7 @@ async function ensureLabelsArchiveColumns() {
     }
   }
 }
-import { sendWhatsAppMessage, sendWhatsAppListMessage, sendWhatsAppButtonMessage, sendWhatsAppCTAMessage, sendWhatsAppReaction, sendWhatsAppLocationRequest, sendWhatsAppCarousel, sendWhatsAppFlow } from '../services/whatsapp-api.js';
+import { sendWhatsAppMessage, sendWhatsAppListMessage, sendWhatsAppButtonMessage, sendWhatsAppCTAMessage, sendWhatsAppReaction, sendWhatsAppLocationRequest, sendWhatsAppCarousel, sendWhatsAppFlow, sendWhatsAppVideo } from '../services/whatsapp-api.js';
 import {
   parseAssignment,
   createTask,
@@ -511,6 +511,35 @@ router.post('/webhook', (req, res) => {
             await sendWhatsAppImage(waId, img.imageUrl, img.productName || '');
           } catch (imgErr) {
             console.error('🟢 WhatsApp image send error:', imgErr.message);
+          }
+        }
+      }
+
+      // Auto-send product demo videos on first product inquiry
+      // Only send once per conversation to avoid spamming
+      if (intent === 'product_inquiry') {
+        const msgLower = (messageBody || '').toLowerCase();
+        const isAboutMagnets = msgLower.includes('iman') || msgLower.includes('imán') || msgLower.includes('imanes') || msgLower.includes('magneto') || msgLower.includes('magnet');
+        if (isAboutMagnets) {
+          try {
+            // Check if we already sent a video in this conversation
+            const videoSentCheck = await query(
+              `SELECT 1 FROM whatsapp_messages WHERE conversation_id = $1 AND message_type = 'video' AND sender = 'ai' LIMIT 1`,
+              [conversationId]
+            );
+            if (videoSentCheck.rows.length === 0) {
+              const videoUrl = 'https://res.cloudinary.com/dg1owvdhw/video/upload/v1774371945/axkan/product-videos/imanes-demo.mp4';
+              await sendWhatsAppVideo(waId, videoUrl, 'Así se ven nuestros imanes ✨');
+              // Store video message in DB
+              await query(
+                `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, media_url)
+                 VALUES ($1, $2, 'outbound', 'ai', 'video', 'Así se ven nuestros imanes ✨', $3)`,
+                [conversationId, 'video_' + Date.now(), videoUrl]
+              );
+              console.log(`📹 Auto-sent imanes demo video to ${waId}`);
+            }
+          } catch (vidErr) {
+            console.error('📹 Video auto-send error:', vidErr.message);
           }
         }
       }

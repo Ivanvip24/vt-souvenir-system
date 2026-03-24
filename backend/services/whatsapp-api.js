@@ -144,6 +144,42 @@ export async function sendWhatsAppMessage(to, text) {
 }
 
 /**
+ * Send a video via WhatsApp Cloud API using a public URL.
+ * @param {string} to - Recipient phone number
+ * @param {string} videoUrl - Public HTTPS URL of the video
+ * @param {string} [caption] - Optional caption text
+ * @returns {{ success: boolean, data?: object, error?: string }}
+ */
+export async function sendWhatsAppVideo(to, videoUrl, caption) {
+  try {
+    const body = {
+      messaging_product: 'whatsapp',
+      to,
+      type: 'video',
+      video: { link: videoUrl }
+    };
+    if (caption) body.video.caption = caption;
+
+    const response = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error('🟢 WhatsApp video send error:', data.error);
+      return { success: false, error: data.error };
+    }
+    console.log(`📹 Video sent to ${to}: ${videoUrl}`);
+    return { success: true, data };
+  } catch (err) {
+    console.error('📹 WhatsApp video send failed:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * Send a list message (radio-button menu) via WhatsApp Cloud API.
  * Max 10 rows total across all sections, row titles max 24 chars, button text max 20 chars.
  * @returns {{ success: boolean, data?: object, error?: string, fallbackText?: string }}
