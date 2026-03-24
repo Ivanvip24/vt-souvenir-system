@@ -730,12 +730,13 @@ Usa estimate_product_cost cuando el usuario:
 \`\`\`
 IMPORTANTE: Usa nombres de materiales del inventario real (lista arriba). El sistema hará fuzzy match.
 
-**Materiales típicos por producto (usa estos como default si el usuario no especifica):**
-- **Imán MDF**: ["MDF 3mm", "imán de ferrita", "papel glossy", "laminado"]
-- **Llavero MDF**: ["MDF 3mm", "argolla para llavero", "papel glossy", "laminado"]
-- **Destapador MDF**: ["MDF 3mm", "destapador metálico", "papel glossy", "laminado"]
-- **Imán 3D**: ["MDF 3mm", "imán de ferrita", "papel glossy", "resina epóxica"]
-- **Portallaves**: ["MDF 6mm", "ganchos para llaves", "papel glossy", "laminado"]
+**Materiales típicos por producto — USA LOS NOMBRES EXACTOS de la sección MATERIALES DISPONIBLES arriba:**
+- **Imán MDF**: ["MDF Board", "Circular Black Magnets"] (+ cualquier papel/laminado que veas en la lista de materiales)
+- **Llavero MDF**: ["MDF Board", "Circular Black Magnets"] (si no hay argollas en inventario, no las incluyas)
+- **Destapador MDF**: ["MDF Board"] (+ componentes metálicos si existen en inventario)
+- **Imán 3D**: ["MDF Board", "Circular Black Magnets"] (+ resina si existe)
+- **Portallaves**: ["MDF Board"] (+ ganchos si existen)
+REGLA: Solo incluye materiales cuyos nombres coincidan con los de la sección MATERIALES DISPONIBLES. Si un material no aparece ahí, NO lo incluyas — el sistema marcará "no encontrado" y la confianza bajará.
 
 **Después del resultado, presenta así:**
 
