@@ -520,14 +520,21 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       return { reply: null, intent: null, skipped: true, reason: 'global_ai_disabled' };
     }
 
-    // ---- Design Portal: route client messages to design_messages (non-blocking) ----
+    // ---- Design Portal: route client messages to design_messages ----
+    // If client has active design assignments, route to portal and SKIP AI reply
     try {
       const activeAssignments = await query(
-        `SELECT id, order_id FROM design_assignments WHERE client_phone = $1 AND status NOT IN ('aprobado') LIMIT 1`,
+        `SELECT da.id, da.order_id, c.name as client_name
+         FROM design_assignments da
+         LEFT JOIN whatsapp_conversations wc ON wc.wa_id = $1
+         LEFT JOIN clients c ON wc.client_id = c.id
+         WHERE da.client_phone = $1 AND da.status NOT IN ('aprobado')
+         LIMIT 1`,
         [waId]
       );
       if (activeAssignments.rows.length > 0) {
         const assignment = activeAssignments.rows[0];
+        const clientName = assignment.client_name || 'Cliente';
         const msgType = (mediaContext?.type === 'image') ? 'image' : 'text';
         const msgContent = (mediaContext?.type === 'image' && mediaContext.cloudinaryUrl)
           ? mediaContext.cloudinaryUrl
@@ -535,12 +542,15 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
         await query(
           `INSERT INTO design_messages (design_assignment_id, order_id, sender_type, sender_name, message_type, content)
            VALUES ($1, $2, 'client', $3, $4, $5)`,
-          [assignment.id, assignment.order_id, waId, msgType, msgContent]
+          [assignment.id, assignment.order_id, clientName, msgType, msgContent]
         );
+        console.log(`📋 Design portal: routed message from ${waId} to order ${assignment.order_id}, skipping AI`);
+        // Skip AI — designer handles this conversation
+        return { reply: null, intent: 'design_portal', skipped: true, reason: 'active_design_assignment' };
       }
     } catch (designPortalErr) {
-      // Non-blocking — never break normal message processing
       console.error('Design portal routing error (non-blocking):', designPortalErr.message);
+      // Continue with normal AI if routing fails
     }
 
     // Load product catalog from database
