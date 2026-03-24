@@ -187,7 +187,8 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
     // Strip extension from public_id to avoid double extensions (e.g. .png.jpg)
     const nameWithoutExt = req.file.originalname.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
     const uploadResult = await uploadImage(dataUri, folder, `${Date.now()}-${nameWithoutExt}`);
-    const fileUrl = uploadResult.secure_url;
+    const fileUrl = uploadResult.url || uploadResult.secure_url;
+    console.log('Cloudinary upload result URL:', fileUrl);
 
     const designerName = req.employee.name;
     const designerId = req.employee.id;
