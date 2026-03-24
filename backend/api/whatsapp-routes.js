@@ -516,27 +516,42 @@ router.post('/webhook', (req, res) => {
       }
 
       // Auto-send product demo videos on first product inquiry
-      // Only send once per conversation to avoid spamming
+      // Only sends once per video type per conversation to avoid spamming
       if (intent === 'product_inquiry') {
         const msgLower = (messageBody || '').toLowerCase();
-        const isAboutMagnets = msgLower.includes('iman') || msgLower.includes('imán') || msgLower.includes('imanes') || msgLower.includes('magneto') || msgLower.includes('magnet');
-        if (isAboutMagnets) {
+        const isAbout3D = msgLower.includes('3d') || msgLower.includes('tres d') || (msgLower.includes('foto') && msgLower.includes('3d')) || (msgLower.includes('imagen') && msgLower.includes('3d')) || (msgLower.includes('video') && msgLower.includes('3d')) || (msgLower.includes('muestra') && msgLower.includes('3d'));
+        const isAboutMagnets = !isAbout3D && (msgLower.includes('iman') || msgLower.includes('imán') || msgLower.includes('imanes') || msgLower.includes('magneto') || msgLower.includes('magnet') || msgLower.includes('foto') || msgLower.includes('imagen') || msgLower.includes('muestra') || msgLower.includes('ejemplo') || msgLower.includes('video'));
+
+        // Pick which video to send
+        let videoUrl = null;
+        let videoCaption = null;
+        let videoTag = null;
+
+        if (isAbout3D) {
+          videoUrl = 'https://res.cloudinary.com/dg1owvdhw/video/upload/v1774372205/axkan/product-videos/imanes-3d-demo.mp4';
+          videoCaption = 'Así se ven nuestros imanes 3D ✨';
+          videoTag = 'video_3d';
+        } else if (isAboutMagnets) {
+          videoUrl = 'https://res.cloudinary.com/dg1owvdhw/video/upload/v1774371945/axkan/product-videos/imanes-demo.mp4';
+          videoCaption = 'Así se ven nuestros imanes ✨';
+          videoTag = 'video_imanes';
+        }
+
+        if (videoUrl) {
           try {
-            // Check if we already sent a video in this conversation
+            // Check if we already sent THIS specific video in this conversation
             const videoSentCheck = await query(
-              `SELECT 1 FROM whatsapp_messages WHERE conversation_id = $1 AND message_type = 'video' AND sender = 'ai' LIMIT 1`,
-              [conversationId]
+              `SELECT 1 FROM whatsapp_messages WHERE conversation_id = $1 AND message_type = 'video' AND sender = 'ai' AND media_url = $2 LIMIT 1`,
+              [conversationId, videoUrl]
             );
             if (videoSentCheck.rows.length === 0) {
-              const videoUrl = 'https://res.cloudinary.com/dg1owvdhw/video/upload/v1774371945/axkan/product-videos/imanes-demo.mp4';
-              await sendWhatsAppVideo(waId, videoUrl, 'Así se ven nuestros imanes ✨');
-              // Store video message in DB
+              await sendWhatsAppVideo(waId, videoUrl, videoCaption);
               await query(
                 `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, media_url)
-                 VALUES ($1, $2, 'outbound', 'ai', 'video', 'Así se ven nuestros imanes ✨', $3)`,
-                [conversationId, 'video_' + Date.now(), videoUrl]
+                 VALUES ($1, $2, 'outbound', 'ai', 'video', $3, $4)`,
+                [conversationId, videoTag + '_' + Date.now(), videoCaption, videoUrl]
               );
-              console.log(`📹 Auto-sent imanes demo video to ${waId}`);
+              console.log(`📹 Auto-sent ${videoTag} to ${waId}`);
             }
           } catch (vidErr) {
             console.error('📹 Video auto-send error:', vidErr.message);
