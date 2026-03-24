@@ -173,7 +173,15 @@ ${orderStatus}
 
 ${mediaHandling}
 
-${responseExamples}`;
+${responseExamples}
+
+## REGLA ABSOLUTA — BREVEDAD (ESTO ANULA TODO LO ANTERIOR SI HAY CONFLICTO):
+Tu respuesta COMPLETA debe tener MÁXIMO 2 líneas de texto (no más de 120 caracteres por línea).
+Si tu respuesta tiene más de 3 líneas, ESTÁS FALLANDO. Reescríbela más corta.
+Ivan escribe en promedio 59 caracteres por mensaje. Los clientes escriben 31. Tú NUNCA debes pasar de 120.
+NO uses listas. NO uses viñetas. NO uses emojis como bullets. Escribe como WhatsApp real.
+Ejemplo de respuesta CORRECTA: "Son $8,800 con todo incluido, diseño y envío. Te paso la liga para confirmar 👇"
+Ejemplo de respuesta INCORRECTA: "¡Hola! Claro que sí, con gusto te ayudo. Te comento que nuestros imanes tienen un precio de $8 por pieza en pedidos de 1000 o más. El precio incluye diseño personalizado y envío nacional. Te comparto la liga para que puedas hacer tu pedido..."`;
 }
 
 /**
@@ -634,7 +642,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
 
       const oaiResponse = await oai.chat.completions.create({
         model: currentModel,
-        max_tokens: 1500,
+        max_tokens: 300,
         messages: oaiMessages
       });
       rawReply = oaiResponse.choices[0].message.content;
@@ -643,7 +651,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       const client = getClient();
       const response = await client.messages.create({
         model: currentModel,
-        max_tokens: 1500,
+        max_tokens: 300,
         system: systemPrompt,
         messages: sanitizedMessages
       });

@@ -302,16 +302,24 @@ export async function buildDynamicPromptSection() {
       LIMIT 45
     `);
 
-    if (learnings.rows.length === 0) return '';
+    // Ivan's proven patterns — always inject these as baseline
+    let section = `\n\n## PATRONES DE IVAN QUE CIERRAN VENTAS (PROBADOS):
+- Ivan cerró venta de $4,000 con mensajes de 1-2 líneas. Mensajes largos NO venden.
+- Nunca preguntes "¿en qué te puedo ayudar?" — da precio directo si preguntan por producto.
+- Cuando dicen cantidad + producto → precio total + liga. Sin más preguntas.
+- "Son $8,800 con todo incluido" cierra mejor que desglosar precio unitario + envío + diseño por separado.
+- Urgencia real: "Si confirmas hoy, te entregamos antes de Semana Santa" (usa la temporada actual).
+- Nunca digas "Me avisas" o "Tómate tu tiempo" — asume que van a comprar.
+- Cross-sell natural: "La mayoría pide imanes + llaveros, ¿te agrego unos llaveros también?"
+`;
 
+    // Append DB learnings if any exist
     const patterns = learnings.rows.filter(l => l.type === 'pattern_insight');
     const corrections = learnings.rows.filter(l => l.type === 'correction');
     const closings = learnings.rows.filter(l => l.type === 'closing_pattern');
 
-    let section = '\n\n## LO QUE HE APRENDIDO DE VENTAS REALES:\n';
-
     if (patterns.length > 0) {
-      section += '\n### Patrones (auto-ajustado):\n';
+      section += '\n### Patrones aprendidos:\n';
       patterns.slice(0, 15).forEach(p => { section += '- ' + p.insight + '\n'; });
     }
 
@@ -321,7 +329,7 @@ export async function buildDynamicPromptSection() {
     }
 
     if (closings.length > 0) {
-      section += '\n### Técnicas de cierre (de ventas reales):\n';
+      section += '\n### Técnicas de cierre:\n';
       closings.slice(0, 15).forEach(c => { section += '- ' + c.insight + '\n'; });
     }
 
