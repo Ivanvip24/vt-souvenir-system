@@ -504,9 +504,9 @@ router.post('/webhook', (req, res) => {
         }
       }
 
-      // Send product images if AI requested them
+      // Only send quote images (from Cloudinary), skip product catalog hero images
       for (const img of imagesToSend) {
-        if (img.imageUrl) {
+        if (img.imageUrl && img.imageUrl.includes('cloudinary.com')) {
           try {
             await sendWhatsAppImage(waId, img.imageUrl, img.productName || '');
           } catch (imgErr) {
