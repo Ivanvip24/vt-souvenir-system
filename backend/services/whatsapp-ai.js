@@ -529,7 +529,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
     }
 
     // ---- Design Portal: route client messages to design_messages ----
-    // If client has active design assignments, route to portal and SKIP AI reply
+    // If client has active design assignments, copy message to portal (but AI still replies)
     try {
       const activeAssignments = await query(
         `SELECT da.id, da.order_id, c.name as client_name
@@ -552,9 +552,8 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
            VALUES ($1, $2, 'client', $3, $4, $5)`,
           [assignment.id, assignment.order_id, clientName, msgType, msgContent]
         );
-        console.log(`📋 Design portal: routed message from ${waId} to order ${assignment.order_id}, skipping AI`);
-        // Skip AI — designer handles this conversation
-        return { reply: null, intent: 'design_portal', skipped: true, reason: 'active_design_assignment' };
+        console.log(`📋 Design portal: routed message from ${waId} to order ${assignment.order_id}, AI continues`);
+        // Don't skip AI — let it respond normally even during active design assignments
       }
     } catch (designPortalErr) {
       console.error('Design portal routing error (non-blocking):', designPortalErr.message);
