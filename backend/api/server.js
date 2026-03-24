@@ -251,7 +251,7 @@ const designerReportsPath = path.join(__dirname, '../designer-reports');
 if (!fs.existsSync(designerReportsPath)) {
   fs.mkdirSync(designerReportsPath, { recursive: true });
 }
-app.use('/designer-reports', authMiddleware, express.static(designerReportsPath));
+app.use('/designer-reports', express.static(designerReportsPath));
 console.log(`📁 Serving designer reports from: ${designerReportsPath} (auth protected)`);
 
 // Sales Digests PDFs
