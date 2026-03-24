@@ -4,7 +4,9 @@
  */
 
 import express from 'express';
+import multer from 'multer';
 import { query } from '../shared/database.js';
+import { uploadImage } from '../shared/cloudinary-config.js';
 import {
   employeeAuth,
   requireManager,
@@ -12,6 +14,12 @@ import {
 } from './middleware/employee-auth.js';
 
 const router = express.Router();
+
+// File upload config — accept all file types up to 10MB
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
 
 // ========================================
 // 1. GET /my-designs — designer's assigned designs
@@ -159,6 +167,84 @@ router.get('/messages/:orderId', employeeAuth, async (req, res) => {
   } catch (error) {
     console.error('Error fetching messages:', error);
     res.status(500).json({ success: false, error: 'Error al obtener mensajes' });
+  }
+});
+
+// ========================================
+// 4b. POST /messages/upload — upload file + send as message
+// ========================================
+router.post('/messages/upload', employeeAuth, upload.single('file'), async (req, res) => {
+  try {
+    const { orderId, designAssignmentId, caption } = req.body;
+    if (!orderId || !req.file) {
+      return res.status(400).json({ success: false, error: 'orderId and file required' });
+    }
+
+    // Upload to Cloudinary
+    const folder = `design-portal/order-${orderId}`;
+    const uploadResult = await uploadImage(req.file.buffer, {
+      folder,
+      resource_type: 'auto',
+      public_id: `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+    });
+    const fileUrl = uploadResult.secure_url;
+
+    const designerName = req.employee.name;
+    const designerId = req.employee.id;
+    const isImage = req.file.mimetype.startsWith('image/');
+    const messageType = isImage ? 'image' : 'file';
+
+    // Save message to DB
+    const msgResult = await query(`
+      INSERT INTO design_messages (design_assignment_id, order_id, sender_type, sender_id, sender_name, message_type, content)
+      VALUES ($1, $2, 'designer', $3, $4, $5, $6)
+      RETURNING *
+    `, [
+      designAssignmentId ? parseInt(designAssignmentId) : null,
+      parseInt(orderId),
+      designerId,
+      designerName,
+      messageType,
+      fileUrl
+    ]);
+
+    const savedMessage = msgResult.rows[0];
+
+    // Find client phone
+    let clientPhone;
+    if (designAssignmentId) {
+      const r = await query(`SELECT client_phone FROM design_assignments WHERE id = $1`, [parseInt(designAssignmentId)]);
+      clientPhone = r.rows[0]?.client_phone;
+    }
+    if (!clientPhone) {
+      const r = await query(`SELECT client_phone FROM design_assignments WHERE order_id = $1 AND assigned_to = $2 AND status != 'aprobado' LIMIT 1`, [parseInt(orderId), designerId]);
+      clientPhone = r.rows[0]?.client_phone;
+    }
+
+    // Send via WhatsApp
+    if (clientPhone) {
+      try {
+        if (isImage) {
+          const { sendWhatsAppImage } = await import('../services/whatsapp-media.js');
+          const waResult = await sendWhatsAppImage(clientPhone, fileUrl, caption ? `*${designerName}:* ${caption}` : `*${designerName}:*`);
+          const waId = waResult?.data?.messages?.[0]?.id || waResult?.messages?.[0]?.id;
+          if (waId) await query(`UPDATE design_messages SET wa_message_id = $1 WHERE id = $2`, [waId, savedMessage.id]);
+        } else {
+          const { sendWhatsAppDocument } = await import('../services/whatsapp-media.js');
+          const waResult = await sendWhatsAppDocument(clientPhone, fileUrl, req.file.originalname, `*${designerName}:*`);
+          const waId = waResult?.data?.messages?.[0]?.id || waResult?.messages?.[0]?.id;
+          if (waId) await query(`UPDATE design_messages SET wa_message_id = $1 WHERE id = $2`, [waId, savedMessage.id]);
+        }
+      } catch (waError) {
+        console.error('WhatsApp file send error:', waError.message);
+      }
+    }
+
+    // Return with the URL so frontend can display it
+    res.json({ success: true, message: { ...savedMessage, file_url: fileUrl } });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({ success: false, error: 'Error uploading file' });
   }
 });
 

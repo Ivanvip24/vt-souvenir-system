@@ -117,6 +117,31 @@ function setupUI() {
     document.getElementById('file-input').addEventListener('change', handleFileSelect);
     document.getElementById('btn-remove-upload').addEventListener('click', clearPendingFile);
 
+    // Drag and drop on chat area
+    var chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            chatMessages.style.background = 'rgba(231,42,136,0.05)';
+            chatMessages.style.outline = '2px dashed #e72a88';
+        });
+        chatMessages.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            chatMessages.style.background = '';
+            chatMessages.style.outline = '';
+        });
+        chatMessages.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            chatMessages.style.background = '';
+            chatMessages.style.outline = '';
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleDroppedFile(e.dataTransfer.files[0]);
+            }
+        });
+    }
+
     document.getElementById('btn-specs').addEventListener('click', toggleSpecs);
 
     document.getElementById('btn-back').addEventListener('click', showOrderList);
@@ -777,13 +802,12 @@ async function sendImageMessage(caption, designId) {
     autoResizeTextarea();
 
     var formData = new FormData();
-    formData.append('order_id', state.currentOrderId);
-    if (designId) formData.append('design_id', designId);
+    formData.append('orderId', state.currentOrderId);
+    if (designId) formData.append('designAssignmentId', designId);
     if (caption) formData.append('caption', caption);
-    formData.append('message_type', 'image');
-    formData.append('image', file);
+    formData.append('file', file);
 
-    var response = await fetch(API_BASE + '/design-portal/messages/send', {
+    var response = await fetch(API_BASE + '/design-portal/messages/upload', {
         method: 'POST',
         headers: {
             'Authorization': 'Bearer ' + state.token
@@ -821,25 +845,39 @@ function getDesignLabelById(designId) {
 function handleFileSelect(e) {
     var file = e.target.files[0];
     if (!file) return;
+    processFileForUpload(file);
+    e.target.value = '';
+}
 
+function handleDroppedFile(file) {
+    if (!file) return;
+    processFileForUpload(file);
+}
+
+function processFileForUpload(file) {
     if (file.size > 10 * 1024 * 1024) {
-        alert('La imagen es muy grande. Maximo 10MB.');
-        e.target.value = '';
+        alert('El archivo es muy grande. Máximo 10MB.');
         return;
     }
 
     var reader = new FileReader();
     reader.onload = function(ev) {
         state.pendingFile = { file: file, dataUrl: ev.target.result };
-        showUploadPreview(file.name, ev.target.result);
+        var isImage = file.type.startsWith('image/');
+        showUploadPreview(file.name, isImage ? ev.target.result : null);
     };
     reader.readAsDataURL(file);
-
-    e.target.value = '';
 }
 
 function showUploadPreview(name, dataUrl) {
-    document.getElementById('upload-thumb').src = dataUrl;
+    var thumb = document.getElementById('upload-thumb');
+    if (dataUrl) {
+        thumb.src = dataUrl;
+        thumb.style.display = 'block';
+    } else {
+        thumb.style.display = 'none';
+        thumb.src = '';
+    }
     document.getElementById('upload-name').textContent = name;
     document.getElementById('upload-preview').classList.add('show');
 }
