@@ -15,6 +15,32 @@ import {
 
 const router = express.Router();
 
+// Mirror designer messages to whatsapp_messages so admin dashboard can see them
+async function mirrorToAdminChat(clientPhone, designerName, content, messageType, mediaUrl) {
+  try {
+    const convResult = await query(
+      `SELECT id FROM whatsapp_conversations WHERE wa_id = $1 LIMIT 1`,
+      [clientPhone]
+    );
+    if (convResult.rows.length > 0) {
+      const convId = convResult.rows[0].id;
+      const waId = 'designer_' + Date.now();
+      const msgContent = `*${designerName}:* ${content || ''}`;
+      await query(
+        `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, media_url)
+         VALUES ($1, $2, 'outbound', 'admin', $3, $4, $5)`,
+        [convId, waId, messageType === 'image' ? 'image' : 'text', msgContent, mediaUrl || null]
+      );
+      await query(
+        `UPDATE whatsapp_conversations SET last_message_at = NOW(), updated_at = NOW() WHERE id = $1`,
+        [convId]
+      );
+    }
+  } catch (err) {
+    console.error('Mirror to admin chat failed (non-blocking):', err.message);
+  }
+}
+
 // File upload config — accept all file types up to 10MB
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -222,6 +248,9 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
       clientPhone = r.rows[0]?.client_phone;
     }
 
+    // Mirror to admin dashboard whatsapp chat
+    if (clientPhone) await mirrorToAdminChat(clientPhone, designerName, caption || req.file.originalname, messageType, fileUrl);
+
     // Send via WhatsApp using Cloudinary URL (already compressed/optimized)
     if (clientPhone) {
       try {
@@ -325,6 +354,9 @@ router.post('/messages/send', employeeAuth, async (req, res) => {
     ]);
 
     const savedMessage = msgResult.rows[0];
+
+    // Mirror to admin dashboard whatsapp chat
+    if (clientPhone) await mirrorToAdminChat(clientPhone, designerName, content, messageType, null);
 
     // Send to WhatsApp (non-blocking)
     if (clientPhone) {
