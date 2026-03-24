@@ -515,12 +515,14 @@ router.post('/webhook', (req, res) => {
         }
       }
 
-      // Auto-send product demo videos when client mentions magnets/3D/fotos
-      // Only sends once per video type per conversation to avoid spamming
+      // Auto-send product demo videos ONLY when client asks to SEE the product
+      // Triggers: "me muestras", "tienes fotos", "cómo se ven", "tienes imágenes", "quiero ver"
+      // Does NOT trigger on general inquiries like "quiero imanes", "información imanes"
       {
         const msgLower = (messageText || '').toLowerCase();
-        const isAbout3D = msgLower.includes('3d') || msgLower.includes('tres d') || (msgLower.includes('foto') && msgLower.includes('3d')) || (msgLower.includes('imagen') && msgLower.includes('3d')) || (msgLower.includes('video') && msgLower.includes('3d')) || (msgLower.includes('muestra') && msgLower.includes('3d'));
-        const isAboutMagnets = !isAbout3D && (msgLower.includes('iman') || msgLower.includes('imán') || msgLower.includes('imanes') || msgLower.includes('magneto') || msgLower.includes('magnet') || msgLower.includes('foto') || msgLower.includes('imagen') || msgLower.includes('muestra') || msgLower.includes('ejemplo') || msgLower.includes('video'));
+        const wantsToSee = msgLower.includes('foto') || msgLower.includes('imagen') || msgLower.includes('muestra') || msgLower.includes('mostrar') || msgLower.includes('ejemplo') || msgLower.includes('video') || msgLower.includes('ver ') || msgLower.includes('cómo se ven') || msgLower.includes('como se ven') || msgLower.includes('cómo son') || msgLower.includes('como son');
+        const isAbout3D = wantsToSee && (msgLower.includes('3d') || msgLower.includes('tres d'));
+        const isAboutMagnets = wantsToSee && !isAbout3D;
 
         // Pick which video to send
         let videoUrl = null;
