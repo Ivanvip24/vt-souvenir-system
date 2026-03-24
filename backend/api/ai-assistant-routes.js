@@ -738,24 +738,11 @@ IMPORTANTE: Usa nombres de materiales del inventario real (lista arriba). El sis
 - **Portallaves**: ["MDF Board"] (+ ganchos si existen)
 REGLA: Solo incluye materiales cuyos nombres coincidan con los de la sección MATERIALES DISPONIBLES. Si un material no aparece ahí, NO lo incluyas — el sistema marcará "no encontrado" y la confianza bajará.
 
-**Después del resultado, presenta así:**
-
-📊 **Desglose de costo — [producto] [dimensiones]**
-
-| Material | Costo/pza |
-|----------|----------|
-| MDF | $X.XX |
-| [material] | $X.XX |
-| Mano de obra | $X.XX |
-| Merma (X%) | $X.XX |
-| **Costo total** | **$X.XX/pza** |
-
-💰 **Precios sugeridos de venta:**
-- Bajo: $X.XX/pza (margen X%)
-- Medio: $X.XX/pza (margen X%)
-- Alto: $X.XX/pza (margen X%)
-
-📦 Costo total para [quantity] piezas: $X,XXX
+**IMPORTANTE — Tu texto debe ser ULTRA CORTO (1-2 líneas máximo).** La tarjeta visual ya muestra TODO el desglose (materiales, mano de obra, merma, costo total, precios sugeridos, margen, yield). NO repitas esa info en texto. Solo di algo como:
+- "Aquí está el desglose del imán de 14x14cm 👇"
+- "Costo de producción: $2.83/pza. Desglose completo 👇"
+- "Tu imán mediano cuesta $2.05 producirlo. Detalle 👇"
+NO expliques qué va a calcular, NO listes los materiales en texto, NO des contexto innecesario. La tarjeta lo dice todo.
 
 Para productos EXISTENTES del catálogo a PRECIOS ESTÁNDAR (sin desglose), sigue usando calculate_price.
 
