@@ -3229,6 +3229,29 @@ function buildConversationItemDOM(c) {
     headerRow.appendChild(fuBadge);
   }
 
+  // Re-engagement timer badge (23hr countdown)
+  if (c.reengagement_at) {
+    var reDate = new Date(c.reengagement_at);
+    var now2 = new Date();
+    var reBadge = document.createElement('span');
+    if (reDate <= now2) {
+      reBadge.className = 'wa-followup-badge expired';
+      reBadge.textContent = '🔄 Enviando...';
+      reBadge.title = 'Re-engagement pendiente de envío';
+    } else {
+      var diffMs = reDate - now2;
+      var diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+      var diffMin = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      var timeLeft = diffHrs > 0 ? diffHrs + 'h ' + diffMin + 'm' : diffMin + 'm';
+      reBadge.className = 'wa-followup-badge pending';
+      reBadge.style.background = '#e8f5e9';
+      reBadge.style.color = '#2e7d32';
+      reBadge.textContent = '🔄 ' + timeLeft;
+      reBadge.title = 'Re-engagement automático en ' + timeLeft;
+    }
+    headerRow.appendChild(reBadge);
+  }
+
   var timeSpan = document.createElement('span');
   timeSpan.className = 'wa-conv-time';
   timeSpan.textContent = time;
@@ -3445,6 +3468,27 @@ function buildChatViewDOM(parentEl) {
   }
   followUpWrap.appendChild(followUpBtn);
   header.appendChild(followUpWrap);
+
+  // Re-engagement timer indicator
+  if (conv.reengagement_at) {
+    var reD = new Date(conv.reengagement_at);
+    var reNow = new Date();
+    var reLabel = document.createElement('span');
+    reLabel.style.cssText = 'padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;margin-left:6px;display:inline-block;';
+    if (reD <= reNow) {
+      reLabel.style.background = '#ffebee';
+      reLabel.style.color = '#c62828';
+      reLabel.textContent = '🔄 Re-engagement pendiente';
+    } else {
+      var rMs = reD - reNow;
+      var rH = Math.floor(rMs / 3600000);
+      var rM = Math.floor((rMs % 3600000) / 60000);
+      reLabel.style.background = '#e8f5e9';
+      reLabel.style.color = '#2e7d32';
+      reLabel.textContent = '🔄 Re-engagement en ' + rH + 'h ' + rM + 'm';
+    }
+    header.appendChild(reLabel);
+  }
 
   // Insights toggle button (visible on small screens)
   var insightsToggle = document.createElement('button');
