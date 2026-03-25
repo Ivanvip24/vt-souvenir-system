@@ -47,8 +47,8 @@ MAT-003 → QTY-25 → ACTION-CONFIRM → ✓ Done! (5 seconds)
 ```
 
 ## Documentation
-- `SMART_BARCODE_TESTING.md` - Comprehensive testing guide with examples
-- `SMART_BARCODE_VISUAL_GUIDE.md` - Visual diagrams and workflow illustrations
+- `docs/guides/SMART_BARCODE_TESTING.md` - Comprehensive testing guide with examples
+- `docs/guides/SMART_BARCODE_VISUAL_GUIDE.md` - Visual diagrams and workflow illustrations
 
 ## Status
 ✅ Complete and Production-Ready

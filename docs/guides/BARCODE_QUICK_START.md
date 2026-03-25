@@ -70,9 +70,9 @@ MAT-002 → QTY-50 → CONFIRM → ✓ Correct entry!
 ## Need Help?
 
 See full documentation:
-- `SMART_BARCODE_TESTING.md` - Complete testing guide
-- `SMART_BARCODE_VISUAL_GUIDE.md` - Visual diagrams
-- `IMPLEMENTATION_SUMMARY.md` - Technical details
+- `docs/guides/SMART_BARCODE_TESTING.md` - Complete testing guide
+- `docs/guides/SMART_BARCODE_VISUAL_GUIDE.md` - Visual diagrams
+- `docs/features/IMPLEMENTATION_SUMMARY.md` - Technical details
 
 ---
 **Speed:** 24x faster | **Errors:** 95% reduction | **Status:** Production Ready

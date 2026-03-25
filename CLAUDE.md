@@ -459,13 +459,36 @@ Use `/axkan` skill for ANY brand-related task.
 
 ## Documentation Reference
 
-| File | Purpose |
-|------|---------|
-| `docs/SETUP_GUIDE.md` | Step-by-step first-time setup |
-| `docs/API_REFERENCE.md` | Complete REST API documentation |
-| `QUICKSTART.md` | 5-minute demo setup |
-| `DEPLOYMENT.md` | Deployment instructions |
-| `RENDER_SETUP.md` | Render.com configuration |
-| `INVENTORY_SETUP.md` | Inventory system setup |
-| `MAKE_COM_WEBHOOKS.md` | Make.com automation setup |
-| `docs/plans/` | Feature design documents (13 files) |
+```
+docs/
+├── API_REFERENCE.md                # Complete REST API documentation
+├── SETUP_GUIDE.md                  # Step-by-step first-time setup
+├── FIXES.md                        # Bug fix log
+├── FIXES-local.md                  # Local environment fixes
+├── TODO-UI-UX-IMPROVEMENTS.md      # Planned UI/UX work
+├── AUTOMATIC-COST-CALCULATIONS.md  # Cost calculation formulas
+├── setup/                          # Setup & deployment guides
+│   ├── DEPLOYMENT.md               # General deployment instructions
+│   ├── RENDER_SETUP.md             # Render.com configuration
+│   ├── INVENTORY_SETUP.md          # Inventory system setup
+│   ├── SETUP-AUTOMATIC-COSTS.md    # Automatic cost calculation setup
+│   └── MAKE_COM_WEBHOOKS.md        # Make.com automation setup
+├── features/                       # Feature completion summaries
+│   ├── ADMIN_DASHBOARD_COMPLETE.md
+│   ├── AUTOMATIC-COSTS-SUMMARY.md
+│   ├── CLIENT_ORDER_SYSTEM_PROGRESS.md
+│   ├── IMPLEMENTATION_SUMMARY.md
+│   ├── INVENTORY_INTEGRATION_COMPLETE.md
+│   ├── SECURITY_AND_NOTION_COMPLETE.md
+│   └── UPDATES_COMPLETED.md
+├── guides/                         # User-facing guides
+│   ├── BARCODE_QUICK_START.md      # Barcode scanning quick reference
+│   ├── BARCODE_INVOICE_TESTING_GUIDE.md
+│   ├── SMART_BARCODE_TESTING.md
+│   └── SMART_BARCODE_VISUAL_GUIDE.md
+├── plans/                          # Feature design documents (13 files)
+├── security-exercise/              # Security audit reports
+└── superpowers/                    # WhatsApp CRM extension docs
+```
+
+Root-level docs: `README.md` (onboarding), `CLAUDE.md` (AI instructions), `QUICKSTART.md` (5-min setup).
