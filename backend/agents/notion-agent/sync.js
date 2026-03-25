@@ -334,8 +334,9 @@ export async function createOrderBothSystems(orderData, { skipNotion = false } =
         subtotal,
         total_price,
         total_production_cost,
-        notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        notes,
+        sales_rep
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING id`,
       [
         orderData.orderNumber,
@@ -347,7 +348,8 @@ export async function createOrderBothSystems(orderData, { skipNotion = false } =
         orderData.subtotal || orderData.totalPrice || (orderData.items || []).reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0) || 0,
         orderData.totalPrice || (orderData.items || []).reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0) || 0,
         orderData.productionCost || 0,
-        orderData.notes || ''
+        orderData.notes || '',
+        orderData.salesRep || null
       ]
     );
 

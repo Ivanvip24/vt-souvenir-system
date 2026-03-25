@@ -521,9 +521,11 @@ async function executeOrderCreation(orderJson, waId, products) {
       orderJson.eventType ? `Evento: ${orderJson.eventType}` : null,
       orderJson.deliveryDate ? `Fecha entrega: ${orderJson.deliveryDate}` : null,
       orderJson.notes || null,
-      'Pedido creado via WhatsApp'
+      'Pedido creado via WhatsApp',
+      'Vendedor: Ivan'
     ].filter(Boolean).join(' | '),
-    eventType: orderJson.eventType || null
+    eventType: orderJson.eventType || null,
+    salesRep: 'Ivan'
   };
 
   const result = await createOrderBothSystems(orderData);
