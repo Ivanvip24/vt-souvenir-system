@@ -52,6 +52,7 @@ import * as facebookMarketplace from '../services/facebook-marketplace.js';
 import publicDesignRoutes from './public-design-routes.js';
 import * as facebookScheduler from '../services/facebook-scheduler.js';
 import { initializeDesignerScheduler, stopDesignerScheduler } from '../services/designer-scheduler.js';
+import { initializeFollowupScheduler, stopFollowupScheduler } from '../services/followup-scheduler.js';
 import designerTaskRoutes from './designer-routes.js';
 import designPortalRoutes from './design-portal-routes.js';
 import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
@@ -5863,6 +5864,15 @@ async function startServer() {
     // Initialize Designer Task Tracking Scheduler (follow-ups + reports)
     initializeDesignerScheduler();
 
+    // Run reengagement timer migration + initialize scheduler (23hr client follow-ups)
+    try {
+      const { migrate: migrateReengagement } = await import('../migrations/add-reengagement-timer.js');
+      await migrateReengagement();
+    } catch (reErr) {
+      console.warn('⚠️  Reengagement migration:', reErr.message);
+    }
+    initializeFollowupScheduler();
+
     // Ensure is_store_pickup column exists (for store pickup feature)
     try {
       await query(`
@@ -6089,6 +6099,7 @@ process.on('SIGTERM', () => {
   stopCepRetryScheduler();
   stopShippingNotificationScheduler();
   stopDesignerScheduler();
+  stopFollowupScheduler();
   process.exit(0);
 });
 
@@ -6098,6 +6109,7 @@ process.on('SIGINT', () => {
   stopCepRetryScheduler();
   stopShippingNotificationScheduler();
   stopDesignerScheduler();
+  stopFollowupScheduler();
   process.exit(0);
 });
 

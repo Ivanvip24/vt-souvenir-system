@@ -408,9 +408,12 @@ router.post('/webhook', (req, res) => {
           console.error('📊 Sales coaching tracking error:', coachErr.message);
       }
 
-      // Increment unread count
+      // Increment unread count + set 23hr re-engagement timer
       await query(
-        'UPDATE whatsapp_conversations SET unread_count = unread_count + 1 WHERE id = $1',
+        `UPDATE whatsapp_conversations
+         SET unread_count = unread_count + 1,
+             reengagement_at = NOW() + INTERVAL '23 hours'
+         WHERE id = $1`,
         [conversationId]
       );
 
