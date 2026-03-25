@@ -4,238 +4,241 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## System Overview
 
-This is a **dual-agent automation system** for managing custom souvenir production businesses. The system replaces manual Notion data entry and provides automated analytics with email reporting.
+**VT Souvenir System** is a full-stack production management platform for custom souvenir businesses. It handles order lifecycle, Notion sync, automated analytics, employee dashboards, multi-channel sales (WhatsApp, Facebook Marketplace, Mercado Libre), payment verification, shipping, and AI-powered assistance.
 
-The repository also contains the **AXKAN brand identity system** - a complete brand oracle for the souvenir brand including visual identity, voice, sales strategies, and decision frameworks.
+The repository also contains the **AXKAN brand identity system** — a complete brand oracle for the souvenir brand.
 
-### AXKAN Brand System (`AXKAN/`)
-
-Use `/axkan` skill for ANY brand-related task. The skill provides:
-- Complete visual identity (colors, typography, logo rules, patterns)
-- Brand voice guidelines by channel (B2C, B2B, internal)
-- Product pricing and specifications
-- Sales scripts and objection handling
-- The "AXKAN Test" decision framework
-
-Key files:
-- `AXKAN/.claude/skills/axkan/SKILL.md` - Complete brand identity (668 lines)
-- `AXKAN/AXKAN-SALES-ASSISTANT-FB-MARKETPLACE.md` - WhatsApp/Marketplace sales templates
-- `AXKAN/brand-manual/` - Visual assets (logo system, product examples)
-- `AXKAN/prompts/` - AI generation prompts for Instagram/video content
-
-### Two Specialized Agents
-
-1. **Notion Integration Agent** (`backend/agents/notion-agent/`)
-   - Auto-creates order pages in Notion with structured data
-   - Bidirectional sync: local database ↔ Notion
-   - Handles CRUD operations and bulk sync
-   - Entry point: `notion-agent/index.js` for API operations, `notion-agent/sync.js` for database integration
-
-2. **Analytics & Reporting Agent** (`backend/agents/analytics-agent/`)
-   - Real-time revenue/profit calculations
-   - Scheduled email reports (daily/weekly/monthly)
-   - HTML report generation with Handlebars templates
-   - Entry point: `analytics-agent/index.js`, scheduler runs via `analytics-agent/scheduler.js`
-
-### Data Flow Architecture
+## Repository Structure
 
 ```
-Client Order → API (/api/orders) → createOrderBothSystems()
-                                   ↓
-                    ┌──────────────┴──────────────┐
-                    ↓                             ↓
-            Local PostgreSQL              Notion API (via sync.js)
-                    ↓                             ↓
-            order_items table            Notion Database Page
-            production_tracking          (with all properties)
-                    ↓
-            Analytics Agent watches orders table
-                    ↓
-            Scheduled Reports (cron) → Email (nodemailer)
+vt-souvenir-system/
+├── backend/                          # Node.js/Express API (main application)
+│   ├── api/                          # Express routes & server
+│   │   ├── server.js                 # Main Express app (~6,100 lines)
+│   │   ├── middleware/               # Auth middleware (employee-auth.js)
+│   │   └── *-routes.js              # 28 route modules
+│   ├── agents/                       # Autonomous agent modules
+│   │   ├── notion-agent/             # Notion bidirectional sync
+│   │   ├── analytics-agent/          # Revenue calculations & email reports
+│   │   ├── inventory/                # BOM, materials, forecasting
+│   │   └── alerts/                   # Order status notifications
+│   ├── services/                     # 35+ business logic modules
+│   ├── shared/                       # Database pool, utils, migrations
+│   ├── migrations/                   # 28 SQL/JS schema migrations
+│   ├── utils/                        # Google Drive, delivery calc, reference sheets
+│   ├── examples/                     # Test scripts & sample data
+│   ├── chatbot_whatsapp/             # WhatsApp chatbot logic
+│   ├── whatsapp-flows/               # WhatsApp flow definitions
+│   ├── assets/                       # Brand assets, fonts, videos
+│   ├── catalogs/                     # Generated PDF catalogs
+│   ├── order-receipts/               # Generated receipts
+│   └── package.json                  # Backend dependencies
+├── frontend/                         # 16 frontend applications
+│   ├── admin-dashboard/              # Admin PWA (order management, analytics)
+│   ├── employee-dashboard/           # Employee portal (role-based views)
+│   ├── pedidos/                      # Client-facing order form
+│   ├── landing/                      # Marketing site (axkan.art)
+│   ├── mobile-app/                   # Mobile-responsive PWA
+│   ├── configurador/                 # Product customizer
+│   ├── order-tracking/               # Client order status tracking
+│   ├── shipping-form/                # Shipping address collection
+│   ├── lead-form/                    # Lead capture
+│   ├── faq/                          # FAQ page
+│   ├── brand-manual-web/             # Brand guidelines site
+│   ├── sanity-studio/                # Sanity CMS (React)
+│   ├── chrome-extension-whatsapp-crm/# WhatsApp CRM browser extension
+│   └── assets/                       # Shared images & fonts
+├── AXKAN/                            # Brand identity system
+│   ├── axkan-skill-claude-code/      # Claude skill for brand tasks
+│   ├── brand-manual/                 # Visual assets (logos, patterns)
+│   ├── prompts/                      # AI generation prompts (Instagram, video)
+│   └── video-analysis/               # Video content analysis frames
+├── Make_automations_blueprints/      # Make.com automation blueprints
+│   ├── 01_WhatsApp_Auto_Updates/     # Auto-send order status via WhatsApp
+│   ├── 02_Payment_Reminders/         # Automated payment reminders
+│   └── 11_Receipt_OCR_Auto_Approve/  # Auto-approve valid payment receipts
+├── facebook-marketplace-bot/         # Python/Selenium listing automation
+├── docs/                             # Setup guides, API reference, design plans
+│   ├── API_REFERENCE.md
+│   ├── SETUP_GUIDE.md
+│   └── plans/                        # Feature implementation plans
+├── render.yaml                       # Render.com deployment config
+└── package.json                      # Root-level utilities (csv-parse, heic-convert)
 ```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | Node.js 20, Express 4.18, ES modules |
+| **Database** | PostgreSQL (pg 8.11), Supabase-hosted |
+| **Frontend** | Vanilla HTML/CSS/JS (static PWAs), Sanity CMS (React) |
+| **Deployment** | Render (backend), Vercel (frontend apps) |
+| **Email** | Nodemailer, Resend, SendGrid |
+| **File Storage** | Cloudinary (images), local fs (PDFs, receipts) |
+| **AI** | Anthropic Claude (receipt analysis, chat), OpenAI, Google Gemini |
+| **Integrations** | Notion API, WhatsApp Business API, Stripe, Facebook, Mercado Libre, Google Drive |
+| **Scheduling** | node-cron (in-process) |
 
 ## Essential Commands
 
 ```bash
-# First-time setup
+# Clone & setup
+git clone --recurse-submodules <repo-url>
+cd vt-souvenir-system/backend
 npm install
-cp .env.example .env
-# Edit .env with Notion token, database ID, email credentials
-npm run init-db              # Creates PostgreSQL schema with 7 tables + 4 views
-
-# Development
-npm run dev                  # Server with auto-reload (nodemon)
-npm start                    # Production server
-node demo-server.js          # Demo mode (no database required)
-
-# Testing
-npm test                     # Tests Notion integration
-npm run test-analytics       # Tests analytics engine
-node examples/create-sample-order.js  # Creates example order
+cp .env.example .env              # Edit with your credentials
 
 # Database
-npm run init-db              # Initialize schema (idempotent)
-psql -U postgres -d souvenir_management  # Direct database access
+npm run init-db                   # Create schema (7+ tables, 4 views) — idempotent
+npm run migrate                   # Run pending migrations (28 migration files)
+
+# Development
+npm run dev                       # Express server with nodemon auto-reload (port 3000)
+npm start                         # Production server
+
+# Testing
+npm test                          # Test Notion integration
+npm run test-analytics            # Test analytics engine
+node examples/create-sample-order.js  # End-to-end order creation
+
+# Demo mode (no database/credentials required)
+cd .. && node demo-server.js      # In-memory mock server for API exploration
+
+# Manual API checks
+curl http://localhost:3000/health
+curl http://localhost:3000/api/analytics?period=today
 ```
 
-## Critical Architecture Details
+## Architecture
 
-### Agent Communication Pattern
+### Four Agent Modules
 
-Agents are **autonomous modules** that expose functions, not microservices. They share the database connection pool from `shared/database.js`.
+Agents are **autonomous modules** that expose functions (not microservices). They share the database pool from `shared/database.js`.
 
-**Creating an order (proper flow):**
+1. **Notion Agent** (`backend/agents/notion-agent/`)
+   - `index.js` — Notion API CRUD (create/update/query orders)
+   - `sync.js` — Bidirectional DB ↔ Notion sync, atomic order creation
+   - `config.js` — Property name mappings (must match Notion schema)
+
+2. **Analytics Agent** (`backend/agents/analytics-agent/`)
+   - `revenue-calculator.js` — Financial metrics, top products/clients
+   - `report-generator.js` — HTML reports via Handlebars templates
+   - `email-sender.js` — Nodemailer/Resend dispatch
+   - `scheduler.js` — Cron-scheduled daily/weekly/monthly reports
+
+3. **Inventory Agent** (`backend/agents/inventory/`)
+   - `bom-manager.js` — Bill of Materials management
+   - `material-manager.js` — Material stock tracking
+   - `order-integration.js` — Links orders to material consumption
+   - `forecasting-engine.js` — Demand forecasting
+
+4. **Alerts Agent** (`backend/agents/alerts/`)
+   - `order-alerts.js` — Low-margin alerts, status change notifications
+
+### Services Layer (35+ Modules)
+
+`backend/services/` contains the core business logic:
+
+| Category | Services |
+|----------|---------|
+| **PDF Generation** | `pdf-generator.js`, `branded-receipt-generator.js`, `catalog-generator.js`, `quote-generator.js` |
+| **WhatsApp** | `whatsapp-api.js`, `whatsapp-ai.js`, `whatsapp-templates.js`, `whatsapp-media.js` |
+| **Payment** | `payment-receipt-verifier.js`, `receipt-ocr.js`, `claude-receipt-analyzer.js`, `cep-service.js`, `cep-retry-scheduler.js` |
+| **Shipping** | `t1-envios-service.js`, `skydropx.js`, `shipping-notification-scheduler.js`, `pickup-scheduler.js` |
+| **Marketplace** | `facebook-marketplace.js`, `facebook-scheduler.js`, `mercadolibre.js` |
+| **Design** | `design-analyzer.js`, `designer-task-tracker.js`, `designer-scheduler.js`, `designer-report-generator.js` |
+| **Sales AI** | `sales-coach.js`, `sales-learning-engine.js`, `sales-digest-generator.js` |
+| **Knowledge** | `knowledge-index.js`, `knowledge-ai.js` |
+| **Pricing** | `pricing-engine.js` (dynamic tiers, markups) |
+| **Notifications** | `push-notification.js` (web push via VAPID) |
+| **Media** | `cloudinary-config.js`, `gemini-image.js`, `heic-utils.js` |
+
+### API Routes (28 Route Files)
+
+`backend/api/server.js` is the main Express app. Route modules in `backend/api/`:
+
+| Route File | Auth | Purpose |
+|-----------|------|---------|
+| `client-routes.js` | None | Client-facing order creation, uploads |
+| `admin-routes.js` | JWT | Admin login, user management |
+| `employee-routes.js` | Employee JWT | Employee login, dashboards |
+| `inventory-routes.js` | JWT | Stock management, BOM |
+| `price-routes.js` | JWT | Pricing engine, tiers |
+| `discount-routes.js` | JWT | Discount management |
+| `shipping-routes.js` | JWT | Labels, tracking, CEP validation |
+| `receipt-routes.js` | JWT | Supplier receipt OCR analysis |
+| `upload-routes.js` | JWT | File uploads (Cloudinary/local) |
+| `quote-routes.js` | JWT | Quote PDF generation |
+| `ai-assistant-routes.js` | JWT | Claude chat interface |
+| `whatsapp-routes.js` | Webhook | WhatsApp message handling |
+| `whatsapp-template-routes.js` | JWT | WhatsApp template management |
+| `mercadolibre-routes.js` | JWT | Mercado Libre integration |
+| `task-routes.js` | Employee JWT | Task management |
+| `gallery-routes.js` | Employee JWT | Design gallery |
+| `notes-routes.js` | Employee JWT | Internal notes |
+| `designer-routes.js` | Employee JWT | Designer task management |
+| `design-portal-routes.js` | JWT | Design portal features |
+| `public-design-routes.js` | Internal | Public design submissions |
+| `lead-routes.js` | JWT | Lead management |
+| `coaching-routes.js` | JWT | Sales coaching |
+| `knowledge-routes.js` | JWT | Knowledge base |
+| `bom-routes.js` | JWT | Bill of Materials |
+| `t1-routes.js` | Sync key | T1 Envios shipping sync |
+| `webhook-routes.js` | Webhook secret | Make.com webhooks |
+
+### Authentication
+
+**File:** `backend/api/middleware/employee-auth.js`
+
+- `employeeAuth()` — Requires Bearer JWT token
+- `requireRole(...roles)` — Role-based access (manager, staff)
+- `requireDepartment(...depts)` — Department access (Design, Production, Counting, Shipping)
+- `requireManager()` — Manager-only endpoints
+- `optionalAuth()` — Attaches employee data if valid token present
+- `generateEmployeeToken(employee)` — Creates 8-hour JWT
+- `logActivity()` — Audit logging for employee actions
+
+Admin auth uses separate JWT with `JWT_SECRET` env var.
+
+## Data Flow
+
+### Order Creation (Critical Path)
+
+```
+Client → POST /api/orders → createOrderBothSystems()
+                              ↓
+               ┌──────────────┴──────────────┐
+               ↓                             ↓
+       PostgreSQL (atomic)           Notion API (via sync.js)
+       ├── clients                   └── Notion Database Page
+       ├── orders
+       ├── order_items
+       └── production_tracking
+               ↓
+       Analytics Agent → Scheduled Reports → Email
+       Alerts Agent → Notifications
+       Task Generator → Auto-creates design tasks
+```
+
+**CORRECT — use the sync module:**
 ```javascript
-// CORRECT: Use sync module which coordinates both systems
 import { createOrderBothSystems } from './agents/notion-agent/sync.js';
-
-const result = await createOrderBothSystems({
-  clientName: "...",
-  items: [...],
-  // ... order data
-});
-// This automatically:
-// 1. Creates client in DB (or finds existing)
-// 2. Creates order + order_items
-// 3. Syncs to Notion via notionAgent.createOrder()
-// 4. Returns both local ID and Notion page URL
+const result = await createOrderBothSystems({ clientName: "...", items: [...] });
+// Creates in DB + Notion atomically, returns both local ID and Notion URL
 ```
 
-**WRONG approach:**
+**WRONG — never bypass sync:**
 ```javascript
-// Don't do this - bypasses sync logic
-await notionAgent.createOrder(data);  // Notion only
-await query('INSERT INTO orders...');  // DB only
+await notionAgent.createOrder(data);  // Notion only, DB out of sync
+await query('INSERT INTO orders...');  // DB only, Notion out of sync
 ```
 
-### Database Schema Key Points
+## Database
 
-**Generated columns** (don't try to insert these):
-- `orders.profit` - Auto-calculated as `total_price - total_production_cost`
-- `orders.profit_margin` - Auto-calculated percentage
-- `order_items.line_total`, `line_cost`, `line_profit` - Auto-calculated per item
+### Connection Pool
 
-**Important views for analytics:**
-- `order_summary` - Pre-joined orders with client info
-- `daily_revenue` - Aggregated by date
-- `top_products`, `top_clients` - Rankings with totals
-
-**Transaction pattern for orders:**
-```javascript
-await query('BEGIN');
-// 1. Insert/update client
-// 2. Insert order
-// 3. Insert order_items
-// 4. Sync to Notion
-await query('COMMIT');  // Only if Notion succeeds
-```
-
-### Notion Property Mapping
-
-The mapping in `notion-agent/config.js` **must match** your Notion database schema. Key mappings:
-
-- Order Number → Title property (required)
-- Status → Select with values: New, Design, Printing, Cutting, Counting, Shipping, Delivered, Cancelled
-- Department → Select with values: Design, Production, Counting, Shipping, Completed
-- Profit/Margin → Can be Number or Formula properties in Notion
-
-**When modifying Notion schema:**
-1. Update property names in `config.js` → `propertyMappings`
-2. Update `buildOrderProperties()` in `notion-agent/index.js` if adding new properties
-3. Update `parseNotionPage()` to extract new properties
-
-### Report Generation Flow
-
-Reports use **Handlebars templates** in `analytics-agent/templates/`:
-
-```javascript
-// Report generation sequence:
-1. scheduler.js triggers via cron (e.g., "0 8 * * *")
-2. Calls reportGenerator.generateDailyReport(date)
-3. Queries database via revenueCalculator functions
-4. Compiles Handlebars template with data
-5. emailSender.sendDailyReport(html, date)
-6. Saves to reports_history table
-```
-
-**Template data structure:**
-```javascript
-{
-  companyName: process.env.COMPANY_NAME,
-  revenue: formatCurrency(amount),
-  topProducts: [{productName, revenueFormatted, ...}],
-  comparison: {revenueChangePercent, ...},
-  // Templates expect formatted strings, not raw numbers
-}
-```
-
-### Environment Configuration Critical Variables
-
-```env
-# These break agents if wrong:
-NOTION_API_TOKEN          # Must start with "secret_"
-NOTION_ORDERS_DATABASE_ID # 32-char hex, no dashes
-DB_TYPE=postgres          # "postgres" or "demo" (demo skips DB)
-
-# Cron schedules (minute hour day month weekday):
-DAILY_REPORT_SCHEDULE=0 8 * * *    # 8 AM daily
-WEEKLY_REPORT_SCHEDULE=0 9 * * 1   # 9 AM Mondays
-MONTHLY_REPORT_SCHEDULE=0 10 1 * * # 10 AM, 1st of month
-
-# Email (Gmail requires app password, not account password)
-EMAIL_SERVICE=gmail
-EMAIL_PASSWORD=xxxx xxxx xxxx xxxx  # 16-char app password
-```
-
-### Common Modification Patterns
-
-**Adding a new Notion property:**
-```javascript
-// 1. Add to config.js
-export const propertyMappings = {
-  newField: 'New Field Name',  // Exact Notion property name
-  // ...
-};
-
-// 2. Add to buildOrderProperties() in notion-agent/index.js
-if (orderData.newField) {
-  properties[propertyMappings.newField] = {
-    rich_text: [{ text: { content: orderData.newField } }]
-  };
-}
-
-// 3. Add to parseNotionPage() for querying
-newField: extractText(props[propertyMappings.newField])
-```
-
-**Adding a new report type:**
-```javascript
-// 1. Create template in analytics-agent/templates/new-report.html
-// 2. Add function to report-generator.js:
-export async function generateNewReport(params) {
-  const data = await revenueCalculator.getRelevantData(params);
-  const template = handlebars.compile(templateSource);
-  return { html: template(data), type: 'new', ... };
-}
-// 3. Add scheduler in scheduler.js if automated
-// 4. Add API route in api/server.js
-```
-
-**Extending analytics with new metric:**
-```javascript
-// Add to revenue-calculator.js
-export async function getNewMetric(startDate, endDate) {
-  const result = await query(`
-    SELECT ... FROM orders WHERE ...
-  `);
-  return result.rows.map(/* transform */);
-}
-// Analytics are pulled together in getAnalyticsSummary()
-```
-
-## Database Connection Pooling
-
-All database operations use the shared pool from `shared/database.js`:
+All queries go through the shared pool in `backend/shared/database.js`:
 
 ```javascript
 import { query, getClient } from '../../shared/database.js';
@@ -243,7 +246,7 @@ import { query, getClient } from '../../shared/database.js';
 // Simple query
 const result = await query('SELECT * FROM orders WHERE id = $1', [orderId]);
 
-// Transaction (when you need atomicity)
+// Transaction (atomic operations)
 const client = await getClient();
 try {
   await client.query('BEGIN');
@@ -258,84 +261,177 @@ try {
 }
 ```
 
+### Schema
+
+**Core tables:** `clients`, `products`, `orders`, `order_items`, `production_tracking`, `order_notes`, `pricing_config`, `employees`, `inventory`, `shipping_labels`, `payment_verifications`
+
+**Auto-calculated columns** (never insert these directly):
+- `orders.profit` — `total_price - total_production_cost`
+- `orders.profit_margin` — percentage
+- `order_items.line_total`, `line_cost`, `line_profit`
+
+**Analytics views:** `order_summary`, `daily_revenue`, `top_products`, `top_clients`
+
+**Migrations:** 28 files in `backend/migrations/` — run with `npm run migrate`. Cover: employee system, design portal, payment tracking, shipping labels, WhatsApp insights, sales coaching, Facebook/ML integration, and more.
+
+### Notion Property Mapping
+
+The mapping in `notion-agent/config.js` **must match** your Notion database schema exactly.
+
+- Order Number → Title property (required)
+- Status → Select: New, Design, Printing, Cutting, Counting, Shipping, Delivered, Cancelled
+- Department → Select: Design, Production, Counting, Shipping, Completed
+
+**When modifying Notion schema:**
+1. Update `propertyMappings` in `config.js`
+2. Update `buildOrderProperties()` in `notion-agent/index.js`
+3. Update `parseNotionPage()` to extract new properties
+
+## Frontend Applications
+
+All frontend apps are **static HTML/CSS/JS** (no build step required) except `sanity-studio` (React + Sanity CMS).
+
+- Deployed to **Vercel** (each app has its own deployment)
+- PWA support for admin-dashboard and employee-dashboard
+- Authentication via localStorage JWT tokens
+- API calls to the Render-hosted backend
+
+**Key frontend apps:**
+- `admin-dashboard/` — Full order management, analytics, employee management
+- `employee-dashboard/` — Role-based views per department
+- `pedidos/` — Client order form (axkan-pedidos.vercel.app)
+- `landing/` — Marketing site (axkan.art)
+- `order-tracking/` — Client-facing order status
+
+## Environment Configuration
+
+Backend requires `.env` in `backend/` (copy from `.env.example`):
+
+```env
+# Required — breaks the system if wrong
+NOTION_API_TOKEN=secret_xxx       # Must start with "secret_"
+NOTION_ORDERS_DATABASE_ID=xxx     # 32-char hex, no dashes
+DB_TYPE=postgres                  # "postgres" or "demo"
+DATABASE_URL=postgresql://...     # Or individual DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD
+
+# Authentication
+JWT_SECRET=xxx                    # For admin/employee JWT signing
+ADMIN_USERNAME=xxx
+ADMIN_PASSWORD=xxx
+
+# Email (pick one provider)
+RESEND_API_KEY=xxx                # Recommended
+# OR: EMAIL_SERVICE=gmail, EMAIL_USER=xxx, EMAIL_PASSWORD=xxxx xxxx xxxx xxxx
+REPORT_RECIPIENTS=owner@co.com,mgr@co.com
+
+# Scheduled reports (cron format)
+DAILY_REPORT_SCHEDULE=0 8 * * *
+WEEKLY_REPORT_SCHEDULE=0 9 * * 1
+MONTHLY_REPORT_SCHEDULE=0 10 1 * *
+COMPANY_TIMEZONE=America/Mexico_City
+
+# Integrations (optional — features degrade gracefully)
+ANTHROPIC_API_KEY=xxx             # Claude AI (receipt analysis, chat)
+OPENAI_API_KEY=xxx                # OpenAI features
+CLOUDINARY_CLOUD_NAME=xxx         # Image uploads
+CLOUDINARY_API_KEY=xxx
+CLOUDINARY_API_SECRET=xxx
+STRIPE_SECRET_KEY=xxx             # Payment processing
+WHATSAPP_ACCESS_TOKEN=xxx         # WhatsApp Business API
+WHATSAPP_PHONE_NUMBER_ID=xxx
+ML_CLIENT_ID=xxx                  # Mercado Libre
+ML_CLIENT_SECRET=xxx
+FACEBOOK_PAGE_ACCESS_TOKEN=xxx    # Facebook Marketplace
+VAPID_PUBLIC_KEY=xxx              # Web push notifications
+VAPID_PRIVATE_KEY=xxx
+MAKE_WEBHOOK_SECRET=xxx           # Make.com webhook validation
+```
+
+## Deployment
+
+### Backend (Render)
+
+Configured in `render.yaml`:
+- **Service:** Web, Node.js, Oregon region
+- **Build:** `git submodule update --init --recursive && cd backend && npm install`
+- **Start:** `cd backend && npm start`
+- **Node version:** 20
+
+### Frontend (Vercel)
+
+Each frontend app deploys independently via Vercel. Config in `frontend/vercel.json`.
+
+### CORS
+
+Allowed origins configured in `server.js`: Render frontend, Vercel deployments, custom domains (`axkan.art`, `vtanunciando.com`), Chrome extensions.
+
+## Common Modification Patterns
+
+### Adding a new API endpoint
+
+1. Create route file in `backend/api/` (e.g., `new-feature-routes.js`)
+2. Import and mount in `server.js`: `app.use('/api/new-feature', newFeatureRoutes)`
+3. Add appropriate auth middleware (`employeeAuth`, `requireRole`, etc.)
+
+### Adding a new service
+
+1. Create file in `backend/services/`
+2. Import and use from routes or other services
+3. If it needs scheduling, add cron job in the relevant agent's `scheduler.js`
+
+### Adding a database migration
+
+1. Create migration file in `backend/migrations/` following the naming pattern
+2. Add the migration to `backend/shared/run-all-migrations.js`
+3. Run with `npm run migrate`
+
+### Adding a new Notion property
+
+```javascript
+// 1. Add to config.js propertyMappings
+// 2. Add to buildOrderProperties() in notion-agent/index.js
+// 3. Add to parseNotionPage() for reading back
+```
+
+### Adding a new report type
+
+1. Create Handlebars template in `analytics-agent/templates/`
+2. Add generator function in `report-generator.js`
+3. Add scheduler in `scheduler.js` if automated
+4. Add API route for manual triggering
+
+## Error Handling
+
+- Agents use **retry with exponential backoff** for API calls (`shared/utils.js`)
+- Notion: 3 requests/second (handled via `sleep(350)` in bulk operations)
+- Rate limiting on auth endpoints (5 attempts/15 min)
+- Helmet.js for HTTP security headers
+
 ## Testing Strategy
 
 **Integration tests** (not unit tests):
-- `examples/test-notion.js` - Full round-trip: create order → verify in Notion → update → query
-- `examples/test-analytics.js` - Queries real database, generates reports (doesn't send email)
-- `examples/create-sample-order.js` - End-to-end order creation workflow
+- `backend/examples/test-notion.js` — Full round-trip Notion CRUD
+- `backend/examples/test-analytics.js` — Database queries + report generation
+- `backend/examples/create-sample-order.js` — End-to-end order workflow
 
 **Manual API testing:**
 ```bash
-# Health check
 curl http://localhost:3000/health
-
-# Create order
-curl -X POST http://localhost:3000/api/orders \
-  -H "Content-Type: application/json" \
-  -d @examples/sample-order.json
-
-# Trigger report manually
+curl -X POST http://localhost:3000/api/orders -H "Content-Type: application/json" -d @test-order.json
 curl -X POST http://localhost:3000/api/reports/daily/send
 ```
 
-## Scheduled Jobs Behavior
+**Demo mode** (`node demo-server.js`): In-memory mock server, no database or credentials needed. Useful for API exploration and frontend testing.
 
-The scheduler initializes on server start (`api/server.js` → `analyticsAgent.initialize()`):
+## AXKAN Brand System
 
-- Jobs run **in-process** (not separate workers)
-- If server restarts, jobs reschedule automatically
-- Timezone uses `COMPANY_TIMEZONE` env var (default: America/Mexico_City)
-- Jobs log to stdout and save to `reports_history` table
+Use `/axkan` skill for ANY brand-related task.
 
-**Debugging scheduled jobs:**
-```bash
-# List active jobs
-curl http://localhost:3000/api/reports/schedule
-
-# Check server logs for cron execution
-# Look for: "📊 Running scheduled daily report..."
-```
-
-## Error Handling Philosophy
-
-Both agents use **retry with exponential backoff** for API calls:
-
-```javascript
-import { retry } from '../../shared/utils.js';
-
-// Notion API calls wrapped in retry (3 attempts, 1s → 2s → 4s delays)
-const response = await retry(async () => {
-  return await notion.pages.create({...});
-});
-```
-
-Rate limits:
-- Notion: 3 requests/second (handled via `sleep(350)` in bulk operations)
-- Email: No rate limiting implemented (Gmail has ~500/day limit)
-
-## Demo Mode vs Full Mode
-
-`demo-server.js` provides a **database-free mode** for testing:
-- Uses in-memory array for orders
-- All API endpoints work but data is temporary
-- Notion/email features return mock responses
-- Useful for: API exploration, testing frontend integration, CI/CD
-
-Switch modes:
-```bash
-node demo-server.js     # Demo mode
-npm start               # Full mode (requires PostgreSQL + .env config)
-```
-
-## Documentation Files
-
-- `docs/SETUP_GUIDE.md` - Step-by-step first-time setup
-- `docs/API_REFERENCE.md` - Complete REST API documentation
-- `QUICKSTART.md` - 5-minute setup for demo
-- `SYSTEM_ACTIVE.md` - Status file created when demo launches
-
-## AXKAN Quick Reference
+**Key files:**
+- `AXKAN/axkan-skill-claude-code/SKILL.md` — Complete brand identity (668 lines)
+- `AXKAN/AXKAN-SALES-ASSISTANT-FB-MARKETPLACE.md` — Sales templates
+- `AXKAN/brand-manual/` — Visual assets
+- `AXKAN/prompts/` — AI generation prompts
 
 **Primary Colors:**
 | Color | Hex |
@@ -349,7 +445,7 @@ npm start               # Full mode (requires PostgreSQL + .env config)
 
 **Typography:** RL AQVA (titles), Prenton RP Cond (body)
 
-**The AXKAN Test** - Apply to all brand decisions:
+**The AXKAN Test** — Apply to all brand decisions:
 1. Does it trigger pride?
 2. Is it culturally authentic?
 3. Is it premium?
@@ -360,3 +456,16 @@ npm start               # Full mode (requires PostgreSQL + .env config)
 - Catalog: https://vtanunciando.com
 - Orders: https://axkan-pedidos.vercel.app/
 - Social: @axkan.mx
+
+## Documentation Reference
+
+| File | Purpose |
+|------|---------|
+| `docs/SETUP_GUIDE.md` | Step-by-step first-time setup |
+| `docs/API_REFERENCE.md` | Complete REST API documentation |
+| `QUICKSTART.md` | 5-minute demo setup |
+| `DEPLOYMENT.md` | Deployment instructions |
+| `RENDER_SETUP.md` | Render.com configuration |
+| `INVENTORY_SETUP.md` | Inventory system setup |
+| `MAKE_COM_WEBHOOKS.md` | Make.com automation setup |
+| `docs/plans/` | Feature design documents (13 files) |
