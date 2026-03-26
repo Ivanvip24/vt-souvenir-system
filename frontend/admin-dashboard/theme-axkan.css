@@ -1,0 +1,622 @@
+/* ═══════════════════════════════════════════════════════════
+   AXKAN ADMIN DASHBOARD — Premium Theme Override
+   Glassmorphism + AXKAN brand colors + pill buttons
+   Load AFTER styles.css
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Brand Fonts ── */
+@font-face {
+  font-family: 'RL Aqva';
+  src: url('../landing/assets/fonts/RLAQVA.otf') format('opentype');
+  font-weight: 900;
+  font-display: swap;
+}
+
+/* ── Root Variable Override ── */
+:root {
+  /* AXKAN Official Colors */
+  --axkan-pink: #e72a88;
+  --axkan-green: #8ab73b;
+  --axkan-orange: #f39223;
+  --axkan-turquoise: #09adc2;
+  --axkan-red: #e52421;
+  --axkan-gold: #D4A574;
+
+  /* Map to functional tokens */
+  --primary: #e72a88;
+  --primary-dark: #c41d6f;
+  --primary-light: #f54e9e;
+  --secondary: #f39223;
+
+  --success: #8ab73b;
+  --danger: #e52421;
+  --warning: #f39223;
+  --info: #09adc2;
+
+  /* Refined neutrals — warm, not cold gray */
+  --gray-50: #faf9f8;
+  --gray-100: #f3f2f0;
+  --gray-200: #e8e6e3;
+  --gray-300: #d4d1cc;
+  --gray-400: #a8a49e;
+  --gray-500: #7a766f;
+  --gray-600: #5c5850;
+  --gray-700: #3d3a35;
+  --gray-800: #252320;
+  --gray-900: #141210;
+
+  /* Glass tokens */
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-blur: blur(20px);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+
+  /* Pill radius */
+  --radius-pill: 100px;
+  --radius-card: 20px;
+  --radius-btn: 12px;
+  --radius-input: 12px;
+
+  /* Premium shadows */
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-btn-primary: 0 4px 16px rgba(231, 42, 136, 0.3);
+}
+
+/* ── Body ── */
+body {
+  background: var(--gray-50) !important;
+  font-family: 'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* ═══════════════════════════════════════════
+   HEADER — Sleek dark with saldo pill
+   ═══════════════════════════════════════════ */
+
+.dashboard-header {
+  background: linear-gradient(135deg, #1a0a10 0%, #2a0e1a 40%, #1a1218 100%) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* AXKAN color band at bottom */
+.dashboard-header::after {
+  height: 3px !important;
+  background: linear-gradient(90deg,
+    var(--axkan-pink),
+    var(--axkan-green),
+    var(--axkan-orange),
+    var(--axkan-turquoise),
+    var(--axkan-red)
+  ) !important;
+}
+
+.dashboard-header h1 {
+  font-family: 'RL Aqva', Georgia, serif !important;
+  font-size: 22px !important;
+  letter-spacing: 0.03em !important;
+}
+
+/* Header stat cards — glassmorphic */
+.header-stats .stat-card {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  transition: background 0.2s, border-color 0.2s !important;
+}
+
+.header-stats .stat-card:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* ── Saldo Pill ── */
+.saldo-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, var(--axkan-green), #6d9e2e) !important;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  border: none;
+  cursor: default;
+  box-shadow: 0 2px 12px rgba(138, 183, 59, 0.35);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.saldo-pill:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 20px rgba(138, 183, 59, 0.45);
+}
+
+.saldo-pill .saldo-icon {
+  font-size: 14px;
+}
+
+.saldo-pill .saldo-plus {
+  font-size: 18px;
+  font-weight: 300;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* ── Command Palette Trigger ── */
+.command-palette-trigger {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.command-palette-trigger:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Notification bell */
+.notification-badge {
+  background: var(--axkan-pink) !important;
+}
+
+/* Logout button */
+.btn-logout {
+  border-radius: var(--radius-pill) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.btn-logout:hover {
+  background: rgba(229, 36, 33, 0.2) !important;
+  border-color: rgba(229, 36, 33, 0.4) !important;
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR — Clean with rosa accents
+   ═══════════════════════════════════════════ */
+
+.sidebar {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+.nav-item {
+  border-radius: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.nav-item:hover {
+  background: rgba(231, 42, 136, 0.06) !important;
+  color: var(--primary) !important;
+}
+
+.nav-item.active {
+  background: var(--primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 16px rgba(231, 42, 136, 0.25) !important;
+}
+
+/* Sub-nav items */
+.sub-nav .nav-item.active {
+  background: rgba(231, 42, 136, 0.1) !important;
+  color: var(--primary) !important;
+  box-shadow: none !important;
+}
+
+/* Section labels */
+.nav-section {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: var(--gray-400) !important;
+}
+
+/* ═══════════════════════════════════════════
+   CONTENT AREA — Glassmorphic
+   ═══════════════════════════════════════════ */
+
+.content-area {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* View headers */
+.view-header h2 {
+  font-family: 'RL Aqva', Georgia, serif !important;
+  font-size: 26px !important;
+  color: var(--gray-900) !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* ═══════════════════════════════════════════
+   BUTTONS — All pill-shaped, AXKAN branded
+   ═══════════════════════════════════════════ */
+
+.btn {
+  border-radius: var(--radius-pill) !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  letter-spacing: 0.01em !important;
+}
+
+.btn-primary {
+  background: var(--primary) !important;
+  box-shadow: var(--shadow-btn-primary) !important;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(231, 42, 136, 0.4) !important;
+}
+
+.btn-success {
+  background: var(--success) !important;
+  border-radius: var(--radius-pill) !important;
+  box-shadow: 0 4px 12px rgba(138, 183, 59, 0.25) !important;
+}
+
+.btn-success:hover {
+  background: #7aa832 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(138, 183, 59, 0.35) !important;
+}
+
+.btn-danger {
+  background: var(--danger) !important;
+  border-radius: var(--radius-pill) !important;
+  box-shadow: 0 4px 12px rgba(229, 36, 33, 0.2) !important;
+}
+
+.btn-danger:hover {
+  background: #cc1f1c !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(229, 36, 33, 0.35) !important;
+}
+
+.btn-secondary {
+  background: var(--gray-100) !important;
+  color: var(--gray-700) !important;
+  border-radius: var(--radius-pill) !important;
+}
+
+.btn-secondary:hover {
+  background: var(--gray-200) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Small buttons */
+.btn-small,
+.btn-sm {
+  border-radius: var(--radius-pill) !important;
+}
+
+/* Filter buttons */
+.filter-btn {
+  border-radius: var(--radius-pill) !important;
+  border-width: 1.5px !important;
+}
+
+.filter-btn.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 2px 8px rgba(231, 42, 136, 0.2) !important;
+}
+
+/* Refresh button */
+.btn-refresh {
+  border-radius: var(--radius-pill) !important;
+}
+
+/* Select button */
+.btn-select {
+  border-radius: var(--radius-pill) !important;
+}
+
+.btn-select.active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Create order button */
+.btn-create-order {
+  border-radius: var(--radius-pill) !important;
+  background: linear-gradient(135deg, var(--success) 0%, #6d9e2e 100%) !important;
+}
+
+/* Client lookup */
+.btn-client-lookup {
+  border-radius: var(--radius-pill) !important;
+  background: linear-gradient(135deg, var(--success) 0%, #6d9e2e 100%) !important;
+}
+
+/* Icon buttons — keep rounded square */
+.btn-icon {
+  border-radius: 12px !important;
+}
+
+.btn-icon:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+/* Close buttons */
+.btn-close {
+  border-radius: 50% !important;
+}
+
+/* Commissions */
+.btn-commissions {
+  border-radius: var(--radius-pill) !important;
+  background: linear-gradient(135deg, var(--axkan-orange) 0%, #d97706 100%) !important;
+}
+
+/* View orders */
+.btn-view-orders {
+  border-radius: var(--radius-pill) !important;
+}
+
+/* Logout */
+.btn-logout {
+  border-radius: var(--radius-pill) !important;
+}
+
+/* Bulk action buttons */
+.btn-approve, .btn-complete, .btn-cancel, .btn-clear {
+  border-radius: var(--radius-pill) !important;
+}
+
+/* Dismiss buttons */
+.btn-dismiss-permanent, .btn-dismiss-snooze {
+  border-radius: 10px !important;
+}
+
+/* ═══════════════════════════════════════════
+   FORM INPUTS — Rounded, refined
+   ═══════════════════════════════════════════ */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+select,
+textarea {
+  border-radius: var(--radius-input) !important;
+  border: 1.5px solid var(--gray-200) !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(231, 42, 136, 0.1) !important;
+  outline: none !important;
+}
+
+/* ═══════════════════════════════════════════
+   CARDS — Glassmorphism everywhere
+   ═══════════════════════════════════════════ */
+
+/* Order cards */
+.order-card {
+  border-radius: 16px !important;
+  border: 1px solid var(--gray-200) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: all 0.25s ease !important;
+}
+
+.order-card:hover {
+  box-shadow: var(--shadow-card-hover) !important;
+  transform: translateY(-2px) !important;
+  border-color: rgba(231, 42, 136, 0.15) !important;
+}
+
+/* Summary cards (analytics) */
+.stat-card-large,
+.summary-card {
+  border-radius: 16px !important;
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* Alert summary cards */
+.alert-summary-card {
+  border-radius: 14px !important;
+}
+
+/* Notification summary cards */
+.notif-summary-card {
+  border-radius: 14px !important;
+}
+
+/* ═══════════════════════════════════════════
+   BADGES — Pill shaped, brand colors
+   ═══════════════════════════════════════════ */
+
+.badge {
+  border-radius: var(--radius-pill) !important;
+  font-weight: 700 !important;
+}
+
+.badge-warning {
+  background: var(--axkan-orange) !important;
+}
+
+.badge-success {
+  background: var(--axkan-green) !important;
+}
+
+.badge-info {
+  background: var(--axkan-turquoise) !important;
+}
+
+/* ═══════════════════════════════════════════
+   MODALS — Glassmorphic overlays
+   ═══════════════════════════════════════════ */
+
+.modal-backdrop {
+  background: rgba(20, 18, 16, 0.5) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+.modal-content {
+  border-radius: var(--radius-card) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15) !important;
+}
+
+.modal-header {
+  border-radius: var(--radius-card) var(--radius-card) 0 0 !important;
+}
+
+.modal-header h3 {
+  font-family: 'RL Aqva', Georgia, serif !important;
+}
+
+/* ═══════════════════════════════════════════
+   NOTIFICATION PANEL — Refined glass
+   ═══════════════════════════════════════════ */
+
+.notification-panel {
+  border-radius: 16px !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+}
+
+/* ═══════════════════════════════════════════
+   TABLES — Clean borders, hover states
+   ═══════════════════════════════════════════ */
+
+.data-table th {
+  background: var(--gray-50) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--gray-500) !important;
+}
+
+.data-table tr:hover td {
+  background: rgba(231, 42, 136, 0.02) !important;
+}
+
+/* ═══════════════════════════════════════════
+   STATUS COLORS — AXKAN palette
+   ═══════════════════════════════════════════ */
+
+/* Override any hardcoded status colors to use AXKAN palette */
+.status-new,
+.status-pending {
+  color: var(--axkan-orange) !important;
+}
+
+.status-approved,
+.status-active {
+  color: var(--axkan-green) !important;
+}
+
+.status-completed,
+.status-delivered {
+  color: var(--axkan-turquoise) !important;
+}
+
+.status-cancelled,
+.status-rejected {
+  color: var(--axkan-red) !important;
+}
+
+/* ═══════════════════════════════════════════
+   KBD SHORTCUT — Refined
+   ═══════════════════════════════════════════ */
+
+.kbd-shortcut {
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR — AXKAN branded
+   ═══════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* ═══════════════════════════════════════════
+   SELECTION — Brand color
+   ═══════════════════════════════════════════ */
+
+::selection {
+  background: var(--primary);
+  color: white;
+}
+
+/* ═══════════════════════════════════════════
+   PRIVACY TOGGLE — Refined
+   ═══════════════════════════════════════════ */
+
+.privacy-toggle-btn {
+  border-radius: 12px !important;
+}
+
+/* ═══════════════════════════════════════════
+   MOBILE OVERRIDES
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .saldo-pill {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  .sidebar {
+    border-radius: 0 !important;
+  }
+
+  .content-area {
+    border-radius: 16px 16px 0 0 !important;
+  }
+}

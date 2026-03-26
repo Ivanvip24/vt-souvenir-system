@@ -1807,6 +1807,12 @@ function updateStats() {
   const todayRevenue = todayOrders.reduce((sum, o) => sum + o.totalPrice, 0);
   document.getElementById('today-revenue').textContent = formatCurrency(todayRevenue);
 
+  // Calculate total saldo (all non-archived orders)
+  const totalSaldo = state.orders.filter(o => !o.archiveStatus || o.archiveStatus === 'active')
+    .reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+  const saldoEl = document.getElementById('saldo-total');
+  if (saldoEl) saldoEl.textContent = privacyMode ? '****** MXN' : formatCurrency(totalSaldo) + ' MXN';
+
   // Calculate stats for filters
   const activeOrdersCount = state.orders.filter(o => !o.archiveStatus || o.archiveStatus === 'active').length;
   const archivedCount = state.orders.filter(o => o.archiveStatus && o.archiveStatus !== 'active').length;
@@ -2712,6 +2718,8 @@ function applyPrivacyMode() {
     // Mask header stats and any elements with data-sensitive
     document.getElementById('today-revenue').textContent = '******';
     document.getElementById('pending-count').textContent = '***';
+    const saldoPriv = document.getElementById('saldo-total');
+    if (saldoPriv) saldoPriv.textContent = '****** MXN';
     document.querySelectorAll('[data-sensitive]').forEach(el => {
       if (!el.dataset.originalValue) el.dataset.originalValue = el.textContent;
       el.textContent = '******';
