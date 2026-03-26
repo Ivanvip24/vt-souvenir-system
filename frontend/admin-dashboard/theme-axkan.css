@@ -691,21 +691,13 @@ textarea:focus {
   overflow: hidden !important;
 }
 
+/* Hide lucide icons in avatar — the HTML <img> handles the logo */
 .ai-avatar .icon,
-.ai-avatar i {
+.ai-avatar i[data-lucide] {
   display: none !important;
 }
 
-.ai-avatar::before {
-  content: '';
-  display: block;
-  width: 28px;
-  height: 28px;
-  background: url('../assets/images/LOGO-01.png') center/contain no-repeat;
-  filter: brightness(0) invert(1);
-}
-
-/* Message avatar — also jaguar */
+/* Message avatar — rosa bg, lucide icon hidden, use ::before for logo */
 .ai-message-avatar {
   background: var(--primary) !important;
   border-radius: 12px !important;
