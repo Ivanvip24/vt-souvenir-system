@@ -5,10 +5,6 @@
 
 import express from 'express';
 import multer from 'multer';
-import { execFile } from 'child_process';
-import { writeFile, unlink } from 'fs/promises';
-import path from 'path';
-import os from 'os';
 import { query } from '../shared/database.js';
 import { uploadImage } from '../shared/cloudinary-config.js';
 import {
@@ -639,25 +635,8 @@ router.post('/generate-order', employeeAuth, async (req, res) => {
       }))
     };
 
-    const tmpFile = path.join(os.tmpdir(), `axkan-order-${orderId}-${Date.now()}.json`);
-    await writeFile(tmpFile, JSON.stringify(payload, null, 2));
-
-    const pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
-    const scriptPath = '/Users/ivanvalenciaperez/Desktop/CLAUDE/READY/ORDERS_GENERATOR/generate_axkan.py';
-    const scriptDir = '/Users/ivanvalenciaperez/Desktop/CLAUDE/READY/ORDERS_GENERATOR';
-
-    execFile(pythonPath, [scriptPath, tmpFile], { cwd: scriptDir, timeout: 120000 }, async (error, stdout, stderr) => {
-      try { await unlink(tmpFile); } catch (e) { /* ignore */ }
-
-      if (error) {
-        console.error('Python script error:', error.message);
-        console.error('stderr:', stderr);
-        return res.status(500).json({ error: 'Order generation failed', details: stderr || error.message });
-      }
-
-      console.log('Python script output:', stdout);
-      res.json({ success: true, output: stdout });
-    });
+    // Return payload for frontend to download — Python script runs locally
+    res.json({ success: true, payload });
 
   } catch (error) {
     console.error('Error generating order:', error);

@@ -1362,8 +1362,19 @@ async function generateOrder(orderId) {
         }
 
         var data = await response.json();
-        alert('Pedido generado exitosamente!');
-        console.log('Generate order output:', data.output);
+
+        // Download JSON for local Python script
+        var blob = new Blob([JSON.stringify(data.payload, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'order-' + (data.payload.order_number || orderId) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        alert('Pedido descargado! Ejecuta generate_axkan.py con el archivo JSON.');
 
     } catch (error) {
         console.error('Error generating order:', error);
