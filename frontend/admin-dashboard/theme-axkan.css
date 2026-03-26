@@ -22,11 +22,11 @@
   --axkan-red: #e52421;
   --axkan-gold: #D4A574;
 
-  /* Map to functional tokens */
+  /* Map to functional tokens — distribute ALL AXKAN colors */
   --primary: #e72a88;
   --primary-dark: #c41d6f;
   --primary-light: #f54e9e;
-  --secondary: #f39223;
+  --secondary: #09adc2;
 
   --success: #8ab73b;
   --danger: #e52421;
@@ -195,21 +195,23 @@ body {
   transition: all 0.2s ease !important;
 }
 
+/* Nav hover — TURQUESA tint */
 .nav-item:hover {
-  background: rgba(231, 42, 136, 0.06) !important;
-  color: var(--primary) !important;
+  background: rgba(9, 173, 194, 0.06) !important;
+  color: var(--axkan-turquoise) !important;
 }
 
+/* Active nav — AXKAN 5-color gradient */
 .nav-item.active {
-  background: var(--primary) !important;
+  background: linear-gradient(135deg, var(--axkan-turquoise) 0%, #0899ab 100%) !important;
   color: white !important;
-  box-shadow: 0 4px 16px rgba(231, 42, 136, 0.25) !important;
+  box-shadow: 0 4px 16px rgba(9, 173, 194, 0.25) !important;
 }
 
-/* Sub-nav items */
+/* Sub-nav items — NARANJA accent */
 .sub-nav .nav-item.active {
-  background: rgba(231, 42, 136, 0.1) !important;
-  color: var(--primary) !important;
+  background: rgba(243, 146, 35, 0.1) !important;
+  color: var(--axkan-orange) !important;
   box-shadow: none !important;
 }
 
@@ -244,7 +246,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   BUTTONS — All pill-shaped, AXKAN branded
+   BUTTONS — Pill-shaped, MULTI-COLOR AXKAN
    ═══════════════════════════════════════════ */
 
 .btn {
@@ -254,19 +256,21 @@ body {
   letter-spacing: 0.01em !important;
 }
 
+/* Primary = TURQUESA (not always pink!) */
 .btn-primary {
-  background: var(--primary) !important;
-  box-shadow: var(--shadow-btn-primary) !important;
+  background: var(--axkan-turquoise) !important;
+  box-shadow: 0 4px 16px rgba(9, 173, 194, 0.3) !important;
 }
 
 .btn-primary:hover {
-  background: var(--primary-dark) !important;
+  background: #0899ab !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 24px rgba(231, 42, 136, 0.4) !important;
+  box-shadow: 0 6px 24px rgba(9, 173, 194, 0.4) !important;
 }
 
+/* Success = VERDE */
 .btn-success {
-  background: var(--success) !important;
+  background: var(--axkan-green) !important;
   border-radius: var(--radius-pill) !important;
   box-shadow: 0 4px 12px rgba(138, 183, 59, 0.25) !important;
 }
@@ -277,8 +281,9 @@ body {
   box-shadow: 0 6px 20px rgba(138, 183, 59, 0.35) !important;
 }
 
+/* Danger = ROJO */
 .btn-danger {
-  background: var(--danger) !important;
+  background: var(--axkan-red) !important;
   border-radius: var(--radius-pill) !important;
   box-shadow: 0 4px 12px rgba(229, 36, 33, 0.2) !important;
 }
@@ -306,53 +311,70 @@ body {
   border-radius: var(--radius-pill) !important;
 }
 
-/* Filter buttons */
+/* Filter buttons — TURQUESA when active */
 .filter-btn {
   border-radius: var(--radius-pill) !important;
   border-width: 1.5px !important;
 }
 
-.filter-btn.active {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
-  box-shadow: 0 2px 8px rgba(231, 42, 136, 0.2) !important;
+.filter-btn:hover {
+  border-color: var(--axkan-turquoise) !important;
+  color: var(--axkan-turquoise) !important;
 }
 
-/* Refresh button */
+.filter-btn.active {
+  background: var(--axkan-turquoise) !important;
+  border-color: var(--axkan-turquoise) !important;
+  box-shadow: 0 2px 8px rgba(9, 173, 194, 0.25) !important;
+}
+
+/* Refresh button — NARANJA hover */
 .btn-refresh {
   border-radius: var(--radius-pill) !important;
 }
 
-/* Select button */
+.btn-refresh:hover {
+  border-color: var(--axkan-orange) !important;
+  color: var(--axkan-orange) !important;
+}
+
+/* Select button — ROSA */
 .btn-select {
   border-radius: var(--radius-pill) !important;
 }
 
-.btn-select.active {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
+.btn-select:hover {
+  border-color: var(--axkan-pink) !important;
+  color: var(--axkan-pink) !important;
 }
 
-/* Create order button */
+.btn-select.active {
+  background: var(--axkan-pink) !important;
+  border-color: var(--axkan-pink) !important;
+}
+
+/* Create order button — VERDE */
 .btn-create-order {
   border-radius: var(--radius-pill) !important;
-  background: linear-gradient(135deg, var(--success) 0%, #6d9e2e 100%) !important;
+  background: linear-gradient(135deg, var(--axkan-green) 0%, #6d9e2e 100%) !important;
+  box-shadow: 0 4px 12px rgba(138, 183, 59, 0.3) !important;
 }
 
-/* Client lookup */
+/* Client lookup — TURQUESA */
 .btn-client-lookup {
   border-radius: var(--radius-pill) !important;
-  background: linear-gradient(135deg, var(--success) 0%, #6d9e2e 100%) !important;
+  background: linear-gradient(135deg, var(--axkan-turquoise) 0%, #0899ab 100%) !important;
+  box-shadow: 0 4px 12px rgba(9, 173, 194, 0.3) !important;
 }
 
-/* Icon buttons — keep rounded square */
+/* Icon buttons — TURQUESA hover */
 .btn-icon {
   border-radius: 12px !important;
 }
 
 .btn-icon:hover {
-  border-color: var(--primary) !important;
-  color: var(--primary) !important;
+  border-color: var(--axkan-turquoise) !important;
+  color: var(--axkan-turquoise) !important;
 }
 
 /* Close buttons */
@@ -360,15 +382,21 @@ body {
   border-radius: 50% !important;
 }
 
-/* Commissions */
+/* Commissions — NARANJA */
 .btn-commissions {
   border-radius: var(--radius-pill) !important;
   background: linear-gradient(135deg, var(--axkan-orange) 0%, #d97706 100%) !important;
+  box-shadow: 0 4px 12px rgba(243, 146, 35, 0.3) !important;
 }
 
-/* View orders */
+/* View orders — TURQUESA border */
 .btn-view-orders {
   border-radius: var(--radius-pill) !important;
+}
+
+.btn-view-orders:hover {
+  border-color: var(--axkan-turquoise) !important;
+  color: var(--axkan-turquoise) !important;
 }
 
 /* Logout */
@@ -376,8 +404,26 @@ body {
   border-radius: var(--radius-pill) !important;
 }
 
-/* Bulk action buttons */
-.btn-approve, .btn-complete, .btn-cancel, .btn-clear {
+/* Bulk action buttons — each a different AXKAN color */
+.btn-approve {
+  border-radius: var(--radius-pill) !important;
+  background: var(--axkan-green) !important;
+  border-color: #7aa832 !important;
+}
+
+.btn-complete {
+  border-radius: var(--radius-pill) !important;
+  background: var(--axkan-turquoise) !important;
+  border-color: #0899ab !important;
+}
+
+.btn-cancel {
+  border-radius: var(--radius-pill) !important;
+  background: var(--axkan-red) !important;
+  border-color: #cc1f1c !important;
+}
+
+.btn-clear {
   border-radius: var(--radius-pill) !important;
 }
 
@@ -406,11 +452,12 @@ textarea {
   transition: border-color 0.2s, box-shadow 0.2s !important;
 }
 
+/* Inputs focus — TURQUESA (not pink) */
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(231, 42, 136, 0.1) !important;
+  border-color: var(--axkan-turquoise) !important;
+  box-shadow: 0 0 0 3px rgba(9, 173, 194, 0.12) !important;
   outline: none !important;
 }
 
@@ -702,19 +749,55 @@ textarea:focus {
   background: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Suggestion buttons — AXKAN rosa */
+/* Suggestion buttons — alternating AXKAN colors */
 .ai-suggestion-btn {
   border-radius: var(--radius-pill) !important;
-  border: 1.5px solid rgba(231, 42, 136, 0.2) !important;
-  background: rgba(231, 42, 136, 0.04) !important;
-  color: var(--primary) !important;
+  border: 1.5px solid rgba(9, 173, 194, 0.25) !important;
+  background: rgba(9, 173, 194, 0.04) !important;
+  color: var(--axkan-turquoise) !important;
   font-weight: 600 !important;
 }
 
+.ai-suggestion-btn:nth-child(1) {
+  border-color: rgba(9, 173, 194, 0.25) !important;
+  color: var(--axkan-turquoise) !important;
+}
+.ai-suggestion-btn:nth-child(2) {
+  border-color: rgba(138, 183, 59, 0.25) !important;
+  color: var(--axkan-green) !important;
+  background: rgba(138, 183, 59, 0.04) !important;
+}
+.ai-suggestion-btn:nth-child(3) {
+  border-color: rgba(243, 146, 35, 0.25) !important;
+  color: var(--axkan-orange) !important;
+  background: rgba(243, 146, 35, 0.04) !important;
+}
+.ai-suggestion-btn:nth-child(4) {
+  border-color: rgba(231, 42, 136, 0.25) !important;
+  color: var(--axkan-pink) !important;
+  background: rgba(231, 42, 136, 0.04) !important;
+}
+
 .ai-suggestion-btn:hover {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
+  background: var(--axkan-turquoise) !important;
+  border-color: var(--axkan-turquoise) !important;
   color: white !important;
+  box-shadow: 0 4px 12px rgba(9, 173, 194, 0.25) !important;
+}
+
+.ai-suggestion-btn:nth-child(2):hover {
+  background: var(--axkan-green) !important;
+  border-color: var(--axkan-green) !important;
+  box-shadow: 0 4px 12px rgba(138, 183, 59, 0.25) !important;
+}
+.ai-suggestion-btn:nth-child(3):hover {
+  background: var(--axkan-orange) !important;
+  border-color: var(--axkan-orange) !important;
+  box-shadow: 0 4px 12px rgba(243, 146, 35, 0.25) !important;
+}
+.ai-suggestion-btn:nth-child(4):hover {
+  background: var(--axkan-pink) !important;
+  border-color: var(--axkan-pink) !important;
   box-shadow: 0 4px 12px rgba(231, 42, 136, 0.25) !important;
 }
 
@@ -776,10 +859,7 @@ textarea:focus {
    BOLDER AXKAN COLOR PRESENCE
    ═══════════════════════════════════════════ */
 
-/* Active nav — more colorful gradient */
-.nav-item.active {
-  background: linear-gradient(135deg, var(--axkan-pink) 0%, var(--primary-dark) 100%) !important;
-}
+/* (nav-item.active already set above with turquesa) */
 
 /* Summary cards — colored top borders */
 .summary-card.primary,
@@ -836,14 +916,14 @@ textarea:focus {
   );
 }
 
-/* Links — rosa on hover */
+/* Links — TURQUESA on hover */
 a:hover {
-  color: var(--primary) !important;
+  color: var(--axkan-turquoise) !important;
 }
 
-/* Focus ring — rosa */
+/* Focus ring — TURQUESA */
 *:focus-visible {
-  outline: 2px solid var(--primary) !important;
+  outline: 2px solid var(--axkan-turquoise) !important;
   outline-offset: 2px !important;
 }
 
@@ -854,38 +934,46 @@ a:hover {
   object-fit: contain !important;
 }
 
-/* Mobile bottom nav — AXKAN colors */
+/* Mobile bottom nav — TURQUESA */
 .mobile-nav-item.active {
-  color: var(--primary) !important;
+  color: var(--axkan-turquoise) !important;
 }
 
 .mobile-nav-item.active .mobile-nav-icon {
-  color: var(--primary) !important;
+  color: var(--axkan-turquoise) !important;
 }
 
-/* Tabs — AXKAN pink active */
+/* Tabs — NARANJA active */
 .tab-btn.active,
 .tab.active {
-  border-color: var(--primary) !important;
-  color: var(--primary) !important;
+  border-color: var(--axkan-orange) !important;
+  color: var(--axkan-orange) !important;
 }
 
-/* Progress bars — green */
+/* Progress bars — VERDE */
 .progress-fill {
-  background: var(--axkan-green) !important;
+  background: linear-gradient(90deg, var(--axkan-green), var(--axkan-turquoise)) !important;
 }
 
-/* Toggle switches — rosa when active */
+/* Toggle switches — TURQUESA when active */
 input[type="checkbox"]:checked {
-  accent-color: var(--primary) !important;
+  accent-color: var(--axkan-turquoise) !important;
 }
 
-/* Command palette — refined */
+/* Command palette — TURQUESA hover */
 .command-palette .command-item:hover,
 .command-palette .command-item.active {
-  background: rgba(231, 42, 136, 0.06) !important;
+  background: rgba(9, 173, 194, 0.06) !important;
 }
 
 .command-palette .command-item.active .command-text {
-  color: var(--primary) !important;
+  color: var(--axkan-turquoise) !important;
 }
+
+/* ── Color distribution summary ──
+   ROSA:     Saldo-related, AI assistant header, select mode, badges
+   VERDE:    Create order, approve, success states, progress bars
+   TURQUESA: Primary buttons, nav active, filters, inputs focus, links
+   NARANJA:  Commissions, tabs, sub-nav active, warnings, refresh hover
+   ROJO:     Danger/cancel, delete, overdue alerts
+   ── Each color has a clear role ── */
