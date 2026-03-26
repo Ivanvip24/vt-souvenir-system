@@ -620,3 +620,272 @@ textarea:focus {
     border-radius: 16px 16px 0 0 !important;
   }
 }
+
+/* ═══════════════════════════════════════════
+   AI ASSISTANT — AXKAN branded
+   ═══════════════════════════════════════════ */
+
+/* Chat header — rosa gradient instead of blue */
+.ai-chat-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+  border-radius: 20px 20px 0 0 !important;
+}
+
+/* Avatar — AXKAN jaguar logo */
+.ai-avatar {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 14px !important;
+  padding: 6px !important;
+  width: 42px !important;
+  height: 42px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.ai-avatar .icon,
+.ai-avatar i {
+  display: none !important;
+}
+
+.ai-avatar::before {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 28px;
+  background: url('../assets/images/LOGO-01.png') center/contain no-repeat;
+  filter: brightness(0) invert(1);
+}
+
+/* Message avatar — also jaguar */
+.ai-message-avatar {
+  background: var(--primary) !important;
+  border-radius: 12px !important;
+}
+
+.ai-message-avatar .icon-sm,
+.ai-message-avatar i {
+  display: none !important;
+}
+
+.ai-message-avatar::before {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: url('../assets/images/LOGO-01.png') center/contain no-repeat;
+  filter: brightness(0) invert(1);
+}
+
+.ai-message-avatar.user-avatar {
+  background: var(--axkan-turquoise) !important;
+}
+
+.ai-message-avatar.user-avatar::before {
+  display: none;
+}
+
+/* Chat title */
+.ai-chat-title h3 {
+  font-family: 'RL Aqva', Georgia, serif !important;
+  font-size: 17px !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Action buttons */
+.ai-action-btn {
+  border-radius: 10px !important;
+}
+
+.ai-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Suggestion buttons — AXKAN rosa */
+.ai-suggestion-btn {
+  border-radius: var(--radius-pill) !important;
+  border: 1.5px solid rgba(231, 42, 136, 0.2) !important;
+  background: rgba(231, 42, 136, 0.04) !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+
+.ai-suggestion-btn:hover {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(231, 42, 136, 0.25) !important;
+}
+
+/* Stat cards in AI chat — AXKAN colors */
+.ai-stat-card {
+  background: linear-gradient(135deg, rgba(231, 42, 136, 0.06) 0%, rgba(9, 173, 194, 0.06) 100%) !important;
+  border: 1px solid rgba(231, 42, 136, 0.12) !important;
+  border-radius: 14px !important;
+}
+
+.ai-stat-value {
+  color: var(--primary) !important;
+}
+
+/* Mini charts */
+.ai-mini-chart-container {
+  background: var(--gray-50) !important;
+  border: 1px solid var(--gray-200) !important;
+  border-radius: 14px !important;
+}
+
+/* Chat input */
+.ai-chat-input {
+  border-radius: 16px !important;
+  border: 1.5px solid var(--gray-200) !important;
+}
+
+.ai-chat-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(231, 42, 136, 0.1) !important;
+}
+
+/* Send button */
+.ai-send-btn,
+.ai-chat-footer button[type="submit"],
+.ai-chat-footer .ai-send {
+  background: var(--primary) !important;
+  border-radius: 14px !important;
+}
+
+/* Attach button */
+.ai-attach-btn {
+  border-radius: 12px !important;
+  color: var(--primary) !important;
+}
+
+.ai-attach-btn:hover {
+  background: rgba(231, 42, 136, 0.08) !important;
+}
+
+/* Chat container — glass feel */
+.ai-chat-container {
+  border-radius: 24px !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* ═══════════════════════════════════════════
+   BOLDER AXKAN COLOR PRESENCE
+   ═══════════════════════════════════════════ */
+
+/* Active nav — more colorful gradient */
+.nav-item.active {
+  background: linear-gradient(135deg, var(--axkan-pink) 0%, var(--primary-dark) 100%) !important;
+}
+
+/* Summary cards — colored top borders */
+.summary-card.primary,
+.stat-card-large:nth-child(1) {
+  border-top: 3px solid var(--axkan-pink) !important;
+}
+
+.summary-card.success,
+.stat-card-large:nth-child(2) {
+  border-top: 3px solid var(--axkan-green) !important;
+}
+
+.summary-card.info,
+.stat-card-large:nth-child(3) {
+  border-top: 3px solid var(--axkan-turquoise) !important;
+}
+
+.summary-card.warning,
+.stat-card-large:nth-child(4) {
+  border-top: 3px solid var(--axkan-orange) !important;
+}
+
+/* Order card status stripe — AXKAN colors */
+.order-card[data-status="pending"] {
+  border-left: 4px solid var(--axkan-orange) !important;
+}
+
+.order-card[data-status="approved"] {
+  border-left: 4px solid var(--axkan-green) !important;
+}
+
+.order-card[data-status="completed"],
+.order-card[data-status="delivered"] {
+  border-left: 4px solid var(--axkan-turquoise) !important;
+}
+
+.order-card[data-status="cancelled"] {
+  border-left: 4px solid var(--axkan-red) !important;
+}
+
+/* Color band — visible on login page header too */
+.login-header::after,
+.auth-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    var(--axkan-pink),
+    var(--axkan-green),
+    var(--axkan-orange),
+    var(--axkan-turquoise),
+    var(--axkan-red)
+  );
+}
+
+/* Links — rosa on hover */
+a:hover {
+  color: var(--primary) !important;
+}
+
+/* Focus ring — rosa */
+*:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Logo image in header — ensure visibility */
+.logo-image {
+  height: 36px !important;
+  width: auto !important;
+  object-fit: contain !important;
+}
+
+/* Mobile bottom nav — AXKAN colors */
+.mobile-nav-item.active {
+  color: var(--primary) !important;
+}
+
+.mobile-nav-item.active .mobile-nav-icon {
+  color: var(--primary) !important;
+}
+
+/* Tabs — AXKAN pink active */
+.tab-btn.active,
+.tab.active {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+/* Progress bars — green */
+.progress-fill {
+  background: var(--axkan-green) !important;
+}
+
+/* Toggle switches — rosa when active */
+input[type="checkbox"]:checked {
+  accent-color: var(--primary) !important;
+}
+
+/* Command palette — refined */
+.command-palette .command-item:hover,
+.command-palette .command-item.active {
+  background: rgba(231, 42, 136, 0.06) !important;
+}
+
+.command-palette .command-item.active .command-text {
+  color: var(--primary) !important;
+}

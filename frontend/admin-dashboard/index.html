@@ -1539,6 +1539,20 @@
                         </button>
                     </div>
 
+                    <div class="guias-date-filters">
+                        <button class="guias-date-chip" data-date="today" onclick="setGuiasDateFilter('today')">Hoy</button>
+                        <button class="guias-date-chip" data-date="yesterday" onclick="setGuiasDateFilter('yesterday')">Ayer</button>
+                        <button class="guias-date-chip" data-date="week" onclick="setGuiasDateFilter('week')">Semana</button>
+                        <button class="guias-date-chip" data-date="custom" onclick="updateDateFilterChips('custom'); document.getElementById('guias-date-range').classList.remove('hidden');">Período</button>
+                        <button class="guias-date-chip guias-date-chip--clear" data-date="clear" onclick="setGuiasDateFilter('clear')">✕</button>
+                        <div id="guias-date-range" class="guias-date-range hidden">
+                            <input type="date" id="guias-date-start">
+                            <span>→</span>
+                            <input type="date" id="guias-date-end">
+                            <button class="guias-date-apply" onclick="setGuiasCustomDateRange()">Aplicar</button>
+                        </div>
+                    </div>
+
                     <div class="guias-topbar-actions">
                         <button class="guias-icon-btn t1-only-btn hidden" onclick="window.open('https://shipping.t1.com/shippings/create-shipping?store=208742', '_blank')" title="Crear envío en T1">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -1556,6 +1570,18 @@
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         </button>
                     </div>
+                </div>
+
+                <div class="guias-print-toolbar" id="guias-print-toolbar">
+                    <label class="guias-select-all-label">
+                        <input type="checkbox" id="guias-select-all" onchange="toggleSelectAllGuias()">
+                        <span>Todas</span>
+                    </label>
+                    <span class="guias-print-count" id="guias-print-count"></span>
+                    <button class="guias-print-btn" id="guias-print-btn" disabled onclick="printSelectedGuias()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        Imprimir
+                    </button>
                 </div>
 
                 <!-- Card list + detail panel layout -->
@@ -2719,7 +2745,7 @@
             <div class="ai-chat-header">
                 <div class="ai-chat-title">
                     <div class="ai-avatar">
-                        <i data-lucide="bot" class="icon"></i>
+                        <img src="../assets/images/LOGO-01.png" alt="AXKAN" style="width:28px;height:28px;object-fit:contain;filter:brightness(0) invert(1);">
                     </div>
                     <div>
                         <h3>Asistente AXKAN</h3>
