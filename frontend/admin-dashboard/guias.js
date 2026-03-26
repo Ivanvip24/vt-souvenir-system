@@ -187,8 +187,64 @@ function renderGuiasList() {
   emptyEl.classList.add('hidden');
   listEl.textContent = '';
 
+  // Group by tracking number to collapse multilabels
+  var groups = {};
+  var order = [];
   guiasData.forEach(function(guia) {
-    listEl.appendChild(createGuiaCard(guia));
+    var key = guia.tracking_number || ('solo_' + guia.id);
+    if (!groups[key]) {
+      groups[key] = [];
+      order.push(key);
+    }
+    groups[key].push(guia);
+  });
+
+  order.forEach(function(key) {
+    var group = groups[key];
+    if (group.length === 1) {
+      // Single label — render normally
+      listEl.appendChild(createGuiaCard(group[0]));
+    } else {
+      // Multilabel — render first as main, add toggle for rest
+      var wrapper = document.createElement('div');
+      wrapper.className = 'guia-multilabel-group';
+
+      var mainCard = createGuiaCard(group[0]);
+      // Add multilabel badge
+      var badge = document.createElement('span');
+      badge.className = 'guia-multilabel-badge';
+      badge.textContent = group.length + ' guias';
+      var row1 = mainCard.querySelector('.guia-card__row1');
+      if (row1) row1.appendChild(badge);
+
+      // Toggle button
+      var toggleBtn = document.createElement('button');
+      toggleBtn.className = 'guia-multilabel-toggle';
+      toggleBtn.textContent = 'Ver ' + (group.length - 1) + ' mas \u25BC';
+      toggleBtn.onclick = function(e) {
+        e.stopPropagation();
+        var hidden = wrapper.querySelector('.guia-multilabel-children');
+        if (hidden.classList.contains('hidden')) {
+          hidden.classList.remove('hidden');
+          toggleBtn.textContent = 'Ocultar \u25B2';
+        } else {
+          hidden.classList.add('hidden');
+          toggleBtn.textContent = 'Ver ' + (group.length - 1) + ' mas \u25BC';
+        }
+      };
+
+      // Children container (hidden by default)
+      var children = document.createElement('div');
+      children.className = 'guia-multilabel-children hidden';
+      for (var i = 1; i < group.length; i++) {
+        children.appendChild(createGuiaCard(group[i]));
+      }
+
+      wrapper.appendChild(mainCard);
+      wrapper.appendChild(toggleBtn);
+      wrapper.appendChild(children);
+      listEl.appendChild(wrapper);
+    }
   });
 }
 
@@ -244,8 +300,17 @@ function createGuiaCard(guia) {
   carrierName.className = 'guia-card__carrier-name';
   carrierName.textContent = guia.carrier || 'N/A';
 
+  var carrierDate = document.createElement('span');
+  carrierDate.className = 'guia-card__carrier-date';
+  carrierDate.textContent = guia.created_at ? formatDateGuias(guia.created_at) : '';
+
+  var carrierInfo = document.createElement('div');
+  carrierInfo.className = 'guia-card__carrier-info';
+  carrierInfo.appendChild(carrierName);
+  carrierInfo.appendChild(carrierDate);
+
   carrierDiv.appendChild(carrierIcon);
-  carrierDiv.appendChild(carrierName);
+  carrierDiv.appendChild(carrierInfo);
 
   var trackingDiv = document.createElement('div');
   trackingDiv.className = 'guia-card__tracking';
