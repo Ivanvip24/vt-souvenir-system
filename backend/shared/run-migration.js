@@ -55,6 +55,13 @@ async function runAllMigrations() {
       console.error('❌ Design Portal migration failed:', e.message);
     }
 
+    try {
+      const { addDesignImageUrl } = await import('../migrations/add-design-image-url.js');
+      await addDesignImageUrl();
+    } catch (e) {
+      console.error('❌ Design Image URL migration failed:', e.message);
+    }
+
     console.log('\n✨ All migrations completed successfully!');
 
   } catch (error) {

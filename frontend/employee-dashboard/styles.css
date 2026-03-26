@@ -2440,3 +2440,536 @@ textarea {
         padding: 0 16px;
     }
 }
+
+/* ============================================
+   DESIGNER TRACKING VIEW
+   ============================================ */
+
+.dt-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* ── Stats Row ── */
+.dt-stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.dt-stat-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 20px 16px;
+    text-align: center;
+    border: 1px solid var(--gray-200);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(12px);
+}
+
+.dt-stat-card.dt-stat-animate {
+    animation: dtStatIn 400ms ease forwards;
+}
+
+@keyframes dtStatIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dt-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.dt-stat-total::before { background: var(--turquoise); }
+.dt-stat-done::before { background: var(--green); }
+.dt-stat-pending::before { background: var(--orange); }
+.dt-stat-correction::before { background: var(--red); }
+.dt-stat-overdue::before { background: linear-gradient(90deg, var(--red), var(--orange)); }
+
+.dt-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gray-900);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+}
+
+.dt-stat-total .dt-stat-value { color: var(--turquoise); }
+.dt-stat-done .dt-stat-value { color: var(--green); }
+.dt-stat-pending .dt-stat-value { color: var(--orange); }
+.dt-stat-correction .dt-stat-value { color: var(--red); }
+.dt-stat-overdue .dt-stat-value { color: var(--red); }
+
+.dt-stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+}
+
+/* ── Designer Cards ── */
+.dt-designers-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.dt-designer-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    border: 1px solid var(--gray-200);
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.dt-designer-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent, var(--primary));
+}
+
+.dt-designer-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.dt-designer-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-weight: 700;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.dt-designer-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.dt-designer-info h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.dt-designer-subtitle {
+    font-size: 12px;
+    color: var(--gray-500);
+}
+
+.dt-designer-pct {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+/* Progress bar */
+.dt-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--gray-100);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+
+.dt-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Metrics row */
+.dt-designer-metrics {
+    display: flex;
+    justify-content: space-between;
+}
+
+.dt-metric {
+    text-align: center;
+}
+
+.dt-metric-value {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.dt-metric-label {
+    display: block;
+    font-size: 10px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+}
+
+/* ── Filters ── */
+.dt-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.dt-filters .select-input {
+    min-width: 160px;
+}
+
+.dt-report-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+/* ── Task Table ── */
+.dt-tasks-table {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.dt-table-header {
+    display: grid;
+    grid-template-columns: 120px 80px 1fr 110px 90px 80px 100px 80px;
+    padding: 10px 16px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.dt-table-row {
+    display: grid;
+    grid-template-columns: 120px 80px 1fr 110px 90px 80px 100px 80px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    align-items: center;
+    font-size: 13px;
+    color: var(--gray-700);
+    transition: var(--transition);
+}
+
+.dt-table-row:last-child {
+    border-bottom: none;
+}
+
+.dt-table-row:hover {
+    background: var(--gray-50);
+}
+
+.dt-row-overdue {
+    background: #FFF5F5;
+}
+
+.dt-row-overdue:hover {
+    background: #FFEDED;
+}
+
+/* Column helpers */
+.dt-col-designer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.dt-designer-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dt-col-product {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Type badges */
+.dt-type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.dt-type-armado {
+    background: #EBF5FF;
+    color: #1976D2;
+}
+
+.dt-type-diseno {
+    background: #F3E5F5;
+    color: #7B1FA2;
+}
+
+/* Status badges */
+.dt-status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.dt-status-pending {
+    background: #FFF3E0;
+    color: #E65100;
+}
+
+.dt-status-in_progress {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.dt-status-done {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.dt-status-correction {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+/* Correction count */
+.dt-correction-count {
+    color: var(--red);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Overdue badge */
+.dt-overdue-badge {
+    display: inline-block;
+    background: var(--red);
+    color: var(--white);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 800;
+    text-align: center;
+    line-height: 16px;
+    margin-left: 4px;
+}
+
+/* Action buttons */
+.dt-action-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    font-size: 14px;
+    font-weight: 700;
+    margin-right: 4px;
+}
+
+.dt-action-complete {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.dt-action-complete:hover {
+    background: #C8E6C9;
+}
+
+.dt-action-correction {
+    background: #FFF3E0;
+    color: #E65100;
+}
+
+.dt-action-correction:hover {
+    background: #FFE0B2;
+}
+
+/* ── Empty state ── */
+.dt-empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--gray-400);
+}
+
+.dt-empty-state p {
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.dt-empty-state.hidden {
+    display: none;
+}
+
+/* ── Modal form extras ── */
+.dt-type-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.dt-type-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    background: var(--white);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-600);
+    transition: var(--transition);
+}
+
+.dt-type-btn.active {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.dt-type-btn:not(.active):hover {
+    background: var(--gray-50);
+}
+
+/* Toast system (if not already defined) */
+.toast {
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 300ms ease;
+    box-shadow: var(--shadow-md);
+}
+
+.toast-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-success {
+    background: #2E7D32;
+    color: var(--white);
+}
+
+.toast-error {
+    background: #C62828;
+    color: var(--white);
+}
+
+.toast-info {
+    background: var(--gray-800);
+    color: var(--white);
+}
+
+/* Spinner small */
+.spinner-sm {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: var(--white);
+    border-radius: 50%;
+    animation: spin 600ms linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .dt-stats-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .dt-table-header,
+    .dt-table-row {
+        grid-template-columns: 100px 70px 1fr 90px 80px 100px 70px;
+    }
+
+    .dt-col-dest {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .dt-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dt-designers-row {
+        grid-template-columns: 1fr;
+    }
+
+    .dt-table-header {
+        display: none;
+    }
+
+    .dt-table-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 12px;
+        padding: 14px 16px;
+    }
+
+    .dt-col-designer {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .dt-col-dest,
+    .dt-col-date {
+        display: none;
+    }
+
+    .dt-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dt-filters .select-input {
+        min-width: 100%;
+    }
+
+    .dt-report-actions {
+        margin-left: 0;
+    }
+}

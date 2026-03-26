@@ -102,6 +102,13 @@
                         </svg>
                         <span>Todas las Tareas</span>
                     </li>
+                    <li class="nav-item" data-view="designer-tracking">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        </svg>
+                        <span>Seguimiento</span>
+                    </li>
                 </ul>
             </div>
 
@@ -413,6 +420,153 @@
 
                 <div id="all-tasks-list" class="tasks-container"></div>
             </section>
+
+            <!-- Designer Tracking View (Manager) -->
+            <section id="designer-tracking-view" class="view">
+                <header class="view-header">
+                    <h2>Seguimiento de Diseño</h2>
+                    <div class="dt-header-actions">
+                        <button class="btn btn-secondary btn-sm" id="dt-refresh-btn" title="Actualizar">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                            </svg>
+                        </button>
+                        <button class="btn btn-primary btn-sm" id="dt-new-task-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Asignar Tarea
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Stats Cards -->
+                <div class="dt-stats-row" id="dt-stats-row">
+                    <div class="dt-stat-card dt-stat-total">
+                        <div class="dt-stat-value" id="dt-stat-total">-</div>
+                        <div class="dt-stat-label">Total (30d)</div>
+                    </div>
+                    <div class="dt-stat-card dt-stat-done">
+                        <div class="dt-stat-value" id="dt-stat-done">-</div>
+                        <div class="dt-stat-label">Completadas</div>
+                    </div>
+                    <div class="dt-stat-card dt-stat-pending">
+                        <div class="dt-stat-value" id="dt-stat-pending">-</div>
+                        <div class="dt-stat-label">Pendientes</div>
+                    </div>
+                    <div class="dt-stat-card dt-stat-correction">
+                        <div class="dt-stat-value" id="dt-stat-correction">-</div>
+                        <div class="dt-stat-label">Correcciones</div>
+                    </div>
+                    <div class="dt-stat-card dt-stat-overdue">
+                        <div class="dt-stat-value" id="dt-stat-overdue">-</div>
+                        <div class="dt-stat-label">Atrasadas</div>
+                    </div>
+                </div>
+
+                <!-- Designer Cards -->
+                <div class="dt-designers-row" id="dt-designers-row"></div>
+
+                <!-- Task Filters -->
+                <div class="dt-filters">
+                    <select id="dt-filter-designer" class="select-input">
+                        <option value="">Todas las diseñadoras</option>
+                    </select>
+                    <select id="dt-filter-status" class="select-input">
+                        <option value="">Todos los estados</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="in_progress">En Progreso</option>
+                        <option value="done">Completado</option>
+                        <option value="correction">Corrección</option>
+                    </select>
+                    <select id="dt-filter-type" class="select-input">
+                        <option value="">Todos los tipos</option>
+                        <option value="armado">Armado</option>
+                        <option value="diseño">Diseño</option>
+                    </select>
+                    <div class="dt-report-actions">
+                        <button class="btn btn-secondary btn-sm" id="dt-report-daily-btn" title="Generar reporte diario">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            Diario
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="dt-report-weekly-btn" title="Generar reporte semanal">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                            Semanal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Task List -->
+                <div id="dt-loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Cargando seguimiento...</p>
+                </div>
+                <div id="dt-tasks-list" class="dt-tasks-table"></div>
+                <div id="dt-empty" class="dt-empty-state hidden">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5">
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                    </svg>
+                    <p>No hay tareas con estos filtros</p>
+                </div>
+            </section>
+
+            <!-- New Task Modal -->
+            <div id="dt-new-task-modal" class="modal-overlay hidden">
+                <div class="modal-container" style="max-width: 480px;">
+                    <header class="modal-header">
+                        <h3>Asignar Nueva Tarea</h3>
+                        <button class="modal-close" onclick="closeDTModal()">&times;</button>
+                    </header>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Diseñadora</label>
+                            <select id="dt-form-designer" class="select-input" required>
+                                <option value="">Seleccionar...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <div class="dt-type-toggle">
+                                <button class="dt-type-btn active" data-type="armado">Armado</button>
+                                <button class="dt-type-btn" data-type="diseño">Diseño</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Producto</label>
+                            <input type="text" id="dt-form-product" class="text-input" placeholder="imanes, destapadores, llaveros...">
+                        </div>
+                        <div class="form-group" id="dt-form-qty-group">
+                            <label>Cantidad</label>
+                            <input type="number" id="dt-form-qty" class="text-input" min="1" placeholder="50">
+                        </div>
+                        <div class="form-group hidden" id="dt-form-pieces-group">
+                            <label>Piezas (separadas por coma)</label>
+                            <input type="text" id="dt-form-pieces" class="text-input" placeholder="destapador, llavero, iman">
+                        </div>
+                        <div class="form-group">
+                            <label>Destino</label>
+                            <input type="text" id="dt-form-destination" class="text-input" placeholder="Cancún, Oaxaca...">
+                        </div>
+                        <div class="form-group">
+                            <label>Referencia de pedido <span style="color:var(--gray-400)">(opcional)</span></label>
+                            <input type="text" id="dt-form-reference" class="text-input" placeholder="pedido Oaxaca #123">
+                        </div>
+                    </div>
+                    <footer class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeDTModal()">Cancelar</button>
+                        <button class="btn btn-primary" id="dt-form-submit">Asignar</button>
+                    </footer>
+                </div>
+            </div>
 
             <!-- Knowledge Base View - AI Chat -->
             <section id="knowledge-view" class="view">
@@ -770,5 +924,6 @@
     <script src="gallery.js"></script>
     <script src="notes.js"></script>
     <script src="knowledge.js"></script>
+    <script src="designer-tracking.js"></script>
 </body>
 </html>

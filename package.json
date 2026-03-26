@@ -2,5 +2,8 @@
   "dependencies": {
     "csv-parse": "^6.1.0",
     "heic-convert": "^2.1.0"
+  },
+  "devDependencies": {
+    "docx": "^9.6.0"
   }
 }

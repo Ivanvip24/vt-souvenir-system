@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>AXKAN — Vacante</title>
+<style>
+  @font-face {
+    font-family: 'RLAQVA';
+    src: url('AXKAN_SOURCES/RLAQVA.otf') format('opentype');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Objektiv';
+    src: url('AXKAN_SOURCES/FONT-OBJEKTIV-VF-BODY.otf') format('opentype');
+    font-display: swap;
+  }
+
+  :root {
+    --rosa: #e72a88;
+    --verde: #8ab73b;
+    --naranja: #f39223;
+    --turquesa: #09adc2;
+    --rojo: #e52421;
+    --rosa-light: #fdf0f6;
+    --turquesa-light: #eef9fb;
+  }
+
+  @page { size: 33cm 47cm; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 33cm;
+    height: 47cm;
+    margin: 0 auto;
+    background: #fff;
+    font-family: 'Objektiv', 'Avenir Next', 'Segoe UI', sans-serif;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ===== STRIPE ===== */
+  .stripe { height: 0.6cm; display: flex; flex-shrink: 0; }
+  .stripe div { flex: 1; }
+  .c1 { background: var(--rosa); }
+  .c2 { background: var(--verde); }
+  .c3 { background: var(--naranja); }
+  .c4 { background: var(--turquesa); }
+  .c5 { background: var(--rojo); }
+
+  /* ===== HEADER ===== */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.9cm 2.5cm 0.6cm;
+    gap: 0.6cm;
+    flex-shrink: 0;
+  }
+  .logo { height: 3.2cm; }
+  .header-divider {
+    width: 2px;
+    height: 2cm;
+    background: #e0e0e0;
+  }
+  .header-text {
+    color: #bbb;
+    font-size: 10pt;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    line-height: 1.6;
+  }
+  .header-text .url {
+    color: var(--rosa);
+    font-weight: 800;
+    font-size: 12pt;
+    letter-spacing: 0.08em;
+  }
+
+  /* ===== CONTENT ===== */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 2.5cm;
+    gap: 0.65cm;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    background: var(--rosa);
+    border-radius: 14px;
+    padding: 1.5cm 2cm;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -3cm; right: -3cm;
+    width: 14cm; height: 14cm;
+    background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 60%);
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -2cm; left: -2cm;
+    width: 10cm; height: 10cm;
+    background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 60%);
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 12pt;
+    font-weight: 800;
+    letter-spacing: 0.55em;
+    text-transform: uppercase;
+    padding: 0.2cm 0.8cm;
+    border-radius: 8px;
+    margin-bottom: 0.4cm;
+    position: relative;
+  }
+  .hero h1 {
+    font-family: 'RLAQVA', 'Impact', sans-serif;
+    font-size: 88pt;
+    color: #fff;
+    line-height: 0.92;
+    position: relative;
+  }
+  .hero-sub {
+    font-size: 18pt;
+    color: rgba(255,255,255,0.75);
+    margin-top: 0.4cm;
+    line-height: 1.4;
+    position: relative;
+  }
+  .hero-sub strong { color: #fff; }
+
+  /* ===== BENEFITS ===== */
+  .benefits {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4cm;
+  }
+  .ben {
+    background: var(--rosa-light);
+    border-radius: 12px;
+    padding: 0.55cm 0.3cm 0.65cm;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .ben:nth-child(2) { background: var(--turquesa-light); }
+  .ben:nth-child(3) { background: #f5faf0; }
+  .ben:nth-child(4) { background: #fef6eb; }
+  .ben::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 25%; right: 25%;
+    height: 4px;
+    border-radius: 2px 2px 0 0;
+  }
+  .ben:nth-child(1)::after { background: var(--rosa); }
+  .ben:nth-child(2)::after { background: var(--turquesa); }
+  .ben:nth-child(3)::after { background: var(--verde); }
+  .ben:nth-child(4)::after { background: var(--naranja); }
+  .ben-ico { font-size: 32pt; margin-bottom: 0.1cm; }
+  .ben-title { font-size: 17pt; font-weight: 800; color: #333; line-height: 1.15; }
+  .ben-sub { font-size: 10pt; color: #999; margin-top: 3px; }
+
+  /* ===== TASKS ===== */
+  .tasks {
+    background: #f8f8f8;
+    border-radius: 12px;
+    padding: 0.75cm 1.2cm;
+  }
+  .tasks h2 {
+    font-family: 'RLAQVA', 'Impact', sans-serif;
+    font-size: 30pt;
+    color: var(--rosa);
+    text-align: center;
+    margin-bottom: 0.4cm;
+    letter-spacing: 0.03em;
+  }
+  .tasks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3cm 0.8cm;
+  }
+  .tasks-grid .t:nth-child(5) {
+    grid-column: 1 / -1;
+    max-width: 48%;
+    margin: 0 auto;
+  }
+  .t {
+    display: flex;
+    align-items: center;
+    gap: 0.3cm;
+    background: #fff;
+    padding: 0.3cm 0.45cm;
+    border-radius: 10px;
+    border: 1px solid #eee;
+  }
+  .tn {
+    width: 0.9cm; height: 0.9cm;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 13pt;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .t:nth-child(1) .tn { background: var(--rosa); }
+  .t:nth-child(2) .tn { background: var(--turquesa); }
+  .t:nth-child(3) .tn { background: var(--verde); }
+  .t:nth-child(4) .tn { background: var(--naranja); }
+  .t:nth-child(5) .tn { background: var(--rojo); }
+  .tl { font-size: 15pt; font-weight: 700; color: #333; line-height: 1.2; }
+  .tl em { font-style: normal; font-weight: 400; font-size: 10pt; color: #999; display: block; }
+
+  /* ===== CTA ===== */
+  .cta {
+    background: var(--turquesa);
+    border-radius: 12px;
+    padding: 0.7cm 1.5cm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5cm;
+  }
+  .cta-left { color: #fff; text-align: center; }
+  .cta-ey {
+    font-size: 11pt;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+  .cta-ph {
+    font-family: 'RLAQVA', 'Impact', sans-serif;
+    font-size: 52pt;
+    line-height: 1;
+    letter-spacing: 0.03em;
+    margin-top: 0.08cm;
+  }
+  .cta-hint { font-size: 13pt; opacity: 0.7; margin-top: 0.08cm; }
+  .cta-wa {
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 0.35cm 0.7cm;
+    text-align: center;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .cta-wa-i { font-size: 38pt; }
+  .cta-wa-l { font-size: 11pt; font-weight: 800; }
+
+  /* ===== FOOTER ===== */
+  .footer { flex-shrink: 0; }
+  .footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.8cm;
+    padding: 0.4cm 2.5cm 0.25cm;
+    font-size: 11pt;
+    color: #ccc;
+  }
+
+  /* ===== WATERMARK ===== */
+  .wm {
+    position: absolute;
+    bottom: 3cm;
+    right: 2cm;
+    width: 4cm;
+    opacity: 0.03;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<img class="wm" src="AXKAN_SOURCES/JAGUAR.png" alt="">
+
+<div class="stripe"><div class="c1"></div><div class="c2"></div><div class="c3"></div><div class="c4"></div><div class="c5"></div></div>
+
+<div class="header">
+  <img class="logo" src="AXKAN_SOURCES/JAGUAR_LETTERS.png" alt="AXKAN">
+  <div class="header-divider"></div>
+  <div class="header-text">Recuerdos Hechos<br>Souvenir<div class="url">axkan.art</div></div>
+</div>
+
+<div class="content">
+
+  <div class="hero">
+    <div class="hero-badge">Vacante Disponible</div>
+    <h1>TRABAJA DESDE<br>TU CASA</h1>
+    <div class="hero-sub">Buscamos personas responsables para<br><strong>produccion y empaque de souvenirs</strong></div>
+  </div>
+
+  <div class="benefits">
+    <div class="ben"><div class="ben-ico">🏠</div><div class="ben-title">100%<br>Remoto</div><div class="ben-sub">Desde tu hogar</div></div>
+    <div class="ben"><div class="ben-ico">💰</div><div class="ben-title">Pago<br>Semanal</div><div class="ben-sub">Cada semana</div></div>
+    <div class="ben"><div class="ben-ico">⏰</div><div class="ben-title">Horario<br>Flexible</div><div class="ben-sub">Tu decides cuando</div></div>
+    <div class="ben"><div class="ben-ico">✅</div><div class="ben-title">Sin<br>Experiencia</div><div class="ben-sub">Te capacitamos</div></div>
+  </div>
+
+  <div class="tasks">
+    <h2>¿QUE HARAS?</h2>
+    <div class="tasks-grid">
+      <div class="t"><div class="tn">1</div><div class="tl">Limpiar piezas<em>Remover exceso de material</em></div></div>
+      <div class="t"><div class="tn">2</div><div class="tl">Pegar imanes<em>Ensamblar iman en la pieza</em></div></div>
+      <div class="t"><div class="tn">3</div><div class="tl">Post-produccion<em>Acabado final de cada pieza</em></div></div>
+      <div class="t"><div class="tn">4</div><div class="tl">Contar inventario<em>Verificar cantidades</em></div></div>
+      <div class="t"><div class="tn">5</div><div class="tl">Empacar pedidos<em>Preparar para envio</em></div></div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <div class="cta-left">
+      <div class="cta-ey">Escribenos por WhatsApp</div>
+      <div class="cta-ph">55 3825 3251</div>
+      <div class="cta-hint">Envia la palabra TRABAJO</div>
+    </div>
+    <div class="cta-wa">
+      <div class="cta-wa-i">💬</div>
+      <div class="cta-wa-l">WhatsApp</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-links"><span>@axkan.mx</span><span>hola@axkan.mx</span><span>axkan.art</span></div>
+  <div class="stripe"><div class="c1"></div><div class="c2"></div><div class="c3"></div><div class="c4"></div><div class="c5"></div></div>
+</div>
+
+</body>
+</html>

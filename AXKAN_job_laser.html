@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>AXKAN — Vacante Corte Laser</title>
+<style>
+  @font-face {
+    font-family: 'RLAQVA';
+    src: url('AXKAN_SOURCES/RLAQVA.otf') format('opentype');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Objektiv';
+    src: url('AXKAN_SOURCES/FONT-OBJEKTIV-VF-BODY.otf') format('opentype');
+    font-display: swap;
+  }
+
+  :root {
+    --rosa: #e72a88;
+    --verde: #8ab73b;
+    --naranja: #f39223;
+    --turquesa: #09adc2;
+    --rojo: #e52421;
+  }
+
+  @page { size: 33cm 47cm; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 33cm;
+    height: 47cm;
+    margin: 0 auto;
+    background: #fff;
+    font-family: 'Objektiv', 'Avenir Next', sans-serif;
+    overflow: hidden;
+    position: relative;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ===== LEFT ACCENT BAR ===== */
+  .left-bar {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1.8cm;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .left-bar div { flex: 1; }
+
+  /* ===== MAIN WRAPPER ===== */
+  .main {
+    margin-left: 1.8cm;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8cm 1.8cm 0.5cm 1.2cm;
+    flex-shrink: 0;
+  }
+  .logo { height: 2.8cm; }
+  .header-right {
+    text-align: right;
+    font-size: 9pt;
+    color: #bbb;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+  .header-right .site {
+    color: var(--turquesa);
+    font-weight: 800;
+    font-size: 11pt;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  /* ===== TOP TAG ===== */
+  .top-tag {
+    margin: 0 1.8cm 0 1.2cm;
+    display: flex;
+    align-items: center;
+    gap: 0.4cm;
+    flex-shrink: 0;
+  }
+  .top-tag-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, var(--turquesa), var(--verde));
+  }
+  .top-tag-text {
+    font-size: 11pt;
+    font-weight: 800;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--turquesa);
+    flex-shrink: 0;
+  }
+
+  /* ===== CONTENT ===== */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 1.8cm 0 1.2cm;
+    gap: 0.6cm;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    text-align: left;
+    padding: 0.4cm 0;
+  }
+  .hero h1 {
+    font-family: 'RLAQVA', 'Impact', sans-serif;
+    font-size: 74pt;
+    line-height: 0.93;
+    color: #333;
+  }
+  .hero h1 .rosa { color: var(--rosa); }
+  .hero h1 .turq { color: var(--turquesa); }
+  .hero h1 .nar { color: var(--naranja); }
+  .hero-desc {
+    font-size: 18pt;
+    color: #888;
+    margin-top: 0.4cm;
+    line-height: 1.4;
+    max-width: 22cm;
+  }
+  .hero-desc strong { color: var(--rosa); }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    height: 4px;
+    background: linear-gradient(90deg, var(--rosa) 20%, var(--naranja) 40%, var(--turquesa) 60%, var(--verde) 80%, var(--rojo) 100%);
+    border-radius: 2px;
+  }
+
+  /* ===== INFO GRID ===== */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.4cm;
+  }
+  .info-card {
+    border-radius: 12px;
+    padding: 0.6cm 0.5cm;
+    text-align: center;
+  }
+  .info-card:nth-child(1) { background: var(--rosa); color: #fff; }
+  .info-card:nth-child(2) { background: var(--turquesa); color: #fff; }
+  .info-card:nth-child(3) { background: var(--verde); color: #fff; }
+  .info-ico { font-size: 34pt; margin-bottom: 0.08cm; }
+  .info-title { font-size: 20pt; font-weight: 800; line-height: 1.1; }
+  .info-sub { font-size: 11pt; opacity: 0.8; margin-top: 3px; }
+
+  /* ===== TASKS ===== */
+  .tasks-section {
+    background: #f6f6f6;
+    border-radius: 12px;
+    padding: 0.7cm 1cm;
+  }
+  .tasks-header {
+    font-family: 'RLAQVA', 'Impact', sans-serif;
+    font-size: 28pt;
+    color: var(--turquesa);
+    text-align: center;
+    margin-bottom: 0.35cm;
+  }
+  .tasks-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25cm 0.7cm;
+  }
+  .task {
+    display: flex;
+    align-items: center;
+    gap: 0.3cm;
+    background: #fff;
+    padding: 0.28cm 0.4cm;
+    border-radius: 10px;
+    border: 1px solid #ececec;
+  }
+  .task-dot {
+    width: 0.7cm; height: 0.7cm;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .task:nth-child(1) .task-dot { background: var(--rosa); }
+  .task:nth-child(2) .task-dot { background: var(--turquesa); }
+  .task:nth-child(3) .task-dot { background: var(--naranja); }
+  .task:nth-child(4) .task-dot { background: var(--verde); }
+  .task-text {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.2;
+  }
+  .task-text em {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 10pt;
+    color: #aaa;
+    display: block;
+  }
+
+  /* ===== REQUISITOS ===== */
+  .reqs {
+    display: flex;
+    gap: 0.4cm;
+    justify-content: center;
+  }
+  .req {
+    background: #fff;
+    border: 2px solid var(--naranja);
+    border-radius: 12px;
+    padding: 0.4cm 0.6cm;
+    text-align: center;
+    flex: 1;
+    max-width: 9cm;
+  }
+  .req:nth-child(2) { border-color: var(--rosa); }
+  .req:nth-child(3) { border-color: var(--turquesa); }
+  .req-ico { font-size: 26pt; }
+  .req-text { font-size: 13pt; font-weight: 700; color: #444; margin-top: 0.05cm; line-height: 1.25; }
+
+  /* ===== CTA ===== */
+  .cta {
+    background: var(--rosa);
+    border-radius: 12px;
+    padding: 0.65cm 1.2cm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2cm;
+    color: #fff;
+  }
+  .cta-info { text-align: center; }
+  .cta-label {
+    font-size: 10pt;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    opacity: 0.75;
+  }
+  .cta-number {
+    font-family: 'RLAQVA', 'Impact', sans-serif;
+    font-size: 50pt;
+    line-height: 1;
+    margin-top: 0.06cm;
+  }
+  .cta-sub { font-size: 12pt; opacity: 0.7; margin-top: 0.05cm; }
+  .cta-badge {
+    background: rgba(255,255,255,0.18);
+    border-radius: 12px;
+    padding: 0.3cm 0.6cm;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .cta-badge-i { font-size: 36pt; }
+  .cta-badge-l { font-size: 10pt; font-weight: 800; }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    flex-shrink: 0;
+    padding: 0.3cm 1.8cm 0.35cm 1.2cm;
+    display: flex;
+    justify-content: center;
+    gap: 1.5cm;
+    font-size: 10pt;
+    color: #ccc;
+  }
+
+  /* ===== BOTTOM STRIPE ===== */
+  .bottom-stripe {
+    height: 0.5cm;
+    display: flex;
+    flex-shrink: 0;
+    margin-left: 0;
+  }
+  .bottom-stripe div { flex: 1; }
+
+  /* ===== WATERMARK ===== */
+  .wm {
+    position: absolute;
+    top: 50%;
+    right: 1.5cm;
+    transform: translateY(-50%);
+    width: 4cm;
+    opacity: 0.025;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<img class="wm" src="AXKAN_SOURCES/JAGUAR.png" alt="">
+
+<!-- LEFT VERTICAL BAR -->
+<div class="left-bar">
+  <div class="c1"></div><div class="c2"></div><div class="c3"></div><div class="c4"></div><div class="c5"></div>
+</div>
+
+<div class="main">
+
+  <!-- HEADER -->
+  <div class="header">
+    <img class="logo" src="AXKAN_SOURCES/JAGUAR_LETTERS.png" alt="AXKAN">
+    <div class="header-right">Recuerdos Hechos Souvenir<div class="site">axkan.art</div></div>
+  </div>
+
+  <!-- TOP TAG -->
+  <div class="top-tag">
+    <div class="top-tag-line"></div>
+    <div class="top-tag-text">Vacante Presencial</div>
+    <div class="top-tag-line"></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- HERO -->
+    <div class="hero">
+      <h1><span class="turq">AYUDANTE</span><br><span class="rosa">GENERAL</span> EN<br><span class="nar">CORTE LASER</span></h1>
+      <div class="hero-desc">Unete a nuestro equipo de produccion y aprende a operar <strong>tecnologia de corte laser</strong> para crear souvenirs premium mexicanos</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- INFO CARDS -->
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-ico">📍</div>
+        <div class="info-title">Trabajo<br>Presencial</div>
+        <div class="info-sub">En nuestro taller</div>
+      </div>
+      <div class="info-card">
+        <div class="info-ico">💰</div>
+        <div class="info-title">Pago<br>Semanal</div>
+        <div class="info-sub">Cada semana</div>
+      </div>
+      <div class="info-card">
+        <div class="info-ico">✅</div>
+        <div class="info-title">Sin<br>Experiencia</div>
+        <div class="info-sub">Te capacitamos</div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="tasks-section">
+      <div class="tasks-header">¿QUE HARAS?</div>
+      <div class="tasks-row">
+        <div class="task"><div class="task-dot"></div><div class="task-text">Operar maquina laser<em>Corte y grabado de piezas</em></div></div>
+        <div class="task"><div class="task-dot"></div><div class="task-text">Preparar material<em>Acomodar MDF y configurar</em></div></div>
+        <div class="task"><div class="task-dot"></div><div class="task-text">Control de calidad<em>Revisar cada pieza cortada</em></div></div>
+        <div class="task"><div class="task-dot"></div><div class="task-text">Orden y limpieza<em>Mantener area de trabajo</em></div></div>
+      </div>
+    </div>
+
+    <!-- REQUISITOS -->
+    <div class="reqs">
+      <div class="req">
+        <div class="req-ico">💪</div>
+        <div class="req-text">Responsable<br>y puntual</div>
+      </div>
+      <div class="req">
+        <div class="req-ico">🎓</div>
+        <div class="req-text">Ganas de<br>aprender</div>
+      </div>
+      <div class="req">
+        <div class="req-ico">🔧</div>
+        <div class="req-text">Gusto por el<br>trabajo manual</div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+      <div class="cta-info">
+        <div class="cta-label">Escribenos por WhatsApp</div>
+        <div class="cta-number">55 3825 3251</div>
+        <div class="cta-sub">Envia la palabra LASER</div>
+      </div>
+      <div class="cta-badge">
+        <div class="cta-badge-i">💬</div>
+        <div class="cta-badge-l">WhatsApp</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span>@axkan.mx</span>
+    <span>hola@axkan.mx</span>
+    <span>axkan.art</span>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bottom-stripe">
+    <div class="c1"></div><div class="c2"></div><div class="c3"></div><div class="c4"></div><div class="c5"></div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -5,6 +5,10 @@
 
 import express from 'express';
 import multer from 'multer';
+import { execFile } from 'child_process';
+import { writeFile, unlink } from 'fs/promises';
+import path from 'path';
+import os from 'os';
 import { query } from '../shared/database.js';
 import { uploadImage } from '../shared/cloudinary-config.js';
 import {
@@ -60,6 +64,7 @@ router.get('/my-designs', employeeAuth, async (req, res) => {
 
     const result = await query(`
       SELECT da.*,
+             da.design_image_url,
              o.order_number,
              oi.product_name,
              da.specs->>'destination' as destination,
@@ -439,6 +444,228 @@ router.put('/designs/:id/status', employeeAuth, async (req, res) => {
 });
 
 // ========================================
+// 6b. PUT /designs/:id/image — upload design image to a slot
+// ========================================
+// Upload design image to a slot
+router.put('/designs/:id/image', employeeAuth, upload.single('file'), async (req, res) => {
+  try {
+    const designId = req.params.id;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    // Verify this design exists and belongs to this employee (or is manager)
+    const check = await query(
+      `SELECT id, order_id, design_number, assigned_to FROM design_assignments WHERE id = $1`,
+      [designId]
+    );
+
+    if (check.rows.length === 0) {
+      return res.status(404).json({ error: 'Design assignment not found' });
+    }
+
+    const design = check.rows[0];
+    const isManager = req.employee.role === 'manager' || req.employee.role === 'admin';
+    if (!isManager && design.assigned_to !== req.employee.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Upload to Cloudinary
+    const b64 = file.buffer.toString('base64');
+    const dataUri = `data:${file.mimetype};base64,${b64}`;
+    const folder = `design-portal/order-${design.order_id}/slots`;
+    const publicId = `D${design.design_number}_${Date.now()}`;
+
+    const uploadResult = await uploadImage(dataUri, folder, publicId);
+    const imageUrl = uploadResult.url || uploadResult.secure_url;
+
+    // Save URL to design_assignments
+    await query(
+      `UPDATE design_assignments SET design_image_url = $1, status = 'aprobado', updated_at = NOW() WHERE id = $2`,
+      [imageUrl, designId]
+    );
+
+    res.json({ success: true, imageUrl, designId: Number(designId) });
+  } catch (error) {
+    console.error('Error uploading design image:', error);
+    res.status(500).json({ error: 'Failed to upload design image' });
+  }
+});
+
+// ========================================
+// 6c. POST /orders/:orderId/add-slot — add a design slot
+// ========================================
+// Add a design slot to an order
+router.post('/orders/:orderId/add-slot', employeeAuth, async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+
+    const existing = await query(
+      `SELECT design_number, total_designs, assigned_to, assigned_by, client_phone, client_name, order_item_id
+       FROM design_assignments WHERE order_id = $1 ORDER BY design_number DESC LIMIT 1`,
+      [orderId]
+    );
+
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: 'No existing design assignments for this order' });
+    }
+
+    const last = existing.rows[0];
+    const newDesignNumber = last.design_number + 1;
+    const newTotalDesigns = last.total_designs + 1;
+
+    const result = await query(
+      `INSERT INTO design_assignments
+        (order_id, order_item_id, design_number, total_designs, assigned_to, assigned_by, client_phone, client_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, design_number`,
+      [orderId, last.order_item_id, newDesignNumber, newTotalDesigns,
+       last.assigned_to, last.assigned_by || req.employee.id, last.client_phone, last.client_name]
+    );
+
+    await query(
+      `UPDATE design_assignments SET total_designs = $1 WHERE order_id = $2`,
+      [newTotalDesigns, orderId]
+    );
+
+    res.json({
+      success: true,
+      design: {
+        id: result.rows[0].id,
+        design_number: result.rows[0].design_number,
+        label: 'D' + result.rows[0].design_number,
+        status: 'pendiente',
+        total_designs: newTotalDesigns
+      }
+    });
+  } catch (error) {
+    console.error('Error adding design slot:', error);
+    res.status(500).json({ error: 'Failed to add design slot' });
+  }
+});
+
+// ========================================
+// 6d. DELETE /orders/:orderId/remove-slot — remove last empty slot
+// ========================================
+// Remove the last empty design slot from an order
+router.delete('/orders/:orderId/remove-slot', employeeAuth, async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+
+    const last = await query(
+      `SELECT id, design_number, design_image_url, total_designs
+       FROM design_assignments WHERE order_id = $1 ORDER BY design_number DESC LIMIT 1`,
+      [orderId]
+    );
+
+    if (last.rows.length === 0) {
+      return res.status(404).json({ error: 'No design slots found' });
+    }
+
+    const slot = last.rows[0];
+
+    if (slot.design_image_url) {
+      return res.status(400).json({ error: 'Cannot remove a slot that has an image uploaded' });
+    }
+
+    if (slot.total_designs <= 1) {
+      return res.status(400).json({ error: 'Cannot remove the last remaining slot' });
+    }
+
+    await query(`DELETE FROM design_assignments WHERE id = $1`, [slot.id]);
+
+    const newTotal = slot.total_designs - 1;
+    await query(
+      `UPDATE design_assignments SET total_designs = $1 WHERE order_id = $2`,
+      [newTotal, orderId]
+    );
+
+    res.json({ success: true, removedDesignNumber: slot.design_number, newTotal });
+  } catch (error) {
+    console.error('Error removing design slot:', error);
+    res.status(500).json({ error: 'Failed to remove design slot' });
+  }
+});
+
+// ========================================
+// 6e. POST /generate-order — spawn Python script with design data
+// ========================================
+// Generate order — spawns Python script with design data
+router.post('/generate-order', employeeAuth, async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ error: 'orderId is required' });
+    }
+
+    const designs = await query(
+      `SELECT da.id, da.design_number, da.design_image_url, da.status,
+              da.client_name, da.client_phone
+       FROM design_assignments da
+       WHERE da.order_id = $1
+       ORDER BY da.design_number ASC`,
+      [orderId]
+    );
+
+    if (designs.rows.length === 0) {
+      return res.status(404).json({ error: 'No designs found for this order' });
+    }
+
+    const emptySlots = designs.rows.filter(d => !d.design_image_url);
+    if (emptySlots.length > 0) {
+      return res.status(400).json({
+        error: 'Not all design slots have images',
+        emptySlots: emptySlots.map(s => 'D' + s.design_number)
+      });
+    }
+
+    const orderResult = await query(
+      `SELECT id, order_number, client_name FROM orders WHERE id = $1`,
+      [orderId]
+    );
+
+    const order = orderResult.rows[0] || {};
+
+    const payload = {
+      order_id: orderId,
+      order_number: order.order_number || '',
+      client_name: order.client_name || designs.rows[0].client_name || '',
+      designs: designs.rows.map(d => ({
+        slot: 'D' + d.design_number,
+        image_url: d.design_image_url
+      }))
+    };
+
+    const tmpFile = path.join(os.tmpdir(), `axkan-order-${orderId}-${Date.now()}.json`);
+    await writeFile(tmpFile, JSON.stringify(payload, null, 2));
+
+    const pythonPath = '/Library/Frameworks/Python.framework/Versions/3.13/bin/python3';
+    const scriptPath = '/Users/ivanvalenciaperez/Desktop/CLAUDE/READY/ORDERS_GENERATOR/generate_axkan.py';
+    const scriptDir = '/Users/ivanvalenciaperez/Desktop/CLAUDE/READY/ORDERS_GENERATOR';
+
+    execFile(pythonPath, [scriptPath, tmpFile], { cwd: scriptDir, timeout: 120000 }, async (error, stdout, stderr) => {
+      try { await unlink(tmpFile); } catch (e) { /* ignore */ }
+
+      if (error) {
+        console.error('Python script error:', error.message);
+        console.error('stderr:', stderr);
+        return res.status(500).json({ error: 'Order generation failed', details: stderr || error.message });
+      }
+
+      console.log('Python script output:', stdout);
+      res.json({ success: true, output: stdout });
+    });
+
+  } catch (error) {
+    console.error('Error generating order:', error);
+    res.status(500).json({ error: 'Failed to generate order' });
+  }
+});
+
+// ========================================
 // 7. POST /assign — create design assignments (admin)
 // ========================================
 router.post('/assign', employeeAuth, requireManager, async (req, res) => {
@@ -485,6 +712,22 @@ router.post('/assign', employeeAuth, requireManager, async (req, res) => {
   } catch (error) {
     console.error('Error creating design assignments:', error);
     res.status(500).json({ success: false, error: 'Error al crear asignaciones' });
+  }
+});
+
+// =====================================================
+// GET /api/design-portal/window-status
+// Returns WhatsApp 24h window status for all active design chats
+// Powers the visual timer in the designer portal
+// =====================================================
+router.get('/window-status', employeeAuth, async (req, res) => {
+  try {
+    const { getDesignWindowStatus } = await import('../services/design-keepalive-scheduler.js');
+    const statuses = await getDesignWindowStatus();
+    res.json({ success: true, windows: statuses });
+  } catch (error) {
+    console.error('Error getting window status:', error);
+    res.status(500).json({ success: false, error: 'Error al obtener estado de ventanas' });
   }
 });
 

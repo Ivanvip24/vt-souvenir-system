@@ -72,7 +72,6 @@ Mexico's cultural richness deserves to be represented by premium, authentic prod
 | Durazno | #f4b266 | Soft warmth, highlights |
 | Lima Suave | #b7c54c | Fresh accents |
 | Magenta Oscuro | #aa1e6b | Rich depth |
-| Oro Maya (MDF Edge) | #D4A574 | Product edges, premium indicators |
 
 ### Color Usage Rules
 
@@ -283,7 +282,7 @@ LAYER 3 (front): Logo, text, illustrated accents
 **Shape:** Organic cloud/scalloped silhouette (horizontal oval with wavy edges)
 
 **Layers (front to back):**
-1. MDF wood frame (tan/beige #D4A574 edge visible)
+1. MDF wood frame (tan/beige edge visible)
 2. Illustrated tropical foliage base
 3. Realistic animal elements (destination-specific)
 4. Destination name in colorful letters (RL AQVA, solid colors, no textures)
@@ -655,7 +654,6 @@ The jaguar represents:
 - **Orange**: #f39223
 - **Cyan**: #09adc2
 - **Red**: #e52421
-- **MDF Edge**: #D4A574
 
 ### Typography Quick Reference
 - **Titles**: RL AQVA Bold

@@ -639,6 +639,55 @@ router.post('/:id/restore', employeeAuth, async (req, res) => {
 });
 
 /**
+ * PATCH /api/gallery/:id/visibility
+ * Toggle is_public flag (controls whether design appears in public gallery)
+ */
+router.patch('/:id/visibility', employeeAuth, requireManager, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_public } = req.body;
+
+    if (typeof is_public !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        error: 'is_public debe ser true o false'
+      });
+    }
+
+    const result = await query(
+      `UPDATE design_gallery SET is_public = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 RETURNING id, name, is_public`,
+      [is_public, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Diseño no encontrado'
+      });
+    }
+
+    await logActivity(req.employee.id, 'design_visibility_changed', 'design_gallery', parseInt(id), {
+      name: result.rows[0].name,
+      is_public
+    });
+
+    res.json({
+      success: true,
+      design: result.rows[0],
+      message: is_public ? 'Diseño ahora es público' : 'Diseño ahora es privado'
+    });
+
+  } catch (error) {
+    console.error('Visibility toggle error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al cambiar visibilidad'
+    });
+  }
+});
+
+/**
  * GET /api/gallery/stats
  * Get gallery statistics
  */

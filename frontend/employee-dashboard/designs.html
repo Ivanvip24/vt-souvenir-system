@@ -233,6 +233,52 @@ html, body {
     white-space: nowrap;
 }
 
+/* WhatsApp 24h Window Timer Badge */
+.window-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    animation: pulse-subtle 2s ease infinite;
+}
+.window-badge--safe {
+    background: #dcfce7;
+    color: #16a34a;
+}
+.window-badge--warning {
+    background: #fef9c3;
+    color: #ca8a04;
+}
+.window-badge--urgent {
+    background: #fed7aa;
+    color: #ea580c;
+    animation: pulse-urgent 1.5s ease infinite;
+}
+.window-badge--critical {
+    background: #fecaca;
+    color: #dc2626;
+    animation: pulse-critical 1s ease infinite;
+}
+.window-badge--expired {
+    background: #f3f4f6;
+    color: #9ca3af;
+    animation: none;
+}
+@keyframes pulse-subtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+}
+@keyframes pulse-urgent {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.03); }
+}
+@keyframes pulse-critical {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.06); }
+}
+
 .order-number {
     font-size: 12px;
     color: #6b7280;
@@ -425,6 +471,136 @@ html, body {
 .strip-pill.selected {
     border-color: #111827;
     box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+}
+
+/* ======== DROP ZONE PILLS ======== */
+.strip-pill.drop-zone {
+  position: relative;
+  min-width: 44px;
+  min-height: 36px;
+  border: 2px dashed #e52421;
+  background: rgba(229, 36, 33, 0.08);
+  color: #e52421;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.strip-pill.drop-zone.has-image {
+  border: 2px solid #8ab73b;
+  background: rgba(138, 183, 59, 0.12);
+  color: #8ab73b;
+  box-shadow: 0 0 8px rgba(138, 183, 59, 0.4);
+  padding: 2px;
+}
+
+.strip-pill.drop-zone.dragover {
+  border-color: #e72a88;
+  background: rgba(231, 42, 136, 0.1);
+  box-shadow: 0 0 12px rgba(231, 42, 136, 0.3);
+  animation: pulse-border 1s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 8px rgba(231, 42, 136, 0.2); }
+  50% { box-shadow: 0 0 16px rgba(231, 42, 136, 0.5); }
+}
+
+.strip-pill .slot-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.strip-pill .slot-check {
+  font-size: 10px;
+}
+
+.strip-pill .slot-label {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.slot-file-input {
+  display: none;
+}
+
+/* ======== +/- SLOT CONTROLS ======== */
+.slot-control-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #d1d5db;
+  background: #fff;
+  color: #6b7280;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.slot-control-btn:hover {
+  border-color: #e72a88;
+  color: #e72a88;
+  background: rgba(231, 42, 136, 0.05);
+}
+
+.slot-control-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ======== GENERATE ORDER BUTTON ======== */
+.btn-generate-order {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #d1d5db;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.btn-generate-order.ready {
+  background: #e72a88;
+  color: #fff;
+  pointer-events: auto;
+  box-shadow: 0 0 12px rgba(231, 42, 136, 0.4);
+  animation: glow-ready 2s ease-in-out infinite;
+}
+
+@keyframes glow-ready {
+  0%, 100% { box-shadow: 0 0 8px rgba(231, 42, 136, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(231, 42, 136, 0.6); }
+}
+
+.btn-generate-order.ready:hover {
+  background: #d1217a;
+  transform: scale(1.03);
+}
+
+.btn-generate-order.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.btn-generate-order .gen-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 .strip-pill-icon {
@@ -1039,6 +1215,12 @@ if (window.location.search.includes('embedded=1')) {
                         </div>
                     </div>
                     <div class="chat-header-actions">
+                        <button class="btn-generate-order" id="btn-generate-order" title="Generar Pedido">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span id="generate-label">Generar</span>
+                        </button>
                         <button class="btn-icon" id="btn-specs" title="Ver especificaciones">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         </button>

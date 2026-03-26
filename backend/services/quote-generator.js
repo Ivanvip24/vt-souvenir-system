@@ -475,7 +475,11 @@ export async function generateQuotePDF(quoteData) {
       validUntil.setDate(validUntil.getDate() + validityDays);
 
       const filename = `cotizacion-${quoteNumber}-${Date.now()}.pdf`;
-      const filepath = path.join(QUOTES_DIR, filename);
+      const outputDir = quoteData.outputDir || QUOTES_DIR;
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+      const filepath = path.join(outputDir, filename);
 
       // Create PDF document — Monolito design with multi-page support
       const doc = new PDFDocument({

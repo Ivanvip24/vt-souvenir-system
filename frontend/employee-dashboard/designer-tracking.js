@@ -1,0 +1,519 @@
+/**
+ * Designer Tracking Module
+ * Manager-only view for tracking designer tasks (armado/diseño),
+ * viewing stats, assigning new tasks, and triggering reports.
+ *
+ * Note: All data rendered via innerHTML comes exclusively from our own
+ * backend API (designer names, task metadata). No user-submitted HTML
+ * is rendered unescaped.
+ */
+
+// ── State ──────────────────────────────────────────
+const dtState = {
+  designers: [],
+  tasks: [],
+  filters: { designer_id: '', status: '', task_type: '' },
+  loaded: false,
+  formTaskType: 'armado'
+};
+
+// ── Init / Load ────────────────────────────────────
+
+async function loadDesignerTracking() {
+  // Load designers into filter + form dropdowns on first visit
+  if (!dtState.loaded) {
+    dtState.loaded = true;
+    initDTEventListeners();
+    await loadDesignersList();
+  }
+  // Always refresh data
+  await Promise.all([loadDTStats(), loadDTTasks()]);
+}
+
+async function loadDesignersList() {
+  try {
+    const data = await apiGet('/designer-tasks/designers');
+    if (data.success) {
+      dtState.designers = data.designers;
+      const filterSelect = document.getElementById('dt-filter-designer');
+      const formSelect = document.getElementById('dt-form-designer');
+      for (const d of data.designers) {
+        const opt1 = new Option(d.name, d.id);
+        const opt2 = new Option(d.name, d.name);
+        filterSelect.appendChild(opt1);
+        formSelect.appendChild(opt2);
+      }
+    }
+  } catch (err) {
+    console.error('Error loading designers:', err);
+  }
+}
+
+// ── Stats Cards ────────────────────────────────────
+
+async function loadDTStats() {
+  try {
+    const data = await apiGet('/designer-tasks/stats');
+    if (!data.success) return;
+
+    const t = data.totals;
+    document.getElementById('dt-stat-total').textContent = t.total || 0;
+    document.getElementById('dt-stat-done').textContent = t.completed || 0;
+    document.getElementById('dt-stat-pending').textContent = t.pending || 0;
+    document.getElementById('dt-stat-correction').textContent = t.in_correction || 0;
+    document.getElementById('dt-stat-overdue').textContent = t.overdue || 0;
+
+    // Animate stat cards on load
+    document.querySelectorAll('.dt-stat-card').forEach((card, i) => {
+      card.style.animationDelay = `${i * 60}ms`;
+      card.classList.add('dt-stat-animate');
+    });
+
+    // Render designer cards
+    renderDesignerCards(data.designers);
+  } catch (err) {
+    console.error('Error loading DT stats:', err);
+  }
+}
+
+function renderDesignerCards(designers) {
+  const container = document.getElementById('dt-designers-row');
+  if (!designers || designers.length === 0) {
+    container.textContent = '';
+    return;
+  }
+
+  // Build DOM safely from trusted backend data
+  container.textContent = '';
+  designers.forEach((d, i) => {
+    const total = parseInt(d.total_tasks) || 0;
+    const completed = parseInt(d.completed) || 0;
+    const active = parseInt(d.active) || 0;
+    const correction = parseInt(d.in_correction) || 0;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const avgH = d.avg_hours != null ? parseFloat(d.avg_hours).toFixed(1) + 'h' : '-';
+    const initial = d.name.charAt(0).toUpperCase();
+
+    const accents = ['var(--primary)', 'var(--turquoise)', 'var(--green)', 'var(--orange)'];
+    const accent = accents[i % accents.length];
+
+    const card = document.createElement('div');
+    card.className = 'dt-designer-card';
+    card.style.setProperty('--accent', accent);
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'dt-designer-header';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'dt-designer-avatar';
+    avatar.style.background = accent;
+    avatar.textContent = initial;
+
+    const info = document.createElement('div');
+    info.className = 'dt-designer-info';
+    const h4 = document.createElement('h4');
+    h4.textContent = d.name;
+    const subtitle = document.createElement('span');
+    subtitle.className = 'dt-designer-subtitle';
+    subtitle.textContent = `${active} activa${active !== 1 ? 's' : ''} \u00B7 ${correction} correc.`;
+    info.appendChild(h4);
+    info.appendChild(subtitle);
+
+    const pctEl = document.createElement('div');
+    pctEl.className = 'dt-designer-pct';
+    pctEl.style.color = accent;
+    pctEl.textContent = pct + '%';
+
+    header.appendChild(avatar);
+    header.appendChild(info);
+    header.appendChild(pctEl);
+
+    // Progress bar
+    const progressBar = document.createElement('div');
+    progressBar.className = 'dt-progress-bar';
+    const progressFill = document.createElement('div');
+    progressFill.className = 'dt-progress-fill';
+    progressFill.style.width = pct + '%';
+    progressFill.style.background = accent;
+    progressBar.appendChild(progressFill);
+
+    // Metrics
+    const metrics = document.createElement('div');
+    metrics.className = 'dt-designer-metrics';
+    const metricData = [
+      { value: completed, label: 'Hechas' },
+      { value: total, label: 'Total' },
+      { value: avgH, label: 'Promedio' }
+    ];
+    for (const m of metricData) {
+      const metric = document.createElement('div');
+      metric.className = 'dt-metric';
+      const val = document.createElement('span');
+      val.className = 'dt-metric-value';
+      val.textContent = m.value;
+      const lbl = document.createElement('span');
+      lbl.className = 'dt-metric-label';
+      lbl.textContent = m.label;
+      metric.appendChild(val);
+      metric.appendChild(lbl);
+      metrics.appendChild(metric);
+    }
+
+    card.appendChild(header);
+    card.appendChild(progressBar);
+    card.appendChild(metrics);
+    container.appendChild(card);
+  });
+}
+
+// ── Task List ──────────────────────────────────────
+
+async function loadDTTasks() {
+  const loading = document.getElementById('dt-loading');
+  const listEl = document.getElementById('dt-tasks-list');
+  const emptyEl = document.getElementById('dt-empty');
+
+  loading.classList.remove('hidden');
+  listEl.textContent = '';
+  emptyEl.classList.add('hidden');
+
+  try {
+    const params = new URLSearchParams();
+    if (dtState.filters.designer_id) params.set('designer_id', dtState.filters.designer_id);
+    if (dtState.filters.status) params.set('status', dtState.filters.status);
+    if (dtState.filters.task_type) params.set('task_type', dtState.filters.task_type);
+    params.set('limit', '100');
+
+    const data = await apiGet(`/designer-tasks/all?${params}`);
+    loading.classList.add('hidden');
+
+    if (!data.success || !data.tasks.length) {
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+
+    dtState.tasks = data.tasks;
+    renderDTTasks(data.tasks);
+  } catch (err) {
+    loading.classList.add('hidden');
+    console.error('Error loading DT tasks:', err);
+  }
+}
+
+function renderDTTasks(tasks) {
+  const listEl = document.getElementById('dt-tasks-list');
+  listEl.textContent = '';
+
+  // Table header
+  const headerEl = document.createElement('div');
+  headerEl.className = 'dt-table-header';
+  const headerCols = [
+    { cls: 'dt-col-designer', text: 'Diseñadora' },
+    { cls: 'dt-col-type', text: 'Tipo' },
+    { cls: 'dt-col-product', text: 'Producto' },
+    { cls: 'dt-col-dest', text: 'Destino' },
+    { cls: 'dt-col-qty', text: 'Cant/Piezas' },
+    { cls: 'dt-col-date', text: 'Asignada' },
+    { cls: 'dt-col-status', text: 'Estado' },
+    { cls: 'dt-col-actions', text: 'Acciones' }
+  ];
+  for (const col of headerCols) {
+    const span = document.createElement('span');
+    span.className = col.cls;
+    span.textContent = col.text;
+    headerEl.appendChild(span);
+  }
+  listEl.appendChild(headerEl);
+
+  const statusLabels = {
+    pending: 'Pendiente', in_progress: 'En Progreso',
+    done: 'Completado', correction: 'Corrección'
+  };
+
+  for (const t of tasks) {
+    const row = document.createElement('div');
+    row.className = 'dt-table-row';
+
+    const assignedDate = new Date(t.assigned_at);
+    const isOverdue = ['pending', 'in_progress'].includes(t.status) &&
+      (Date.now() - assignedDate.getTime()) > 2 * 24 * 60 * 60 * 1000;
+    if (isOverdue) row.classList.add('dt-row-overdue');
+
+    // Designer
+    const designerCol = document.createElement('span');
+    designerCol.className = 'dt-col-designer';
+    const dot = document.createElement('span');
+    dot.className = 'dt-designer-dot';
+    dot.style.background = getDesignerColor(t.designer_name);
+    designerCol.appendChild(dot);
+    designerCol.appendChild(document.createTextNode(t.designer_name));
+
+    // Type
+    const typeCol = document.createElement('span');
+    typeCol.className = 'dt-col-type';
+    const typeBadge = document.createElement('span');
+    typeBadge.className = `dt-type-badge ${t.task_type === 'armado' ? 'dt-type-armado' : 'dt-type-diseno'}`;
+    typeBadge.textContent = t.task_type === 'armado' ? 'Armado' : 'Diseño';
+    typeCol.appendChild(typeBadge);
+
+    // Product
+    const productCol = document.createElement('span');
+    productCol.className = 'dt-col-product';
+    productCol.textContent = t.product_type || t.description || '-';
+
+    // Destination
+    const destCol = document.createElement('span');
+    destCol.className = 'dt-col-dest';
+    destCol.textContent = t.destination || '-';
+
+    // Quantity/pieces
+    const qtyCol = document.createElement('span');
+    qtyCol.className = 'dt-col-qty';
+    const pieceCount = parseInt(t.piece_count) || 0;
+    const piecesDone = parseInt(t.pieces_done) || 0;
+    const corrections = parseInt(t.total_corrections) || 0;
+    let qtyText = '-';
+    if (t.quantity) qtyText = String(t.quantity);
+    else if (pieceCount > 0) qtyText = `${piecesDone}/${pieceCount}`;
+    qtyCol.textContent = qtyText;
+    if (corrections > 0) {
+      const corrSpan = document.createElement('span');
+      corrSpan.className = 'dt-correction-count';
+      corrSpan.textContent = ` ${corrections}x`;
+      qtyCol.appendChild(corrSpan);
+    }
+
+    // Date
+    const dateCol = document.createElement('span');
+    dateCol.className = 'dt-col-date';
+    dateCol.title = assignedDate.toLocaleString('es-MX');
+    dateCol.textContent = formatTimeAgo(assignedDate);
+    if (isOverdue) {
+      const badge = document.createElement('span');
+      badge.className = 'dt-overdue-badge';
+      badge.textContent = ' !';
+      dateCol.appendChild(badge);
+    }
+
+    // Status
+    const statusCol = document.createElement('span');
+    statusCol.className = 'dt-col-status';
+    const statusBadge = document.createElement('span');
+    statusBadge.className = `dt-status-badge dt-status-${t.status}`;
+    statusBadge.textContent = statusLabels[t.status] || t.status;
+    statusCol.appendChild(statusBadge);
+
+    // Actions
+    const actionsCol = document.createElement('span');
+    actionsCol.className = 'dt-col-actions';
+    if (t.status !== 'done') {
+      const completeBtn = document.createElement('button');
+      completeBtn.className = 'dt-action-btn dt-action-complete';
+      completeBtn.title = 'Completar';
+      completeBtn.textContent = '\u2713';
+      completeBtn.addEventListener('click', () => dtCompleteTask(t.id));
+      actionsCol.appendChild(completeBtn);
+
+      if (t.task_type === 'diseño') {
+        const corrBtn = document.createElement('button');
+        corrBtn.className = 'dt-action-btn dt-action-correction';
+        corrBtn.title = 'Corrección';
+        corrBtn.textContent = '\u21BB';
+        corrBtn.addEventListener('click', () => dtMarkCorrection(t.id));
+        actionsCol.appendChild(corrBtn);
+      }
+    }
+
+    row.appendChild(designerCol);
+    row.appendChild(typeCol);
+    row.appendChild(productCol);
+    row.appendChild(destCol);
+    row.appendChild(qtyCol);
+    row.appendChild(dateCol);
+    row.appendChild(statusCol);
+    row.appendChild(actionsCol);
+    listEl.appendChild(row);
+  }
+}
+
+// ── Actions ────────────────────────────────────────
+
+async function dtCompleteTask(taskId) {
+  try {
+    const data = await apiPost(`/designer-tasks/${taskId}/complete`, {});
+    if (data.success) {
+      showToast('Tarea completada', 'success');
+      await Promise.all([loadDTStats(), loadDTTasks()]);
+    } else {
+      showToast(data.error || 'Error al completar', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  }
+}
+
+async function dtMarkCorrection(taskId) {
+  const notes = prompt('Notas de corrección (opcional):');
+  if (notes === null) return;
+  try {
+    const data = await apiPost(`/designer-tasks/${taskId}/correction`, { notes });
+    if (data.success) {
+      showToast('Corrección registrada', 'success');
+      await Promise.all([loadDTStats(), loadDTTasks()]);
+    } else {
+      showToast(data.error || 'Error', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  }
+}
+
+// ── New Task Modal ─────────────────────────────────
+
+function openDTModal() {
+  document.getElementById('dt-new-task-modal').classList.remove('hidden');
+}
+
+function closeDTModal() {
+  document.getElementById('dt-new-task-modal').classList.add('hidden');
+  document.getElementById('dt-form-designer').value = '';
+  document.getElementById('dt-form-product').value = '';
+  document.getElementById('dt-form-qty').value = '';
+  document.getElementById('dt-form-pieces').value = '';
+  document.getElementById('dt-form-destination').value = '';
+  document.getElementById('dt-form-reference').value = '';
+}
+
+async function dtSubmitNewTask() {
+  const designerName = document.getElementById('dt-form-designer').value;
+  const taskType = dtState.formTaskType;
+  const productType = document.getElementById('dt-form-product').value.trim();
+  const destination = document.getElementById('dt-form-destination').value.trim();
+  const orderReference = document.getElementById('dt-form-reference').value.trim();
+
+  if (!designerName) { showToast('Selecciona una diseñadora', 'error'); return; }
+  if (!productType) { showToast('Indica el tipo de producto', 'error'); return; }
+
+  const body = { designerName, taskType, productType, destination, orderReference };
+
+  if (taskType === 'armado') {
+    const qty = parseInt(document.getElementById('dt-form-qty').value);
+    if (qty > 0) body.quantity = qty;
+  } else {
+    const piecesStr = document.getElementById('dt-form-pieces').value.trim();
+    if (piecesStr) body.pieces = piecesStr.split(',').map(p => p.trim()).filter(Boolean);
+  }
+
+  const submitBtn = document.getElementById('dt-form-submit');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Asignando...';
+
+  try {
+    const data = await apiPost('/designer-tasks/create', body);
+    if (data.success) {
+      showToast(`Tarea asignada a ${data.task.designer_name}`, 'success');
+      closeDTModal();
+      await Promise.all([loadDTStats(), loadDTTasks()]);
+    } else {
+      showToast(data.error || 'Error al crear tarea', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Asignar';
+  }
+}
+
+// ── Reports ────────────────────────────────────────
+
+async function dtTriggerReport(type) {
+  const btn = document.getElementById(`dt-report-${type}-btn`);
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = 'Generando...';
+
+  try {
+    const data = await apiPost(`/designer-tasks/report/${type}`, {});
+    if (data.success) {
+      showToast(`Reporte ${type} generado${data.delivered ? ' y enviado' : ''}`, 'success');
+    } else {
+      showToast(data.error || 'Error al generar reporte', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexión', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+
+// ── Event Listeners ────────────────────────────────
+
+function initDTEventListeners() {
+  document.getElementById('dt-refresh-btn').addEventListener('click', () => loadDesignerTracking());
+  document.getElementById('dt-new-task-btn').addEventListener('click', openDTModal);
+
+  document.getElementById('dt-filter-designer').addEventListener('change', (e) => {
+    dtState.filters.designer_id = e.target.value;
+    loadDTTasks();
+  });
+  document.getElementById('dt-filter-status').addEventListener('change', (e) => {
+    dtState.filters.status = e.target.value;
+    loadDTTasks();
+  });
+  document.getElementById('dt-filter-type').addEventListener('change', (e) => {
+    dtState.filters.task_type = e.target.value;
+    loadDTTasks();
+  });
+
+  document.querySelectorAll('.dt-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.dt-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      dtState.formTaskType = btn.dataset.type;
+      const isArmado = btn.dataset.type === 'armado';
+      document.getElementById('dt-form-qty-group').classList.toggle('hidden', !isArmado);
+      document.getElementById('dt-form-pieces-group').classList.toggle('hidden', isArmado);
+    });
+  });
+
+  document.getElementById('dt-form-submit').addEventListener('click', dtSubmitNewTask);
+  document.getElementById('dt-report-daily-btn').addEventListener('click', () => dtTriggerReport('daily'));
+  document.getElementById('dt-report-weekly-btn').addEventListener('click', () => dtTriggerReport('weekly'));
+}
+
+// ── Helpers ────────────────────────────────────────
+
+function formatTimeAgo(date) {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+}
+
+function getDesignerColor(name) {
+  const colors = ['var(--primary)', 'var(--turquoise)', 'var(--green)', 'var(--orange)'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function showToast(message, type) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type || 'info'}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.classList.add('toast-visible'), 10);
+  setTimeout(() => {
+    toast.classList.remove('toast-visible');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}

@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Imanes MDF — Souvenirs Corte Láser | AXKAN</title>
+<meta name="description" content="Imanes de MDF personalizados con corte láser de precisión y acabado brillante UV. Desde $8/pieza en mayoreo. Diseño incluido. Envío a toda la República Mexicana.">
+<link rel="canonical" href="https://axkan.art/productos/imanes-mdf">
+<meta property="og:title" content="Imanes MDF — Souvenirs Corte Láser | AXKAN">
+<meta property="og:description" content="Imanes de MDF personalizados con corte láser. Desde $8/pieza en mayoreo. Diseño incluido.">
+<meta property="og:image" content="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=1200">
+<meta property="og:type" content="product">
+<meta property="og:url" content="https://axkan.art/productos/imanes-mdf">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="/assets/LOGO-01.png">
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Imanes MDF",
+    "description": "Imanes de MDF personalizados con corte láser de precisión y acabado brillante UV.",
+    "image": "https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=1200",
+    "brand": { "@type": "Brand", "name": "AXKAN" },
+    "offers": {
+        "@type": "AggregateOffer",
+        "lowPrice": "8",
+        "highPrice": "15",
+        "priceCurrency": "MXN",
+        "availability": "https://schema.org/InStock"
+    }
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face {
+    font-family: 'RL Aqva';
+    src: url('/fonts/rl-aqva-black.otf') format('opentype');
+    font-weight: 900;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Objektiv';
+    src: url('/fonts/objektiv-vf.otf') format('opentype');
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+/* ═══════════════════════════════════════
+   DESIGN TOKENS — LIGHT / DARK
+   ═══════════════════════════════════════ */
+:root {
+    --rosa: #e72a88;
+    --rosa-glow: rgba(231,42,136,0.25);
+    --verde: #8ab73b;
+    --naranja: #f39223;
+    --turquesa: #09adc2;
+    --rojo: #e52421;
+    --mdf-edge: #D4A574;
+
+    --bg: #ffffff;
+    --bg-alt: #f5f5f7;
+    --bg-card: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+    --border: rgba(0,0,0,0.08);
+    --nav-bg: rgba(255,255,255,0.92);
+    --canvas-bg: #f5f5f7;
+    --card-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    --card-hover-shadow: 0 8px 40px rgba(0,0,0,0.12);
+
+    --font-display: 'RL Aqva', 'Fredoka', system-ui, sans-serif;
+    --font-body: 'Objektiv', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    color-scheme: light;
+}
+
+/* Light theme only — no dark mode */
+
+/* ═══════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-body);
+    color: var(--text-primary);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════
+   NAVIGATION — Minimal Apple-style
+   ═══════════════════════════════════════ */
+.nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 max(20px, env(safe-area-inset-left));
+    height: 48px;
+    background: var(--nav-bg);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 0.5px solid var(--border);
+    transition: transform 0.3s ease;
+}
+
+.nav-logo {
+    height: 32px;
+    display: flex;
+    align-items: center;
+}
+.nav-logo img { height: 100%; }
+
+.nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+    align-items: center;
+}
+.nav-links a {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--text-primary);
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+.nav-links a:hover { opacity: 1; }
+
+.nav-cta {
+    background: var(--rosa) !important;
+    color: #fff !important;
+    opacity: 1 !important;
+    padding: 6px 16px;
+    border-radius: 980px;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    transition: background 0.2s, transform 0.15s !important;
+}
+.nav-cta:hover {
+    background: #c91e73 !important;
+    transform: scale(1.02);
+}
+
+.nav-mobile-toggle {
+    display: none;
+    background: none;
+    border: none;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    position: relative;
+}
+.nav-mobile-toggle span {
+    display: block;
+    width: 18px;
+    height: 1.5px;
+    background: var(--text-primary);
+    position: absolute;
+    left: 9px;
+    transition: 0.3s;
+}
+.nav-mobile-toggle span:nth-child(1) { top: 13px; }
+.nav-mobile-toggle span:nth-child(2) { top: 18px; }
+.nav-mobile-toggle span:nth-child(3) { top: 23px; }
+.nav-mobile-toggle.open span:nth-child(1) { top: 18px; transform: rotate(45deg); }
+.nav-mobile-toggle.open span:nth-child(2) { opacity: 0; }
+.nav-mobile-toggle.open span:nth-child(3) { top: 18px; transform: rotate(-45deg); }
+
+.nav-mobile-menu {
+    display: none;
+    position: fixed;
+    top: 48px; left: 0; right: 0; bottom: 0;
+    background: var(--bg);
+    padding: 20px;
+    z-index: 999;
+}
+.nav-mobile-menu.open { display: flex; flex-direction: column; gap: 0; }
+.nav-mobile-menu a {
+    display: block;
+    padding: 16px 0;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-bottom: 0.5px solid var(--border);
+}
+
+@media (max-width: 768px) {
+    .nav-links { display: none; }
+    .nav-mobile-toggle { display: block; }
+}
+
+/* ═══════════════════════════════════════
+   HERO SECTION — Full viewport cinematic
+   ═══════════════════════════════════════ */
+.hero {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 20px 0;
+    position: relative;
+    overflow: hidden;
+    background: var(--canvas-bg);
+}
+
+.hero-overline {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--rosa);
+    margin-bottom: 12px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.2s forwards;
+}
+
+.hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 10vw, 96px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.4s forwards;
+}
+
+.hero-subtitle {
+    font-size: clamp(18px, 3vw, 28px);
+    font-weight: 400;
+    color: var(--text-secondary);
+    max-width: 600px;
+    line-height: 1.4;
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.6s forwards;
+}
+
+.hero-prices {
+    display: flex;
+    gap: 24px;
+    align-items: baseline;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.7s forwards;
+}
+.hero-price-from {
+    font-size: 14px;
+    color: var(--text-tertiary);
+}
+.hero-price-value {
+    font-family: var(--font-display);
+    font-size: 32px;
+    color: var(--rosa);
+}
+.hero-price-unit {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.hero-actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.8s forwards;
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    background: var(--rosa);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    border: none;
+    border-radius: 980px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+}
+.btn-primary:hover { background: #c91e73; transform: scale(1.03); }
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    background: transparent;
+    color: var(--rosa);
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    border: 2px solid var(--rosa);
+    border-radius: 980px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: 0.2s;
+}
+.btn-secondary:hover { background: var(--rosa); color: #fff; }
+
+.hero-scroll-hint {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1.2s forwards;
+}
+.hero-scroll-hint span {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+}
+.scroll-arrow {
+    width: 20px;
+    height: 20px;
+    border-right: 1.5px solid var(--text-tertiary);
+    border-bottom: 1.5px solid var(--text-tertiary);
+    transform: rotate(45deg);
+    animation: scrollBounce 2s ease infinite;
+}
+
+/* ═══════════════════════════════════════
+   SCROLL CANVAS — 3D Product Rotation
+   ═══════════════════════════════════════ */
+.sequence-section {
+    height: 300vh;
+    position: relative;
+    background: var(--canvas-bg);
+}
+
+.sequence-canvas-wrap {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.sequence-canvas-wrap canvas {
+    max-width: 90%;
+    max-height: 70vh;
+    object-fit: contain;
+}
+
+.sequence-caption {
+    position: absolute;
+    bottom: 12vh;
+    left: 0; right: 0;
+    text-align: center;
+    padding: 0 20px;
+    pointer-events: none;
+}
+
+.sequence-caption p {
+    font-size: clamp(14px, 2.5vw, 20px);
+    color: var(--text-secondary);
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.5;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+.sequence-caption p.visible { opacity: 1; }
+
+/* ═══════════════════════════════════════
+   FEATURE SECTIONS — Apple-style reveals
+   ═══════════════════════════════════════ */
+.feature-section {
+    padding: clamp(80px, 12vw, 160px) 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-section--alt {
+    background: var(--bg-alt);
+}
+
+.feature-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 980px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+}
+.badge-rosa { background: rgba(231,42,136,0.1); color: var(--rosa); }
+.badge-turquesa { background: rgba(9,173,194,0.1); color: var(--turquesa); }
+.badge-verde { background: rgba(138,183,59,0.1); color: var(--verde); }
+.badge-naranja { background: rgba(243,146,35,0.1); color: var(--naranja); }
+
+.feature-heading {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 7vw, 72px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    max-width: 800px;
+    margin-bottom: 20px;
+}
+
+.feature-subheading {
+    font-size: clamp(16px, 2.5vw, 24px);
+    font-weight: 400;
+    color: var(--text-secondary);
+    max-width: 600px;
+    line-height: 1.5;
+    margin-bottom: 48px;
+}
+
+.feature-img {
+    max-width: min(90%, 640px);
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+}
+
+.feature-highlight {
+    color: var(--rosa);
+}
+.feature-highlight--turquesa { color: var(--turquesa); }
+.feature-highlight--verde { color: var(--verde); }
+.feature-highlight--naranja { color: var(--naranja); }
+
+/* ═══════════════════════════════════════
+   SPECS GRID — Clean data layout
+   ═══════════════════════════════════════ */
+.specs-section {
+    padding: clamp(80px, 12vw, 160px) 20px;
+    background: var(--bg-alt);
+}
+
+.specs-header {
+    text-align: center;
+    margin-bottom: 64px;
+}
+.specs-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 6vw, 56px);
+    color: var(--text-primary);
+}
+
+.specs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1px;
+    max-width: 1000px;
+    margin: 0 auto;
+    background: var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.spec-card {
+    background: var(--bg-card);
+    padding: 36px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.spec-icon {
+    font-size: 28px;
+    margin-bottom: 4px;
+}
+
+.spec-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+.spec-value {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--text-primary);
+}
+
+.spec-detail {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════
+   PRICING TABLE — Clean, clear
+   ═══════════════════════════════════════ */
+.pricing-section {
+    padding: clamp(80px, 12vw, 160px) 20px;
+    background: var(--bg);
+}
+
+.pricing-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+.pricing-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 6vw, 56px);
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+.pricing-header p {
+    font-size: 18px;
+    color: var(--text-secondary);
+}
+
+.pricing-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.pricing-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 28px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+.pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-hover-shadow);
+}
+.pricing-card--featured {
+    border-color: var(--rosa);
+    border-width: 2px;
+}
+.pricing-card--featured::before {
+    content: 'Más popular';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 6px;
+    background: var(--rosa);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.pricing-card--featured { padding-top: 56px; }
+
+.pricing-card-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.pricing-card-qty {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    margin-bottom: 24px;
+}
+
+.pricing-card-price {
+    font-family: var(--font-display);
+    font-size: 48px;
+    color: var(--rosa);
+    line-height: 1;
+}
+.pricing-card-price sup {
+    font-size: 20px;
+    vertical-align: super;
+    margin-right: 2px;
+}
+.pricing-card-price sub {
+    font-size: 16px;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    vertical-align: baseline;
+}
+
+.pricing-card-details {
+    margin-top: 24px;
+    list-style: none;
+    text-align: left;
+}
+.pricing-card-details li {
+    padding: 10px 0;
+    border-top: 0.5px solid var(--border);
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.pricing-card-details li::before {
+    content: '✓';
+    color: var(--verde);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.pricing-card-cta {
+    display: block;
+    margin-top: 28px;
+    padding: 14px 24px;
+    border-radius: 980px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: 0.2s;
+}
+.pricing-card-cta--fill {
+    background: var(--rosa);
+    color: #fff;
+}
+.pricing-card-cta--fill:hover { background: #c91e73; }
+.pricing-card-cta--outline {
+    border: 1.5px solid var(--rosa);
+    color: var(--rosa);
+}
+.pricing-card-cta--outline:hover { background: var(--rosa); color: #fff; }
+
+/* ═══════════════════════════════════════
+   DELIVERY & PROCESS
+   ═══════════════════════════════════════ */
+.process-section {
+    padding: clamp(80px, 12vw, 120px) 20px;
+    background: var(--bg-alt);
+}
+
+.process-header {
+    text-align: center;
+    margin-bottom: 56px;
+}
+.process-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 48px);
+    color: var(--text-primary);
+}
+
+.process-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 32px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.process-step {
+    text-align: center;
+    position: relative;
+}
+
+.process-step-num {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--rosa);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.process-step h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.process-step p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════
+   CTA BANNER
+   ═══════════════════════════════════════ */
+.cta-section {
+    padding: clamp(80px, 12vw, 140px) 20px;
+    text-align: center;
+    background: var(--bg);
+    position: relative;
+}
+
+.cta-section h2 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 6vw, 64px);
+    color: var(--text-primary);
+    margin-bottom: 16px;
+}
+
+.cta-section p {
+    font-size: clamp(16px, 2.5vw, 20px);
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto 32px;
+    line-height: 1.5;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-whatsapp {
+    background: #25D366;
+    color: #fff;
+}
+.btn-whatsapp:hover { background: #1fb855; }
+
+/* ═══════════════════════════════════════
+   FOOTER — Minimal
+   ═══════════════════════════════════════ */
+.footer {
+    padding: 48px 20px 32px;
+    border-top: 0.5px solid var(--border);
+    background: var(--bg-alt);
+}
+
+.footer-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr repeat(3, 1fr);
+    gap: 40px;
+}
+
+.footer-brand p {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+    margin-top: 12px;
+    max-width: 280px;
+}
+
+.footer-col h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.footer-col a {
+    display: block;
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 4px 0;
+    transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--rosa); }
+
+.footer-bottom {
+    max-width: 1000px;
+    margin: 32px auto 0;
+    padding-top: 20px;
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.footer-social {
+    display: flex;
+    gap: 16px;
+}
+.footer-social a {
+    color: var(--text-tertiary);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+.footer-social a:hover { color: var(--rosa); }
+
+@media (max-width: 768px) {
+    .footer-inner {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+    }
+}
+@media (max-width: 480px) {
+    .footer-inner {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ═══════════════════════════════════════
+   FLOATING WHATSAPP
+   ═══════════════════════════════════════ */
+.fab-whatsapp {
+    position: fixed;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #25D366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(37,211,102,0.35);
+    z-index: 900;
+    transition: transform 0.2s;
+    text-decoration: none;
+}
+.fab-whatsapp:hover { transform: scale(1.08); }
+.fab-whatsapp svg { width: 28px; height: 28px; fill: #fff; }
+
+/* ═══════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════ */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scrollBounce {
+    0%, 100% { transform: rotate(45deg) translateY(0); }
+    50% { transform: rotate(45deg) translateY(6px); }
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════
+   LOADING STATE
+   ═══════════════════════════════════════ */
+.loading-bar {
+    position: fixed;
+    top: 48px; left: 0;
+    height: 2px;
+    background: var(--rosa);
+    z-index: 1001;
+    transition: width 0.3s;
+    border-radius: 0 2px 2px 0;
+}
+
+/* ═══════════════════════════════════════
+   MOBILE OVERRIDES
+   ═══════════════════════════════════════ */
+@media (max-width: 768px) {
+    .hero { padding-top: 60px; }
+    .hero-prices { flex-direction: column; gap: 4px; align-items: center; }
+    .hero-actions { flex-direction: column; align-items: stretch; padding: 0 20px; }
+    .btn-primary, .btn-secondary { justify-content: center; }
+    .specs-grid { grid-template-columns: 1fr 1fr; }
+    .pricing-cards { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+    .process-steps { grid-template-columns: 1fr 1fr; }
+    .cta-buttons { flex-direction: column; align-items: stretch; padding: 0 20px; }
+}
+
+@media (max-width: 480px) {
+    .specs-grid { grid-template-columns: 1fr; }
+    .process-steps { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOADING BAR -->
+<div class="loading-bar" id="loadingBar" style="width:0%"></div>
+
+<!-- ═══ NAVIGATION ═══ -->
+<nav class="nav">
+    <a href="/" class="nav-logo">
+        <img src="/assets/LOGO-01.png" alt="AXKAN">
+    </a>
+    <ul class="nav-links">
+        <li><a href="/productos">Productos</a></li>
+        <li><a href="/productos/imanes-mdf#specs">Especificaciones</a></li>
+        <li><a href="/productos/imanes-mdf#precios">Precios</a></li>
+        <li><a href="/productos/imanes-mdf#proceso">Proceso</a></li>
+        <li><a href="https://axkan-pedidos.vercel.app/" class="nav-cta">Hacer Pedido</a></li>
+    </ul>
+    <button class="nav-mobile-toggle" id="navToggle" aria-label="Menú">
+        <span></span><span></span><span></span>
+    </button>
+</nav>
+
+<div class="nav-mobile-menu" id="navMobile">
+    <a href="/productos">Productos</a>
+    <a href="/productos/imanes-mdf#specs">Especificaciones</a>
+    <a href="/productos/imanes-mdf#precios">Precios</a>
+    <a href="/productos/imanes-mdf#proceso">Proceso</a>
+    <a href="https://axkan-pedidos.vercel.app/" style="color:var(--rosa);font-weight:700">Hacer Pedido</a>
+    <a href="https://wa.me/5215547932741" style="color:#25D366;font-weight:700">WhatsApp</a>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+    <p class="hero-overline">Lo más vendido de AXKAN</p>
+    <h1 class="hero-title">Imanes MDF</h1>
+    <p class="hero-subtitle">Corte láser de precisión. Acabado brillante UV. Diseños que capturan la esencia de México.</p>
+
+    <div class="hero-prices">
+        <span class="hero-price-from">Desde</span>
+        <span class="hero-price-value"><sup>$</sup>8</span>
+        <span class="hero-price-unit">MXN / pieza</span>
+    </div>
+
+    <div class="hero-actions">
+        <a href="https://axkan-pedidos.vercel.app/" class="btn-primary">Hacer Pedido</a>
+        <a href="https://wa.me/5215547932741?text=Hola!%20Me%20interesan%20los%20imanes%20MDF" class="btn-secondary">Cotizar por WhatsApp</a>
+    </div>
+
+    <div class="hero-scroll-hint">
+        <span>Descubre</span>
+        <div class="scroll-arrow"></div>
+    </div>
+</section>
+
+<!-- ═══ SCROLL SEQUENCE — 3D Rotation ═══ -->
+<section class="sequence-section" id="sequenceSection">
+    <div class="sequence-canvas-wrap">
+        <canvas id="sequenceCanvas" width="960" height="540"></canvas>
+        <div class="sequence-caption">
+            <p id="caption1">Cada pieza diseñada con tecnología láser de precisión milimétrica.</p>
+            <p id="caption2">MDF de alta densidad con canto natural visible — calidad que se siente.</p>
+            <p id="caption3">Imán de neodimio integrado en la parte trasera — se adhiere al instante.</p>
+            <p id="caption4">Acabado brillante UV que protege el diseño por años.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ FEATURE: Acabado Brillante ═══ -->
+<section class="feature-section feature-section--alt">
+    <div class="reveal">
+        <span class="feature-badge badge-rosa">Acabado Premium</span>
+        <h2 class="feature-heading">Brillo que <span class="feature-highlight">deslumbra.</span></h2>
+        <p class="feature-subheading">Acabado UV de alta definición que protege cada detalle del diseño. Colores vibrantes que no se desvanecen con el tiempo. Como si el recuerdo estuviera vivo.</p>
+    </div>
+</section>
+
+<!-- ═══ FEATURE: Corte Láser ═══ -->
+<section class="feature-section">
+    <div class="reveal">
+        <span class="feature-badge badge-turquesa">Manufactura</span>
+        <h2 class="feature-heading">Precisión de <span class="feature-highlight--turquesa">corte láser.</span></h2>
+        <p class="feature-subheading">Cada contorno cortado con láser CO₂ industrial. Bordes limpios, formas orgánicas perfectas. No hay dos souvenirs genéricos — cada diseño es único para cada destino.</p>
+    </div>
+</section>
+
+<!-- ═══ FEATURE: Diseño Auténtico ═══ -->
+<section class="feature-section feature-section--alt">
+    <div class="reveal">
+        <span class="feature-badge badge-verde">Diseño Auténtico</span>
+        <h2 class="feature-heading">México en cada <span class="feature-highlight--verde">detalle.</span></h2>
+        <p class="feature-subheading">Jaguares, tucanes, tortugas marinas, iguanas — cada destino con su fauna endémica. Hojas de monstera, palmeras y follaje tropical. Letras con texturas mayas, aztecas y zapotecas. No copias genéricas — arte auténtico.</p>
+    </div>
+</section>
+
+<!-- ═══ SPECS ═══ -->
+<section class="specs-section" id="specs">
+    <div class="specs-header reveal">
+        <h2>Especificaciones</h2>
+    </div>
+    <div class="specs-grid reveal">
+        <div class="spec-card">
+            <div class="spec-icon">📐</div>
+            <div class="spec-label">Material</div>
+            <div class="spec-value">MDF 3mm</div>
+            <div class="spec-detail">Fibra de alta densidad, resistente y ligero.</div>
+        </div>
+        <div class="spec-card">
+            <div class="spec-icon">✨</div>
+            <div class="spec-label">Acabado</div>
+            <div class="spec-value">UV Brillante</div>
+            <div class="spec-detail">Impresión UV de alta resolución con capa protectora.</div>
+        </div>
+        <div class="spec-card">
+            <div class="spec-icon">🧲</div>
+            <div class="spec-label">Imán</div>
+            <div class="spec-value">Neodimio</div>
+            <div class="spec-detail">Imán de alta fuerza incluido en parte trasera.</div>
+        </div>
+        <div class="spec-card">
+            <div class="spec-icon">🔥</div>
+            <div class="spec-label">Corte</div>
+            <div class="spec-value">Láser CO₂</div>
+            <div class="spec-detail">Precisión milimétrica en cada contorno.</div>
+        </div>
+        <div class="spec-card">
+            <div class="spec-icon">📏</div>
+            <div class="spec-label">Tamaño Mediano</div>
+            <div class="spec-value">7 × 5 cm</div>
+            <div class="spec-detail">Perfecto para souvenirs estándar.</div>
+        </div>
+        <div class="spec-card">
+            <div class="spec-icon">📐</div>
+            <div class="spec-label">Tamaño Grande</div>
+            <div class="spec-value">10 × 7 cm</div>
+            <div class="spec-detail">Ideal para diseños con más detalle.</div>
+        </div>
+        <div class="spec-card">
+            <div class="spec-icon">🎨</div>
+            <div class="spec-label">Diseño</div>
+            <div class="spec-value">Incluido</div>
+            <div class="spec-detail">Diseño personalizado para tu destino, sin costo extra.</div>
+        </div>
+        <div class="spec-card">
+            <div class="spec-icon">📦</div>
+            <div class="spec-label">Pedido Mínimo</div>
+            <div class="spec-value">100 pzas</div>
+            <div class="spec-detail">Mezcla de diseños permitida.</div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ PRICING ═══ -->
+<section class="pricing-section" id="precios">
+    <div class="pricing-header reveal">
+        <h2>Precios por mayoreo</h2>
+        <p>Diseño personalizado incluido en todos los paquetes.</p>
+    </div>
+    <div class="pricing-cards reveal">
+
+        <div class="pricing-card">
+            <div class="pricing-card-title">Mediano</div>
+            <div class="pricing-card-qty">100 — 999 piezas</div>
+            <div class="pricing-card-price"><sup>$</sup>11<sub>/pza</sub></div>
+            <ul class="pricing-card-details">
+                <li>Tamaño 7 × 5 cm</li>
+                <li>Diseño personalizado incluido</li>
+                <li>Entrega en 8 días hábiles</li>
+                <li>2 rondas de revisión de diseño</li>
+            </ul>
+            <a href="https://wa.me/5215547932741?text=Hola!%20Quiero%20cotizar%20imanes%20medianos" class="pricing-card-cta pricing-card-cta--outline">Cotizar</a>
+        </div>
+
+        <div class="pricing-card pricing-card--featured">
+            <div class="pricing-card-title">Grande</div>
+            <div class="pricing-card-qty">100 — 999 piezas</div>
+            <div class="pricing-card-price"><sup>$</sup>15<sub>/pza</sub></div>
+            <ul class="pricing-card-details">
+                <li>Tamaño 10 × 7 cm</li>
+                <li>Diseño personalizado incluido</li>
+                <li>Entrega en 8 días hábiles</li>
+                <li>Más espacio para detalles</li>
+            </ul>
+            <a href="https://wa.me/5215547932741?text=Hola!%20Quiero%20cotizar%20imanes%20grandes" class="pricing-card-cta pricing-card-cta--fill">Cotizar</a>
+        </div>
+
+        <div class="pricing-card">
+            <div class="pricing-card-title">Volumen 1000+</div>
+            <div class="pricing-card-qty">Precio especial por volumen</div>
+            <div class="pricing-card-price"><sup>$</sup>8<sub>/pza</sub></div>
+            <ul class="pricing-card-details">
+                <li>Mediano desde $8 / Grande desde $12</li>
+                <li>Diseño personalizado incluido</li>
+                <li>Entrega en 13-14 días hábiles</li>
+                <li>Atención dedicada</li>
+            </ul>
+            <a href="https://wa.me/5215547932741?text=Hola!%20Quiero%20cotizar%20un%20pedido%20de%201000%2B%20imanes" class="pricing-card-cta pricing-card-cta--outline">Cotizar</a>
+        </div>
+
+    </div>
+</section>
+
+<!-- ═══ PROCESS / DELIVERY ═══ -->
+<section class="process-section" id="proceso">
+    <div class="process-header reveal">
+        <h2>De tu idea a tu puerta</h2>
+    </div>
+    <div class="process-steps reveal">
+        <div class="process-step">
+            <div class="process-step-num">1</div>
+            <h3>Cuéntanos tu idea</h3>
+            <p>Dinos tu destino, cantidad y estilo. Cotización inmediata por WhatsApp.</p>
+        </div>
+        <div class="process-step">
+            <div class="process-step-num">2</div>
+            <h3>Diseñamos para ti</h3>
+            <p>Nuestro equipo crea un diseño único para tu destino con 2 rondas de revisión.</p>
+        </div>
+        <div class="process-step">
+            <div class="process-step-num">3</div>
+            <h3>Producción láser</h3>
+            <p>Corte láser, impresión UV, armado y control de calidad pieza por pieza.</p>
+        </div>
+        <div class="process-step">
+            <div class="process-step-num">4</div>
+            <h3>Envío a tu puerta</h3>
+            <p>5-7 días hábiles a cualquier punto de la República Mexicana. Envío gratis en 300+ piezas.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ FINAL CTA ═══ -->
+<section class="cta-section">
+    <div class="reveal">
+        <h2>¿Listo para empezar?</h2>
+        <p>Cotización sin compromiso. Respuesta inmediata por WhatsApp.</p>
+        <div class="cta-buttons">
+            <a href="https://axkan-pedidos.vercel.app/" class="btn-primary">Hacer Pedido</a>
+            <a href="https://wa.me/5215547932741?text=Hola!%20Me%20interesan%20los%20imanes%20MDF%20de%20AXKAN" class="btn-primary btn-whatsapp">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.75.75 0 00.913.912l4.458-1.495A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.336 0-4.512-.752-6.278-2.03l-.438-.326-2.655.89.89-2.655-.326-.438A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                WhatsApp
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <img src="/assets/LOGO-01.png" alt="AXKAN" height="36">
+            <p>Recuerdos Hechos Souvenir. Souvenirs premium de México con corte láser y diseño auténtico.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Productos</h4>
+            <a href="/productos/imanes-mdf">Imanes MDF</a>
+            <a href="/productos/llaveros-mdf">Llaveros</a>
+            <a href="/productos/destapadores-mdf">Destapadores</a>
+            <a href="/productos/portallaves-mdf">Portallaves</a>
+        </div>
+        <div class="footer-col">
+            <h4>Empresa</h4>
+            <a href="/">Inicio</a>
+            <a href="/productos">Catálogo</a>
+            <a href="https://vtanunciando.com">Tienda en línea</a>
+        </div>
+        <div class="footer-col">
+            <h4>Contacto</h4>
+            <a href="https://wa.me/5215547932741">WhatsApp</a>
+            <a href="https://instagram.com/axkan.mx">Instagram</a>
+            <a href="mailto:hola@axkan.mx">hola@axkan.mx</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; 2026 AXKAN. Todos los derechos reservados.</span>
+        <div class="footer-social">
+            <a href="https://instagram.com/axkan.mx" aria-label="Instagram">IG</a>
+            <a href="https://wa.me/5215547932741" aria-label="WhatsApp">WA</a>
+        </div>
+    </div>
+</footer>
+
+<!-- ═══ FLOATING WHATSAPP ═══ -->
+<a href="https://wa.me/5215547932741?text=Hola!%20Me%20interesan%20los%20imanes%20MDF" class="fab-whatsapp" aria-label="WhatsApp">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.75.75 0 00.913.912l4.458-1.495A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.336 0-4.512-.752-6.278-2.03l-.438-.326-2.655.89.89-2.655-.326-.438A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+</a>
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT — Scroll Sequence + Reveals
+     ═══════════════════════════════════════ -->
+<script>
+(function() {
+    'use strict';
+
+    // ── CONFIG ──
+    const TOTAL_FRAMES = 87;
+    const FRAME_PATH = './assets/seq-clean/frame-';
+    const FRAME_EXT = '.jpg';
+
+    // ── PRELOAD IMAGE SEQUENCE ──
+    const canvas = document.getElementById('sequenceCanvas');
+    const ctx = canvas.getContext('2d');
+    const images = [];
+    let loadedCount = 0;
+    const loadingBar = document.getElementById('loadingBar');
+
+    function padNum(n) {
+        return String(n).padStart(3, '0');
+    }
+
+    function preloadImages() {
+        for (let i = 1; i <= TOTAL_FRAMES; i++) {
+            const img = new Image();
+            img.src = FRAME_PATH + padNum(i) + FRAME_EXT;
+            img.onload = () => {
+                loadedCount++;
+                const pct = (loadedCount / TOTAL_FRAMES) * 100;
+                loadingBar.style.width = pct + '%';
+                if (loadedCount === TOTAL_FRAMES) {
+                    loadingBar.style.opacity = '0';
+                    setTimeout(() => loadingBar.remove(), 300);
+                    drawFrame(0);
+                }
+            };
+            images.push(img);
+        }
+    }
+
+    function drawFrame(index) {
+        const img = images[Math.min(index, images.length - 1)];
+        if (!img || !img.complete) return;
+
+        // Fit to canvas maintaining aspect ratio
+        const ratio = img.naturalWidth / img.naturalHeight;
+        let dw = canvas.width;
+        let dh = canvas.width / ratio;
+        if (dh > canvas.height) {
+            dh = canvas.height;
+            dw = canvas.height * ratio;
+        }
+        const dx = (canvas.width - dw) / 2;
+        const dy = (canvas.height - dh) / 2;
+
+        ctx.fillStyle = '#f5f5f7';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, dx, dy, dw, dh);
+    }
+
+    // ── RESIZE CANVAS TO FIT VIEWPORT ──
+    function resizeCanvas() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const wrap = canvas.parentElement;
+        const w = wrap.clientWidth;
+        const h = wrap.clientHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.scale(dpr, dpr);
+        canvas.width = w;
+        canvas.height = h;
+    }
+
+    // ── SMOOTH SCROLL-DRIVEN ANIMATION (lerped RAF) ──
+    const seqSection = document.getElementById('sequenceSection');
+    const captions = [
+        document.getElementById('caption1'),
+        document.getElementById('caption2'),
+        document.getElementById('caption3'),
+        document.getElementById('caption4')
+    ];
+
+    let targetFrame = 0;
+    let currentFrame = 0;
+    let lastDrawnFrame = -1;
+    let scrollProgress = 0;
+
+    function onScroll() {
+        const rect = seqSection.getBoundingClientRect();
+        const sectionH = seqSection.offsetHeight - window.innerHeight;
+        const scrolled = -rect.top;
+        scrollProgress = Math.max(0, Math.min(1, scrolled / sectionH));
+        targetFrame = scrollProgress * (TOTAL_FRAMES - 1);
+
+        // Captions based on progress
+        captions.forEach(c => c.classList.remove('visible'));
+        if (scrollProgress > 0.02 && scrollProgress < 0.25) captions[0].classList.add('visible');
+        else if (scrollProgress >= 0.25 && scrollProgress < 0.5) captions[1].classList.add('visible');
+        else if (scrollProgress >= 0.5 && scrollProgress < 0.75) captions[2].classList.add('visible');
+        else if (scrollProgress >= 0.75) captions[3].classList.add('visible');
+    }
+
+    // Buttery smooth animation loop — lerps between frames
+    function animationLoop() {
+        // Ease toward target (0.12 = smooth glide, lower = smoother but laggier)
+        currentFrame += (targetFrame - currentFrame) * 0.12;
+
+        const frameIdx = Math.round(currentFrame);
+        if (frameIdx !== lastDrawnFrame) {
+            drawFrame(frameIdx);
+            lastDrawnFrame = frameIdx;
+        }
+        requestAnimationFrame(animationLoop);
+    }
+
+    // ── SCROLL REVEAL ──
+    const reveals = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+    reveals.forEach(el => revealObserver.observe(el));
+
+    // ── NAV MOBILE TOGGLE ──
+    const navToggle = document.getElementById('navToggle');
+    const navMobile = document.getElementById('navMobile');
+    navToggle.addEventListener('click', () => {
+        navToggle.classList.toggle('open');
+        navMobile.classList.toggle('open');
+        document.body.style.overflow = navMobile.classList.contains('open') ? 'hidden' : '';
+    });
+    navMobile.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', () => {
+            navToggle.classList.remove('open');
+            navMobile.classList.remove('open');
+            document.body.style.overflow = '';
+        });
+    });
+
+    // ── INIT ──
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        onScroll();
+    });
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // ── HERO VISIBILITY SAFETY NET ──
+    // Ensure hero elements become visible even if CSS animation fails
+    setTimeout(() => {
+        document.querySelectorAll('.hero-overline, .hero-title, .hero-subtitle, .hero-prices, .hero-actions, .hero-scroll-hint').forEach(el => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        });
+    }, 1500);
+
+    resizeCanvas();
+    preloadImages();
+    animationLoop();
+})();
+</script>
+
+</body>
+</html>

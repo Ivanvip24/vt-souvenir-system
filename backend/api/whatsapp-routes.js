@@ -261,8 +261,10 @@ router.post('/webhook', (req, res) => {
           mediaContext = { type: 'video' };
         }
         else if (message.type === 'sticker') {
-          messageText = '[Sticker recibido]';
-          mediaContext = { type: 'sticker' };
+          const media = await downloadWhatsAppMedia(message.sticker.id);
+          const base64 = media.buffer.toString('base64');
+          messageText = '[Sticker]';
+          mediaContext = { type: 'image', imageBase64: base64, imageMimeType: media.mimeType || 'image/webp' };
         }
         else if (message.type === 'interactive') {
           // User tapped a list item or quick reply button
@@ -434,6 +436,62 @@ router.post('/webhook', (req, res) => {
       } catch (designerErr) {
         console.error('📋 Designer task error:', designerErr.message);
         // Don't block normal flow on error
+      }
+
+      // --- Client → Designer Portal Bridge ---
+      // If client has an active design assignment, the designer owns the conversation — skip AI
+      let designerHandling = false;
+      try {
+        const activeDesigns = await query(
+          `SELECT id, order_id, assigned_to FROM design_assignments
+           WHERE client_phone = $1 AND status NOT IN ('aprobado')
+           ORDER BY updated_at DESC LIMIT 1`,
+          [waId]
+        );
+
+        if (activeDesigns.rows.length > 0) {
+          const design = activeDesigns.rows[0];
+          designerHandling = true;
+
+          // Bridge message to design portal
+          const msgType = mediaUrl ? 'image' : 'text';
+          const msgContent = mediaUrl || messageText;
+          await query(
+            `INSERT INTO design_messages (design_assignment_id, order_id, sender_type, sender_name, message_type, content, wa_message_id)
+             VALUES ($1, $2, 'client', $3, $4, $5, $6)`,
+            [design.id, design.order_id, clientName || 'Cliente', msgType, msgContent, `client_${Date.now()}`]
+          );
+          console.log(`🎨 Client has active design — message bridged, AI skipped`);
+        }
+      } catch (bridgeErr) {
+        console.error('🎨 Design portal bridge error:', bridgeErr.message);
+      }
+
+      if (designerHandling) {
+        // Send brief acknowledgment — don't leave client hanging
+        // But only if their last message wasn't also design-bridged (avoid spamming)
+        try {
+          const recentAck = await query(
+            `SELECT id FROM whatsapp_messages
+             WHERE conversation_id = $1 AND direction = 'outbound'
+               AND content LIKE '%diseñador%'
+               AND created_at > NOW() - INTERVAL '2 hours'
+             LIMIT 1`,
+            [conversationId]
+          );
+          if (recentAck.rows.length === 0) {
+            const ack = 'Recibido! Tu diseñadora ya puede ver tu mensaje y te responderá pronto 🎨';
+            await sendWhatsAppMessage(waId, ack);
+            await query(
+              `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content)
+               VALUES ($1, $2, 'outbound', 'system', 'text', $3)`,
+              [conversationId, `design_ack_${Date.now()}`, ack]
+            );
+          }
+        } catch (ackErr) {
+          // Silent fail — ack is nice-to-have, not critical
+        }
+        return; // Skip AI — designer owns this conversation
       }
 
       // Skip AI processing if ai_enabled is false for this conversation

@@ -31,7 +31,6 @@ Use `/axkan` for ANY brand-related task. The skill contains complete visual iden
 | Durazno | #f4b266 |
 | Lima Suave | #b7c54c |
 | Magenta Oscuro | #aa1e6b |
-| Oro Maya (MDF Edge) | #D4A574 |
 
 ### Color Rules
 - **60/30/10**: 60% white/neutral, 30% pink, 10% accents

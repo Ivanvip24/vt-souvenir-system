@@ -7,6 +7,9 @@ import express from 'express';
 import { query } from '../shared/database.js';
 import * as skydropx from '../services/skydropx.js';
 import * as pickupScheduler from '../services/pickup-scheduler.js';
+import { writeFileSync, unlinkSync, mkdtempSync, rmdirSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 const router = express.Router();
 
@@ -2362,6 +2365,112 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
   } catch (error) {
     console.error('❌ Error getting shipping quotes for client:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// ========================================
+// PRINTER MANAGEMENT
+// ========================================
+
+/**
+ * GET /shipping/printers
+ * Lists available system printers
+ */
+router.get('/printers', async (req, res) => {
+  try {
+    const { execFileSync } = await import('child_process');
+    const output = execFileSync('lpstat', ['-p'], { encoding: 'utf8', timeout: 5000 });
+    let defaultPrinter = null;
+    try {
+      const defaultOutput = execFileSync('lpstat', ['-d'], { encoding: 'utf8', timeout: 5000 });
+      const defaultMatch = defaultOutput.match(/destination:\s*(.+)/);
+      defaultPrinter = defaultMatch ? defaultMatch[1].trim() : null;
+    } catch (_) {}
+
+    const printers = [];
+    for (const line of output.split('\n')) {
+      const match = line.match(/^printer\s+(\S+)\s+is\s+(.+)/);
+      if (match) {
+        printers.push({
+          name: match[1],
+          status: match[2].trim(),
+          isDefault: match[1] === defaultPrinter
+        });
+      }
+    }
+
+    res.json({ success: true, printers, defaultPrinter });
+  } catch (error) {
+    res.json({ success: true, printers: [], defaultPrinter: null, error: 'No printers found' });
+  }
+});
+
+/**
+ * POST /shipping/labels/print
+ * Downloads label PDFs and sends them to the system printer
+ * Body: { labelIds: [1, 2, 3], printer?: "PRINTER_NAME" }
+ */
+router.post('/labels/print', async (req, res) => {
+  try {
+    const { labelIds, printer } = req.body;
+
+    if (!labelIds || !Array.isArray(labelIds) || labelIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'labelIds array required' });
+    }
+
+    if (labelIds.length > 50) {
+      return res.status(400).json({ success: false, error: 'Maximum 50 labels per print job' });
+    }
+
+    if (!labelIds.every(id => Number.isInteger(id) && id > 0)) {
+      return res.status(400).json({ success: false, error: 'Invalid label IDs' });
+    }
+
+    const placeholders = labelIds.map((_, i) => `$${i + 1}`).join(',');
+    const result = await query(
+      `SELECT id, label_url, tracking_number FROM shipping_labels WHERE id IN (${placeholders}) AND label_url IS NOT NULL`,
+      labelIds
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'No printable labels found' });
+    }
+
+    const { execFileSync } = await import('child_process');
+    const tmpDir = mkdtempSync(join(tmpdir(), 'axkan-labels-'));
+    let printed = 0;
+    let failed = 0;
+    const errors = [];
+
+    for (const label of result.rows) {
+      try {
+        const response = await fetch(label.label_url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const buffer = Buffer.from(await response.arrayBuffer());
+
+        const filePath = join(tmpDir, `label-${label.id}.pdf`);
+        writeFileSync(filePath, buffer);
+
+        const args = [];
+        if (printer) { args.push('-d', printer); }
+        args.push(filePath);
+        execFileSync('lp', args, { timeout: 10000 });
+
+        printed++;
+
+        try { unlinkSync(filePath); } catch (_) {}
+      } catch (err) {
+        failed++;
+        errors.push({ id: label.id, tracking: label.tracking_number, error: err.message });
+      }
+    }
+
+    try { rmdirSync(tmpDir); } catch (_) {}
+
+    res.json({ success: true, printed, failed, errors: errors.length > 0 ? errors : undefined });
+  } catch (error) {
+    console.error('Print error:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

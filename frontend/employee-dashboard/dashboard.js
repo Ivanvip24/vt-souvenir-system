@@ -171,6 +171,9 @@ function switchView(viewName) {
         case 'all-tasks':
             loadAllTasks();
             break;
+        case 'designer-tracking':
+            if (typeof loadDesignerTracking === 'function') loadDesignerTracking();
+            break;
         case 'profile':
             loadProfile();
             break;

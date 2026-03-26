@@ -24,8 +24,11 @@ var state = {
     messages: [],
     lastMessageTime: null,
     pollInterval: null,
+    windowPollInterval: null,
     pendingFile: null,  // { file, dataUrl }
-    searchQuery: ''
+    searchQuery: '',
+    windowStatus: {},  // { orderId: { hoursRemaining, urgency, ... } }
+    slotImages: {}     // { designId: imageUrl }
 };
 
 // ============================================
@@ -154,6 +157,52 @@ function setupUI() {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeLightbox();
     });
+
+    // Paste image to selected design slot
+    document.addEventListener('paste', function(e) {
+        if (!state.currentOrderId) return;
+        var items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                e.preventDefault();
+                var file = items[i].getAsFile();
+                var order = state.orders[state.currentOrderId];
+                if (!order) return;
+                var targetDesign = null;
+                if (state.currentDesignId) {
+                    targetDesign = order.designs.find(function(d) { return d.id == state.currentDesignId; });
+                }
+                if (!targetDesign) {
+                    targetDesign = order.designs.find(function(d) {
+                        return !d.design_image_url && !state.slotImages[d.id];
+                    });
+                }
+                if (targetDesign) {
+                    uploadDesignToSlot(targetDesign.id, file);
+                } else {
+                    alert('Todos los slots ya tienen imagen');
+                }
+                break;
+            }
+        }
+    });
+
+    // Refresh window status every 60 seconds for live timer countdown
+    state.windowPollInterval = setInterval(async function() {
+        await loadWindowStatus();
+        // Update badges without full re-render
+        document.querySelectorAll('.order-item').forEach(function(el) {
+            var oid = el.dataset.orderId;
+            var windowInfo = state.windowStatus[oid];
+            var oldBadge = el.querySelector('.window-badge');
+            if (windowInfo && oldBadge) {
+                oldBadge.textContent = formatWindowTimer(windowInfo.hoursRemaining);
+                oldBadge.className = 'window-badge ' + getWindowBadgeClass(windowInfo.urgency);
+            }
+        });
+    }, 60000);
 }
 
 function autoResizeTextarea() {
@@ -256,6 +305,7 @@ async function loadMyDesigns() {
         state.designs = data.designs || data || [];
 
         groupDesignsByOrder();
+        await loadWindowStatus();
         renderOrderList();
 
     } catch (error) {
@@ -266,6 +316,42 @@ async function loadMyDesigns() {
         var errP = createEl('p', '', 'Error al cargar pedidos');
         errDiv.appendChild(errP);
         container.appendChild(errDiv);
+    }
+}
+
+async function loadWindowStatus() {
+    try {
+        var response = await fetch(API_BASE + '/design-portal/window-status', {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) return;
+        var data = await response.json();
+        state.windowStatus = {};
+        (data.windows || []).forEach(function(w) {
+            // Key by order_id — use the most urgent window per order
+            var existing = state.windowStatus[w.orderId];
+            if (!existing || w.hoursRemaining < existing.hoursRemaining) {
+                state.windowStatus[w.orderId] = w;
+            }
+        });
+    } catch (err) {
+        console.error('Error loading window status:', err);
+    }
+}
+
+function formatWindowTimer(hours) {
+    if (hours <= 0) return 'Expirado';
+    if (hours >= 1) return Math.floor(hours) + 'h';
+    return Math.round(hours * 60) + 'min';
+}
+
+function getWindowBadgeClass(urgency) {
+    switch (urgency) {
+        case 'safe': return 'window-badge--safe';
+        case 'warning': return 'window-badge--warning';
+        case 'urgent': return 'window-badge--urgent';
+        case 'critical': return 'window-badge--critical';
+        default: return 'window-badge--expired';
     }
 }
 
@@ -297,8 +383,13 @@ function groupDesignsByOrder() {
             quantity: d.quantity,
             notes: d.notes || d.design_notes,
             deadline: d.deadline || d.due_date,
-            designer_name: d.designer_name
+            designer_name: d.designer_name,
+            design_image_url: d.design_image_url || null,
         });
+
+        if (d.design_image_url) {
+            state.slotImages[d.id || d.design_id] = d.design_image_url;
+        }
 
         if (d.has_unread_client_messages) {
             state.orders[oid].has_unread = true;
@@ -362,7 +453,19 @@ function renderOrderList() {
         // Top row
         var top = createEl('div', 'order-item-top');
         top.appendChild(createEl('span', 'order-client-name', o.client_name));
-        top.appendChild(createEl('span', 'order-date', dueStr));
+
+        // WhatsApp 24h window timer badge
+        var windowInfo = state.windowStatus[oid];
+        if (windowInfo) {
+            var badge = createEl('span', 'window-badge ' + getWindowBadgeClass(windowInfo.urgency),
+                formatWindowTimer(windowInfo.hoursRemaining));
+            badge.title = windowInfo.urgency === 'expired'
+                ? 'Ventana WhatsApp expirada — el cliente debe escribir primero'
+                : 'Tiempo restante de ventana WhatsApp: ' + windowInfo.hoursRemaining + 'h';
+            top.appendChild(badge);
+        } else {
+            top.appendChild(createEl('span', 'order-date', dueStr));
+        }
         item.appendChild(top);
 
         // Order number + designer names for managers
@@ -379,7 +482,8 @@ function renderOrderList() {
         var pills = createEl('div', 'order-pills');
         o.designs.forEach(function(d, i) {
             var pill = createEl('span', 'design-pill', d.label || ('D' + (i + 1)));
-            pill.dataset.status = d.status;
+            var hasImage = !!(d.design_image_url || state.slotImages[d.id]);
+            pill.dataset.status = hasImage ? 'aprobado' : d.status;
             pills.appendChild(pill);
         });
         item.appendChild(pills);
@@ -447,24 +551,80 @@ function showChatView(orderId) {
 function renderDesignStrip(order) {
     var container = document.getElementById('chat-design-strip');
     container.textContent = '';
-    var statusIcons = {
-        pendiente: '\uD83D\uDD32',
-        en_progreso: '\u23F3',
-        en_revision: '\uD83D\uDD0D',
-        cambios: '\uD83D\uDD04',
-        aprobado: '\u2705'
-    };
 
     order.designs.forEach(function(d, i) {
         var label = d.label || ('D' + (i + 1));
-        var icon = statusIcons[d.status] || '';
-        var pill = createEl('span', 'strip-pill' + (state.currentDesignId == d.id ? ' selected' : ''));
-        pill.dataset.status = d.status;
+        var hasImage = !!(d.design_image_url || state.slotImages[d.id]);
+        var imgUrl = d.design_image_url || state.slotImages[d.id] || null;
+
+        var pill = createEl('span', 'strip-pill drop-zone' + (hasImage ? ' has-image' : ''));
         pill.dataset.designId = d.id;
-        pill.textContent = icon + ' ' + label;
-        pill.addEventListener('click', function() { selectDesign(d.id); });
+        pill.dataset.status = d.status;
+
+        if (hasImage) {
+            var thumb = document.createElement('img');
+            thumb.className = 'slot-thumb';
+            thumb.src = imgUrl;
+            thumb.alt = label;
+            pill.appendChild(thumb);
+            pill.appendChild(createEl('span', 'slot-check', '\u2705'));
+            pill.appendChild(createEl('span', 'slot-label', label));
+        } else {
+            pill.textContent = label;
+        }
+
+        // Click to upload
+        pill.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.addEventListener('change', function() {
+                if (input.files[0]) uploadDesignToSlot(d.id, input.files[0]);
+            });
+            input.click();
+        });
+
+        // Drag and drop
+        pill.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            pill.classList.add('dragover');
+        });
+        pill.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            pill.classList.remove('dragover');
+        });
+        pill.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            pill.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                uploadDesignToSlot(d.id, e.dataTransfer.files[0]);
+            }
+        });
+
         container.appendChild(pill);
     });
+
+    // + button
+    var addBtn = createEl('button', 'slot-control-btn', '+');
+    addBtn.title = 'Agregar diseno';
+    addBtn.addEventListener('click', function() { addDesignSlot(order.order_id); });
+    container.appendChild(addBtn);
+
+    // - button
+    var removeBtn = createEl('button', 'slot-control-btn', '\u2212');
+    removeBtn.title = 'Quitar ultimo diseno';
+    var lastDesign = order.designs[order.designs.length - 1];
+    if (order.designs.length <= 1 || (lastDesign && (lastDesign.design_image_url || state.slotImages[lastDesign.id]))) {
+        removeBtn.disabled = true;
+    }
+    removeBtn.addEventListener('click', function() { removeDesignSlot(order.order_id); });
+    container.appendChild(removeBtn);
+
+    // Update generate button state
+    updateGenerateButton(order);
 }
 
 function updateDesignTagSelect(order) {
@@ -1047,6 +1207,172 @@ function getDateLabel(timestamp) {
     if (diff === 0) return 'Hoy';
     if (diff === 1) return 'Ayer';
     return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ============================================
+// DESIGN SLOT INTERACTIONS
+// ============================================
+
+async function uploadDesignToSlot(designId, file) {
+    if (!file.type.startsWith('image/')) {
+        alert('Solo se permiten imagenes');
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Archivo muy grande. Maximo 10MB.');
+        return;
+    }
+
+    // Optimistic UI — show local preview immediately
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        state.slotImages[designId] = ev.target.result;
+        var order = state.orders[state.currentOrderId];
+        if (order) renderDesignStrip(order);
+    };
+    reader.readAsDataURL(file);
+
+    try {
+        var formData = new FormData();
+        formData.append('file', file);
+
+        var response = await fetch(API_BASE + '/design-portal/designs/' + designId + '/image', {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + state.token },
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('Upload failed');
+
+        var data = await response.json();
+
+        // Update with real Cloudinary URL
+        state.slotImages[designId] = data.imageUrl;
+        var order = state.orders[state.currentOrderId];
+        if (order) {
+            var d = order.designs.find(function(des) { return des.id == designId; });
+            if (d) {
+                d.design_image_url = data.imageUrl;
+                d.status = 'aprobado';
+            }
+            renderDesignStrip(order);
+            renderOrderList();
+        }
+
+    } catch (error) {
+        console.error('Error uploading design to slot:', error);
+        alert('Error al subir diseno. Intenta de nuevo.');
+        delete state.slotImages[designId];
+        var order2 = state.orders[state.currentOrderId];
+        if (order2) renderDesignStrip(order2);
+    }
+}
+
+async function addDesignSlot(orderId) {
+    try {
+        var response = await fetch(API_BASE + '/design-portal/orders/' + orderId + '/add-slot', {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            var err = await response.json();
+            throw new Error(err.error || 'Failed to add slot');
+        }
+
+        var data = await response.json();
+        var order = state.orders[orderId];
+        if (order && data.design) {
+            order.designs.push({
+                id: data.design.id,
+                label: data.design.label,
+                status: data.design.status,
+                design_image_url: null
+            });
+            renderDesignStrip(order);
+            renderOrderList();
+        }
+    } catch (error) {
+        console.error('Error adding design slot:', error);
+        alert('Error al agregar diseno');
+    }
+}
+
+async function removeDesignSlot(orderId) {
+    try {
+        var response = await fetch(API_BASE + '/design-portal/orders/' + orderId + '/remove-slot', {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            var err = await response.json();
+            throw new Error(err.error || 'Failed to remove slot');
+        }
+
+        var order = state.orders[orderId];
+        if (order) {
+            order.designs.pop();
+            renderDesignStrip(order);
+            renderOrderList();
+        }
+    } catch (error) {
+        console.error('Error removing design slot:', error);
+        alert('Error al quitar diseno');
+    }
+}
+
+function updateGenerateButton(order) {
+    var btn = document.getElementById('btn-generate-order');
+    if (!btn) return;
+
+    var allFilled = order.designs.length > 0 && order.designs.every(function(d) {
+        return d.design_image_url || state.slotImages[d.id];
+    });
+
+    btn.classList.toggle('ready', allFilled);
+    if (allFilled) {
+        btn.onclick = function() { generateOrder(order.order_id); };
+    } else {
+        btn.onclick = null;
+    }
+}
+
+async function generateOrder(orderId) {
+    var btn = document.getElementById('btn-generate-order');
+    var label = document.getElementById('generate-label');
+    if (!btn || btn.classList.contains('loading')) return;
+
+    btn.classList.add('loading');
+    var originalText = label.textContent;
+    label.textContent = '';
+    var spinner = createEl('span', 'gen-spinner');
+    btn.insertBefore(spinner, label);
+
+    try {
+        var response = await fetch(API_BASE + '/design-portal/generate-order', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ orderId: orderId })
+        });
+
+        if (!response.ok) {
+            var err = await response.json();
+            throw new Error(err.error || 'Generation failed');
+        }
+
+        var data = await response.json();
+        alert('Pedido generado exitosamente!');
+        console.log('Generate order output:', data.output);
+
+    } catch (error) {
+        console.error('Error generating order:', error);
+        alert('Error al generar pedido: ' + error.message);
+    } finally {
+        btn.classList.remove('loading');
+        if (spinner.parentNode) spinner.parentNode.removeChild(spinner);
+        label.textContent = originalText;
+    }
 }
 
 // ============================================

@@ -345,7 +345,6 @@ npm start               # Full mode (requires PostgreSQL + .env config)
 | Naranja Cálido | #f39223 |
 | Turquesa Caribe | #09adc2 |
 | Rojo Mexicano | #e52421 |
-| Oro Maya (MDF Edge) | #D4A574 |
 
 **Typography:** RL AQVA (titles), Prenton RP Cond (body)
 

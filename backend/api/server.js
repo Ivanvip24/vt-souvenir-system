@@ -5822,6 +5822,14 @@ async function startServer() {
     // Initialize Shipping Notification Scheduler (checks Skydropx for in-transit shipments)
     initializeShippingNotificationScheduler();
 
+    // Initialize Design Keep-Alive Scheduler (prevents 24h WhatsApp window expiry for design chats)
+    try {
+      const { initializeDesignKeepAlive } = await import('../services/design-keepalive-scheduler.js');
+      initializeDesignKeepAlive();
+    } catch (dkaErr) {
+      console.error('🎨 Design keep-alive scheduler init error:', dkaErr.message);
+    }
+
     // Initialize Facebook Marketplace Scheduler (daily at 9 AM)
     await facebookScheduler.initFacebookScheduler();
 

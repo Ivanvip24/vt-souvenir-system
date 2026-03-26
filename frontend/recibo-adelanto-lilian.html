@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXKAN — Recibo de Adelanto | Lilian Alejandra</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* === AXKAN BRAND FONTS === */
+        @font-face {
+            font-family: 'RL AQVA';
+            src: url('assets/axkan/RLAQVA.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Objektiv';
+            src: url('assets/axkan/FONT-OBJEKTIV-VF-BODY.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root {
+            --rosa-mexicano: #e72a88;
+            --verde-selva: #8ab73b;
+            --naranja-calido: #f39223;
+            --turquesa-caribe: #09adc2;
+            --rojo-mexicano: #e52421;
+            --oro-maya: #D4A574;
+            --guinda: #a6191d;
+            --magenta-oscuro: #aa1e6b;
+            --teal-oscuro: #106c7f;
+            --bg-cream: #faf8f5;
+            --text-dark: #1a1a1a;
+            --text-mid: #4a4a4a;
+            --text-light: #8a8a8a;
+            --border-soft: #e8e4df;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @page { size: letter; margin: 0; }
+
+        body {
+            font-family: 'Objektiv', 'DM Sans', sans-serif;
+            background: #e8e4df;
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .receipt-page {
+            width: 215.9mm;
+            min-height: 279.4mm;
+            background: var(--bg-cream);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.15), 0 5px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .receipt-body {
+            flex: 1;
+        }
+
+        /* === TOP DECORATIVE BAND === */
+        .top-band {
+            height: 8px;
+            background: linear-gradient(90deg,
+                var(--rosa-mexicano) 0%, var(--rosa-mexicano) 20%,
+                var(--naranja-calido) 20%, var(--naranja-calido) 40%,
+                var(--turquesa-caribe) 40%, var(--turquesa-caribe) 60%,
+                var(--verde-selva) 60%, var(--verde-selva) 80%,
+                var(--rojo-mexicano) 80%, var(--rojo-mexicano) 100%
+            );
+        }
+
+        /* === JAGUAR WATERMARK === */
+        .jaguar-watermark {
+            position: absolute;
+            bottom: 80px;
+            right: -20px;
+            width: 320px;
+            height: 320px;
+            opacity: 0.035;
+            pointer-events: none;
+            user-select: none;
+        }
+        .jaguar-watermark img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* === HEADER === */
+        .header {
+            padding: 32px 50px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-jaguar {
+            width: 58px;
+            height: 58px;
+            flex-shrink: 0;
+        }
+        .brand-jaguar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .brand-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .brand-letters {
+            height: 32px;
+        }
+        .brand-letters img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .brand-tagline {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 8px;
+            letter-spacing: 3.5px;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 500;
+            margin-top: 3px;
+        }
+
+        .receipt-type-block {
+            text-align: right;
+        }
+
+        .receipt-type {
+            font-family: 'RL AQVA', serif;
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--rosa-mexicano);
+            border-bottom: 2.5px solid var(--rosa-mexicano);
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .receipt-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        /* === DIVIDER === */
+        .divider {
+            margin: 22px 50px;
+            height: 1px;
+            background: var(--border-soft);
+            position: relative;
+        }
+        .divider::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 60px;
+            height: 2.5px;
+            background: var(--rosa-mexicano);
+        }
+
+        /* === DATE & META STRIP === */
+        .meta-strip {
+            padding: 0 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .meta-label {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 7.5px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .meta-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        /* === MAIN CONTENT === */
+        .content { padding: 0 50px; }
+
+        .section-title {
+            font-family: 'RL AQVA', serif;
+            font-size: 9px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--turquesa-caribe);
+            margin-bottom: 10px;
+        }
+
+        /* === CLIENT CARD === */
+        .client-card {
+            background: white;
+            border: 1px solid var(--border-soft);
+            border-left: 4px solid var(--rosa-mexicano);
+            padding: 18px 24px;
+            margin-bottom: 22px;
+        }
+
+        .client-name {
+            font-family: 'RL AQVA', serif;
+            font-size: 22px;
+            color: var(--text-dark);
+            margin-bottom: 3px;
+        }
+
+        .client-role {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 11px;
+            color: var(--text-light);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* === CONCEPT SECTION === */
+        .concept-block {
+            background: white;
+            border: 1px solid var(--border-soft);
+            padding: 22px 24px;
+            margin-bottom: 22px;
+        }
+
+        .concept-label {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 7.5px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .concept-text {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 13px;
+            color: var(--text-dark);
+            font-weight: 500;
+            line-height: 1.55;
+        }
+
+        /* === AMOUNT HERO === */
+        .amount-hero {
+            background: var(--rosa-mexicano);
+            padding: 28px 32px;
+            margin-bottom: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .amount-hero .jaguar-overlay {
+            position: absolute;
+            right: 140px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 110px;
+            height: 110px;
+            opacity: 0.08;
+            pointer-events: none;
+        }
+        .amount-hero .jaguar-overlay img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(10);
+        }
+
+        .amount-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .amount-label-group { position: relative; z-index: 1; }
+
+        .amount-type-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-family: 'RL AQVA', serif;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 5px 14px;
+            border-radius: 2px;
+            margin-bottom: 8px;
+        }
+
+        .amount-description {
+            font-family: 'Objektiv', sans-serif;
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+        }
+
+        .amount-value-group {
+            text-align: right;
+            position: relative;
+            z-index: 1;
+        }
+
+        .amount-currency {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            font-weight: 300;
+            vertical-align: top;
+            line-height: 1;
+        }
+
+        .amount-number {
+            font-family: 'RL AQVA', serif;
+            font-size: 44px;
+            color: white;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .amount-cents {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            color: rgba(255,255,255,0.7);
+            vertical-align: top;
+            margin-left: 2px;
+        }
+
+        .amount-words {
+            font-family: 'Objektiv', sans-serif;
+            color: rgba(255,255,255,0.6);
+            font-size: 9px;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* === PRODUCT TABLE === */
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+        .product-table thead tr {
+            background: linear-gradient(135deg, var(--turquesa-caribe) 0%, var(--teal-oscuro) 100%);
+        }
+        .product-table thead th {
+            background: transparent;
+            color: white;
+            font-family: 'RL AQVA', serif;
+            font-size: 8px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 9px 12px;
+            text-align: left;
+        }
+        .product-table thead th:last-child,
+        .product-table thead th:nth-child(3),
+        .product-table thead th:nth-child(4) {
+            text-align: right;
+        }
+        .product-table tbody td {
+            font-family: 'Objektiv', sans-serif;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-soft);
+            font-weight: 500;
+            color: var(--text-dark);
+            font-size: 11px;
+        }
+        .product-table tbody td:last-child,
+        .product-table tbody td:nth-child(3),
+        .product-table tbody td:nth-child(4) {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+        }
+        .product-table tbody tr:nth-child(even) {
+            background: rgba(0,0,0,0.015);
+        }
+
+        .table-totals { width: 100%; margin-bottom: 20px; }
+        .total-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 30px;
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+        .total-row .t-label {
+            font-family: 'Objektiv', sans-serif;
+            color: var(--text-light);
+            font-weight: 600;
+            min-width: 80px;
+            text-align: right;
+        }
+        .total-row .t-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-dark);
+            min-width: 110px;
+            text-align: right;
+            font-size: 10.5px;
+        }
+        .total-row.grand {
+            border-top: 2px solid var(--text-dark);
+            padding-top: 8px;
+            margin-top: 2px;
+        }
+        .total-row.grand .t-label,
+        .total-row.grand .t-value {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* === DETAILS TABLE === */
+        .details-table { width: 100%; margin-bottom: 22px; }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .detail-row:last-child { border-bottom: none; }
+
+        .detail-key {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 11px;
+            color: var(--text-light);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-key .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .dot.rosa { background: var(--rosa-mexicano); }
+        .dot.turquesa { background: var(--turquesa-caribe); }
+        .dot.naranja { background: var(--naranja-calido); }
+        .dot.verde { background: var(--verde-selva); }
+
+        .detail-value {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 12px;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        /* === TERMS === */
+        .terms {
+            background: #f5f3f0;
+            border: 1px solid var(--border-soft);
+            padding: 18px 24px;
+            margin-bottom: 30px;
+        }
+
+        .terms-title {
+            font-family: 'RL AQVA', serif;
+            font-size: 7.5px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        .terms-list { list-style: none; padding: 0; }
+
+        .terms-list li {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 10px;
+            color: var(--text-mid);
+            line-height: 1.6;
+            padding-left: 16px;
+            position: relative;
+            margin-bottom: 3px;
+        }
+        .terms-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 7px;
+            width: 6px;
+            height: 2px;
+            background: var(--oro-maya);
+        }
+
+        /* === FOOTER === */
+        .footer {
+            padding: 16px 50px;
+            border-top: 1px solid var(--border-soft);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-contact { display: flex; gap: 24px; }
+
+        .footer-item {
+            font-family: 'Objektiv', sans-serif;
+            font-size: 8.5px;
+            color: var(--text-light);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-item:hover { color: var(--rosa-mexicano); }
+        .footer-item span {
+            color: var(--rosa-mexicano);
+            font-weight: 600;
+        }
+
+        .footer-brand {
+            font-family: 'RL AQVA', serif;
+            font-size: 10px;
+            color: var(--text-light);
+            letter-spacing: 3px;
+        }
+
+        /* === BOTTOM BAND === */
+        .bottom-band {
+            height: 5px;
+            background: linear-gradient(90deg,
+                var(--rosa-mexicano) 0%, var(--naranja-calido) 25%,
+                var(--turquesa-caribe) 50%, var(--verde-selva) 75%,
+                var(--rojo-mexicano) 100%
+            );
+        }
+
+        /* === PRINT REPEATING HEADER === */
+        .print-top-band {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            z-index: 1000;
+            background:
+                linear-gradient(90deg,
+                    var(--rosa-mexicano) 0%, var(--rosa-mexicano) 20%,
+                    var(--naranja-calido) 20%, var(--naranja-calido) 40%,
+                    var(--turquesa-caribe) 40%, var(--turquesa-caribe) 60%,
+                    var(--verde-selva) 60%, var(--verde-selva) 80%,
+                    var(--rojo-mexicano) 80%, var(--rojo-mexicano) 100%
+                ) top / 100% 8px no-repeat,
+                var(--bg-cream);
+        }
+
+        /* === PRINT === */
+        @media print {
+            body { background: white; padding: 0; }
+            .receipt-page { box-shadow: none; width: 100%; min-height: 100vh; }
+            .print-btn { display: none; }
+            .print-top-band { display: block; }
+        }
+
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--rosa-mexicano);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-family: 'RL AQVA', serif;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(231, 42, 136, 0.3);
+        }
+        .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(231, 42, 136, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+<div class="print-top-band"></div>
+<div class="receipt-page">
+    <!-- Jaguar watermark -->
+    <div class="jaguar-watermark">
+        <img src="assets/axkan/JAGUAR.png" alt="">
+    </div>
+
+    <!-- Top color band -->
+    <div class="top-band"></div>
+
+    <div class="receipt-body">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="brand-block">
+            <div class="brand-jaguar">
+                <img src="assets/axkan/JAGUAR.png" alt="AXKAN Jaguar">
+            </div>
+            <div class="brand-info">
+                <div class="brand-letters">
+                    <img src="assets/axkan/LETTERS.png" alt="AXKAN">
+                </div>
+                <div class="brand-tagline">Recuerdos Hechos Souvenir</div>
+            </div>
+        </div>
+        <div class="receipt-type-block">
+            <div class="receipt-type">Recibo de Adelanto</div>
+            <div class="receipt-number">No. AXK-2026-0226-001</div>
+        </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="divider"></div>
+
+    <!-- Meta info strip -->
+    <div class="meta-strip">
+        <div class="meta-item">
+            <span class="meta-label">Fecha de Emisión</span>
+            <span class="meta-value">26 de Febrero de 2026</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Lugar</span>
+            <span class="meta-value">México</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Tipo de Documento</span>
+            <span class="meta-value">Anticipo de Proyecto</span>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+        <!-- Client -->
+        <div class="section-title">Datos del Cliente</div>
+        <div class="client-card">
+            <div class="client-name">Lilian Alejandra</div>
+            <div class="client-role">Cliente — Proyecto Imanes Mundial 2026</div>
+        </div>
+
+        <!-- Concept -->
+        <div class="section-title">Concepto</div>
+        <div class="concept-block">
+            <div class="concept-label">Descripción del Proyecto</div>
+            <div class="concept-text">
+                Adelanto para inicio de producción del proyecto <strong>Imanes Mundial 2026</strong> — 10,000 piezas totales. Este pago cubre el arranque de diseño, preparación de materiales y producción.
+            </div>
+        </div>
+
+        <!-- Product Table -->
+        <div class="section-title">Desglose de Productos</div>
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th>Producto AXKAN</th>
+                    <th>Tamaño</th>
+                    <th>Cantidad</th>
+                    <th>P. Unitario</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Imanes 3D</td>
+                    <td>Grande</td>
+                    <td>3,000</td>
+                    <td>$11.50</td>
+                    <td>$34,500.00</td>
+                </tr>
+                <tr>
+                    <td>Imán MDF</td>
+                    <td>Mediano</td>
+                    <td>5,000</td>
+                    <td>$7.50</td>
+                    <td>$37,500.00</td>
+                </tr>
+                <tr>
+                    <td>Imán MDF</td>
+                    <td>Chico</td>
+                    <td>2,000</td>
+                    <td>$6.00</td>
+                    <td>$12,000.00</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="table-totals">
+            <div class="total-row">
+                <span class="t-label">Subtotal (10,000 pzas):</span>
+                <span class="t-value">$84,000.00</span>
+            </div>
+            <div class="total-row">
+                <span class="t-label">IVA (16%):</span>
+                <span class="t-value">$13,440.00</span>
+            </div>
+            <div class="total-row grand">
+                <span class="t-label">Total del Proyecto:</span>
+                <span class="t-value">$97,440.00</span>
+            </div>
+        </div>
+
+        <!-- Amount Hero -->
+        <div class="amount-hero">
+            <div class="jaguar-overlay">
+                <img src="assets/axkan/JAGUAR.png" alt="">
+            </div>
+            <div class="amount-label-group">
+                <div class="amount-type-badge">Anticipo Recibido</div>
+                <div class="amount-description">Adelanto para inicio de producción</div>
+            </div>
+            <div class="amount-value-group">
+                <span class="amount-currency">MXN</span>
+                <span class="amount-number">$42,000</span><span class="amount-cents">.00</span>
+                <div class="amount-words">( Cuarenta y dos mil pesos 00/100 M.N. )</div>
+            </div>
+        </div>
+
+        <!-- Details -->
+        <div class="section-title">Detalles de la Operación</div>
+        <div class="details-table">
+            <div class="detail-row">
+                <span class="detail-key"><span class="dot rosa"></span>Monto del Adelanto</span>
+                <span class="detail-value">$42,000.00 MXN</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-key"><span class="dot turquesa"></span>Saldo Pendiente</span>
+                <span class="detail-value">$55,440.00 MXN</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-key"><span class="dot naranja"></span>Fecha del Pago</span>
+                <span class="detail-value">26 de Febrero de 2026</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-key"><span class="dot verde"></span>Estado del Pago</span>
+                <span class="detail-value" style="color: var(--verde-selva);">✓ Recibido</span>
+            </div>
+        </div>
+
+        <!-- Terms -->
+        <div class="terms">
+            <div class="terms-title">Términos y Condiciones</div>
+            <ul class="terms-list">
+                <li>Este recibo ampara únicamente el adelanto señalado, no el monto total del proyecto.</li>
+                <li>El saldo restante deberá cubrirse previo al envío del pedido finalizado.</li>
+                <li>El diseño incluye 2 rondas de revisión sin costo adicional.</li>
+                <li>Los tiempos de entrega comienzan a partir de la aprobación del diseño final.</li>
+                <li>Garantía válida 7 días posteriores a la entrega con evidencia fotográfica.</li>
+            </ul>
+        </div>
+    </div>
+
+    </div><!-- end receipt-body -->
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-contact">
+            <a href="mailto:informacion@axkan.art" class="footer-item"><span>@</span> informacion@axkan.art</a>
+            <a href="https://www.instagram.com/axkanoficial/" target="_blank" class="footer-item"><span>IG</span> @axkanoficial</a>
+            <a href="https://axkan.art" target="_blank" class="footer-item"><span>Web</span> axkan.art</a>
+        </div>
+        <div class="footer-brand">AXKAN © 2026</div>
+    </div>
+
+    <!-- Bottom band -->
+    <div class="bottom-band"></div>
+</div>
+
+<button class="print-btn" onclick="window.print()">Imprimir / Guardar PDF</button>
+
+<script>
+    // Calculate and fill remaining page space so footer sits at bottom of last page
+    function fillPage() {
+        const PAGE_HEIGHT_PX = 279.4 * (96 / 25.4); // letter height in px at 96dpi
+        const page = document.querySelector('.receipt-page');
+        const contentHeight = page.scrollHeight;
+        const pages = Math.ceil(contentHeight / PAGE_HEIGHT_PX);
+        const targetHeight = pages * PAGE_HEIGHT_PX;
+        page.style.minHeight = targetHeight + 'px';
+    }
+    // Run after fonts and images load
+    window.addEventListener('load', fillPage);
+    // Also run immediately for headless Chrome
+    fillPage();
+    setTimeout(fillPage, 200);
+</script>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 /**
  * Public Design Gallery Routes
- * Handles public gallery browsing, subscriber auth, Stripe subscriptions, and downloads.
+ * Handles public gallery browsing, subscriber auth, credit purchases, and downloads.
  * Separate from internal gallery-routes.js (employee-only).
  */
 
@@ -14,7 +14,7 @@ let Stripe;
 try {
   Stripe = (await import('stripe')).default;
 } catch (e) {
-  console.warn('⚠️ stripe package not installed — design subscription routes will be limited');
+  console.warn('⚠️ stripe package not installed — credit purchase routes will be limited');
 }
 
 const router = express.Router();
@@ -22,9 +22,7 @@ const router = express.Router();
 // ── Config ──────────────────────────────────────────────
 const DESIGN_JWT_SECRET = process.env.DESIGN_JWT_SECRET || process.env.JWT_SECRET;
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-const STRIPE_DESIGN_PRICE_ID = process.env.STRIPE_DESIGN_PRICE_ID;
 const STRIPE_DESIGN_WEBHOOK_SECRET = process.env.STRIPE_DESIGN_WEBHOOK_SECRET;
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
@@ -32,37 +30,35 @@ if (!DESIGN_JWT_SECRET) {
   console.warn('⚠️ DESIGN_JWT_SECRET not set — subscriber auth will use JWT_SECRET');
 }
 if (!STRIPE_SECRET_KEY) {
-  console.warn('⚠️ STRIPE_SECRET_KEY not set — subscription features disabled');
+  console.warn('⚠️ STRIPE_SECRET_KEY not set — credit purchase features disabled');
 }
+
+// ── Credit Packs ────────────────────────────────────────
+const CREDIT_PACKS = {
+  pack_10:  { credits: 10,  price_mxn: 99,   label: '10 Créditos' },
+  pack_25:  { credits: 25,  price_mxn: 199,  label: '25 Créditos' },
+  pack_50:  { credits: 50,  price_mxn: 349,  label: '50 Créditos' },
+};
 
 // ── Watermark Helper ────────────────────────────────────
 
-/**
- * Transform a Cloudinary URL to add watermark overlay.
- * Uses Cloudinary's URL-based transformations — no server processing needed.
- */
 function getWatermarkedUrl(originalUrl) {
   if (!originalUrl) return null;
 
-  // Match Cloudinary URL pattern: .../upload/v1234/folder/file.ext
   const uploadIdx = originalUrl.indexOf('/upload/');
-  if (uploadIdx === -1) {
-    // Not a Cloudinary URL — return as-is (shouldn't happen)
-    return originalUrl;
-  }
+  if (uploadIdx === -1) return originalUrl;
 
   const before = originalUrl.substring(0, uploadIdx + '/upload/'.length);
   const after = originalUrl.substring(uploadIdx + '/upload/'.length);
 
-  // Cloudinary transformations: resize, lower quality, add watermark text overlay
   const transforms = [
-    'w_800',           // Max width 800px
-    'q_50',            // 50% quality
-    'l_text:Arial_40_bold:AXKAN.ART',  // Text overlay
-    'co_rgb:e72a88',   // Rosa Mexicano color
-    'o_30',            // 30% opacity
-    'g_center',        // Centered
-    'fl_tiled'         // Tile across image
+    'w_800',
+    'q_50',
+    'l_text:Arial_40_bold:AXKAN.ART',
+    'co_rgb:e72a88',
+    'o_30',
+    'g_center',
+    'fl_tiled'
   ].join(',');
 
   return `${before}${transforms}/${after}`;
@@ -86,25 +82,10 @@ function subscriberAuth(req, res, next) {
   }
 }
 
-function requireActiveSubscription(req, res, next) {
-  if (req.subscriber.subscription_status !== 'active') {
-    return res.status(403).json({
-      success: false,
-      error: 'Se requiere una suscripción activa',
-      subscription_status: req.subscriber.subscription_status
-    });
-  }
-  next();
-}
-
 // ════════════════════════════════════════════════════════
 // PUBLIC GALLERY (no auth)
 // ════════════════════════════════════════════════════════
 
-/**
- * GET /api/public/designs
- * Returns public designs with watermarked preview URLs
- */
 router.get('/', async (req, res) => {
   try {
     const { category_id, search, limit = 50, offset = 0 } = req.query;
@@ -136,15 +117,13 @@ router.get('/', async (req, res) => {
 
     const result = await query(sql, values);
 
-    // Replace URLs with watermarked versions
     const designs = result.rows.map(d => ({
       ...d,
       preview_url: getWatermarkedUrl(d.file_url),
-      file_url: undefined,      // Never expose original URL
-      thumbnail_url: undefined   // Never expose original thumbnail
+      file_url: undefined,
+      thumbnail_url: undefined
     }));
 
-    // Get total count
     let countSql = `
       SELECT COUNT(*) FROM design_gallery g
       WHERE g.is_public = true
@@ -176,10 +155,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-/**
- * GET /api/public/designs/categories
- * Returns categories that have public designs
- */
 router.get('/categories', async (req, res) => {
   try {
     const result = await query(`
@@ -204,9 +179,6 @@ router.get('/categories', async (req, res) => {
 // SUBSCRIBER AUTH
 // ════════════════════════════════════════════════════════
 
-/**
- * POST /api/public/designs/auth/register
- */
 router.post('/auth/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -215,7 +187,6 @@ router.post('/auth/register', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Email y contraseña son requeridos' });
     }
 
-    // Check if email already exists
     const existing = await query('SELECT id FROM design_subscribers WHERE email = $1', [email.toLowerCase()]);
     if (existing.rows.length > 0) {
       return res.status(409).json({ success: false, error: 'Este email ya está registrado' });
@@ -226,17 +197,13 @@ router.post('/auth/register', async (req, res) => {
     const result = await query(
       `INSERT INTO design_subscribers (email, password_hash, name)
        VALUES ($1, $2, $3)
-       RETURNING id, email, name, subscription_status, created_at`,
+       RETURNING id, email, name, credits_balance, created_at`,
       [email.toLowerCase(), passwordHash, name || null]
     );
 
     const subscriber = result.rows[0];
     const token = jwt.sign(
-      {
-        id: subscriber.id,
-        email: subscriber.email,
-        subscription_status: subscriber.subscription_status
-      },
+      { id: subscriber.id, email: subscriber.email },
       DESIGN_JWT_SECRET,
       { expiresIn: '30d' }
     );
@@ -248,7 +215,7 @@ router.post('/auth/register', async (req, res) => {
         id: subscriber.id,
         email: subscriber.email,
         name: subscriber.name,
-        subscription_status: subscriber.subscription_status
+        credits_balance: subscriber.credits_balance
       }
     });
 
@@ -258,9 +225,6 @@ router.post('/auth/register', async (req, res) => {
   }
 });
 
-/**
- * POST /api/public/designs/auth/login
- */
 router.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -270,7 +234,7 @@ router.post('/auth/login', async (req, res) => {
     }
 
     const result = await query(
-      'SELECT id, email, name, password_hash, subscription_status FROM design_subscribers WHERE email = $1',
+      'SELECT id, email, name, password_hash, credits_balance FROM design_subscribers WHERE email = $1',
       [email.toLowerCase()]
     );
 
@@ -285,16 +249,11 @@ router.post('/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      {
-        id: subscriber.id,
-        email: subscriber.email,
-        subscription_status: subscriber.subscription_status
-      },
+      { id: subscriber.id, email: subscriber.email },
       DESIGN_JWT_SECRET,
       { expiresIn: '30d' }
     );
 
-    // Update last login
     await query('UPDATE design_subscribers SET updated_at = NOW() WHERE id = $1', [subscriber.id]);
 
     res.json({
@@ -304,7 +263,7 @@ router.post('/auth/login', async (req, res) => {
         id: subscriber.id,
         email: subscriber.email,
         name: subscriber.name,
-        subscription_status: subscriber.subscription_status
+        credits_balance: subscriber.credits_balance
       }
     });
 
@@ -314,15 +273,10 @@ router.post('/auth/login', async (req, res) => {
   }
 });
 
-/**
- * GET /api/public/designs/auth/me
- * Returns current subscriber profile + fresh subscription status
- */
 router.get('/auth/me', subscriberAuth, async (req, res) => {
   try {
     const result = await query(
-      `SELECT id, email, name, subscription_status, stripe_customer_id,
-              stripe_subscription_id, created_at
+      `SELECT id, email, name, credits_balance, stripe_customer_id, created_at
        FROM design_subscribers WHERE id = $1`,
       [req.subscriber.id]
     );
@@ -338,8 +292,7 @@ router.get('/auth/me', subscriberAuth, async (req, res) => {
         id: sub.id,
         email: sub.email,
         name: sub.name,
-        subscription_status: sub.subscription_status,
-        has_stripe: !!sub.stripe_customer_id,
+        credits_balance: sub.credits_balance,
         created_at: sub.created_at
       }
     });
@@ -351,17 +304,31 @@ router.get('/auth/me', subscriberAuth, async (req, res) => {
 });
 
 // ════════════════════════════════════════════════════════
-// DOWNLOAD (subscriber + active subscription)
+// DOWNLOAD (requires credits)
 // ════════════════════════════════════════════════════════
 
-/**
- * GET /api/public/designs/:id/download
- * Returns original file URL for active subscribers. Logs download.
- */
-router.get('/:id/download', subscriberAuth, requireActiveSubscription, async (req, res) => {
+router.get('/:id/download', subscriberAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const subscriberId = req.subscriber.id;
+
+    // Check credit balance
+    const balanceResult = await query(
+      'SELECT credits_balance FROM design_subscribers WHERE id = $1',
+      [subscriberId]
+    );
+    if (balanceResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Cuenta no encontrada' });
+    }
+
+    const currentBalance = balanceResult.rows[0].credits_balance;
+    if (currentBalance < 1) {
+      return res.status(403).json({
+        success: false,
+        error: 'No tienes créditos. Compra un paquete para descargar.',
+        credits_balance: 0
+      });
+    }
 
     // Rate limit: 50 downloads/day
     const today = await query(
@@ -387,27 +354,45 @@ router.get('/:id/download', subscriberAuth, requireActiveSubscription, async (re
       return res.status(404).json({ success: false, error: 'Diseño no encontrado' });
     }
 
+    // Deduct 1 credit atomically
+    const deduct = await query(
+      `UPDATE design_subscribers
+       SET credits_balance = credits_balance - 1, updated_at = NOW()
+       WHERE id = $1 AND credits_balance > 0
+       RETURNING credits_balance`,
+      [subscriberId]
+    );
+
+    if (deduct.rows.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: 'No tienes créditos. Compra un paquete para descargar.',
+        credits_balance: 0
+      });
+    }
+
     // Log the download
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     await query(
-      `INSERT INTO design_download_log (subscriber_id, design_id, ip_address)
-       VALUES ($1, $2, $3)`,
+      `INSERT INTO design_download_log (subscriber_id, design_id, ip_address, credits_spent)
+       VALUES ($1, $2, $3, 1)`,
       [subscriberId, id, ip]
     );
 
-    // Increment download count on design_gallery
+    // Increment download count
     await query(
       `UPDATE design_gallery SET download_count = COALESCE(download_count, 0) + 1 WHERE id = $1`,
       [id]
     );
 
-    console.log(`📥 Design download: subscriber=${subscriberId}, design=${id}, ip=${ip}`);
+    console.log(`📥 Design download: subscriber=${subscriberId}, design=${id}, credits_remaining=${deduct.rows[0].credits_balance}`);
 
     res.json({
       success: true,
       download_url: design.rows[0].file_url,
       name: design.rows[0].name,
-      file_type: design.rows[0].file_type
+      file_type: design.rows[0].file_type,
+      credits_remaining: deduct.rows[0].credits_balance
     });
 
   } catch (error) {
@@ -417,19 +402,45 @@ router.get('/:id/download', subscriberAuth, requireActiveSubscription, async (re
 });
 
 // ════════════════════════════════════════════════════════
-// STRIPE SUBSCRIPTION
+// CREDIT PURCHASES (Stripe one-time payments)
 // ════════════════════════════════════════════════════════
 
 /**
- * POST /api/public/designs/subscribe
- * Creates a Stripe Checkout session for the subscriber
+ * GET /api/public/designs/credits/packs
+ * Returns available credit packs with pricing
  */
-router.post('/subscribe', subscriberAuth, async (req, res) => {
+router.get('/credits/packs', (req, res) => {
+  const packs = Object.entries(CREDIT_PACKS).map(([key, pack]) => ({
+    key,
+    credits: pack.credits,
+    price_mxn: pack.price_mxn,
+    label: pack.label,
+    per_credit: Math.round((pack.price_mxn / pack.credits) * 100) / 100
+  }));
+
+  res.json({ success: true, packs });
+});
+
+/**
+ * POST /api/public/designs/credits/purchase
+ * Creates a Stripe Checkout session for a credit pack purchase
+ */
+router.post('/credits/purchase', subscriberAuth, async (req, res) => {
   try {
-    if (!stripe || !STRIPE_DESIGN_PRICE_ID) {
+    if (!stripe) {
       return res.status(503).json({
         success: false,
-        error: 'Suscripciones no configuradas aún'
+        error: 'Pagos no configurados aún'
+      });
+    }
+
+    const { pack_key } = req.body;
+    const pack = CREDIT_PACKS[pack_key];
+
+    if (!pack) {
+      return res.status(400).json({
+        success: false,
+        error: 'Paquete no válido. Opciones: ' + Object.keys(CREDIT_PACKS).join(', ')
       });
     }
 
@@ -459,60 +470,89 @@ router.post('/subscribe', subscriberAuth, async (req, res) => {
       );
     }
 
-    // Create Checkout session
+    // Create one-time Checkout session
+    const origin = req.headers.origin || 'https://axkan.art';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      mode: 'subscription',
-      line_items: [{ price: STRIPE_DESIGN_PRICE_ID, quantity: 1 }],
-      success_url: `${req.headers.origin || 'https://axkan.art'}/diseños?subscription=success`,
-      cancel_url: `${req.headers.origin || 'https://axkan.art'}/diseños?subscription=cancelled`,
-      metadata: { subscriber_id: String(subscriberId) }
+      mode: 'payment',
+      line_items: [{
+        price_data: {
+          currency: 'mxn',
+          product_data: {
+            name: `${pack.label} — AXKAN Diseños`,
+            description: `Paquete de ${pack.credits} créditos para descargar diseños originales`
+          },
+          unit_amount: pack.price_mxn * 100,
+        },
+        quantity: 1,
+      }],
+      success_url: `${origin}/diseños?credits=success`,
+      cancel_url: `${origin}/diseños?credits=cancelled`,
+      metadata: {
+        subscriber_id: String(subscriberId),
+        pack_key: pack_key,
+      },
     });
+
+    // Insert pending purchase record
+    await query(
+      `INSERT INTO credit_purchases (subscriber_id, credits, amount_mxn, pack_key, stripe_session_id, status)
+       VALUES ($1, $2, $3, $4, $5, 'pending')`,
+      [subscriberId, pack.credits, pack.price_mxn, pack_key, session.id]
+    );
 
     res.json({ success: true, checkout_url: session.url });
 
   } catch (error) {
-    console.error('Subscribe error:', error);
+    console.error('Credit purchase error:', error);
     res.status(500).json({ success: false, error: 'Error al crear sesión de pago' });
   }
 });
 
 /**
- * POST /api/public/designs/portal
- * Creates a Stripe Customer Portal session
+ * GET /api/public/designs/credits/history
+ * Returns credit purchase history and recent downloads for the subscriber
  */
-router.post('/portal', subscriberAuth, async (req, res) => {
+router.get('/credits/history', subscriberAuth, async (req, res) => {
   try {
-    if (!stripe) {
-      return res.status(503).json({ success: false, error: 'Stripe no configurado' });
-    }
+    const subscriberId = req.subscriber.id;
 
-    const sub = await query(
-      'SELECT stripe_customer_id FROM design_subscribers WHERE id = $1',
-      [req.subscriber.id]
+    const purchases = await query(
+      `SELECT id, credits, amount_mxn, pack_key, status, created_at
+       FROM credit_purchases
+       WHERE subscriber_id = $1
+       ORDER BY created_at DESC
+       LIMIT 20`,
+      [subscriberId]
     );
 
-    if (!sub.rows[0]?.stripe_customer_id) {
-      return res.status(400).json({ success: false, error: 'No tienes suscripción activa' });
-    }
+    const downloads = await query(
+      `SELECT dl.id, dl.downloaded_at, dl.credits_spent,
+              g.name as design_name
+       FROM design_download_log dl
+       LEFT JOIN design_gallery g ON dl.design_id = g.id
+       WHERE dl.subscriber_id = $1
+       ORDER BY dl.downloaded_at DESC
+       LIMIT 20`,
+      [subscriberId]
+    );
 
-    const session = await stripe.billingPortal.sessions.create({
-      customer: sub.rows[0].stripe_customer_id,
-      return_url: `${req.headers.origin || 'https://axkan.art'}/diseños`
+    res.json({
+      success: true,
+      purchases: purchases.rows,
+      downloads: downloads.rows
     });
 
-    res.json({ success: true, portal_url: session.url });
-
   } catch (error) {
-    console.error('Portal error:', error);
-    res.status(500).json({ success: false, error: 'Error al abrir portal' });
+    console.error('Credits history error:', error);
+    res.status(500).json({ success: false, error: 'Error al obtener historial' });
   }
 });
 
-/**
- * POST /api/public/designs/webhook
- * Stripe webhook handler — must receive raw body (configured in server.js)
- */
+// ════════════════════════════════════════════════════════
+// STRIPE WEBHOOK (one-time payments)
+// ════════════════════════════════════════════════════════
+
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   if (!stripe || !STRIPE_DESIGN_WEBHOOK_SECRET) {
     return res.status(503).send('Webhook not configured');
@@ -534,61 +574,57 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
       case 'checkout.session.completed': {
         const session = event.data.object;
         const subscriberId = session.metadata?.subscriber_id;
-        const subscriptionId = session.subscription;
+        const packKey = session.metadata?.pack_key;
 
-        if (subscriberId && subscriptionId) {
-          await query(
-            `UPDATE design_subscribers
-             SET subscription_status = 'active',
-                 stripe_subscription_id = $1,
-                 stripe_customer_id = COALESCE(stripe_customer_id, $2),
-                 updated_at = NOW()
-             WHERE id = $3`,
-            [subscriptionId, session.customer, subscriberId]
-          );
-          console.log(`✅ Subscription activated for subscriber ${subscriberId}`);
+        if (!subscriberId || !packKey) break;
+
+        const pack = CREDIT_PACKS[packKey];
+        if (!pack) {
+          console.error(`❌ Unknown pack_key in webhook: ${packKey}`);
+          break;
         }
-        break;
-      }
 
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        const status = subscription.status === 'active' ? 'active' :
-                       subscription.status === 'past_due' ? 'past_due' : 'cancelled';
+        // Idempotency: check if already processed
+        const existing = await query(
+          `SELECT id FROM credit_purchases WHERE stripe_session_id = $1 AND status = 'completed'`,
+          [session.id]
+        );
+        if (existing.rows.length > 0) {
+          console.log(`ℹ️ Credit purchase already processed for session ${session.id}`);
+          break;
+        }
 
+        // Add credits to subscriber and mark purchase as completed
         await query(
           `UPDATE design_subscribers
-           SET subscription_status = $1, updated_at = NOW()
-           WHERE stripe_subscription_id = $2`,
-          [status, subscription.id]
+           SET credits_balance = credits_balance + $1,
+               stripe_customer_id = COALESCE(stripe_customer_id, $2),
+               updated_at = NOW()
+           WHERE id = $3`,
+          [pack.credits, session.customer, subscriberId]
         );
-        console.log(`🔄 Subscription updated: ${subscription.id} → ${status}`);
-        break;
-      }
 
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
         await query(
-          `UPDATE design_subscribers
-           SET subscription_status = 'cancelled', updated_at = NOW()
-           WHERE stripe_subscription_id = $1`,
-          [subscription.id]
+          `UPDATE credit_purchases
+           SET status = 'completed',
+               stripe_payment_intent = $1
+           WHERE stripe_session_id = $2`,
+          [session.payment_intent, session.id]
         );
-        console.log(`❌ Subscription cancelled: ${subscription.id}`);
+
+        console.log(`✅ ${pack.credits} credits added for subscriber ${subscriberId} (session: ${session.id})`);
         break;
       }
 
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object;
-        if (invoice.subscription) {
-          await query(
-            `UPDATE design_subscribers
-             SET subscription_status = 'past_due', updated_at = NOW()
-             WHERE stripe_subscription_id = $1`,
-            [invoice.subscription]
-          );
-          console.log(`⚠️ Payment failed for subscription: ${invoice.subscription}`);
-        }
+      case 'payment_intent.payment_failed': {
+        const paymentIntent = event.data.object;
+        // Mark any pending purchases with this payment intent as failed
+        await query(
+          `UPDATE credit_purchases SET status = 'failed'
+           WHERE stripe_payment_intent = $1 AND status = 'pending'`,
+          [paymentIntent.id]
+        );
+        console.log(`⚠️ Payment failed: ${paymentIntent.id}`);
         break;
       }
     }

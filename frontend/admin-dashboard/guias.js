@@ -11,6 +11,8 @@ let guiasCurrentStatus = 'all';
 let guiasSearchQuery = '';
 let guiasSelectedId = null;
 let guiasStats = {};
+let guiasSelectedForPrint = new Set();
+let guiasDateFilter = null;
 
 // API URL
 const GUIAS_API_URL = window.location.hostname === 'localhost'
@@ -117,6 +119,10 @@ async function loadGuias(page) {
     var params = new URLSearchParams({ page: page, limit: 50 });
     if (guiasCurrentStatus && guiasCurrentStatus !== 'all') params.append('status', guiasCurrentStatus);
     if (guiasSearchQuery) params.append('search', guiasSearchQuery);
+    if (guiasDateFilter) {
+      params.append('startDate', guiasDateFilter.startDate);
+      params.append('endDate', guiasDateFilter.endDate);
+    }
 
     var response = await guiasFetch(GUIAS_API_URL + '/labels?' + params);
     var result = await response.json();
@@ -201,6 +207,25 @@ function createGuiaCard(guia) {
   card.className = 'guia-card' + (isSelected ? ' guia-card--active' : '');
   card.dataset.guiaId = guia.id;
   card.onclick = function() { openGuiaPanel(guia.id); };
+
+  // Checkbox for print selection
+  if (guia.label_url) {
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'guia-card__checkbox';
+    checkbox.checked = guiasSelectedForPrint.has(guia.id);
+    checkbox.onclick = function(e) {
+      e.stopPropagation();
+      if (this.checked) {
+        guiasSelectedForPrint.add(guia.id);
+      } else {
+        guiasSelectedForPrint.delete(guia.id);
+      }
+      updatePrintToolbar();
+    };
+    card.appendChild(checkbox);
+    card.classList.add('guia-card--selectable');
+  }
 
   // Row 1
   var row1 = document.createElement('div');
@@ -684,12 +709,151 @@ function exportGuiasCSV() {
   guiasToast('CSV descargado');
 }
 
+/**
+ * Print selection helpers
+ */
+function toggleSelectAllGuias() {
+  var printable = guiasData.filter(function(g) { return g.label_url; });
+  var allSelected = printable.length > 0 && printable.every(function(g) { return guiasSelectedForPrint.has(g.id); });
+
+  if (allSelected) {
+    guiasSelectedForPrint.clear();
+  } else {
+    printable.forEach(function(g) { guiasSelectedForPrint.add(g.id); });
+  }
+
+  renderGuiasList();
+  updatePrintToolbar();
+}
+
+function updatePrintToolbar() {
+  var count = guiasSelectedForPrint.size;
+  var counterEl = document.getElementById('guias-print-count');
+  var printBtn = document.getElementById('guias-print-btn');
+  var selectAllCb = document.getElementById('guias-select-all');
+
+  if (counterEl) counterEl.textContent = count > 0 ? count + ' seleccionada' + (count > 1 ? 's' : '') : '';
+  if (printBtn) printBtn.disabled = count === 0;
+
+  if (selectAllCb) {
+    var printable = guiasData.filter(function(g) { return g.label_url; });
+    selectAllCb.checked = printable.length > 0 && printable.every(function(g) { return guiasSelectedForPrint.has(g.id); });
+    selectAllCb.indeterminate = count > 0 && !selectAllCb.checked;
+  }
+}
+
+async function printSelectedGuias() {
+  var ids = Array.from(guiasSelectedForPrint);
+  if (ids.length === 0) return;
+
+  var btn = document.getElementById('guias-print-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Imprimiendo...'; }
+
+  try {
+    var response = await guiasFetch(GUIAS_API_URL + '/labels/print', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ labelIds: ids })
+    });
+    var result = await response.json();
+
+    if (!result.success) throw new Error(result.error || 'Error');
+
+    var msg = result.printed + ' guia' + (result.printed > 1 ? 's' : '') + ' enviada' + (result.printed > 1 ? 's' : '') + ' a imprimir';
+    if (result.failed > 0) msg += ' (' + result.failed + ' fallida' + (result.failed > 1 ? 's' : '') + ')';
+    guiasToast(msg, result.failed > 0 ? 'error' : 'success');
+
+    guiasSelectedForPrint.clear();
+    renderGuiasList();
+    updatePrintToolbar();
+  } catch (error) {
+    guiasToast('Error al imprimir: ' + error.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Imprimir';
+    }
+  }
+}
+
+/**
+ * Date quick-filters
+ */
+function setGuiasDateFilter(preset) {
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var start, end;
+
+  if (preset === 'today') {
+    start = end = today.toISOString().split('T')[0];
+  } else if (preset === 'yesterday') {
+    var yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    start = end = yesterday.toISOString().split('T')[0];
+  } else if (preset === 'week') {
+    var weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    start = weekAgo.toISOString().split('T')[0];
+    end = today.toISOString().split('T')[0];
+  } else if (preset === 'clear') {
+    guiasDateFilter = null;
+    updateDateFilterChips(null);
+    guiasSelectedForPrint.clear();
+    loadGuias(1);
+    updatePrintToolbar();
+    return;
+  }
+
+  guiasDateFilter = { startDate: start, endDate: end };
+  updateDateFilterChips(preset);
+  guiasSelectedForPrint.clear();
+  loadGuias(1);
+  updatePrintToolbar();
+}
+
+function setGuiasCustomDateRange() {
+  var startEl = document.getElementById('guias-date-start');
+  var endEl = document.getElementById('guias-date-end');
+  if (!startEl || !endEl || !startEl.value || !endEl.value) return;
+
+  guiasDateFilter = { startDate: startEl.value, endDate: endEl.value };
+  updateDateFilterChips('custom');
+  guiasSelectedForPrint.clear();
+  loadGuias(1);
+  updatePrintToolbar();
+}
+
+function updateDateFilterChips(active) {
+  document.querySelectorAll('.guias-date-chip').forEach(function(btn) {
+    btn.classList.toggle('guias-date-chip--active', btn.dataset.date === active);
+  });
+  var rangeEl = document.getElementById('guias-date-range');
+  if (rangeEl) rangeEl.classList.toggle('hidden', active !== 'custom');
+}
+
 // Inject dynamic styles
 var guiasStyleSheet = document.createElement('style');
 guiasStyleSheet.textContent =
   '@keyframes spin { to { transform: rotate(360deg); } }' +
   '@keyframes guiaSkelPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }' +
-  '.guias-spinning svg, .guias-spinning { animation: spin 0.6s linear infinite; }';
+  '.guias-spinning svg, .guias-spinning { animation: spin 0.6s linear infinite; }' +
+  '.guia-card--selectable { padding-left: 40px; position: relative; }' +
+  '.guia-card__checkbox { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; cursor: pointer; accent-color: #e72a88; z-index: 2; }' +
+  '.guias-print-toolbar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; margin-bottom: 8px; }' +
+  '.guias-select-all-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--gray-600); cursor: pointer; }' +
+  '.guias-select-all-label input { width: 18px; height: 18px; accent-color: #e72a88; cursor: pointer; }' +
+  '.guias-print-count { font-size: 13px; color: var(--gray-500); flex: 1; }' +
+  '.guias-print-btn { display: flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; background: #e72a88; color: white; transition: all 0.15s; }' +
+  '.guias-print-btn:disabled { opacity: 0.4; cursor: not-allowed; }' +
+  '.guias-print-btn:not(:disabled):hover { background: #c4216f; }' +
+  '.guias-date-filters { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }' +
+  '.guias-date-chip { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid var(--gray-200); background: white; color: var(--gray-600); cursor: pointer; transition: all 0.15s; }' +
+  '.guias-date-chip:hover { border-color: var(--gray-400); }' +
+  '.guias-date-chip--active { background: #e72a88; color: white; border-color: #e72a88; }' +
+  '.guias-date-chip--clear { border: none; background: none; color: var(--gray-400); font-size: 14px; padding: 4px 6px; }' +
+  '.guias-date-range { display: flex; align-items: center; gap: 6px; margin-left: 4px; }' +
+  '.guias-date-range input { padding: 3px 6px; border: 1px solid var(--gray-200); border-radius: 6px; font-size: 12px; }' +
+  '.guias-date-apply { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; background: #e72a88; color: white; border: none; cursor: pointer; }';
 document.head.appendChild(guiasStyleSheet);
 
 // Close panel on Escape
@@ -712,6 +876,12 @@ window.openGuiaPanel = openGuiaPanel;
 window.closeGuiasPanel = closeGuiasPanel;
 window.handleGuiaPanelStatusChange = handleGuiaPanelStatusChange;
 window.handleGuiaPanelRefresh = handleGuiaPanelRefresh;
+window.toggleSelectAllGuias = toggleSelectAllGuias;
+window.updatePrintToolbar = updatePrintToolbar;
+window.printSelectedGuias = printSelectedGuias;
+window.setGuiasDateFilter = setGuiasDateFilter;
+window.setGuiasCustomDateRange = setGuiasCustomDateRange;
+window.updateDateFilterChips = updateDateFilterChips;
 
 // ==========================================
 // PICKUPS MODAL FUNCTIONALITY
