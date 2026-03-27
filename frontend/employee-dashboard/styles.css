@@ -3163,22 +3163,21 @@ textarea {
 
 .dt-modal-task-actions {
     display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    padding-top: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid #f0f0f0;
 }
 
 .dt-modal-task-actions .dt-action-btn {
-    font-size: 12px;
-    padding: 6px 14px;
-    border-radius: 6px;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
     cursor: pointer;
     border: none;
     white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+    font-weight: 600;
 }
 
 .dt-modal-task-actions .dt-action-complete {
