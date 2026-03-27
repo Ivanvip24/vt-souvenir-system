@@ -2657,8 +2657,8 @@ function startWhatsAppPolling() {
         // BUT skip re-render if audio is playing (prevents audio reset mid-playback)
         if (waState.selectedConversationId) {
           const ok = await fetchConversationMessages(waState.selectedConversationId);
-          var audioPlaying = document.querySelector('.wa-msg-audio');
-          var isPlaying = audioPlaying && !audioPlaying.paused;
+          var allAudios = document.querySelectorAll('.wa-msg-audio');
+          var isPlaying = Array.from(allAudios).some(function(a) { return !a.paused; });
           if (ok && !isPlaying) renderChatMessages();
           // Refresh coaching pills too
           if (typeof loadCoachingPills === 'function') loadCoachingPills(waState.selectedConversationId);
