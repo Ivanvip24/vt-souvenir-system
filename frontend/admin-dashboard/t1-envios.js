@@ -129,6 +129,25 @@ function createT1Card(shipment) {
   card.dataset.guiaId = 't1-' + shipment.id;
   card.onclick = function() { openT1Panel(shipment); };
 
+  // Checkbox for print selection
+  if (shipment.label_url) {
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'guia-card__checkbox';
+    checkbox.checked = guiasSelectedForPrint.has(shipment.id);
+    checkbox.onclick = function(e) {
+      e.stopPropagation();
+      if (this.checked) {
+        guiasSelectedForPrint.add(shipment.id);
+      } else {
+        guiasSelectedForPrint.delete(shipment.id);
+      }
+      updatePrintToolbar();
+    };
+    card.appendChild(checkbox);
+    card.classList.add('guia-card--selectable');
+  }
+
   // Row 1: carrier | tracking | status
   var row1 = document.createElement('div');
   row1.className = 'guia-card__row1';
