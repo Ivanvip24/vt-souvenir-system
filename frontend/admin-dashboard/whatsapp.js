@@ -3692,12 +3692,32 @@ function buildMessagesDOM(parentEl) {
         contentDiv.appendChild(captionDiv);
       }
     } else if (msgType === 'audio' && m.media_url) {
-      // Audio message
+      // Audio message with speed controls
+      var audioWrap = document.createElement('div');
+      audioWrap.className = 'wa-audio-wrapper';
+
       var audio = document.createElement('audio');
       audio.controls = true;
       audio.src = m.media_url;
       audio.className = 'wa-msg-audio';
-      contentDiv.appendChild(audio);
+      audioWrap.appendChild(audio);
+
+      var speedBar = document.createElement('div');
+      speedBar.className = 'wa-audio-speeds';
+      var speeds = [1, 1.5, 2, 3];
+      speeds.forEach(function(spd) {
+        var btn = document.createElement('button');
+        btn.className = 'wa-speed-btn' + (spd === 1 ? ' wa-speed-active' : '');
+        btn.textContent = spd + 'x';
+        btn.onclick = function() {
+          audio.playbackRate = spd;
+          speedBar.querySelectorAll('.wa-speed-btn').forEach(function(b) { b.classList.remove('wa-speed-active'); });
+          btn.classList.add('wa-speed-active');
+        };
+        speedBar.appendChild(btn);
+      });
+      audioWrap.appendChild(speedBar);
+      contentDiv.appendChild(audioWrap);
       // Show transcription if available
       if (meta && meta.transcription) {
         var transSpan = document.createElement('span');
