@@ -122,6 +122,45 @@
         <main class="main-content">
             <!-- My Tasks View -->
             <section id="my-tasks-view" class="view">
+                <!-- Daily Activity Log (for designers) -->
+                <div id="daily-log-section">
+                    <header class="view-header">
+                        <h2>Registro de Hoy</h2>
+                        <span class="dl-date" id="dl-date"></span>
+                    </header>
+                    <div class="dl-counters">
+                        <div class="dl-counter">
+                            <span class="dl-counter-label">Diseños</span>
+                            <div class="dl-counter-controls">
+                                <button class="dl-btn" onclick="dlAdjust('designs', -1)">-</button>
+                                <span class="dl-counter-value" id="dl-designs">0</span>
+                                <button class="dl-btn dl-btn-plus" onclick="dlAdjust('designs', 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="dl-counter">
+                            <span class="dl-counter-label">Armados</span>
+                            <div class="dl-counter-controls">
+                                <button class="dl-btn" onclick="dlAdjust('armados', -1)">-</button>
+                                <span class="dl-counter-value" id="dl-armados">0</span>
+                                <button class="dl-btn dl-btn-plus" onclick="dlAdjust('armados', 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="dl-counter">
+                            <span class="dl-counter-label">Correcciones</span>
+                            <div class="dl-counter-controls">
+                                <button class="dl-btn" onclick="dlAdjust('corrections', -1)">-</button>
+                                <span class="dl-counter-value" id="dl-corrections">0</span>
+                                <button class="dl-btn dl-btn-plus" onclick="dlAdjust('corrections', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dl-notes-row">
+                        <textarea id="dl-notes" class="dl-notes" placeholder="Notas del dia (opcional)..." rows="2"></textarea>
+                    </div>
+                    <button class="btn btn-primary dl-save-btn" id="dl-save-btn" onclick="dlSave()">Guardar Registro</button>
+                    <span class="dl-saved-msg hidden" id="dl-saved-msg">Guardado</span>
+                </div>
+
                 <!-- Designer Tracking -->
                 <div class="manager-only" id="dt-section">
                     <header class="view-header">

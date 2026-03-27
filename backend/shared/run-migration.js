@@ -62,6 +62,13 @@ async function runAllMigrations() {
       console.error('❌ Design Image URL migration failed:', e.message);
     }
 
+    try {
+      const { addDesignerDailyLogs } = await import('../migrations/add-designer-daily-logs.js');
+      await addDesignerDailyLogs();
+    } catch (e) {
+      console.error('❌ Designer Daily Logs migration failed:', e.message);
+    }
+
     console.log('\n✨ All migrations completed successfully!');
 
   } catch (error) {

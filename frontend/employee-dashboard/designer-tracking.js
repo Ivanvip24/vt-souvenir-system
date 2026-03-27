@@ -17,6 +17,15 @@ const dtState = {
   formTaskType: 'armado'
 };
 
+// ── Daily Log State ───────────────────────────────
+const dlState = {
+  designerId: null,
+  designs: 0,
+  armados: 0,
+  corrections: 0,
+  loaded: false
+};
+
 // ── Init / Load ────────────────────────────────────
 
 async function loadDesignerTracking() {
@@ -507,6 +516,105 @@ function getDesignerColor(name) {
   return colors[Math.abs(hash) % colors.length];
 }
 
+// ── Daily Activity Log ────────────────────────────
+
+async function initDailyLog() {
+  if (dlState.loaded) return;
+  dlState.loaded = true;
+
+  // Set today's date
+  const dateEl = document.getElementById('dl-date');
+  if (dateEl) {
+    const today = new Date();
+    dateEl.textContent = today.toLocaleDateString('es-MX', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+  }
+
+  // Find this employee's designer ID by matching name
+  try {
+    const data = await apiGet('/designer-tasks/designers');
+    if (data.success && data.designers.length > 0) {
+      const empName = window.state?.employee?.name?.toLowerCase() || '';
+      const match = data.designers.find(d => empName.includes(d.name.toLowerCase()));
+      if (match) {
+        dlState.designerId = match.id;
+        await dlLoadToday();
+      } else {
+        // Not a designer — hide the log section
+        const section = document.getElementById('daily-log-section');
+        if (section) section.style.display = 'none';
+      }
+    }
+  } catch (err) {
+    console.error('Error initializing daily log:', err);
+  }
+}
+
+async function dlLoadToday() {
+  if (!dlState.designerId) return;
+  try {
+    const data = await apiGet(`/designer-tasks/daily-log/${dlState.designerId}`);
+    if (data.success && data.log) {
+      dlState.designs = data.log.designs_completed || 0;
+      dlState.armados = data.log.armados_completed || 0;
+      dlState.corrections = data.log.corrections_made || 0;
+      document.getElementById('dl-designs').textContent = dlState.designs;
+      document.getElementById('dl-armados').textContent = dlState.armados;
+      document.getElementById('dl-corrections').textContent = dlState.corrections;
+      if (data.log.notes) document.getElementById('dl-notes').value = data.log.notes;
+    }
+  } catch (err) {
+    console.error('Error loading today log:', err);
+  }
+}
+
+function dlAdjust(type, delta) {
+  const map = { designs: 'designs', armados: 'armados', corrections: 'corrections' };
+  const key = map[type];
+  dlState[key] = Math.max(0, dlState[key] + delta);
+  document.getElementById('dl-' + type).textContent = dlState[key];
+}
+
+async function dlSave() {
+  if (!dlState.designerId) {
+    showToast('No se encontr\u00F3 tu perfil de dise\u00F1adora', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('dl-save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try {
+    const data = await apiPost('/designer-tasks/daily-log', {
+      designerId: dlState.designerId,
+      designs_completed: dlState.designs,
+      armados_completed: dlState.armados,
+      corrections_made: dlState.corrections,
+      notes: document.getElementById('dl-notes').value.trim() || null
+    });
+
+    if (data.success) {
+      const msg = document.getElementById('dl-saved-msg');
+      msg.classList.remove('hidden');
+      setTimeout(() => msg.classList.add('hidden'), 2500);
+      showToast('Registro guardado', 'success');
+    } else {
+      showToast(data.error || 'Error al guardar', 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexi\u00F3n', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Guardar Registro';
+  }
+}
+
+// Make daily log functions global
+window.dlAdjust = dlAdjust;
+window.dlSave = dlSave;
+
 // ── Designer Detail Modal ─────────────────────────
 // Note: All data rendered comes from our own backend API (designer names,
 // task metadata, status enums). No user-submitted HTML is rendered.
@@ -689,6 +797,85 @@ async function openDTDesignerModal(designer) {
 
       tasksEl.appendChild(card);
     }
+    // Load daily logs history
+    const historySection = document.createElement('div');
+    historySection.className = 'dl-history-section';
+
+    const histTitle = document.createElement('div');
+    histTitle.className = 'dl-history-title';
+    histTitle.textContent = 'Registro Diario (30 d\u00EDas)';
+    historySection.appendChild(histTitle);
+
+    try {
+      const logsData = await apiGet(`/designer-tasks/daily-logs/${designer.id}?days=30`);
+      if (logsData.success && logsData.logs.length > 0) {
+        // Averages
+        const avg = logsData.averages;
+        const avgRow = document.createElement('div');
+        avgRow.className = 'dl-averages';
+        const avgItems = [
+          { label: 'Dise\u00F1os/d\u00EDa', value: avg.avg_designs || '0' },
+          { label: 'Armados/d\u00EDa', value: avg.avg_armados || '0' },
+          { label: 'Correc./d\u00EDa', value: avg.avg_corrections || '0' },
+          { label: 'D\u00EDas registrados', value: avg.days_logged || '0' }
+        ];
+        for (const a of avgItems) {
+          const pill = document.createElement('span');
+          pill.className = 'dl-avg-pill';
+          const strong = document.createElement('strong');
+          strong.textContent = a.value;
+          pill.appendChild(strong);
+          pill.appendChild(document.createTextNode(' ' + a.label));
+          avgRow.appendChild(pill);
+        }
+        historySection.appendChild(avgRow);
+
+        // Table
+        const table = document.createElement('table');
+        table.className = 'dl-history-table';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        for (const h of ['Fecha', 'Dise\u00F1os', 'Armados', 'Correc.', 'Notas']) {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headerRow.appendChild(th);
+        }
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        for (const log of logsData.logs) {
+          const tr = document.createElement('tr');
+          const dateStr = new Date(log.log_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+          const cells = [
+            dateStr,
+            String(log.designs_completed),
+            String(log.armados_completed),
+            String(log.corrections_made),
+            log.notes || '-'
+          ];
+          cells.forEach((c, i) => {
+            const td = document.createElement('td');
+            td.textContent = c;
+            if (i === 4) td.className = 'dl-notes-cell';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+        historySection.appendChild(table);
+      } else {
+        const empty = document.createElement('div');
+        empty.className = 'dt-modal-empty';
+        empty.textContent = 'Sin registros diarios a\u00FAn';
+        historySection.appendChild(empty);
+      }
+    } catch (logErr) {
+      console.error('Error loading daily logs:', logErr);
+    }
+
+    tasksEl.appendChild(historySection);
+
   } catch (err) {
     tasksEl.textContent = 'Error cargando tareas';
     console.error('Error loading designer tasks for modal:', err);

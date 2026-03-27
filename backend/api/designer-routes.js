@@ -256,4 +256,83 @@ router.post('/follow-up', async (req, res) => {
   }
 });
 
+// ── DAILY LOG ENDPOINTS ──────────────────────────
+
+// GET /api/designer-tasks/daily-log/:designerId?date=YYYY-MM-DD
+router.get('/daily-log/:designerId', async (req, res) => {
+  try {
+    const { designerId } = req.params;
+    const date = req.query.date || new Date().toISOString().split('T')[0];
+    const result = await query(
+      'SELECT * FROM designer_daily_logs WHERE designer_id = $1 AND log_date = $2',
+      [designerId, date]
+    );
+    res.json({ success: true, log: result.rows[0] || null });
+  } catch (err) {
+    console.error('Error fetching daily log:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/designer-tasks/daily-log - Upsert today's log
+router.post('/daily-log', async (req, res) => {
+  try {
+    const { designerId, designs_completed, armados_completed, corrections_made, notes } = req.body;
+    if (!designerId) return res.status(400).json({ success: false, error: 'designerId required' });
+
+    const today = new Date().toISOString().split('T')[0];
+    const result = await query(`
+      INSERT INTO designer_daily_logs (designer_id, log_date, designs_completed, armados_completed, corrections_made, notes)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (designer_id, log_date)
+      DO UPDATE SET
+        designs_completed = $3,
+        armados_completed = $4,
+        corrections_made = $5,
+        notes = $6,
+        updated_at = NOW()
+      RETURNING *
+    `, [designerId, today, designs_completed || 0, armados_completed || 0, corrections_made || 0, notes || null]);
+
+    res.json({ success: true, log: result.rows[0] });
+  } catch (err) {
+    console.error('Error saving daily log:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/designer-tasks/daily-logs/:designerId?days=30 - History for manager
+router.get('/daily-logs/:designerId', async (req, res) => {
+  try {
+    const { designerId } = req.params;
+    const days = parseInt(req.query.days) || 30;
+
+    const [logs, averages] = await Promise.all([
+      query(`
+        SELECT * FROM designer_daily_logs
+        WHERE designer_id = $1 AND log_date >= CURRENT_DATE - $2::int
+        ORDER BY log_date DESC
+      `, [designerId, days]),
+      query(`
+        SELECT
+          ROUND(AVG(designs_completed)::numeric, 1) AS avg_designs,
+          ROUND(AVG(armados_completed)::numeric, 1) AS avg_armados,
+          ROUND(AVG(corrections_made)::numeric, 1) AS avg_corrections,
+          COUNT(*) AS days_logged
+        FROM designer_daily_logs
+        WHERE designer_id = $1 AND log_date >= CURRENT_DATE - $2::int
+      `, [designerId, days])
+    ]);
+
+    res.json({
+      success: true,
+      logs: logs.rows,
+      averages: averages.rows[0]
+    });
+  } catch (err) {
+    console.error('Error fetching daily logs history:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

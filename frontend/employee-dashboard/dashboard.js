@@ -139,7 +139,7 @@ function switchView(viewName) {
     // Load data for the view
     switch (viewName) {
         case 'my-tasks':
-            loadMyTasks();
+            if (typeof initDailyLog === 'function') initDailyLog();
             if (typeof loadDesignerTracking === 'function') loadDesignerTracking();
             break;
         case 'department-queue':
