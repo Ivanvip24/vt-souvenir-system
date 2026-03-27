@@ -568,6 +568,29 @@
                 </div>
             </div>
 
+            <!-- Designer Detail Modal -->
+            <div id="dt-designer-modal" class="modal-overlay hidden">
+                <div class="dt-designer-modal-content">
+                    <header class="dt-designer-modal-header">
+                        <div class="dt-designer-modal-profile">
+                            <div class="dt-designer-modal-avatar" id="dt-modal-avatar">M</div>
+                            <div>
+                                <h2 id="dt-modal-name">Majo</h2>
+                                <span class="dt-designer-modal-subtitle" id="dt-modal-subtitle">3 tareas activas</span>
+                            </div>
+                        </div>
+                        <button class="btn-close" onclick="closeDTDesignerModal()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </header>
+                    <div class="dt-designer-modal-stats" id="dt-modal-stats"></div>
+                    <div class="dt-designer-modal-tasks" id="dt-modal-tasks"></div>
+                </div>
+            </div>
+
             <!-- Knowledge Base View - AI Chat -->
             <section id="knowledge-view" class="view">
                 <header class="view-header">

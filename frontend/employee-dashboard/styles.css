@@ -2973,3 +2973,205 @@ textarea {
         margin-left: 0;
     }
 }
+
+/* ── Designer Detail Modal ─────────────────────── */
+
+.dt-designer-modal-content {
+    background: #fff;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    animation: dtModalIn .25s ease;
+}
+
+@keyframes dtModalIn {
+    from { opacity: 0; transform: scale(.95) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.dt-designer-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dt-designer-modal-profile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.dt-designer-modal-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.dt-designer-modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.dt-designer-modal-subtitle {
+    color: #888;
+    font-size: 13px;
+}
+
+.dt-designer-modal-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dt-modal-stat {
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: 10px;
+    background: #f8f8f8;
+}
+
+.dt-modal-stat-value {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    color: #222;
+}
+
+.dt-modal-stat-done .dt-modal-stat-value { color: var(--green, #8ab73b); }
+.dt-modal-stat-active .dt-modal-stat-value { color: var(--turquoise, #09adc2); }
+.dt-modal-stat-correction .dt-modal-stat-value { color: var(--orange, #f39223); }
+
+.dt-modal-stat-label {
+    display: block;
+    font-size: 11px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-top: 2px;
+}
+
+.dt-designer-modal-tasks {
+    padding: 16px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dt-modal-task-card {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: box-shadow .15s;
+}
+
+.dt-modal-task-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+.dt-modal-task-done { opacity: .6; }
+.dt-modal-task-correction { border-left: 3px solid var(--orange, #f39223); }
+.dt-modal-task-pending { border-left: 3px solid #ccc; }
+.dt-modal-task-in_progress { border-left: 3px solid var(--turquoise, #09adc2); }
+
+.dt-modal-task-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.dt-modal-task-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.dt-modal-task-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.dt-modal-task-product {
+    font-weight: 600;
+    font-size: 14px;
+    color: #222;
+}
+
+.dt-modal-task-dest {
+    font-size: 12px;
+    color: #888;
+}
+
+.dt-modal-task-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.dt-modal-task-qty {
+    font-size: 12px;
+    color: #666;
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.dt-modal-task-date {
+    font-size: 12px;
+    color: #999;
+    margin-left: auto;
+}
+
+.dt-modal-task-ref {
+    font-size: 11px;
+    color: #aaa;
+    font-family: monospace;
+}
+
+.dt-modal-task-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.dt-modal-task-actions .dt-action-btn {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+}
+
+.dt-modal-loading, .dt-modal-empty {
+    text-align: center;
+    color: #999;
+    padding: 32px 0;
+    font-size: 14px;
+}
+
+@media (max-width: 600px) {
+    .dt-designer-modal-content {
+        width: 95vw;
+        max-height: 90vh;
+    }
+    .dt-designer-modal-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

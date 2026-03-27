@@ -160,6 +160,9 @@ function renderDesignerCards(designers) {
       metrics.appendChild(metric);
     }
 
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => openDTDesignerModal(d));
+
     card.appendChild(header);
     card.appendChild(progressBar);
     card.appendChild(metrics);
@@ -503,6 +506,204 @@ function getDesignerColor(name) {
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
 }
+
+// ── Designer Detail Modal ─────────────────────────
+// Note: All data rendered comes from our own backend API (designer names,
+// task metadata, status enums). No user-submitted HTML is rendered.
+
+async function openDTDesignerModal(designer) {
+  const modal = document.getElementById('dt-designer-modal');
+  const avatar = document.getElementById('dt-modal-avatar');
+  const nameEl = document.getElementById('dt-modal-name');
+  const subtitleEl = document.getElementById('dt-modal-subtitle');
+  const statsEl = document.getElementById('dt-modal-stats');
+  const tasksEl = document.getElementById('dt-modal-tasks');
+
+  const total = parseInt(designer.total_tasks) || 0;
+  const completed = parseInt(designer.completed) || 0;
+  const active = parseInt(designer.active) || 0;
+  const correction = parseInt(designer.in_correction) || 0;
+  const avgH = designer.avg_hours != null ? parseFloat(designer.avg_hours).toFixed(1) + 'h' : '-';
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  const accent = getDesignerColor(designer.name);
+  avatar.textContent = designer.name.charAt(0).toUpperCase();
+  avatar.style.background = accent;
+  nameEl.textContent = designer.name;
+  subtitleEl.textContent = `${active} activa${active !== 1 ? 's' : ''} \u00B7 ${correction} correcci\u00F3n${correction !== 1 ? 'es' : ''}`;
+
+  // Build stat cards via DOM
+  statsEl.textContent = '';
+  const statItems = [
+    { value: completed, label: 'Hechas', cls: 'done' },
+    { value: active, label: 'Activas', cls: 'active' },
+    { value: correction, label: 'Correcciones', cls: 'correction' },
+    { value: total, label: 'Total', cls: 'total' },
+    { value: pct + '%', label: 'Completado', cls: 'pct' },
+    { value: avgH, label: 'Promedio', cls: 'avg' }
+  ];
+  for (const s of statItems) {
+    const div = document.createElement('div');
+    div.className = 'dt-modal-stat dt-modal-stat-' + s.cls;
+    const val = document.createElement('span');
+    val.className = 'dt-modal-stat-value';
+    val.textContent = s.value;
+    const lbl = document.createElement('span');
+    lbl.className = 'dt-modal-stat-label';
+    lbl.textContent = s.label;
+    div.appendChild(val);
+    div.appendChild(lbl);
+    statsEl.appendChild(div);
+  }
+
+  // Show modal with loading state
+  tasksEl.textContent = 'Cargando tareas...';
+  modal.classList.remove('hidden');
+
+  try {
+    const data = await apiGet(`/designer-tasks/all?designer_id=${designer.id}&limit=50`);
+    tasksEl.textContent = '';
+
+    if (!data.success || !data.tasks.length) {
+      tasksEl.textContent = 'Sin tareas asignadas';
+      return;
+    }
+
+    const statusLabels = {
+      pending: 'Pendiente', in_progress: 'En Progreso',
+      done: 'Completado', correction: 'Correcci\u00F3n'
+    };
+    const statusIcons = {
+      pending: '\u23F3', in_progress: '\uD83D\uDD04', done: '\u2705', correction: '\uD83D\uDD01'
+    };
+
+    for (const t of data.tasks) {
+      const card = document.createElement('div');
+      card.className = 'dt-modal-task-card dt-modal-task-' + t.status;
+
+      const assignedDate = new Date(t.assigned_at);
+      const isOverdue = ['pending', 'in_progress'].includes(t.status) &&
+        (Date.now() - assignedDate.getTime()) > 2 * 24 * 60 * 60 * 1000;
+
+      const pieceCount = parseInt(t.piece_count) || 0;
+      const piecesDone = parseInt(t.pieces_done) || 0;
+      const corrections = parseInt(t.total_corrections) || 0;
+
+      // Top row: icon + product info + type badge
+      const topRow = document.createElement('div');
+      topRow.className = 'dt-modal-task-top';
+
+      const icon = document.createElement('span');
+      icon.className = 'dt-modal-task-icon';
+      icon.textContent = statusIcons[t.status] || '';
+
+      const info = document.createElement('div');
+      info.className = 'dt-modal-task-info';
+      const product = document.createElement('span');
+      product.className = 'dt-modal-task-product';
+      product.textContent = t.product_type || '-';
+      const dest = document.createElement('span');
+      dest.className = 'dt-modal-task-dest';
+      dest.textContent = t.destination || '';
+      info.appendChild(product);
+      info.appendChild(dest);
+
+      const typeBadge = document.createElement('span');
+      typeBadge.className = 'dt-type-badge ' + (t.task_type === 'armado' ? 'dt-type-armado' : 'dt-type-diseno');
+      typeBadge.textContent = t.task_type === 'armado' ? 'Armado' : 'Dise\u00F1o';
+
+      topRow.appendChild(icon);
+      topRow.appendChild(info);
+      topRow.appendChild(typeBadge);
+
+      // Bottom row: status + qty + corrections + date + ref
+      const bottomRow = document.createElement('div');
+      bottomRow.className = 'dt-modal-task-bottom';
+
+      const statusBadge = document.createElement('span');
+      statusBadge.className = 'dt-status-badge dt-status-' + t.status;
+      statusBadge.textContent = statusLabels[t.status] || t.status;
+      bottomRow.appendChild(statusBadge);
+
+      if (t.quantity) {
+        const qty = document.createElement('span');
+        qty.className = 'dt-modal-task-qty';
+        qty.textContent = t.quantity + ' pzas';
+        bottomRow.appendChild(qty);
+      } else if (pieceCount > 0) {
+        const qty = document.createElement('span');
+        qty.className = 'dt-modal-task-qty';
+        qty.textContent = piecesDone + '/' + pieceCount + ' piezas';
+        bottomRow.appendChild(qty);
+      }
+
+      if (corrections > 0) {
+        const corrSpan = document.createElement('span');
+        corrSpan.className = 'dt-correction-count';
+        corrSpan.textContent = corrections + ' correcci\u00F3n' + (corrections > 1 ? 'es' : '');
+        bottomRow.appendChild(corrSpan);
+      }
+
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'dt-modal-task-date';
+      dateSpan.textContent = formatTimeAgo(assignedDate) + (isOverdue ? ' \u26A0\uFE0F' : '');
+      bottomRow.appendChild(dateSpan);
+
+      if (t.order_reference) {
+        const ref = document.createElement('span');
+        ref.className = 'dt-modal-task-ref';
+        ref.textContent = t.order_reference;
+        bottomRow.appendChild(ref);
+      }
+
+      card.appendChild(topRow);
+      card.appendChild(bottomRow);
+
+      // Action buttons for non-completed tasks
+      if (t.status !== 'done') {
+        const actions = document.createElement('div');
+        actions.className = 'dt-modal-task-actions';
+
+        const completeBtn = document.createElement('button');
+        completeBtn.className = 'dt-action-btn dt-action-complete';
+        completeBtn.textContent = '\u2713 Completar';
+        completeBtn.addEventListener('click', async () => {
+          await dtCompleteTask(t.id);
+          openDTDesignerModal(designer);
+        });
+        actions.appendChild(completeBtn);
+
+        if (t.task_type === 'dise\u00F1o') {
+          const corrBtn = document.createElement('button');
+          corrBtn.className = 'dt-action-btn dt-action-correction';
+          corrBtn.textContent = '\u21BB Correcci\u00F3n';
+          corrBtn.addEventListener('click', async () => {
+            await dtMarkCorrection(t.id);
+            openDTDesignerModal(designer);
+          });
+          actions.appendChild(corrBtn);
+        }
+
+        card.appendChild(actions);
+      }
+
+      tasksEl.appendChild(card);
+    }
+  } catch (err) {
+    tasksEl.textContent = 'Error cargando tareas';
+    console.error('Error loading designer tasks for modal:', err);
+  }
+}
+
+function closeDTDesignerModal() {
+  document.getElementById('dt-designer-modal').classList.add('hidden');
+}
+
+// Close modal on backdrop click
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('dt-designer-modal');
+  if (e.target === modal) closeDTDesignerModal();
+});
 
 function showToast(message, type) {
   const container = document.getElementById('toast-container');
