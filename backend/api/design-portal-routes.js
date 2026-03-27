@@ -619,7 +619,10 @@ router.post('/generate-order', employeeAuth, async (req, res) => {
     }
 
     const orderResult = await query(
-      `SELECT id, order_number, client_name FROM orders WHERE id = $1`,
+      `SELECT o.id, o.order_number, c.name as client_name
+       FROM orders o
+       LEFT JOIN clients c ON o.client_id = c.id
+       WHERE o.id = $1`,
       [orderId]
     );
 
