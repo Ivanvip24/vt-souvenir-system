@@ -807,6 +807,23 @@ function updatePrintToolbar() {
   }
 }
 
+var PRINT_PROXY_URL = 'http://localhost:3001';
+var printProxyAvailable = null; // null = unknown, true/false after check
+
+async function checkPrintProxy() {
+  try {
+    var response = await fetch(PRINT_PROXY_URL + '/health', { signal: AbortSignal.timeout(2000) });
+    var data = await response.json();
+    printProxyAvailable = data.success === true;
+  } catch (_) {
+    printProxyAvailable = false;
+  }
+  return printProxyAvailable;
+}
+
+// Check on load
+checkPrintProxy();
+
 async function printSelectedGuias() {
   var ids = Array.from(guiasSelectedForPrint);
   if (ids.length === 0) return;
@@ -815,16 +832,37 @@ async function printSelectedGuias() {
   if (btn) { btn.disabled = true; btn.textContent = 'Imprimiendo...'; }
 
   try {
-    var response = await guiasFetch(GUIAS_API_URL + '/labels/print', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ labelIds: ids })
-    });
-    var result = await response.json();
+    // Check if local print proxy is running
+    if (printProxyAvailable === null) await checkPrintProxy();
+
+    if (printProxyAvailable) {
+      // Collect label URLs from selected labels
+      var urls = [];
+      guiasData.forEach(function(g) {
+        if (guiasSelectedForPrint.has(g.id) && g.label_url) urls.push(g.label_url);
+      });
+
+      if (urls.length === 0) throw new Error('No hay PDFs para imprimir');
+
+      var response = await fetch(PRINT_PROXY_URL + '/print', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls: urls })
+      });
+      var result = await response.json();
+    } else {
+      // Fallback: try backend endpoint
+      var response = await guiasFetch(GUIAS_API_URL + '/labels/print', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ labelIds: ids })
+      });
+      var result = await response.json();
+    }
 
     if (!result.success) throw new Error(result.error || 'Error');
 
-    var msg = result.printed + ' guia' + (result.printed > 1 ? 's' : '') + ' enviada' + (result.printed > 1 ? 's' : '') + ' a imprimir';
+    var msg = result.printed + ' guía' + (result.printed > 1 ? 's' : '') + ' enviada' + (result.printed > 1 ? 's' : '') + ' a imprimir';
     if (result.failed > 0) msg += ' (' + result.failed + ' fallida' + (result.failed > 1 ? 's' : '') + ')';
     guiasToast(msg, result.failed > 0 ? 'error' : 'success');
 
@@ -832,7 +870,11 @@ async function printSelectedGuias() {
     renderGuiasList();
     updatePrintToolbar();
   } catch (error) {
-    guiasToast('Error al imprimir: ' + error.message, 'error');
+    if (!printProxyAvailable) {
+      guiasToast('Inicia el print proxy: node print-proxy.js', 'error');
+    } else {
+      guiasToast('Error al imprimir: ' + error.message, 'error');
+    }
   } finally {
     if (btn) {
       btn.disabled = false;
