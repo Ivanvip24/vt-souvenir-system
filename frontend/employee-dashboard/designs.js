@@ -1338,7 +1338,7 @@ function updateGenerateButton(order) {
     }
 }
 
-var ORDER_PROXY_URL = 'http://localhost:3001';
+var ORDER_PROXY_URL = 'http://localhost:3002';
 
 async function generateOrder(orderId) {
     var btn = document.getElementById('btn-generate-order');
@@ -1367,17 +1367,19 @@ async function generateOrder(orderId) {
         var data = await response.json();
         var payload = data.payload;
 
-        // Try local proxy first (generates PDF via Python script)
+        // Try local order proxy first (generates PDF via Python script)
         var proxyAvailable = false;
         try {
             var healthCheck = await fetch(ORDER_PROXY_URL + '/health', { signal: AbortSignal.timeout(2000) });
-            var healthData = await healthCheck.json();
-            proxyAvailable = healthData.success === true;
+            if (healthCheck.ok) {
+                var healthData = await healthCheck.json();
+                proxyAvailable = healthData.status === 'ok';
+            }
         } catch (_) {}
 
         if (proxyAvailable) {
             label.textContent = 'Generando PDF...';
-            var pdfResponse = await fetch(ORDER_PROXY_URL + '/generate-pdf', {
+            var pdfResponse = await fetch(ORDER_PROXY_URL + '/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1391,7 +1393,7 @@ async function generateOrder(orderId) {
                 throw new Error(pdfResult.error || 'PDF generation failed');
             }
         } else {
-            // Fallback: download JSON for manual Python script
+            // Fallback: download JSON
             var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
             var url = URL.createObjectURL(blob);
             var a = document.createElement('a');
@@ -1402,7 +1404,7 @@ async function generateOrder(orderId) {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            alert('Print proxy no detectado. JSON descargado.\nEjecuta: node print-proxy.js');
+            alert('Order proxy no detectado. JSON descargado.\nEjecuta: node order-proxy.js');
         }
 
     } catch (error) {
