@@ -2654,9 +2654,12 @@ function startWhatsAppPolling() {
         updateWaUnreadBadge();
 
         // If a conversation is open, refresh its messages too
+        // BUT skip re-render if audio is playing (prevents audio reset mid-playback)
         if (waState.selectedConversationId) {
           const ok = await fetchConversationMessages(waState.selectedConversationId);
-          if (ok) renderChatMessages();
+          var audioPlaying = document.querySelector('.wa-msg-audio');
+          var isPlaying = audioPlaying && !audioPlaying.paused;
+          if (ok && !isPlaying) renderChatMessages();
           // Refresh coaching pills too
           if (typeof loadCoachingPills === 'function') loadCoachingPills(waState.selectedConversationId);
         }
