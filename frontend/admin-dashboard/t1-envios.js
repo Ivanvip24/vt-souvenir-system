@@ -560,7 +560,7 @@ function t1BuildSyncScript() {
     'try{' +
     'const r=await fetch("/shippings/my-shippings/"+s[i].tracking);' +
     'const html=await r.text();' +
-    'const m=html.match(/shipping\\.cdn\\.t1\\.com\\/labels\\/[^"\\s]+\\.pdf/);' +
+    'const m=html.match(/cdn\\.t1\\.com\\/labels\\/[^"\\x27\\s\\\\]+\\.pdf/);' +
     'if(m)s[i].labelUrl="https://"+m[0];' +
     '}catch(e){console.log("Skip label URL for "+s[i].tracking)}' +
     'if(i%5===0)console.log("Progress: "+(i+1)+"/"+s.length)}' +

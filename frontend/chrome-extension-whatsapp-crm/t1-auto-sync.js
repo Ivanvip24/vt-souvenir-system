@@ -69,7 +69,7 @@
         try {
           const r = await fetch('/shippings/my-shippings/' + shipments[i].tracking);
           const html = await r.text();
-          const m = html.match(/shipping\.cdn\.t1\.com\/labels\/[^"\s]+\.pdf/);
+          const m = html.match(/cdn\.t1\.com\/labels\/[^"'\s\\]+\.pdf/);
           if (m) {
             shipments[i].labelUrl = 'https://' + m[0];
             pdfCount++;
