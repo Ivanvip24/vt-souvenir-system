@@ -6,11 +6,16 @@
   "permissions": ["storage"],
   "host_permissions": [
     "https://web.whatsapp.com/*",
-    "https://vt-souvenir-backend.onrender.com/*"
+    "https://vt-souvenir-backend.onrender.com/*",
+    "https://shipping.t1.com/*"
   ],
   "content_scripts": [{
     "matches": ["https://web.whatsapp.com/*"],
     "js": ["sidebar.js", "content.js"],
+    "run_at": "document_idle"
+  }, {
+    "matches": ["https://shipping.t1.com/shippings/*"],
+    "js": ["t1-auto-sync.js"],
     "run_at": "document_idle"
   }],
   "background": {
