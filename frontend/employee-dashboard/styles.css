@@ -3100,6 +3100,113 @@ textarea {
 
 .dl-saved-msg.hidden { display: none; }
 
+/* Source prompt modal */
+.dl-source-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dl-source-overlay.hidden { display: none; }
+
+.dl-source-backdrop {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+}
+
+.dl-source-box {
+    position: relative;
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 340px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.dl-source-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary, #e72a88);
+    margin-bottom: 4px;
+}
+
+.dl-source-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 16px;
+}
+
+.dl-source-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.dl-source-input:focus {
+    outline: none;
+    border-color: var(--primary, #e72a88);
+}
+
+.dl-source-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: flex-end;
+}
+
+/* Detail items list */
+.dl-details-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dl-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.dl-detail-source {
+    flex: 1;
+    color: #374151;
+    font-weight: 500;
+}
+
+.dl-detail-time {
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+.dl-detail-remove {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.dl-detail-remove:hover {
+    color: #ef4444;
+}
+
 /* History table in modal */
 .dl-history-section {
     margin-top: 20px;

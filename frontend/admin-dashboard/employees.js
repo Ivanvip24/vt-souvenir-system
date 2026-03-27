@@ -79,7 +79,7 @@ function renderEmployeesTable() {
   }
 
   tbody.innerHTML = filteredEmployees.map(emp => `
-    <tr style="border-bottom: 1px solid #e5e7eb;">
+    <tr style="border-bottom: 1px solid #e5e7eb; cursor: pointer;" onclick="openEmployeeDetailModal(${emp.id})" class="employee-row-hover">
       <td style="padding: 16px;">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="width: 40px; height: 40px; border-radius: 50%; background: ${getAvatarColor(emp.role)}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
@@ -103,7 +103,7 @@ function renderEmployeesTable() {
       <td style="padding: 16px; color: #6b7280; font-size: 13px;">
         ${emp.last_login ? formatDateRelative(emp.last_login) : 'Nunca'}
       </td>
-      <td style="padding: 16px; text-align: center;">
+      <td style="padding: 16px; text-align: center;" onclick="event.stopPropagation()">
         <div style="display: flex; gap: 8px; justify-content: center;">
           <button onclick="openEditEmployeeModal(${emp.id})" class="btn-icon" title="Editar">
             ✏️
@@ -115,6 +115,9 @@ function renderEmployeesTable() {
             ? `<button onclick="toggleEmployeeStatus(${emp.id}, false)" class="btn-icon" title="Desactivar">⏸️</button>`
             : `<button onclick="toggleEmployeeStatus(${emp.id}, true)" class="btn-icon" title="Activar">▶️</button>`
           }
+          <button onclick="deleteEmployee(${emp.id}, '${escapeHtml(emp.name)}')" class="btn-icon btn-icon-danger" title="Eliminar">
+            🗑️
+          </button>
         </div>
       </td>
     </tr>
@@ -267,8 +270,12 @@ async function saveEmployee(event) {
   // Add password only if provided
   const password = document.getElementById('employee-password').value;
   if (password) {
-    if (password.length < 6) {
-      showToast('La contraseña debe tener al menos 6 caracteres', 'error');
+    if (password.length < 8) {
+      showToast('La contraseña debe tener al menos 8 caracteres', 'error');
+      return;
+    }
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      showToast('La contraseña debe incluir mayúsculas, minúsculas y números', 'error');
       return;
     }
     employeeData.password = password;
@@ -379,8 +386,13 @@ async function resetEmployeePassword(event) {
     return;
   }
 
-  if (newPassword.length < 6) {
-    showToast('La contraseña debe tener al menos 6 caracteres', 'error');
+  if (newPassword.length < 8) {
+    showToast('La contraseña debe tener al menos 8 caracteres', 'error');
+    return;
+  }
+
+  if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+    showToast('La contraseña debe incluir mayúsculas, minúsculas y números', 'error');
     return;
   }
 
@@ -418,6 +430,128 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+/**
+ * Open employee detail popup (click on row)
+ */
+function openEmployeeDetailModal(employeeId) {
+  const emp = allEmployees.find(e => e.id === employeeId);
+  if (!emp) return;
+
+  const createdDate = emp.created_at
+    ? new Date(emp.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+    : 'N/A';
+  const lastLogin = emp.last_login
+    ? new Date(emp.last_login).toLocaleString('es-MX', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : 'Nunca';
+
+  let modal = document.getElementById('employee-detail-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'employee-detail-modal';
+    modal.className = 'modal';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="modal-backdrop" onclick="closeEmployeeDetailModal()"></div>
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 style="margin: 0;">Detalle del Empleado</h3>
+        <button class="btn-close" onclick="closeEmployeeDetailModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+          <div style="width: 64px; height: 64px; border-radius: 50%; background: ${getAvatarColor(emp.role)}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 22px;">
+            ${getInitials(emp.name)}
+          </div>
+          <div>
+            <div style="font-size: 20px; font-weight: 700; color: #1f2937;">${escapeHtml(emp.name)}</div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+              <span class="role-badge role-${emp.role}">${ROLE_LABELS[emp.role] || emp.role}</span>
+              <span class="status-badge ${emp.is_active ? 'status-active' : 'status-inactive'}">${emp.is_active ? 'Activo' : 'Inactivo'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 600; margin-bottom: 4px;">Email</div>
+            <div style="color: #374151; font-size: 14px; word-break: break-all;">${escapeHtml(emp.email)}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 600; margin-bottom: 4px;">Teléfono</div>
+            <div style="color: #374151; font-size: 14px;">${emp.phone ? escapeHtml(emp.phone) : '—'}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 600; margin-bottom: 4px;">Último acceso</div>
+            <div style="color: #374151; font-size: 14px;">${lastLogin}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 600; margin-bottom: 4px;">Fecha de registro</div>
+            <div style="color: #374151; font-size: 14px;">${createdDate}</div>
+          </div>
+          ${emp.department ? `
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 600; margin-bottom: 4px;">Departamento</div>
+            <div style="color: #374151; font-size: 14px;">${DEPT_LABELS[emp.department] || emp.department}</div>
+          </div>` : ''}
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 600; margin-bottom: 4px;">ID</div>
+            <div style="color: #374151; font-size: 14px;">${emp.id}</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
+        <button class="btn btn-secondary" onclick="closeEmployeeDetailModal(); openEditEmployeeModal(${emp.id});">✏️ Editar</button>
+        <button class="btn btn-secondary" onclick="closeEmployeeDetailModal(); openResetPasswordModal(${emp.id}, '${escapeHtml(emp.name)}');">🔑 Contraseña</button>
+        ${emp.is_active
+          ? `<button class="btn btn-secondary" onclick="closeEmployeeDetailModal(); toggleEmployeeStatus(${emp.id}, false);">⏸️ Desactivar</button>`
+          : `<button class="btn btn-secondary" onclick="closeEmployeeDetailModal(); toggleEmployeeStatus(${emp.id}, true);">▶️ Activar</button>`
+        }
+        <button class="btn btn-danger" onclick="closeEmployeeDetailModal(); deleteEmployee(${emp.id}, '${escapeHtml(emp.name)}');">🗑️ Eliminar</button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+}
+
+/**
+ * Close employee detail modal
+ */
+function closeEmployeeDetailModal() {
+  const modal = document.getElementById('employee-detail-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+/**
+ * Delete (soft-delete) an employee
+ */
+async function deleteEmployee(employeeId, employeeName) {
+  if (!confirm(`¿Estás seguro de ELIMINAR a ${employeeName}? Esta acción desactivará su cuenta permanentemente.`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/admin/employees/${employeeId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showToast(`${employeeName} eliminado correctamente`, 'success');
+      loadEmployees();
+    } else {
+      showToast(data.error || 'Error al eliminar empleado', 'error');
+    }
+  } catch (error) {
+    console.error('Delete employee error:', error);
+    showToast('Error de conexión', 'error');
+  }
+}
+
 // Export functions globally
 window.loadEmployees = loadEmployees;
 window.filterEmployees = filterEmployees;
@@ -430,3 +564,6 @@ window.toggleEmployeeStatus = toggleEmployeeStatus;
 window.openResetPasswordModal = openResetPasswordModal;
 window.closeResetPasswordModal = closeResetPasswordModal;
 window.resetEmployeePassword = resetEmployeePassword;
+window.openEmployeeDetailModal = openEmployeeDetailModal;
+window.closeEmployeeDetailModal = closeEmployeeDetailModal;
+window.deleteEmployee = deleteEmployee;

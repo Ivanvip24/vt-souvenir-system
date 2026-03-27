@@ -23,6 +23,7 @@ const dlState = {
   designs: 0,
   armados: 0,
   corrections: 0,
+  details: [],   // [{type: 'designs'|'armados'|'corrections', source: 'Pedido #123'}]
   loaded: false
 };
 
@@ -559,10 +560,12 @@ async function dlLoadToday() {
       dlState.designs = data.log.designs_completed || 0;
       dlState.armados = data.log.armados_completed || 0;
       dlState.corrections = data.log.corrections_made || 0;
+      dlState.details = data.log.details || [];
       document.getElementById('dl-designs').textContent = dlState.designs;
       document.getElementById('dl-armados').textContent = dlState.armados;
       document.getElementById('dl-corrections').textContent = dlState.corrections;
       if (data.log.notes) document.getElementById('dl-notes').value = data.log.notes;
+      dlRenderDetails();
     }
   } catch (err) {
     console.error('Error loading today log:', err);
@@ -570,10 +573,138 @@ async function dlLoadToday() {
 }
 
 function dlAdjust(type, delta) {
-  const map = { designs: 'designs', armados: 'armados', corrections: 'corrections' };
-  const key = map[type];
-  dlState[key] = Math.max(0, dlState[key] + delta);
-  document.getElementById('dl-' + type).textContent = dlState[key];
+  const key = type; // designs, armados, corrections
+  if (delta > 0) {
+    // Show source prompt on increment
+    dlShowSourcePrompt(type);
+  } else {
+    // On decrement, remove last item of this type and decrease counter
+    if (dlState[key] <= 0) return;
+    dlState[key] = Math.max(0, dlState[key] + delta);
+    // Remove last detail of this type
+    const idx = dlState.details.map(d => d.type).lastIndexOf(type);
+    if (idx !== -1) dlState.details.splice(idx, 1);
+    document.getElementById('dl-' + type).textContent = dlState[key];
+    dlRenderDetails();
+  }
+}
+
+const DL_TYPE_LABELS = { designs: 'Diseño', armados: 'Armado', corrections: 'Corrección' };
+
+function dlShowSourcePrompt(type) {
+  // Create or reuse the source prompt modal
+  let modal = document.getElementById('dl-source-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'dl-source-modal';
+    modal.className = 'dl-source-overlay';
+    document.body.appendChild(modal);
+  }
+
+  const label = DL_TYPE_LABELS[type] || type;
+
+  modal.innerHTML = `
+    <div class="dl-source-backdrop" onclick="dlCloseSourcePrompt()"></div>
+    <div class="dl-source-box">
+      <div class="dl-source-title">+ 1 ${label}</div>
+      <div class="dl-source-subtitle">¿De dónde es?</div>
+      <input type="text" id="dl-source-input" class="dl-source-input" placeholder="Ej: Pedido #142, Cliente Ana, Inventario..." autofocus>
+      <div class="dl-source-actions">
+        <button class="btn btn-secondary btn-sm" onclick="dlCloseSourcePrompt()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="dlConfirmSource('${type}')">Agregar</button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    const input = document.getElementById('dl-source-input');
+    if (input) {
+      input.focus();
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') dlConfirmSource(type);
+        if (e.key === 'Escape') dlCloseSourcePrompt();
+      });
+    }
+  }, 50);
+}
+
+function dlConfirmSource(type) {
+  const input = document.getElementById('dl-source-input');
+  const source = input ? input.value.trim() : '';
+
+  if (!source) {
+    input.style.border = '2px solid #e72a88';
+    input.placeholder = 'Escribe de dónde es...';
+    input.focus();
+    return;
+  }
+
+  dlState[type] = (dlState[type] || 0) + 1;
+  dlState.details.push({ type, source, time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) });
+  document.getElementById('dl-' + type).textContent = dlState[type];
+  dlRenderDetails();
+  dlCloseSourcePrompt();
+}
+
+function dlCloseSourcePrompt() {
+  const modal = document.getElementById('dl-source-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function dlRenderDetails() {
+  const types = ['designs', 'armados', 'corrections'];
+  for (const type of types) {
+    let list = document.getElementById('dl-details-' + type);
+    if (!list) {
+      // Create the details list container after the counter
+      const counter = document.getElementById('dl-' + type);
+      if (!counter) continue;
+      const counterDiv = counter.closest('.dl-counter');
+      if (!counterDiv) continue;
+      list = document.createElement('div');
+      list.id = 'dl-details-' + type;
+      list.className = 'dl-details-list';
+      counterDiv.appendChild(list);
+    }
+
+    const items = dlState.details.filter(d => d.type === type);
+    if (items.length === 0) {
+      list.innerHTML = '';
+      continue;
+    }
+
+    list.innerHTML = items.map((item, i) => `
+      <div class="dl-detail-item">
+        <span class="dl-detail-source">${escapeHtmlDL(item.source)}</span>
+        <span class="dl-detail-time">${item.time || ''}</span>
+        <button class="dl-detail-remove" onclick="dlRemoveDetail('${type}', ${i})" title="Quitar">&times;</button>
+      </div>
+    `).join('');
+  }
+}
+
+function dlRemoveDetail(type, index) {
+  // Find the nth item of this type in details array
+  let count = 0;
+  for (let i = 0; i < dlState.details.length; i++) {
+    if (dlState.details[i].type === type) {
+      if (count === index) {
+        dlState.details.splice(i, 1);
+        break;
+      }
+      count++;
+    }
+  }
+  dlState[type] = Math.max(0, dlState[type] - 1);
+  document.getElementById('dl-' + type).textContent = dlState[type];
+  dlRenderDetails();
+}
+
+function escapeHtmlDL(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 async function dlSave() {
@@ -592,7 +723,8 @@ async function dlSave() {
       designs_completed: dlState.designs,
       armados_completed: dlState.armados,
       corrections_made: dlState.corrections,
-      notes: document.getElementById('dl-notes').value.trim() || null
+      notes: document.getElementById('dl-notes').value.trim() || null,
+      details: dlState.details
     });
 
     if (data.success) {
@@ -614,6 +746,10 @@ async function dlSave() {
 // Make daily log functions global
 window.dlAdjust = dlAdjust;
 window.dlSave = dlSave;
+window.dlShowSourcePrompt = dlShowSourcePrompt;
+window.dlConfirmSource = dlConfirmSource;
+window.dlCloseSourcePrompt = dlCloseSourcePrompt;
+window.dlRemoveDetail = dlRemoveDetail;
 
 // ── Designer Detail Modal ─────────────────────────
 // Note: All data rendered comes from our own backend API (designer names,

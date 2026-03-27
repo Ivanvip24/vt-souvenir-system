@@ -69,6 +69,13 @@ async function runAllMigrations() {
       console.error('❌ Designer Daily Logs migration failed:', e.message);
     }
 
+    try {
+      const { addDailyLogDetails } = await import('../migrations/add-daily-log-details.js');
+      await addDailyLogDetails();
+    } catch (e) {
+      console.error('❌ Daily Log Details migration failed:', e.message);
+    }
+
     console.log('\n✨ All migrations completed successfully!');
 
   } catch (error) {

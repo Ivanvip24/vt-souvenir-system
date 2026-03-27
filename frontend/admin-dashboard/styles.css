@@ -5415,6 +5415,15 @@ textarea:disabled {
   transform: scale(1.1);
 }
 
+#employees-table-body .btn-icon-danger:hover {
+  background: #fee2e2;
+}
+
+.employee-row-hover:hover {
+  background: #f9fafb;
+  transition: background 0.15s;
+}
+
 /* Filter select styling */
 .filter-select {
   padding: 8px 12px;

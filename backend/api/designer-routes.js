@@ -31,12 +31,24 @@ async function flexAuth(req, res, next) {
   }
 }
 
-router.use(flexAuth);
+// Auth that allows ANY authenticated employee (not just managers)
+async function anyEmployeeAuth(req, res, next) {
+  try {
+    const { employeeAuth } = await import('./middleware/employee-auth.js');
+    employeeAuth(req, res, (err) => {
+      if (!err && req.employee) {
+        return next();
+      }
+      // Fall back to admin auth
+      authMiddleware(req, res, next);
+    });
+  } catch {
+    authMiddleware(req, res, next);
+  }
+}
 
-// ── READ ENDPOINTS ─────────────────────────────────
-
-// GET /api/designer-tasks/designers - List all designers
-router.get('/designers', async (req, res) => {
+// Daily log & designers list — accessible to ALL authenticated employees
+router.get('/designers', anyEmployeeAuth, async (req, res) => {
   try {
     const result = await query('SELECT * FROM designers WHERE is_active = true ORDER BY name');
     res.json({ success: true, designers: result.rows });
@@ -45,6 +57,54 @@ router.get('/designers', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+router.get('/daily-log/:designerId', anyEmployeeAuth, async (req, res) => {
+  try {
+    const { designerId } = req.params;
+    const date = req.query.date || new Date().toISOString().split('T')[0];
+    const result = await query(
+      'SELECT * FROM designer_daily_logs WHERE designer_id = $1 AND log_date = $2',
+      [designerId, date]
+    );
+    res.json({ success: true, log: result.rows[0] || null });
+  } catch (err) {
+    console.error('Error fetching daily log:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/daily-log', anyEmployeeAuth, async (req, res) => {
+  try {
+    const { designerId, designs_completed, armados_completed, corrections_made, notes, details } = req.body;
+    if (!designerId) return res.status(400).json({ success: false, error: 'designerId required' });
+
+    const today = new Date().toISOString().split('T')[0];
+    const detailsJson = JSON.stringify(details || []);
+    const result = await query(`
+      INSERT INTO designer_daily_logs (designer_id, log_date, designs_completed, armados_completed, corrections_made, notes, details)
+      VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
+      ON CONFLICT (designer_id, log_date)
+      DO UPDATE SET
+        designs_completed = $3,
+        armados_completed = $4,
+        corrections_made = $5,
+        notes = $6,
+        details = $7::jsonb,
+        updated_at = NOW()
+      RETURNING *
+    `, [designerId, today, designs_completed || 0, armados_completed || 0, corrections_made || 0, notes || null, detailsJson]);
+
+    res.json({ success: true, log: result.rows[0] });
+  } catch (err) {
+    console.error('Error saving daily log:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// All other routes require manager auth
+router.use(flexAuth);
+
+// ── READ ENDPOINTS (manager-only) ─────────────────
 
 // GET /api/designer-tasks/pending - List pending tasks
 router.get('/pending', async (req, res) => {
@@ -256,50 +316,7 @@ router.post('/follow-up', async (req, res) => {
   }
 });
 
-// ── DAILY LOG ENDPOINTS ──────────────────────────
-
-// GET /api/designer-tasks/daily-log/:designerId?date=YYYY-MM-DD
-router.get('/daily-log/:designerId', async (req, res) => {
-  try {
-    const { designerId } = req.params;
-    const date = req.query.date || new Date().toISOString().split('T')[0];
-    const result = await query(
-      'SELECT * FROM designer_daily_logs WHERE designer_id = $1 AND log_date = $2',
-      [designerId, date]
-    );
-    res.json({ success: true, log: result.rows[0] || null });
-  } catch (err) {
-    console.error('Error fetching daily log:', err.message);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// POST /api/designer-tasks/daily-log - Upsert today's log
-router.post('/daily-log', async (req, res) => {
-  try {
-    const { designerId, designs_completed, armados_completed, corrections_made, notes } = req.body;
-    if (!designerId) return res.status(400).json({ success: false, error: 'designerId required' });
-
-    const today = new Date().toISOString().split('T')[0];
-    const result = await query(`
-      INSERT INTO designer_daily_logs (designer_id, log_date, designs_completed, armados_completed, corrections_made, notes)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      ON CONFLICT (designer_id, log_date)
-      DO UPDATE SET
-        designs_completed = $3,
-        armados_completed = $4,
-        corrections_made = $5,
-        notes = $6,
-        updated_at = NOW()
-      RETURNING *
-    `, [designerId, today, designs_completed || 0, armados_completed || 0, corrections_made || 0, notes || null]);
-
-    res.json({ success: true, log: result.rows[0] });
-  } catch (err) {
-    console.error('Error saving daily log:', err.message);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+// ── DAILY LOG HISTORY (manager-only) ─────────────
 
 // GET /api/designer-tasks/daily-logs/:designerId?days=30 - History for manager
 router.get('/daily-logs/:designerId', async (req, res) => {

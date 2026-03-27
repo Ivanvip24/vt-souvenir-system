@@ -231,6 +231,9 @@ async function loadMyTasks() {
     const empty = document.getElementById('my-tasks-empty');
     const list = document.getElementById('my-tasks-list');
 
+    // Guard: these elements may not exist if the view was removed
+    if (!loading || !empty || !list) return;
+
     loading.classList.remove('hidden');
     empty.classList.add('hidden');
     list.innerHTML = '';
