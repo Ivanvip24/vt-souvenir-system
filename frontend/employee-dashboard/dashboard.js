@@ -11,7 +11,7 @@ const API_BASE = window.location.hostname === 'localhost'
 const state = {
     employee: null,
     token: null,
-    currentView: 'my-tasks',
+    currentView: 'my-designs',
     employees: [] // For manager task assignment
 };
 
@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup logout
     document.getElementById('logout-btn').addEventListener('click', logout);
 
-    // Load initial data
-    loadMyTasks();
+    // Load initial view (Mis Diseños)
+    switchView('my-designs');
 
     // Auto-refresh every 30 seconds
     setInterval(() => {
@@ -140,6 +140,7 @@ function switchView(viewName) {
     switch (viewName) {
         case 'my-tasks':
             loadMyTasks();
+            if (typeof loadDesignerTracking === 'function') loadDesignerTracking();
             break;
         case 'department-queue':
             loadDepartmentQueue();
@@ -170,9 +171,6 @@ function switchView(viewName) {
             break;
         case 'all-tasks':
             loadAllTasks();
-            break;
-        case 'designer-tracking':
-            if (typeof loadDesignerTracking === 'function') loadDesignerTracking();
             break;
         case 'profile':
             loadProfile();
