@@ -28,7 +28,8 @@ var state = {
     pendingFile: null,  // { file, dataUrl }
     searchQuery: '',
     windowStatus: {},  // { orderId: { hoursRemaining, urgency, ... } }
-    slotImages: {}     // { designId: imageUrl }
+    slotImages: {},    // { designId: imageUrl }
+    selectedSlotId: null  // currently selected design slot
 };
 
 // ============================================
@@ -159,6 +160,7 @@ function setupUI() {
     });
 
     // Paste image to selected design slot
+    // Paste image to selected design slot
     document.addEventListener('paste', function(e) {
         if (!state.currentOrderId) return;
         var items = e.clipboardData && e.clipboardData.items;
@@ -170,10 +172,13 @@ function setupUI() {
                 var file = items[i].getAsFile();
                 var order = state.orders[state.currentOrderId];
                 if (!order) return;
+
+                // Use selected slot first
                 var targetDesign = null;
-                if (state.currentDesignId) {
-                    targetDesign = order.designs.find(function(d) { return d.id == state.currentDesignId; });
+                if (state.selectedSlotId) {
+                    targetDesign = order.designs.find(function(d) { return d.id == state.selectedSlotId; });
                 }
+                // Fallback to first empty slot
                 if (!targetDesign) {
                     targetDesign = order.designs.find(function(d) {
                         return !d.design_image_url && !state.slotImages[d.id];
@@ -548,16 +553,39 @@ function showChatView(orderId) {
     autoResizeTextarea();
 }
 
+function selectDesignSlot(designId, order) {
+    state.selectedSlotId = designId;
+    renderDesignStrip(order);
+}
+
+function uploadToSelectedSlot(file) {
+    if (!state.selectedSlotId) {
+        alert('Selecciona un slot primero');
+        return;
+    }
+    uploadDesignToSlot(state.selectedSlotId, file);
+}
+
 function renderDesignStrip(order) {
     var container = document.getElementById('chat-design-strip');
     container.textContent = '';
+
+    // Auto-select first empty slot if none selected
+    if (!state.selectedSlotId) {
+        var firstEmpty = order.designs.find(function(d) {
+            return !d.design_image_url && !state.slotImages[d.id];
+        });
+        if (firstEmpty) state.selectedSlotId = firstEmpty.id;
+        else if (order.designs.length > 0) state.selectedSlotId = order.designs[0].id;
+    }
 
     order.designs.forEach(function(d, i) {
         var label = d.label || ('D' + (i + 1));
         var hasImage = !!(d.design_image_url || state.slotImages[d.id]);
         var imgUrl = d.design_image_url || state.slotImages[d.id] || null;
+        var isSelected = state.selectedSlotId == d.id;
 
-        var pill = createEl('span', 'strip-pill drop-zone' + (hasImage ? ' has-image' : ''));
+        var pill = createEl('span', 'strip-pill drop-zone' + (hasImage ? ' has-image' : '') + (isSelected ? ' selected' : ''));
         pill.dataset.designId = d.id;
         pill.dataset.status = d.status;
 
@@ -573,9 +601,16 @@ function renderDesignStrip(order) {
             pill.textContent = label;
         }
 
-        // Click to upload
+        // Click to SELECT this slot (not upload immediately)
         pill.addEventListener('click', function(e) {
             e.stopPropagation();
+            selectDesignSlot(d.id, order);
+        });
+
+        // Double-click to open file picker for this slot
+        pill.addEventListener('dblclick', function(e) {
+            e.stopPropagation();
+            state.selectedSlotId = d.id;
             var input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
@@ -585,7 +620,7 @@ function renderDesignStrip(order) {
             input.click();
         });
 
-        // Drag and drop
+        // Drag and drop onto any slot
         pill.addEventListener('dragover', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -607,17 +642,31 @@ function renderDesignStrip(order) {
         container.appendChild(pill);
     });
 
+    // Upload button — uploads to selected slot
+    var uploadBtn = createEl('button', 'slot-control-btn', '\u2B06');
+    uploadBtn.title = 'Subir imagen al slot seleccionado';
+    uploadBtn.addEventListener('click', function() {
+        if (!state.selectedSlotId) { alert('Selecciona un slot primero'); return; }
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.addEventListener('change', function() {
+            if (input.files[0]) uploadDesignToSlot(state.selectedSlotId, input.files[0]);
+        });
+        input.click();
+    });
+    container.appendChild(uploadBtn);
+
     // + button
     var addBtn = createEl('button', 'slot-control-btn', '+');
     addBtn.title = 'Agregar diseno';
     addBtn.addEventListener('click', function() { addDesignSlot(order.order_id); });
     container.appendChild(addBtn);
 
-    // - button
+    // - button — removes selected slot if empty, or last empty slot
     var removeBtn = createEl('button', 'slot-control-btn', '\u2212');
-    removeBtn.title = 'Quitar ultimo diseno';
-    var lastDesign = order.designs[order.designs.length - 1];
-    if (order.designs.length <= 1 || (lastDesign && (lastDesign.design_image_url || state.slotImages[lastDesign.id]))) {
+    removeBtn.title = 'Quitar slot vacio';
+    if (order.designs.length <= 1) {
         removeBtn.disabled = true;
     }
     removeBtn.addEventListener('click', function() { removeDesignSlot(order.order_id); });
