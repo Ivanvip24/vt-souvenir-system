@@ -1338,6 +1338,8 @@ function updateGenerateButton(order) {
     }
 }
 
+var ORDER_PROXY_URL = 'http://localhost:3001';
+
 async function generateOrder(orderId) {
     var btn = document.getElementById('btn-generate-order');
     var label = document.getElementById('generate-label');
@@ -1350,6 +1352,7 @@ async function generateOrder(orderId) {
     btn.insertBefore(spinner, label);
 
     try {
+        // Get order data from backend
         var response = await fetch(API_BASE + '/design-portal/generate-order', {
             method: 'POST',
             headers: getAuthHeaders(),
@@ -1362,19 +1365,45 @@ async function generateOrder(orderId) {
         }
 
         var data = await response.json();
+        var payload = data.payload;
 
-        // Download JSON for local Python script
-        var blob = new Blob([JSON.stringify(data.payload, null, 2)], { type: 'application/json' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'order-' + (data.payload.order_number || orderId) + '.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Try local proxy first (generates PDF via Python script)
+        var proxyAvailable = false;
+        try {
+            var healthCheck = await fetch(ORDER_PROXY_URL + '/health', { signal: AbortSignal.timeout(2000) });
+            var healthData = await healthCheck.json();
+            proxyAvailable = healthData.success === true;
+        } catch (_) {}
 
-        alert('Pedido descargado! Ejecuta generate_axkan.py con el archivo JSON.');
+        if (proxyAvailable) {
+            label.textContent = 'Generando PDF...';
+            var pdfResponse = await fetch(ORDER_PROXY_URL + '/generate-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            var pdfResult = await pdfResponse.json();
+
+            if (pdfResult.success && pdfResult.pdfPath) {
+                alert('PDF generado!\n\n' + pdfResult.pdfPath);
+            } else {
+                throw new Error(pdfResult.error || 'PDF generation failed');
+            }
+        } else {
+            // Fallback: download JSON for manual Python script
+            var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'order-' + (payload.order_number || orderId) + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('Print proxy no detectado. JSON descargado.\nEjecuta: node print-proxy.js');
+        }
 
     } catch (error) {
         console.error('Error generating order:', error);

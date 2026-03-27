@@ -103,6 +103,114 @@ app.post('/print', async (req, res) => {
 });
 
 /**
+ * POST /generate-pdf — download design images, run Python script, return PDF path
+ * Body: { order_number, client_name, designs: [{ slot, image_url }] }
+ */
+app.post('/generate-pdf', async (req, res) => {
+  try {
+    const { order_number, client_name, designs } = req.body;
+
+    if (!designs || !Array.isArray(designs) || designs.length === 0) {
+      return res.status(400).json({ success: false, error: 'designs array required' });
+    }
+
+    const tmpDir = mkdtempSync(join(tmpdir(), 'axkan-order-'));
+
+    // Download all design images from Cloudinary URLs
+    const jsonData = {
+      order_name: `${client_name || 'Order'} - ${order_number || 'Unknown'}`,
+      instructions: '',
+      designs: []
+    };
+
+    for (const design of designs) {
+      if (!design.image_url) continue;
+
+      try {
+        const response = await fetch(design.image_url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const buffer = Buffer.from(await response.arrayBuffer());
+
+        const ext = design.image_url.match(/\.(jpg|jpeg|png|webp)/i)?.[1] || 'jpg';
+        const filePath = join(tmpDir, `${design.slot}.${ext}`);
+        writeFileSync(filePath, buffer);
+
+        jsonData.designs.push({
+          slot: design.slot,
+          image_path: filePath
+        });
+      } catch (err) {
+        console.error(`Failed to download ${design.slot}: ${err.message}`);
+        jsonData.designs.push({ slot: design.slot });
+      }
+    }
+
+    // Write JSON file for the Python script
+    const jsonPath = join(tmpDir, 'order.json');
+    writeFileSync(jsonPath, JSON.stringify(jsonData, null, 2));
+
+    // Find the Python script
+    const scriptPaths = [
+      '/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/ORDERS_GENERATOR/generate_axkan.py',
+      '/Users/ivanvalenciaperez/Desktop/CLAUDE/READY/ORDERS_GENERATOR/generate_axkan.py'
+    ];
+
+    let scriptPath = null;
+    for (const p of scriptPaths) {
+      try {
+        const { statSync } = await import('fs');
+        statSync(p);
+        scriptPath = p;
+        break;
+      } catch (_) {}
+    }
+
+    if (!scriptPath) {
+      return res.status(500).json({ success: false, error: 'generate_axkan.py not found' });
+    }
+
+    // Run the Python script
+    const { execFile } = await import('child_process');
+    const result = await new Promise((resolve, reject) => {
+      execFile('python3', [scriptPath, '--auto', jsonPath], {
+        timeout: 60000,
+        cwd: join(scriptPath, '..')
+      }, (error, stdout, stderr) => {
+        if (error) {
+          console.error('Python stderr:', stderr);
+          reject(new Error(stderr || error.message));
+        } else {
+          resolve(stdout);
+        }
+      });
+    });
+
+    // Extract PDF path from stdout
+    const pdfMatch = result.match(/PDF generated:\s*(.+)/);
+    const pdfPath = pdfMatch ? pdfMatch[1].trim() : null;
+
+    // Cleanup temp dir
+    try {
+      const { readdirSync } = await import('fs');
+      for (const f of readdirSync(tmpDir)) {
+        try { unlinkSync(join(tmpDir, f)); } catch (_) {}
+      }
+      rmdirSync(tmpDir);
+    } catch (_) {}
+
+    if (pdfPath) {
+      res.json({ success: true, pdfPath });
+    } else {
+      res.json({ success: true, output: result, message: 'PDF generated but path not detected' });
+    }
+
+  } catch (error) {
+    console.error('Generate PDF error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * GET /health — check if proxy is alive
  */
 app.get('/health', (req, res) => {
