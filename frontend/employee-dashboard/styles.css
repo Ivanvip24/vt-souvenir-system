@@ -2976,6 +2976,23 @@ textarea {
 
 /* ── Designer Detail Modal ─────────────────────── */
 
+#dt-designer-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.45);
+}
+
+#dt-designer-modal.hidden {
+    display: none;
+}
+
 .dt-designer-modal-content {
     background: #fff;
     border-radius: 16px;
@@ -2985,6 +3002,7 @@ textarea {
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0,0,0,.2);
     animation: dtModalIn .25s ease;
+    position: relative;
 }
 
 @keyframes dtModalIn {
@@ -3153,10 +3171,24 @@ textarea {
 
 .dt-modal-task-actions .dt-action-btn {
     font-size: 12px;
-    padding: 4px 12px;
+    padding: 6px 14px;
     border-radius: 6px;
     cursor: pointer;
     border: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dt-modal-task-actions .dt-action-complete {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.dt-modal-task-actions .dt-action-correction {
+    background: #fff3e0;
+    color: #e65100;
 }
 
 .dt-modal-loading, .dt-modal-empty {
