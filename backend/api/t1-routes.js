@@ -245,6 +245,7 @@ router.post('/sync', async (req, res) => {
       const clientName = (s.client || '').trim() || null;
       const costStr = (s.cost || '').replace(/[^0-9.]/g, '');
       const shippingCost = costStr ? parseFloat(costStr) : null;
+      const labelUrl = s.labelUrl || null;
 
       if (existing.rows.length > 0) {
         // Update status + carrier if changed
@@ -255,18 +256,19 @@ router.post('/sync', async (req, res) => {
             tracking_url = $2,
             status = $3,
             t1_client_name = COALESCE($5, t1_client_name),
-            t1_shipping_cost = COALESCE($6, t1_shipping_cost)
+            t1_shipping_cost = COALESCE($6, t1_shipping_cost),
+            label_url = COALESCE($7, label_url)
           WHERE id = $4
-        `, [carrier, trackingUrl, status, existing.rows[0].id, clientName, shippingCost]);
+        `, [carrier, trackingUrl, status, existing.rows[0].id, clientName, shippingCost, labelUrl]);
         updated++;
       } else {
         // Insert new
         await query(`
           INSERT INTO shipping_labels (
-            tracking_number, tracking_url, carrier, carrier_source,
+            tracking_number, tracking_url, label_url, carrier, carrier_source,
             status, t1_client_name, t1_shipping_cost, created_at
-          ) VALUES ($1, $2, $3, 't1', $4, $5, $6, NOW())
-        `, [s.tracking, trackingUrl, carrier, status, clientName, shippingCost]);
+          ) VALUES ($1, $2, $3, $4, 't1', $5, $6, $7, NOW())
+        `, [s.tracking, trackingUrl, labelUrl, carrier, status, clientName, shippingCost]);
         inserted++;
       }
     }

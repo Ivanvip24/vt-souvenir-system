@@ -546,7 +546,28 @@ function t1CloseSyncModal() {
 
 function t1BuildSyncScript() {
   var apiUrl = T1_API_URL + '/sync';
-  return '(async()=>{const t=document.querySelectorAll("table tbody tr"),s=[];t.forEach(r=>{const c=r.querySelectorAll("td");if(c.length<7)return;const f=c[1].querySelector(".flex-col"),p=f?f.querySelectorAll("span"):[],n=c[4].textContent.trim().replace(/\\s+/g," "),v=c[7]?c[7].textContent.trim():"";p[0]&&s.push({tracking:p[0].textContent.trim(),carrier:p[1]?p[1].textContent.trim():"",client:n,cost:c[5].textContent.trim(),trackingStatus:v})});console.log("Syncing "+s.length+" shipments...");const r=await fetch("' + apiUrl + '",{method:"POST",headers:{"Content-Type":"application/json","X-Sync-Key":"axkan-t1-sync-2026"},body:JSON.stringify({shipments:s})});const d=await r.json();console.log("T1 Sync:",d);document.title="SYNC OK: "+d.inserted+" nuevos, "+d.updated+" actualizados"})()';
+  // Script scrapes table rows AND fetches label PDF URLs from T1's Next.js data API
+  return '(async()=>{' +
+    'const t=document.querySelectorAll("table tbody tr"),s=[];' +
+    't.forEach(r=>{const c=r.querySelectorAll("td");if(c.length<7)return;' +
+    'const f=c[1].querySelector(".flex-col"),p=f?f.querySelectorAll("span"):[];' +
+    'const n=c[4].textContent.trim().replace(/\\s+/g," ");' +
+    'const v=c[7]?c[7].textContent.trim():"";' +
+    'if(p[0])s.push({tracking:p[0].textContent.trim(),carrier:p[1]?p[1].textContent.trim():"",client:n,cost:c[5].textContent.trim(),trackingStatus:v})});' +
+    'console.log("Scraping "+s.length+" shipments, fetching label URLs...");' +
+    // Fetch label URL for each shipment via T1's Next.js data endpoint
+    'for(let i=0;i<s.length;i++){' +
+    'try{' +
+    'const r=await fetch("/shippings/my-shippings/"+s[i].tracking);' +
+    'const html=await r.text();' +
+    'const m=html.match(/shipping\\.cdn\\.t1\\.com\\/labels\\/[^"\\s]+\\.pdf/);' +
+    'if(m)s[i].labelUrl="https://"+m[0];' +
+    '}catch(e){console.log("Skip label URL for "+s[i].tracking)}' +
+    'if(i%5===0)console.log("Progress: "+(i+1)+"/"+s.length)}' +
+    'console.log("Syncing to AXKAN...");' +
+    'const r=await fetch("' + apiUrl + '",{method:"POST",headers:{"Content-Type":"application/json","X-Sync-Key":"axkan-t1-sync-2026"},body:JSON.stringify({shipments:s})});' +
+    'const d=await r.json();console.log("T1 Sync:",d);' +
+    'document.title="SYNC OK: "+d.inserted+" nuevos, "+d.updated+" actualizados"})()';
 }
 
 function t1CopySyncScript() {
