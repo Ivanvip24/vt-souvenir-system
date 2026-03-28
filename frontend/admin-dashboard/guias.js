@@ -264,24 +264,22 @@ function createGuiaCard(guia) {
   card.dataset.guiaId = guia.id;
   card.onclick = function() { openGuiaPanel(guia.id); };
 
-  // Checkbox for print selection
-  if (guia.label_url) {
-    var checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'guia-card__checkbox';
-    checkbox.checked = guiasSelectedForPrint.has(guia.id);
-    checkbox.onclick = function(e) {
-      e.stopPropagation();
-      if (this.checked) {
-        guiasSelectedForPrint.add(guia.id);
-      } else {
-        guiasSelectedForPrint.delete(guia.id);
-      }
-      updatePrintToolbar();
-    };
-    card.appendChild(checkbox);
-    card.classList.add('guia-card--selectable');
-  }
+  // Checkbox for print selection (all labels, not just those with label_url)
+  var checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.className = 'guia-card__checkbox';
+  checkbox.checked = guiasSelectedForPrint.has(guia.id);
+  checkbox.onclick = function(e) {
+    e.stopPropagation();
+    if (this.checked) {
+      guiasSelectedForPrint.add(guia.id);
+    } else {
+      guiasSelectedForPrint.delete(guia.id);
+    }
+    updatePrintToolbar();
+  };
+  card.appendChild(checkbox);
+  card.classList.add('guia-card--selectable');
 
   // Row 1
   var row1 = document.createElement('div');
@@ -837,9 +835,17 @@ async function printSelectedGuias() {
     if (printProxyAvailable) {
       // Collect label URLs from selected labels
       var urls = [];
+      var noUrlCount = 0;
       guiasData.forEach(function(g) {
-        if (guiasSelectedForPrint.has(g.id) && g.label_url) urls.push(g.label_url);
+        if (guiasSelectedForPrint.has(g.id)) {
+          if (g.label_url) urls.push(g.label_url);
+          else noUrlCount++;
+        }
       });
+
+      if (noUrlCount > 0) {
+        guiasToast(noUrlCount + ' guía' + (noUrlCount > 1 ? 's' : '') + ' sin PDF disponible — se omitirán', 'error');
+      }
 
       if (urls.length === 0) throw new Error('No hay PDFs para imprimir');
 
