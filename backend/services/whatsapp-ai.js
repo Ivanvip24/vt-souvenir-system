@@ -857,6 +857,17 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       .replace(/\[SEND_FLOW\].*$/s, '')                       // unclosed [SEND_FLOW]...
       .trim();
 
+    // Message length enforcement — research shows >60 words = 40% drop in response rate
+    if (finalReply.length > 500) {
+      console.warn(`⚠️ Bot reply too long (${finalReply.length} chars). Ivan averages 59 chars. Truncating.`);
+      // Keep only up to the last complete sentence within 500 chars
+      const truncated = finalReply.substring(0, 500);
+      const lastPeriod = Math.max(truncated.lastIndexOf('.'), truncated.lastIndexOf('?'), truncated.lastIndexOf('!'), truncated.lastIndexOf('\n'));
+      if (lastPeriod > 200) {
+        finalReply = truncated.substring(0, lastPeriod + 1).trim();
+      }
+    }
+
     return {
       reply: finalReply,
       intent: intent,

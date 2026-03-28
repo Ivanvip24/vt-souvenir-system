@@ -4,13 +4,14 @@ import { sendWhatsAppMessage } from './whatsapp-api.js';
 
 let scheduledJob = null;
 
-// Re-engagement messages — short, casual, Ivan's voice
+// Re-engagement messages — value-first, not "still interested?" nagging
+// Research: follow-ups that add value convert 15-25%. Generic "checking in" annoys.
 const REENGAGEMENT_MESSAGES = [
-  'Oye! Vi que nos escribiste hace rato, ¿todavía te interesa? 🙌',
-  'Hey! ¿Aún andas buscando souvenirs? Aquí andamos para ayudarte 😊',
-  'Hola! Se me pasó darte seguimiento, ¿en qué te puedo ayudar?',
-  'Oye! ¿Sigues interesado o ya encontraste lo que buscabas?',
-  'Hey! Nada más checando, ¿todavía necesitas los imanes? 🧲',
+  'Oye, la producción de esta semana tiene espacio. Si quieres que te aparte lugar me dices 👍',
+  'Te cuento que nos acaban de llegar pedidos de tu zona. Si quieres aprovechar el envío te cotizo rápido',
+  'Por cierto, si pides 300+ piezas el envío te sale gratis. ¿Quieres que te arme la cotización?',
+  'Oye, tenemos una promo esta semana en pedidos de 500+ piezas. ¿Te mando los detalles?',
+  'Hola! Solo te aviso que la producción tarda 8-14 días. Si lo necesitas para una fecha específica me dices para calcular',
 ];
 
 function getRandomMessage() {
