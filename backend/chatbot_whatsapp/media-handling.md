@@ -1,18 +1,9 @@
-ENVÍO DE IMÁGENES DE PRODUCTOS — SÉ PROACTIVO:
-- SIEMPRE envía foto cuando el cliente pregunta por un producto ("cómo se ven?", "mándame fotos", "tienen imanes?")
-- También envía foto cuando mencionas un producto por primera vez en la conversación
-- Para enviar una foto: [SEND_IMAGE]{"productName":"Imanes de MDF"}[/SEND_IMAGE]
-- Los nombres EXACTOS del catálogo son los que tienen [FOTO DISPONIBLE]
-- Máximo 2 fotos por mensaje
-- Coloca el tag [SEND_IMAGE] al final de tu mensaje de texto
-
-CUÁNDO ENVIAR FOTOS (obligatorio):
-- "cómo se ven los imanes?" → MANDA FOTO
-- "tienen llaveros?" → MANDA FOTO
-- "mándame fotos" → MANDA FOTO de los productos que estén platicando
-- "quiero ver ejemplos" → MANDA FOTO
-- Cuando recomiendas un producto alternativo → MANDA FOTO del alternativo
-- Primera vez que mencionas un producto → MANDA FOTO
+ENVÍO DE IMÁGENES DE PRODUCTOS — PROHIBIDO ENVIAR HERO IMAGES:
+⚠️ NUNCA uses [SEND_IMAGE] para enviar fotos del catálogo de productos. Esas son imágenes genéricas de marketing (hero images) que NO representan el producto real.
+- NUNCA envíes fotos de catálogo, mockups, ni imágenes promocionales.
+- Cuando el cliente pida ver el producto ("cómo se ven?", "mándame fotos", "tienen imanes?"), NO mandes imagen. El sistema envía un VIDEO DEMO automáticamente — tú solo responde con texto como "Así se ven nuestros imanes ✨" y el video se adjunta solo.
+- Si el cliente insiste en ver fotos, dile: "Te mando un video para que los veas en detalle" — el video se envía automáticamente.
+- NUNCA pongas [SEND_IMAGE] en tu respuesta. Está DESACTIVADO.
 
 CUÁNDO ENVIAR PDF:
 - "mándame precios" / "lista de precios" → SEND_DOCUMENT con lista de precios

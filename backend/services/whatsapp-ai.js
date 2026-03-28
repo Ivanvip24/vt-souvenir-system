@@ -312,17 +312,10 @@ async function parseAIResponse(responseText) {
     }
   }
 
-  // Extract SEND_IMAGE blocks
+  // Extract SEND_IMAGE blocks — DISABLED: hero product images are banned
+  // Only quote images (added via GENERATE_QUOTE flow) will be in imagesToSend
   const imagesToSend = [];
-  const imageMatches = cleanReply.matchAll(/\[SEND_IMAGE\](.*?)\[\/SEND_IMAGE\]/g);
-  for (const match of imageMatches) {
-    try {
-      const imageData = JSON.parse(match[1].trim());
-      imagesToSend.push(imageData);
-    } catch (err) {
-      console.error('🟢 WhatsApp AI: Failed to parse SEND_IMAGE JSON:', err.message);
-    }
-  }
+  // Strip any [SEND_IMAGE] tags the AI might still generate (they're banned in instructions)
   cleanReply = cleanReply.replace(/\[SEND_IMAGE\].*?\[\/SEND_IMAGE\]/g, '').trim();
 
   // Extract SEND_LIST blocks (interactive list menus)
@@ -818,19 +811,8 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       }
     }
 
-    // Resolve product image URLs for SEND_IMAGE requests
-    const resolvedImages = (imagesToSend || []).map(img => {
-      // If image already has a URL (e.g., quote image from Cloudinary), use it directly
-      if (img.imageUrl) return img;
-      // Otherwise, look up product image from catalog
-      const nameLower = (img.productName || '').toLowerCase();
-      const match = products.find(p => p.name.toLowerCase() === nameLower)
-        || products.find(p => nameLower.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(nameLower));
-      return {
-        productName: img.productName,
-        imageUrl: match?.image_url || null
-      };
-    }).filter(img => img.imageUrl);
+    // Only quote images remain in imagesToSend (hero images disabled)
+    const resolvedImages = imagesToSend.filter(img => img.imageUrl);
 
     // Resolve carousel product cards from catalog
     let carouselCards = [];

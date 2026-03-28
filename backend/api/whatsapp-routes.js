@@ -565,9 +565,10 @@ router.post('/webhook', (req, res) => {
         }
       }
 
-      // Only send quote images (from Cloudinary), skip product catalog hero images
+      // Only send QUOTE images (from Cloudinary whatsapp-quotes-img folder)
+      // Block ALL product catalog hero images — even if hosted on Cloudinary
       for (const img of imagesToSend) {
-        if (img.imageUrl && img.imageUrl.includes('cloudinary.com')) {
+        if (img.imageUrl && img.imageUrl.includes('cloudinary.com') && img.imageUrl.includes('whatsapp-quotes')) {
           try {
             await sendWhatsAppImage(waId, img.imageUrl, img.productName || '');
           } catch (imgErr) {
