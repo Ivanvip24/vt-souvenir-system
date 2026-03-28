@@ -1492,9 +1492,40 @@ async function removeDesignSlot(orderId) {
     }
 }
 
+function updateOrderStatusLabel(order) {
+    var label = document.getElementById('order-status-label');
+    if (!label) return;
+
+    var allApproved = order.designs.length > 0 && order.designs.every(function(d) {
+        return d.status === 'aprobado' && d.design_image_url;
+    });
+
+    var alreadyCompleted = order.order_status && order.order_status !== 'new' && order.order_status !== 'design' && order.order_status !== 'whatsapp_draft';
+
+    label.className = 'order-status-label';
+    if (alreadyCompleted || allApproved) {
+        label.className = 'order-status-label completed';
+        label.textContent = '';
+        var dot = document.createElement('span');
+        dot.className = 'status-dot';
+        label.appendChild(dot);
+        label.appendChild(document.createTextNode('Sin Pedido Activo'));
+    } else {
+        label.className = 'order-status-label active';
+        label.textContent = '';
+        var dot = document.createElement('span');
+        dot.className = 'status-dot';
+        label.appendChild(dot);
+        label.appendChild(document.createTextNode('Pedido Activo'));
+    }
+}
+
 function updateGenerateButton(order) {
     var btn = document.getElementById('btn-generate-order');
     if (!btn) return;
+
+    // Update order status label
+    updateOrderStatusLabel(order);
 
     var allFilled = order.designs.length > 0 && order.designs.every(function(d) {
         return d.design_image_url || state.slotImages[d.id];

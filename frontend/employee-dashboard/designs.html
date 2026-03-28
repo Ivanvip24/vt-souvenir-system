@@ -441,6 +441,48 @@ html, body {
 }
 
 /* Design strip in header */
+/* ======== ORDER STATUS LABEL ======== */
+.order-status-label {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 4px 0 2px;
+    display: none;
+}
+
+.order-status-label.active {
+    display: block;
+    color: #e72a88;
+}
+
+.order-status-label.completed {
+    display: block;
+    color: #8ab73b;
+}
+
+.order-status-label .status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.order-status-label.active .status-dot {
+    background: #e72a88;
+}
+
+.order-status-label.completed .status-dot {
+    background: #8ab73b;
+    animation: none;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
 .chat-design-strip {
     display: flex;
     gap: 6px;
@@ -1431,6 +1473,7 @@ if (window.location.search.includes('embedded=1')) {
                         </button>
                     </div>
                 </div>
+                <div class="order-status-label" id="order-status-label"></div>
                 <div class="chat-design-strip" id="chat-design-strip"></div>
             </div>
 
