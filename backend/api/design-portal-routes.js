@@ -713,4 +713,90 @@ router.get('/window-status', employeeAuth, async (req, res) => {
   }
 });
 
+// ========================================
+// POST /complete-order — mark design phase as complete, update order status, notify client
+// ========================================
+router.post('/complete-order', employeeAuth, async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ error: 'orderId is required' });
+    }
+
+    // Verify all designs are approved
+    const designs = await query(
+      `SELECT id, design_number, design_image_url, status, client_phone, client_name
+       FROM design_assignments
+       WHERE order_id = $1
+       ORDER BY design_number ASC`,
+      [orderId]
+    );
+
+    if (designs.rows.length === 0) {
+      return res.status(404).json({ error: 'No designs found for this order' });
+    }
+
+    const notApproved = designs.rows.filter(d => !d.design_image_url || d.status !== 'aprobado');
+    if (notApproved.length > 0) {
+      return res.status(400).json({
+        error: 'Not all designs are approved',
+        pending: notApproved.map(d => 'D' + d.design_number)
+      });
+    }
+
+    // Get order info
+    const orderResult = await query(
+      `SELECT o.id, o.order_number, o.status, c.name as client_name, c.phone as client_phone
+       FROM orders o
+       LEFT JOIN clients c ON o.client_id = c.id
+       WHERE o.id = $1`,
+      [orderId]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Update order status to Printing (next phase after Design)
+    await query(
+      `UPDATE orders SET status = 'printing', updated_at = NOW() WHERE id = $1`,
+      [orderId]
+    );
+
+    // Send WhatsApp notification to client
+    const clientPhone = order.client_phone || designs.rows[0].client_phone;
+    let whatsappSent = false;
+
+    if (clientPhone) {
+      try {
+        const { sendWhatsAppMessage } = await import('../services/whatsapp-api.js');
+        const clientName = order.client_name || designs.rows[0].client_name || '';
+        const firstName = clientName.split(' ')[0] || '';
+        const totalDesigns = designs.rows.length;
+
+        const message = `¡${firstName}! 🎨✅ Tus ${totalDesigns} diseño${totalDesigns > 1 ? 's' : ''} del pedido ${order.order_number} ya están listos y aprobados. Ahora pasamos a producción. ¡Pronto tendrás tus souvenirs!`;
+
+        await sendWhatsAppMessage(clientPhone, message);
+        whatsappSent = true;
+      } catch (waError) {
+        console.error('WhatsApp notification failed (non-blocking):', waError);
+      }
+    }
+
+    res.json({
+      success: true,
+      newStatus: 'printing',
+      whatsappSent,
+      orderNumber: order.order_number
+    });
+
+  } catch (error) {
+    console.error('Error completing order:', error);
+    res.status(500).json({ error: 'Failed to complete order' });
+  }
+});
+
 export default router;

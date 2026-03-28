@@ -604,6 +604,50 @@ html, body {
   animation: spin 0.8s linear infinite;
 }
 
+/* ======== COMPLETE ORDER BUTTON ======== */
+.btn-complete-order {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #8ab73b;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(138, 183, 59, 0.4);
+  animation: glow-complete 2s ease-in-out infinite;
+}
+
+.btn-complete-order.visible {
+  display: inline-flex;
+}
+
+.btn-complete-order:hover {
+  background: #79a134;
+  transform: scale(1.03);
+}
+
+.btn-complete-order.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.btn-complete-order.done {
+  background: #6b7280;
+  pointer-events: none;
+  animation: none;
+  box-shadow: none;
+}
+
+@keyframes glow-complete {
+  0%, 100% { box-shadow: 0 0 8px rgba(138, 183, 59, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(138, 183, 59, 0.6); }
+}
+
 .strip-pill-icon {
     font-size: 10px;
 }
@@ -1216,6 +1260,12 @@ if (window.location.search.includes('embedded=1')) {
                         </div>
                     </div>
                     <div class="chat-header-actions">
+                        <button class="btn-complete-order" id="btn-complete-order" title="Marcar diseños como completados">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span id="complete-label">Completado</span>
+                        </button>
                         <button class="btn-generate-order" id="btn-generate-order" title="Generar Pedido">
                             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>

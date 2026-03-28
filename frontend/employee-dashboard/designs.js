@@ -1385,6 +1385,75 @@ function updateGenerateButton(order) {
     } else {
         btn.onclick = null;
     }
+
+    // Show/hide complete button
+    var completeBtn = document.getElementById('btn-complete-order');
+    if (!completeBtn) return;
+
+    var allApproved = order.designs.length > 0 && order.designs.every(function(d) {
+        return d.status === 'aprobado' && d.design_image_url;
+    });
+
+    var alreadyCompleted = order.order_status && order.order_status !== 'new' && order.order_status !== 'design' && order.order_status !== 'whatsapp_draft';
+
+    if (alreadyCompleted) {
+        completeBtn.classList.add('visible', 'done');
+        document.getElementById('complete-label').textContent = 'Enviado a producción';
+        completeBtn.onclick = null;
+    } else if (allApproved) {
+        completeBtn.classList.add('visible');
+        completeBtn.classList.remove('done');
+        completeBtn.onclick = function() { completeOrder(order.order_id); };
+    } else {
+        completeBtn.classList.remove('visible', 'done');
+        completeBtn.onclick = null;
+    }
+}
+
+async function completeOrder(orderId) {
+    var btn = document.getElementById('btn-complete-order');
+    var label = document.getElementById('complete-label');
+    if (!btn || btn.classList.contains('loading')) return;
+
+    if (!confirm('¿Marcar todos los diseños como completados y notificar al cliente por WhatsApp?')) return;
+
+    btn.classList.add('loading');
+    var originalText = label.textContent;
+    label.textContent = 'Enviando...';
+
+    try {
+        var response = await fetch(API_BASE + '/design-portal/complete-order', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ orderId: orderId })
+        });
+
+        if (!response.ok) {
+            var err = await response.json();
+            throw new Error(err.error || 'Failed to complete order');
+        }
+
+        var data = await response.json();
+
+        btn.classList.add('done');
+        label.textContent = 'Enviado a producción';
+        btn.onclick = null;
+
+        var msg = '✅ Pedido ' + (data.orderNumber || '') + ' marcado como completado.';
+        if (data.whatsappSent) {
+            msg += '\n📱 Cliente notificado por WhatsApp.';
+        } else {
+            msg += '\n⚠️ No se pudo notificar al cliente por WhatsApp.';
+        }
+        alert(msg);
+
+    } catch (error) {
+        console.error('Error completing order:', error);
+        alert('Error: ' + error.message);
+        label.textContent = originalText;
+    } finally {
+        btn.classList.remove('loading');
+    }
 }
 
 var ORDER_PROXY_URL = 'http://localhost:3002';

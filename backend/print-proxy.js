@@ -18,7 +18,7 @@ import { tmpdir } from 'os';
 import { execFileSync } from 'child_process';
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PRINT_PROXY_PORT || 3007;
 
 app.use(cors());
 app.use(express.json());

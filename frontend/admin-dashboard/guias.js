@@ -807,7 +807,7 @@ function updatePrintToolbar() {
   }
 }
 
-var PRINT_PROXY_URL = 'http://localhost:3001';
+var PRINT_PROXY_URL = 'http://localhost:3007';
 var printProxyAvailable = null; // null = unknown, true/false after check
 
 async function checkPrintProxy() {
