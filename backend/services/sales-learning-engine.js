@@ -293,6 +293,159 @@ Responde SOLO JSON (sin markdown):
   }
 }
 
+/**
+ * Analyze conversations where the client showed buying intent but never purchased.
+ * Identifies what the bot did wrong so it can avoid those mistakes.
+ * Runs as part of the nightly analysis.
+ */
+export async function learnFromLostDeals() {
+  try {
+    console.log('🧠 Analyzing lost deals...');
+
+    // Find conversations with buying signals but no order created
+    // Buying signals: client mentioned quantity, said "sí", asked about payment, etc.
+    // No order: conversation has no linked order
+    const lostDeals = await query(`
+      SELECT wc.id, wc.wa_id, wc.client_name, wc.created_at,
+        COUNT(wm.id) as message_count,
+        MAX(wm.created_at) as last_message_at
+      FROM whatsapp_conversations wc
+      JOIN whatsapp_messages wm ON wm.conversation_id = wc.id
+      WHERE wc.status = 'active'
+        AND wc.created_at > NOW() - INTERVAL '7 days'
+        AND NOT EXISTS (
+          SELECT 1 FROM orders o WHERE o.client_id = wc.client_id
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM sales_learnings sl
+          WHERE sl.source_conversation_id = wc.id AND sl.type = 'lost_deal'
+        )
+        AND EXISTS (
+          SELECT 1 FROM whatsapp_messages wm2
+          WHERE wm2.conversation_id = wc.id
+            AND wm2.sender = 'client'
+            AND (
+              wm2.content ~* '(\\d+\\s*(piezas|imanes|llaveros|destapadores))'
+              OR wm2.content ~* '(cuánto|precio|costo|cotiza)'
+              OR wm2.content ~* '(sí claro|si claro|va dale|cómo (le )?hago|cómo pago)'
+            )
+        )
+      GROUP BY wc.id
+      HAVING COUNT(wm.id) >= 6
+      ORDER BY wc.created_at DESC
+      LIMIT 5
+    `);
+
+    if (lostDeals.rows.length === 0) {
+      console.log('🧠 No lost deals to analyze');
+      return;
+    }
+
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    for (const deal of lostDeals.rows) {
+      try {
+        // Get messages for this conversation
+        const msgs = await query(`
+          SELECT sender, direction, content, message_type, created_at
+          FROM whatsapp_messages WHERE conversation_id = $1
+          ORDER BY created_at ASC
+        `, [deal.id]);
+
+        if (msgs.rows.length < 6) continue;
+
+        const chatText = msgs.rows.map(m => {
+          const who = m.sender === 'client' ? 'CLIENTE' : m.sender === 'admin' ? 'IVAN' : 'BOT';
+          const typeTag = m.message_type !== 'text' ? ` [${m.message_type}]` : '';
+          return `${who}${typeTag}: ${(m.content || '').substring(0, 250)}`;
+        }).join('\n');
+
+        const response = await anthropic.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: `Esta conversación de WhatsApp de souvenirs AXKAN NO resultó en venta. El cliente mostró interés pero nunca compró. Analiza qué hizo MAL el bot.
+
+Errores comunes a detectar:
+- Enviar imágenes genéricas en vez de cotizar
+- Repetir preguntas que el cliente ya contestó
+- No generar cotización cuando el cliente dio producto + cantidad
+- Hacer demasiadas preguntas en vez de cerrar
+- Pedir información que el cliente ya dio (dirección, nombre, etc.)
+- Mensajes demasiado largos o formales
+- No crear urgencia
+- Ignorar señales de compra ("sí claro", "cómo le hago")
+
+Conversación:
+${chatText}
+
+Genera 2-4 errores específicos que el bot cometió y qué debería haber hecho diferente. SOLO errores reales, no genéricos.
+
+Responde SOLO JSON válido (sin markdown):
+[
+  {
+    "type": "lost_deal",
+    "category": "tone|timing|closing|follow_up|objection|repetition|product_knowledge",
+    "insight": "REGLA: [qué debe hacer el bot] (máximo 1 línea, español)",
+    "evidence": "mensaje exacto donde falló",
+    "auto_adjustable": true,
+    "confidence": "high"
+  }
+]`
+          }]
+        });
+
+        let rawText = response.content[0].text.trim();
+        rawText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+        const insights = JSON.parse(rawText);
+
+        for (const insight of insights) {
+          // Check duplicate
+          const existing = await query(
+            'SELECT id FROM sales_learnings WHERE insight = $1 LIMIT 1',
+            [insight.insight]
+          );
+
+          if (existing.rows.length > 0) {
+            await query('UPDATE sales_learnings SET times_validated = times_validated + 1, updated_at = NOW() WHERE id = $1', [existing.rows[0].id]);
+          } else {
+            // Cap at 15 per type
+            const typeCount = await query(
+              'SELECT COUNT(*) as count FROM sales_learnings WHERE type = $1 AND applied = true',
+              ['lost_deal']
+            );
+
+            const shouldApply = parseInt(typeCount.rows[0].count) < 15;
+
+            await query(`
+              INSERT INTO sales_learnings (type, category, insight, evidence, source_conversation_id, confidence, auto_adjustable, applied)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+              'lost_deal',
+              insight.category || 'closing',
+              insight.insight,
+              insight.evidence || '',
+              deal.id,
+              insight.confidence || 'high',
+              true,
+              shouldApply
+            ]);
+          }
+        }
+
+        console.log(`🧠 Lost deal analyzed: conv ${deal.id} (${deal.client_name || deal.wa_id}), ${insights.length} mistakes found`);
+      } catch (dealErr) {
+        console.error(`🧠 Error analyzing lost deal ${deal.id}:`, dealErr.message);
+      }
+    }
+
+    console.log(`🧠 Lost deals analysis complete: ${lostDeals.rows.length} conversations analyzed`);
+  } catch (error) {
+    console.error('🧠 Lost deals analysis error:', error.message);
+  }
+}
+
 export async function buildDynamicPromptSection() {
   try {
     const learnings = await query(`
@@ -317,6 +470,12 @@ export async function buildDynamicPromptSection() {
     const patterns = learnings.rows.filter(l => l.type === 'pattern_insight');
     const corrections = learnings.rows.filter(l => l.type === 'correction');
     const closings = learnings.rows.filter(l => l.type === 'closing_pattern');
+    const lostDeals = learnings.rows.filter(l => l.type === 'lost_deal');
+
+    if (lostDeals.length > 0) {
+      section += '\n### ERRORES QUE PERDIERON VENTAS (NUNCA repetir):\n';
+      lostDeals.slice(0, 15).forEach(l => { section += '- ' + l.insight + '\n'; });
+    }
 
     if (patterns.length > 0) {
       section += '\n### Patrones aprendidos:\n';

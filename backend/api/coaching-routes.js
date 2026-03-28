@@ -404,8 +404,9 @@ router.post('/digest', async (req, res) => {
 // =====================================================
 router.post('/analyze', async (req, res) => {
   try {
-    const { nightlyPatternAnalysis } = await import('../services/sales-learning-engine.js');
+    const { nightlyPatternAnalysis, learnFromLostDeals } = await import('../services/sales-learning-engine.js');
     await nightlyPatternAnalysis();
+    await learnFromLostDeals();
     const learnings = await query('SELECT id, type, category, insight, confidence, applied FROM sales_learnings ORDER BY created_at DESC');
     res.json({ success: true, totalLearnings: learnings.rows.length, learnings: learnings.rows });
   } catch (err) {
