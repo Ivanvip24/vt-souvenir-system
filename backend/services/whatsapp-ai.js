@@ -218,7 +218,7 @@ export async function buildConversationHistory(conversationId) {
        FROM whatsapp_messages
        WHERE conversation_id = $1
        ORDER BY created_at DESC
-       LIMIT 40
+       LIMIT 30
      ) recent
      ORDER BY created_at ASC`,
     [conversationId]
