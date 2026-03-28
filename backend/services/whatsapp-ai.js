@@ -210,12 +210,17 @@ El nombre va bien en el primer saludo y de vez en cuando, NO en cada respuesta.`
  * @returns {Array} Array of {role, content} messages for Claude
  */
 export async function buildConversationHistory(conversationId) {
+  // Get the most recent 40 messages, then reverse to chronological order
   const result = await query(
     `SELECT direction, sender, content, message_type, media_url, metadata
-     FROM whatsapp_messages
-     WHERE conversation_id = $1
-     ORDER BY created_at ASC
-     LIMIT 40`,
+     FROM (
+       SELECT direction, sender, content, message_type, media_url, metadata, created_at
+       FROM whatsapp_messages
+       WHERE conversation_id = $1
+       ORDER BY created_at DESC
+       LIMIT 40
+     ) recent
+     ORDER BY created_at ASC`,
     [conversationId]
   );
 
