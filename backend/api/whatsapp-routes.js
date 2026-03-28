@@ -621,9 +621,9 @@ router.post('/webhook', (req, res) => {
 
         if (videoUrl) {
           try {
-            // Check if we already sent THIS specific video in this conversation
+            // Check if we sent THIS video in the last 7 days (allow re-send for returning clients)
             const videoSentCheck = await query(
-              `SELECT 1 FROM whatsapp_messages WHERE conversation_id = $1 AND message_type = 'video' AND sender = 'ai' AND media_url = $2 LIMIT 1`,
+              `SELECT 1 FROM whatsapp_messages WHERE conversation_id = $1 AND message_type = 'video' AND sender = 'ai' AND media_url = $2 AND created_at > NOW() - INTERVAL '7 days' LIMIT 1`,
               [conversationId, videoUrl]
             );
             if (videoSentCheck.rows.length === 0) {
