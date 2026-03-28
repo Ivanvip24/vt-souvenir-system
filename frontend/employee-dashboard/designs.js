@@ -1419,7 +1419,11 @@ async function addDesignSlot(orderId) {
 
 async function removeDesignSlot(orderId) {
     try {
-        var response = await fetch(API_BASE + '/design-portal/orders/' + orderId + '/remove-slot', {
+        var selectedId = state.selectedSlotId;
+        var url = API_BASE + '/design-portal/orders/' + orderId + '/remove-slot';
+        if (selectedId) url += '?designId=' + selectedId;
+
+        var response = await fetch(url, {
             method: 'DELETE',
             headers: getAuthHeaders()
         });
@@ -1431,13 +1435,19 @@ async function removeDesignSlot(orderId) {
 
         var order = state.orders[orderId];
         if (order) {
-            order.designs.pop();
+            order.designs = order.designs.filter(function(d) {
+                return d.id != selectedId;
+            });
+            // If we removed the selected slot, select the first remaining
+            if (state.selectedSlotId == selectedId && order.designs.length > 0) {
+                state.selectedSlotId = order.designs[0].id;
+            }
             renderDesignStrip(order);
             renderOrderList();
         }
     } catch (error) {
         console.error('Error removing design slot:', error);
-        alert('Error al quitar diseno');
+        alert('Error al quitar diseno: ' + error.message);
     }
 }
 

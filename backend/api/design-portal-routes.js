@@ -543,24 +543,35 @@ router.post('/orders/:orderId/add-slot', employeeAuth, async (req, res) => {
 });
 
 // ========================================
-// 6d. DELETE /orders/:orderId/remove-slot — remove last empty slot
+// 6d. DELETE /orders/:orderId/remove-slot — remove a specific or last design slot
 // ========================================
-// Remove the last empty design slot from an order
 router.delete('/orders/:orderId/remove-slot', employeeAuth, async (req, res) => {
   try {
     const orderId = req.params.orderId;
+    const designId = req.query.designId;
 
-    const last = await query(
-      `SELECT id, design_number, design_image_url, total_designs
-       FROM design_assignments WHERE order_id = $1 ORDER BY design_number DESC LIMIT 1`,
-      [orderId]
-    );
-
-    if (last.rows.length === 0) {
-      return res.status(404).json({ error: 'No design slots found' });
+    let slot;
+    if (designId) {
+      // Remove specific slot by ID
+      const result = await query(
+        `SELECT id, design_number, total_designs
+         FROM design_assignments WHERE id = $1 AND order_id = $2`,
+        [designId, orderId]
+      );
+      slot = result.rows[0];
+    } else {
+      // Fallback: remove last slot
+      const result = await query(
+        `SELECT id, design_number, total_designs
+         FROM design_assignments WHERE order_id = $1 ORDER BY design_number DESC LIMIT 1`,
+        [orderId]
+      );
+      slot = result.rows[0];
     }
 
-    const slot = last.rows[0];
+    if (!slot) {
+      return res.status(404).json({ error: 'Design slot not found' });
+    }
 
     if (slot.total_designs <= 1) {
       return res.status(400).json({ error: 'Cannot remove the last remaining slot' });
