@@ -547,6 +547,41 @@ function injectWhatsAppStyles() {
       transform: scale(1.02);
     }
 
+    .wa-msg-thumbnails {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .wa-msg-thumbnail {
+      max-width: 180px;
+      max-height: 180px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: block;
+      object-fit: cover;
+      transition: transform 0.15s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .wa-msg-thumbnail:hover {
+      transform: scale(1.03);
+    }
+    .wa-msg-thumbnail-error {
+      max-width: 180px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.04);
+      color: #999;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .wa-msg-thumbnail-error:hover {
+      background: rgba(0,0,0,0.08);
+    }
+
     .wa-msg-audio {
       max-width: 250px;
       margin-bottom: 4px;
@@ -3797,9 +3832,22 @@ function buildMessagesDOM(parentEl) {
         thumb.src = meta.imagesSent[k];
         thumb.alt = 'Imagen enviada';
         thumb.className = 'wa-msg-thumbnail';
+        thumb.loading = 'lazy';
+        thumb.referrerPolicy = 'no-referrer';
+        thumb.crossOrigin = 'anonymous';
         thumb.addEventListener('click', (function(url) {
           return function() { window.open(url, '_blank'); };
         })(meta.imagesSent[k]));
+        thumb.addEventListener('error', (function(url, thumbEl) {
+          return function() {
+            var fallback = document.createElement('div');
+            fallback.className = 'wa-msg-thumbnail-error';
+            fallback.textContent = '\uD83D\uDDBC\uFE0F Imagen enviada';
+            fallback.title = url;
+            fallback.addEventListener('click', function() { window.open(url, '_blank'); });
+            thumbEl.replaceWith(fallback);
+          };
+        })(meta.imagesSent[k], thumb));
         thumbsDiv.appendChild(thumb);
       }
       contentDiv.appendChild(thumbsDiv);
