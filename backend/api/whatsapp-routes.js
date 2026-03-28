@@ -595,14 +595,15 @@ router.post('/webhook', (req, res) => {
         }
       }
 
-      // Auto-send product demo videos ONLY when client asks to SEE the product
-      // Triggers: "me muestras", "tienes fotos", "cómo se ven", "tienes imágenes", "quiero ver"
-      // Does NOT trigger on general inquiries like "quiero imanes", "información imanes"
+      // Auto-send product demo video when client mentions products OR asks to see them
+      // Sends on first product mention to show what we make — research shows visuals in first response = 2-3x conversion
       {
         const msgLower = (messageText || '').toLowerCase();
+        const mentionsProduct = msgLower.includes('iman') || msgLower.includes('imán') || msgLower.includes('llavero') || msgLower.includes('destapador') || msgLower.includes('souvenir') || msgLower.includes('botón') || msgLower.includes('boton') || msgLower.includes('portallaves') || msgLower.includes('portarretrato');
         const wantsToSee = msgLower.includes('foto') || msgLower.includes('imagen') || msgLower.includes('muestra') || msgLower.includes('mostrar') || msgLower.includes('ejemplo') || msgLower.includes('video') || msgLower.includes('ver ') || msgLower.includes('cómo se ven') || msgLower.includes('como se ven') || msgLower.includes('cómo son') || msgLower.includes('como son');
-        const isAbout3D = wantsToSee && (msgLower.includes('3d') || msgLower.includes('tres d'));
-        const isAboutMagnets = wantsToSee && !isAbout3D;
+        const shouldSendVideo = mentionsProduct || wantsToSee;
+        const isAbout3D = shouldSendVideo && (msgLower.includes('3d') || msgLower.includes('tres d'));
+        const isAboutMagnets = shouldSendVideo && !isAbout3D;
 
         // Pick which video to send
         let videoUrl = null;
