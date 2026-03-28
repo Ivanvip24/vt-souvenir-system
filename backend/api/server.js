@@ -534,8 +534,8 @@ app.use('/api/whatsapp', (req, res, next) => {
 app.use('/api/whatsapp', authMiddleware, whatsappTemplateRoutes);
 // T1 routes — sync endpoint accepts sync key, all others require JWT
 app.use('/api/t1', (req, res, next) => {
-  if (req.path === '/sync' && req.method === 'POST' && req.headers['x-sync-key'] === 'axkan-t1-sync-2026') {
-    return next(); // Skip JWT auth for sync with valid key
+  if ((req.path === '/sync' || req.path === '/backfill-labels') && req.method === 'POST' && req.headers['x-sync-key'] === 'axkan-t1-sync-2026') {
+    return next(); // Skip JWT auth for sync/backfill with valid key
   }
   authMiddleware(req, res, next);
 }, t1Routes);
