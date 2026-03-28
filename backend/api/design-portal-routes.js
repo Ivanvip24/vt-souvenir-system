@@ -562,10 +562,6 @@ router.delete('/orders/:orderId/remove-slot', employeeAuth, async (req, res) => 
 
     const slot = last.rows[0];
 
-    if (slot.design_image_url) {
-      return res.status(400).json({ error: 'Cannot remove a slot that has an image uploaded' });
-    }
-
     if (slot.total_designs <= 1) {
       return res.status(400).json({ error: 'Cannot remove the last remaining slot' });
     }
