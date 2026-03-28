@@ -1237,9 +1237,9 @@ router.get('/conversations/:id/messages', authMiddleware, async (req, res) => {
 // ---------------------------------------------------------------------------
 router.post('/conversations/:id/reply', authMiddleware, async (req, res) => {
   try {
-    const { message, imageUrl } = req.body;
-    if (!message && !imageUrl) {
-      return res.status(400).json({ success: false, error: 'message or imageUrl is required' });
+    const { message, imageUrl, videoUrl } = req.body;
+    if (!message && !imageUrl && !videoUrl) {
+      return res.status(400).json({ success: false, error: 'message, imageUrl, or videoUrl is required' });
     }
 
     // Look up the conversation to get the wa_id
@@ -1252,21 +1252,23 @@ router.post('/conversations/:id/reply', authMiddleware, async (req, res) => {
     }
     const waId = convResult.rows[0].wa_id;
 
-    // Send via Meta API (text, image, or both)
-    if (message) {
-      await sendWhatsAppMessage(waId, message);
-    }
-    if (imageUrl) {
+    // Send via Meta API (text, image, video)
+    if (videoUrl) {
+      await sendWhatsAppVideo(waId, videoUrl, message || '');
+    } else if (imageUrl) {
       await sendWhatsAppImage(waId, imageUrl, message || '');
+    } else if (message) {
+      await sendWhatsAppMessage(waId, message);
     }
 
     // Store outbound admin message
     const outboundWaId = 'admin_' + Date.now();
-    const msgType = imageUrl ? 'image' : 'text';
+    const msgType = videoUrl ? 'video' : imageUrl ? 'image' : 'text';
+    const mediaUrl = videoUrl || imageUrl || null;
     await query(
       `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, media_url)
        VALUES ($1, $2, 'outbound', 'admin', $3, $4, $5)`,
-      [req.params.id, outboundWaId, msgType, message || '', imageUrl || null]
+      [req.params.id, outboundWaId, msgType, message || '', mediaUrl]
     );
 
     // Update last_message_at
