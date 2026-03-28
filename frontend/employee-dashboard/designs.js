@@ -672,9 +672,130 @@ function renderDesignStrip(order) {
     removeBtn.addEventListener('click', function() { removeDesignSlot(order.order_id); });
     container.appendChild(removeBtn);
 
+    // Toggle designs panel button (grid icon)
+    var toggleBtn = createEl('button', 'btn-toggle-designs-panel');
+    toggleBtn.title = 'Ver diseños en grande';
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '16');
+    svg.setAttribute('height', '16');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    ['3,3,7,7','14,3,7,7','3,14,7,7','14,14,7,7'].forEach(function(r) {
+        var parts = r.split(',');
+        var rect = document.createElementNS(svgNS, 'rect');
+        rect.setAttribute('x', parts[0]);
+        rect.setAttribute('y', parts[1]);
+        rect.setAttribute('width', parts[2]);
+        rect.setAttribute('height', parts[3]);
+        svg.appendChild(rect);
+    });
+    toggleBtn.appendChild(svg);
+    var panel = document.getElementById('designs-side-panel');
+    if (panel && panel.classList.contains('open')) toggleBtn.classList.add('active');
+    toggleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleDesignsPanel(order);
+    });
+    container.appendChild(toggleBtn);
+
+    // Render side panel grid if open
+    renderDesignsPanelGrid(order);
+
     // Update generate button state
     updateGenerateButton(order);
 }
+
+function toggleDesignsPanel(order) {
+    var panel = document.getElementById('designs-side-panel');
+    var btn = document.querySelector('.btn-toggle-designs-panel');
+    if (!panel) return;
+
+    panel.classList.toggle('open');
+    if (btn) btn.classList.toggle('active', panel.classList.contains('open'));
+
+    if (panel.classList.contains('open')) {
+        renderDesignsPanelGrid(order);
+    }
+}
+
+function renderDesignsPanelGrid(order) {
+    var grid = document.getElementById('designs-panel-grid');
+    if (!grid) return;
+    grid.textContent = '';
+
+    order.designs.forEach(function(d, i) {
+        var label = d.label || ('D' + (i + 1));
+        var hasImage = !!(d.design_image_url || state.slotImages[d.id]);
+        var imgUrl = d.design_image_url || state.slotImages[d.id] || null;
+        var isSelected = state.selectedSlotId == d.id;
+        var isApproved = d.status === 'aprobado';
+
+        var card = document.createElement('div');
+        card.className = 'design-panel-card' + (isSelected ? ' selected' : '') + (isApproved ? ' approved' : '');
+
+        if (hasImage) {
+            var img = document.createElement('img');
+            img.className = 'panel-card-img';
+            img.src = imgUrl;
+            img.alt = label;
+            card.appendChild(img);
+        } else {
+            var empty = document.createElement('div');
+            empty.className = 'panel-card-empty';
+            empty.textContent = '+';
+            card.appendChild(empty);
+        }
+
+        var footer = document.createElement('div');
+        footer.className = 'panel-card-footer';
+        var labelEl = document.createElement('span');
+        labelEl.className = 'panel-card-label';
+        labelEl.textContent = label;
+        footer.appendChild(labelEl);
+
+        var statusEl = document.createElement('span');
+        statusEl.className = 'panel-card-status st-' + d.status;
+        statusEl.textContent = d.status === 'aprobado' ? '\u2713' : d.status === 'pendiente' ? '...' : d.status.replace('_', ' ');
+        footer.appendChild(statusEl);
+
+        card.appendChild(footer);
+
+        card.addEventListener('click', function() {
+            selectDesignSlot(d.id, order);
+            renderDesignsPanelGrid(order);
+        });
+
+        card.addEventListener('dblclick', function(e) {
+            e.stopPropagation();
+            state.selectedSlotId = d.id;
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.addEventListener('change', function() {
+                if (input.files[0]) uploadDesignToSlot(d.id, input.files[0]);
+            });
+            input.click();
+        });
+
+        grid.appendChild(card);
+    });
+}
+
+// Close designs panel button
+document.addEventListener('DOMContentLoaded', function() {
+    var closeBtn = document.getElementById('designs-panel-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            var panel = document.getElementById('designs-side-panel');
+            var btn = document.querySelector('.btn-toggle-designs-panel');
+            if (panel) panel.classList.remove('open');
+            if (btn) btn.classList.remove('active');
+        });
+    }
+});
 
 function updateDesignTagSelect(order) {
     var select = document.getElementById('design-tag-select');

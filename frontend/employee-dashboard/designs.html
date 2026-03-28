@@ -648,6 +648,160 @@ html, body {
   50% { box-shadow: 0 0 20px rgba(138, 183, 59, 0.6); }
 }
 
+/* ======== DESIGNS SIDE PANEL ======== */
+.designs-side-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100%;
+  background: #fff;
+  border-left: 1px solid #e5e7eb;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.08);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.designs-side-panel.open {
+  transform: translateX(0);
+}
+
+.designs-side-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.designs-side-panel-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.designs-side-panel-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.designs-side-panel-close:hover {
+  color: #e72a88;
+}
+
+.designs-side-panel-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-content: start;
+}
+
+.design-panel-card {
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  background: #f9fafb;
+}
+
+.design-panel-card.selected {
+  border-color: #e72a88;
+  box-shadow: 0 0 0 3px rgba(231, 42, 136, 0.25);
+}
+
+.design-panel-card.approved {
+  border-color: #8ab73b;
+}
+
+.design-panel-card .panel-card-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  background: #f3f4f6;
+}
+
+.design-panel-card .panel-card-empty {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d1d5db;
+  font-size: 28px;
+  background: #f9fafb;
+}
+
+.design-panel-card .panel-card-footer {
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-top: 1px solid #f3f4f6;
+}
+
+.design-panel-card .panel-card-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.design-panel-card .panel-card-status {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.panel-card-status.st-aprobado { background: #8ab73b; }
+.panel-card-status.st-pendiente { background: #9ca3af; }
+.panel-card-status.st-en_progreso { background: #f39223; }
+.panel-card-status.st-en_revision { background: #09adc2; }
+.panel-card-status.st-cambios { background: #e52421; }
+
+/* Toggle button in the strip */
+.btn-toggle-designs-panel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-toggle-designs-panel:hover {
+  color: #e72a88;
+  border-color: #e72a88;
+}
+
+.btn-toggle-designs-panel.active {
+  background: #e72a88;
+  color: #fff;
+  border-color: #e72a88;
+}
+
 .strip-pill-icon {
     font-size: 10px;
 }
@@ -1283,6 +1437,15 @@ if (window.location.search.includes('embedded=1')) {
             <!-- Specs panel (collapsible) -->
             <div class="specs-panel" id="specs-panel">
                 <div class="specs-panel-inner" id="specs-content"></div>
+            </div>
+
+            <!-- Designs side panel (collapsible) -->
+            <div class="designs-side-panel" id="designs-side-panel">
+                <div class="designs-side-panel-header">
+                    <h3>Diseños</h3>
+                    <button class="designs-side-panel-close" id="designs-panel-close">&times;</button>
+                </div>
+                <div class="designs-side-panel-grid" id="designs-panel-grid"></div>
             </div>
 
             <!-- Messages -->
