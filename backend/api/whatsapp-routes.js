@@ -494,23 +494,10 @@ router.post('/webhook', (req, res) => {
         return; // Skip AI — designer owns this conversation
       }
 
-      // Skip AI if client has active orders (not delivered/cancelled)
-      if (!designerHandling && clientId) {
-        try {
-          const activeOrders = await query(
-            `SELECT id FROM orders
-             WHERE client_id = $1 AND status NOT IN ('delivered', 'cancelled')
-             LIMIT 1`,
-            [clientId]
-          );
-          if (activeOrders.rows.length > 0) {
-            console.log(`📦 Client ${clientId} has active orders — AI chatbot disabled`);
-            return;
-          }
-        } catch (orderErr) {
-          console.error('Active order check error:', orderErr.message);
-        }
-      }
+      // Note: Previously AI was disabled for clients with active orders.
+      // Removed because: clients with orders may want to reorder, ask about
+      // new products, or refer others. AI should still respond.
+      // Order status inquiries are handled by the bot's order-status.md rules.
 
       // Skip AI processing if ai_enabled is false for this conversation
       if (aiEnabled === false) {
