@@ -215,7 +215,7 @@ export async function buildConversationHistory(conversationId) {
      FROM whatsapp_messages
      WHERE conversation_id = $1
      ORDER BY created_at ASC
-     LIMIT 20`,
+     LIMIT 40`,
     [conversationId]
   );
 
@@ -654,18 +654,23 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
         })
       ];
 
+      const oaiMsgCount = sanitizedMessages.length;
+      const oaiMaxTokens = oaiMsgCount >= 8 ? 800 : 400;
       const oaiResponse = await oai.chat.completions.create({
         model: currentModel,
-        max_tokens: 300,
+        max_tokens: oaiMaxTokens,
         messages: oaiMessages
       });
       rawReply = oaiResponse.choices[0].message.content;
     } else {
       // Claude API call
       const client = getClient();
+      // Use higher max_tokens when conversation is advanced (more likely to generate orders/quotes)
+      const msgCount = sanitizedMessages.length;
+      const maxTokens = msgCount >= 8 ? 800 : 400;
       const response = await client.messages.create({
         model: currentModel,
-        max_tokens: 300,
+        max_tokens: maxTokens,
         system: systemPrompt,
         messages: sanitizedMessages
       });
