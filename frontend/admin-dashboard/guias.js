@@ -821,8 +821,7 @@ async function checkPrintProxy() {
   return printProxyAvailable;
 }
 
-// Check on load
-checkPrintProxy();
+// Check lazily on first print attempt (avoids CORS console errors on load)
 
 async function printSelectedGuias() {
   var ids = Array.from(guiasSelectedForPrint);
