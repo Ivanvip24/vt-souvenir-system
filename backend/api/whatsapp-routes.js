@@ -494,6 +494,24 @@ router.post('/webhook', (req, res) => {
         return; // Skip AI — designer owns this conversation
       }
 
+      // Skip AI if client has active orders (not delivered/cancelled)
+      if (!designerHandling && clientId) {
+        try {
+          const activeOrders = await query(
+            `SELECT id FROM orders
+             WHERE client_id = $1 AND status NOT IN ('delivered', 'cancelled')
+             LIMIT 1`,
+            [clientId]
+          );
+          if (activeOrders.rows.length > 0) {
+            console.log(`📦 Client ${clientId} has active orders — AI chatbot disabled`);
+            return;
+          }
+        } catch (orderErr) {
+          console.error('Active order check error:', orderErr.message);
+        }
+      }
+
       // Skip AI processing if ai_enabled is false for this conversation
       if (aiEnabled === false) {
         console.log(`🟢 WhatsApp AI disabled for conversation ${conversationId} — skipping auto-reply`);
