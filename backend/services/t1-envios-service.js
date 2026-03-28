@@ -116,6 +116,22 @@ export async function searchProducts(name, page = 1, limit = 20) {
 }
 
 /**
+ * Try to fetch the label PDF URL from T1's shipping detail page
+ * Scrapes the same cdn.t1.com/labels/*.pdf pattern the frontend sync uses
+ */
+export async function getLabelUrl(trackingNumber) {
+  try {
+    const resp = await fetch(`https://t1envios.com/shippings/my-shippings/${encodeURIComponent(trackingNumber)}`);
+    if (!resp.ok) return null;
+    const html = await resp.text();
+    const match = html.match(/cdn\.t1\.com\/labels\/[^"'\s\\]+\.pdf/);
+    return match ? 'https://' + match[0] : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Clear the tracking cache (useful when user wants fresh data)
  */
 export function clearTrackingCache() {
@@ -132,5 +148,6 @@ export default {
   getFullTracking,
   getBulkTracking,
   searchProducts,
+  getLabelUrl,
   clearTrackingCache
 };

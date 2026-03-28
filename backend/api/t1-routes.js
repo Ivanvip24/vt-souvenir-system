@@ -104,6 +104,14 @@ router.post('/tracking/link', async (req, res) => {
       [trackingNumber]
     );
 
+    // Try to fetch label PDF URL from T1
+    let labelUrl = null;
+    try {
+      labelUrl = await t1.getLabelUrl(trackingNumber);
+    } catch (e) {
+      // Non-blocking — label URL is nice-to-have
+    }
+
     let result;
     if (existing.rows.length > 0) {
       // Update existing record
@@ -112,19 +120,20 @@ router.post('/tracking/link', async (req, res) => {
           order_id = COALESCE($1, order_id),
           client_id = COALESCE($2, client_id),
           carrier = COALESCE($3, carrier),
-          tracking_url = $4
+          tracking_url = $4,
+          label_url = COALESCE($6, label_url)
         WHERE id = $5
         RETURNING *
-      `, [orderId || null, clientId || null, carrier || null, trackingUrl, existing.rows[0].id]);
+      `, [orderId || null, clientId || null, carrier || null, trackingUrl, existing.rows[0].id, labelUrl]);
     } else {
       // Insert new record
       result = await query(`
         INSERT INTO shipping_labels (
-          order_id, client_id, tracking_number, tracking_url,
+          order_id, client_id, tracking_number, tracking_url, label_url,
           carrier, carrier_source, status, created_at
-        ) VALUES ($1, $2, $3, $4, $5, 't1', 'label_generated', NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, 't1', 'label_generated', NOW())
         RETURNING *
-      `, [orderId || null, clientId || null, trackingNumber, trackingUrl, carrier || 'unknown']);
+      `, [orderId || null, clientId || null, trackingNumber, trackingUrl, labelUrl, carrier || 'unknown']);
     }
 
     res.json({
@@ -283,6 +292,51 @@ router.post('/sync', async (req, res) => {
   } catch (error) {
     console.error('T1 sync error:', error.message);
     res.status(500).json({ error: 'Failed to sync T1 shipments', details: error.message });
+  }
+});
+
+// ========================================
+// BACKFILL LABEL URLS
+// POST /api/t1/backfill-labels
+// Fetches label PDF URLs for T1 labels that are missing them
+// ========================================
+router.post('/backfill-labels', async (req, res) => {
+  try {
+    const missing = await query(
+      `SELECT id, tracking_number FROM shipping_labels
+       WHERE carrier_source = 't1' AND label_url IS NULL AND status != 'cancelled'
+       ORDER BY created_at DESC LIMIT 50`
+    );
+
+    if (missing.rows.length === 0) {
+      return res.json({ success: true, message: 'All T1 labels have URLs', updated: 0 });
+    }
+
+    let updated = 0;
+    for (const label of missing.rows) {
+      try {
+        const labelUrl = await t1.getLabelUrl(label.tracking_number);
+        if (labelUrl) {
+          await query(
+            `UPDATE shipping_labels SET label_url = $1 WHERE id = $2`,
+            [labelUrl, label.id]
+          );
+          updated++;
+        }
+      } catch (e) {
+        // Skip individual failures
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Backfilled ${updated} of ${missing.rows.length} labels`,
+      updated,
+      total: missing.rows.length
+    });
+  } catch (error) {
+    console.error('T1 backfill error:', error.message);
+    res.status(500).json({ error: 'Failed to backfill labels', details: error.message });
   }
 });
 
