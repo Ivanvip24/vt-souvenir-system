@@ -1480,26 +1480,21 @@ function updateOrderStatusLabel(order) {
 }
 
 function updateGenerateButton(order) {
-    var btn = document.getElementById('btn-generate-order');
-    if (!btn) return;
-
     // Update order status label
     updateOrderStatusLabel(order);
+
+    // Render buttons in the side panel actions area
+    renderPanelActions(order);
+}
+
+function renderPanelActions(order) {
+    var container = document.getElementById('designs-panel-actions');
+    if (!container) return;
+    container.textContent = '';
 
     var allFilled = order.designs.length > 0 && order.designs.every(function(d) {
         return d.design_image_url || state.slotImages[d.id];
     });
-
-    btn.classList.toggle('ready', allFilled);
-    if (allFilled) {
-        btn.onclick = function() { generateOrder(order.order_id); };
-    } else {
-        btn.onclick = null;
-    }
-
-    // Show/hide complete button
-    var completeBtn = document.getElementById('btn-complete-order');
-    if (!completeBtn) return;
 
     var allApproved = order.designs.length > 0 && order.designs.every(function(d) {
         return d.status === 'aprobado' && d.design_image_url;
@@ -1507,18 +1502,33 @@ function updateGenerateButton(order) {
 
     var alreadyCompleted = order.order_status && order.order_status !== 'new' && order.order_status !== 'design' && order.order_status !== 'whatsapp_draft';
 
+    // Completado button
+    var completeBtn = document.createElement('button');
+    completeBtn.className = 'btn-complete-order';
+    completeBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><span></span>';
+    var completeLabel = completeBtn.querySelector('span');
+
     if (alreadyCompleted) {
         completeBtn.classList.add('visible', 'done');
-        document.getElementById('complete-label').textContent = 'Enviado a producción';
-        completeBtn.onclick = null;
+        completeLabel.textContent = 'Enviado a producción';
     } else if (allApproved) {
         completeBtn.classList.add('visible');
-        completeBtn.classList.remove('done');
+        completeLabel.textContent = 'Completado';
         completeBtn.onclick = function() { completeOrder(order.order_id); };
-    } else {
-        completeBtn.classList.remove('visible', 'done');
-        completeBtn.onclick = null;
     }
+
+    if (completeBtn.classList.contains('visible')) {
+        container.appendChild(completeBtn);
+    }
+
+    // Generar button
+    var genBtn = document.createElement('button');
+    genBtn.className = 'btn-generate-order' + (allFilled ? ' ready' : '');
+    genBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>Generar</span>';
+    if (allFilled) {
+        genBtn.onclick = function() { generateOrder(order.order_id); };
+    }
+    container.appendChild(genBtn);
 }
 
 async function completeOrder(orderId) {

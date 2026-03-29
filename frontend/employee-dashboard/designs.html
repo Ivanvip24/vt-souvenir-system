@@ -712,11 +712,20 @@ html, body {
 }
 
 .designs-side-panel-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.designs-side-panel-header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid #e5e7eb;
+}
+
+.designs-side-panel-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .designs-side-panel-header h3 {
@@ -1481,18 +1490,6 @@ if (window.location.search.includes('embedded=1')) {
                         </div>
                     </div>
                     <div class="chat-header-actions">
-                        <button class="btn-complete-order" id="btn-complete-order" title="Marcar diseños como completados">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path d="M5 13l4 4L19 7"/>
-                            </svg>
-                            <span id="complete-label">Completado</span>
-                        </button>
-                        <button class="btn-generate-order" id="btn-generate-order" title="Generar Pedido">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span id="generate-label">Generar</span>
-                        </button>
                         <button class="btn-icon" id="btn-specs" title="Ver especificaciones">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         </button>
@@ -1510,8 +1507,11 @@ if (window.location.search.includes('embedded=1')) {
             <!-- Designs side panel (collapsible) -->
             <div class="designs-side-panel" id="designs-side-panel">
                 <div class="designs-side-panel-header">
-                    <h3>Diseños</h3>
-                    <button class="designs-side-panel-close" id="designs-panel-close">&times;</button>
+                    <div class="designs-side-panel-header-top">
+                        <h3>Diseños</h3>
+                        <button class="designs-side-panel-close" id="designs-panel-close">&times;</button>
+                    </div>
+                    <div class="designs-side-panel-actions" id="designs-panel-actions"></div>
                 </div>
                 <div class="designs-side-panel-grid" id="designs-panel-grid"></div>
             </div>
