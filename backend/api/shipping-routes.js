@@ -723,13 +723,6 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
 
     const order = orderResult.rows[0];
 
-    // Check if order is approved
-    if (order.approval_status !== 'approved') {
-      return res.status(400).json({
-        error: 'El pedido debe estar aprobado para obtener cotizaciones'
-      });
-    }
-
     // Check if labels already generated
     if (parseInt(order.existing_labels) > 0) {
       return res.status(400).json({
@@ -864,15 +857,11 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
 
     const order = orderResult.rows[0];
 
-    if (order.approval_status !== 'approved') {
-      return res.status(400).json({ error: 'El pedido debe estar aprobado' });
-    }
-
     if (parseInt(order.existing_labels) > 0) {
       return res.status(400).json({ error: 'Las guías ya fueron generadas' });
     }
 
-    // Save selected rate to order
+    // Save selected rate to order (allowed before approval — just saves preference)
     await query(`
       UPDATE orders SET
         selected_quotation_id = $1,
