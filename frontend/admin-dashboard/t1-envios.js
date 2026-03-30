@@ -581,10 +581,13 @@ function t1BuildSyncScript() {
     'if(m)s[i].labelUrl="https://"+m[0];' +
     '}catch(e){console.log("Skip label URL for "+s[i].tracking)}' +
     'if(i%5===0)console.log("Progress: "+(i+1)+"/"+s.length)}' +
+    'const withUrl=s.filter(x=>x.labelUrl).length;' +
+    'const noUrl=s.length-withUrl;' +
+    'console.log("Labels con PDF: "+withUrl+", sin PDF: "+noUrl);' +
     'console.log("Syncing to AXKAN...");' +
     'const r=await fetch("' + apiUrl + '",{method:"POST",headers:{"Content-Type":"application/json","X-Sync-Key":"axkan-t1-sync-2026"},body:JSON.stringify({shipments:s})});' +
     'const d=await r.json();console.log("T1 Sync:",d);' +
-    'document.title="SYNC OK: "+d.inserted+" nuevos, "+d.updated+" actualizados"})()';
+    'document.title="SYNC OK: "+d.inserted+" nuevos, "+d.updated+" act | PDF: "+withUrl+"/"+s.length})()';
 }
 
 function t1CopySyncScript() {
