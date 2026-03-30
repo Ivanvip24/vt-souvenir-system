@@ -21,8 +21,8 @@ const state = {
 
 document.addEventListener('DOMContentLoaded', () => {
     // Check authentication
-    const token = localStorage.getItem('employee_token');
-    const employeeData = localStorage.getItem('employee_data');
+    const token = sessionStorage.getItem('employee_token');
+    const employeeData = sessionStorage.getItem('employee_data');
 
     if (!token || !employeeData) {
         window.location.href = 'login.html';
@@ -70,7 +70,7 @@ async function verifyAuth() {
 
         const data = await response.json();
         state.employee = data.employee;
-        localStorage.setItem('employee_data', JSON.stringify(data.employee));
+        sessionStorage.setItem('employee_data', JSON.stringify(data.employee));
         updateEmployeeInfo();
 
     } catch (error) {
@@ -693,7 +693,7 @@ document.getElementById('profile-form')?.addEventListener('submit', async (e) =>
 
         if (data.success) {
             state.employee = data.employee;
-            localStorage.setItem('employee_data', JSON.stringify(data.employee));
+            sessionStorage.setItem('employee_data', JSON.stringify(data.employee));
             updateEmployeeInfo();
             showToast('Perfil actualizado', 'success');
         } else {
@@ -820,8 +820,8 @@ document.getElementById('create-employee-btn')?.addEventListener('click', async 
 
 function logout() {
     if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-        localStorage.removeItem('employee_token');
-        localStorage.removeItem('employee_data');
+        sessionStorage.removeItem('employee_token');
+        sessionStorage.removeItem('employee_data');
         window.location.href = 'login.html';
     }
 }

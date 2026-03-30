@@ -37,8 +37,8 @@ var state = {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    var token = localStorage.getItem('employee_token');
-    var employeeData = localStorage.getItem('employee_data');
+    var token = sessionStorage.getItem('employee_token');
+    var employeeData = sessionStorage.getItem('employee_data');
 
     if (!token || !employeeData) {
         window.location.href = 'login.html';
@@ -66,7 +66,7 @@ async function verifyAuth() {
 
         var data = await response.json();
         state.employee = data.employee;
-        localStorage.setItem('employee_data', JSON.stringify(data.employee));
+        sessionStorage.setItem('employee_data', JSON.stringify(data.employee));
         document.getElementById('designer-name').textContent = state.employee.name;
 
     } catch (error) {
@@ -83,8 +83,8 @@ function getAuthHeaders() {
 }
 
 function logout() {
-    localStorage.removeItem('employee_token');
-    localStorage.removeItem('employee_data');
+    sessionStorage.removeItem('employee_token');
+    sessionStorage.removeItem('employee_data');
     window.location.href = 'login.html';
 }
 

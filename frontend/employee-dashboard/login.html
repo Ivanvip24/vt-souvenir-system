@@ -259,7 +259,7 @@
         const btnLoader = document.getElementById('btn-loader');
 
         // Check if already logged in
-        const token = localStorage.getItem('employee_token');
+        const token = sessionStorage.getItem('employee_token');
         if (token) {
             verifyToken(token);
         }
@@ -275,13 +275,13 @@
                 if (response.ok) {
                     window.location.href = 'index.html';
                 } else {
-                    localStorage.removeItem('employee_token');
-                    localStorage.removeItem('employee_data');
+                    sessionStorage.removeItem('employee_token');
+                    sessionStorage.removeItem('employee_data');
                 }
             } catch (error) {
                 console.error('Error verifying token:', error);
-                localStorage.removeItem('employee_token');
-                localStorage.removeItem('employee_data');
+                sessionStorage.removeItem('employee_token');
+                sessionStorage.removeItem('employee_data');
             }
         }
 
@@ -309,8 +309,8 @@
                 const data = await response.json();
 
                 if (data.success && data.token) {
-                    localStorage.setItem('employee_token', data.token);
-                    localStorage.setItem('employee_data', JSON.stringify(data.employee));
+                    sessionStorage.setItem('employee_token', data.token);
+                    sessionStorage.setItem('employee_data', JSON.stringify(data.employee));
 
                     window.location.href = 'index.html';
                 } else {
