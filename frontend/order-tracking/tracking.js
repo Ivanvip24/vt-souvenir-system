@@ -667,7 +667,10 @@
     }
 
     // ── Shipping Quotes ──────────────────────────────────────
-    async function loadShippingQuotes(orderId) {
+    async function loadShippingQuotes(orderId, attempt) {
+        attempt = attempt || 1;
+        var MAX_ATTEMPTS = 3;
+
         navigateTo('shipping');
 
         // Show destination
@@ -680,11 +683,24 @@
         $('shipping-rates-container').textContent = '';
         $('btn-confirm-shipping').style.display = 'none';
 
+        if (attempt > 1) {
+            var retryMsg = document.createElement('p');
+            retryMsg.style.cssText = 'text-align:center;color:var(--text-muted);font-size:0.85rem;margin-top:8px;';
+            retryMsg.textContent = 'Cargando mas opciones... (intento ' + attempt + '/' + MAX_ATTEMPTS + ')';
+            $('shipping-rates-container').appendChild(retryMsg);
+        }
+
         try {
             var res = await fetch(SHIPPING_API + '/orders/' + orderId + '/quotes');
             var data = await res.json();
 
             if (!data.success || !data.rates || data.rates.length === 0) {
+                // Auto-retry if no rates and we have attempts left
+                if (attempt < MAX_ATTEMPTS) {
+                    await new Promise(function(r) { setTimeout(r, 2000); });
+                    return loadShippingQuotes(orderId, attempt + 1);
+                }
+
                 var emptyDiv = document.createElement('div');
                 emptyDiv.className = 'empty-state';
                 var eIcon = document.createElement('div');
@@ -697,17 +713,42 @@
                 emptyDiv.appendChild(eIcon);
                 emptyDiv.appendChild(eTitle);
                 emptyDiv.appendChild(eDesc);
+
+                var retryBtn = document.createElement('button');
+                retryBtn.className = 'btn-shipping';
+                retryBtn.style.marginTop = '16px';
+                retryBtn.textContent = '🔄 Intentar de nuevo';
+                retryBtn.addEventListener('click', function() {
+                    loadShippingQuotes(orderId, 1);
+                });
+                emptyDiv.appendChild(retryBtn);
+
+                $('shipping-rates-container').textContent = '';
                 $('shipping-rates-container').appendChild(emptyDiv);
                 $('shipping-loading').style.display = 'none';
                 return;
             }
 
+            // If we got few rates, auto-retry for more (Skydropx sometimes returns partial)
+            if (data.rates.length < 3 && attempt < MAX_ATTEMPTS) {
+                await new Promise(function(r) { setTimeout(r, 2000); });
+                return loadShippingQuotes(orderId, attempt + 1);
+            }
+
             state.shippingQuotationId = data.quotation_id;
 
+            $('shipping-rates-container').textContent = '';
             renderShippingRates(data.rates, data.previousSelection);
 
         } catch (err) {
             console.error('Shipping quotes error:', err);
+
+            // Auto-retry on network error
+            if (attempt < MAX_ATTEMPTS) {
+                await new Promise(function(r) { setTimeout(r, 2000); });
+                return loadShippingQuotes(orderId, attempt + 1);
+            }
+
             var errDiv = document.createElement('div');
             errDiv.className = 'empty-state';
             var errIcon = document.createElement('div');
@@ -716,10 +757,21 @@
             var errTitle = document.createElement('h3');
             errTitle.textContent = 'Error de conexion';
             var errDesc = document.createElement('p');
-            errDesc.textContent = 'No pudimos cargar las opciones de envio. Intenta de nuevo.';
+            errDesc.textContent = 'No pudimos cargar las opciones de envio.';
             errDiv.appendChild(errIcon);
             errDiv.appendChild(errTitle);
             errDiv.appendChild(errDesc);
+
+            var retryBtn = document.createElement('button');
+            retryBtn.className = 'btn-shipping';
+            retryBtn.style.marginTop = '16px';
+            retryBtn.textContent = '🔄 Intentar de nuevo';
+            retryBtn.addEventListener('click', function() {
+                loadShippingQuotes(orderId, 1);
+            });
+            errDiv.appendChild(retryBtn);
+
+            $('shipping-rates-container').textContent = '';
             $('shipping-rates-container').appendChild(errDiv);
         }
 
