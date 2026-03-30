@@ -9,35 +9,82 @@
     font-display: swap;
 }
 
+/* ═══════════════════════════════════════
+   THEME: Change --theme to "light" or "dark"
+   All colors below adapt automatically.
+   ═══════════════════════════════════════ */
 :root {
     color-scheme: light;
 
+    /* Brand */
     --rosa: #e72a88;
-    --rosa-glow: rgba(231, 42, 136, 0.25);
+    --rosa-glow: rgba(231, 42, 136, 0.15);
     --verde: #8ab73b;
     --naranja: #f39223;
     --turquesa: #09adc2;
     --rojo: #e52421;
-
-    --gray-400: #9ca3af;
-    --gray-500: #6b7280;
-    --gray-600: #4b5563;
-    --gray-800: #1f2937;
-    --gray-900: #111827;
-
     --success: #10b981;
     --error: #ef4444;
     --warning: #f59e0b;
 
+    /* ── Light theme tokens ── */
+    --bg-page: #fafafa;
+    --bg-gradient-1: #fafafa;
+    --bg-gradient-2: #f5f0f8;
+    --bg-gradient-3: #f0f7fa;
+    --bg-card: rgba(255,255,255,0.75);
+    --bg-card-solid: rgba(255,255,255,0.95);
+    --bg-subtle: rgba(0,0,0,0.02);
+    --bg-muted: rgba(0,0,0,0.03);
+    --bg-hover: rgba(0,0,0,0.04);
+    --border-light: rgba(0,0,0,0.06);
+    --border-medium: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.12);
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #6b7280;
+    --text-faint: #9ca3af;
+    --text-on-accent: #ffffff;
+    --orb-opacity: var(--orb-opacity);
+    --orb-blur: 100px;
+    --shadow-card: 0 4px 24px rgba(0,0,0,0.04);
+    --spinner-track: rgba(0,0,0,0.06);
+
+    /* Status badges - light */
+    --badge-new-bg: rgba(59,130,246,0.1);
+    --badge-new-color: #2563eb;
+    --badge-new-border: rgba(59,130,246,0.2);
+    --badge-design-bg: rgba(168,85,247,0.1);
+    --badge-design-color: #7c3aed;
+    --badge-design-border: rgba(168,85,247,0.2);
+    --badge-prod-bg: rgba(245,158,11,0.1);
+    --badge-prod-color: #b45309;
+    --badge-prod-border: rgba(245,158,11,0.2);
+    --badge-ship-bg: rgba(6,182,212,0.1);
+    --badge-ship-color: #0891b2;
+    --badge-ship-border: rgba(6,182,212,0.2);
+    --badge-ok-bg: rgba(16,185,129,0.1);
+    --badge-ok-color: #059669;
+    --badge-ok-border: rgba(16,185,129,0.2);
+    --badge-pending-bg: rgba(0,0,0,0.05);
+    --badge-pending-color: #6b7280;
+    --badge-pending-border: rgba(0,0,0,0.1);
+    --badge-cancel-bg: rgba(239,68,68,0.1);
+    --badge-cancel-color: #dc2626;
+    --badge-cancel-border: rgba(239,68,68,0.2);
+
+    /* Fonts */
     --font-display: 'RL Aqva', sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
+    /* Radii */
     --radius-sm: 10px;
     --radius-md: 16px;
     --radius-lg: 24px;
     --radius-xl: 32px;
     --radius-full: 100px;
 
+    /* Easing */
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
@@ -48,8 +95,8 @@ html { scroll-behavior: smooth; }
 
 body {
     font-family: var(--font-body);
-    background: #fafafa;
-    color: #111827;
+    background: var(--bg-page);
+    color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
     min-height: 100dvh;
@@ -73,17 +120,17 @@ body {
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg,
-        #fafafa 0%, #f5f0f8 25%,
-        #fafafa 50%, #f0f7fa 75%,
-        #fafafa 100%
+        var(--bg-gradient-1) 0%, var(--bg-gradient-2) 25%,
+        var(--bg-gradient-1) 50%, var(--bg-gradient-3) 75%,
+        var(--bg-gradient-1) 100%
     );
 }
 
 .bg-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.06;
+    filter: blur(var(--orb-blur));
+    opacity: var(--orb-opacity);
     will-change: transform;
     contain: strict;
 }
@@ -231,13 +278,13 @@ body {
     font-family: var(--font-display);
     font-size: clamp(2rem, 7vw, 2.5rem);
     font-weight: 700;
-    color: var(--gray-900);
+    color: var(--text-primary);
     margin-bottom: 0.35rem;
 }
 
 .form-subtitle {
     font-size: 0.95rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
 }
 
 /* Entrance animations */
@@ -258,10 +305,10 @@ body {
    ═══════════════════════════════════════ */
 
 .form-card {
-    background: rgba(255,255,255,0.75);
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(0,0,0,0.06);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     padding: 28px 24px;
     display: flex;
@@ -276,7 +323,7 @@ body {
 .lookup-tabs {
     display: flex;
     gap: 4px;
-    background: rgba(0,0,0,0.04);
+    background: var(--bg-hover);
     border-radius: var(--radius-full);
     padding: 4px;
 }
@@ -291,7 +338,7 @@ body {
     font-family: var(--font-body);
     font-size: 0.82rem;
     font-weight: 600;
-    color: var(--gray-500);
+    color: var(--text-muted);
     background: transparent;
     border: none;
     border-radius: var(--radius-full);
@@ -322,7 +369,7 @@ body {
 
 .verify-hint {
     font-size: 0.78rem;
-    color: var(--gray-400);
+    color: var(--text-faint);
     text-align: center;
     margin: -4px 0;
 }
@@ -342,12 +389,12 @@ body {
     gap: 8px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--gray-800);
+    color: var(--text-secondary);
     margin-bottom: 8px;
 }
 
 .field-label svg {
-    color: var(--gray-400);
+    color: var(--text-faint);
     flex-shrink: 0;
 }
 
@@ -356,9 +403,9 @@ body {
     padding: 14px 16px;
     font-family: var(--font-body);
     font-size: 1rem;
-    color: var(--gray-900);
-    background: rgba(0,0,0,0.03);
-    border: 1.5px solid rgba(0,0,0,0.1);
+    color: var(--text-primary);
+    background: var(--bg-muted);
+    border: 1.5px solid var(--border-medium);
     border-radius: var(--radius-md);
     outline: none;
     transition: all 0.3s var(--ease-smooth);
@@ -366,12 +413,12 @@ body {
 }
 
 .field-input::placeholder {
-    color: var(--gray-400);
+    color: var(--text-faint);
 }
 
 .field-input:hover {
     border-color: rgba(0,0,0,0.18);
-    background: rgba(0,0,0,0.04);
+    background: var(--bg-hover);
 }
 
 .field-input:focus {
@@ -417,7 +464,7 @@ body {
     width: 100%;
     padding: 16px;
     background: var(--rosa);
-    color: var(--gray-900);
+    color: var(--text-primary);
     font-family: var(--font-display);
     font-size: 1.05rem;
     font-weight: 600;
@@ -473,7 +520,7 @@ body {
 .lookup-loading p,
 .shipping-loading p,
 .shipping-confirm-loading p {
-    color: var(--gray-500);
+    color: var(--text-muted);
     font-size: 0.9rem;
     margin-top: 12px;
 }
@@ -493,7 +540,7 @@ body {
 .spinner-ring {
     position: absolute;
     inset: 0;
-    border: 3px solid rgba(0,0,0,0.06);
+    border: 3px solid var(--spinner-track);
     border-top-color: var(--rosa);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -526,7 +573,7 @@ body {
     padding: 10px 0;
     background: transparent;
     border: none;
-    color: var(--gray-500);
+    color: var(--text-muted);
     font-family: var(--font-body);
     font-size: 0.9rem;
     font-weight: 500;
@@ -555,13 +602,13 @@ body {
     font-family: var(--font-display);
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--gray-900);
+    color: var(--text-primary);
     margin-bottom: 4px;
 }
 
 .results-welcome p {
     font-size: 0.85rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
 }
 
 /* ═══════════════════════════════════════
@@ -569,10 +616,10 @@ body {
    ═══════════════════════════════════════ */
 
 .order-card {
-    background: rgba(255,255,255,0.75);
+    background: var(--bg-card);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(0,0,0,0.06);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     padding: 24px;
     margin-bottom: 16px;
@@ -601,7 +648,7 @@ body {
 
 .order-date {
     font-size: 0.78rem;
-    color: var(--gray-400);
+    color: var(--text-faint);
     margin-top: 2px;
 }
 
@@ -619,51 +666,51 @@ body {
 }
 
 .status-badge--new {
-    background: rgba(59,130,246,0.15);
-    color: #60a5fa;
-    border: 1px solid rgba(59,130,246,0.2);
+    background: var(--badge-new-bg);
+    color: var(--badge-new-color);
+    border: 1px solid var(--badge-new-border);
 }
 
 .status-badge--design {
-    background: rgba(168,85,247,0.15);
-    color: #c084fc;
-    border: 1px solid rgba(168,85,247,0.2);
+    background: var(--badge-design-bg);
+    color: var(--badge-design-color);
+    border: 1px solid var(--badge-design-border);
 }
 
 .status-badge--production {
-    background: rgba(245,158,11,0.15);
-    color: #fbbf24;
-    border: 1px solid rgba(245,158,11,0.2);
+    background: var(--badge-prod-bg);
+    color: var(--badge-prod-color);
+    border: 1px solid var(--badge-prod-border);
 }
 
 .status-badge--shipping {
-    background: rgba(6,182,212,0.15);
-    color: #22d3ee;
-    border: 1px solid rgba(6,182,212,0.2);
+    background: var(--badge-ship-bg);
+    color: var(--badge-ship-color);
+    border: 1px solid var(--badge-ship-border);
 }
 
 .status-badge--delivered {
-    background: rgba(16,185,129,0.15);
-    color: #34d399;
-    border: 1px solid rgba(16,185,129,0.2);
+    background: var(--badge-ok-bg);
+    color: var(--badge-ok-color);
+    border: 1px solid var(--badge-ok-border);
 }
 
 .status-badge--pending {
     background: rgba(0,0,0,0.06);
-    color: var(--gray-500);
+    color: var(--text-muted);
     border: 1px solid rgba(0,0,0,0.1);
 }
 
 .status-badge--approved {
-    background: rgba(16,185,129,0.15);
-    color: #34d399;
-    border: 1px solid rgba(16,185,129,0.2);
+    background: var(--badge-ok-bg);
+    color: var(--badge-ok-color);
+    border: 1px solid var(--badge-ok-border);
 }
 
 .status-badge--cancelled {
-    background: rgba(239,68,68,0.15);
-    color: #f87171;
-    border: 1px solid rgba(239,68,68,0.2);
+    background: var(--badge-cancel-bg);
+    color: var(--badge-cancel-color);
+    border: 1px solid var(--badge-cancel-border);
 }
 
 /* Order items list */
@@ -671,8 +718,8 @@ body {
     list-style: none;
     margin: 16px 0;
     padding: 16px 0;
-    border-top: 1px solid rgba(0,0,0,0.06);
-    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
 }
 
 .order-item {
@@ -683,11 +730,11 @@ body {
 }
 
 .order-item-name {
-    color: var(--gray-800);
+    color: var(--text-secondary);
 }
 
 .order-item-qty {
-    color: var(--gray-500);
+    color: var(--text-muted);
     font-size: 0.82rem;
 }
 
@@ -706,11 +753,11 @@ body {
 }
 
 .order-total-row span:first-child {
-    color: var(--gray-500);
+    color: var(--text-muted);
 }
 
 .order-total-row span:last-child {
-    color: var(--gray-800);
+    color: var(--text-secondary);
     font-weight: 600;
 }
 
@@ -728,8 +775,8 @@ body {
    ═══════════════════════════════════════ */
 
 .order-action {
-    background: rgba(0,0,0,0.02);
-    border: 1px solid rgba(0,0,0,0.06);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     padding: 16px;
     margin-top: 12px;
@@ -742,7 +789,7 @@ body {
     font-family: var(--font-display);
     font-size: 0.95rem;
     font-weight: 600;
-    color: var(--gray-900);
+    color: var(--text-primary);
     margin-bottom: 10px;
 }
 
@@ -752,7 +799,7 @@ body {
 
 /* Upload receipt section */
 .upload-area {
-    border: 2px dashed rgba(0,0,0,0.1);
+    border: 2px dashed var(--border-medium);
     border-radius: var(--radius-md);
     padding: 24px;
     text-align: center;
@@ -776,7 +823,7 @@ body {
 
 .upload-area-text {
     font-size: 0.9rem;
-    color: var(--gray-600);
+    color: var(--text-secondary);
     margin-bottom: 4px;
 }
 
@@ -815,7 +862,7 @@ body {
 
 .upload-preview-size {
     font-size: 0.75rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
 }
 
 .btn-upload-submit {
@@ -823,7 +870,7 @@ body {
     padding: 12px;
     margin-top: 12px;
     background: linear-gradient(135deg, var(--verde), #6d9e2a);
-    color: var(--gray-900);
+    color: var(--text-primary);
     font-family: var(--font-display);
     font-size: 0.95rem;
     font-weight: 600;
@@ -881,7 +928,7 @@ body {
 .balance-banner-label {
     font-size: 0.88rem;
     font-weight: 600;
-    color: var(--gray-800);
+    color: var(--text-secondary);
 }
 
 .balance-banner-amount {
@@ -928,7 +975,7 @@ body {
     width: 26px;
     height: 26px;
     background: var(--rosa);
-    color: var(--gray-900);
+    color: var(--text-primary);
     font-family: var(--font-display);
     font-size: 0.82rem;
     font-weight: 700;
@@ -940,7 +987,7 @@ body {
     font-family: var(--font-display);
     font-size: 1rem;
     font-weight: 700;
-    color: var(--gray-900);
+    color: var(--text-primary);
 }
 
 /* ═══════════════════════════════════════
@@ -948,8 +995,8 @@ body {
    ═══════════════════════════════════════ */
 
 .payment-info {
-    background: rgba(0,0,0,0.02);
-    border: 1px solid rgba(0,0,0,0.06);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     padding: 20px;
     margin-top: 12px;
@@ -957,7 +1004,7 @@ body {
 
 .payment-info-subtitle {
     font-size: 0.82rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
     margin-bottom: 14px;
     line-height: 1.4;
 }
@@ -965,7 +1012,7 @@ body {
 .payment-option-label {
     font-size: 0.78rem;
     font-weight: 700;
-    color: var(--gray-500);
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 8px;
@@ -973,8 +1020,8 @@ body {
 }
 
 .payment-method {
-    background: rgba(0,0,0,0.02);
-    border: 1px solid rgba(0,0,0,0.06);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     padding: 14px;
     margin-bottom: 16px;
@@ -995,7 +1042,7 @@ body {
 
 .payment-detail-label {
     font-size: 0.78rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
     min-width: 72px;
     flex-shrink: 0;
 }
@@ -1003,7 +1050,7 @@ body {
 .payment-detail-value {
     font-size: 0.92rem;
     font-weight: 600;
-    color: var(--gray-900);
+    color: var(--text-primary);
     flex: 1;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.04em;
@@ -1043,7 +1090,7 @@ body {
     width: 100%;
     padding: 14px;
     background: linear-gradient(135deg, #635bff, #7a73ff);
-    color: var(--gray-900);
+    color: var(--text-primary);
     font-family: var(--font-display);
     font-size: 1rem;
     font-weight: 600;
@@ -1112,7 +1159,7 @@ body {
 
 .tracking-info-label {
     font-size: 0.78rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
 }
 
 .tracking-info-number {
@@ -1164,7 +1211,7 @@ body {
 
 .shipping-selected-details {
     font-size: 0.78rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
 }
 
 /* ═══════════════════════════════════════
@@ -1172,7 +1219,7 @@ body {
    ═══════════════════════════════════════ */
 
 .shipping-rate-card {
-    background: rgba(0,0,0,0.03);
+    background: var(--bg-muted);
     border: 1.5px solid rgba(0,0,0,0.06);
     border-radius: var(--radius-md);
     padding: 16px;
@@ -1187,7 +1234,7 @@ body {
 
 .shipping-rate-card:hover {
     background: rgba(0,0,0,0.06);
-    border-color: rgba(0,0,0,0.1);
+    border-color: var(--border-medium);
 }
 
 .shipping-rate-card.selected {
@@ -1200,7 +1247,7 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    border: 2px solid rgba(0,0,0,0.12);
+    border: 2px solid var(--border-strong);
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -1228,13 +1275,13 @@ body {
 .shipping-rate-carrier {
     font-weight: 600;
     font-size: 0.95rem;
-    color: var(--gray-900);
+    color: var(--text-primary);
     margin-bottom: 2px;
 }
 
 .shipping-rate-service {
     font-size: 0.82rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
 }
 
 .shipping-rate-meta {
@@ -1274,7 +1321,7 @@ body {
     padding: 16px;
     margin-top: 16px;
     background: linear-gradient(135deg, var(--turquesa), #0891b2);
-    color: var(--gray-900);
+    color: var(--text-primary);
     font-family: var(--font-display);
     font-size: 1.05rem;
     font-weight: 600;
@@ -1313,13 +1360,13 @@ body {
 .empty-state h3 {
     font-family: var(--font-display);
     font-size: 1.25rem;
-    color: var(--gray-900);
+    color: var(--text-primary);
     margin-bottom: 8px;
 }
 
 .empty-state p {
     font-size: 0.9rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
     margin-bottom: 20px;
 }
 
@@ -1329,7 +1376,7 @@ body {
     gap: 8px;
     padding: 14px 28px;
     background: var(--rosa);
-    color: var(--gray-900);
+    color: var(--text-primary);
     font-family: var(--font-display);
     font-size: 1rem;
     font-weight: 600;
@@ -1371,13 +1418,13 @@ body {
 
 .toast--success {
     background: var(--verde);
-    color: var(--gray-900);
+    color: var(--text-primary);
     box-shadow: 0 8px 24px rgba(138,183,59,0.4);
 }
 
 .toast--error {
     background: var(--error);
-    color: var(--gray-900);
+    color: var(--text-primary);
     box-shadow: 0 8px 24px rgba(239,68,68,0.4);
 }
 
@@ -1469,261 +1516,14 @@ input:focus:not(:focus-visible) {
 }
 
 /* ═══════════════════════════════════════
-   LIGHT MODE
+   MOBILE: Disable backdrop-filter for perf
    ═══════════════════════════════════════ */
 
-@media (prefers-color-scheme: light) {
-    body { background: #fafafa; color: #1a1a1a; }
-
-    .bg-gradient {
-        background: linear-gradient(135deg,
-            #fafafa 0%, #f5f0f8 25%,
-            #fafafa 50%, #f0f7fa 75%,
-            #fafafa 100%
-        );
-    }
-
-    .bg-orb { opacity: 0.08; filter: blur(100px); }
-
-    .topbar-logo img {
-        filter: drop-shadow(0 2px 8px rgba(0,0,0,0.08));
-    }
-
-    .form-title { color: var(--gray-900); }
-    .form-subtitle { color: var(--gray-500); }
-
-    .form-card {
-        background: rgba(255,255,255,0.75);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-color: rgba(0,0,0,0.06);
-        box-shadow: 0 4px 24px rgba(0,0,0,0.04);
-    }
-
-    .lookup-tabs { background: rgba(0,0,0,0.04); }
-
-    .lookup-tab { color: var(--gray-500); }
-    .lookup-tab.active {
-        background: rgba(231,42,136,0.1);
-        color: var(--rosa);
-    }
-
-    .field-label { color: var(--gray-800); }
-    .field-label svg { color: var(--gray-400); }
-    .verify-hint { color: var(--gray-400); }
-
-    .field-input {
-        color: var(--gray-900);
-        background: rgba(0,0,0,0.03);
-        border-color: rgba(0,0,0,0.1);
-    }
-    .field-input::placeholder { color: var(--gray-400); }
-    .field-input:hover {
-        border-color: rgba(0,0,0,0.18);
-        background: rgba(0,0,0,0.04);
-    }
-    .field-input:focus {
-        border-color: var(--rosa);
-        background: rgba(231,42,136,0.03);
-        box-shadow: 0 0 0 3px rgba(231,42,136,0.08);
-    }
-
-    .btn-lookup {
-        box-shadow: 0 4px 20px rgba(231,42,136,0.2);
-    }
-
-    .btn-back-link { color: var(--gray-500); }
-    .btn-back-link:hover { color: var(--rosa); }
-
-    .results-welcome h2 { color: var(--gray-900); }
-    .results-welcome p { color: var(--gray-500); }
-
-    .order-card {
-        background: rgba(255,255,255,0.75);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-color: rgba(0,0,0,0.06);
-        box-shadow: 0 4px 24px rgba(0,0,0,0.04);
-    }
-
-    .order-number { color: var(--rosa); }
-    .order-date { color: var(--gray-400); }
-
-    .order-items { border-color: rgba(0,0,0,0.06); }
-    .order-item-name { color: var(--gray-800); }
-    .order-item-qty { color: var(--gray-500); }
-
-    .order-total-row span:first-child { color: var(--gray-500); }
-    .order-total-row span:last-child { color: var(--gray-800); }
-
-    .order-action {
-        background: rgba(0,0,0,0.02);
-        border-color: rgba(0,0,0,0.06);
-    }
-    .order-action-title { color: var(--gray-900); }
-
-    .upload-area {
-        border-color: rgba(0,0,0,0.12);
-    }
-    .upload-area:hover {
-        border-color: var(--rosa);
-        background: rgba(231,42,136,0.02);
-    }
-    .upload-area-text { color: var(--gray-600); }
-    .upload-area-hint { color: var(--gray-400); }
-
-    .shipping-rate-card {
-        background: rgba(0,0,0,0.02);
-        border-color: rgba(0,0,0,0.08);
-    }
-    .shipping-rate-card:hover {
-        background: rgba(0,0,0,0.04);
-        border-color: rgba(0,0,0,0.12);
-    }
-    .shipping-rate-card.selected {
-        background: rgba(9,173,194,0.05);
-        border-color: var(--turquesa);
-    }
-    .shipping-rate-radio { border-color: rgba(0,0,0,0.15); }
-    .shipping-rate-carrier { color: var(--gray-900); }
-    .shipping-rate-service { color: var(--gray-500); }
-
-    .empty-state h3 { color: var(--gray-900); }
-    .empty-state p { color: var(--gray-500); }
-
-    .footer-links a { color: var(--gray-400); }
-    .footer-dot { background: rgba(0,0,0,0.12); }
-
-    .lookup-loading p,
-    .shipping-loading p,
-    .shipping-confirm-loading p { color: var(--gray-500); }
-
-    .spinner-ring {
-        border-color: rgba(0,0,0,0.06);
-        border-top-color: var(--rosa);
-    }
-
-    .tracking-info {
-        background: rgba(6,182,212,0.05);
-        border-color: rgba(6,182,212,0.15);
-    }
-    .tracking-info-label { color: var(--gray-500); }
-
-    .pickup-badge {
-        background: rgba(138,183,59,0.08);
-        border-color: rgba(138,183,59,0.15);
-    }
-
-    .shipping-selected-badge {
-        background: rgba(9,173,194,0.05);
-        border-color: rgba(9,173,194,0.1);
-    }
-    .shipping-selected-details { color: var(--gray-500); }
-
-    .upload-preview {
-        background: rgba(16,185,129,0.05);
-        border-color: rgba(16,185,129,0.15);
-    }
-    .upload-preview-size { color: var(--gray-500); }
-
-    .upload-success {
-        background: rgba(16,185,129,0.06);
-        border-color: rgba(16,185,129,0.15);
-    }
-
-    /* Balance banner light mode */
-    .balance-banner {
-        background: linear-gradient(135deg, rgba(231,42,136,0.08), rgba(231,42,136,0.03));
-        border-color: rgba(231,42,136,0.2);
-    }
-    .balance-banner-label { color: var(--gray-600); }
-
-    .payment-complete-banner {
-        background: rgba(16,185,129,0.06);
-        border-color: rgba(16,185,129,0.2);
-    }
-
-    /* Step indicators light mode */
-    .step-title { color: var(--gray-900); }
-
-    /* Payment info light mode */
-    .payment-info {
-        background: rgba(0,0,0,0.02);
-        border-color: rgba(0,0,0,0.06);
-    }
-    .payment-info-subtitle { color: var(--gray-500); }
-    .payment-option-label { color: var(--gray-500); }
-    .payment-method {
-        background: rgba(0,0,0,0.02);
-        border-color: rgba(0,0,0,0.06);
-    }
-    .payment-detail-row { border-color: rgba(0,0,0,0.04); }
-    .payment-detail-label { color: var(--gray-500); }
-    .payment-detail-value { color: var(--gray-900); }
-    .btn-copy-detail {
-        color: var(--turquesa);
-        background: rgba(9,173,194,0.06);
-        border-color: rgba(9,173,194,0.15);
-    }
-
-    /* Status badges — darker text for light bg */
-    .status-badge--new {
-        background: rgba(59,130,246,0.1);
-        color: #2563eb;
-        border-color: rgba(59,130,246,0.2);
-    }
-    .status-badge--design {
-        background: rgba(168,85,247,0.1);
-        color: #7c3aed;
-        border-color: rgba(168,85,247,0.2);
-    }
-    .status-badge--production {
-        background: rgba(245,158,11,0.1);
-        color: #b45309;
-        border-color: rgba(245,158,11,0.2);
-    }
-    .status-badge--shipping {
-        background: rgba(6,182,212,0.1);
-        color: #0891b2;
-        border-color: rgba(6,182,212,0.2);
-    }
-    .status-badge--delivered,
-    .status-badge--approved {
-        background: rgba(16,185,129,0.1);
-        color: #059669;
-        border-color: rgba(16,185,129,0.2);
-    }
-    .status-badge--pending {
-        background: rgba(0,0,0,0.05);
-        color: var(--gray-500);
-        border-color: rgba(0,0,0,0.1);
-    }
-    .status-badge--cancelled {
-        background: rgba(239,68,68,0.1);
-        color: #dc2626;
-        border-color: rgba(239,68,68,0.2);
-    }
-
-    /* Order items light */
-    .order-items { border-color: rgba(0,0,0,0.06); }
-    .order-item-name { color: var(--gray-800); }
-    .order-item-qty { color: var(--gray-500); }
-
-    /* Btn stripe */
-    .btn-stripe-pay {
-        background: linear-gradient(135deg, #635bff, #7c3aed);
-    }
-
-    /* Order date */
-    .order-date { color: var(--gray-400); }
-}
-
-/* Light + Mobile */
-@media (prefers-color-scheme: light) and (max-width: 480px) {
+@media (max-width: 480px) {
     .form-card,
     .order-card {
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
-        background: rgba(255,255,255,0.95);
+        background: var(--bg-card-solid);
     }
 }
