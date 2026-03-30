@@ -2169,9 +2169,15 @@ body {
 
 .category-tabs {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     padding: 0 16px 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.category-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .category-pill {

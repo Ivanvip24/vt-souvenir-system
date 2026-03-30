@@ -342,6 +342,37 @@
             // Step 2: Upload receipt (always show when there's balance)
             var uploadSection = createUploadSection(order.orderId);
             card.appendChild(uploadSection);
+
+            // Step 3: Choose carrier (hidden until receipt uploaded, only for non-pickup)
+            if (!order.isStorePickup && !order.allLabelsGenerated) {
+                var shippingStep = document.createElement('div');
+                shippingStep.className = 'order-action';
+                shippingStep.id = 'shipping-step-' + order.orderId;
+                shippingStep.style.display = 'none';
+
+                var shipStepHeader = document.createElement('div');
+                shipStepHeader.className = 'step-header';
+                var shipStepNum = document.createElement('span');
+                shipStepNum.className = 'step-number';
+                shipStepNum.textContent = '3';
+                var shipStepTitle = document.createElement('span');
+                shipStepTitle.className = 'step-title';
+                shipStepTitle.textContent = 'Elige tu paqueteria';
+                shipStepHeader.appendChild(shipStepNum);
+                shipStepHeader.appendChild(shipStepTitle);
+                shippingStep.appendChild(shipStepHeader);
+
+                var shippingBtn = document.createElement('button');
+                shippingBtn.className = 'btn-shipping';
+                shippingBtn.style.marginTop = '12px';
+                shippingBtn.textContent = '🚚 Ver Opciones de Envio';
+                shippingBtn.addEventListener('click', function() {
+                    state.currentOrderId = order.orderId;
+                    loadShippingQuotes(order.orderId);
+                });
+                shippingStep.appendChild(shippingBtn);
+                card.appendChild(shippingStep);
+            }
         }
 
         // Show if second payment already received
@@ -350,24 +381,43 @@
             successDiv.className = 'payment-complete-banner';
             successDiv.textContent = '✅ Pago completo — Comprobante recibido';
             card.appendChild(successDiv);
+
+            // Show Step 3 shipping if payment done but no label yet
+            if (!order.isStorePickup && !order.allLabelsGenerated) {
+                var shippingStep = document.createElement('div');
+                shippingStep.className = 'order-action';
+
+                var shipStepHeader = document.createElement('div');
+                shipStepHeader.className = 'step-header';
+                var shipStepNum = document.createElement('span');
+                shipStepNum.className = 'step-number';
+                shipStepNum.textContent = '3';
+                var shipStepTitle = document.createElement('span');
+                shipStepTitle.className = 'step-title';
+                shipStepTitle.textContent = 'Elige tu paqueteria';
+                shipStepHeader.appendChild(shipStepNum);
+                shipStepHeader.appendChild(shipStepTitle);
+                shippingStep.appendChild(shipStepHeader);
+
+                var shippingBtn = document.createElement('button');
+                shippingBtn.className = 'btn-shipping';
+                shippingBtn.style.marginTop = '12px';
+                shippingBtn.textContent = '🚚 Ver Opciones de Envio';
+                shippingBtn.addEventListener('click', function() {
+                    state.currentOrderId = order.orderId;
+                    loadShippingQuotes(order.orderId);
+                });
+                shippingStep.appendChild(shippingBtn);
+                card.appendChild(shippingStep);
+            }
         }
 
-        // Action: Shipping
+        // Store pickup badge
         if (order.isStorePickup) {
             var pickupDiv = document.createElement('div');
             pickupDiv.className = 'pickup-badge';
             pickupDiv.textContent = '🏪 Recoger en tienda';
             card.appendChild(pickupDiv);
-        } else if (order.approvalStatus === 'approved' && !order.allLabelsGenerated) {
-            var shippingBtn = document.createElement('button');
-            shippingBtn.className = 'btn-shipping';
-            shippingBtn.dataset.orderId = order.orderId;
-            shippingBtn.textContent = '🚚 Ver Opciones de Envio';
-            shippingBtn.addEventListener('click', function() {
-                state.currentOrderId = order.orderId;
-                loadShippingQuotes(order.orderId);
-            });
-            card.appendChild(shippingBtn);
         }
 
         // Show tracking info if shipped
@@ -598,6 +648,13 @@
 
             // Hide upload area
             if (uploadArea) uploadArea.style.display = 'none';
+
+            // Reveal Step 3: Shipping selection
+            var shippingStep = document.getElementById('shipping-step-' + orderId);
+            if (shippingStep) {
+                shippingStep.style.display = '';
+                shippingStep.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
 
             showToast('Comprobante enviado correctamente', 'success');
 
