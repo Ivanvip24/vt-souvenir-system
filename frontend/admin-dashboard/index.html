@@ -3019,5 +3019,11 @@
         </div>
     </div>
 </div>
+<script>
+// Move ALL modals to body root so position:fixed works correctly
+document.querySelectorAll('.content-area .modal').forEach(function(m) {
+    document.body.appendChild(m);
+});
+</script>
 </body>
 </html>
