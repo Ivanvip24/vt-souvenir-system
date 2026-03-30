@@ -617,7 +617,9 @@ function dlShowSourcePrompt(type) {
     <div class="dl-source-box">
       <div class="dl-source-title-row">
         <span class="dl-source-title">+ </span>
+        <button class="dl-qty-btn" onclick="dlQtyAdjust(-1)">−</button>
         <input type="number" id="dl-source-qty" class="dl-source-qty" value="1" min="1" max="99">
+        <button class="dl-qty-btn" onclick="dlQtyAdjust(1)">+</button>
         <span class="dl-source-title"> ${label}</span>
       </div>
       <div class="dl-source-subtitle">¿De dónde es?</div>
@@ -665,10 +667,19 @@ function dlConfirmSource(type) {
   dlCloseSourcePrompt();
 }
 
+function dlQtyAdjust(delta) {
+  const input = document.getElementById('dl-source-qty');
+  if (!input) return;
+  const val = Math.max(1, Math.min(99, (parseInt(input.value) || 1) + delta));
+  input.value = val;
+}
+
 function dlCloseSourcePrompt() {
   const modal = document.getElementById('dl-source-modal');
   if (modal) modal.classList.add('hidden');
 }
+
+window.dlQtyAdjust = dlQtyAdjust;
 
 function dlRenderDetails() {
   const types = ['designs', 'armados', 'corrections'];

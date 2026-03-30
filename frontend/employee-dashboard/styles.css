@@ -3165,6 +3165,30 @@ textarea {
     margin: 0;
 }
 
+.dl-qty-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+    background: #fff;
+    color: var(--primary, #e72a88);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+}
+
+.dl-qty-btn:hover {
+    background: var(--primary, #e72a88);
+    color: #fff;
+    border-color: var(--primary, #e72a88);
+}
+
 .dl-source-subtitle {
     font-size: 14px;
     color: #6b7280;
