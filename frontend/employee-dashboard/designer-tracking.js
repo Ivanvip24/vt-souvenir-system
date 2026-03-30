@@ -537,7 +537,16 @@ async function initDailyLog() {
     const data = await apiGet('/designer-tasks/designers');
     if (data.success && data.designers.length > 0) {
       const empName = window.state?.employee?.name?.toLowerCase() || '';
-      const match = data.designers.find(d => empName.includes(d.name.toLowerCase()));
+      const empEmail = window.state?.employee?.email?.toLowerCase() || '';
+      // Match designer by name inclusion, or by first name, or known nicknames
+      const nicknames = { 'majo': ['maría josé', 'maria jose'], 'sarahi': ['sarahí', 'sarahi'] };
+      const match = data.designers.find(d => {
+        const dName = d.name.toLowerCase();
+        if (empName.includes(dName)) return true;
+        // Check if designer nickname maps to employee name
+        const aliases = nicknames[dName] || [];
+        return aliases.some(alias => empName.includes(alias));
+      });
       if (match) {
         dlState.designerId = match.id;
         await dlLoadToday();
