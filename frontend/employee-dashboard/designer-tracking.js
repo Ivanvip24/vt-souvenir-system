@@ -595,6 +595,7 @@ function dlAdjust(type, delta) {
     if (idx !== -1) dlState.details.splice(idx, 1);
     document.getElementById('dl-' + type).textContent = dlState[key];
     dlRenderDetails();
+    dlSave();
   }
 }
 
@@ -665,6 +666,7 @@ function dlConfirmSource(type) {
   document.getElementById('dl-' + type).textContent = dlState[type];
   dlRenderDetails();
   dlCloseSourcePrompt();
+  dlSave();
 }
 
 function dlQtyAdjust(delta) {
