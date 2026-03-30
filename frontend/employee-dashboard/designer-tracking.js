@@ -925,6 +925,20 @@ async function openDTDesignerModal(designer) {
       pending: '\u23F3', in_progress: '\uD83D\uDD04', done: '\u2705', correction: '\uD83D\uDD01'
     };
 
+    // Task cards hidden — calendar view is the primary display
+    const tasksToggle = document.createElement('button');
+    tasksToggle.className = 'btn btn-secondary btn-sm';
+    tasksToggle.textContent = 'Ver tareas asignadas (' + data.tasks.length + ')';
+    const tasksContainer = document.createElement('div');
+    tasksContainer.style.display = 'none';
+    tasksToggle.addEventListener('click', function() {
+      var showing = tasksContainer.style.display !== 'none';
+      tasksContainer.style.display = showing ? 'none' : 'block';
+      tasksToggle.textContent = showing ? 'Ver tareas asignadas (' + data.tasks.length + ')' : 'Ocultar tareas';
+    });
+    tasksEl.appendChild(tasksToggle);
+    tasksEl.appendChild(tasksContainer);
+
     for (const t of data.tasks) {
       const card = document.createElement('div');
       card.className = 'dt-modal-task-card dt-modal-task-' + t.status;
@@ -1035,7 +1049,7 @@ async function openDTDesignerModal(designer) {
         card.appendChild(actions);
       }
 
-      tasksEl.appendChild(card);
+      tasksContainer.appendChild(card);
     }
     // Load daily logs history
     const historySection = document.createElement('div');
