@@ -6073,6 +6073,14 @@ async function startServer() {
       console.warn('⚠️  Price tiers migration:', mErr.message);
     }
 
+    // Add destination column to orders (if not exists)
+    try {
+      await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS destination VARCHAR(150)`);
+      console.log('✅ Destination column ready');
+    } catch (mErr) {
+      console.warn('⚠️  Destination migration:', mErr.message);
+    }
+
     // Start server
     app.listen(PORT, () => {
       console.log('\n' + '='.repeat(60));
