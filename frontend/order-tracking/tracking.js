@@ -878,16 +878,90 @@
             var data = await res.json();
 
             if (!data.success) {
-                throw new Error(data.error || 'Error al seleccionar envio');
+                throw new Error(data.error || 'Error al confirmar envio');
             }
 
-            showToast('Envio seleccionado: ' + state.selectedRateData.carrier, 'success');
+            // Show completion screen with label info
+            $('shipping-confirm-loading').style.display = 'none';
+            $('shipping-rates-container').textContent = '';
+            $('btn-confirm-shipping').style.display = 'none';
+            $('shipping-loading').style.display = 'none';
 
-            // Go back to results and refresh
-            navigateTo('results');
+            var completion = document.createElement('div');
+            completion.style.cssText = 'text-align:center;padding:24px 0;';
 
-            // Re-lookup to refresh data
-            setTimeout(function() { refreshOrders(); }, 500);
+            var checkIcon = document.createElement('div');
+            checkIcon.style.cssText = 'font-size:48px;margin-bottom:12px;';
+            checkIcon.textContent = '✅';
+            completion.appendChild(checkIcon);
+
+            var title = document.createElement('h2');
+            title.style.cssText = 'font-size:1.3rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;';
+            title.textContent = '¡Envio Confirmado!';
+            completion.appendChild(title);
+
+            var subtitle = document.createElement('p');
+            subtitle.style.cssText = 'color:var(--text-muted);font-size:0.9rem;margin-bottom:20px;';
+            subtitle.textContent = 'Tu guia ha sido generada exitosamente';
+            completion.appendChild(subtitle);
+
+            if (data.label) {
+                var card = document.createElement('div');
+                card.style.cssText = 'background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-md);padding:20px;text-align:left;margin-bottom:16px;';
+
+                var carrierLine = document.createElement('div');
+                carrierLine.style.cssText = 'font-weight:700;font-size:1rem;color:var(--text-primary);margin-bottom:4px;';
+                carrierLine.textContent = (data.label.carrier || '') + ' — ' + (data.label.service || '');
+                card.appendChild(carrierLine);
+
+                if (data.label.delivery_days) {
+                    var daysLine = document.createElement('div');
+                    daysLine.style.cssText = 'font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;';
+                    daysLine.textContent = 'Entrega estimada: ' + data.label.delivery_days + ' dia' + (data.label.delivery_days > 1 ? 's' : '');
+                    card.appendChild(daysLine);
+                }
+
+                if (data.label.tracking_number) {
+                    var trackRow = document.createElement('div');
+                    trackRow.style.cssText = 'background:var(--bg-subtle);border-radius:8px;padding:12px;margin-bottom:8px;';
+
+                    var trackLabel = document.createElement('div');
+                    trackLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;';
+                    trackLabel.textContent = 'Numero de guia';
+                    trackRow.appendChild(trackLabel);
+
+                    var trackNum = document.createElement('div');
+                    trackNum.style.cssText = 'font-size:1.1rem;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;letter-spacing:0.03em;';
+                    trackNum.textContent = data.label.tracking_number;
+                    trackRow.appendChild(trackNum);
+
+                    card.appendChild(trackRow);
+                }
+
+                if (data.label.tracking_url) {
+                    var trackBtn = document.createElement('a');
+                    trackBtn.href = data.label.tracking_url;
+                    trackBtn.target = '_blank';
+                    trackBtn.rel = 'noopener noreferrer';
+                    trackBtn.style.cssText = 'display:block;text-align:center;padding:12px;background:var(--turquesa);color:white;border-radius:var(--radius-sm);font-weight:600;font-size:0.9rem;text-decoration:none;margin-top:12px;';
+                    trackBtn.textContent = '📦 Rastrear mi Paquete';
+                    card.appendChild(trackBtn);
+                }
+
+                completion.appendChild(card);
+            }
+
+            var backBtn = document.createElement('button');
+            backBtn.style.cssText = 'padding:12px 24px;background:transparent;border:1.5px solid var(--border-medium);border-radius:var(--radius-full);color:var(--text-secondary);font-weight:600;font-size:0.9rem;cursor:pointer;';
+            backBtn.textContent = '← Volver a mis pedidos';
+            backBtn.addEventListener('click', function() {
+                navigateTo('results');
+                setTimeout(function() { refreshOrders(); }, 300);
+            });
+            completion.appendChild(backBtn);
+
+            $('shipping-rates-container').appendChild(completion);
+            return;
 
         } catch (err) {
             console.error('Confirm shipping error:', err);

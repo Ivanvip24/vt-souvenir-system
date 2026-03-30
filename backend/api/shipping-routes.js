@@ -861,7 +861,7 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
       return res.status(400).json({ error: 'Las guías ya fueron generadas' });
     }
 
-    // Save selected rate to order (allowed before approval — just saves preference)
+    // Save selected rate
     await query(`
       UPDATE orders SET
         selected_quotation_id = $1,
@@ -874,17 +874,121 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
       WHERE id = $7
     `, [quotation_id, rate_id, carrier, service, price, days, orderId]);
 
-    console.log(`✅ Client selected shipping: ${carrier} - ${service} for order ${orderId}`);
+    // Get client info for label generation
+    const fullOrder = await query(`
+      SELECT
+        o.id, o.order_number, o.client_id,
+        c.name as client_name, c.phone as client_phone, c.email as client_email,
+        c.street, c.street_number, c.colonia, c.city, c.state,
+        c.postal, c.postal_code, c.reference_notes
+      FROM orders o
+      JOIN clients c ON o.client_id = c.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    const orderData = fullOrder.rows[0];
+    const postal = orderData.postal || orderData.postal_code;
+
+    const destAddress = {
+      name: orderData.client_name,
+      phone: orderData.client_phone,
+      email: orderData.client_email,
+      street: orderData.street,
+      street_number: orderData.street_number,
+      colonia: orderData.colonia,
+      city: orderData.city,
+      state: orderData.state,
+      zip: postal,
+      reference_notes: orderData.reference_notes
+    };
+
+    console.log(`📦 Client confirmed shipping for order ${orderData.order_number}: ${carrier} - ${service}`);
+    console.log(`   Generating label automatically...`);
+
+    // Generate label immediately
+    const selectedRate = {
+      rate_id: rate_id,
+      carrier: carrier,
+      service: service,
+      total_price: price,
+      days: days
+    };
+
+    const shipment = await skydropx.createShipment(
+      quotation_id,
+      rate_id,
+      selectedRate,
+      destAddress
+    );
+
+    // Save label to database
+    const insertResult = await query(`
+      INSERT INTO shipping_labels (
+        order_id, client_id, shipment_id, quotation_id, rate_id,
+        tracking_number, tracking_url, label_url,
+        carrier, service, delivery_days, shipping_cost,
+        package_number, status, label_generated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
+      RETURNING *
+    `, [
+      orderId,
+      orderData.client_id,
+      shipment.shipment_id,
+      quotation_id,
+      rate_id,
+      shipment.tracking_number,
+      shipment.tracking_url,
+      shipment.label_url,
+      shipment.carrier,
+      shipment.service,
+      shipment.delivery_days,
+      shipment.shipping_cost,
+      1,
+      shipment.label_url ? 'label_generated' : 'processing'
+    ]);
+
+    // Update order shipping status
+    await query(`
+      UPDATE orders SET
+        shipping_label_generated = true,
+        shipping_labels_count = 1,
+        status = 'shipping'
+      WHERE id = $1
+    `, [orderId]);
+
+    console.log(`✅ Label generated for order ${orderData.order_number}: ${shipment.tracking_number}`);
+
+    // Auto-request pickup (non-blocking)
+    if (shipment.shipment_id && shipment.carrier) {
+      setImmediate(async () => {
+        try {
+          const pickupResult = await skydropx.requestPickupIfNeeded(
+            shipment.shipment_id,
+            shipment.carrier
+          );
+          console.log(`📦 Pickup for label: ${pickupResult.message}`);
+        } catch (pickupError) {
+          console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+        }
+      });
+    }
 
     res.json({
       success: true,
-      message: 'Método de envío seleccionado exitosamente',
-      selection: { carrier, service, price, days }
+      message: 'Guía generada exitosamente',
+      label: {
+        tracking_number: shipment.tracking_number,
+        tracking_url: shipment.tracking_url,
+        label_url: shipment.label_url,
+        carrier: shipment.carrier,
+        service: shipment.service,
+        delivery_days: shipment.delivery_days
+      }
     });
 
   } catch (error) {
-    console.error('❌ Error saving shipping selection:', error);
-    res.status(500).json({ error: 'Error guardando selección de envío' });
+    console.error('❌ Error generating shipping label:', error);
+    res.status(500).json({ error: 'Error generando guía de envío: ' + (error.message || 'Error interno') });
   }
 });
 
