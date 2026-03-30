@@ -2167,6 +2167,13 @@ body {
     display: none;
 }
 
+.category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 16px 12px;
+}
+
 .category-pill {
     flex-shrink: 0;
     background: rgba(255, 255, 255, 0.9);

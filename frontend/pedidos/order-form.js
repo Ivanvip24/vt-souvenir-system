@@ -1426,7 +1426,7 @@ function buildCategoryTabs() {
   // "Todos" tab
   const allTab = document.createElement('button');
   allTab.type = 'button';
-  allTab.className = 'cat-tab active';
+  allTab.className = 'category-pill active';
   allTab.textContent = 'Todos';
   allTab.addEventListener('click', () => filterCategory('all'));
   container.appendChild(allTab);
@@ -1435,7 +1435,7 @@ function buildCategoryTabs() {
   categories.forEach(cat => {
     const tab = document.createElement('button');
     tab.type = 'button';
-    tab.className = 'cat-tab';
+    tab.className = 'category-pill';
     tab.dataset.category = cat;
     tab.textContent = getCategoryLabel(cat);
     tab.addEventListener('click', () => filterCategory(cat));
@@ -1444,7 +1444,7 @@ function buildCategoryTabs() {
 }
 
 window.filterCategory = function(cat) {
-  const tabs = document.querySelectorAll('.cat-tab');
+  const tabs = document.querySelectorAll('.category-pill');
   tabs.forEach(t => t.classList.remove('active'));
 
   // Activate the clicked tab
