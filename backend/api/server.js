@@ -361,6 +361,9 @@ app.use('/api/discounts', authMiddleware, discountRoutes);
 // ========================================
 app.use('/api/shipping', authMiddleware, shippingRoutes);
 
+// Public shipping routes for /seguimiento (quotes + rate selection only)
+app.use('/api/client/shipping', shippingRoutes);
+
 // ========================================
 // FILE UPLOAD ROUTES (Cloudinary) — no auth for client uploads
 // ========================================

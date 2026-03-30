@@ -7,7 +7,7 @@
         : 'https://vt-souvenir-backend.onrender.com/api';
 
     const CLIENT_API = API_BASE + '/client';
-    const SHIPPING_API = API_BASE + '/shipping';
+    const SHIPPING_API = API_BASE + '/client/shipping';
 
     // ── State ───────────────────────────────────────────────
     const state = {
