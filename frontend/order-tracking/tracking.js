@@ -941,51 +941,73 @@
         stepHeader.appendChild(stepTitle);
         section.appendChild(stepHeader);
 
-        var subtitle = document.createElement('div');
-        subtitle.className = 'payment-info-subtitle';
-        subtitle.textContent = 'Elige tu metodo de pago:';
-        section.appendChild(subtitle);
+        // Payment method toggle buttons
+        var toggleRow = document.createElement('div');
+        toggleRow.style.cssText = 'display:flex;gap:8px;margin-top:12px;';
 
-        // Divider: "Opcion A"
-        var optionA = document.createElement('div');
-        optionA.className = 'payment-option-label';
-        optionA.textContent = 'Opcion A — Transferencia';
-        section.appendChild(optionA);
+        var bankToggle = document.createElement('button');
+        bankToggle.type = 'button';
+        bankToggle.className = 'payment-toggle active';
+        bankToggle.textContent = '🏦 Transferencia';
 
-        // Bank Transfer details
-        var bankMethod = document.createElement('div');
-        bankMethod.className = 'payment-method';
+        var cardToggle = document.createElement('button');
+        cardToggle.type = 'button';
+        cardToggle.className = 'payment-toggle';
+        cardToggle.textContent = '💳 Tarjeta';
 
-        appendPaymentDetail(bankMethod, 'Banco', 'BBVA', null);
-        appendPaymentDetail(bankMethod, 'CLABE', '012 180 01571714055 4', '012180015717140554');
-        appendPaymentDetail(bankMethod, 'Tarjeta', '4152 3138 4049 8567', '4152313840498567');
-        appendPaymentDetail(bankMethod, 'A nombre de', 'Ivan Valencia', null);
+        toggleRow.appendChild(bankToggle);
+        toggleRow.appendChild(cardToggle);
+        section.appendChild(toggleRow);
 
-        section.appendChild(bankMethod);
+        // Bank Transfer details (visible by default)
+        var bankDetails = document.createElement('div');
+        bankDetails.className = 'payment-method';
+        bankDetails.style.marginTop = '12px';
 
-        // Divider: "Opcion B"
-        var optionB = document.createElement('div');
-        optionB.className = 'payment-option-label';
-        optionB.textContent = 'Opcion B — Tarjeta de credito/debito';
-        section.appendChild(optionB);
+        appendPaymentDetail(bankDetails, 'Banco', 'BBVA', null);
+        appendPaymentDetail(bankDetails, 'CLABE', '012 180 01571714055 4', '012180015717140554');
+        appendPaymentDetail(bankDetails, 'Tarjeta', '4152 3138 4049 8567', '4152313840498567');
+        appendPaymentDetail(bankDetails, 'A nombre de', 'Ivan Valencia', null);
 
-        // Card Payment (Stripe)
+        section.appendChild(bankDetails);
+
+        // Card Payment (Stripe) — hidden by default
+        var cardDetails = document.createElement('div');
+        cardDetails.style.cssText = 'display:none;margin-top:12px;';
+
         var stripeBtn = document.createElement('a');
         stripeBtn.href = 'https://buy.stripe.com/00gcPP1GscTObJufYY';
         stripeBtn.target = '_blank';
         stripeBtn.rel = 'noopener noreferrer';
         stripeBtn.className = 'btn-stripe-pay';
-
-        // Static SVG icon (no user data — safe for insertAdjacentHTML)
         stripeBtn.insertAdjacentHTML('afterbegin',
             '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
             '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>' +
             '<line x1="1" y1="10" x2="23" y2="10"/></svg> '
         );
+        stripeBtn.appendChild(document.createTextNode('Pagar con Tarjeta'));
+        cardDetails.appendChild(stripeBtn);
 
-        var stripeBtnText = document.createTextNode('Pagar con Tarjeta');
-        stripeBtn.appendChild(stripeBtnText);
-        section.appendChild(stripeBtn);
+        var stripeNote = document.createElement('p');
+        stripeNote.style.cssText = 'font-size:0.78rem;color:var(--text-muted);text-align:center;margin-top:8px;';
+        stripeNote.textContent = 'Pago seguro procesado por Stripe';
+        cardDetails.appendChild(stripeNote);
+
+        section.appendChild(cardDetails);
+
+        // Toggle logic
+        bankToggle.addEventListener('click', function() {
+            bankToggle.classList.add('active');
+            cardToggle.classList.remove('active');
+            bankDetails.style.display = '';
+            cardDetails.style.display = 'none';
+        });
+        cardToggle.addEventListener('click', function() {
+            cardToggle.classList.add('active');
+            bankToggle.classList.remove('active');
+            cardDetails.style.display = '';
+            bankDetails.style.display = 'none';
+        });
 
         return section;
     }

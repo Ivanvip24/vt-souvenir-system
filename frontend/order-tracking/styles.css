@@ -1002,6 +1002,31 @@ body {
     margin-top: 12px;
 }
 
+.payment-toggle {
+    flex: 1;
+    padding: 10px 12px;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-muted);
+    border: 1.5px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s var(--ease-smooth);
+}
+
+.payment-toggle:hover {
+    border-color: var(--border-medium);
+    background: var(--bg-hover);
+}
+
+.payment-toggle.active {
+    color: var(--rosa);
+    background: rgba(231,42,136,0.06);
+    border-color: var(--rosa);
+}
+
 .payment-info-subtitle {
     font-size: 0.82rem;
     color: var(--text-muted);
