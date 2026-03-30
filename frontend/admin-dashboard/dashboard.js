@@ -1589,10 +1589,13 @@ async function showOrderDetail(orderId) {
   `;
 
   modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  modal.scrollTop = 0;
 }
 
 function closeOrderDetail() {
   document.getElementById('order-detail-modal').classList.add('hidden');
+  document.body.style.overflow = '';
   state.selectedOrder = null;
 }
 
