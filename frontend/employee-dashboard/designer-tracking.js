@@ -679,6 +679,81 @@ function dlCloseSourcePrompt() {
   if (modal) modal.classList.add('hidden');
 }
 
+function dlShowDayDetail(panel, log, dateKey) {
+  panel.classList.remove('hidden');
+  panel.textContent = '';
+
+  const dateStr = new Date(dateKey + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const header = document.createElement('div');
+  header.className = 'dl-detail-header';
+  const title = document.createElement('strong');
+  title.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+  header.appendChild(title);
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'dl-detail-close';
+  closeBtn.textContent = '\u00D7';
+  closeBtn.addEventListener('click', function() { panel.classList.add('hidden'); });
+  header.appendChild(closeBtn);
+  panel.appendChild(header);
+
+  // Summary row
+  const summary = document.createElement('div');
+  summary.className = 'dl-detail-summary';
+  var items = [
+    { label: 'Diseños', value: log.designs_completed, cls: 'design' },
+    { label: 'Armados', value: log.armados_completed, cls: 'armado' },
+    { label: 'Correcciones', value: log.corrections_made, cls: 'correction' }
+  ];
+  items.forEach(function(item) {
+    var chip = document.createElement('span');
+    chip.className = 'dl-detail-chip ' + item.cls;
+    chip.textContent = item.value + ' ' + item.label;
+    summary.appendChild(chip);
+  });
+  panel.appendChild(summary);
+
+  // Notes
+  if (log.notes) {
+    var notesEl = document.createElement('div');
+    notesEl.className = 'dl-detail-notes';
+    notesEl.textContent = log.notes;
+    panel.appendChild(notesEl);
+  }
+
+  // Details list (individual items with sources)
+  var details = log.details || [];
+  if (details.length > 0) {
+    var listTitle = document.createElement('div');
+    listTitle.className = 'dl-detail-list-title';
+    listTitle.textContent = 'Detalle:';
+    panel.appendChild(listTitle);
+
+    var list = document.createElement('div');
+    list.className = 'dl-detail-list';
+    details.forEach(function(d) {
+      var row = document.createElement('div');
+      row.className = 'dl-detail-item';
+      var badge = document.createElement('span');
+      badge.className = 'dl-detail-badge ' + (d.type === 'designs' ? 'design' : d.type === 'armados' ? 'armado' : 'correction');
+      badge.textContent = d.type === 'designs' ? 'D' : d.type === 'armados' ? 'A' : 'C';
+      row.appendChild(badge);
+      var src = document.createElement('span');
+      src.className = 'dl-detail-source';
+      src.textContent = d.source;
+      row.appendChild(src);
+      if (d.time) {
+        var time = document.createElement('span');
+        time.className = 'dl-detail-time';
+        time.textContent = d.time;
+        row.appendChild(time);
+      }
+      list.appendChild(row);
+    });
+    panel.appendChild(list);
+  }
+}
+
 window.dlQtyAdjust = dlQtyAdjust;
 
 function dlRenderDetails() {
@@ -995,40 +1070,91 @@ async function openDTDesignerModal(designer) {
         }
         historySection.appendChild(avgRow);
 
-        // Table
-        const table = document.createElement('table');
-        table.className = 'dl-history-table';
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-        for (const h of ['Fecha', 'Dise\u00F1os', 'Armados', 'Correc.', 'Notas']) {
-          const th = document.createElement('th');
-          th.textContent = h;
-          headerRow.appendChild(th);
-        }
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-
-        const tbody = document.createElement('tbody');
+        // Calendar grid
+        const logsByDate = {};
         for (const log of logsData.logs) {
-          const tr = document.createElement('tr');
-          const dateStr = new Date(log.log_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-          const cells = [
-            dateStr,
-            String(log.designs_completed),
-            String(log.armados_completed),
-            String(log.corrections_made),
-            log.notes || '-'
-          ];
-          cells.forEach((c, i) => {
-            const td = document.createElement('td');
-            td.textContent = c;
-            if (i === 4) td.className = 'dl-notes-cell';
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
+          const key = log.log_date.split('T')[0];
+          logsByDate[key] = log;
         }
-        table.appendChild(tbody);
-        historySection.appendChild(table);
+
+        const today = new Date();
+        const calGrid = document.createElement('div');
+        calGrid.className = 'dl-calendar';
+
+        // Day headers
+        const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        for (const dn of dayNames) {
+          const dh = document.createElement('div');
+          dh.className = 'dl-cal-header';
+          dh.textContent = dn;
+          calGrid.appendChild(dh);
+        }
+
+        // Build 30-day calendar starting from first day of the visible range
+        const startDate = new Date(today);
+        startDate.setDate(startDate.getDate() - 29);
+        // Align to Monday
+        const startDay = startDate.getDay();
+        const mondayOffset = startDay === 0 ? -6 : 1 - startDay;
+        startDate.setDate(startDate.getDate() + mondayOffset);
+
+        const endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + (7 - (today.getDay() === 0 ? 7 : today.getDay())));
+
+        const detailPanel = document.createElement('div');
+        detailPanel.className = 'dl-cal-detail hidden';
+
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+          const dateKey = d.toISOString().split('T')[0];
+          const log = logsByDate[dateKey];
+          const isToday = dateKey === today.toISOString().split('T')[0];
+          const isFuture = d > today;
+          const isInRange = d >= new Date(today.getTime() - 29 * 86400000);
+
+          const cell = document.createElement('div');
+          cell.className = 'dl-cal-day' + (isToday ? ' today' : '') + (isFuture ? ' future' : '') + (!isInRange ? ' out-range' : '') + (log ? ' has-data' : '');
+
+          const dayNum = document.createElement('div');
+          dayNum.className = 'dl-cal-day-num';
+          dayNum.textContent = d.getDate();
+          cell.appendChild(dayNum);
+
+          if (log && !isFuture) {
+            const total = log.designs_completed + log.armados_completed + log.corrections_made;
+            if (total > 0) {
+              const dots = document.createElement('div');
+              dots.className = 'dl-cal-dots';
+              if (log.designs_completed > 0) {
+                const dot = document.createElement('span');
+                dot.className = 'dl-cal-dot design';
+                dot.textContent = log.designs_completed;
+                dots.appendChild(dot);
+              }
+              if (log.armados_completed > 0) {
+                const dot = document.createElement('span');
+                dot.className = 'dl-cal-dot armado';
+                dot.textContent = log.armados_completed;
+                dots.appendChild(dot);
+              }
+              if (log.corrections_made > 0) {
+                const dot = document.createElement('span');
+                dot.className = 'dl-cal-dot correction';
+                dot.textContent = log.corrections_made;
+                dots.appendChild(dot);
+              }
+              cell.appendChild(dots);
+            }
+            cell.addEventListener('click', function() {
+              dlShowDayDetail(detailPanel, log, dateKey);
+            });
+            cell.style.cursor = 'pointer';
+          }
+
+          calGrid.appendChild(cell);
+        }
+
+        historySection.appendChild(calGrid);
+        historySection.appendChild(detailPanel);
       } else {
         const empty = document.createElement('div');
         empty.className = 'dt-modal-empty';
