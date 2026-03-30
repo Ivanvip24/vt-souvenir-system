@@ -311,7 +311,7 @@ app.post('/api/orders', (req, res) => {
 
   const order = {
     id: orderCounter++,
-    orderNumber: `ORD-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${String(orderCounter).padStart(4, '0')}`,
+    orderNumber: `AXK${orderCounter}`,
     ...orderData,
     createdAt: new Date().toISOString(),
     status: orderData.status || 'new',
@@ -475,7 +475,7 @@ app.post('/api/client/orders/submit', (req, res) => {
     }
 
     // Create order
-    const orderNumber = `ORD-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${String(orderCounter).padStart(4, '0')}`;
+    const orderNumber = `AXK${orderCounter}`;
     const order = {
       id: orderCounter++,
       orderNumber,

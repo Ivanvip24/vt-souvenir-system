@@ -184,7 +184,7 @@ router.post('/orders/submit', async (req, res) => {
     if (req.body.website || req.body.company_url) {
       console.warn(`🤖 Bot detected on order submit — honeypot filled from IP: ${req.ip}`);
       // Return fake success so bots think it worked
-      return res.json({ success: true, orderId: 0, orderNumber: 'ORD-00000000-0000' });
+      return res.json({ success: true, orderId: 0, orderNumber: 'AXK0' });
     }
 
     // Validation
@@ -342,7 +342,7 @@ router.post('/orders/submit', async (req, res) => {
     }
 
     // 3. Create order
-    const orderNumber = generateOrderNumber();
+    const orderNumber = await generateOrderNumber();
 
     // Calculate delivery dates based on order quantity
     const totalQuantity = orderItems.reduce((sum, item) => sum + item.quantity, 0);

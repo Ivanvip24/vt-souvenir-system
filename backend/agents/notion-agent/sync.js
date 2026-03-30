@@ -268,7 +268,7 @@ export async function createOrderBothSystems(orderData, { skipNotion = false } =
   try {
     // 1. Generate order number if not provided
     if (!orderData.orderNumber) {
-      orderData.orderNumber = generateOrderNumber();
+      orderData.orderNumber = await generateOrderNumber();
     }
 
     // 2. Create or get client

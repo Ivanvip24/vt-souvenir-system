@@ -1,13 +1,25 @@
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, subWeeks, subMonths } from 'date-fns';
+import { query } from './database.js';
 
 /**
  * Generate unique order number
- * Format: ORD-YYYYMMDD-XXXX
+ * Format: AXK1, AXK2, AXK3, ...
  */
-export function generateOrderNumber() {
-  const date = format(new Date(), 'yyyyMMdd');
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `ORD-${date}-${random}`;
+export async function generateOrderNumber() {
+  const result = await query(`
+    SELECT order_number FROM orders
+    WHERE order_number ~ '^AXK[0-9]+$'
+    ORDER BY CAST(SUBSTRING(order_number FROM 4) AS INTEGER) DESC
+    LIMIT 1
+  `);
+
+  let nextNum = 1;
+  if (result.rows.length > 0) {
+    const lastNum = parseInt(result.rows[0].order_number.substring(3), 10);
+    nextNum = lastNum + 1;
+  }
+
+  return `AXK${nextNum}`;
 }
 
 /**
