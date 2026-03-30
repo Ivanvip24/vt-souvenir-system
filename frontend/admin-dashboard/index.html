@@ -438,19 +438,7 @@
                 </div>
             </section>
 
-            <!-- Order Detail Modal -->
-            <div id="order-detail-modal" class="modal hidden">
-                <div class="modal-backdrop" onclick="closeOrderDetail()"></div>
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2 id="modal-title">Detalles del Pedido</h2>
-                        <button class="modal-close" onclick="closeOrderDetail()">×</button>
-                    </div>
-                    <div class="modal-body" id="modal-body">
-                        <!-- Content loaded dynamically -->
-                    </div>
-                </div>
-            </div>
+            <!-- Modal moved to end of body for proper z-index stacking -->
 
             <!-- Client Lookup Modal -->
             <div id="client-lookup-modal" class="modal hidden">
@@ -3017,5 +3005,19 @@
             }
         });
     </script>
+
+<!-- Order Detail Modal — outside content-area for proper fixed positioning -->
+<div id="order-detail-modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeOrderDetail()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Detalles del Pedido</h2>
+            <button class="modal-close" onclick="closeOrderDetail()">×</button>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <!-- Content loaded dynamically -->
+        </div>
+    </div>
+</div>
 </body>
 </html>
