@@ -773,6 +773,7 @@ app.get('/api/orders', authMiddleware, async (req, res) => {
         o.created_at,
         o.shipping_cost,
         o.is_store_pickup,
+        o.destination,
         -- Shipping label data from shipping_labels table
         (SELECT sl.tracking_number FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_tracking_number,
         (SELECT sl.carrier FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_carrier,
@@ -872,6 +873,8 @@ app.get('/api/orders', authMiddleware, async (req, res) => {
       // Shipping cost and store pickup
       shippingCost: parseFloat(order.shipping_cost) || 0,
       isStorePickup: order.is_store_pickup || false,
+      // Destination
+      destination: order.destination || '',
       // Summary for compatibility
       summary: order.client_notes || ''
     }));
@@ -1336,6 +1339,7 @@ app.get('/api/orders/:orderId', authMiddleware, async (req, res) => {
         o.order_attachments,
         o.notion_page_id,
         o.notion_page_url,
+        o.destination,
         o.created_at,
         -- Shipping label data from shipping_labels table
         (SELECT sl.tracking_number FROM shipping_labels sl WHERE sl.order_id = o.id ORDER BY sl.created_at DESC LIMIT 1) as sl_tracking_number,
@@ -1439,6 +1443,8 @@ app.get('/api/orders/:orderId', authMiddleware, async (req, res) => {
       // Notion sync
       notionPageId: order.notion_page_id,
       notionPageUrl: order.notion_page_url,
+      // Destination
+      destination: order.destination || '',
       // Summary for compatibility
       summary: order.client_notes || ''
     };
@@ -2458,7 +2464,8 @@ app.post('/api/orders/:orderId/reference-sheet', authMiddleware, async (req, res
         o.client_notes,
         o.internal_notes,
         o.total_price,
-        o.order_attachments
+        o.order_attachments,
+        o.destination
       FROM orders o
       LEFT JOIN clients c ON o.client_id = c.id
       WHERE o.id = $1
@@ -2554,7 +2561,8 @@ app.post('/api/orders/:orderId/reference-sheet/save', authMiddleware, async (req
         o.client_notes,
         o.internal_notes,
         o.total_price,
-        o.order_attachments
+        o.order_attachments,
+        o.destination
       FROM orders o
       LEFT JOIN clients c ON o.client_id = c.id
       WHERE o.id = $1

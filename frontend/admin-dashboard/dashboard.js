@@ -999,6 +999,12 @@ function createOrderCard(order) {
             ` : ''}
           </span>
         </div>
+        ${order.destination ? `
+          <div class="client-info" style="margin-top: 4px;">
+            <span class="info-label">DESTINO</span>
+            <span class="info-value" style="color: var(--primary-color, #e72a88);">${escapeHtml(order.destination)}</span>
+          </div>
+        ` : ''}
         <div class="order-totals">
           <span class="total-label">TOTAL</span>
           <span class="total-value">${formatCurrency(order.totalPrice)}</span>
@@ -1560,6 +1566,16 @@ async function showOrderDetail(orderId) {
         </div>
       </div>
     </div>
+
+    <!-- Destination (if any) -->
+    ${order.destination ? `
+      <div class="detail-section">
+        <h3>📍 Destino</h3>
+        <p style="background: var(--gray-50); padding: 16px; border-radius: 10px; line-height: 1.6; font-weight: 600;">
+          ${escapeHtml(order.destination)}
+        </p>
+      </div>
+    ` : ''}
 
     <!-- Client Notes (if any) -->
     ${order.clientNotes ? `

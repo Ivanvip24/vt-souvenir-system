@@ -339,11 +339,9 @@
             var paymentSection = createPaymentInfoSection(order);
             card.appendChild(paymentSection);
 
-            // Step 2: Upload receipt (only if approved)
-            if (order.approvalStatus === 'approved') {
-                var uploadSection = createUploadSection(order.orderId);
-                card.appendChild(uploadSection);
-            }
+            // Step 2: Upload receipt (always show when there's balance)
+            var uploadSection = createUploadSection(order.orderId);
+            card.appendChild(uploadSection);
         }
 
         // Show if second payment already received
@@ -573,10 +571,8 @@
                 throw new Error(uploadData.error || 'Error al subir archivo');
             }
 
-            // Step 2: Link receipt to order
-            var linkUrl = window.location.hostname === 'localhost'
-                ? 'http://localhost:3000/api/orders/' + orderId + '/second-payment'
-                : 'https://vt-souvenir-backend.onrender.com/api/orders/' + orderId + '/second-payment';
+            // Step 2: Link receipt to order (uses public client route)
+            var linkUrl = CLIENT_API + '/orders/' + orderId + '/second-payment';
 
             var linkRes = await fetch(linkUrl, {
                 method: 'POST',

@@ -76,6 +76,13 @@ async function runAllMigrations() {
       console.error('❌ Daily Log Details migration failed:', e.message);
     }
 
+    try {
+      const { addOrderDestination } = await import('../migrations/add-order-destination.js');
+      await addOrderDestination();
+    } catch (e) {
+      console.error('❌ Order Destination migration failed:', e.message);
+    }
+
     console.log('\n✨ All migrations completed successfully!');
 
   } catch (error) {

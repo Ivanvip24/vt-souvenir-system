@@ -22,8 +22,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 
-    <style>body{background:#0a0a0f;margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#f1f5f9;}@media(prefers-color-scheme:light){body{background:#fafafa;color:#1a1a1a;}}</style>
-    <link rel="stylesheet" href="/pedidos/styles.css?v=2">
+    <meta name="color-scheme" content="light">
+    <style>:root{color-scheme:light;}body{background:#fafafa;margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#1a1a1a;}</style>
+    <link rel="stylesheet" href="/pedidos/styles.css?v=3">
 </head>
 <body>
     <!-- Animated Background -->
@@ -485,6 +486,49 @@
                             </div>
                         </div>
                     </label>
+                </div>
+
+                <!-- Destination -->
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="order-destination" style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">
+                        📍 ¿Para qué destino es tu pedido?
+                    </label>
+                    <input type="text"
+                           id="order-destination"
+                           list="destination-options"
+                           placeholder="Ej: Cancún, CDMX, Oaxaca..."
+                           autocomplete="off"
+                           style="width: 100%; box-sizing: border-box;">
+                    <datalist id="destination-options">
+                        <option value="Cancún">
+                        <option value="CDMX">
+                        <option value="Oaxaca">
+                        <option value="Guanajuato">
+                        <option value="San Miguel de Allende">
+                        <option value="Guadalajara">
+                        <option value="Puerto Vallarta">
+                        <option value="Mérida">
+                        <option value="Los Cabos">
+                        <option value="Puebla">
+                        <option value="Huasteca Potosina">
+                        <option value="Tulum">
+                        <option value="Playa del Carmen">
+                        <option value="Querétaro">
+                        <option value="Mazatlán">
+                        <option value="Morelia">
+                        <option value="Chiapas">
+                        <option value="Acapulco">
+                        <option value="Monterrey">
+                        <option value="Zacatecas">
+                        <option value="Bacalar">
+                        <option value="Campeche">
+                        <option value="Chignahuapan">
+                        <option value="Cozumel">
+                        <option value="Cuetzalan">
+                        <option value="Puerto Escondido">
+                        <option value="Toluca">
+                        <option value="Zacatlán">
+                    </datalist>
                 </div>
 
                 <!-- Notes collapsible -->

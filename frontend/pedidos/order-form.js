@@ -259,6 +259,7 @@ const state = {
   cart: {}, // Composite keys: "productId__variantKey" for variant products, "productId" for non-variant
   order: {
     clientNotes: '',
+    destination: '',
     salesRep: null // Sales rep from referral link (e.g., ?ref=alejandra)
   },
   payment: {
@@ -2623,7 +2624,11 @@ function handlePaymentMethodChange(e) {
  * Step 4A → 4B: "Continuar al Pago" button handler
  */
 function handleContinueToPay() {
-  // Store notes before transitioning
+  // Store destination and notes before transitioning
+  const destinationEl = document.getElementById('order-destination');
+  if (destinationEl) {
+    state.order.destination = destinationEl.value.trim();
+  }
   const clientNotes = document.getElementById('client-notes');
   if (clientNotes) {
     state.order.clientNotes = clientNotes.value.trim();
@@ -2732,8 +2737,12 @@ async function handleOrderSubmit() {
     }
   }
 
-  // Notes were already captured in handleContinueToPay() on Step 4A
-  // Just make sure we have the latest value
+  // Destination and notes were already captured in handleContinueToPay() on Step 4A
+  // Just make sure we have the latest values
+  const destinationEl = document.getElementById('order-destination');
+  if (destinationEl) {
+    state.order.destination = destinationEl.value.trim();
+  }
   const notesEl = document.getElementById('client-notes');
   if (notesEl) {
     state.order.clientNotes = notesEl.value.trim();
@@ -2758,7 +2767,8 @@ async function handleOrderSubmit() {
         };
       }),
 
-      // Client notes
+      // Destination and client notes
+      destination: state.order.destination,
       clientNotes: state.order.clientNotes,
 
       // Client info
@@ -2880,6 +2890,7 @@ function showSuccessScreen(orderNumber) {
   // Clear cart for next order
   state.cart = {};
   state.order.clientNotes = '';
+  state.order.destination = '';
   state.payment.proofFile = null;
 }
 

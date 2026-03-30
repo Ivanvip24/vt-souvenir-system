@@ -151,6 +151,7 @@ router.post('/orders/submit', async (req, res) => {
       eventType,
       eventDate,
       clientNotes,
+      destination,
 
       // Client information
       clientName,
@@ -382,8 +383,9 @@ router.post('/orders/submit', async (req, res) => {
         shipping_days,
         sales_rep,
         is_store_pickup,
-        shipping_cost
-      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16, $17)
+        shipping_cost,
+        destination
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16, $17, $18)
       RETURNING id`,
       [
         orderNumber,
@@ -402,7 +404,8 @@ router.post('/orders/submit', async (req, res) => {
         deliveryDates.shippingDays,
         salesRep || null,
         isStorePickup || false,
-        parseFloat(shippingCost) || 0
+        parseFloat(shippingCost) || 0,
+        destination || null
       ]
     );
 
@@ -918,6 +921,94 @@ router.post('/orders/:orderId/upload-proof', async (req, res) => {
       success: false,
       error: 'Error al subir comprobante'
     });
+  }
+});
+
+/**
+ * POST /api/client/orders/:orderId/second-payment
+ * Upload second payment receipt (public — used by /seguimiento page)
+ */
+router.post('/orders/:orderId/second-payment', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { receiptUrl, publicId } = req.body;
+
+    if (!receiptUrl) {
+      return res.status(400).json({ success: false, error: 'Receipt URL is required' });
+    }
+
+    // Validate URL domain
+    try {
+      const parsed = new URL(receiptUrl);
+      if (parsed.protocol !== 'https:') {
+        return res.status(400).json({ success: false, error: 'Solo se permiten URLs HTTPS' });
+      }
+      const allowedDomains = ['res.cloudinary.com', 'drive.google.com', 'lh3.googleusercontent.com', 'lh4.googleusercontent.com', 'lh5.googleusercontent.com', 'lh6.googleusercontent.com', 'storage.googleapis.com'];
+      if (!allowedDomains.some(d => parsed.hostname === d || parsed.hostname.endsWith('.' + d))) {
+        return res.status(400).json({ success: false, error: 'Dominio de imagen no permitido' });
+      }
+    } catch {
+      return res.status(400).json({ success: false, error: 'URL inválida' });
+    }
+
+    // Verify order exists and has remaining balance
+    const orderCheck = await query(
+      'SELECT id, order_number, total_price, deposit_amount, second_payment_proof_url FROM orders WHERE id = $1',
+      [orderId]
+    );
+
+    if (orderCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
+    }
+
+    const order = orderCheck.rows[0];
+
+    if (order.second_payment_proof_url) {
+      return res.status(400).json({ success: false, error: 'Ya se subió un comprobante para este pedido' });
+    }
+
+    const remainingBalance = parseFloat(order.total_price) - parseFloat(order.deposit_amount);
+    if (remainingBalance <= 0) {
+      return res.status(400).json({ success: false, error: 'Este pedido no tiene saldo pendiente' });
+    }
+
+    // Save receipt URL
+    await query(
+      'UPDATE orders SET second_payment_proof_url = $1 WHERE id = $2',
+      [receiptUrl, orderId]
+    );
+
+    console.log(`✅ Second payment receipt uploaded via client route for order ${orderId}`);
+
+    // AI Verification (if configured)
+    if (isAIConfigured()) {
+      try {
+        const verificationResult = await verifyPaymentReceipt(receiptUrl, remainingBalance, order.order_number);
+        const now = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+        let verificationNote = `\n\n--- PAGO FINAL via seguimiento (${now}) ---\n`;
+        verificationNote += `Verificación AI: ${verificationResult.recommendation}\n`;
+        if (verificationResult.analysis) {
+          const a = verificationResult.analysis;
+          verificationNote += `Monto detectado: $${a.amount_detected?.toFixed(2) || 'N/A'}\n`;
+          verificationNote += `Monto esperado: $${remainingBalance.toFixed(2)}\n`;
+        }
+        await query(
+          `UPDATE orders SET internal_notes = COALESCE(internal_notes, '') || $1 WHERE id = $2`,
+          [verificationNote, orderId]
+        );
+      } catch (aiErr) {
+        console.error('AI verification failed (non-blocking):', aiErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Comprobante recibido. Verificaremos tu pago pronto.'
+    });
+
+  } catch (error) {
+    console.error('Error uploading second payment receipt:', error);
+    res.status(500).json({ success: false, error: 'Error al subir comprobante' });
   }
 });
 

@@ -19,6 +19,8 @@
 }
 
 :root {
+    color-scheme: light;
+
     /* AXKAN Brand Colors */
     --axkan-pink: #e72a88;
     --axkan-green: #8ab73b;
@@ -37,21 +39,21 @@
     --warning: #f39223;
 
     /* Backgrounds (light theme) */
-    --bg-primary: #f5f5f7;
+    --bg-primary: #fafafa;
     --bg-secondary: #ffffff;
-    --bg-tertiary: #eef0f4;
+    --bg-tertiary: #f1f3f9;
 
     /* Gray palette — light theme (low=light, high=dark) */
-    --gray-50: #f8f9fa;
-    --gray-100: #f1f3f5;
-    --gray-200: #e9ecef;
-    --gray-300: #dee2e6;
-    --gray-400: #adb5bd;
-    --gray-500: #6c757d;
-    --gray-600: #495057;
-    --gray-700: #343a40;
-    --gray-800: #e9ecef;
-    --gray-900: #1a1a2e;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
 
     /* Borders */
     --border-light: rgba(0, 0, 0, 0.08);
@@ -107,11 +109,11 @@ body {
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg,
-        #f5f5f7 0%,
-        #f0edf5 25%,
-        #f5f5f7 50%,
-        #edf3f5 75%,
-        #f5f5f7 100%
+        #fafafa 0%,
+        #f5f0f8 25%,
+        #fafafa 50%,
+        #f0f7fa 75%,
+        #fafafa 100%
     );
 }
 
@@ -412,7 +414,7 @@ body {
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--gray-400);
 }
 
 .form-group input:focus,
@@ -2031,7 +2033,7 @@ body {
 }
 
 .spei-tip strong {
-    color: #64B5F6;
+    color: #1565C0;
 }
 
 .spei-icon {
@@ -2698,7 +2700,7 @@ input:focus:not(:focus-visible) {
 .variant-label {
     font-weight: 700;
     font-size: 15px;
-    color: #1a1a1a;
+    color: var(--gray-900);
 }
 
 .variant-price {
