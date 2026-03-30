@@ -414,7 +414,7 @@ router.post('/webhook', (req, res) => {
       await query(
         `UPDATE whatsapp_conversations
          SET unread_count = unread_count + 1,
-             reengagement_at = NOW() + INTERVAL '23 hours'
+             reengagement_at = CASE WHEN reengagement_at IS NULL THEN NOW() + INTERVAL '23 hours' ELSE reengagement_at END
          WHERE id = $1`,
         [conversationId]
       );
