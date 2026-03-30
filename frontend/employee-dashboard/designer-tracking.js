@@ -615,7 +615,11 @@ function dlShowSourcePrompt(type) {
   modal.innerHTML = `
     <div class="dl-source-backdrop" onclick="dlCloseSourcePrompt()"></div>
     <div class="dl-source-box">
-      <div class="dl-source-title">+ 1 ${label}</div>
+      <div class="dl-source-title-row">
+        <span class="dl-source-title">+ </span>
+        <input type="number" id="dl-source-qty" class="dl-source-qty" value="1" min="1" max="99">
+        <span class="dl-source-title"> ${label}</span>
+      </div>
       <div class="dl-source-subtitle">¿De dónde es?</div>
       <input type="text" id="dl-source-input" class="dl-source-input" placeholder="Ej: Pedido #142, Cliente Ana, Inventario..." autofocus>
       <div class="dl-source-actions">
@@ -640,7 +644,9 @@ function dlShowSourcePrompt(type) {
 
 function dlConfirmSource(type) {
   const input = document.getElementById('dl-source-input');
+  const qtyInput = document.getElementById('dl-source-qty');
   const source = input ? input.value.trim() : '';
+  const qty = Math.max(1, Math.min(99, parseInt(qtyInput?.value) || 1));
 
   if (!source) {
     input.style.border = '2px solid #e72a88';
@@ -649,8 +655,11 @@ function dlConfirmSource(type) {
     return;
   }
 
-  dlState[type] = (dlState[type] || 0) + 1;
-  dlState.details.push({ type, source, time: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) });
+  const time = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  dlState[type] = (dlState[type] || 0) + qty;
+  for (let i = 0; i < qty; i++) {
+    dlState.details.push({ type, source: qty > 1 ? source + ' (' + (i + 1) + '/' + qty + ')' : source, time });
+  }
   document.getElementById('dl-' + type).textContent = dlState[type];
   dlRenderDetails();
   dlCloseSourcePrompt();

@@ -3128,11 +3128,41 @@ textarea {
     text-align: center;
 }
 
+.dl-source-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
 .dl-source-title {
     font-size: 18px;
     font-weight: 800;
     color: var(--primary, #e72a88);
-    margin-bottom: 4px;
+}
+
+.dl-source-qty {
+    width: 48px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary, #e72a88);
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 2px 4px;
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.dl-source-qty:focus {
+    border-color: var(--primary, #e72a88);
+}
+
+.dl-source-qty::-webkit-outer-spin-button,
+.dl-source-qty::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .dl-source-subtitle {
