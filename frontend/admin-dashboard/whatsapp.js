@@ -3779,6 +3779,19 @@ function buildMessagesDOM(parentEl) {
         }
         contentDiv.appendChild(docCaptionDiv);
       }
+    } else if (msgType === 'video' && m.media_url) {
+      // Video message
+      var videoEl = document.createElement('video');
+      videoEl.src = m.media_url;
+      videoEl.controls = true;
+      videoEl.preload = 'metadata';
+      videoEl.style.cssText = 'max-width:260px;border-radius:12px;display:block;margin-bottom:6px;box-shadow:0 2px 8px rgba(0,0,0,0.08);';
+      contentDiv.appendChild(videoEl);
+      if (contentText && contentText !== '[Video]') {
+        var vidCaption = document.createElement('div');
+        vidCaption.textContent = contentText;
+        contentDiv.appendChild(vidCaption);
+      }
     } else if (msgType === 'location' || (meta && meta.type === 'location')) {
       // Location message rendering
       var lat = meta.latitude;
