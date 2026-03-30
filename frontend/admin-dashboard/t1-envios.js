@@ -571,16 +571,18 @@ function t1BuildSyncScript() {
     'const n=c[4].textContent.trim().replace(/\\s+/g," ");' +
     'const v=c[7]?c[7].textContent.trim():"";' +
     'if(p[0])s.push({tracking:p[0].textContent.trim(),carrier:p[1]?p[1].textContent.trim():"",client:n,cost:c[5].textContent.trim(),trackingStatus:v})});' +
-    'console.log("Scraping "+s.length+" shipments, fetching label URLs...");' +
-    // Fetch label URL for each shipment via T1's Next.js data endpoint
-    'for(let i=0;i<s.length;i++){' +
+    'console.log("Scraping "+s.length+" shipments, fetching label URLs (5 at a time)...");' +
+    // Fetch label URLs in parallel batches of 5
+    'for(let i=0;i<s.length;i+=5){' +
+    'const batch=s.slice(i,i+5);' +
+    'await Promise.all(batch.map(async(item)=>{' +
     'try{' +
-    'const r=await fetch("/shippings/my-shippings/"+s[i].tracking);' +
+    'const r=await fetch("/shippings/my-shippings/"+item.tracking);' +
     'const html=await r.text();' +
     'const m=html.match(/cdn\\.t1\\.com\\/labels\\/[^"\\x27\\s\\\\]+\\.pdf/);' +
-    'if(m)s[i].labelUrl="https://"+m[0];' +
-    '}catch(e){console.log("Skip label URL for "+s[i].tracking)}' +
-    'if(i%5===0)console.log("Progress: "+(i+1)+"/"+s.length)}' +
+    'if(m)item.labelUrl="https://"+m[0];' +
+    '}catch(e){}}));' +
+    'console.log("Progress: "+Math.min(i+5,s.length)+"/"+s.length)}' +
     'const withUrl=s.filter(x=>x.labelUrl).length;' +
     'const noUrl=s.length-withUrl;' +
     'console.log("Labels con PDF: "+withUrl+", sin PDF: "+noUrl);' +
