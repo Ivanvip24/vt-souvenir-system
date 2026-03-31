@@ -193,7 +193,7 @@ export async function seedDefaultTemplates() {
         { name: 'client_name', example: 'María' },
         { name: 'order_number', example: '1234' }
       ],
-      buttons: [{ text: 'Ya completé mi pedido' }, { text: 'Necesito ayuda' }, { text: 'Hablar con alguien' }]
+      buttons: []
     }
   ];
 

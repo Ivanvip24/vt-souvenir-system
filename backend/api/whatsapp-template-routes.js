@@ -124,6 +124,30 @@ router.get('/broadcasts', async (req, res) => {
   }
 });
 
+// Update a template (e.g. remove buttons)
+router.put('/templates/:name', async (req, res) => {
+  try {
+    const { bodyText, footerText, headerType, variables, buttons } = req.body;
+    const sets = [];
+    const vals = [];
+    let i = 1;
+    if (bodyText !== undefined) { sets.push(`body_text = $${i++}`); vals.push(bodyText); }
+    if (footerText !== undefined) { sets.push(`footer_text = $${i++}`); vals.push(footerText); }
+    if (headerType !== undefined) { sets.push(`header_type = $${i++}`); vals.push(headerType); }
+    if (variables !== undefined) { sets.push(`variables = $${i++}`); vals.push(JSON.stringify(variables)); }
+    if (buttons !== undefined) { sets.push(`buttons = $${i++}`); vals.push(JSON.stringify(buttons)); }
+    if (sets.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+    vals.push(req.params.name);
+    const result = await query(`UPDATE whatsapp_templates SET ${sets.join(', ')} WHERE name = $${i}`, vals);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Template not found' });
+    const updated = await query('SELECT * FROM whatsapp_templates WHERE name = $1', [req.params.name]);
+    res.json({ template: updated.rows[0] });
+  } catch (err) {
+    console.error('🟢 Template update error:', err.message);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Seed default templates
 router.post('/templates/seed', async (req, res) => {
   try {
