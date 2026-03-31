@@ -5,15 +5,17 @@
 
 /**
  * Calculate production days based on total quantity
- * - 1-499 items: 3 business days
- * - 500-1999 items: 4 business days
- * - 2000+ items: 5 business days
+ * Includes 2 days for design + production time:
+ * - 1-499 items: 2 (design) + 3 (production) = 5 business days
+ * - 500-1999 items: 2 (design) + 4 (production) = 6 business days
+ * - 2000+ items: 2 (design) + 5 (production) = 7 business days
  */
+const DESIGN_DAYS = 2;
+
 export function getProductionDays(totalQuantity) {
-  if (totalQuantity <= 499) return 3;
-  if (totalQuantity <= 999) return 4;
-  if (totalQuantity <= 1999) return 4;
-  return 5;
+  if (totalQuantity <= 499) return DESIGN_DAYS + 3;
+  if (totalQuantity <= 1999) return DESIGN_DAYS + 4;
+  return DESIGN_DAYS + 5;
 }
 
 /**
