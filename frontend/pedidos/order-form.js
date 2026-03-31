@@ -1144,19 +1144,35 @@ function _renderPedidosCards(addrContainer, confirmBtn, selectedId) {
       window.AddressCards.showForm(addrContainer, addr, async function(formData) {
         try {
           const addrId = formData.id || addr.id;
-          const res = await fetch(API_BASE + '/addresses/' + encodeURIComponent(addrId), {
-            method: 'PUT',
+          const isLocal = addrId === 'local';
+          const url = isLocal
+            ? API_BASE + '/addresses'
+            : API_BASE + '/addresses/' + encodeURIComponent(addrId);
+          const method = isLocal ? 'POST' : 'PUT';
+          const res = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               phone: state.client.phone,
               email: state.client.email,
-              ...formData
+              street: formData.street,
+              streetNumber: formData.street_number,
+              colonia: formData.colonia,
+              city: formData.city,
+              state: formData.state,
+              postal: formData.postal_code,
+              referenceNotes: formData.references
             })
           });
           const data = await res.json();
           if (data.success && data.address) {
-            const idx = _pedidosAddresses.findIndex(function(a) { return String(a.id) === String(addrId); });
-            if (idx !== -1) _pedidosAddresses[idx] = data.address;
+            if (isLocal) {
+              _pedidosAddresses = [data.address];
+              state.client.selectedAddressId = data.address.id;
+            } else {
+              const idx = _pedidosAddresses.findIndex(function(a) { return String(a.id) === String(addrId); });
+              if (idx !== -1) _pedidosAddresses[idx] = data.address;
+            }
             _syncAddressToState(state.client.selectedAddressId);
             _renderPedidosCards(addrContainer, confirmBtn, state.client.selectedAddressId);
           } else {
