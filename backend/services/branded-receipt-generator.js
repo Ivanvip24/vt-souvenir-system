@@ -18,9 +18,13 @@ if (!fs.existsSync(BRANDED_RECEIPTS_DIR)) {
   fs.mkdirSync(BRANDED_RECEIPTS_DIR, { recursive: true });
 }
 
-// Brand asset paths
-const FONT_RLAQVA = path.join(__dirname, '../../frontend/assets/axkan/RLAQVA.otf');
-const FONT_OBJEKTIV = path.join(__dirname, '../../frontend/assets/axkan/FONT-OBJEKTIV-VF-BODY.otf');
+// Brand asset paths (same as quote-generator)
+const FONT_RLAQVA = path.join(__dirname, '../assets/fonts/RLAQVA.otf');
+const FONT_OBJEKTIV = path.join(__dirname, '../assets/fonts/FONT-OBJEKTIV-VF-BODY.otf');
+const LOGO_COMBINED = path.join(__dirname, '../assets/images/JAGUAR_LETTERS.png');
+// Fallback to old paths
+const FONT_RLAQVA_ALT = path.join(__dirname, '../../frontend/assets/axkan/RLAQVA.otf');
+const FONT_OBJEKTIV_ALT = path.join(__dirname, '../../frontend/assets/axkan/FONT-OBJEKTIV-VF-BODY.otf');
 const LOGO_JAGUAR = path.join(__dirname, '../../frontend/assets/axkan/JAGUAR.png');
 const LOGO_LETTERS = path.join(__dirname, '../../frontend/assets/axkan/LETTERS.png');
 
@@ -320,592 +324,237 @@ export async function generateBrandedReceipt(receiptData) {
       console.log(`🧾 Generating branded receipt: ${receiptNumber}`);
       console.log(`   Client: ${clientName} | Type: ${receiptType} | Total: ${formatCurrency(totalProject)}`);
 
-      // Create PDF
+      // ══════════════════════════════════════════
+      // PDF — Matching quotation layout exactly
+      // ══════════════════════════════════════════
       const doc = new PDFDocument({
         size: 'LETTER',
-        margins: { top: 0, bottom: 0, left: 0, right: 0 }
+        margins: { top: 40, bottom: 15, left: 55, right: 55 },
+        autoFirstPage: false
       });
+
+      // Register fonts (same as quote-generator)
+      const titleFontPath = fs.existsSync(FONT_RLAQVA) ? FONT_RLAQVA : (fs.existsSync(FONT_RLAQVA_ALT) ? FONT_RLAQVA_ALT : null);
+      const bodyFontPath = fs.existsSync(FONT_OBJEKTIV) ? FONT_OBJEKTIV : (fs.existsSync(FONT_OBJEKTIV_ALT) ? FONT_OBJEKTIV_ALT : null);
+      if (titleFontPath) doc.registerFont('Title', titleFontPath);
+      if (bodyFontPath) doc.registerFont('Body', bodyFontPath);
+      const titleFont = titleFontPath ? 'Title' : 'Helvetica-Bold';
+      const bodyFont = bodyFontPath ? 'Body' : 'Helvetica';
+
+      // Logo path (prefer combined, fallback to separate)
+      const logoPath = fs.existsSync(LOGO_COMBINED) ? LOGO_COMBINED : null;
+
+      const pw = 612;
+      const ph = 792;
+      const ml = 55;
+      const cw = pw - ml - 55;
+      const segW = pw / BAND_COLORS.length;
+
+      const FOOTER_ZONE = 40;
+      const PAGE_BOTTOM = ph - FOOTER_ZONE;
+      const CONT_TOP = 30;
 
       const stream = fs.createWriteStream(filepath);
       doc.pipe(stream);
 
-      // Register fonts
-      const fonts = registerFonts(doc);
-
-      let y = 0;
-
-      // ================================================================
-      // 1. TOP COLOR BAND (8pt)
-      // ================================================================
-      drawColorBand(doc, 0, 8);
-      y = 8;
-
-      // ================================================================
-      // 2. HEADER (y=32 to y=90)
-      // ================================================================
-      y = 32;
-
-      // Left side: Jaguar logo + Letters logo + tagline
-      try {
-        if (fs.existsSync(LOGO_JAGUAR)) {
-          doc.image(LOGO_JAGUAR, MARGIN_LEFT, y, { height: 48 });
+      // ── Page chrome helpers (same as quotation)
+      function drawTopBand() {
+        for (let i = 0; i < BAND_COLORS.length; i++) {
+          doc.rect(segW * i, 0, segW + 1, 5).fill(BAND_COLORS[i]);
         }
-      } catch (err) {
-        console.log('⚠️ Could not load JAGUAR logo:', err.message);
+      }
+      function drawFooterBand() {
+        const fY = ph - 20;
+        for (let i = 0; i < BAND_COLORS.length; i++) {
+          doc.rect(segW * i, fY, segW + 1, 4).fill(BAND_COLORS[i]);
+        }
+        doc.font(bodyFont).fontSize(6).fillColor('#B0B0B0')
+           .text('axkan.art   •   55 3825 3251   •   informacion@axkan.art', ml, fY - 11, { width: cw, align: 'center', lineBreak: false });
+      }
+      function newPage() {
+        doc.addPage({ size: 'LETTER', margins: { top: 40, bottom: 15, left: 55, right: 55 } });
+        drawTopBand();
+        drawFooterBand();
+      }
+      function ensureSpace(atY, needed) {
+        if (atY + needed > PAGE_BOTTOM) { newPage(); return CONT_TOP; }
+        return atY;
       }
 
-      try {
-        if (fs.existsSync(LOGO_LETTERS)) {
-          doc.image(LOGO_LETTERS, 112, y + 3, { height: 26 });
-        }
-      } catch (err) {
-        console.log('⚠️ Could not load LETTERS logo:', err.message);
+      // Table column positions (same as quotation)
+      const cN = ml + 8;
+      const cQ = ml + 240;
+      const cP = ml + 320;
+      const cS = ml + cw - 8;
+
+      function drawTableHeader(atY) {
+        doc.font(bodyFont).fontSize(6).fillColor('#B0B0B0');
+        doc.text('PRODUCTO', cN, atY);
+        doc.text('CANTIDAD', cQ, atY);
+        doc.text('PRECIO', cP, atY);
+        doc.text('SUBTOTAL', cS - 60, atY, { width: 60, align: 'right' });
+        const lineY = atY + 4;
+        doc.moveTo(ml + 4, lineY).lineTo(ml + cw - 4, lineY).lineWidth(0.4).strokeColor(COLORS.rosaMexicano).opacity(0.2).stroke();
+        doc.opacity(1);
+        return lineY + 10;
       }
 
-      // Tagline
-      doc.font(fonts.body)
-         .fontSize(6.5)
-         .fillColor(COLORS.textLight)
-         .text('RECUERDOS HECHOS SOUVENIR', 112, y + 32, {
-           characterSpacing: 2.5,
-           lineBreak: false
-         });
+      // ══════════════════════════════════════════
+      // PAGE 1 — Header (matching quotation exactly)
+      // ══════════════════════════════════════════
+      newPage();
+      let y = 16;
 
-      // Right side: Receipt type title + receipt number
-      doc.font(fonts.title)
-         .fontSize(11)
-         .fillColor(COLORS.rosaMexicano)
-         .text(labels.title, MARGIN_LEFT, y, {
-           width: CONTENT_WIDTH,
-           align: 'right'
-         });
+      // Centered logo
+      if (logoPath) {
+        try { doc.image(logoPath, (pw - 160) / 2, y, { fit: [160, 56], align: 'center' }); }
+        catch (err) { console.log('Could not load logo:', err.message); }
+      }
+      y += 80;
 
-      doc.font('Courier')
-         .fontSize(8.5)
-         .fillColor(COLORS.textLight)
-         .text(receiptNumber, MARGIN_LEFT, y + 16, {
-           width: CONTENT_WIDTH,
-           align: 'right'
-         });
+      // Tagline pill
+      const tagW = 210;
+      const tagX = (pw - tagW) / 2;
+      doc.roundedRect(tagX, y, tagW, 14, 7).fill('#FDF2F8');
+      doc.font(bodyFont).fontSize(5.5).fillColor(COLORS.rosaMexicano)
+         .text('RECUERDOS HECHOS SOUVENIR', ml, y + 3, { width: cw, align: 'center', characterSpacing: 2 });
+      y += 34;
 
-      // ================================================================
-      // 3. DIVIDER (y=88)
-      // ================================================================
-      y = 88;
-      // Full width line
-      doc.moveTo(MARGIN_LEFT, y)
-         .lineTo(PAGE_WIDTH - MARGIN_RIGHT, y)
-         .lineWidth(0.5)
-         .strokeColor(COLORS.borderSoft)
-         .stroke();
+      // Receipt number + date
+      doc.font(bodyFont).fontSize(7.5).fillColor('#B0B0B0')
+         .text(`${receiptNumber}   •   ${dateStr}   •   ${labels.docType}`, ml, y, { width: cw, align: 'center' });
+      y += 32;
 
-      // Rosa accent bar on left
-      doc.rect(MARGIN_LEFT, y - 1, 50, 2.5)
-         .fill(COLORS.rosaMexicano);
+      // Client card (centered)
+      if (clientName) {
+        const cardH = 34;
+        const cardW = 230;
+        const cardX = (pw - cardW) / 2;
+        doc.roundedRect(cardX, y, cardW, cardH, 6).fill('#F6F6F6');
+        doc.roundedRect(cardX, y + 5, 3, cardH - 10, 1.5).fill(COLORS.rosaMexicano);
+        doc.font(bodyFont).fontSize(6).fillColor('#B0B0B0')
+           .text('CLIENTE', cardX + 14, y + 6);
+        doc.font(bodyFont).fontSize(10).fillColor('#505050')
+           .text(clientName, cardX + 14, y + 18);
+        y += cardH + 34;
+      }
 
-      // ================================================================
-      // 4. META STRIP (y=98)
-      // ================================================================
-      y = 98;
-      const metaColWidth = CONTENT_WIDTH / 3;
+      // Diamond divider
+      const rW = cw * 0.45;
+      const rxS = ml + (cw - rW) / 2;
+      doc.moveTo(rxS, y).lineTo(pw / 2 - 6, y).lineWidth(0.3).strokeColor('#E0E0E0').stroke();
+      doc.moveTo(pw / 2 + 6, y).lineTo(rxS + rW, y).lineWidth(0.3).strokeColor('#E0E0E0').stroke();
+      doc.save();
+      doc.translate(pw / 2, y).rotate(45);
+      doc.rect(-2, -2, 4, 4).fill(COLORS.rosaMexicano);
+      doc.restore();
+      y += 26;
 
-      // Column 1: Fecha
-      doc.font(fonts.body)
-         .fontSize(6)
-         .fillColor(COLORS.textLight)
-         .text('FECHA DE EMISIÓN', MARGIN_LEFT, y, {
-           characterSpacing: 1,
-           lineBreak: false
-         });
-      doc.font('Courier')
-         .fontSize(10)
-         .fillColor(COLORS.textDark)
-         .text(dateStr, MARGIN_LEFT, y + 10, { lineBreak: false });
+      // "PRODUCTOS" title with decorative lines
+      doc.moveTo(ml + 40, y + 4).lineTo(pw / 2 - 42, y + 4).lineWidth(0.3).strokeColor('#E0E0E0').stroke();
+      doc.moveTo(pw / 2 + 42, y + 4).lineTo(ml + cw - 40, y + 4).lineWidth(0.3).strokeColor('#E0E0E0').stroke();
+      doc.font(titleFont).fontSize(8).fillColor('#505050')
+         .text('PRODUCTOS', ml, y, { width: cw, align: 'center', characterSpacing: 2 });
+      y += 28;
 
-      // Column 2: Lugar
-      const col2X = MARGIN_LEFT + metaColWidth;
-      doc.font(fonts.body)
-         .fontSize(6)
-         .fillColor(COLORS.textLight)
-         .text('LUGAR', col2X, y, {
-           characterSpacing: 1,
-           lineBreak: false
-         });
-      doc.font('Courier')
-         .fontSize(10)
-         .fillColor(COLORS.textDark)
-         .text('México', col2X, y + 10, { lineBreak: false });
+      // ── Table header
+      y = drawTableHeader(y);
 
-      // Column 3: Tipo de documento
-      const col3X = MARGIN_LEFT + metaColWidth * 2;
-      doc.font(fonts.body)
-         .fontSize(6)
-         .fillColor(COLORS.textLight)
-         .text('TIPO DE DOCUMENTO', col3X, y, {
-           characterSpacing: 1,
-           lineBreak: false
-         });
-      doc.font('Courier')
-         .fontSize(10)
-         .fillColor(COLORS.textDark)
-         .text(labels.docType, col3X, y + 10, { lineBreak: false });
+      // ── Product rows
+      const rowH = 28;
+      items.forEach((item, i) => {
+        if (y + rowH > PAGE_BOTTOM) { newPage(); y = CONT_TOP; y = drawTableHeader(y); }
 
-      // ================================================================
-      // 5. CLIENT CARD (y=128)
-      // ================================================================
-      y = 128;
-      const clientCardHeight = 38;
-
-      // White card with borderSoft stroke
-      doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, clientCardHeight)
-         .lineWidth(0.5)
-         .fillAndStroke('#ffffff', COLORS.borderSoft);
-
-      // Rosa left border accent (3pt wide)
-      doc.rect(MARGIN_LEFT, y, 3, clientCardHeight)
-         .fill(COLORS.rosaMexicano);
-
-      // Client name
-      doc.font(fonts.title)
-         .fontSize(18)
-         .fillColor(COLORS.textDark)
-         .text(clientName, MARGIN_LEFT + 14, y + 6, { lineBreak: false });
-
-      // Role line
-      const roleText = projectName ? `Cliente — ${projectName}` : 'Cliente';
-      doc.font(fonts.body)
-         .fontSize(9)
-         .fillColor(COLORS.textLight)
-         .text(roleText, MARGIN_LEFT + 14, y + 24, { lineBreak: false });
-
-      // ================================================================
-      // 6. CONCEPT BLOCK (y=175)
-      // ================================================================
-      y = 175;
-
-      // Measure description height
-      doc.font(fonts.body).fontSize(11);
-      const descHeight = doc.heightOfString(description, { width: CONTENT_WIDTH - 28 });
-      const conceptBlockHeight = Math.max(40, descHeight + 26);
-
-      // White rect background
-      doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, conceptBlockHeight)
-         .lineWidth(0.5)
-         .fillAndStroke('#ffffff', COLORS.borderSoft);
-
-      // Label
-      doc.font(fonts.body)
-         .fontSize(6)
-         .fillColor(COLORS.textLight)
-         .text('DESCRIPCIÓN DEL PROYECTO', MARGIN_LEFT + 14, y + 6, {
-           characterSpacing: 1,
-           lineBreak: false
-         });
-
-      // Description text
-      doc.font(fonts.body)
-         .fontSize(11)
-         .fillColor(COLORS.textDark)
-         .text(description, MARGIN_LEFT + 14, y + 18, {
-           width: CONTENT_WIDTH - 28
-         });
-
-      // ================================================================
-      // 7. PRODUCT TABLE (y dynamic)
-      // ================================================================
-      y = y + conceptBlockHeight + 10;
-      y = checkPageBreak(doc, y, fonts, 80);
-
-      // Column positions
-      const colProduct = MARGIN_LEFT;
-      const colSize = 220;
-      const colQty = 320;
-      const colPrice = 400;
-      const colTotal = 490;
-      const tableHeaderHeight = 22;
-
-      // Header row - turquesaCaribe background
-      doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, tableHeaderHeight)
-         .fill(COLORS.turquesaCaribe);
-
-      // Column headers in white
-      doc.font(fonts.title)
-         .fontSize(7)
-         .fillColor('#ffffff');
-
-      doc.text('PRODUCTO AXKAN', colProduct + 10, y + 7, { lineBreak: false });
-      doc.text('TAMAÑO', colSize, y + 7, { lineBreak: false });
-      doc.text('CANTIDAD', colQty, y + 7, { lineBreak: false });
-      doc.text('P. UNITARIO', colPrice, y + 7, { lineBreak: false });
-      doc.text('TOTAL', colTotal, y + 7, { lineBreak: false });
-
-      y += tableHeaderHeight;
-
-      // Data rows
-      items.forEach((item, index) => {
-        y = checkPageBreak(doc, y, fonts, 24);
-
-        const rowHeight = 22;
-
-        // Alternating row background
-        if (index % 2 === 0) {
-          doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, rowHeight)
-             .fill('#fafaf8');
+        if (i % 2 === 0) {
+          doc.roundedRect(ml + 2, y - 3, cw - 4, rowH, 3).fill('#F6F6F6');
         }
 
         const lineTotal = item.quantity * item.unitPrice;
+        const displayName = item.size ? `${item.product} (${item.size})` : item.product;
 
-        doc.font(fonts.body)
-           .fontSize(9)
-           .fillColor(COLORS.textDark);
-
-        doc.text(item.product, colProduct + 10, y + 6, { lineBreak: false });
-        doc.text(item.size || '—', colSize, y + 6, { lineBreak: false });
-
-        // Right-align numeric columns
-        doc.text(item.quantity.toLocaleString('es-MX'), colQty, y + 6, {
-          width: 60,
-          align: 'right',
-          lineBreak: false
-        });
-        doc.text(formatCurrency(item.unitPrice), colPrice, y + 6, {
-          width: 70,
-          align: 'right',
-          lineBreak: false
-        });
-        doc.text(formatCurrency(lineTotal), colTotal, y + 6, {
-          width: 72,
-          align: 'right',
-          lineBreak: false
-        });
-
-        y += rowHeight;
+        doc.font(bodyFont).fontSize(9).fillColor('#505050')
+           .text(displayName, cN, y + 3, { width: 220 });
+        doc.font(bodyFont).fontSize(8.5).fillColor('#808080')
+           .text(item.quantity.toLocaleString('es-MX') + ' pzas', cQ, y + 3);
+        doc.font(bodyFont).fontSize(8.5).fillColor('#808080')
+           .text(formatCurrency(item.unitPrice), cP, y + 3);
+        doc.font(titleFont).fontSize(9).fillColor('#505050')
+           .text(formatCurrency(lineTotal), cS - 75, y + 2, { width: 75, align: 'right' });
+        y += rowH;
       });
 
-      // ================================================================
-      // 8. TABLE TOTALS
-      // ================================================================
-      y += 4;
-      y = checkPageBreak(doc, y, fonts, 60);
-
-      const totalsX = colPrice;
-      const totalsValueX = colTotal;
-      const totalsValueWidth = 72;
-
-      // Subtotal
-      doc.font(fonts.body)
-         .fontSize(9)
-         .fillColor(COLORS.textMid)
-         .text('Subtotal', totalsX, y, { lineBreak: false });
-      doc.text(formatCurrency(subtotal), totalsValueX, y, {
-        width: totalsValueWidth,
-        align: 'right',
-        lineBreak: false
-      });
-      y += 16;
-
-      // IVA (conditional)
-      if (includeIVA) {
-        doc.text(`IVA (${ivaRate}%)`, totalsX, y, { lineBreak: false });
-        doc.text(formatCurrency(ivaAmount), totalsValueX, y, {
-          width: totalsValueWidth,
-          align: 'right',
-          lineBreak: false
-        });
-        y += 16;
-      }
-
-      // Divider line before grand total
-      doc.moveTo(totalsX, y)
-         .lineTo(totalsValueX + totalsValueWidth, y)
-         .lineWidth(0.75)
-         .strokeColor(COLORS.borderSoft)
-         .stroke();
-      y += 6;
-
-      // Grand total
-      doc.font(fonts.title)
-         .fontSize(11)
-         .fillColor(COLORS.textDark)
-         .text('Total del Proyecto', totalsX, y, { lineBreak: false });
-      doc.text(formatCurrency(totalProject), totalsValueX, y, {
-        width: totalsValueWidth,
-        align: 'right',
-        lineBreak: false
-      });
       y += 24;
 
-      // ================================================================
-      // 9. AMOUNT HERO (big pink block)
-      // ================================================================
-      y = checkPageBreak(doc, y, fonts, 90);
+      // ══════════════════════════════════════════
+      // TOTALS CARD (matching quotation style)
+      // ══════════════════════════════════════════
+      y = ensureSpace(y, 250);
 
-      const heroHeight = 82;
+      const totCardW = 230;
+      const totCardX = ml + cw - totCardW;
+      const hasIVA = includeIVA && ivaAmount > 0;
+      const totCardH = 110 + (hasIVA ? 20 : 0) + (pendingBalance > 0 ? 20 : 0);
+      doc.roundedRect(totCardX, y, totCardW, totCardH, 8).fill('#F6F6F6');
 
-      // Full-width rosa background
-      doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, heroHeight)
-         .fill(COLORS.rosaMexicano);
+      let ty = y + 10;
+      const tL = totCardX + 16;
+      const tR = totCardX + totCardW - 16;
 
-      // Jaguar watermark overlay at low opacity
-      try {
-        if (fs.existsSync(LOGO_JAGUAR)) {
-          doc.save();
-          doc.opacity(0.08);
-          doc.image(LOGO_JAGUAR, PAGE_WIDTH - MARGIN_RIGHT - 100, y + 6, { height: 70 });
-          doc.restore();
-        }
-      } catch (err) {
-        // Skip watermark if image fails
+      // Subtotal
+      doc.font(bodyFont).fontSize(8.5).fillColor('#808080').text('Subtotal', tL, ty);
+      doc.font(bodyFont).fontSize(8.5).fillColor('#505050')
+         .text(formatCurrency(subtotal), tL, ty, { width: tR - tL, align: 'right' });
+      ty += 20;
+
+      // IVA
+      if (hasIVA) {
+        doc.font(bodyFont).fontSize(8.5).fillColor('#808080').text(`IVA (${ivaRate}%)`, tL, ty);
+        doc.font(bodyFont).fontSize(8.5).fillColor('#505050')
+           .text(formatCurrency(ivaAmount), tL, ty, { width: tR - tL, align: 'right' });
+        ty += 20;
       }
 
-      // Left side: badge
-      // Semi-transparent white badge background
-      doc.save();
-      doc.opacity(0.2);
-      doc.roundedRect(MARGIN_LEFT + 14, y + 12, 130, 20, 3)
-         .fill('#ffffff');
-      doc.restore();
+      // TOTAL
+      doc.font(titleFont).fontSize(16).fillColor(COLORS.rosaMexicano).text('TOTAL', tL, ty);
+      doc.font(titleFont).fontSize(16).fillColor(COLORS.rosaMexicano)
+         .text(formatCurrency(totalProject), tL, ty, { width: tR - tL, align: 'right' });
+      ty += 24;
 
-      doc.font(fonts.title)
-         .fontSize(7)
-         .fillColor('#ffffff')
-         .text(labels.badge, MARGIN_LEFT + 20, y + 16, { lineBreak: false });
+      // Anticipo
+      const advanceLabel = receiptType === 'full' ? 'Pago completo' : `${labels.badge}`;
+      doc.font(bodyFont).fontSize(8).fillColor(COLORS.verdeSelva).text(advanceLabel, tL, ty);
+      doc.font(titleFont).fontSize(10).fillColor(COLORS.verdeSelva)
+         .text(formatCurrency(effectiveAdvance), tL, ty, { width: tR - tL, align: 'right' });
+      ty += 20;
 
-      // Description below badge
-      const heroDescText = receiptType === 'advance'
-        ? `Pago parcial del proyecto\n${projectName || 'AXKAN'}`
-        : receiptType === 'full'
-        ? `Pago total del proyecto\n${projectName || 'AXKAN'}`
-        : `Pago recibido para\n${projectName || 'AXKAN'}`;
+      // Saldo pendiente
+      if (pendingBalance > 0) {
+        doc.font(bodyFont).fontSize(8).fillColor(COLORS.naranjCalido).text('Saldo pendiente', tL, ty);
+        doc.font(titleFont).fontSize(10).fillColor(COLORS.naranjCalido)
+           .text(formatCurrency(pendingBalance), tL, ty, { width: tR - tL, align: 'right' });
+        ty += 20;
+      }
 
-      doc.font(fonts.body)
-         .fontSize(8)
-         .fillColor('rgba(255,255,255,0.85)')
-         .text(heroDescText, MARGIN_LEFT + 14, y + 40, {
-           width: 180,
-           lineBreak: true
-         });
+      y += totCardH + 24;
 
-      // Right side: MXN label + big amount
-      const amountStr = formatCurrency(effectiveAdvance);
-      // Split into main amount and decimals
-      const amountParts = amountStr.split('.');
-      const mainAmount = amountParts[0]; // e.g. "$42,000"
-      const decimals = amountParts[1] ? '.' + amountParts[1] : '.00';
+      // ── Payment method + date line
+      y = ensureSpace(y, 30);
+      doc.font(bodyFont).fontSize(7.5).fillColor('#B0B0B0')
+         .text(`Forma de pago: ${paymentMethod}   •   Fecha de pago: ${dateStr}`, ml, y, { width: cw, align: 'center' });
+      y += 24;
 
-      doc.font(fonts.body)
-         .fontSize(7)
-         .fillColor('rgba(255,255,255,0.7)')
-         .text('MXN', PAGE_WIDTH - MARGIN_RIGHT - 200, y + 10, {
-           width: 185,
-           align: 'right',
-           lineBreak: false
-         });
-
-      doc.font(fonts.title)
-         .fontSize(36)
-         .fillColor('#ffffff')
-         .text(mainAmount, PAGE_WIDTH - MARGIN_RIGHT - 200, y + 20, {
-           width: 185,
-           align: 'right',
-           lineBreak: false
-         });
-
-      // Smaller decimals
-      // Calculate position for decimals after main amount
-      const mainAmountWidth = doc.widthOfString(mainAmount);
-      doc.font(fonts.title)
-         .fontSize(16)
-         .fillColor('rgba(255,255,255,0.8)')
-         .text(decimals, PAGE_WIDTH - MARGIN_RIGHT - 15, y + 24, {
-           lineBreak: false
-         });
-
-      // Amount in words
-      const amountInWords = numberToSpanishWords(effectiveAdvance);
-      doc.font(fonts.body)
-         .fontSize(7)
-         .fillColor('rgba(255,255,255,0.7)')
-         .text(amountInWords, PAGE_WIDTH - MARGIN_RIGHT - 280, y + 62, {
-           width: 265,
-           align: 'right',
-           lineBreak: false
-         });
-
-      y += heroHeight + 10;
-
-      // ================================================================
-      // 10. DETAILS TABLE (colored dots)
-      // ================================================================
-      y = checkPageBreak(doc, y, fonts, 80);
-
-      const detailRows = [
-        {
-          dot: COLORS.rosaMexicano,
-          label: receiptType === 'full' ? 'Monto pagado' : 'Anticipo recibido',
-          value: formatCurrency(effectiveAdvance)
-        },
-        {
-          dot: COLORS.turquesaCaribe,
-          label: 'Saldo pendiente',
-          value: formatCurrency(pendingBalance)
-        },
-        {
-          dot: COLORS.naranjCalido,
-          label: 'Fecha de pago',
-          value: dateStr
-        },
-        {
-          dot: COLORS.verdeSelva,
-          label: 'Forma de pago',
-          value: paymentMethod
-        }
-      ];
-
-      detailRows.forEach((row) => {
-        y = checkPageBreak(doc, y, fonts, 20);
-
-        // Colored dot
-        doc.circle(MARGIN_LEFT + 8, y + 6, 4)
-           .fill(row.dot);
-
-        // Label
-        doc.font(fonts.body)
-           .fontSize(9)
-           .fillColor(COLORS.textMid)
-           .text(row.label, MARGIN_LEFT + 20, y + 1, { lineBreak: false });
-
-        // Value (right-aligned)
-        doc.font(fonts.title)
-           .fontSize(9)
-           .fillColor(COLORS.textDark)
-           .text(row.value, MARGIN_LEFT, y + 1, {
-             width: CONTENT_WIDTH,
-             align: 'right',
-             lineBreak: false
-           });
-
-        // Subtle separator line
-        y += 18;
-        doc.moveTo(MARGIN_LEFT + 20, y)
-           .lineTo(PAGE_WIDTH - MARGIN_RIGHT, y)
-           .lineWidth(0.3)
-           .strokeColor(COLORS.borderSoft)
-           .stroke();
-        y += 6;
-      });
-
-      // Special instructions (if any)
+      // ── Special instructions
       if (specialInstructions) {
-        y += 4;
-        y = checkPageBreak(doc, y, fonts, 40);
-
-        doc.font(fonts.body)
-           .fontSize(6)
-           .fillColor(COLORS.textLight)
-           .text('INSTRUCCIONES ESPECIALES', MARGIN_LEFT, y, {
-             characterSpacing: 1
-           });
-        y += 10;
-
-        doc.font(fonts.body)
-           .fontSize(9)
-           .fillColor(COLORS.textDark)
-           .text(specialInstructions, MARGIN_LEFT + 10, y, {
-             width: CONTENT_WIDTH - 20
-           });
-
-        y += doc.heightOfString(specialInstructions, { width: CONTENT_WIDTH - 20 }) + 10;
+        y = ensureSpace(y, 40);
+        doc.font(bodyFont).fontSize(7).fillColor('#808080')
+           .text(specialInstructions, ml, y, { width: cw, align: 'center' });
+        y += 18;
       }
 
-      // ================================================================
-      // 11. TERMS & CONDITIONS
-      // ================================================================
-      y += 6;
-      y = checkPageBreak(doc, y, fonts, 100);
-
-      const termsBlockHeight = 12 + (DEFAULT_TERMS.length * 14) + 10;
-
-      // Light gray background
-      doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, termsBlockHeight)
-         .fill('#f7f6f4');
-
-      // Title
-      doc.font(fonts.title)
-         .fontSize(6)
-         .fillColor(COLORS.textMid)
-         .text('TÉRMINOS Y CONDICIONES', MARGIN_LEFT + 14, y + 8, {
-           characterSpacing: 1,
-           lineBreak: false
-         });
-
-      let termsY = y + 22;
-      DEFAULT_TERMS.forEach((term) => {
-        // Oro maya dash marker
-        doc.font(fonts.body)
-           .fontSize(8.5)
-           .fillColor(COLORS.oroMaya)
-           .text('—', MARGIN_LEFT + 14, termsY, { lineBreak: false });
-
-        doc.fillColor(COLORS.textMid)
-           .text(term, MARGIN_LEFT + 30, termsY, {
-             width: CONTENT_WIDTH - 50
-           });
-
-        termsY += 14;
-      });
-
-      y += termsBlockHeight + 10;
-
-      // ================================================================
-      // 12. FOOTER
-      // ================================================================
-      // Position footer near bottom of page
-      const footerY = Math.max(y + 10, PAGE_HEIGHT - 60);
-
-      // Line separator
-      doc.moveTo(MARGIN_LEFT, footerY)
-         .lineTo(PAGE_WIDTH - MARGIN_RIGHT, footerY)
-         .lineWidth(0.5)
-         .strokeColor(COLORS.borderSoft)
-         .stroke();
-
-      // Left: contact info
-      doc.font(fonts.body)
-         .fontSize(7)
-         .fillColor(COLORS.textLight)
-         .text('informacion@axkan.art    IG @axkanoficial    Web axkan.art', MARGIN_LEFT, footerY + 6, {
-           lineBreak: false
-         });
-
-      // Right: copyright
-      doc.font(fonts.title)
-         .fontSize(8)
-         .fillColor(COLORS.textLight)
-         .text('AXKAN \u00A9 2026', MARGIN_LEFT, footerY + 5, {
-           width: CONTENT_WIDTH,
-           align: 'right',
-           lineBreak: false
-         });
-
-      // ================================================================
-      // 13. BOTTOM COLOR BAND (5pt)
-      // ================================================================
-      drawColorBand(doc, PAGE_HEIGHT - 5, 5);
-
-      // ================================================================
-      // 14. JAGUAR WATERMARK (bottom-right, 3.5% opacity)
-      // ================================================================
-      try {
-        if (fs.existsSync(LOGO_JAGUAR)) {
-          doc.save();
-          doc.opacity(0.035);
-          doc.image(LOGO_JAGUAR, PAGE_WIDTH - MARGIN_RIGHT - 140, PAGE_HEIGHT - 180, { height: 120 });
-          doc.restore();
-        }
-      } catch (err) {
-        // Skip watermark silently
-      }
+      // ── Terms
+      y = ensureSpace(y, 20);
+      doc.font(bodyFont).fontSize(5.5).fillColor('#B0B0B0')
+         .text('Precios en MXN, no incluyen IVA  •  Anticipo 50% para iniciar  •  Producción 5–7 días hábiles  •  Envío gratis 300+ pzas', ml, y, { width: cw, align: 'center' });
 
       // Finalize PDF
       doc.end();
