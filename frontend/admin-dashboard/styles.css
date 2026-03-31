@@ -933,6 +933,20 @@ body {
     min-height: 0;
 }
 
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 0 0;
+    margin-top: 8px;
+}
+
+.modal-content form {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: calc(90vh - 80px);
+}
+
 .modal-footer {
     display: flex;
     justify-content: flex-end;
