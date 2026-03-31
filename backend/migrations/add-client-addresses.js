@@ -3,6 +3,7 @@ import { query } from '../shared/database.js';
 export async function addClientAddresses() {
   console.log('🔄 Running client_addresses migration...');
 
+  // 1. Create the table
   await query(`
     CREATE TABLE IF NOT EXISTS client_addresses (
       id SERIAL PRIMARY KEY,
@@ -23,23 +24,27 @@ export async function addClientAddresses() {
     CREATE INDEX IF NOT EXISTS idx_client_addresses_client_id ON client_addresses(client_id);
   `);
 
-  // Migrate existing client addresses into the new table
+  // 2. Add shipping_address_id to orders (must succeed independently)
   await query(`
-    INSERT INTO client_addresses (client_id, label, street, street_number, colonia, city, state, postal, reference_notes, is_default)
-    SELECT id,
-           COALESCE(NULLIF(colonia, ''), city) || ', ' || COALESCE(state, ''),
-           street, street_number, colonia, city, state,
-           COALESCE(postal, postal_code), reference_notes, true
-    FROM clients
-    WHERE (postal IS NOT NULL OR postal_code IS NOT NULL)
-      AND city IS NOT NULL
-      AND NOT EXISTS (SELECT 1 FROM client_addresses ca WHERE ca.client_id = clients.id)
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_id INTEGER
   `);
 
-  // Add shipping_address_id to orders table
-  await query(`
-    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_id INTEGER REFERENCES client_addresses(id)
-  `);
+  // 3. Migrate existing client addresses (best-effort, may fail if columns don't exist)
+  try {
+    await query(`
+      INSERT INTO client_addresses (client_id, label, street, street_number, colonia, city, state, postal, reference_notes, is_default)
+      SELECT id,
+             COALESCE(NULLIF(colonia, ''), city) || ', ' || COALESCE(state, ''),
+             street, street_number, colonia, city, state,
+             COALESCE(postal, postal_code), reference_notes, true
+      FROM clients
+      WHERE (postal IS NOT NULL OR postal_code IS NOT NULL)
+        AND city IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM client_addresses ca WHERE ca.client_id = clients.id)
+    `);
+  } catch (e) {
+    console.warn('⚠️  Could not migrate existing addresses (columns may not exist):', e.message);
+  }
 
   console.log('✅ client_addresses migration complete');
 }

@@ -387,9 +387,8 @@ router.post('/orders/submit', async (req, res) => {
         sales_rep,
         is_store_pickup,
         shipping_cost,
-        destination,
-        shipping_address_id
-      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16, $17, $18, $19)
+        destination
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16, $17, $18)
       RETURNING id`,
       [
         orderNumber,
@@ -409,12 +408,20 @@ router.post('/orders/submit', async (req, res) => {
         salesRep || null,
         isStorePickup || false,
         parseFloat(shippingCost) || 0,
-        destination || null,
-        shippingAddressId || null
+        destination || null
       ]
     );
 
     const orderId = orderResult.rows[0].id;
+
+    // 3b. Set shipping_address_id if provided (column may not exist yet)
+    if (shippingAddressId) {
+      try {
+        await query('UPDATE orders SET shipping_address_id = $1 WHERE id = $2', [shippingAddressId, orderId]);
+      } catch (e) {
+        console.warn('⚠️  Could not set shipping_address_id:', e.message);
+      }
+    }
 
     // 4. Insert order items
     for (const item of orderItems) {
