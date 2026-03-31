@@ -753,6 +753,9 @@
                 }
                 $('btn-continue-to-rates').style.display = 'block';
                 $('btn-continue-to-rates').disabled = false;
+                // Re-render cards to update visual selection
+                var addressContainer = $('address-cards-shipping');
+                renderAddressCardsShipping(addressContainer, state.clientAddresses, addrId, orderId);
             },
             onAdd: function() {
                 var addressContainer = $('address-cards-shipping');
