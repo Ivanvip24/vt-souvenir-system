@@ -30,7 +30,7 @@ export function getProductionDays(totalQuantity) {
 export function getShippingDays(shippingMethod = 'standard') {
   const shippingTimes = {
     'express': 2,      // Express courier (next-day or 2-day)
-    'standard': 5,     // Standard FedEx/DHL
+    'standard': 7,     // Standard FedEx/DHL (5-7 days, promise 7)
     'economy': 7,      // Economy shipping
     'local': 1         // Local delivery
   };
