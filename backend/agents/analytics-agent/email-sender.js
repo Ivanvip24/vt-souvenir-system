@@ -253,6 +253,16 @@ export async function sendReceiptEmail(order, client, pdfPath) {
     }
 
     const orderDate = new Date(order.orderDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+    const eventDateFmt = order.eventDate ? new Date(order.eventDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
+    // Build item rows if available
+    const items = order.items || [];
+    const itemRows = items.map(item =>
+      `<tr>
+        <td style="padding: 18px 0; ${F}; font-size: 14px; color: #1c1c1e; border-bottom: 1px solid #f0f0f0;">${item.quantity} &times; ${item.productName}</td>
+        <td style="padding: 18px 0; ${F}; font-size: 14px; font-weight: 600; color: #1c1c1e; text-align: right; border-bottom: 1px solid #f0f0f0;">${formatCurrency(item.lineTotal)}</td>
+      </tr>`
+    ).join('');
 
     const SP = (h) => `<tr><td style="height:${h}px; line-height:${h}px; font-size:0;" height="${h}">&nbsp;</td></tr>`;
 
@@ -264,24 +274,41 @@ export async function sendReceiptEmail(order, client, pdfPath) {
           <p style="margin: 14px 0 0; ${F}; font-size: 14px; color: #8e8e93; line-height: 1.5;">Tu pago ha sido verificado y registrado correctamente. Adjunto encontraras tu recibo oficial.</p>
         </td></tr>
 
-        ${SP(36)}
+        ${SP(40)}
 
+        <!-- Order + Date -->
         <tr><td style="padding: 0 48px;" class="mobile-pad">
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
             <tr>
-              <td style="padding: 20px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; width: 50%; vertical-align: top;">
-                <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Fecha</p>
-                <p style="margin: 6px 0 0; ${F}; font-size: 15px; font-weight: 600; color: #1c1c1e;">${orderDate}</p>
+              <td style="padding: 24px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; width: 33%; vertical-align: top;">
+                <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Orden</p>
+                <p style="margin: 8px 0 0; ${F}; font-size: 16px; font-weight: 700; color: #1c1c1e;">${order.orderNumber}</p>
               </td>
-              <td style="padding: 20px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; width: 50%; vertical-align: top; text-align: right;">
-                <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Metodo de Pago</p>
-                <p style="margin: 6px 0 0; ${F}; font-size: 15px; font-weight: 600; color: #1c1c1e;">Transferencia SPEI</p>
+              <td style="padding: 24px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; width: 34%; vertical-align: top; text-align: center;">
+                <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Fecha</p>
+                <p style="margin: 8px 0 0; ${F}; font-size: 16px; font-weight: 700; color: #1c1c1e;">${orderDate}</p>
+              </td>
+              <td style="padding: 24px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; width: 33%; vertical-align: top; text-align: right;">
+                <p style="margin: 0; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Metodo</p>
+                <p style="margin: 8px 0 0; ${F}; font-size: 16px; font-weight: 700; color: #1c1c1e;">SPEI</p>
               </td>
             </tr>
           </table>
         </td></tr>
 
-        ${SP(32)}
+        ${items.length > 0 ? `
+        ${SP(36)}
+
+        <!-- Products -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <p style="margin: 0 0 14px; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Productos</p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            ${itemRows}
+          </table>
+        </td></tr>
+        ` : ''}
+
+        ${SP(28)}
 
         <!-- Totals -->
         <tr><td style="padding: 0 48px;" class="mobile-pad">
@@ -295,6 +322,7 @@ export async function sendReceiptEmail(order, client, pdfPath) {
               <td style="padding: 14px 0; ${F}; font-size: 14px; font-weight: 600; color: #8AB73B; text-align: right;">${formatCurrency(order.actualDepositAmount)}</td>
             </tr>
             <tr><td colspan="2"><div style="height: 1px; background-color: #e5e5ea;"></div></td></tr>
+            ${order.remainingBalance > 0 ? `
             <tr>
               <td style="padding: 20px 0 0; ${F}; font-size: 11px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px;">Saldo Restante</td>
               <td style="padding: 20px 0 0; ${F}; font-size: 28px; font-weight: 700; color: #E72A88; text-align: right; letter-spacing: -0.5px;">${formatCurrency(order.remainingBalance)}</td>
@@ -304,15 +332,68 @@ export async function sendReceiptEmail(order, client, pdfPath) {
                 Este monto debera ser cubierto antes de la entrega del pedido.
               </td>
             </tr>
+            ` : `
+            <tr>
+              <td colspan="2" style="padding: 24px 0 0; ${F}; font-size: 15px; font-weight: 600; color: #8AB73B; text-align: center;">
+                Pedido pagado en su totalidad
+              </td>
+            </tr>
+            `}
           </table>
         </td></tr>
 
-        ${SP(40)}
+        ${SP(36)}
 
-        <!-- CTA -->
-        <tr><td style="padding: 0 48px; text-align: center;" class="mobile-pad">
-          <a href="https://axkan.art" style="display: inline-block; ${F}; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none; padding: 14px 48px; background-color: #E72A88; border-radius: 50px;">Ver Recibo Completo</a>
+        <!-- Divider -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <div style="height: 1px; background-color: #e5e5ea;"></div>
         </td></tr>
+
+        ${SP(36)}
+
+        <!-- Next Steps -->
+        <tr><td style="padding: 0 48px;" class="mobile-pad">
+          <p style="margin: 0 0 20px; ${F}; font-size: 10px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 1px;">Proximos Pasos</p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="width: 44px; vertical-align: top; padding-bottom: 24px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #E72A88; color: #fff; ${F}; font-size: 14px; font-weight: 700; line-height: 32px; text-align: center;">1</div>
+              </td>
+              <td style="vertical-align: top; padding-bottom: 24px;">
+                <p style="margin: 0; ${F}; font-size: 15px; font-weight: 700; color: #1c1c1e;">Diseno en Proceso</p>
+                <p style="margin: 4px 0 0; ${F}; font-size: 13px; color: #8e8e93; line-height: 1.4;">Te enviaremos una vista previa para aprobacion</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 44px; vertical-align: top; padding-bottom: 24px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f0f0f0; color: #8e8e93; ${F}; font-size: 14px; font-weight: 700; line-height: 32px; text-align: center;">2</div>
+              </td>
+              <td style="vertical-align: top; padding-bottom: 24px;">
+                <p style="margin: 0; ${F}; font-size: 15px; font-weight: 700; color: #1c1c1e;">Produccion</p>
+                <p style="margin: 4px 0 0; ${F}; font-size: 13px; color: #8e8e93; line-height: 1.4;">Impresion, corte y empaque de tu pedido</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 44px; vertical-align: top;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f0f0f0; color: #8e8e93; ${F}; font-size: 14px; font-weight: 700; line-height: 32px; text-align: center;">3</div>
+              </td>
+              <td style="vertical-align: top;">
+                <p style="margin: 0; ${F}; font-size: 15px; font-weight: 700; color: #1c1c1e;">Envio</p>
+                <p style="margin: 4px 0 0; ${F}; font-size: 13px; color: #8e8e93; line-height: 1.4;">Recibiras tu numero de rastreo por este medio</p>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+        ${eventDateFmt ? `
+        ${SP(20)}
+        <tr><td style="padding: 0 48px; text-align: center;" class="mobile-pad">
+          <div style="display: inline-block; background-color: #FFF0F5; border-radius: 8px; padding: 12px 24px;">
+            <p style="margin: 0; ${F}; font-size: 11px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px;">Fecha del Evento</p>
+            <p style="margin: 4px 0 0; ${F}; font-size: 16px; font-weight: 700; color: #E72A88;">${eventDateFmt}</p>
+          </div>
+        </td></tr>
+        ` : ''}
 
         ${SP(48)}
     `;
