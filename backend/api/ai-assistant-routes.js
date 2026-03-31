@@ -928,9 +928,20 @@ Después de recibir el resultado del cálculo, explica el desglose de forma conv
   "text": "INCLUIR AQUÍ EL TEXTO COMPLETO con cantidades + productos + precios especiales",
   "clientName": "nombre del cliente si se menciona (opcional)",
   "clientPhone": "teléfono si se menciona (opcional)",
-  "notes": "notas adicionales (opcional)"
+  "notes": "notas adicionales (opcional)",
+  "extraConcepts": [
+    { "concept": "nombre del concepto", "amount": 250 }
+  ]
 }
 \`\`\`
+
+**CONCEPTOS EXTRA (extraConcepts):**
+Cuando el usuario pida agregar cargos adicionales que NO son productos (urgencia, diseño especial, empaque premium, descuento, etc.), inclúyelos en extraConcepts:
+- Cargo por urgencia: { "concept": "Cargo por urgencia", "amount": 250 }
+- Diseño especial: { "concept": "Diseño personalizado", "amount": 500 }
+- Descuento: { "concept": "Descuento especial", "amount": -200 } (negativo para descuentos)
+- Empaque premium: { "concept": "Empaque premium", "amount": 150 }
+Estos conceptos aparecen como líneas adicionales en la cotización y se suman al total.
 
 **MÚLTIPLES COTIZACIONES PARA COMPARACIÓN:**
 Cuando el usuario pida cotizaciones con DIFERENTES CANTIDADES del MISMO producto para comparar opciones, genera MÚLTIPLES cotizaciones separadas.
@@ -1438,6 +1449,7 @@ router.post('/chat', async (req, res) => {
               clientEmail: action.clientEmail || null,
               items,
               notes: action.notes || null,
+              extraConcepts: action.extraConcepts || [],
               validityDays: 3,
               includeShipping: false
             });
@@ -1458,6 +1470,7 @@ router.post('/chat', async (req, res) => {
                 filename: result.filename,
                 items: result.items,
                 invalidItems: result.invalidItems,
+                extraConcepts: result.extraConcepts,
                 clientName: action.clientName
               }
             };
@@ -1499,6 +1512,7 @@ router.post('/chat', async (req, res) => {
                 clientEmail: action.clientEmail || null,
                 items,
                 notes: quoteSpec.label || null,
+                extraConcepts: quoteSpec.extraConcepts || action.extraConcepts || [],
                 validityDays: 3,
                 includeShipping: false
               });

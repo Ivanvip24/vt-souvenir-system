@@ -724,6 +724,13 @@ function showQuoteResult(data) {
                         </div>
                     ` : ''}
 
+                    ${(data.extraConcepts || []).map(ec => `
+                        <div class="ai-quote-shipping" style="color: ${ec.amount < 0 ? '#8ab73b' : '#f39223'}">
+                            <span>${ec.amount < 0 ? '🏷️' : '📌'} ${escapeHtml(ec.concept)}:</span>
+                            <span>${ec.amount < 0 ? '-' : '+'}$${Math.abs(ec.amount).toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                        </div>
+                    `).join('')}
+
                     ${data.shipping && data.shipping > 0 ? `
                         <div class="ai-quote-shipping">
                             <span>🚚 Envío:</span>

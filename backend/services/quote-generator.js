@@ -459,12 +459,19 @@ export async function generateQuotePDF(quoteData) {
         if (!isNaN(itemQuantity)) totalPieces += itemQuantity;
       }
 
+      // Extra concepts (urgency, special design, discounts, etc.)
+      const extraConcepts = (quoteData.extraConcepts || []).filter(c => c && c.concept && typeof c.amount === 'number');
+      let extraConceptsTotal = 0;
+      for (const ec of extraConcepts) {
+        extraConceptsTotal += ec.amount;
+      }
+
       // Free shipping for orders >= 300 pieces
       // Standard shipping cost: $210 MXN (per AXKAN brand guidelines)
       const STANDARD_SHIPPING_COST = 210;
       const freeShipping = totalPieces >= 300;
       const shippingEstimate = freeShipping ? 0 : STANDARD_SHIPPING_COST;
-      const total = subtotal + shippingEstimate;
+      const total = subtotal + extraConceptsTotal + shippingEstimate;
 
       // Calculate 50% deposit
       const depositAmount = Math.ceil(total * 0.5);
@@ -664,6 +671,18 @@ export async function generateQuotePDF(quoteData) {
         }
       }
 
+      // Extra concepts (urgency, special design, discounts, etc.)
+      for (const ec of extraConcepts) {
+        if (y + rowH > PAGE_BOTTOM) { newPage(); y = CONT_TOP; y = drawTableHeader(y); }
+        const isDiscount = ec.amount < 0;
+        const conceptColor = isDiscount ? COLORS.green : COLORS.orange;
+        doc.font(bodyFont).fontSize(9).fillColor(conceptColor)
+           .text(ec.concept, cN, y + 3, { width: 280 });
+        doc.font(titleFont).fontSize(9).fillColor(conceptColor)
+           .text(formatCurrency(Math.abs(ec.amount)), cS - 75, y + 2, { width: 75, align: 'right' });
+        y += rowH;
+      }
+
       // Shipping line
       if (shippingEstimate > 0) {
         if (y + 22 > PAGE_BOTTOM) { newPage(); y = CONT_TOP; }
@@ -685,7 +704,7 @@ export async function generateQuotePDF(quoteData) {
       // Totals card
       const totCardW = 230;
       const totCardX = ml + cw - totCardW;
-      const totCardH = freeShipping ? 108 : 90;
+      const totCardH = (freeShipping ? 108 : 90) + (extraConcepts.length * 20);
       doc.roundedRect(totCardX, y, totCardW, totCardH, 8).fill('#F6F6F6');
 
       let ty = y + 10;
@@ -705,6 +724,15 @@ export async function generateQuotePDF(quoteData) {
       doc.font(bodyFont).fontSize(8.5).fillColor('#505050')
          .text(formatCurrency(subtotal), tL, ty, { width: tR - tL, align: 'right' });
       ty += 20;
+
+      for (const ec of extraConcepts) {
+        const isDiscount = ec.amount < 0;
+        const ecColor = isDiscount ? COLORS.green : COLORS.orange;
+        doc.font(bodyFont).fontSize(8.5).fillColor(ecColor).text(ec.concept, tL, ty);
+        doc.font(bodyFont).fontSize(8.5).fillColor(ecColor)
+           .text((isDiscount ? '-' : '+') + formatCurrency(Math.abs(ec.amount)), tL, ty, { width: tR - tL, align: 'right' });
+        ty += 20;
+      }
 
       if (shippingEstimate > 0) {
         doc.font(bodyFont).fontSize(8.5).fillColor('#808080').text('Envío', tL, ty);
@@ -772,7 +800,8 @@ export async function generateQuotePDF(quoteData) {
           validUntil: formatDate(validUntil),
           items: validItems,
           invalidItems,
-          specialQuoteItems
+          specialQuoteItems,
+          extraConcepts
         });
       });
 
