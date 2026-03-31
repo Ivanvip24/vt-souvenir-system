@@ -1432,13 +1432,24 @@ async function showOrderDetail(orderId) {
             <td colspan="4" style="padding: 6px 0; color: var(--gray-600);">
               ${order.isStorePickup ? '🏪 Recoger en tienda' : '🚚 Envío'}
             </td>
-            <td style="text-align: right; padding: 6px 0; ${isFreeShipping ? 'color: var(--green);' : ''}">
-              ${order.isStorePickup ? 'Gratis' : (isFreeShipping ? '¡Gratis!' : formatCurrency(displayShipping))}
+            <td style="text-align: right; padding: 6px 0;">
+              ${order.isStorePickup ? '<span style="color: var(--green);">Gratis</span>' : `
+                <span id="shipping-display-${order.id}" onclick="editShippingCost(${order.id}, ${displayShipping})" style="cursor: pointer; ${isFreeShipping ? 'color: var(--green);' : ''}" title="Click para editar">
+                  ${isFreeShipping ? '¡Gratis!' : formatCurrency(displayShipping)} ✏️
+                </span>
+                <span id="shipping-edit-${order.id}" style="display: none;">
+                  <input type="number" id="shipping-input-${order.id}" value="${displayShipping}" min="0" step="10"
+                    style="width: 90px; padding: 4px 8px; border: 2px solid var(--primary); border-radius: 6px; font-size: 14px; text-align: right;"
+                    onkeydown="if(event.key==='Enter')saveShippingCost(${order.id});if(event.key==='Escape')cancelShippingEdit(${order.id})">
+                  <button onclick="saveShippingCost(${order.id})" style="background: var(--success); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 2px;">✓</button>
+                  <button onclick="cancelShippingEdit(${order.id})" style="background: var(--gray-300); border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">✕</button>
+                </span>
+              `}
             </td>
           </tr>
           <tr style="border-top: 2px solid var(--gray-300);">
             <td colspan="4" style="padding: 8px 0; font-weight: 700;">Total</td>
-            <td style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(displayTotal)}</td>
+            <td id="total-display-${order.id}" style="text-align: right; padding: 8px 0; font-weight: 700; font-size: 16px; color: var(--primary);">${formatCurrency(displayTotal)}</td>
           </tr>`;
           })()}
         </table>
@@ -2266,6 +2277,54 @@ async function removeItemAttachment(orderId, itemId, url) {
 
 // Debounce timer for order notes
 let orderNotesSaveTimer = null;
+
+// ── Editable Shipping Cost ──────────────────────────────
+
+function editShippingCost(orderId, currentValue) {
+  document.getElementById('shipping-display-' + orderId).style.display = 'none';
+  document.getElementById('shipping-edit-' + orderId).style.display = 'inline';
+  var input = document.getElementById('shipping-input-' + orderId);
+  input.value = currentValue;
+  input.focus();
+  input.select();
+}
+
+function cancelShippingEdit(orderId) {
+  document.getElementById('shipping-display-' + orderId).style.display = '';
+  document.getElementById('shipping-edit-' + orderId).style.display = 'none';
+}
+
+async function saveShippingCost(orderId) {
+  var input = document.getElementById('shipping-input-' + orderId);
+  var newCost = parseFloat(input.value) || 0;
+
+  try {
+    var response = await fetch(API_BASE + '/orders/' + orderId + '/shipping-cost', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+      },
+      body: JSON.stringify({ shippingCost: newCost })
+    });
+    var data = await response.json();
+    if (!data.success) throw new Error(data.error || 'Error');
+
+    // Update local state
+    var order = state.orders.find(function(o) { return o.id === orderId; });
+    if (order) {
+      order.shippingCost = newCost;
+      var subtotal = order.items.reduce(function(sum, item) { return sum + (item.lineTotal || 0); }, 0);
+      order.totalPrice = subtotal + newCost;
+    }
+
+    // Refresh the modal
+    showOrderDetail(orderId);
+    showToast('Envío actualizado: ' + formatCurrency(newCost));
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
 
 async function updateOrderNotes(orderId, notes) {
   // Clear existing timer

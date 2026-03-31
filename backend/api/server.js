@@ -1469,6 +1469,34 @@ app.get('/api/orders/:orderId', authMiddleware, async (req, res) => {
 });
 
 // Update order status
+// Update shipping cost for an order
+app.patch('/api/orders/:orderId/shipping-cost', authMiddleware, async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { shippingCost } = req.body;
+    const cost = parseFloat(shippingCost) || 0;
+
+    // Get current subtotal to recalculate total
+    const orderResult = await query('SELECT subtotal FROM orders WHERE id = $1', [orderId]);
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+    const subtotal = parseFloat(orderResult.rows[0].subtotal) || 0;
+    const newTotal = subtotal + cost;
+
+    await query(
+      'UPDATE orders SET shipping_cost = $1, total_price = $2 WHERE id = $3',
+      [cost, newTotal, orderId]
+    );
+
+    console.log(`✅ Shipping cost updated for order ${orderId}: $${cost} (new total: $${newTotal})`);
+    res.json({ success: true, shippingCost: cost, totalPrice: newTotal });
+  } catch (error) {
+    console.error('Error updating shipping cost:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.patch('/api/orders/:orderId/status', authMiddleware, async (req, res) => {
   try {
     const { status } = req.body;
