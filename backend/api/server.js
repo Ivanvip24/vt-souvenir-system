@@ -6128,6 +6128,15 @@ async function startServer() {
       console.warn('⚠️  Destination migration:', mErr.message);
     }
 
+    // Add is_printed tracking to shipping_labels
+    try {
+      await query(`ALTER TABLE shipping_labels ADD COLUMN IF NOT EXISTS is_printed BOOLEAN DEFAULT false`);
+      await query(`ALTER TABLE shipping_labels ADD COLUMN IF NOT EXISTS printed_at TIMESTAMP`);
+      console.log('✅ is_printed column ready');
+    } catch (mErr) {
+      console.warn('⚠️  is_printed migration:', mErr.message);
+    }
+
     // Start server
     app.listen(PORT, () => {
       console.log('\n' + '='.repeat(60));

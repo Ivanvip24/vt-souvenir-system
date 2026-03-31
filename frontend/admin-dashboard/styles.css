@@ -10298,6 +10298,15 @@ body.mobile-menu-open {
     box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.12);
 }
 
+.guia-card--unprinted {
+    border-left: 4px solid #f59e0b;
+    background: #fffbeb;
+}
+
+.guia-card--unprinted:hover {
+    background: #fef3c7;
+}
+
 .guia-card__row1 {
     display: flex;
     align-items: center;

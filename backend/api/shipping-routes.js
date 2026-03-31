@@ -525,6 +525,7 @@ router.get('/labels', async (req, res) => {
         COUNT(CASE WHEN status = 'label_generated' THEN 1 END) as generated,
         COUNT(CASE WHEN status = 'shipped' THEN 1 END) as shipped,
         COUNT(CASE WHEN status = 'delivered' THEN 1 END) as delivered,
+        COUNT(CASE WHEN (is_printed IS NULL OR is_printed = false) AND label_url IS NOT NULL AND status = 'label_generated' THEN 1 END) as unprinted,
         COUNT(DISTINCT carrier) as carriers_used
       FROM shipping_labels
     `);
@@ -2579,9 +2580,40 @@ router.post('/labels/print', async (req, res) => {
 
     try { rmdirSync(tmpDir); } catch (_) {}
 
+    // Mark successfully printed labels
+    if (printed > 0) {
+      const printedIds = result.rows.map(r => r.id);
+      const ph = printedIds.map((_, i) => `$${i + 1}`).join(',');
+      await query(
+        `UPDATE shipping_labels SET is_printed = true, printed_at = CURRENT_TIMESTAMP WHERE id IN (${ph})`,
+        printedIds
+      );
+    }
+
     res.json({ success: true, printed, failed, errors: errors.length > 0 ? errors : undefined });
   } catch (error) {
     console.error('Print error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /shipping/labels/mark-printed
+ * Manually mark labels as printed (for print-proxy or manual printing)
+ */
+router.post('/labels/mark-printed', async (req, res) => {
+  try {
+    const { labelIds } = req.body;
+    if (!labelIds || !Array.isArray(labelIds) || labelIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'labelIds array required' });
+    }
+    const ph = labelIds.map((_, i) => `$${i + 1}`).join(',');
+    await query(
+      `UPDATE shipping_labels SET is_printed = true, printed_at = CURRENT_TIMESTAMP WHERE id IN (${ph})`,
+      labelIds
+    );
+    res.json({ success: true, marked: labelIds.length });
+  } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });

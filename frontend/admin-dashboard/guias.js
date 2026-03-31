@@ -260,7 +260,8 @@ function createGuiaCard(guia) {
   var location = [guia.client_city, guia.client_state].filter(Boolean).join(', ');
 
   var card = document.createElement('div');
-  card.className = 'guia-card' + (isSelected ? ' guia-card--active' : '');
+  var isUnprinted = !guia.is_printed && guia.label_url && guia.status === 'label_generated';
+  card.className = 'guia-card' + (isSelected ? ' guia-card--active' : '') + (isUnprinted ? ' guia-card--unprinted' : '');
   card.dataset.guiaId = guia.id;
   card.onclick = function() { openGuiaPanel(guia.id); };
 
@@ -866,6 +867,22 @@ async function printSelectedGuias() {
     }
 
     if (!result.success) throw new Error(result.error || 'Error');
+
+    // Mark labels as printed in backend
+    try {
+      await guiasFetch(GUIAS_API_URL + '/labels/mark-printed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ labelIds: ids })
+      });
+      // Update local data
+      guiasData.forEach(function(g) {
+        if (ids.includes(g.id)) {
+          g.is_printed = true;
+          g.printed_at = new Date().toISOString();
+        }
+      });
+    } catch (_) {}
 
     var msg = result.printed + ' guía' + (result.printed > 1 ? 's' : '') + ' enviada' + (result.printed > 1 ? 's' : '') + ' a imprimir';
     if (result.failed > 0) msg += ' (' + result.failed + ' fallida' + (result.failed > 1 ? 's' : '') + ')';
