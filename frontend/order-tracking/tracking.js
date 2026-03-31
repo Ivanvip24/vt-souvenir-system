@@ -930,12 +930,38 @@
                     trackLabel.textContent = 'Numero de guia';
                     trackRow.appendChild(trackLabel);
 
-                    var trackNum = document.createElement('div');
-                    trackNum.style.cssText = 'font-size:1.1rem;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;letter-spacing:0.03em;';
-                    trackNum.textContent = data.label.tracking_number;
-                    trackRow.appendChild(trackNum);
+                    var trackNumRow = document.createElement('div');
+                    trackNumRow.style.cssText = 'display:flex;align-items:center;gap:8px;';
 
+                    var trackNum = document.createElement('div');
+                    trackNum.style.cssText = 'font-size:1.1rem;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;letter-spacing:0.03em;flex:1;';
+                    trackNum.textContent = data.label.tracking_number;
+                    trackNumRow.appendChild(trackNum);
+
+                    var copyBtn = document.createElement('button');
+                    copyBtn.type = 'button';
+                    copyBtn.style.cssText = 'padding:6px 12px;background:var(--bg-muted);border:1px solid var(--border-medium);border-radius:6px;font-size:0.78rem;font-weight:600;color:var(--text-muted);cursor:pointer;';
+                    copyBtn.textContent = 'Copiar';
+                    copyBtn.addEventListener('click', function() {
+                        navigator.clipboard.writeText(data.label.tracking_number).then(function() {
+                            copyBtn.textContent = '✓ Copiado';
+                            setTimeout(function() { copyBtn.textContent = 'Copiar'; }, 1500);
+                        });
+                    });
+                    trackNumRow.appendChild(copyBtn);
+
+                    trackRow.appendChild(trackNumRow);
                     card.appendChild(trackRow);
+                } else {
+                    // Tracking not ready yet
+                    var pendingRow = document.createElement('div');
+                    pendingRow.style.cssText = 'background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:12px;margin-bottom:8px;';
+
+                    var pendingIcon = document.createElement('div');
+                    pendingIcon.style.cssText = 'font-size:0.85rem;color:#b45309;font-weight:500;';
+                    pendingIcon.textContent = '⏳ Tu numero de guia esta siendo generado. Regresa en unos minutos para ver tu numero de rastreo.';
+                    pendingRow.appendChild(pendingIcon);
+                    card.appendChild(pendingRow);
                 }
 
                 if (data.label.tracking_url) {
