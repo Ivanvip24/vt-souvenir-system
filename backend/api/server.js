@@ -38,6 +38,7 @@ import coachingRoutes from './coaching-routes.js';
 import * as knowledgeIndex from '../services/knowledge-index.js';
 import * as knowledgeAI from '../services/knowledge-ai.js';
 import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
+import { generateBrandedReceipt } from '../services/branded-receipt-generator.js';
 import { onOrderStatusChange } from '../services/task-generator.js';
 import { sendReceiptEmail, initializeEmailSender, sendEmail } from '../agents/analytics-agent/email-sender.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
@@ -4468,10 +4469,25 @@ app.post('/api/test/email', async (req, res) => {
   }
 });
 
-// Test receipt email with sample data
+// Test receipt email with sample data + branded PDF attachment
 app.post('/api/test/receipt-email', async (req, res) => {
   try {
     const to = req.body.to || process.env.ADMIN_EMAIL || 'test@example.com';
+
+    // Generate a branded PDF receipt
+    const pdfResult = await generateBrandedReceipt({
+      clientName: 'Cliente de Prueba',
+      projectName: 'Souvenirs Boda Cancún',
+      items: [
+        { product: 'Imanes MDF', size: 'Mediano', quantity: 200, unitPrice: 11 },
+        { product: 'Llaveros', size: '', quantity: 100, unitPrice: 10 },
+        { product: 'Destapadores', size: '', quantity: 100, unitPrice: 20 }
+      ],
+      advanceAmount: 2750,
+      receiptType: 'advance',
+      paymentMethod: 'Transferencia SPEI'
+    });
+
     const result = await sendReceiptEmail(
       {
         orderNumber: 'AXK42',
@@ -4483,12 +4499,11 @@ app.post('/api/test/receipt-email', async (req, res) => {
         items: [
           { quantity: 200, productName: 'Imanes MDF Mediano', lineTotal: 2200 },
           { quantity: 100, productName: 'Llaveros', lineTotal: 1000 },
-          { quantity: 100, productName: 'Destapadores', lineTotal: 2000 },
-          { quantity: 1, productName: 'Cargo por urgencia', lineTotal: 300 }
+          { quantity: 100, productName: 'Destapadores', lineTotal: 2000 }
         ]
       },
       { name: 'Cliente de Prueba', email: to },
-      null
+      pdfResult.filepath
     );
     res.json({ success: true, to, ...result });
   } catch (error) {
