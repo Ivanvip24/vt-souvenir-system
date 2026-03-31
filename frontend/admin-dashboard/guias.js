@@ -264,6 +264,7 @@ function createGuiaCard(guia) {
   card.className = 'guia-card' + (isSelected ? ' guia-card--active' : '') + (isUnprinted ? ' guia-card--unprinted' : '');
   card.dataset.guiaId = guia.id;
   card.onclick = function() { openGuiaPanel(guia.id); };
+  card.addEventListener('contextmenu', function(e) { showGuiaContextMenu(e, guia); });
 
   // Checkbox for print selection (all labels, not just those with label_url)
   var checkbox = document.createElement('input');
@@ -1397,6 +1398,106 @@ async function saveConfirmationCode(pickupId, code) {
 function promptConfirmationCode(pickupId) {
   var code = prompt('Ingresa el c\u00F3digo de confirmaci\u00F3n de la paqueter\u00EDa\n(ej: AME260204015829, MEXA3562):');
   if (code) saveConfirmationCode(pickupId, code);
+}
+
+// =====================================================
+// GUIA CONTEXT MENU (right-click)
+// =====================================================
+
+function closeGuiaContextMenu() {
+  var existing = document.querySelector('.guia-context-menu');
+  if (existing) existing.remove();
+}
+
+document.addEventListener('click', closeGuiaContextMenu);
+
+function showGuiaContextMenu(e, guia) {
+  e.preventDefault();
+  e.stopPropagation();
+  closeGuiaContextMenu();
+
+  var menu = document.createElement('div');
+  menu.className = 'guia-context-menu';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+
+  // Print status toggle
+  var printItem = document.createElement('div');
+  printItem.className = 'guia-context-item';
+  if (guia.is_printed) {
+    printItem.textContent = '📄 Marcar como NO impresa';
+    printItem.addEventListener('click', function() {
+      toggleGuiaPrinted(guia.id, false);
+      closeGuiaContextMenu();
+    });
+  } else {
+    printItem.textContent = '✅ Marcar como impresa';
+    printItem.addEventListener('click', function() {
+      toggleGuiaPrinted(guia.id, true);
+      closeGuiaContextMenu();
+    });
+  }
+  menu.appendChild(printItem);
+
+  // Copy tracking number
+  if (guia.tracking_number) {
+    var copyItem = document.createElement('div');
+    copyItem.className = 'guia-context-item';
+    copyItem.textContent = '📋 Copiar # guia';
+    copyItem.addEventListener('click', function() {
+      navigator.clipboard.writeText(guia.tracking_number);
+      guiasToast('Numero copiado: ' + guia.tracking_number, 'success');
+      closeGuiaContextMenu();
+    });
+    menu.appendChild(copyItem);
+  }
+
+  // Open label PDF
+  if (guia.label_url) {
+    var pdfItem = document.createElement('div');
+    pdfItem.className = 'guia-context-item';
+    pdfItem.textContent = '🖨️ Abrir PDF';
+    pdfItem.addEventListener('click', function() {
+      window.open(guia.label_url, '_blank');
+      closeGuiaContextMenu();
+    });
+    menu.appendChild(pdfItem);
+  }
+
+  // Prevent menu from going off-screen
+  document.body.appendChild(menu);
+  var rect = menu.getBoundingClientRect();
+  if (rect.right > window.innerWidth) menu.style.left = (e.clientX - rect.width) + 'px';
+  if (rect.bottom > window.innerHeight) menu.style.top = (e.clientY - rect.height) + 'px';
+}
+
+async function toggleGuiaPrinted(guiaId, printed) {
+  try {
+    if (printed) {
+      await guiasFetch(GUIAS_API_URL + '/labels/mark-printed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ labelIds: [guiaId] })
+      });
+    } else {
+      await guiasFetch(GUIAS_API_URL + '/labels/mark-unprinted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ labelIds: [guiaId] })
+      });
+    }
+    // Update local data
+    guiasData.forEach(function(g) {
+      if (g.id === guiaId) {
+        g.is_printed = printed;
+        g.printed_at = printed ? new Date().toISOString() : null;
+      }
+    });
+    renderGuiasList();
+    guiasToast(printed ? 'Marcada como impresa' : 'Marcada como no impresa', 'success');
+  } catch (err) {
+    guiasToast('Error: ' + err.message, 'error');
+  }
 }
 
 // Carrier pickup modal exports

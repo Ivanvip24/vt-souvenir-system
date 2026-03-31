@@ -2618,4 +2618,25 @@ router.post('/labels/mark-printed', async (req, res) => {
   }
 });
 
+/**
+ * POST /shipping/labels/mark-unprinted
+ * Mark labels as not printed
+ */
+router.post('/labels/mark-unprinted', async (req, res) => {
+  try {
+    const { labelIds } = req.body;
+    if (!labelIds || !Array.isArray(labelIds) || labelIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'labelIds array required' });
+    }
+    const ph = labelIds.map((_, i) => `$${i + 1}`).join(',');
+    await query(
+      `UPDATE shipping_labels SET is_printed = false, printed_at = NULL WHERE id IN (${ph})`,
+      labelIds
+    );
+    res.json({ success: true, marked: labelIds.length });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;
