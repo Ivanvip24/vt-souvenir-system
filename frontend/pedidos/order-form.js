@@ -2925,14 +2925,14 @@ async function handleStripePayment() {
       stripeBtn.dataset.ready = 'true';
       stripeBtn.style.opacity = '1';
       stripeBtn.style.cursor = 'pointer';
-      stripeBtn.textContent = '\uD83D\uDCB3 Abrir Stripe para pagar';
+      stripeBtn.textContent = '\uD83D\uDCB3 Pagar con Tarjeta';
     }, 2000);
     return;
   }
 
   // Second click: open Stripe directly
   window.open('https://buy.stripe.com/00gcPP1GscTObJufYY', '_blank');
-  stripeBtn.textContent = '\uD83D\uDCB3 Abrir Stripe de nuevo';
+  stripeBtn.textContent = '\uD83D\uDCB3 Pagar con Tarjeta de nuevo';
   stripeBtn.style.opacity = '0.7';
 }
 
