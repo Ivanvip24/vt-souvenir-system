@@ -403,18 +403,23 @@ export async function sendReceiptEmail(order, client, pdfPath) {
       .replace('%%DOC_TITLE%%', order.orderNumber)
       .replace('%%DOC_COLOR%%', '#E72A88');
 
-    return await sendEmail({
+    const emailOptions = {
       to: client.email,
       subject: `Recibo de Pago — ${order.orderNumber} | AXKAN`,
-      html,
-      attachments: [
+      html
+    };
+
+    if (pdfPath) {
+      emailOptions.attachments = [
         {
           filename: `Recibo-${order.orderNumber}.pdf`,
           path: pdfPath,
           contentType: 'application/pdf'
         }
-      ]
-    });
+      ];
+    }
+
+    return await sendEmail(emailOptions);
 
   } catch (error) {
     console.error('❌ Error sending receipt email:', error);

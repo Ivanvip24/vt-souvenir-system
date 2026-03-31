@@ -4468,6 +4468,35 @@ app.post('/api/test/email', async (req, res) => {
   }
 });
 
+// Test receipt email with sample data
+app.post('/api/test/receipt-email', async (req, res) => {
+  try {
+    const to = req.body.to || process.env.ADMIN_EMAIL || 'test@example.com';
+    const result = await sendReceiptEmail(
+      {
+        orderNumber: 'AXK42',
+        orderDate: new Date(),
+        totalPrice: 5500,
+        actualDepositAmount: 2750,
+        remainingBalance: 2750,
+        eventDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        items: [
+          { quantity: 200, productName: 'Imanes MDF Mediano', lineTotal: 2200 },
+          { quantity: 100, productName: 'Llaveros', lineTotal: 1000 },
+          { quantity: 100, productName: 'Destapadores', lineTotal: 2000 },
+          { quantity: 1, productName: 'Cargo por urgencia', lineTotal: 300 }
+        ]
+      },
+      { name: 'Cliente de Prueba', email: to },
+      null
+    );
+    res.json({ success: true, to, ...result });
+  } catch (error) {
+    console.error('Error testing receipt email:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // =====================================================
 // SALESPEOPLE & COMMISSIONS ROUTES
 // =====================================================
