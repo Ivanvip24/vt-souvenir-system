@@ -5,6 +5,7 @@ import { processIncomingMessage, generateConversationInsights, ensureAiToggleCol
 import { migrate as migrateLabelsArchive } from '../migrations/add-whatsapp-labels-archive.js';
 import Anthropic from '@anthropic-ai/sdk';
 import { analyzeConversation } from '../services/sales-coach.js';
+import { employeeAuth } from './middleware/employee-auth.js';
 
 // Run labels/archive migration once on import
 let labelsArchiveMigrated = false;
@@ -1146,8 +1147,10 @@ router.get('/conversations', authMiddleware, async (req, res) => {
            JOIN whatsapp_labels wl ON wl.id = wcl.label_id
            WHERE wcl.conversation_id = wc.id),
           '[]'::json
-        ) as labels
+        ) as labels,
+        emp.name as assigned_to_name
       FROM whatsapp_conversations wc
+      LEFT JOIN employees emp ON wc.assigned_to = emp.id
       WHERE (COALESCE(wc.is_archived, false) = $1)
       ORDER BY wc.is_pinned DESC NULLS LAST, wc.last_message_at DESC NULLS LAST
     `, [showArchived]);
@@ -1200,6 +1203,125 @@ router.get('/conversations/search', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Search error:', err);
     res.status(500).json({ success: false, error: 'Search failed' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 3c. GET /conversations/my-assigned — Conversations assigned to logged-in employee
+// ---------------------------------------------------------------------------
+router.get('/conversations/my-assigned', employeeAuth, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT wc.*,
+        (SELECT content FROM whatsapp_messages WHERE conversation_id = wc.id ORDER BY created_at DESC LIMIT 1) as last_message,
+        (SELECT COUNT(*) FROM whatsapp_messages WHERE conversation_id = wc.id) as message_count,
+        e.name as assigned_to_name
+      FROM whatsapp_conversations wc
+      LEFT JOIN employees e ON wc.assigned_to = e.id
+      WHERE wc.assigned_to = $1
+      ORDER BY wc.last_message_at DESC
+    `, [req.employee.id]);
+
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('Fetch assigned conversations error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 3d. GET /conversations/:id/employee-messages — Messages for assigned conv (employee auth)
+// ---------------------------------------------------------------------------
+router.get('/conversations/:id/employee-messages', employeeAuth, async (req, res) => {
+  try {
+    // Verify assignment
+    const conv = await query('SELECT assigned_to FROM whatsapp_conversations WHERE id = $1', [req.params.id]);
+    if (conv.rows.length === 0 || conv.rows[0].assigned_to !== req.employee.id) {
+      return res.status(403).json({ success: false, error: 'Not assigned to you' });
+    }
+
+    const result = await query(
+      'SELECT * FROM whatsapp_messages WHERE conversation_id = $1 ORDER BY created_at ASC',
+      [req.params.id]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 3e. PUT /conversations/:id/assign — Assign/unassign conversation to employee (admin)
+// ---------------------------------------------------------------------------
+router.put('/conversations/:id/assign', authMiddleware, async (req, res) => {
+  try {
+    const { employeeId } = req.body; // null to unassign
+
+    // Validate employee exists if assigning
+    if (employeeId) {
+      const emp = await query('SELECT id, name FROM employees WHERE id = $1 AND is_active = true', [employeeId]);
+      if (emp.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Employee not found' });
+      }
+    }
+
+    await query(
+      'UPDATE whatsapp_conversations SET assigned_to = $1, updated_at = NOW() WHERE id = $2',
+      [employeeId || null, req.params.id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Assign conversation error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 3f. POST /conversations/:id/employee-reply — Employee reply to assigned conv
+// ---------------------------------------------------------------------------
+router.post('/conversations/:id/employee-reply', employeeAuth, async (req, res) => {
+  try {
+    const { message, imageUrl } = req.body;
+    if (!message && !imageUrl) {
+      return res.status(400).json({ success: false, error: 'message or imageUrl required' });
+    }
+
+    // Verify this conversation is assigned to this employee
+    const conv = await query(
+      'SELECT wa_id, assigned_to FROM whatsapp_conversations WHERE id = $1',
+      [req.params.id]
+    );
+    if (conv.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+    if (conv.rows[0].assigned_to !== req.employee.id) {
+      return res.status(403).json({ success: false, error: 'Not assigned to you' });
+    }
+
+    const waId = conv.rows[0].wa_id;
+
+    // Send via WhatsApp API
+    if (imageUrl) {
+      await sendWhatsAppImage(waId, imageUrl, message || '');
+    } else {
+      await sendWhatsAppMessage(waId, message);
+    }
+
+    // Store message
+    const msgType = imageUrl ? 'image' : 'text';
+    await query(
+      `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, media_url)
+       VALUES ($1, $2, 'outbound', 'employee', $3, $4, $5)`,
+      [req.params.id, 'emp_' + Date.now(), msgType, message || '', imageUrl || null]
+    );
+
+    await query('UPDATE whatsapp_conversations SET last_message_at = NOW() WHERE id = $1', [req.params.id]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Employee reply error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

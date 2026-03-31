@@ -83,6 +83,13 @@ async function runAllMigrations() {
       console.error('❌ Order Destination migration failed:', e.message);
     }
 
+    try {
+      const { migrate: migrateChatAssignment } = await import('../migrations/add-chat-assignment.js');
+      await migrateChatAssignment();
+    } catch (e) {
+      console.error('❌ Chat Assignment migration failed:', e.message);
+    }
+
     console.log('\n✨ All migrations completed successfully!');
 
   } catch (error) {

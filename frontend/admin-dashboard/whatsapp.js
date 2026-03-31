@@ -1327,8 +1327,20 @@ function injectWhatsAppStyles() {
     .wa-context-icon.pin { background: #fff8e1; }
     .wa-context-icon.archive { background: #e3f2fd; }
     .wa-context-icon.delete { background: #ffebee; }
+    .wa-context-icon.assign { background: #ede7f6; }
     .wa-context-item.danger { color: #dc2626; }
     .wa-context-item.danger:hover { background: #fff5f5; }
+    .wa-assign-badge {
+      display: inline-block;
+      background: #ede7f6;
+      color: #5e35b1;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 4px;
+      white-space: nowrap;
+    }
     .wa-context-separator {
       height: 1px;
       background: #f0f0f0;
@@ -2328,6 +2340,17 @@ async function toggleArchiveConversation(convId, isArchived) {
   } catch (e) { console.error('Failed to toggle archive:', e); }
 }
 
+async function assignConversationTo(convId, employeeId) {
+  try {
+    await fetch(API_BASE + '/whatsapp/conversations/' + convId + '/assign', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_token') },
+      body: JSON.stringify({ employeeId: employeeId })
+    });
+    await reloadConversations();
+  } catch (e) { console.error('Failed to assign conversation:', e); }
+}
+
 async function deleteConversation(convId) {
   if (!confirm('Eliminar esta conversacion y todos sus mensajes? Esta accion no se puede deshacer.')) return;
   try {
@@ -2614,6 +2637,87 @@ function showConversationContextMenu(e, conv) {
     closeContextMenu();
   });
   menu.appendChild(archiveItem);
+
+  // --- Assign to employee ---
+  var assignItem = document.createElement('div');
+  assignItem.className = 'wa-context-item';
+  var assignIcon = document.createElement('span');
+  assignIcon.className = 'wa-context-icon assign';
+  assignIcon.textContent = '\uD83D\uDCCB';
+  assignItem.appendChild(assignIcon);
+  assignItem.appendChild(document.createTextNode('Asignar a empleado'));
+  assignItem.addEventListener('click', function(ev) {
+    ev.stopPropagation();
+    var sub = menu.querySelector('.wa-assign-submenu');
+    if (sub) {
+      sub.style.display = sub.style.display === 'none' ? 'block' : 'none';
+    }
+  });
+  menu.appendChild(assignItem);
+
+  // Assign submenu content
+  var assignSub = document.createElement('div');
+  assignSub.className = 'wa-context-submenu wa-assign-submenu';
+  var assignTitle = document.createElement('div');
+  assignTitle.className = 'wa-context-submenu-title';
+  assignTitle.textContent = 'Asignar a:';
+  assignSub.appendChild(assignTitle);
+
+  var assignLoading = document.createElement('div');
+  assignLoading.style.cssText = 'padding:8px 12px;font-size:12px;color:#999;';
+  assignLoading.textContent = 'Cargando empleados...';
+  assignSub.appendChild(assignLoading);
+  menu.appendChild(assignSub);
+
+  // Fetch employees asynchronously
+  fetch(API_BASE + '/employees?active=true', { headers: getAuthHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      assignLoading.remove();
+      var employees = (json.data || json.employees || []);
+      employees.forEach(function(emp) {
+        var opt = document.createElement('div');
+        opt.className = 'wa-label-option';
+        opt.style.cursor = 'pointer';
+
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = emp.name;
+        opt.appendChild(nameSpan);
+
+        // Check if already assigned to this employee
+        if (conv.assigned_to === emp.id) {
+          var check = document.createElement('span');
+          check.className = 'wa-label-check';
+          check.textContent = '\u2705';
+          opt.appendChild(check);
+        }
+
+        opt.addEventListener('click', function() {
+          assignConversationTo(conv.id, emp.id);
+          closeContextMenu();
+        });
+        assignSub.appendChild(opt);
+      });
+    })
+    .catch(function() {
+      assignLoading.textContent = 'Error al cargar';
+    });
+
+  // --- Unassign (if currently assigned) ---
+  if (conv.assigned_to) {
+    var unassignItem = document.createElement('div');
+    unassignItem.className = 'wa-context-item';
+    var unassignIcon = document.createElement('span');
+    unassignIcon.className = 'wa-context-icon assign';
+    unassignIcon.textContent = '\u274C';
+    unassignItem.appendChild(unassignIcon);
+    unassignItem.appendChild(document.createTextNode('Desasignar'));
+    unassignItem.addEventListener('click', function() {
+      assignConversationTo(conv.id, null);
+      closeContextMenu();
+    });
+    menu.appendChild(unassignItem);
+  }
 
   // --- Separator ---
   var sep = document.createElement('div');
@@ -3247,6 +3351,15 @@ function buildConversationItemDOM(c) {
     aiOffDot.className = 'wa-conv-ai-off';
     aiOffDot.title = 'AI desactivada';
     headerRow.appendChild(aiOffDot);
+  }
+
+  // Assigned-to badge
+  if (c.assigned_to_name) {
+    var assignBadge = document.createElement('span');
+    assignBadge.className = 'wa-assign-badge';
+    assignBadge.textContent = c.assigned_to_name;
+    assignBadge.title = 'Asignado a ' + c.assigned_to_name;
+    headerRow.appendChild(assignBadge);
   }
 
   // Follow-up badge

@@ -157,6 +157,17 @@ function switchView(viewName) {
                 };
             }
             break;
+        case 'mis-chats':
+            var chatIframe = document.getElementById('chats-iframe');
+            var chatLoading = document.getElementById('chats-loading');
+            if (chatIframe && !chatIframe.src.includes('chats.html')) {
+                chatIframe.src = 'chats.html?embedded=1';
+                chatIframe.onload = function() {
+                    chatIframe.style.display = 'block';
+                    if (chatLoading) chatLoading.style.display = 'none';
+                };
+            }
+            break;
         case 'gallery':
             if (typeof loadGallery === 'function') loadGallery();
             break;

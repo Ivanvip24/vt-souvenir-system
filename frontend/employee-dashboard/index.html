@@ -52,6 +52,12 @@
                     </svg>
                     <span>Mis Diseños</span>
                 </li>
+                <li class="nav-item" data-view="mis-chats">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>Mis Chats</span>
+                </li>
                 <li class="nav-item" data-view="my-tasks">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 11l3 3L22 4"/>
@@ -225,6 +231,12 @@
                 <div id="designs-loading" style="display:flex;align-items:center;justify-content:center;height:100%;color:#888;">
                     <p>Cargando diseños...</p>
                 </div>
+            </section>
+
+            <!-- Mis Chats View (WhatsApp assigned conversations) -->
+            <section id="mis-chats-view" class="view" style="padding:0;margin:-32px;height:calc(100vh - 64px);overflow:hidden;">
+                <iframe id="chats-iframe" src="" style="width:100%;height:100%;border:none;display:none;"></iframe>
+                <div id="chats-loading" style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">Cargando chats...</div>
             </section>
 
             <!-- Gallery View -->
