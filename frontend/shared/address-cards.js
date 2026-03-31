@@ -437,6 +437,7 @@ function showAddressForm(container, existingAddress, onSave, onCancel) {
 
   var form = document.createElement('div');
   form.className = 'address-form-overlay';
+  form.setAttribute('autocomplete', 'off');
 
   // Title
   var titleEl = document.createElement('div');
@@ -481,6 +482,8 @@ function showAddressForm(container, existingAddress, onSave, onCancel) {
     }
 
     input.id = id;
+    input.autocomplete = 'off';
+    input.setAttribute('autocomplete', 'off');
     if (placeholder) input.placeholder = placeholder;
     if (opts) {
       if (opts.maxlength) input.maxLength = opts.maxlength;
