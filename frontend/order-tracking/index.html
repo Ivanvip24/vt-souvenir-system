@@ -153,6 +153,18 @@
                 <p class="form-subtitle" id="shipping-destination"></p>
             </div>
 
+            <!-- Address Selection (before carrier quotes) -->
+            <div id="address-selection-container" style="display: none;">
+                <div style="margin-bottom: 16px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 4px;">Dirección de Envío</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted, #8e8e93); margin: 0;">Selecciona a dónde enviar tu pedido</p>
+                </div>
+                <div id="address-cards-shipping"></div>
+                <button class="btn-confirm-shipping" id="btn-continue-to-rates" style="display: none; margin-top: 16px;" disabled>
+                    Continuar con esta dirección
+                </button>
+            </div>
+
             <div class="shipping-loading" id="shipping-loading" style="display: none">
                 <div class="loading-spinner">
                     <div class="spinner-ring"></div>
@@ -176,6 +188,7 @@
         </section>
     </div>
 
+    <script src="/shared/address-cards.js" defer></script>
     <script src="/seguimiento/tracking.js" defer></script>
 </body>
 </html>

@@ -6137,6 +6137,14 @@ async function startServer() {
       console.warn('⚠️  is_printed migration:', mErr.message);
     }
 
+    // Run client_addresses migration (multi-address support per client)
+    try {
+      const { addClientAddresses } = await import('../migrations/add-client-addresses.js');
+      await addClientAddresses();
+    } catch (caErr) {
+      console.warn('⚠️  Client addresses migration:', caErr.message);
+    }
+
     // Start server
     app.listen(PORT, () => {
       console.log('\n' + '='.repeat(60));

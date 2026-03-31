@@ -60,6 +60,7 @@
     { "source": "/assets/:path*", "destination": "/landing/assets/:path*" },
     { "source": "/fonts/:path*", "destination": "/landing/fonts/:path*" },
     { "source": "/shared-nav-footer.css", "destination": "/landing/shared-nav-footer.css" },
+    { "source": "/shared/:path*", "destination": "/shared/:path*" },
     { "source": "/globe-section.js", "destination": "/landing/globe-section.js" },
     { "source": "/destination-images.json", "destination": "/landing/destination-images.json" },
     { "source": "/mexico-states.json", "destination": "/landing/mexico-states.json" },

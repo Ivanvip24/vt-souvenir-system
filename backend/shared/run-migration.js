@@ -90,6 +90,13 @@ async function runAllMigrations() {
       console.error('❌ Chat Assignment migration failed:', e.message);
     }
 
+    try {
+      const { addClientAddresses } = await import('../migrations/add-client-addresses.js');
+      await addClientAddresses();
+    } catch (e) {
+      console.error('❌ Client Addresses migration failed:', e.message);
+    }
+
     console.log('\n✨ All migrations completed successfully!');
 
   } catch (error) {

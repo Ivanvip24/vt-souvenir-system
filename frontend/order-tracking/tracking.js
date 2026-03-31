@@ -18,6 +18,8 @@
         shippingQuotationId: null,
         selectedRateId: null,
         selectedRateData: null,
+        selectedAddressId: null,
+        clientAddresses: [],
         uploadedFile: null,
         uploadedUrl: null
     };
@@ -59,6 +61,9 @@
 
         // Confirm shipping
         $('btn-confirm-shipping').addEventListener('click', handleConfirmShipping);
+
+        // Continue to rates (after address selection)
+        $('btn-continue-to-rates').addEventListener('click', handleContinueToRates);
 
         // Enter key to submit
         document.querySelectorAll('.field-input').forEach(function(input) {
@@ -673,11 +678,181 @@
 
         navigateTo('shipping');
 
-        // Show destination
+        // Reset address selection state
+        state.selectedAddressId = null;
+        state.selectedRateId = null;
+        state.selectedRateData = null;
+
+        // Show default destination from client info
         if (state.clientInfo) {
             var ci = state.clientInfo;
             $('shipping-destination').textContent = 'Envio a ' + [ci.city, ci.state].filter(Boolean).join(', ');
         }
+
+        // Hide everything initially
+        $('shipping-loading').style.display = 'none';
+        $('shipping-rates-container').textContent = '';
+        $('btn-confirm-shipping').style.display = 'none';
+        $('address-selection-container').style.display = 'none';
+        $('btn-continue-to-rates').style.display = 'none';
+        $('btn-continue-to-rates').disabled = true;
+
+        // Step 1: Try to fetch client addresses
+        try {
+            var addressRes = await fetch(API_BASE + '/client/addresses?phone=' + encodeURIComponent(state.clientInfo.phone) + '&email=' + encodeURIComponent(state.clientInfo.email));
+            var addressData = await addressRes.json();
+
+            if (addressData.addresses && addressData.addresses.length > 0) {
+                state.clientAddresses = addressData.addresses;
+
+                // Show address selection step
+                $('address-selection-container').style.display = 'block';
+
+                var addressContainer = $('address-cards-shipping');
+                var defaultAddr = addressData.addresses.find(function(a) { return a.is_default; });
+                var defaultId = defaultAddr ? defaultAddr.id : null;
+
+                renderAddressCardsShipping(addressContainer, addressData.addresses, defaultId, orderId);
+
+                // If there's a default, pre-select it
+                if (defaultAddr) {
+                    state.selectedAddressId = defaultAddr.id;
+                    $('shipping-destination').textContent = 'Envio a ' + [defaultAddr.city, defaultAddr.state].filter(Boolean).join(', ');
+                    $('btn-continue-to-rates').style.display = 'block';
+                    $('btn-continue-to-rates').disabled = false;
+                }
+
+                return; // Wait for user to click "Continue"
+            }
+        } catch (err) {
+            console.error('Address fetch error (non-blocking):', err);
+        }
+
+        // No addresses found — fall through to fetch quotes directly
+        fetchShippingQuotes(orderId, attempt);
+    }
+
+    function findAddressById(id) {
+        for (var i = 0; i < state.clientAddresses.length; i++) {
+            if (String(state.clientAddresses[i].id) === String(id)) return state.clientAddresses[i];
+        }
+        return null;
+    }
+
+    function buildAddressCallbacks(orderId) {
+        return {
+            onSelect: function(addrId) {
+                state.selectedAddressId = addrId;
+                var addr = findAddressById(addrId);
+                if (addr) {
+                    $('shipping-destination').textContent = 'Envio a ' + [addr.city, addr.state].filter(Boolean).join(', ');
+                }
+                $('btn-continue-to-rates').style.display = 'block';
+                $('btn-continue-to-rates').disabled = false;
+            },
+            onAdd: function() {
+                var addressContainer = $('address-cards-shipping');
+                showAddressForm(addressContainer, null, async function(formData) {
+                    // Map form field names to API field names
+                    var payload = {
+                        phone: state.clientInfo.phone,
+                        email: state.clientInfo.email,
+                        street: formData.street,
+                        streetNumber: formData.street_number,
+                        colonia: formData.colonia,
+                        city: formData.city,
+                        state: formData.state,
+                        postal: formData.postal_code,
+                        referenceNotes: formData.references
+                    };
+                    var res = await fetch(API_BASE + '/client/addresses', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    var result = await res.json();
+                    if (result.success) {
+                        await refreshAddressCards(orderId);
+                    }
+                }, function() {
+                    // onCancel — re-render cards
+                    refreshAddressCards(orderId);
+                });
+            },
+            onEdit: function(addr) {
+                var addressContainer = $('address-cards-shipping');
+                showAddressForm(addressContainer, addr, async function(formData) {
+                    var payload = {
+                        street: formData.street,
+                        streetNumber: formData.street_number,
+                        colonia: formData.colonia,
+                        city: formData.city,
+                        state: formData.state,
+                        postal: formData.postal_code,
+                        referenceNotes: formData.references
+                    };
+                    var res = await fetch(API_BASE + '/client/addresses/' + (formData.id || addr.id), {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    var result = await res.json();
+                    if (result.success) {
+                        await refreshAddressCards(orderId);
+                    }
+                }, function() {
+                    refreshAddressCards(orderId);
+                });
+            },
+            onDelete: async function(addrId) {
+                if (!confirm('¿Eliminar esta dirección?')) return;
+                var res = await fetch(API_BASE + '/client/addresses/' + addrId, { method: 'DELETE' });
+                var result = await res.json();
+                if (result.success) {
+                    if (String(state.selectedAddressId) === String(addrId)) {
+                        state.selectedAddressId = null;
+                        $('btn-continue-to-rates').disabled = true;
+                    }
+                    await refreshAddressCards(orderId);
+                }
+            }
+        };
+    }
+
+    function renderAddressCardsShipping(container, addresses, selectedId, orderId) {
+        if (typeof window.AddressCards !== 'undefined') {
+            window.AddressCards.render(container, addresses, selectedId, buildAddressCallbacks(orderId));
+        } else if (typeof window.renderAddressCards === 'function') {
+            window.renderAddressCards(container, addresses, selectedId, buildAddressCallbacks(orderId));
+        }
+    }
+
+    async function refreshAddressCards(orderId) {
+        try {
+            var addressRes = await fetch(API_BASE + '/client/addresses?phone=' + encodeURIComponent(state.clientInfo.phone) + '&email=' + encodeURIComponent(state.clientInfo.email));
+            var addressData = await addressRes.json();
+            state.clientAddresses = addressData.addresses || [];
+
+            var addressContainer = $('address-cards-shipping');
+            renderAddressCardsShipping(addressContainer, state.clientAddresses, state.selectedAddressId, orderId);
+        } catch (err) {
+            console.error('Refresh addresses error:', err);
+        }
+    }
+
+    function handleContinueToRates() {
+        if (!state.selectedAddressId) return;
+
+        // Hide address selection, show loading
+        $('address-selection-container').style.display = 'none';
+
+        // Fetch quotes with selected address
+        fetchShippingQuotes(state.currentOrderId, 1);
+    }
+
+    async function fetchShippingQuotes(orderId, attempt) {
+        attempt = attempt || 1;
+        var MAX_ATTEMPTS = 3;
 
         $('shipping-loading').style.display = 'block';
         $('shipping-rates-container').textContent = '';
@@ -691,14 +866,19 @@
         }
 
         try {
-            var res = await fetch(SHIPPING_API + '/orders/' + orderId + '/quotes');
+            var quotesUrl = SHIPPING_API + '/orders/' + orderId + '/quotes';
+            if (state.selectedAddressId) {
+                quotesUrl += '?addressId=' + state.selectedAddressId;
+            }
+
+            var res = await fetch(quotesUrl);
             var data = await res.json();
 
             if (!data.success || !data.rates || data.rates.length === 0) {
                 // Auto-retry if no rates and we have attempts left
                 if (attempt < MAX_ATTEMPTS) {
                     await new Promise(function(r) { setTimeout(r, 2000); });
-                    return loadShippingQuotes(orderId, attempt + 1);
+                    return fetchShippingQuotes(orderId, attempt + 1);
                 }
 
                 var emptyDiv = document.createElement('div');
@@ -719,7 +899,7 @@
                 retryBtn.style.marginTop = '16px';
                 retryBtn.textContent = '🔄 Intentar de nuevo';
                 retryBtn.addEventListener('click', function() {
-                    loadShippingQuotes(orderId, 1);
+                    fetchShippingQuotes(orderId, 1);
                 });
                 emptyDiv.appendChild(retryBtn);
 
@@ -732,7 +912,7 @@
             // If we got few rates, auto-retry for more (Skydropx sometimes returns partial)
             if (data.rates.length < 3 && attempt < MAX_ATTEMPTS) {
                 await new Promise(function(r) { setTimeout(r, 2000); });
-                return loadShippingQuotes(orderId, attempt + 1);
+                return fetchShippingQuotes(orderId, attempt + 1);
             }
 
             state.shippingQuotationId = data.quotation_id;
@@ -746,7 +926,7 @@
             // Auto-retry on network error
             if (attempt < MAX_ATTEMPTS) {
                 await new Promise(function(r) { setTimeout(r, 2000); });
-                return loadShippingQuotes(orderId, attempt + 1);
+                return fetchShippingQuotes(orderId, attempt + 1);
             }
 
             var errDiv = document.createElement('div');
@@ -767,7 +947,7 @@
             retryBtn.style.marginTop = '16px';
             retryBtn.textContent = '🔄 Intentar de nuevo';
             retryBtn.addEventListener('click', function() {
-                loadShippingQuotes(orderId, 1);
+                fetchShippingQuotes(orderId, 1);
             });
             errDiv.appendChild(retryBtn);
 
@@ -871,7 +1051,8 @@
                     carrier: state.selectedRateData.carrier,
                     service: state.selectedRateData.service,
                     price: state.selectedRateData.price,
-                    days: state.selectedRateData.days
+                    days: state.selectedRateData.days,
+                    addressId: state.selectedAddressId || undefined
                 })
             });
 

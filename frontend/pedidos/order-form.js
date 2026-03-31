@@ -979,40 +979,245 @@ async function handlePhoneSubmit() {
 
 function populateConfirmationData() {
   const container = document.getElementById('confirm-data-display');
+  const confirmBtn = document.getElementById('confirm-data-btn');
 
-  const fullAddress = [
-    `${state.client.street} ${state.client.streetNumber}`.trim() || state.client.address,
-    state.client.colonia,
-    `${state.client.city}, ${state.client.state}`,
-    `CP ${state.client.postal}`
-  ].filter(Boolean).join(', ');
+  // Build static client info using safe DOM methods
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'display: grid; gap: 16px;';
 
-  container.innerHTML = `
-    <div style="display: grid; gap: 16px;">
-      <div>
-        <div style="font-size: 12px; color: var(--gray-600); font-weight: 600; margin-bottom: 4px;">NOMBRE COMPLETO</div>
-        <div style="font-size: 16px; font-weight: 500;">${state.client.name || 'No disponible'}</div>
-      </div>
-      <div>
-        <div style="font-size: 12px; color: var(--gray-600); font-weight: 600; margin-bottom: 4px;">TELÉFONO</div>
-        <div style="font-size: 16px; font-weight: 500;">${state.client.phone || 'No disponible'}</div>
-      </div>
-      <div>
-        <div style="font-size: 12px; color: var(--gray-600); font-weight: 600; margin-bottom: 4px;">CORREO ELECTRÓNICO</div>
-        <div style="font-size: 16px; font-weight: 500;">${state.client.email || 'No disponible'}</div>
-      </div>
-      <div>
-        <div style="font-size: 12px; color: var(--gray-600); font-weight: 600; margin-bottom: 4px;">DIRECCIÓN COMPLETA DE ENTREGA</div>
-        <div style="font-size: 16px; font-weight: 500; line-height: 1.5;">${fullAddress || 'No disponible'}</div>
-      </div>
-      ${state.client.references ? `
-        <div>
-          <div style="font-size: 12px; color: var(--gray-600); font-weight: 600; margin-bottom: 4px;">REFERENCIAS</div>
-          <div style="font-size: 14px; font-weight: 400; color: var(--gray-700);">${state.client.references}</div>
-        </div>
-      ` : ''}
-    </div>
-  `;
+  function addStaticField(label, value) {
+    const row = document.createElement('div');
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size: 12px; color: var(--gray-600); font-weight: 600; margin-bottom: 4px;';
+    lbl.textContent = label;
+    row.appendChild(lbl);
+    const val = document.createElement('div');
+    val.style.cssText = 'font-size: 16px; font-weight: 500;';
+    val.textContent = value || 'No disponible';
+    row.appendChild(val);
+    wrapper.appendChild(row);
+  }
+
+  addStaticField('NOMBRE COMPLETO', state.client.name);
+  addStaticField('TEL\u00C9FONO', state.client.phone);
+  addStaticField('CORREO ELECTR\u00D3NICO', state.client.email);
+
+  // Address section label
+  const addrLabel = document.createElement('div');
+  addrLabel.style.cssText = 'font-size: 12px; color: var(--gray-600); font-weight: 600; margin-bottom: 4px; margin-top: 4px;';
+  addrLabel.textContent = 'DIRECCI\u00D3N DE ENTREGA';
+  wrapper.appendChild(addrLabel);
+
+  // Address cards container
+  const addrContainer = document.createElement('div');
+  addrContainer.id = 'address-cards-pedidos';
+  wrapper.appendChild(addrContainer);
+
+  // Replace container contents safely
+  while (container.firstChild) container.removeChild(container.firstChild);
+  container.appendChild(wrapper);
+
+  // Disable confirm button until address is selected
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.5';
+  }
+
+  // Fetch addresses from API and render cards
+  _loadAddressCards(addrContainer, confirmBtn);
+}
+
+// Internal: cached addresses for the current session
+let _pedidosAddresses = [];
+
+async function _loadAddressCards(addrContainer, confirmBtn) {
+  const phone = encodeURIComponent(state.client.phone || '');
+  const email = encodeURIComponent(state.client.email || '');
+
+  let addresses = [];
+
+  try {
+    const res = await fetch(API_BASE + '/addresses?phone=' + phone + '&email=' + email);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.addresses)) {
+        addresses = data.addresses;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to fetch addresses:', e);
+  }
+
+  // If no saved addresses but client has address data in state, create a synthetic card
+  if (addresses.length === 0 && (state.client.street || state.client.address)) {
+    addresses = [{
+      id: 'local',
+      label: [state.client.colonia, state.client.city].filter(Boolean).join(', ') || 'Direccion actual',
+      street: state.client.street || '',
+      street_number: state.client.streetNumber || '',
+      colonia: state.client.colonia || '',
+      city: state.client.city || '',
+      state: state.client.state || '',
+      postal_code: state.client.postal || '',
+      references: state.client.references || '',
+      is_default: true
+    }];
+  }
+
+  _pedidosAddresses = addresses;
+
+  // Auto-select: previously selected, or default, or first
+  let selectedId = state.client.selectedAddressId || null;
+  if (!selectedId) {
+    const def = addresses.find(function(a) { return a.is_default || a.isDefault; });
+    if (def) selectedId = def.id;
+    else if (addresses.length > 0) selectedId = addresses[0].id;
+  }
+
+  if (selectedId) {
+    state.client.selectedAddressId = selectedId;
+    _syncAddressToState(selectedId);
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.style.opacity = '1';
+    }
+  }
+
+  _renderPedidosCards(addrContainer, confirmBtn, selectedId);
+}
+
+function _renderPedidosCards(addrContainer, confirmBtn, selectedId) {
+  if (!window.AddressCards) {
+    // Fallback: component not loaded yet
+    addrContainer.textContent = 'Cargando direcciones...';
+    setTimeout(function() { _renderPedidosCards(addrContainer, confirmBtn, selectedId); }, 200);
+    return;
+  }
+
+  window.AddressCards.render(addrContainer, _pedidosAddresses, selectedId, {
+    onSelect: function(id) {
+      state.client.selectedAddressId = id;
+      _syncAddressToState(id);
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+      }
+      _renderPedidosCards(addrContainer, confirmBtn, id);
+    },
+
+    onAdd: function() {
+      window.AddressCards.showForm(addrContainer, null, async function(formData) {
+        // Save to API
+        try {
+          const res = await fetch(API_BASE + '/addresses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: state.client.phone,
+              email: state.client.email,
+              ...formData
+            })
+          });
+          const data = await res.json();
+          if (data.success && data.address) {
+            _pedidosAddresses.push(data.address);
+            state.client.selectedAddressId = data.address.id;
+            _syncAddressToState(data.address.id);
+            if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.style.opacity = '1'; }
+            _renderPedidosCards(addrContainer, confirmBtn, data.address.id);
+          } else {
+            alert('Error al guardar: ' + (data.error || 'Intenta de nuevo'));
+            _renderPedidosCards(addrContainer, confirmBtn, state.client.selectedAddressId);
+          }
+        } catch (e) {
+          console.error('Error saving address:', e);
+          alert('Error de conexi\u00F3n al guardar la direcci\u00F3n');
+          _renderPedidosCards(addrContainer, confirmBtn, state.client.selectedAddressId);
+        }
+      }, function() {
+        // Cancel - re-render cards
+        _renderPedidosCards(addrContainer, confirmBtn, state.client.selectedAddressId);
+      });
+    },
+
+    onEdit: function(addr) {
+      window.AddressCards.showForm(addrContainer, addr, async function(formData) {
+        try {
+          const addrId = formData.id || addr.id;
+          const res = await fetch(API_BASE + '/addresses/' + encodeURIComponent(addrId), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: state.client.phone,
+              email: state.client.email,
+              ...formData
+            })
+          });
+          const data = await res.json();
+          if (data.success && data.address) {
+            const idx = _pedidosAddresses.findIndex(function(a) { return String(a.id) === String(addrId); });
+            if (idx !== -1) _pedidosAddresses[idx] = data.address;
+            _syncAddressToState(state.client.selectedAddressId);
+            _renderPedidosCards(addrContainer, confirmBtn, state.client.selectedAddressId);
+          } else {
+            alert('Error al actualizar: ' + (data.error || 'Intenta de nuevo'));
+            _renderPedidosCards(addrContainer, confirmBtn, state.client.selectedAddressId);
+          }
+        } catch (e) {
+          console.error('Error updating address:', e);
+          alert('Error de conexi\u00F3n al actualizar la direcci\u00F3n');
+          _renderPedidosCards(addrContainer, confirmBtn, state.client.selectedAddressId);
+        }
+      }, function() {
+        _renderPedidosCards(addrContainer, confirmBtn, state.client.selectedAddressId);
+      });
+    },
+
+    onDelete: async function(id) {
+      if (!confirm('\u00BFEliminar esta direcci\u00F3n?')) return;
+      try {
+        const res = await fetch(API_BASE + '/addresses/' + encodeURIComponent(id), {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: state.client.phone, email: state.client.email })
+        });
+        const data = await res.json();
+        if (data.success) {
+          _pedidosAddresses = _pedidosAddresses.filter(function(a) { return String(a.id) !== String(id); });
+          if (String(state.client.selectedAddressId) === String(id)) {
+            state.client.selectedAddressId = _pedidosAddresses.length > 0 ? _pedidosAddresses[0].id : null;
+            if (state.client.selectedAddressId) {
+              _syncAddressToState(state.client.selectedAddressId);
+            }
+            if (confirmBtn) {
+              confirmBtn.disabled = !state.client.selectedAddressId;
+              confirmBtn.style.opacity = state.client.selectedAddressId ? '1' : '0.5';
+            }
+          }
+          _renderPedidosCards(addrContainer, confirmBtn, state.client.selectedAddressId);
+        }
+      } catch (e) {
+        console.error('Error deleting address:', e);
+        alert('Error de conexi\u00F3n al eliminar');
+      }
+    },
+
+    onSetDefault: function() { /* handled via form checkbox */ }
+  });
+}
+
+// Sync selected address data back into state.client fields (for order submission)
+function _syncAddressToState(selectedId) {
+  const addr = _pedidosAddresses.find(function(a) { return String(a.id) === String(selectedId); });
+  if (!addr) return;
+  state.client.street = addr.street || '';
+  state.client.streetNumber = addr.street_number || addr.streetNumber || '';
+  state.client.colonia = addr.colonia || '';
+  state.client.city = addr.city || '';
+  state.client.state = addr.state || '';
+  state.client.postal = addr.postal_code || addr.postal || '';
+  state.client.references = addr.references || addr.reference_notes || '';
+  state.client.address = [state.client.street, state.client.streetNumber].filter(Boolean).join(' ');
 }
 
 function handleConfirmData() {
@@ -2793,6 +2998,9 @@ async function handleOrderSubmit() {
 
       // Store pickup option (skips shipping processes when true)
       isStorePickup: state.isStorePickup || false,
+
+      // Selected shipping address ID (from address cards)
+      shippingAddressId: state.client.selectedAddressId || null,
 
       // Shipping cost (calculated at submission time)
       shippingCost: (() => {

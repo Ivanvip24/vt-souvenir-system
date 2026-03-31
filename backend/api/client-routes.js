@@ -178,6 +178,9 @@ router.post('/orders/submit', async (req, res) => {
 
       // Shipping cost
       shippingCost,
+
+      // Selected address from client_addresses table
+      shippingAddressId,
     } = req.body;
 
     // Honeypot anti-bot check: if this hidden field is filled, it's a bot
@@ -384,8 +387,9 @@ router.post('/orders/submit', async (req, res) => {
         sales_rep,
         is_store_pickup,
         shipping_cost,
-        destination
-      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16, $17, $18)
+        destination,
+        shipping_address_id
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING id`,
       [
         orderNumber,
@@ -405,7 +409,8 @@ router.post('/orders/submit', async (req, res) => {
         salesRep || null,
         isStorePickup || false,
         parseFloat(shippingCost) || 0,
-        destination || null
+        destination || null,
+        shippingAddressId || null
       ]
     );
 
@@ -1230,6 +1235,14 @@ router.post('/info', async (req, res) => {
       }
 
       const client = result.rows[0];
+      const clientId = client.id;
+
+      // Fetch saved addresses for this client
+      const addresses = await query(
+        'SELECT * FROM client_addresses WHERE client_id = $1 ORDER BY is_default DESC, last_used_at DESC',
+        [clientId]
+      );
+
       return res.json({
         success: true,
         found: true,
@@ -1246,7 +1259,8 @@ router.post('/info', async (req, res) => {
           state: client.state,
           postal: client.postal,
           references: client.reference_notes
-        }
+        },
+        addresses: addresses.rows
       });
     }
 
@@ -1827,6 +1841,125 @@ async function sendPaymentProofNotification(orderId) {
     `
   });
 }
+
+// ========================================
+// CLIENT ADDRESSES CRUD
+// ========================================
+
+/**
+ * GET /api/client/addresses
+ * List addresses for a client by phone+email query params
+ */
+router.get('/addresses', async (req, res) => {
+  try {
+    const { phone, email } = req.query;
+    if (!phone || !email) return res.status(400).json({ error: 'phone and email required' });
+
+    const client = await query('SELECT id FROM clients WHERE phone = $1 AND email = $2 LIMIT 1', [phone, email]);
+    if (client.rows.length === 0) return res.json({ addresses: [] });
+
+    const addresses = await query(
+      'SELECT * FROM client_addresses WHERE client_id = $1 ORDER BY is_default DESC, last_used_at DESC',
+      [client.rows[0].id]
+    );
+    res.json({ addresses: addresses.rows });
+  } catch (error) {
+    console.error('Error fetching addresses:', error);
+    res.status(500).json({ error: 'Error al obtener direcciones' });
+  }
+});
+
+/**
+ * POST /api/client/addresses
+ * Create a new address for a client
+ */
+router.post('/addresses', async (req, res) => {
+  try {
+    const { phone, email, street, streetNumber, colonia, city, state, postal, referenceNotes } = req.body;
+
+    const clientResult = await query('SELECT id FROM clients WHERE phone = $1 AND email = $2 LIMIT 1', [phone, email]);
+    if (clientResult.rows.length === 0) return res.status(404).json({ error: 'Client not found' });
+    const clientId = clientResult.rows[0].id;
+
+    const label = [colonia || street, city].filter(Boolean).join(', ');
+
+    const existingCount = await query('SELECT COUNT(*) as c FROM client_addresses WHERE client_id = $1', [clientId]);
+    const isDefault = parseInt(existingCount.rows[0].c) === 0;
+
+    const result = await query(`
+      INSERT INTO client_addresses (client_id, label, street, street_number, colonia, city, state, postal, reference_notes, is_default)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *
+    `, [clientId, label, street, streetNumber, colonia, city, state, postal, referenceNotes, isDefault]);
+
+    res.json({ success: true, address: result.rows[0] });
+  } catch (error) {
+    console.error('Error creating address:', error);
+    res.status(500).json({ error: 'Error al crear dirección' });
+  }
+});
+
+/**
+ * PUT /api/client/addresses/:id
+ * Update an existing address
+ */
+router.put('/addresses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { street, streetNumber, colonia, city, state, postal, referenceNotes } = req.body;
+    const label = [colonia || street, city].filter(Boolean).join(', ');
+
+    const result = await query(`
+      UPDATE client_addresses SET street=$1, street_number=$2, colonia=$3, city=$4, state=$5, postal=$6, reference_notes=$7, label=$8
+      WHERE id = $9 RETURNING *
+    `, [street, streetNumber, colonia, city, state, postal, referenceNotes, label, id]);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Address not found' });
+    res.json({ success: true, address: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating address:', error);
+    res.status(500).json({ error: 'Error al actualizar dirección' });
+  }
+});
+
+/**
+ * DELETE /api/client/addresses/:id
+ * Delete an address
+ */
+router.delete('/addresses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await query('DELETE FROM client_addresses WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting address:', error);
+    res.status(500).json({ error: 'Error al eliminar dirección' });
+  }
+});
+
+/**
+ * POST /api/client/addresses/:id/set-default
+ * Set an address as the default for its client
+ */
+router.post('/addresses/:id/set-default', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const addr = await query('SELECT client_id FROM client_addresses WHERE id = $1', [id]);
+    if (addr.rows.length === 0) return res.status(404).json({ error: 'Address not found' });
+
+    const clientId = addr.rows[0].client_id;
+    await query('UPDATE client_addresses SET is_default = false WHERE client_id = $1', [clientId]);
+    await query('UPDATE client_addresses SET is_default = true, last_used_at = NOW() WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error setting default address:', error);
+    res.status(500).json({ error: 'Error al establecer dirección predeterminada' });
+  }
+});
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
 
 function getStatusText(status) {
   const statusMap = {

@@ -732,9 +732,24 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
       });
     }
 
+    // Check for addressId param - use specific address from client_addresses table
+    const addressId = req.query.addressId;
+    let addressRow = null;
+
+    if (addressId) {
+      const addrResult = await query('SELECT * FROM client_addresses WHERE id = $1', [addressId]);
+      if (addrResult.rows.length > 0) addressRow = addrResult.rows[0];
+    } else if (order.shipping_address_id) {
+      const addrResult = await query('SELECT * FROM client_addresses WHERE id = $1', [order.shipping_address_id]);
+      if (addrResult.rows.length > 0) addressRow = addrResult.rows[0];
+    }
+
+    // Use address record if found, fallback to client table fields
+    const addr = addressRow || order;
+    const postal = addr.postal || order.postal || order.postal_code;
+
     // Validate client has shipping address
-    const postal = order.postal || order.postal_code;
-    if (!postal || !order.city || !order.state) {
+    if (!postal || !(addr.city || order.city) || !(addr.state || order.state)) {
       return res.status(400).json({
         error: 'El cliente no tiene dirección de envío completa'
       });
@@ -745,13 +760,13 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
       name: order.client_name,
       phone: order.client_phone,
       email: order.client_email,
-      street: order.street,
-      street_number: order.street_number,
-      colonia: order.colonia,
-      city: order.city,
-      state: order.state,
+      street: addr.street || order.street,
+      street_number: addr.street_number || order.street_number,
+      colonia: addr.colonia || order.colonia,
+      city: addr.city || order.city,
+      state: addr.state || order.state,
       zip: postal,
-      reference_notes: order.reference_notes
+      reference_notes: addr.reference_notes || order.reference_notes
     };
 
     console.log(`📦 Getting shipping quotes for order ${order.order_number}`);
@@ -838,7 +853,7 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
 // ========================================
 router.post('/orders/:orderId/select-rate', async (req, res) => {
   const { orderId } = req.params;
-  const { quotation_id, rate_id, carrier, service, price, days } = req.body;
+  const { quotation_id, rate_id, carrier, service, price, days, addressId } = req.body;
 
   if (!quotation_id || !rate_id) {
     return res.status(400).json({ error: 'Faltan datos de la tarifa seleccionada' });
@@ -862,7 +877,7 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
       return res.status(400).json({ error: 'Las guías ya fueron generadas' });
     }
 
-    // Save selected rate
+    // Save selected rate (and shipping_address_id if provided)
     await query(`
       UPDATE orders SET
         selected_quotation_id = $1,
@@ -871,9 +886,10 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
         selected_service = $4,
         selected_shipping_price = $5,
         selected_delivery_days = $6,
-        shipping_rate_selected_at = CURRENT_TIMESTAMP
+        shipping_rate_selected_at = CURRENT_TIMESTAMP,
+        shipping_address_id = COALESCE($8, shipping_address_id)
       WHERE id = $7
-    `, [quotation_id, rate_id, carrier, service, price, days, orderId]);
+    `, [quotation_id, rate_id, carrier, service, price, days, orderId, addressId || null]);
 
     // Get client info for label generation
     const fullOrder = await query(`
@@ -888,19 +904,28 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
     `, [orderId]);
 
     const orderData = fullOrder.rows[0];
-    const postal = orderData.postal || orderData.postal_code;
+
+    // Look up address from client_addresses if addressId provided
+    let addrRow = null;
+    if (addressId) {
+      const addrResult = await query('SELECT * FROM client_addresses WHERE id = $1', [addressId]);
+      if (addrResult.rows.length > 0) addrRow = addrResult.rows[0];
+    }
+
+    const addr = addrRow || orderData;
+    const postal = addr.postal || orderData.postal || orderData.postal_code;
 
     const destAddress = {
       name: orderData.client_name,
       phone: orderData.client_phone,
       email: orderData.client_email,
-      street: orderData.street,
-      street_number: orderData.street_number,
-      colonia: orderData.colonia,
-      city: orderData.city,
-      state: orderData.state,
+      street: addr.street || orderData.street,
+      street_number: addr.street_number || orderData.street_number,
+      colonia: addr.colonia || orderData.colonia,
+      city: addr.city || orderData.city,
+      state: addr.state || orderData.state,
       zip: postal,
-      reference_notes: orderData.reference_notes
+      reference_notes: addr.reference_notes || orderData.reference_notes
     };
 
     // Calculate how many boxes/labels needed
@@ -2287,9 +2312,21 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
     const client = clientResult.rows[0];
 
+    // Check for addressId param - use specific address from client_addresses table
+    const addressId = req.query.addressId;
+    let addressRow = null;
+
+    if (addressId) {
+      const addrResult = await query('SELECT * FROM client_addresses WHERE id = $1', [addressId]);
+      if (addrResult.rows.length > 0) addressRow = addrResult.rows[0];
+    }
+
+    // Use address record if found, fallback to client table fields
+    const addr = addressRow || client;
+    const postal = addr.postal || client.postal || client.postal_code;
+
     // Validate client has shipping address
-    const postal = client.postal || client.postal_code;
-    if (!postal || !client.city || !client.state) {
+    if (!postal || !(addr.city || client.city) || !(addr.state || client.state)) {
       return res.status(400).json({
         error: 'El cliente no tiene dirección de envío completa'
       });
@@ -2300,13 +2337,13 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
       name: client.name,
       phone: client.phone,
       email: client.email,
-      street: client.street,
-      street_number: client.street_number,
-      colonia: client.colonia,
-      city: client.city,
-      state: client.state,
+      street: addr.street || client.street,
+      street_number: addr.street_number || client.street_number,
+      colonia: addr.colonia || client.colonia,
+      city: addr.city || client.city,
+      state: addr.state || client.state,
       zip: postal,
-      reference_notes: client.reference_notes
+      reference_notes: addr.reference_notes || client.reference_notes
     };
 
     console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
