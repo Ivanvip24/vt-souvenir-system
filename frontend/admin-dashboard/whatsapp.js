@@ -2655,12 +2655,13 @@ function showConversationContextMenu(e, conv) {
   });
   menu.appendChild(assignItem);
 
-  // Assign submenu content
+  // Assign submenu content (starts hidden, toggled on click)
   var assignSub = document.createElement('div');
   assignSub.className = 'wa-context-submenu wa-assign-submenu';
+  assignSub.style.display = 'none';
   var assignTitle = document.createElement('div');
   assignTitle.className = 'wa-context-submenu-title';
-  assignTitle.textContent = 'Asignar a:';
+  assignTitle.textContent = 'ASIGNAR A:';
   assignSub.appendChild(assignTitle);
 
   var assignLoading = document.createElement('div');
