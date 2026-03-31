@@ -5,22 +5,15 @@
 
 /**
  * Calculate production days based on total quantity
- * Uses a tiered system:
- * - 100-249 items: 3 business days
- * - 250-599 items: 4 business days
- * - 600-799 items: 6 business days
- * - 800-999 items: 7 business days
- * - 1000-1999 items: 8 business days
- * - 2000+ items: 9 business days
+ * - 1-499 items: 3 business days
+ * - 500-1999 items: 4 business days
+ * - 2000+ items: 5 business days
  */
 export function getProductionDays(totalQuantity) {
-  if (totalQuantity < 100) return 3;    // Under minimum, same as lowest tier
-  if (totalQuantity <= 249) return 3;
-  if (totalQuantity <= 599) return 4;
-  if (totalQuantity <= 799) return 6;
-  if (totalQuantity <= 999) return 7;
-  if (totalQuantity <= 1999) return 8;
-  return 9;
+  if (totalQuantity <= 499) return 3;
+  if (totalQuantity <= 999) return 4;
+  if (totalQuantity <= 1999) return 4;
+  return 5;
 }
 
 /**
