@@ -274,16 +274,21 @@
 // SEPOMEX API
 // ==========================================
 
-const SEPOMEX_API = 'https://sepomex-api.dfrfrfr.workers.dev/codigo_postal';
-
 async function fetchPostalData(cp) {
-  if (!cp || cp.length !== 5) return null;
+  if (!cp || cp.length !== 5 || !/^\d{5}$/.test(cp)) return null;
   try {
-    const res = await fetch(SEPOMEX_API + '/' + encodeURIComponent(cp));
+    var res = await fetch('https://api.zippopotam.us/mx/' + encodeURIComponent(cp));
     if (!res.ok) return null;
-    return await res.json();
+    var data = await res.json();
+    if (!data || !data.places || data.places.length === 0) return null;
+    // Transform zippopotam format to expected { estado, municipio, colonias[] }
+    return {
+      estado: data.places[0].state || '',
+      municipio: data.places[0].state || '',
+      colonias: data.places.map(function(p) { return p['place name']; })
+    };
   } catch (e) {
-    console.warn('Sepomex lookup failed:', e);
+    console.warn('Postal lookup failed:', e);
     return null;
   }
 }
