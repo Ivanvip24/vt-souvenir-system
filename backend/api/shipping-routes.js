@@ -902,10 +902,18 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
       reference_notes: orderData.reference_notes
     };
 
-    console.log(`📦 Client confirmed shipping for order ${orderData.order_number}: ${carrier} - ${service}`);
-    console.log(`   Generating label automatically...`);
+    // Calculate how many boxes/labels needed
+    const itemsResult = await query(
+      `SELECT product_name, quantity FROM order_items WHERE order_id = $1`,
+      [orderId]
+    );
+    const { totalBoxes, breakdown } = calculateBoxesForOrder(itemsResult.rows);
+    const labelsCount = Math.max(1, totalBoxes);
 
-    // Generate label immediately
+    console.log(`📦 Client confirmed shipping for order ${orderData.order_number}: ${carrier} - ${service}`);
+    console.log(`   Calculated ${labelsCount} box(es):`, breakdown);
+    console.log(`   Generating multiguía...`);
+
     const selectedRate = {
       rate_id: rate_id,
       carrier: carrier,
@@ -918,45 +926,54 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
       quotation_id,
       rate_id,
       selectedRate,
-      destAddress
+      destAddress,
+      skydropx.DEFAULT_PACKAGE,
+      labelsCount
     );
 
-    // Save label to database
-    const insertResult = await query(`
-      INSERT INTO shipping_labels (
-        order_id, client_id, shipment_id, quotation_id, rate_id,
-        tracking_number, tracking_url, label_url,
-        carrier, service, delivery_days, shipping_cost,
-        package_number, status, label_generated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
-      RETURNING *
-    `, [
-      orderId,
-      orderData.client_id,
-      shipment.shipment_id,
-      quotation_id,
-      rate_id,
-      shipment.tracking_number,
-      shipment.tracking_url,
-      shipment.label_url,
-      shipment.carrier,
-      shipment.service,
-      shipment.delivery_days,
-      shipment.shipping_cost,
-      1,
-      shipment.label_url ? 'label_generated' : 'processing'
-    ]);
+    // Save ALL packages to database
+    const packagesData = shipment.packages || [];
+    const savedLabels = [];
+
+    for (let i = 0; i < labelsCount; i++) {
+      const pkg = packagesData[i] || {};
+      const insertResult = await query(`
+        INSERT INTO shipping_labels (
+          order_id, client_id, shipment_id, quotation_id, rate_id,
+          tracking_number, tracking_url, label_url,
+          carrier, service, delivery_days, shipping_cost,
+          package_number, status, label_generated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
+        RETURNING *
+      `, [
+        orderId,
+        orderData.client_id,
+        shipment.shipment_id,
+        quotation_id,
+        rate_id,
+        pkg.tracking_number || shipment.tracking_number,
+        pkg.tracking_url || shipment.tracking_url,
+        pkg.label_url || shipment.label_url,
+        shipment.carrier,
+        shipment.service,
+        shipment.delivery_days,
+        shipment.shipping_cost / labelsCount,
+        i + 1,
+        (pkg.label_url || shipment.label_url) ? 'label_generated' : 'processing'
+      ]);
+      savedLabels.push(insertResult.rows[0]);
+    }
 
     // Update order shipping status
     await query(`
       UPDATE orders SET
         shipping_label_generated = true,
-        shipping_labels_count = 1,
+        shipping_labels_count = $1,
         status = 'shipping'
-      WHERE id = $1
-    `, [orderId]);
+      WHERE id = $2
+    `, [labelsCount, orderId]);
 
-    console.log(`✅ Label generated for order ${orderData.order_number}: ${shipment.tracking_number}`);
+    console.log(`✅ ${labelsCount} label(s) generated for order ${orderData.order_number}: ${shipment.tracking_number}`);
 
     // Auto-request pickup (non-blocking)
     if (shipment.shipment_id && shipment.carrier) {
@@ -975,15 +992,17 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Guía generada exitosamente',
+      message: labelsCount + ' guía(s) generada(s) exitosamente',
+      labelsCount: labelsCount,
       label: {
-        tracking_number: shipment.tracking_number,
+        tracking_number: shipment.tracking_number || shipment.master_tracking_number,
         tracking_url: shipment.tracking_url,
         label_url: shipment.label_url,
         carrier: shipment.carrier,
         service: shipment.service,
         delivery_days: shipment.delivery_days
-      }
+      },
+      breakdown: breakdown
     });
 
   } catch (error) {

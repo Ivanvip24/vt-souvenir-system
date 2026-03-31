@@ -902,7 +902,9 @@
 
             var subtitle = document.createElement('p');
             subtitle.style.cssText = 'color:var(--text-muted);font-size:0.9rem;margin-bottom:20px;';
-            subtitle.textContent = 'Tu guia ha sido generada exitosamente';
+            subtitle.textContent = data.labelsCount > 1
+                ? data.labelsCount + ' guias generadas (' + data.labelsCount + ' paquetes)'
+                : 'Tu guia ha sido generada exitosamente';
             completion.appendChild(subtitle);
 
             if (data.label) {
