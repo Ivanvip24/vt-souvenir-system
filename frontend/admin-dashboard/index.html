@@ -3006,6 +3006,29 @@
         });
     </script>
 
+    <!-- Cmd+Enter = confirm any visible primary button -->
+    <script>
+    document.addEventListener('keydown', function(e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            // Find the topmost visible modal's primary action button
+            var modals = document.querySelectorAll('.modal:not(.hidden), .ai-chat-modal:not(.hidden)');
+            for (var i = modals.length - 1; i >= 0; i--) {
+                var btn = modals[i].querySelector('.btn-primary, .btn-confirm, [type="submit"], .approve-btn');
+                if (btn && !btn.disabled && btn.offsetParent !== null) {
+                    btn.click();
+                    return;
+                }
+            }
+            // No modal open — click any visible primary button on the page
+            var pageBtn = document.querySelector('.view.active .btn-primary:not([disabled]), .view.active [type="submit"]:not([disabled])');
+            if (pageBtn && pageBtn.offsetParent !== null) {
+                pageBtn.click();
+            }
+        }
+    });
+    </script>
+
 <!-- Order Detail Modal — outside content-area for proper fixed positioning -->
 <div id="order-detail-modal" class="modal hidden">
     <div class="modal-backdrop" onclick="closeOrderDetail()"></div>
