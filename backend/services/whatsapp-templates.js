@@ -182,6 +182,18 @@ export async function seedDefaultTemplates() {
         { name: 'amount', example: '1,500' }
       ],
       buttons: [{ text: 'Enviar datos bancarios' }, { text: 'Ya pagué' }, { text: 'Hablar con alguien' }]
+    },
+    {
+      name: 'axkan_order_followup',
+      category: 'UTILITY',
+      bodyText: 'Hola {{1}}, tu pedido #{{2}} está casi listo pero necesitamos que completes tu pago y elijas tu paquetería para poder enviártelo 📦\n\nEntra aquí para completar tu pedido:\nhttps://axkan.art/seguimiento',
+      footerText: 'AXKAN — Recuerdos que cuentan historias',
+      headerType: null,
+      variables: [
+        { name: 'client_name', example: 'María' },
+        { name: 'order_number', example: '1234' }
+      ],
+      buttons: [{ text: 'Ya completé mi pedido' }, { text: 'Necesito ayuda' }, { text: 'Hablar con alguien' }]
     }
   ];
 
