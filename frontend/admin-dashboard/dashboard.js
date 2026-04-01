@@ -1147,6 +1147,7 @@ async function showOrderDetail(orderId) {
   modalTitle.innerHTML = `
     <div>
       ${escapeHtml(order.orderNumber)}
+      ${order.destination ? `<span style="margin-left: 8px; padding: 4px 10px; background: #fce4ec; color: #e72a88; border-radius: 6px; font-size: 12px; font-weight: 600;">📍 ${escapeHtml(order.destination)}</span>` : ''}
       ${order.receiptPdfUrl ? `<a href="${encodeURI(order.receiptPdfUrl)}" target="_blank" download style="margin-left: 12px; padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📄 PDF</a>` : ''}
       <span style="margin-left: 12px; padding: 6px 14px; background: ${statusStyle.bg}; color: ${statusStyle.color}; border: 1px solid ${statusStyle.border}; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase;">${escapeHtml(getStatusText(order.approvalStatus))}</span>
       <div style="font-size: 13px; font-weight: 400; color: #6b7280; margin-top: 4px;">\uD83D\uDCC5 ${escapeHtml(orderDateStr)} \u2014 ${escapeHtml(orderTimeStr)}</div>
@@ -1600,16 +1601,6 @@ async function showOrderDetail(orderId) {
       </div>
     </div>
 
-    <!-- Destination (if any) -->
-    ${order.destination ? `
-      <div class="detail-section">
-        <h3>📍 Destino</h3>
-        <p style="background: var(--gray-50); padding: 16px; border-radius: 10px; line-height: 1.6; font-weight: 600;">
-          ${escapeHtml(order.destination)}
-        </p>
-      </div>
-    ` : ''}
-
     <!-- Client Notes (if any) -->
     ${order.clientNotes ? `
       <div class="detail-section">
@@ -1657,6 +1648,11 @@ async function cobrarSaldo(orderId, orderNumber, pendingAmount) {
       btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
       btn.textContent = 'Enviado';
       if (typeof window.showToast === 'function') window.showToast('Mensaje enviado al cliente', 'success');
+      setTimeout(() => {
+        btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        btn.textContent = 'Enviar de nuevo';
+        btn.disabled = false;
+      }, 10000);
     } else {
       btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
       btn.textContent = 'Error';
