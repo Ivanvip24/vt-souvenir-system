@@ -149,6 +149,35 @@ router.put('/templates/:name', async (req, res) => {
   }
 });
 
+// Delete a template from Meta and local DB
+router.delete('/templates/:name', async (req, res) => {
+  try {
+    const WABA_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+    const { metaApiFetch, WHATSAPP_API_BASE } = await import('../services/whatsapp-api.js');
+
+    // Delete from Meta (all languages)
+    if (WABA_ID) {
+      try {
+        const metaRes = await metaApiFetch(
+          `${WHATSAPP_API_BASE}/${WABA_ID}/message_templates?name=${req.params.name}`,
+          { method: 'DELETE' }
+        );
+        const metaData = await metaRes.json();
+        console.log('🟢 Meta template delete response:', JSON.stringify(metaData));
+      } catch (err) {
+        console.error('🟢 Meta template delete failed:', err.message);
+      }
+    }
+
+    // Delete from local DB
+    await query('DELETE FROM whatsapp_templates WHERE name = $1', [req.params.name]);
+    res.json({ message: `Template "${req.params.name}" deleted from Meta and local DB` });
+  } catch (err) {
+    console.error('🟢 Template delete error:', err.message);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Seed default templates
 router.post('/templates/seed', async (req, res) => {
   try {
