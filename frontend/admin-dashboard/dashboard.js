@@ -1097,6 +1097,28 @@ function formatDateFull(dateString) {
 // ORDER DETAIL MODAL
 // ==========================================
 
+async function refreshAndShowOrder(orderId) {
+  try {
+    const response = await fetch(API_BASE + '/orders/' + orderId, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('authToken') }
+    });
+    const data = await response.json();
+    if (data.success && data.data) {
+      // Update in state.orders
+      const idx = state.orders.findIndex(o => o.id === orderId);
+      if (idx !== -1) state.orders[idx] = data.data;
+      else state.orders.unshift(data.data);
+      // Re-render the list card
+      renderOrders();
+      // Show updated modal
+      showOrderDetail(orderId);
+    }
+  } catch (e) {
+    console.error('Error refreshing order:', e);
+    showOrderDetail(orderId);
+  }
+}
+
 async function showOrderDetail(orderId) {
   const order = state.orders.find(o => o.id === orderId);
   if (!order) return;
@@ -2319,9 +2341,8 @@ async function saveShippingCost(orderId) {
       order.totalPrice = subtotal + newCost;
     }
 
-    // Refresh the modal
-    showOrderDetail(orderId);
     showToast('Envío actualizado: ' + formatCurrency(newCost));
+    refreshAndShowOrder(orderId);
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
     cancelShippingEdit(orderId);
@@ -3848,9 +3869,8 @@ async function saveProductChanges(orderId, itemId, productName, oldQuantity, ori
 
     if (data.success) {
       closeEditProductModal();
-      alert('Producto actualizado correctamente. Se ha notificado al cliente.');
-      showOrderDetail(orderId);
-      loadOrders();
+      showToast('Producto actualizado');
+      refreshAndShowOrder(orderId);
     } else {
       alert('Error: ' + (data.error || 'No se pudo actualizar el producto'));
     }
@@ -4093,9 +4113,8 @@ async function addNewProduct(orderId) {
 
     if (data.success) {
       closeAddProductModal();
-      alert('Producto agregado correctamente. Se ha notificado al cliente.');
-      showOrderDetail(orderId);
-      loadOrders();
+      showToast('Producto agregado correctamente');
+      refreshAndShowOrder(orderId);
     } else {
       alert('Error: ' + (data.error || 'No se pudo agregar el producto'));
     }
@@ -4126,9 +4145,8 @@ async function deleteOrderItem(orderId, itemId, productName, quantity, unitPrice
     const data = await response.json();
 
     if (data.success) {
-      alert('Producto eliminado correctamente.');
-      showOrderDetail(orderId);
-      loadOrders();
+      showToast('Producto eliminado');
+      refreshAndShowOrder(orderId);
     } else {
       alert('Error: ' + (data.error || 'No se pudo eliminar el producto'));
     }
