@@ -455,6 +455,23 @@ async function showClientDetailPopup(clientId) {
             <div class="client-popup-address">${addressHtml}</div>
           </div>
 
+          ${client.addresses && client.addresses.length > 0 ? `
+          <div class="client-popup-section">
+            <h4>📦 Direcciones Guardadas (${client.addresses.length})</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              ${client.addresses.map(function(addr) {
+                var parts = [addr.street + (addr.street_number ? ' #' + addr.street_number : ''), addr.colonia ? 'Col. ' + addr.colonia : '', addr.city, addr.state, addr.postal ? 'CP ' + addr.postal : ''].filter(Boolean);
+                var fullAddr = parts.join(', ');
+                return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">' +
+                  (addr.is_default ? '<span style="background:#E72A88;color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">Principal</span>' : '') +
+                  '<span style="flex:1;font-size:13px;color:#374151;">' + escapeHtml(addr.label || fullAddr) + '</span>' +
+                  '<button class="copy-btn" onclick="shippingCopyToClipboard(\'' + fullAddr.replace(/'/g, "\\'") + '\', this)" title="Copiar">📋</button>' +
+                  '</div>';
+              }).join('')}
+            </div>
+          </div>
+          ` : ''}
+
           <div class="client-popup-section">
             <h4>Contacto</h4>
             <div class="client-popup-info-grid">

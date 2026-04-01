@@ -5556,7 +5556,16 @@ app.get('/api/clients/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Client not found' });
     }
 
-    res.json({ success: true, data: result.rows[0] });
+    // Fetch saved addresses
+    const addressesResult = await query(
+      'SELECT * FROM client_addresses WHERE client_id = $1 ORDER BY is_default DESC, last_used_at DESC',
+      [id]
+    );
+
+    const clientData = result.rows[0];
+    clientData.addresses = addressesResult.rows;
+
+    res.json({ success: true, data: clientData });
   } catch (error) {
     console.error('Error fetching client:', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
