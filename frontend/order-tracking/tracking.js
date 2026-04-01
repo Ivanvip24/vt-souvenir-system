@@ -1264,22 +1264,48 @@
         var cardDetails = document.createElement('div');
         cardDetails.style.cssText = 'display:none;margin-top:12px;';
 
-        var stripeBtn = document.createElement('a');
-        stripeBtn.href = 'https://buy.stripe.com/00gcPP1GscTObJufYY';
-        stripeBtn.target = '_blank';
-        stripeBtn.rel = 'noopener noreferrer';
+        var depositAmount = order.remainingBalance || (order.totalPrice ? order.totalPrice / 2 : 0);
+
+        var stripeBtn = document.createElement('button');
+        stripeBtn.type = 'button';
         stripeBtn.className = 'btn-stripe-pay';
         stripeBtn.insertAdjacentHTML('afterbegin',
             '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
             '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>' +
             '<line x1="1" y1="10" x2="23" y2="10"/></svg> '
         );
-        stripeBtn.appendChild(document.createTextNode('Pagar con Tarjeta'));
+        stripeBtn.appendChild(document.createTextNode('Pagar $' + depositAmount.toLocaleString('es-MX', {minimumFractionDigits: 2}) + ' con Tarjeta'));
+        stripeBtn.addEventListener('click', async function() {
+            stripeBtn.disabled = true;
+            stripeBtn.textContent = 'Redirigiendo a Stripe...';
+            try {
+                var res = await fetch(CLIENT_API + '/stripe-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: order.orderId,
+                        amount: depositAmount,
+                        clientName: state.clientInfo ? state.clientInfo.name : '',
+                        clientEmail: state.clientInfo ? state.clientInfo.email : ''
+                    })
+                });
+                var data = await res.json();
+                if (data.success && data.url) {
+                    window.location.href = data.url;
+                } else {
+                    throw new Error(data.error || 'Error al crear pago');
+                }
+            } catch (err) {
+                showToast(err.message || 'Error al conectar con Stripe', 'error');
+                stripeBtn.disabled = false;
+                stripeBtn.textContent = 'Pagar $' + depositAmount.toLocaleString('es-MX', {minimumFractionDigits: 2}) + ' con Tarjeta';
+            }
+        });
         cardDetails.appendChild(stripeBtn);
 
         var stripeNote = document.createElement('p');
         stripeNote.style.cssText = 'font-size:0.78rem;color:var(--text-muted);text-align:center;margin-top:8px;';
-        stripeNote.textContent = 'Pago seguro procesado por Stripe';
+        stripeNote.textContent = 'Pago seguro procesado por Stripe — ' + formatCurrency(depositAmount);
         cardDetails.appendChild(stripeNote);
 
         section.appendChild(cardDetails);

@@ -16,6 +16,9 @@ import { calculateDeliveryDates } from '../utils/delivery-calculator.js';
 import { calculateTieredPrice, MOQ } from '../shared/pricing.js';
 import { verifyPaymentReceipt, isConfigured as isAIConfigured } from '../services/payment-receipt-verifier.js';
 import { validateTransfer, downloadCEP, resolveBankCode } from '../services/cep-service.js';
+import Stripe from 'stripe';
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 const router = express.Router();
 
@@ -1022,6 +1025,55 @@ router.post('/orders/:orderId/second-payment', async (req, res) => {
   } catch (error) {
     console.error('Error uploading second payment receipt:', error);
     res.status(500).json({ success: false, error: 'Error al subir comprobante' });
+  }
+});
+
+/**
+ * POST /api/client/stripe-checkout
+ * Create a Stripe Checkout Session for the deposit amount
+ */
+router.post('/stripe-checkout', async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(500).json({ success: false, error: 'Stripe no configurado' });
+    }
+
+    const { orderId, amount, clientName, clientEmail } = req.body;
+
+    if (!orderId || !amount || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'orderId y amount son requeridos' });
+    }
+
+    const amountCents = Math.round(amount * 100);
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'mxn',
+          product_data: {
+            name: 'Pedido AXKAN #' + orderId,
+            description: 'Anticipo 50% - Souvenirs Personalizados',
+          },
+          unit_amount: amountCents,
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      customer_email: clientEmail || undefined,
+      metadata: {
+        orderId: String(orderId),
+        clientName: clientName || '',
+        type: 'deposit'
+      },
+      success_url: 'https://axkan.art/seguimiento?payment=success&order=' + orderId,
+      cancel_url: 'https://axkan.art/seguimiento?payment=cancelled&order=' + orderId,
+    });
+
+    res.json({ success: true, url: session.url });
+  } catch (error) {
+    console.error('Stripe checkout error:', error);
+    res.status(500).json({ success: false, error: 'Error al crear sesión de pago' });
   }
 });
 
