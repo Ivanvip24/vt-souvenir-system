@@ -960,6 +960,47 @@ function closeClientModal() {
   if (modal) modal.classList.add('hidden');
 }
 
+// ZIP code autocomplete for Edit Client form
+(function() {
+  var lastPostal = '';
+  document.addEventListener('input', function(e) {
+    if (e.target.id !== 'client_postal_code') return;
+    var postal = e.target.value.trim();
+    if (postal === lastPostal || postal.length !== 5 || !/^\d{5}$/.test(postal)) return;
+    lastPostal = postal;
+    e.target.style.borderColor = '#f59e0b';
+    fetch('https://api.zippopotam.us/mx/' + postal)
+      .then(function(r) { if (!r.ok) throw new Error('Not found'); return r.json(); })
+      .then(function(data) {
+        if (!data.places || data.places.length === 0) return;
+        var place = data.places[0];
+        var cityEl = document.getElementById('client_city');
+        var stateEl = document.getElementById('client_state');
+        var coloniaEl = document.getElementById('client_colonia');
+        if (stateEl && place.state) { stateEl.value = place.state; stateEl.style.borderColor = '#10b981'; setTimeout(function() { stateEl.style.borderColor = ''; }, 2000); }
+        if (cityEl && place.state) { cityEl.value = place.state; cityEl.style.borderColor = '#10b981'; setTimeout(function() { cityEl.style.borderColor = ''; }, 2000); }
+        if (coloniaEl && data.places.length === 1) { coloniaEl.value = data.places[0]['place name']; coloniaEl.style.borderColor = '#10b981'; setTimeout(function() { coloniaEl.style.borderColor = ''; }, 2000); }
+        else if (coloniaEl && data.places.length > 1) {
+          // Multiple colonias — show as datalist
+          var listId = 'colonia-suggestions';
+          var existing = document.getElementById(listId);
+          if (existing) existing.remove();
+          var dl = document.createElement('datalist');
+          dl.id = listId;
+          data.places.forEach(function(p) { var o = document.createElement('option'); o.value = p['place name']; dl.appendChild(o); });
+          coloniaEl.parentNode.appendChild(dl);
+          coloniaEl.setAttribute('list', listId);
+          coloniaEl.value = '';
+          coloniaEl.placeholder = data.places.length + ' colonias — escribe para filtrar';
+          coloniaEl.focus();
+        }
+        e.target.style.borderColor = '#10b981';
+        setTimeout(function() { e.target.style.borderColor = ''; }, 2000);
+      })
+      .catch(function() { e.target.style.borderColor = ''; });
+  });
+})();
+
 async function viewClientOrders(clientId) {
   try {
     const response = await fetch(`${API_BASE}/clients/${clientId}`, {
