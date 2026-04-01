@@ -769,10 +769,18 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
       reference_notes: addr.reference_notes || order.reference_notes
     };
 
-    console.log(`📦 Getting shipping quotes for order ${order.order_number}`);
+    // Calculate boxes needed for this order
+    const itemsResult = await query(
+      `SELECT product_name, quantity FROM order_items WHERE order_id = $1`,
+      [orderId]
+    );
+    const { totalBoxes, breakdown } = calculateBoxesForOrder(itemsResult.rows);
+    const packagesCount = Math.max(1, totalBoxes);
 
-    // Get quote from Skydropx
-    const quote = await skydropx.getQuote(destAddress);
+    console.log(`📦 Getting shipping quotes for order ${order.order_number} (${packagesCount} package(s))`, breakdown);
+
+    // Get quote from Skydropx with correct package count
+    const quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
 
     if (!quote.rates || quote.rates.length === 0) {
       const postal = destAddress.zip;
@@ -841,6 +849,7 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
       success: true,
       quotation_id: quote.quotation_id,
       rates: formattedRates,
+      packagesCount: packagesCount,
       previousSelection,
       destination: {
         city: order.city,
@@ -936,10 +945,13 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
       reference_notes: addr.reference_notes || orderData.reference_notes
     };
 
-    // Use 1 package to match the quotation (quotes are always for 1 package)
-    // Multi-package shipments are handled separately from admin panel
-    const labelsCount = 1;
-    const breakdown = [];
+    // Calculate boxes to match the quotation (quote was made with this count)
+    const itemsResult = await query(
+      `SELECT product_name, quantity FROM order_items WHERE order_id = $1`,
+      [orderId]
+    );
+    const { totalBoxes, breakdown } = calculateBoxesForOrder(itemsResult.rows);
+    const labelsCount = Math.max(1, totalBoxes);
 
     console.log(`📦 Client confirmed shipping for order ${orderData.order_number}: ${carrier} - ${service}`);
     console.log(`   Calculated ${labelsCount} box(es):`, breakdown);
