@@ -775,8 +775,16 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
     const quote = await skydropx.getQuote(destAddress);
 
     if (!quote.rates || quote.rates.length === 0) {
+      const postal = destAddress.zip;
+      const diagMessages = {
+        'FUERA_DE_AREA': `CP ${postal} está fuera del área de cobertura de las paqueterías.`,
+        'CP_NO_RECONOCIDO': `El código postal ${postal} no es reconocido. Verifica que sea correcto.`,
+        'DIRECCION_INVALIDA': `La dirección no pudo ser validada. Revisa calle, colonia y CP.`,
+        'SIN_COBERTURA': `No hay cobertura de paquetería para esta zona.`
+      };
       return res.status(400).json({
-        error: 'No hay tarifas de envío disponibles para esta dirección'
+        error: diagMessages[quote.diagnosis] || 'No hay tarifas de envío disponibles. Verifica el código postal.',
+        diagnosis: quote.diagnosis || 'UNKNOWN'
       });
     }
 
@@ -2421,8 +2429,28 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
     }
 
     if ((!singlePackageQuote?.rates?.length) && multiRatesMap.size === 0) {
+      // Get diagnosis from any quote attempt
+      const diagnosis = singleResult?.diagnosis || multiResults?.find(r => r?.diagnosis)?.diagnosis;
+      const addr = addressRow || client;
+      const postal = addr.postal || client.postal || client.postal_code;
+
+      const diagMessages = {
+        'FUERA_DE_AREA': `Todas las paqueterías reportan que CP ${postal} (${addr.city || client.city}) está fuera de su área de cobertura. Verifica que el código postal sea correcto.`,
+        'CP_NO_RECONOCIDO': `El código postal ${postal} no es reconocido por las paqueterías. Verifica que sea un CP válido para ${addr.city || client.city}, ${addr.state || client.state}.`,
+        'DIRECCION_INVALIDA': `La dirección no pudo ser validada por las paqueterías. Verifica: calle "${addr.street || client.street}", colonia "${addr.colonia || client.colonia}", CP ${postal}.`,
+        'SIN_COBERTURA': `No hay cobertura de paquetería disponible para ${addr.city || client.city}, ${addr.state || client.state} (CP ${postal}). Puede ser una zona de difícil acceso.`
+      };
+
       return res.status(400).json({
-        error: 'No hay tarifas de envío disponibles para esta dirección. Intenta de nuevo.'
+        error: diagMessages[diagnosis] || `No hay tarifas de envío disponibles para CP ${postal} (${addr.city || client.city}). Verifica la dirección.`,
+        diagnosis: diagnosis || 'UNKNOWN',
+        address: {
+          street: addr.street || client.street,
+          colonia: addr.colonia || client.colonia,
+          city: addr.city || client.city,
+          state: addr.state || client.state,
+          postal: postal
+        }
       });
     }
 

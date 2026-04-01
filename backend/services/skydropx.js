@@ -309,9 +309,29 @@ export async function getQuote(destAddress, packageInfo = DEFAULT_PACKAGE, packa
 
     console.log('✅ After filtering:', rates.length, 'rates available');
 
+    // If all rates were filtered out, diagnose why
+    let diagnosis = null;
+    if (rates.length === 0 && result.rates && result.rates.length > 0) {
+      const allOutOfArea = result.rates.every(r => r.out_of_area === true);
+      const allFailed = result.rates.every(r => r.success === false);
+      const allNoPrice = result.rates.every(r => !r.total || parseFloat(r.total) <= 0);
+
+      if (allOutOfArea) {
+        diagnosis = 'FUERA_DE_AREA';
+      } else if (allNoPrice && allFailed) {
+        diagnosis = 'CP_NO_RECONOCIDO';
+      } else if (allFailed) {
+        diagnosis = 'DIRECCION_INVALIDA';
+      } else {
+        diagnosis = 'SIN_COBERTURA';
+      }
+      console.log(`⚠️ All ${result.rates.length} rates filtered out. Diagnosis: ${diagnosis}`);
+    }
+
     return {
       quotation_id: result.id,
-      rates
+      rates,
+      diagnosis
     };
   } catch (error) {
     // Retry on failure
