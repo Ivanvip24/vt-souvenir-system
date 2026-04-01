@@ -1844,7 +1844,17 @@ async function fetchShippingQuotesUI() {
 
   } catch (error) {
     console.error('Error fetching quotes:', error);
-    showNotification(error.message || 'Error al cotizar', 'error');
+    // Show prominent top banner for shipping errors (they contain important diagnostic info)
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#ef4444;color:white;padding:16px 24px;font-size:14px;font-weight:600;text-align:center;box-shadow:0 4px 20px rgba(239,68,68,0.3);animation:slideDown 0.3s ease;';
+    banner.textContent = '⚠️ ' + (error.message || 'Error al cotizar envío');
+    document.body.appendChild(banner);
+    setTimeout(function() {
+      banner.style.transition = 'opacity 0.5s, transform 0.5s';
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-100%)';
+      setTimeout(function() { banner.remove(); }, 500);
+    }, 6000);
   } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;
