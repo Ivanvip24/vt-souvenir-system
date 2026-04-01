@@ -1860,10 +1860,16 @@ async function sendPaymentProofNotification(orderId) {
 router.get('/addresses', async (req, res) => {
   try {
     const { phone, email } = req.query;
-    if (!phone || !email) return res.status(400).json({ error: 'phone and email required' });
+    if (!phone && !email) return res.status(400).json({ error: 'phone or email required' });
 
-    const client = await query('SELECT id FROM clients WHERE phone = $1 AND email = $2 LIMIT 1', [phone, email]);
-    if (client.rows.length === 0) return res.json({ addresses: [] });
+    let client;
+    if (phone) {
+      client = await query('SELECT id FROM clients WHERE phone = $1 LIMIT 1', [phone]);
+    }
+    if ((!client || client.rows.length === 0) && email) {
+      client = await query('SELECT id FROM clients WHERE email = $1 LIMIT 1', [email]);
+    }
+    if (!client || client.rows.length === 0) return res.json({ success: true, addresses: [] });
 
     const addresses = await query(
       'SELECT * FROM client_addresses WHERE client_id = $1 ORDER BY is_default DESC, last_used_at DESC',
@@ -1884,9 +1890,23 @@ router.post('/addresses', async (req, res) => {
   try {
     const { phone, email, street, streetNumber, colonia, city, state, postal, referenceNotes } = req.body;
 
-    const clientResult = await query('SELECT id FROM clients WHERE phone = $1 AND email = $2 LIMIT 1', [phone, email]);
-    if (clientResult.rows.length === 0) return res.status(404).json({ error: 'Client not found' });
-    const clientId = clientResult.rows[0].id;
+    // Find client by phone (primary) or email (fallback)
+    let clientResult = await query('SELECT id FROM clients WHERE phone = $1 LIMIT 1', [phone]);
+    if (clientResult.rows.length === 0 && email) {
+      clientResult = await query('SELECT id FROM clients WHERE email = $1 LIMIT 1', [email]);
+    }
+
+    // If still not found, create the client
+    let clientId;
+    if (clientResult.rows.length === 0) {
+      const newClient = await query(
+        'INSERT INTO clients (phone, email, street, street_number, colonia, city, state, postal, reference_notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
+        [phone, email, street, streetNumber, colonia, city, state, postal, referenceNotes]
+      );
+      clientId = newClient.rows[0].id;
+    } else {
+      clientId = clientResult.rows[0].id;
+    }
 
     const label = [colonia || street, city].filter(Boolean).join(', ');
 
