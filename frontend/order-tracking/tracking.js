@@ -577,7 +577,7 @@
             preview.appendChild(img);
         } else {
             var pdfIcon = document.createElement('div');
-            pdfIcon.style.cssText = 'width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(255,255,255,0.06);border-radius:8px';
+            pdfIcon.style.cssText = 'width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--bg-subtle);border-radius:8px';
             pdfIcon.textContent = '📄';
             preview.appendChild(pdfIcon);
         }
@@ -1171,7 +1171,7 @@
             backBtn.textContent = '← Volver a mis pedidos';
             backBtn.addEventListener('click', function() {
                 navigateTo('results');
-                setTimeout(function() { refreshOrders(); }, 300);
+                refreshOrders();
             });
             completion.appendChild(backBtn);
 
@@ -1288,13 +1288,13 @@
         bankToggle.addEventListener('click', function() {
             bankToggle.classList.add('active');
             cardToggle.classList.remove('active');
-            bankDetails.style.display = '';
+            bankDetails.style.display = 'block';
             cardDetails.style.display = 'none';
         });
         cardToggle.addEventListener('click', function() {
             cardToggle.classList.add('active');
             bankToggle.classList.remove('active');
-            cardDetails.style.display = '';
+            cardDetails.style.display = 'block';
             bankDetails.style.display = 'none';
         });
 
