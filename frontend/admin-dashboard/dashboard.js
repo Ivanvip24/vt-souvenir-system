@@ -1184,8 +1184,8 @@ async function showOrderDetail(orderId) {
             <div style="font-size: 12px; color: #92400e; font-weight: 600;">SALDO PENDIENTE</div>
             <div style="font-size: 24px; font-weight: 700; color: #b45309;">$${(order.totalPrice - (order.depositAmount || 0)).toLocaleString('es-MX')}</div>
           </div>
-          <button onclick="cobrarSaldo(${order.id}, '${escapeHtml(order.orderNumber)}', ${order.totalPrice - (order.depositAmount || 0)})"
-            style="padding: 10px 20px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap;">
+          <button id="cobrar-btn-${order.id}" onclick="cobrarSaldo(${order.id}, '${escapeHtml(order.orderNumber)}', ${order.totalPrice - (order.depositAmount || 0)})"
+            style="padding: 10px 20px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.3s ease;">
             💰 Cobrar Saldo
           </button>
         </div>
@@ -1640,7 +1640,12 @@ function closeOrderDetail() {
 let orderToApprove = null;
 
 async function cobrarSaldo(orderId, orderNumber, pendingAmount) {
-  if (!confirm('¿Enviar mensaje de cobro por $' + pendingAmount.toLocaleString('es-MX') + ' al cliente?')) return;
+  const btn = document.getElementById('cobrar-btn-' + orderId);
+  if (!btn) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+  btn.style.background = '#9ca3af';
 
   try {
     const res = await fetch(API_BASE + '/orders/' + orderId + '/cobrar-saldo', {
@@ -1649,13 +1654,27 @@ async function cobrarSaldo(orderId, orderNumber, pendingAmount) {
     });
     const data = await res.json();
     if (data.success) {
-      if (typeof window.showToast === 'function') window.showToast('Mensaje de cobro enviado', 'success');
-      else alert('Mensaje de cobro enviado al cliente');
+      btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+      btn.textContent = 'Enviado';
+      if (typeof window.showToast === 'function') window.showToast('Mensaje enviado al cliente', 'success');
     } else {
-      alert('Error: ' + (data.error || 'No se pudo enviar'));
+      btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+      btn.textContent = 'Error';
+      btn.disabled = false;
+      setTimeout(() => {
+        btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        btn.textContent = 'Cobrar Saldo';
+      }, 3000);
+      if (typeof window.showToast === 'function') window.showToast(data.error || 'No se pudo enviar', 'error');
     }
   } catch (err) {
-    alert('Error de conexión');
+    btn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+    btn.textContent = 'Error';
+    btn.disabled = false;
+    setTimeout(() => {
+      btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+      btn.textContent = 'Cobrar Saldo';
+    }, 3000);
   }
 }
 

@@ -1610,10 +1610,12 @@ app.post('/api/orders/:orderId/cobrar-saldo', authMiddleware, async (req, res) =
     // Format phone for WhatsApp (add 521 prefix if 10 digits)
     const waPhone = clientPhone.length === 10 ? '52' + clientPhone : clientPhone;
 
-    // Send WhatsApp message
-    const { sendWhatsAppMessage } = await import('./whatsapp-routes.js').then(() => import('../services/whatsapp-api.js'));
-    const msg = `Hola ${order.name}, tu pedido *${order.order_number}* está listo.\n\nEl saldo pendiente es *$${pendingAmount.toLocaleString('es-MX')}*.\n\nEnvíame tu comprobante de pago y te mando la guía de envío.`;
-    await sendWhatsAppMessage(waPhone, msg);
+    // Send WhatsApp template message (works outside 24h window)
+    const { sendTemplate } = await import('../services/whatsapp-templates.js');
+    const result = await sendTemplate('axkan_order_followup', waPhone, {
+      client_name: order.name || 'Cliente',
+      order_number: order.order_number
+    });
 
     console.log(`💰 Cobro enviado: ${order.order_number} — $${pendingAmount} a ${waPhone}`);
     res.json({ success: true, message: 'Mensaje de cobro enviado' });
