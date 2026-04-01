@@ -6174,6 +6174,17 @@ async function startServer() {
       console.warn('⚠️  is_printed migration:', mErr.message);
     }
 
+    // Add "Urgencia" product if not exists
+    try {
+      const urgCheck = await query("SELECT id FROM products WHERE name = 'Urgencia'");
+      if (urgCheck.rows.length === 0) {
+        await query(`INSERT INTO products (name, base_price, production_cost, category, is_active, wholesale_price) VALUES ('Urgencia', 1.00, 0, 'SERVICIOS', true, 1.00)`);
+        console.log('✅ Urgencia product created');
+      }
+    } catch (mErr) {
+      console.warn('⚠️  Urgencia product:', mErr.message);
+    }
+
     // Run client_addresses migration (multi-address support per client)
     try {
       const { addClientAddresses } = await import('../migrations/add-client-addresses.js');
