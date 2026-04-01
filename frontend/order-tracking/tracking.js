@@ -728,12 +728,11 @@
             console.error('Address fetch error (non-blocking):', err);
         }
 
-        // No addresses found — show address form so client can add one
+        // No saved addresses — skip address selection, use client's profile address
+        // Go straight to shipping quotes
         state.clientAddresses = [];
-        $('address-selection-container').style.display = 'block';
-        var addressContainer = $('address-cards-shipping');
-        renderAddressCardsShipping(addressContainer, [], null, orderId);
-        return; // Wait for user to add an address
+        $('address-selection-container').style.display = 'none';
+        fetchShippingQuotes(orderId, 1);
     }
 
     function findAddressById(id) {
