@@ -2307,6 +2307,7 @@ async function saveShippingCost(orderId) {
       },
       body: JSON.stringify({ shippingCost: newCost })
     });
+    if (!response.ok) throw new Error('Error del servidor (' + response.status + ')');
     var data = await response.json();
     if (!data.success) throw new Error(data.error || 'Error');
 
@@ -2322,7 +2323,8 @@ async function saveShippingCost(orderId) {
     showOrderDetail(orderId);
     showToast('Envío actualizado: ' + formatCurrency(newCost));
   } catch (err) {
-    alert('Error: ' + err.message);
+    showToast('Error: ' + err.message, 'error');
+    cancelShippingEdit(orderId);
   }
 }
 
