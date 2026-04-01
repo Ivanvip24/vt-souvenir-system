@@ -415,9 +415,10 @@ router.post('/orders/submit', async (req, res) => {
     const orderId = orderResult.rows[0].id;
 
     // 3b. Set shipping_address_id if provided (column may not exist yet)
-    if (shippingAddressId) {
+    const addressIdNum = parseInt(shippingAddressId);
+    if (addressIdNum && !isNaN(addressIdNum) && addressIdNum > 0) {
       try {
-        await query('UPDATE orders SET shipping_address_id = $1 WHERE id = $2', [shippingAddressId, orderId]);
+        await query('UPDATE orders SET shipping_address_id = $1 WHERE id = $2', [addressIdNum, orderId]);
       } catch (e) {
         console.warn('⚠️  Could not set shipping_address_id:', e.message);
       }
