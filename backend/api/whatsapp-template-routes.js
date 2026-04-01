@@ -49,6 +49,8 @@ async function ensureTemplatesTables() {
     `);
     templatesMigrated = true;
     console.log('🟢 WhatsApp templates tables ready');
+    // Auto-seed default templates on startup
+    await seedDefaultTemplates();
   } catch (e) {
     console.error('🟢 Templates migration error:', e.message);
   }
