@@ -936,13 +936,10 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
       reference_notes: addr.reference_notes || orderData.reference_notes
     };
 
-    // Calculate how many boxes/labels needed
-    const itemsResult = await query(
-      `SELECT product_name, quantity FROM order_items WHERE order_id = $1`,
-      [orderId]
-    );
-    const { totalBoxes, breakdown } = calculateBoxesForOrder(itemsResult.rows);
-    const labelsCount = Math.max(1, totalBoxes);
+    // Use 1 package to match the quotation (quotes are always for 1 package)
+    // Multi-package shipments are handled separately from admin panel
+    const labelsCount = 1;
+    const breakdown = [];
 
     console.log(`📦 Client confirmed shipping for order ${orderData.order_number}: ${carrier} - ${service}`);
     console.log(`   Calculated ${labelsCount} box(es):`, breakdown);
