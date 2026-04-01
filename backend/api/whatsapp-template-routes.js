@@ -127,7 +127,7 @@ router.get('/broadcasts', async (req, res) => {
 // Update a template (e.g. remove buttons)
 router.put('/templates/:name', async (req, res) => {
   try {
-    const { bodyText, footerText, headerType, variables, buttons } = req.body;
+    const { bodyText, footerText, headerType, variables, buttons, language } = req.body;
     const sets = [];
     const vals = [];
     let i = 1;
@@ -136,6 +136,7 @@ router.put('/templates/:name', async (req, res) => {
     if (headerType !== undefined) { sets.push(`header_type = $${i++}`); vals.push(headerType); }
     if (variables !== undefined) { sets.push(`variables = $${i++}`); vals.push(JSON.stringify(variables)); }
     if (buttons !== undefined) { sets.push(`buttons = $${i++}`); vals.push(JSON.stringify(buttons)); }
+    if (language !== undefined) { sets.push(`language = $${i++}`); vals.push(language); }
     if (sets.length === 0) return res.status(400).json({ error: 'Nothing to update' });
     vals.push(req.params.name);
     const result = await query(`UPDATE whatsapp_templates SET ${sets.join(', ')} WHERE name = $${i}`, vals);
