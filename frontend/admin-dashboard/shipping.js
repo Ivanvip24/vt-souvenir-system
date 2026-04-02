@@ -450,9 +450,9 @@ async function showClientDetailPopup(clientId) {
         </div>
 
         <div class="client-popup-body">
-          ${client.addresses && client.addresses.length > 0 ? `
           <div class="client-popup-section">
-            <h4>📦 Direcciones (${client.addresses.length})</h4>
+            <h4>📦 Direcciones${client.addresses && client.addresses.length > 0 ? ' (' + client.addresses.length + ')' : ''}</h4>
+            ${client.addresses && client.addresses.length > 0 ? `
             <div style="display:flex;flex-direction:column;gap:8px;">
               ${client.addresses.map(function(addr) {
                 var streetLine = (addr.street || '') + (addr.street_number ? ' #' + addr.street_number : '');
@@ -461,25 +461,23 @@ async function showClientDetailPopup(clientId) {
                 var cpLine = addr.postal ? 'CP ' + addr.postal : '';
                 var fullAddr = [streetLine, coloniaLine, cityLine, cpLine].filter(Boolean).join(', ');
                 var refLine = addr.reference_notes ? 'Ref: ' + addr.reference_notes : '';
+                var missingCp = !addr.postal ? '<span style="color:#f59e0b;font-size:11px;">⚠️ Sin CP</span>' : '';
                 return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;display:flex;gap:8px;">' +
                   '<div style="flex:1;">' +
-                    (addr.is_default ? '<span style="background:#E72A88;color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;display:inline-block;margin-bottom:4px;">Principal</span><br>' : '') +
+                    (addr.is_default ? '<span style="background:#E72A88;color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;display:inline-block;margin-bottom:4px;">Principal</span> ' : '') +
                     '<div style="font-size:13px;font-weight:600;color:#111827;">' + escapeHtml(streetLine) + '</div>' +
                     (coloniaLine ? '<div style="font-size:12px;color:#4b5563;">' + escapeHtml(coloniaLine) + '</div>' : '') +
-                    '<div style="font-size:12px;color:#4b5563;">' + escapeHtml(cityLine) + (cpLine ? ' · ' + escapeHtml(cpLine) : '') + '</div>' +
+                    '<div style="font-size:12px;color:#4b5563;">' + escapeHtml(cityLine) + (cpLine ? ' · ' + escapeHtml(cpLine) : ' ' + missingCp) + '</div>' +
                     (refLine ? '<div style="font-size:11px;color:#9ca3af;margin-top:2px;">' + escapeHtml(refLine) + '</div>' : '') +
                   '</div>' +
                   '<button class="copy-btn" onclick="shippingCopyToClipboard(\'' + fullAddr.replace(/'/g, "\\'") + '\', this)" title="Copiar" style="align-self:start;">📋</button>' +
                   '</div>';
               }).join('')}
             </div>
-          </div>
-          ` : `
-          <div class="client-popup-section">
-            <h4>📦 Direccion ${addressPlain ? '<button class="copy-btn copy-all" onclick="shippingCopyToClipboard(\'' + addressPlain.replace(/'/g, "\\'") + '\', this)" title="Copiar todo">📋 Todo</button>' : ''}</h4>
+            ` : `
             <div class="client-popup-address">${addressHtml || '<span style="color: #f59e0b;">Sin direccion registrada</span>'}</div>
+            `}
           </div>
-          `}
 
           <div class="client-popup-section">
             <h4>Contacto</h4>
