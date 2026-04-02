@@ -1941,7 +1941,10 @@ router.get('/addresses', async (req, res) => {
  */
 router.post('/addresses', async (req, res) => {
   try {
-    const { phone, email, street, streetNumber, colonia, city, state, postal, referenceNotes } = req.body;
+    const { phone, email, street, streetNumber, street_number, colonia, city, state, postal, postal_code, referenceNotes, references, reference_notes } = req.body;
+    const postalVal = postal || postal_code || null;
+    const streetNumVal = streetNumber || street_number || null;
+    const refsVal = referenceNotes || references || reference_notes || null;
 
     // Find client by phone (primary) or email (fallback)
     let clientResult = await query('SELECT id FROM clients WHERE phone = $1 LIMIT 1', [phone]);
@@ -1954,7 +1957,7 @@ router.post('/addresses', async (req, res) => {
     if (clientResult.rows.length === 0) {
       const newClient = await query(
         'INSERT INTO clients (phone, email, street, street_number, colonia, city, state, postal, reference_notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
-        [phone, email, street, streetNumber, colonia, city, state, postal, referenceNotes]
+        [phone, email, street, streetNumVal, colonia, city, state, postalVal, refsVal]
       );
       clientId = newClient.rows[0].id;
     } else {
@@ -1970,7 +1973,7 @@ router.post('/addresses', async (req, res) => {
       INSERT INTO client_addresses (client_id, label, street, street_number, colonia, city, state, postal, reference_notes, is_default)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
-    `, [clientId, label, street, streetNumber, colonia, city, state, postal, referenceNotes, isDefault]);
+    `, [clientId, label, street, streetNumVal, colonia, city, state, postalVal, refsVal, isDefault]);
 
     res.json({ success: true, address: result.rows[0] });
   } catch (error) {
@@ -1986,13 +1989,16 @@ router.post('/addresses', async (req, res) => {
 router.put('/addresses/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { street, streetNumber, colonia, city, state, postal, referenceNotes } = req.body;
+    const { street, streetNumber, street_number, colonia, city, state, postal, postal_code, referenceNotes, references, reference_notes } = req.body;
+    const postalVal = postal || postal_code || null;
+    const streetNumVal = streetNumber || street_number || null;
+    const refsVal = referenceNotes || references || reference_notes || null;
     const label = [colonia || street, city].filter(Boolean).join(', ');
 
     const result = await query(`
       UPDATE client_addresses SET street=$1, street_number=$2, colonia=$3, city=$4, state=$5, postal=$6, reference_notes=$7, label=$8
       WHERE id = $9 RETURNING *
-    `, [street, streetNumber, colonia, city, state, postal, referenceNotes, label, id]);
+    `, [street, streetNumVal, colonia, city, state, postalVal, refsVal, label, id]);
 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Address not found' });
     res.json({ success: true, address: result.rows[0] });
