@@ -180,7 +180,71 @@ app.use('/api/client/info', clientInfoLimiter);
 app.use('/api/client/orders/lookup', clientInfoLimiter);
 
 // Body parsing - reduced limit to prevent memory abuse
-// Skip JSON parsing for Stripe webhook (needs raw body for signature verification)
+// Stripe webhook needs raw body for signature verification — must be BEFORE json parser
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!stripeKey) return res.status(500).send('Stripe not configured');
+
+  const { default: Stripe } = await import('stripe');
+  const stripe = new Stripe(stripeKey);
+
+  let event;
+  try {
+    if (webhookSecret) {
+      const sig = req.headers['stripe-signature'];
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } else {
+      event = JSON.parse(req.body.toString());
+    }
+  } catch (err) {
+    console.error('⚠️ Stripe webhook signature failed:', err.message);
+    return res.status(400).send('Webhook signature verification failed');
+  }
+
+  console.log(`💳 Stripe webhook: ${event.type}`);
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const orderId = session.metadata?.orderId;
+    const amountPaid = (session.amount_total || 0) / 100;
+
+    console.log(`✅ Stripe payment completed: Order ${orderId}, $${amountPaid} MXN`);
+
+    if (orderId) {
+      try {
+        // Mark deposit as paid
+        await query(
+          `UPDATE orders SET
+            deposit_paid = true,
+            payment_method = 'stripe',
+            stripe_payment_id = $1,
+            approval_status = 'approved',
+            status = 'in_production'
+          WHERE id = $2 AND approval_status != 'approved'`,
+          [session.payment_intent || session.id, orderId]
+        );
+
+        // Log payment
+        await query(
+          `INSERT INTO payments (order_id, payment_type, payment_method, status, amount, stripe_session_id)
+           VALUES ($1, 'deposit', 'stripe', 'completed', $2, $3)
+           ON CONFLICT DO NOTHING`,
+          [orderId, amountPaid, session.id]
+        ).catch(() => {});
+
+        console.log(`✅ Order ${orderId} auto-approved via Stripe payment`);
+      } catch (dbErr) {
+        console.error('❌ Error updating order from Stripe webhook:', dbErr.message);
+      }
+    }
+  }
+
+  res.json({ received: true });
+});
+
+// Skip JSON parsing for design webhook (needs raw body)
 app.use((req, res, next) => {
   if (req.path === '/api/public/designs/webhook') return next();
   express.json({ limit: '10mb' })(req, res, next);
