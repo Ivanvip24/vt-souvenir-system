@@ -450,14 +450,9 @@ async function showClientDetailPopup(clientId) {
         </div>
 
         <div class="client-popup-body">
-          <div class="client-popup-section">
-            <h4>Direccion ${addressPlain ? `<button class="copy-btn copy-all" onclick="shippingCopyToClipboard('${addressPlain.replace(/'/g, "\\'")}', this)" title="Copiar todo">📋 Todo</button>` : ''}</h4>
-            <div class="client-popup-address">${addressHtml}</div>
-          </div>
-
           ${client.addresses && client.addresses.length > 0 ? `
           <div class="client-popup-section">
-            <h4>📦 Direcciones Guardadas (${client.addresses.length})</h4>
+            <h4>📦 Direcciones (${client.addresses.length})</h4>
             <div style="display:flex;flex-direction:column;gap:8px;">
               ${client.addresses.map(function(addr) {
                 var streetLine = (addr.street || '') + (addr.street_number ? ' #' + addr.street_number : '');
@@ -479,7 +474,12 @@ async function showClientDetailPopup(clientId) {
               }).join('')}
             </div>
           </div>
-          ` : ''}
+          ` : `
+          <div class="client-popup-section">
+            <h4>📦 Direccion ${addressPlain ? '<button class="copy-btn copy-all" onclick="shippingCopyToClipboard(\'' + addressPlain.replace(/'/g, "\\'") + '\', this)" title="Copiar todo">📋 Todo</button>' : ''}</h4>
+            <div class="client-popup-address">${addressHtml || '<span style="color: #f59e0b;">Sin direccion registrada</span>'}</div>
+          </div>
+          `}
 
           <div class="client-popup-section">
             <h4>Contacto</h4>
