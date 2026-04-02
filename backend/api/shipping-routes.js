@@ -749,9 +749,14 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
     const postal = addr.postal || order.postal || order.postal_code;
 
     // Validate client has shipping address
-    if (!postal || !(addr.city || order.city) || !(addr.state || order.state)) {
+    const missing = [];
+    if (!postal) missing.push('código postal');
+    if (!(addr.city || order.city)) missing.push('ciudad');
+    if (!(addr.state || order.state)) missing.push('estado');
+    if (missing.length > 0) {
       return res.status(400).json({
-        error: 'El cliente no tiene dirección de envío completa'
+        error: 'Falta en tu dirección: ' + missing.join(', ') + '. Actualiza tu dirección para cotizar envío.',
+        missingFields: missing
       });
     }
 
