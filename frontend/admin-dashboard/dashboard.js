@@ -947,7 +947,7 @@ function createOrderCard(order) {
         </label>
       ` : ''}
       <div class="order-title">
-        <h3>${order.orderNumber}</h3>
+        <h3>${order.orderNumber}${order.destination ? ` <span style="font-size: 12px; font-weight: 600; color: #e72a88; margin-left: 6px;">📍 ${escapeHtml(order.destination)}</span>` : ''}</h3>
         <span class="status-badge ${statusClass}">${statusText}</span>
         ${order.salesRep ? (() => {
           const repColor = getSalesRepColor(order.salesRep);
@@ -999,12 +999,6 @@ function createOrderCard(order) {
             ` : ''}
           </span>
         </div>
-        ${order.destination ? `
-          <div class="client-info" style="margin-top: 4px;">
-            <span class="info-label">DESTINO</span>
-            <span class="info-value" style="color: var(--primary-color, #e72a88);">${escapeHtml(order.destination)}</span>
-          </div>
-        ` : ''}
         <div class="order-totals">
           <span class="total-label">TOTAL</span>
           <span class="total-value">${formatCurrency(order.totalPrice)}</span>
