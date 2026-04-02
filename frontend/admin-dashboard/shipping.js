@@ -470,7 +470,11 @@ async function showClientDetailPopup(clientId) {
                     '<div style="font-size:12px;color:#4b5563;">' + escapeHtml(cityLine) + (cpLine ? ' · ' + escapeHtml(cpLine) : ' ' + missingCp) + '</div>' +
                     (refLine ? '<div style="font-size:11px;color:#9ca3af;margin-top:2px;">' + escapeHtml(refLine) + '</div>' : '') +
                   '</div>' +
-                  '<button class="copy-btn" onclick="shippingCopyToClipboard(\'' + fullAddr.replace(/'/g, "\\'") + '\', this)" title="Copiar" style="align-self:start;">📋</button>' +
+                  '<div style="display:flex;flex-direction:column;gap:4px;align-self:start;">' +
+                    '<button class="copy-btn" onclick="shippingCopyToClipboard(\'' + fullAddr.replace(/'/g, "\\'") + '\', this)" title="Copiar">📋</button>' +
+                    '<button class="copy-btn" onclick="editClientAddress(' + client.id + ',' + addr.id + ')" title="Editar" style="font-size:12px;">✏️</button>' +
+                    '<button class="copy-btn" onclick="deleteClientAddress(' + client.id + ',' + addr.id + ')" title="Eliminar" style="font-size:12px;">🗑️</button>' +
+                  '</div>' +
                   '</div>';
               }).join('')}
             </div>
@@ -969,6 +973,28 @@ async function saveClient(event) {
 
     const result = await response.json();
     if (!result.success) throw new Error(result.error);
+
+    // Also update the specific address if editing one
+    if (window._editingAddressId) {
+      try {
+        await fetch(`${API_BASE.replace('/api', '')}/api/client/addresses/${window._editingAddressId}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            street: data.street,
+            street_number: data.street_number,
+            colonia: data.colonia,
+            city: data.city,
+            state: data.state,
+            postal_code: data.postal_code,
+            reference_notes: data.reference_notes
+          })
+        });
+      } catch (addrErr) {
+        console.warn('Address update failed:', addrErr.message);
+      }
+      window._editingAddressId = null;
+    }
 
     showNotification(clientId ? 'Cliente actualizado' : 'Cliente creado', 'success');
     closeClientModal();
@@ -2204,6 +2230,69 @@ window.triggerImportCSV = triggerImportCSV;
 window.handleCSVImport = handleCSVImport;
 window.closeImportModal = closeImportModal;
 window.executeClientImport = executeClientImport;
+// ── Client Address Edit/Delete from Popup ──
+
+async function editClientAddress(clientId, addressId) {
+  try {
+    const res = await fetch(`${API_BASE}/clients/${clientId}`, { headers: getAuthHeaders() });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    const addr = (data.data.addresses || []).find(a => a.id === addressId);
+    if (!addr) { alert('Dirección no encontrada'); return; }
+
+    // Pre-fill the client edit modal with this address
+    document.getElementById('client_id').value = clientId;
+    document.getElementById('client_name').value = data.data.name || '';
+    document.getElementById('client_phone').value = data.data.phone || '';
+    document.getElementById('client_email').value = data.data.email || '';
+    document.getElementById('client_street').value = addr.street || '';
+    document.getElementById('client_street_number').value = addr.street_number || '';
+    document.getElementById('client_colonia').value = addr.colonia || '';
+    document.getElementById('client_city').value = addr.city || '';
+    document.getElementById('client_state').value = addr.state || '';
+    document.getElementById('client_postal_code').value = addr.postal || '';
+    document.getElementById('client_reference_notes').value = addr.reference_notes || '';
+
+    // Store the address ID being edited
+    window._editingAddressId = addressId;
+
+    document.getElementById('client-modal-title').textContent = 'Editar Dirección #' + addressId;
+    document.getElementById('client-modal').classList.remove('hidden');
+
+    // Close the detail popup
+    var popup = document.getElementById('client-detail-popup');
+    if (popup) popup.remove();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function deleteClientAddress(clientId, addressId) {
+  if (!confirm('¿Eliminar esta dirección?')) return;
+
+  try {
+    const res = await fetch(`${API_BASE.replace('/api', '')}/api/client/addresses/${addressId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    const data = await res.json();
+
+    if (data.success || res.ok) {
+      // Refresh the popup
+      var popup = document.getElementById('client-detail-popup');
+      if (popup) popup.remove();
+      showClientDetailPopup(clientId);
+    } else {
+      alert('Error: ' + (data.error || 'No se pudo eliminar'));
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+window.editClientAddress = editClientAddress;
+window.deleteClientAddress = deleteClientAddress;
 window.editClient = editClient;
 window.deleteClient = deleteClient;
 window.showClientDetailPopup = showClientDetailPopup;
