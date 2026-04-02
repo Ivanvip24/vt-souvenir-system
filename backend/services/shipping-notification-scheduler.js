@@ -58,21 +58,20 @@ async function checkAndNotify() {
 
   // Get all shipping labels that:
   // 1. Have a shipment_id (were created via Skydropx)
-  // 2. Haven't been notified yet
-  // 3. Are in a pre-transit status (label_generated, pending, processing)
+  // 2. Are not yet delivered or cancelled
+  // (includes 'shipped' so we can detect DELIVERED transition)
   const { rows: labels } = await query(`
     SELECT
       sl.id, sl.shipment_id, sl.tracking_number, sl.tracking_url,
       sl.carrier, sl.service, sl.delivery_days, sl.status,
       sl.order_id, sl.created_at,
-      o.order_number,
+      o.order_number, o.order_date,
       c.name AS client_name, c.email AS client_email
     FROM shipping_labels sl
     LEFT JOIN orders o ON sl.order_id = o.id
     LEFT JOIN clients c ON sl.client_id = c.id
     WHERE sl.shipment_id IS NOT NULL
-      AND sl.status NOT IN ('shipped', 'delivered', 'cancelled')
-      AND (sl.notification_sent IS NULL OR sl.notification_sent = false)
+      AND sl.status NOT IN ('delivered', 'cancelled')
     ORDER BY sl.created_at ASC
   `);
 
@@ -98,7 +97,7 @@ async function checkAndNotify() {
       // Check if carrier has the package
       const isInTransit = ['IN_TRANSIT', 'PICKED_UP', 'ON_THE_WAY', 'TRANSIT'].includes(status);
 
-      if (isInTransit) {
+      if (isInTransit && label.status !== 'shipped') {
         // Update local status to 'shipped'
         await query(`
           UPDATE shipping_labels
@@ -106,8 +105,8 @@ async function checkAndNotify() {
           WHERE id = $1
         `, [label.id]);
 
-        // Send notification email if client has email
-        if (label.client_email) {
+        // Send notification email if client has email and not already notified
+        if (label.client_email && !label.notification_sent) {
           try {
             await sendShippingNotificationEmail({
               email: label.client_email,
@@ -126,7 +125,7 @@ async function checkAndNotify() {
             console.error(`   ❌ Email failed for ${label.client_email}:`, emailError.message);
             errors++;
           }
-        } else {
+        } else if (!label.client_email) {
           console.log(`   ⚠️  No email for order ${label.order_number}, skipping notification`);
         }
 
@@ -138,13 +137,20 @@ async function checkAndNotify() {
         `, [label.id]);
 
       } else if (['DELIVERED', 'ENTREGADO'].includes(status)) {
-        // Already delivered — update status and mark notified (skip email since it's already there)
+        // Package delivered — update status with timestamp
         await query(`
           UPDATE shipping_labels
-          SET status = 'delivered', delivered_at = NOW(), notification_sent = true, notification_sent_at = NOW()
+          SET status = 'delivered', delivered_at = NOW()
           WHERE id = $1
         `, [label.id]);
-        console.log(`   📦 Already delivered, updated status`);
+
+        // Log turnaround time
+        if (label.order_date) {
+          const turnaroundDays = Math.round((Date.now() - new Date(label.order_date).getTime()) / (1000 * 60 * 60 * 24));
+          console.log(`   📦 DELIVERED — Order ${label.order_number} — Turnaround: ${turnaroundDays} days (order: ${new Date(label.order_date).toLocaleDateString('es-MX')})`);
+        } else {
+          console.log(`   📦 DELIVERED — Order ${label.order_number}`);
+        }
 
       } else if (['CANCELED', 'CANCELLED', 'VOIDED', 'REFUNDED', 'EXPIRED'].includes(status)) {
         // Cancelled — update status, no notification needed
