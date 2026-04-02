@@ -198,6 +198,10 @@
                             <i data-lucide="tag" class="nav-icon-sm"></i>
                             <span>Guías</span>
                         </button>
+                        <button class="nav-sub-item" data-view="shipping-analytics" tabindex="0">
+                            <i data-lucide="bar-chart-2" class="nav-icon-sm"></i>
+                            <span>Análisis Envíos</span>
+                        </button>
                         <!-- Hidden: Recolecciones tab disabled temporarily
                         <button class="nav-sub-item" data-view="pickups" tabindex="0">
                             <i data-lucide="package-check" class="nav-icon-sm"></i>
@@ -1642,6 +1646,48 @@
                 </div>
             </section>
 
+            <!-- Shipping Analytics View -->
+            <section id="shipping-analytics-view" class="view">
+                <div class="view-header">
+                    <h2>📊 Análisis de Envíos</h2>
+                    <div style="display:flex;gap:8px;">
+                        <select id="sa-carrier-filter" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                            <option value="">Todas las paqueterías</option>
+                        </select>
+                        <button class="btn" onclick="loadShippingAnalytics()">🔄 Actualizar</button>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div id="sa-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0;"></div>
+
+                <!-- Table -->
+                <div style="overflow-x:auto;">
+                    <table id="sa-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+                                <th style="padding:10px 12px;text-align:left;font-weight:600;color:#6b7280;">Fecha</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:600;color:#6b7280;">Pedido</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:600;color:#6b7280;">Cliente</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:600;color:#6b7280;">Destino</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:600;color:#6b7280;">Paquetería</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:600;color:#6b7280;">Servicio</th>
+                                <th style="padding:10px 12px;text-align:right;font-weight:600;color:#6b7280;">Cajas</th>
+                                <th style="padding:10px 12px;text-align:right;font-weight:600;color:#6b7280;">Días</th>
+                                <th style="padding:10px 12px;text-align:right;font-weight:600;color:#6b7280;">$/Caja</th>
+                                <th style="padding:10px 12px;text-align:right;font-weight:600;color:#6b7280;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sa-table-body"></tbody>
+                    </table>
+                </div>
+
+                <div id="sa-loading" style="text-align:center;padding:40px;display:none;">
+                    <div class="spinner"></div>
+                    <p style="margin-top:8px;color:#6b7280;">Cargando datos...</p>
+                </div>
+            </section>
+
             <!-- Pickups View -->
             <section id="pickups-view" class="view">
                 <div class="view-header">
@@ -2909,6 +2955,7 @@
     <script src="prices.js"></script>
     <script src="shipping.js"></script>
     <script src="guias.js"></script>
+    <script src="shipping-analytics.js"></script>
     <script src="t1-envios.js"></script>
     <script src="analytics.js"></script>
     <script src="calendar.js"></script>

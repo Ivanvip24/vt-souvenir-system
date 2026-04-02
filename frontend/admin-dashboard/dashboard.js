@@ -175,6 +175,10 @@ function switchView(viewName) {
     initGuiasView();
   }
 
+  if (viewName === 'shipping-analytics' && typeof initShippingAnalytics === 'function') {
+    initShippingAnalytics();
+  }
+
   // Initialize pickups when switching to pickups view
   if (viewName === 'pickups' && typeof initPickupsView === 'function') {
     initPickupsView();

@@ -549,6 +549,126 @@ router.get('/labels', async (req, res) => {
 });
 
 // ========================================
+// SHIPPING ANALYTICS
+// GET /api/shipping/analytics
+// ========================================
+router.get('/analytics', async (req, res) => {
+  try {
+    const { startDate, endDate, carrier } = req.query;
+
+    let whereClause = 'WHERE sl.shipping_cost > 0';
+    const params = [];
+
+    if (startDate) {
+      params.push(startDate);
+      whereClause += ` AND sl.created_at >= $${params.length}`;
+    }
+    if (endDate) {
+      params.push(endDate);
+      whereClause += ` AND sl.created_at <= $${params.length}::date + 1`;
+    }
+    if (carrier) {
+      params.push(carrier);
+      whereClause += ` AND sl.carrier ILIKE $${params.length}`;
+    }
+
+    const shipmentsResult = await query(`
+      SELECT
+        sl.id,
+        sl.order_id,
+        sl.shipping_cost,
+        sl.carrier,
+        sl.service,
+        sl.delivery_days,
+        sl.tracking_number,
+        sl.package_number,
+        sl.status,
+        sl.created_at,
+        sl.shipment_id,
+        COALESCE(o.order_number, 'Sin pedido') as order_number,
+        COALESCE(c.name, 'Desconocido') as client_name,
+        c.city as dest_city,
+        c.state as dest_state,
+        c.postal as dest_postal,
+        COUNT(*) OVER (PARTITION BY sl.shipment_id) as boxes_in_shipment,
+        SUM(sl.shipping_cost) OVER (PARTITION BY sl.shipment_id) as shipment_total_cost
+      FROM shipping_labels sl
+      LEFT JOIN orders o ON sl.order_id = o.id
+      LEFT JOIN clients c ON sl.client_id = c.id
+      ${whereClause}
+      ORDER BY sl.created_at DESC
+    `, params);
+
+    // Dedupe to one row per shipment (show totals, not per-box)
+    const seen = new Set();
+    const shipments = [];
+    for (const row of shipmentsResult.rows) {
+      const key = row.shipment_id || row.id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      shipments.push({
+        id: row.id,
+        orderNumber: row.order_number,
+        clientName: row.client_name,
+        destination: [row.dest_city, row.dest_state].filter(Boolean).join(', '),
+        postalCode: row.dest_postal,
+        carrier: row.carrier,
+        service: row.service,
+        deliveryDays: row.delivery_days,
+        boxes: parseInt(row.boxes_in_shipment),
+        totalCost: parseFloat(row.shipment_total_cost),
+        costPerBox: parseFloat(row.shipping_cost),
+        trackingNumber: row.tracking_number,
+        status: row.status,
+        date: row.created_at
+      });
+    }
+
+    // Summary
+    const totalShipments = shipments.length;
+    const avgCost = totalShipments > 0 ? shipments.reduce((s, r) => s + r.totalCost, 0) / totalShipments : 0;
+    const avgCostPerBox = totalShipments > 0 ? shipments.reduce((s, r) => s + r.costPerBox, 0) / totalShipments : 0;
+    const avgDays = totalShipments > 0 ? shipments.reduce((s, r) => s + (r.deliveryDays || 0), 0) / totalShipments : 0;
+    const totalBoxes = shipments.reduce((s, r) => s + r.boxes, 0);
+
+    // Carrier breakdown
+    const carrierStats = {};
+    shipments.forEach(s => {
+      if (!carrierStats[s.carrier]) {
+        carrierStats[s.carrier] = { count: 0, totalCost: 0, totalDays: 0 };
+      }
+      carrierStats[s.carrier].count++;
+      carrierStats[s.carrier].totalCost += s.totalCost;
+      carrierStats[s.carrier].totalDays += (s.deliveryDays || 0);
+    });
+
+    const carriers = Object.entries(carrierStats).map(([name, stats]) => ({
+      name,
+      count: stats.count,
+      avgCost: stats.totalCost / stats.count,
+      avgDays: stats.totalDays / stats.count
+    })).sort((a, b) => b.count - a.count);
+
+    res.json({
+      success: true,
+      shipments,
+      summary: {
+        totalShipments,
+        totalBoxes,
+        avgCost: Math.round(avgCost * 100) / 100,
+        avgCostPerBox: Math.round(avgCostPerBox * 100) / 100,
+        avgDays: Math.round(avgDays * 10) / 10
+      },
+      carriers
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting shipping analytics:', error);
+    res.status(500).json({ error: 'Error obteniendo analíticas de envío' });
+  }
+});
+
+// ========================================
 // GET SINGLE SHIPPING LABEL
 // GET /api/shipping/labels/:labelId
 // ========================================
