@@ -8,7 +8,7 @@
 const SA_API = (window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://vt-souvenir-backend.onrender.com') + '/api/shipping';
 
 function saFetch(url, opts) {
-  var token = localStorage.getItem('token');
+  var token = localStorage.getItem('admin_token');
   return fetch(url, {
     ...opts,
     headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(opts?.headers || {}) }
