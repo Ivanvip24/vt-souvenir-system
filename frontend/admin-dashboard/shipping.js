@@ -460,12 +460,21 @@ async function showClientDetailPopup(clientId) {
             <h4>📦 Direcciones Guardadas (${client.addresses.length})</h4>
             <div style="display:flex;flex-direction:column;gap:8px;">
               ${client.addresses.map(function(addr) {
-                var parts = [addr.street + (addr.street_number ? ' #' + addr.street_number : ''), addr.colonia ? 'Col. ' + addr.colonia : '', addr.city, addr.state, addr.postal ? 'CP ' + addr.postal : ''].filter(Boolean);
-                var fullAddr = parts.join(', ');
-                return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">' +
-                  (addr.is_default ? '<span style="background:#E72A88;color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;">Principal</span>' : '') +
-                  '<span style="flex:1;font-size:13px;color:#374151;">' + escapeHtml(addr.label || fullAddr) + '</span>' +
-                  '<button class="copy-btn" onclick="shippingCopyToClipboard(\'' + fullAddr.replace(/'/g, "\\'") + '\', this)" title="Copiar">📋</button>' +
+                var streetLine = (addr.street || '') + (addr.street_number ? ' #' + addr.street_number : '');
+                var coloniaLine = addr.colonia ? 'Col. ' + addr.colonia : '';
+                var cityLine = [addr.city, addr.state].filter(Boolean).join(', ');
+                var cpLine = addr.postal ? 'CP ' + addr.postal : '';
+                var fullAddr = [streetLine, coloniaLine, cityLine, cpLine].filter(Boolean).join(', ');
+                var refLine = addr.reference_notes ? 'Ref: ' + addr.reference_notes : '';
+                return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;display:flex;gap:8px;">' +
+                  '<div style="flex:1;">' +
+                    (addr.is_default ? '<span style="background:#E72A88;color:white;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;display:inline-block;margin-bottom:4px;">Principal</span><br>' : '') +
+                    '<div style="font-size:13px;font-weight:600;color:#111827;">' + escapeHtml(streetLine) + '</div>' +
+                    (coloniaLine ? '<div style="font-size:12px;color:#4b5563;">' + escapeHtml(coloniaLine) + '</div>' : '') +
+                    '<div style="font-size:12px;color:#4b5563;">' + escapeHtml(cityLine) + (cpLine ? ' · ' + escapeHtml(cpLine) : '') + '</div>' +
+                    (refLine ? '<div style="font-size:11px;color:#9ca3af;margin-top:2px;">' + escapeHtml(refLine) + '</div>' : '') +
+                  '</div>' +
+                  '<button class="copy-btn" onclick="shippingCopyToClipboard(\'' + fullAddr.replace(/'/g, "\\'") + '\', this)" title="Copiar" style="align-self:start;">📋</button>' +
                   '</div>';
               }).join('')}
             </div>
