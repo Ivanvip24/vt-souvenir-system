@@ -1941,10 +1941,17 @@ router.get('/addresses', async (req, res) => {
  */
 router.post('/addresses', async (req, res) => {
   try {
-    const { phone, email, street, streetNumber, street_number, colonia, city, state, postal, postal_code, referenceNotes, references, reference_notes } = req.body;
-    const postalVal = postal || postal_code || null;
-    const streetNumVal = streetNumber || street_number || null;
-    const refsVal = referenceNotes || references || reference_notes || null;
+    const b = req.body;
+    const street = b.street || null;
+    const streetNumVal = b.streetNumber || b.street_number || null;
+    const colonia = b.colonia || null;
+    const city = b.city || null;
+    const state = b.state || null;
+    const postalVal = b.postal || b.postal_code || null;
+    const refsVal = b.referenceNotes || b.references || b.reference_notes || null;
+    const isDefault = b.is_default || b.isDefault || false;
+    const phone = b.phone;
+    const email = b.email;
 
     // Find client by phone (primary) or email (fallback)
     let clientResult = await query('SELECT id FROM clients WHERE phone = $1 LIMIT 1', [phone]);
@@ -1967,13 +1974,18 @@ router.post('/addresses', async (req, res) => {
     const label = [colonia || street, city].filter(Boolean).join(', ');
 
     const existingCount = await query('SELECT COUNT(*) as c FROM client_addresses WHERE client_id = $1', [clientId]);
-    const isDefault = parseInt(existingCount.rows[0].c) === 0;
+    const shouldBeDefault = isDefault || parseInt(existingCount.rows[0].c) === 0;
+
+    // If marking as default, unmark others first
+    if (shouldBeDefault) {
+      await query('UPDATE client_addresses SET is_default = false WHERE client_id = $1', [clientId]);
+    }
 
     const result = await query(`
       INSERT INTO client_addresses (client_id, label, street, street_number, colonia, city, state, postal, reference_notes, is_default)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
-    `, [clientId, label, street, streetNumVal, colonia, city, state, postalVal, refsVal, isDefault]);
+    `, [clientId, label, street, streetNumVal, colonia, city, state, postalVal, refsVal, shouldBeDefault]);
 
     res.json({ success: true, address: result.rows[0] });
   } catch (error) {
@@ -1989,16 +2001,29 @@ router.post('/addresses', async (req, res) => {
 router.put('/addresses/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { street, streetNumber, street_number, colonia, city, state, postal, postal_code, referenceNotes, references, reference_notes } = req.body;
-    const postalVal = postal || postal_code || null;
-    const streetNumVal = streetNumber || street_number || null;
-    const refsVal = referenceNotes || references || reference_notes || null;
+    const b = req.body;
+    const street = b.street || null;
+    const streetNumVal = b.streetNumber || b.street_number || null;
+    const colonia = b.colonia || null;
+    const city = b.city || null;
+    const state = b.state || null;
+    const postalVal = b.postal || b.postal_code || null;
+    const refsVal = b.referenceNotes || b.references || b.reference_notes || null;
+    const isDefault = b.is_default || b.isDefault || false;
     const label = [colonia || street, city].filter(Boolean).join(', ');
 
+    // If marking as default, unmark others first
+    if (isDefault) {
+      const addrRow = await query('SELECT client_id FROM client_addresses WHERE id = $1', [id]);
+      if (addrRow.rows.length > 0) {
+        await query('UPDATE client_addresses SET is_default = false WHERE client_id = $1', [addrRow.rows[0].client_id]);
+      }
+    }
+
     const result = await query(`
-      UPDATE client_addresses SET street=$1, street_number=$2, colonia=$3, city=$4, state=$5, postal=$6, reference_notes=$7, label=$8
-      WHERE id = $9 RETURNING *
-    `, [street, streetNumVal, colonia, city, state, postalVal, refsVal, label, id]);
+      UPDATE client_addresses SET street=$1, street_number=$2, colonia=$3, city=$4, state=$5, postal=$6, reference_notes=$7, label=$8, is_default=$9
+      WHERE id = $10 RETURNING *
+    `, [street, streetNumVal, colonia, city, state, postalVal, refsVal, label, isDefault, id]);
 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Address not found' });
     res.json({ success: true, address: result.rows[0] });
