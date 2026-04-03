@@ -511,7 +511,7 @@ async function showClientDetailPopup(clientId) {
                   </div>
                 </div>
               ` : ''}
-              ${client.reference_notes ? `
+              ${client.reference_notes && !(client.addresses && client.addresses.length > 0) ? `
                 <div class="client-popup-info-item full-width">
                   <div class="client-popup-info-label">Referencias <button class="copy-btn" onclick="shippingCopyToClipboard('${escapeHtml(client.reference_notes).replace(/'/g, "\\'")}', this)" title="Copiar referencias">📋</button></div>
                   <div class="client-popup-info-value">${escapeHtml(client.reference_notes)}</div>
