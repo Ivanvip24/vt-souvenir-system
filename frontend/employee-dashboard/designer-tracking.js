@@ -669,60 +669,68 @@ function dlShowDayDetail(panel, log, dateKey) {
   header.appendChild(closeBtn);
   panel.appendChild(header);
 
-  // Summary row
+  // Summary chips
   const summary = document.createElement('div');
   summary.className = 'dl-detail-summary';
-  var items = [
-    { label: 'Diseños', value: log.designs_completed, cls: 'design' },
+  const summaryItems = [
+    { label: 'Dise\u00F1os', value: log.designs_completed, cls: 'design' },
     { label: 'Armados', value: log.armados_completed, cls: 'armado' },
     { label: 'Correcciones', value: log.corrections_made, cls: 'correction' }
   ];
-  items.forEach(function(item) {
-    var chip = document.createElement('span');
-    chip.className = 'dl-detail-chip ' + item.cls;
-    chip.textContent = item.value + ' ' + item.label;
-    summary.appendChild(chip);
+  summaryItems.forEach(function(item) {
+    if (item.value > 0) {
+      const chip = document.createElement('span');
+      chip.className = 'dl-detail-chip ' + item.cls;
+      chip.textContent = item.value + ' ' + item.label;
+      summary.appendChild(chip);
+    }
   });
   panel.appendChild(summary);
 
   // Notes
   if (log.notes) {
-    var notesEl = document.createElement('div');
+    const notesEl = document.createElement('div');
     notesEl.className = 'dl-detail-notes';
     notesEl.textContent = log.notes;
     panel.appendChild(notesEl);
   }
 
-  // Details list (individual items with sources)
-  var details = log.details || [];
+  // Details grouped by type
+  const details = log.details || [];
   if (details.length > 0) {
-    var listTitle = document.createElement('div');
-    listTitle.className = 'dl-detail-list-title';
-    listTitle.textContent = 'Detalle:';
-    panel.appendChild(listTitle);
+    const groups = [
+      { key: 'designs', label: 'Dise\u00F1os', cls: 'design' },
+      { key: 'armados', label: 'Armados', cls: 'armado' },
+      { key: 'corrections', label: 'Correcciones', cls: 'correction' }
+    ];
+    for (const g of groups) {
+      const items = details.filter(d => d.type === g.key);
+      if (items.length === 0) continue;
 
-    var list = document.createElement('div');
-    list.className = 'dl-detail-list';
-    details.forEach(function(d) {
-      var row = document.createElement('div');
-      row.className = 'dl-detail-item';
-      var badge = document.createElement('span');
-      badge.className = 'dl-detail-badge ' + (d.type === 'designs' ? 'design' : d.type === 'armados' ? 'armado' : 'correction');
-      badge.textContent = d.type === 'designs' ? 'D' : d.type === 'armados' ? 'A' : 'C';
-      row.appendChild(badge);
-      var src = document.createElement('span');
-      src.className = 'dl-detail-source';
-      src.textContent = d.source;
-      row.appendChild(src);
-      if (d.time) {
-        var time = document.createElement('span');
-        time.className = 'dl-detail-time';
-        time.textContent = d.time;
-        row.appendChild(time);
-      }
-      list.appendChild(row);
-    });
-    panel.appendChild(list);
+      const groupTitle = document.createElement('div');
+      groupTitle.className = 'dl-detail-group-title dl-detail-group-' + g.cls;
+      groupTitle.textContent = g.label + ' (' + items.length + ')';
+      panel.appendChild(groupTitle);
+
+      const list = document.createElement('div');
+      list.className = 'dl-detail-list';
+      items.forEach(function(d) {
+        const row = document.createElement('div');
+        row.className = 'dl-detail-item';
+        const src = document.createElement('span');
+        src.className = 'dl-detail-source';
+        src.textContent = d.source;
+        row.appendChild(src);
+        if (d.time) {
+          const time = document.createElement('span');
+          time.className = 'dl-detail-time';
+          time.textContent = d.time;
+          row.appendChild(time);
+        }
+        list.appendChild(row);
+      });
+      panel.appendChild(list);
+    }
   }
 }
 

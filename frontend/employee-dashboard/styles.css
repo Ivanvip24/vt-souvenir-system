@@ -3480,6 +3480,20 @@ textarea {
     margin-bottom: 6px;
 }
 
+.dl-detail-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid #f3f4f6;
+}
+.dl-detail-group-design { color: #e72a88; border-bottom-color: #fce7f3; }
+.dl-detail-group-armado { color: #f39223; border-bottom-color: #fff7ed; }
+.dl-detail-group-correction { color: #e52421; border-bottom-color: #fef2f2; }
+
 .dl-detail-list {
     display: flex;
     flex-direction: column;
