@@ -1384,6 +1384,31 @@ async function showOrderDetail(orderId) {
             `}
           </div>
         </div>
+        ${order.shippingStatus ? `
+        <div style="margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: ${order.shippingStatus === 'delivered' ? '#d1fae5' : order.shippingStatus === 'shipped' || order.shippingStatus === 'in_transit' ? '#dbeafe' : order.shippingStatus === 'cancelled' ? '#fee2e2' : '#f3f4f6'}; border: 1px solid ${order.shippingStatus === 'delivered' ? '#059669' : order.shippingStatus === 'shipped' || order.shippingStatus === 'in_transit' ? '#3b82f6' : order.shippingStatus === 'cancelled' ? '#ef4444' : '#d1d5db'};">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 18px;">${order.shippingStatus === 'delivered' ? '✅' : order.shippingStatus === 'shipped' || order.shippingStatus === 'in_transit' ? '🚚' : order.shippingStatus === 'cancelled' ? '❌' : '📦'}</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 700; color: ${order.shippingStatus === 'delivered' ? '#065f46' : order.shippingStatus === 'shipped' || order.shippingStatus === 'in_transit' ? '#1e40af' : order.shippingStatus === 'cancelled' ? '#991b1b' : '#374151'};">
+                  ${order.shippingStatus === 'delivered' ? 'ENTREGADO' : order.shippingStatus === 'shipped' || order.shippingStatus === 'in_transit' ? 'EN TRÁNSITO' : order.shippingStatus === 'cancelled' ? 'CANCELADO' : order.shippingStatus === 'label_generated' ? 'GUÍA GENERADA' : order.shippingStatus.toUpperCase()}
+                </div>
+                ${order.deliveredAt ? `<div style="font-size: 11px; color: #065f46; margin-top: 2px;">${new Date(order.deliveredAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })} — ${new Date(order.deliveredAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</div>` : ''}
+                ${order.shippedAt && !order.deliveredAt ? `<div style="font-size: 11px; color: #1e40af; margin-top: 2px;">Enviado: ${new Date(order.shippedAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</div>` : ''}
+              </div>
+            </div>
+            ${order.deliveredAt && order.orderDate ? (() => {
+              const start = new Date(order.orderDate);
+              const end = new Date(order.deliveredAt);
+              const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
+              return `<div style="text-align: right;">
+                <div style="font-size: 11px; color: #065f46; text-transform: uppercase; font-weight: 600;">Tiempo total</div>
+                <div style="font-size: 18px; font-weight: 800; color: #059669;">${diffDays} días</div>
+              </div>`;
+            })() : ''}
+          </div>
+        </div>
+        ` : ''}
         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-200);">
           <div style="font-size: 13px; color: var(--gray-600);">
             ${order.estimatedDeliveryDays ? `
