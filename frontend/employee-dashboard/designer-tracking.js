@@ -837,7 +837,7 @@ async function openDTDesignerModal(designer) {
   const nameEl = document.getElementById('dt-modal-name');
   const subtitleEl = document.getElementById('dt-modal-subtitle');
   const statsEl = document.getElementById('dt-modal-stats');
-  const tasksEl = document.getElementById('dt-modal-tasks');
+  const body = document.getElementById('dt-modal-tasks');
 
   const total = parseInt(designer.total_tasks) || 0;
   const completed = parseInt(designer.completed) || 0;
@@ -852,156 +852,120 @@ async function openDTDesignerModal(designer) {
   nameEl.textContent = designer.name;
   subtitleEl.textContent = `${active} activa${active !== 1 ? 's' : ''} \u00B7 ${correction} correcci\u00F3n${correction !== 1 ? 'es' : ''}`;
 
-  // Build stat cards via DOM
+  // Build compact stat row
   statsEl.textContent = '';
   const statItems = [
     { value: completed, label: 'Hechas', cls: 'done' },
     { value: active, label: 'Activas', cls: 'active' },
-    { value: correction, label: 'Correcciones', cls: 'correction' },
-    { value: total, label: 'Total', cls: 'total' },
-    { value: pct + '%', label: 'Completado', cls: 'pct' },
-    { value: avgH, label: 'Promedio', cls: 'avg' }
+    { value: correction, label: 'Correc.', cls: 'correction' },
+    { value: pct + '%', label: 'Completado', cls: 'pct' }
   ];
   for (const s of statItems) {
     const div = document.createElement('div');
-    div.className = 'dt-modal-stat dt-modal-stat-' + s.cls;
+    div.className = 'dtm-stat dtm-stat-' + s.cls;
     const val = document.createElement('span');
-    val.className = 'dt-modal-stat-value';
+    val.className = 'dtm-stat-value';
     val.textContent = s.value;
     const lbl = document.createElement('span');
-    lbl.className = 'dt-modal-stat-label';
+    lbl.className = 'dtm-stat-label';
     lbl.textContent = s.label;
     div.appendChild(val);
     div.appendChild(lbl);
     statsEl.appendChild(div);
   }
 
-  // Show modal with loading state
-  tasksEl.textContent = 'Cargando tareas...';
+  // Show modal
+  body.textContent = '';
+  const loadingEl = document.createElement('div');
+  loadingEl.className = 'dtm-empty';
+  loadingEl.textContent = 'Cargando...';
+  body.appendChild(loadingEl);
   modal.classList.remove('hidden');
 
   try {
     const data = await apiGet(`/designer-tasks/all?designer_id=${designer.id}&limit=50`);
-    tasksEl.textContent = '';
+    body.textContent = '';
 
     if (!data.success || !data.tasks.length) {
-      tasksEl.textContent = 'Sin tareas asignadas';
+      const empty = document.createElement('div');
+      empty.className = 'dtm-empty';
+      empty.textContent = 'Sin tareas asignadas';
+      body.appendChild(empty);
       return;
     }
 
-    const statusLabels = {
-      pending: 'Pendiente', in_progress: 'En Progreso',
-      done: 'Completado', correction: 'Correcci\u00F3n'
-    };
     const statusIcons = {
       pending: '\u23F3', in_progress: '\uD83D\uDD04', done: '\u2705', correction: '\uD83D\uDD01'
     };
 
-    // Task cards hidden — calendar view is the primary display
+    // Toggle for task list
     const tasksToggle = document.createElement('button');
     tasksToggle.className = 'btn btn-secondary btn-sm';
-    tasksToggle.textContent = 'Ver tareas asignadas (' + data.tasks.length + ')';
+    tasksToggle.style.cssText = 'width:100%;text-align:center;';
+    tasksToggle.textContent = 'Ver tareas (' + data.tasks.length + ')';
     const tasksContainer = document.createElement('div');
+    tasksContainer.style.display = 'none';
+    tasksContainer.style.cssText = 'display:none;display:flex;flex-direction:column;gap:8px;';
     tasksContainer.style.display = 'none';
     tasksToggle.addEventListener('click', function() {
       var showing = tasksContainer.style.display !== 'none';
-      tasksContainer.style.display = showing ? 'none' : 'block';
-      tasksToggle.textContent = showing ? 'Ver tareas asignadas (' + data.tasks.length + ')' : 'Ocultar tareas';
+      tasksContainer.style.display = showing ? 'none' : 'flex';
+      tasksToggle.textContent = showing ? 'Ver tareas (' + data.tasks.length + ')' : 'Ocultar tareas';
     });
-    tasksEl.appendChild(tasksToggle);
-    tasksEl.appendChild(tasksContainer);
+    body.appendChild(tasksToggle);
+    body.appendChild(tasksContainer);
 
     for (const t of data.tasks) {
-      const card = document.createElement('div');
-      card.className = 'dt-modal-task-card dt-modal-task-' + t.status;
-
-      const assignedDate = new Date(t.assigned_at);
-      const isOverdue = ['pending', 'in_progress'].includes(t.status) &&
-        (Date.now() - assignedDate.getTime()) > 2 * 24 * 60 * 60 * 1000;
-
-      const pieceCount = parseInt(t.piece_count) || 0;
-      const piecesDone = parseInt(t.pieces_done) || 0;
-      const corrections = parseInt(t.total_corrections) || 0;
-
-      // Top row: icon + product info + type badge
-      const topRow = document.createElement('div');
-      topRow.className = 'dt-modal-task-top';
+      const row = document.createElement('div');
+      row.className = 'dtm-task dtm-task-' + t.status;
 
       const icon = document.createElement('span');
-      icon.className = 'dt-modal-task-icon';
+      icon.className = 'dtm-task-icon';
       icon.textContent = statusIcons[t.status] || '';
+      row.appendChild(icon);
 
-      const info = document.createElement('div');
-      info.className = 'dt-modal-task-info';
+      const main = document.createElement('div');
+      main.className = 'dtm-task-main';
       const product = document.createElement('span');
-      product.className = 'dt-modal-task-product';
+      product.className = 'dtm-task-product';
       product.textContent = t.product_type || '-';
-      const dest = document.createElement('span');
-      dest.className = 'dt-modal-task-dest';
-      dest.textContent = t.destination || '';
-      info.appendChild(product);
-      info.appendChild(dest);
+      main.appendChild(product);
 
-      const typeBadge = document.createElement('span');
-      typeBadge.className = 'dt-type-badge ' + (t.task_type === 'armado' ? 'dt-type-armado' : 'dt-type-diseno');
-      typeBadge.textContent = t.task_type === 'armado' ? 'Armado' : 'Dise\u00F1o';
-
-      topRow.appendChild(icon);
-      topRow.appendChild(info);
-      topRow.appendChild(typeBadge);
-
-      // Bottom row: status + qty + corrections + date + ref
-      const bottomRow = document.createElement('div');
-      bottomRow.className = 'dt-modal-task-bottom';
-
-      const statusBadge = document.createElement('span');
-      statusBadge.className = 'dt-status-badge dt-status-' + t.status;
-      statusBadge.textContent = statusLabels[t.status] || t.status;
-      bottomRow.appendChild(statusBadge);
-
+      const meta = document.createElement('div');
+      meta.className = 'dtm-task-meta';
+      if (t.destination) {
+        const dest = document.createElement('span');
+        dest.textContent = t.destination;
+        meta.appendChild(dest);
+      }
       if (t.quantity) {
         const qty = document.createElement('span');
-        qty.className = 'dt-modal-task-qty';
         qty.textContent = t.quantity + ' pzas';
-        bottomRow.appendChild(qty);
-      } else if (pieceCount > 0) {
-        const qty = document.createElement('span');
-        qty.className = 'dt-modal-task-qty';
-        qty.textContent = piecesDone + '/' + pieceCount + ' piezas';
-        bottomRow.appendChild(qty);
+        meta.appendChild(qty);
       }
-
-      if (corrections > 0) {
-        const corrSpan = document.createElement('span');
-        corrSpan.className = 'dt-correction-count';
-        corrSpan.textContent = corrections + ' correcci\u00F3n' + (corrections > 1 ? 'es' : '');
-        bottomRow.appendChild(corrSpan);
-      }
-
+      const assignedDate = new Date(t.assigned_at);
       const dateSpan = document.createElement('span');
-      dateSpan.className = 'dt-modal-task-date';
-      dateSpan.textContent = formatTimeAgo(assignedDate) + (isOverdue ? ' \u26A0\uFE0F' : '');
-      bottomRow.appendChild(dateSpan);
+      dateSpan.textContent = formatTimeAgo(assignedDate);
+      meta.appendChild(dateSpan);
+      main.appendChild(meta);
+      row.appendChild(main);
 
-      if (t.order_reference) {
-        const ref = document.createElement('span');
-        ref.className = 'dt-modal-task-ref';
-        ref.textContent = t.order_reference;
-        bottomRow.appendChild(ref);
-      }
+      // Type badge
+      const badge = document.createElement('span');
+      badge.className = 'dtm-task-badge ' + (t.task_type === 'armado' ? 'dtm-badge-armado' : 'dtm-badge-diseno');
+      badge.textContent = t.task_type === 'armado' ? 'ARM' : 'DIS';
+      row.appendChild(badge);
 
-      card.appendChild(topRow);
-      card.appendChild(bottomRow);
-
-      // Action buttons for non-completed tasks
+      // Actions for non-completed
       if (t.status !== 'done') {
         const actions = document.createElement('div');
-        actions.className = 'dt-modal-task-actions';
-
+        actions.className = 'dtm-task-actions';
         const completeBtn = document.createElement('button');
-        completeBtn.className = 'dt-action-btn dt-action-complete';
-        completeBtn.textContent = '\u2713 Completar';
-        completeBtn.addEventListener('click', async () => {
+        completeBtn.className = 'dtm-act-complete';
+        completeBtn.textContent = '\u2713';
+        completeBtn.title = 'Completar';
+        completeBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
           await dtCompleteTask(t.id);
           openDTDesignerModal(designer);
         });
@@ -1009,152 +973,112 @@ async function openDTDesignerModal(designer) {
 
         if (t.task_type === 'dise\u00F1o') {
           const corrBtn = document.createElement('button');
-          corrBtn.className = 'dt-action-btn dt-action-correction';
-          corrBtn.textContent = '\u21BB Correcci\u00F3n';
-          corrBtn.addEventListener('click', async () => {
+          corrBtn.className = 'dtm-act-correction';
+          corrBtn.textContent = '\u21BB';
+          corrBtn.title = 'Correcci\u00F3n';
+          corrBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
             await dtMarkCorrection(t.id);
             openDTDesignerModal(designer);
           });
           actions.appendChild(corrBtn);
         }
-
-        card.appendChild(actions);
+        row.appendChild(actions);
       }
 
-      tasksContainer.appendChild(card);
+      tasksContainer.appendChild(row);
     }
-    // Load daily logs history
-    const historySection = document.createElement('div');
-    historySection.className = 'dl-history-section';
 
-    const histTitle = document.createElement('div');
-    histTitle.className = 'dl-history-title';
-    histTitle.textContent = 'Registro Diario (30 d\u00EDas)';
-    historySection.appendChild(histTitle);
-
+    // Daily logs calendar
     try {
       const logsData = await apiGet(`/designer-tasks/daily-logs/${designer.id}?days=30`);
       if (logsData.success && logsData.logs.length > 0) {
-        // Averages
+        const title = document.createElement('div');
+        title.className = 'dtm-section-title';
+        title.textContent = 'Registro (30 d\u00EDas)';
+        body.appendChild(title);
+
         const avg = logsData.averages;
         const avgRow = document.createElement('div');
-        avgRow.className = 'dl-averages';
+        avgRow.className = 'dtm-avg-row';
         const avgItems = [
-          { label: 'Dise\u00F1os/d\u00EDa', value: avg.avg_designs || '0' },
-          { label: 'Armados/d\u00EDa', value: avg.avg_armados || '0' },
-          { label: 'Correc./d\u00EDa', value: avg.avg_corrections || '0' },
-          { label: 'D\u00EDas registrados', value: avg.days_logged || '0' }
+          { label: 'Dis/d\u00EDa', value: avg.avg_designs || '0' },
+          { label: 'Arm/d\u00EDa', value: avg.avg_armados || '0' },
+          { label: 'Corr/d\u00EDa', value: avg.avg_corrections || '0' }
         ];
         for (const a of avgItems) {
           const pill = document.createElement('span');
-          pill.className = 'dl-avg-pill';
+          pill.className = 'dtm-avg-pill';
           const strong = document.createElement('strong');
           strong.textContent = a.value;
           pill.appendChild(strong);
           pill.appendChild(document.createTextNode(' ' + a.label));
           avgRow.appendChild(pill);
         }
-        historySection.appendChild(avgRow);
+        body.appendChild(avgRow);
 
         // Calendar grid
         const logsByDate = {};
         for (const log of logsData.logs) {
-          const key = log.log_date.split('T')[0];
-          logsByDate[key] = log;
+          logsByDate[log.log_date.split('T')[0]] = log;
         }
-
         const today = new Date();
         const calGrid = document.createElement('div');
         calGrid.className = 'dl-calendar';
-
-        // Day headers
-        const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-        for (const dn of dayNames) {
+        for (const dn of ['L', 'M', 'X', 'J', 'V', 'S', 'D']) {
           const dh = document.createElement('div');
           dh.className = 'dl-cal-header';
           dh.textContent = dn;
           calGrid.appendChild(dh);
         }
-
-        // Build 30-day calendar starting from first day of the visible range
         const startDate = new Date(today);
         startDate.setDate(startDate.getDate() - 29);
-        // Align to Monday
         const startDay = startDate.getDay();
-        const mondayOffset = startDay === 0 ? -6 : 1 - startDay;
-        startDate.setDate(startDate.getDate() + mondayOffset);
-
+        startDate.setDate(startDate.getDate() + (startDay === 0 ? -6 : 1 - startDay));
         const endDate = new Date(today);
         endDate.setDate(endDate.getDate() + (7 - (today.getDay() === 0 ? 7 : today.getDay())));
-
         const detailPanel = document.createElement('div');
         detailPanel.className = 'dl-cal-detail hidden';
-
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
           const dateKey = d.toISOString().split('T')[0];
           const log = logsByDate[dateKey];
           const isToday = dateKey === today.toISOString().split('T')[0];
           const isFuture = d > today;
           const isInRange = d >= new Date(today.getTime() - 29 * 86400000);
-
           const cell = document.createElement('div');
           cell.className = 'dl-cal-day' + (isToday ? ' today' : '') + (isFuture ? ' future' : '') + (!isInRange ? ' out-range' : '') + (log ? ' has-data' : '');
-
           const dayNum = document.createElement('div');
           dayNum.className = 'dl-cal-day-num';
           dayNum.textContent = d.getDate();
           cell.appendChild(dayNum);
-
           if (log && !isFuture) {
-            const total = log.designs_completed + log.armados_completed + log.corrections_made;
-            if (total > 0) {
+            const tot = log.designs_completed + log.armados_completed + log.corrections_made;
+            if (tot > 0) {
               const dots = document.createElement('div');
               dots.className = 'dl-cal-dots';
-              if (log.designs_completed > 0) {
-                const dot = document.createElement('span');
-                dot.className = 'dl-cal-dot design';
-                dot.textContent = log.designs_completed;
-                dots.appendChild(dot);
-              }
-              if (log.armados_completed > 0) {
-                const dot = document.createElement('span');
-                dot.className = 'dl-cal-dot armado';
-                dot.textContent = log.armados_completed;
-                dots.appendChild(dot);
-              }
-              if (log.corrections_made > 0) {
-                const dot = document.createElement('span');
-                dot.className = 'dl-cal-dot correction';
-                dot.textContent = log.corrections_made;
-                dots.appendChild(dot);
-              }
+              if (log.designs_completed > 0) { const dot = document.createElement('span'); dot.className = 'dl-cal-dot design'; dot.textContent = log.designs_completed; dots.appendChild(dot); }
+              if (log.armados_completed > 0) { const dot = document.createElement('span'); dot.className = 'dl-cal-dot armado'; dot.textContent = log.armados_completed; dots.appendChild(dot); }
+              if (log.corrections_made > 0) { const dot = document.createElement('span'); dot.className = 'dl-cal-dot correction'; dot.textContent = log.corrections_made; dots.appendChild(dot); }
               cell.appendChild(dots);
             }
-            cell.addEventListener('click', function() {
-              dlShowDayDetail(detailPanel, log, dateKey);
-            });
+            cell.addEventListener('click', function() { dlShowDayDetail(detailPanel, log, dateKey); });
             cell.style.cursor = 'pointer';
           }
-
           calGrid.appendChild(cell);
         }
-
-        historySection.appendChild(calGrid);
-        historySection.appendChild(detailPanel);
-      } else {
-        const empty = document.createElement('div');
-        empty.className = 'dt-modal-empty';
-        empty.textContent = 'Sin registros diarios a\u00FAn';
-        historySection.appendChild(empty);
+        body.appendChild(calGrid);
+        body.appendChild(detailPanel);
       }
     } catch (logErr) {
       console.error('Error loading daily logs:', logErr);
     }
 
-    tasksEl.appendChild(historySection);
-
   } catch (err) {
-    tasksEl.textContent = 'Error cargando tareas';
+    body.textContent = '';
+    const errEl = document.createElement('div');
+    errEl.className = 'dtm-empty';
+    errEl.textContent = 'Error cargando tareas';
+    body.appendChild(errEl);
     console.error('Error loading designer tasks for modal:', err);
   }
 }
