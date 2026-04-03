@@ -59,7 +59,15 @@ async function loadDesignersList() {
 // ── Stats Cards ────────────────────────────────────
 
 async function loadDTStats() {
-  // Stats cards removed — no-op
+  try {
+    const data = await apiGet('/designer-tasks/stats');
+    if (!data.success) return;
+
+    // Render designer cards
+    renderDesignerCards(data.designers);
+  } catch (err) {
+    console.error('Error loading DT stats:', err);
+  }
 }
 
 function renderDesignerCards(designers) {
@@ -457,8 +465,6 @@ function initDTEventListeners() {
   });
 
   document.getElementById('dt-form-submit').addEventListener('click', dtSubmitNewTask);
-  document.getElementById('dt-report-daily-btn').addEventListener('click', () => dtTriggerReport('daily'));
-  document.getElementById('dt-report-weekly-btn').addEventListener('click', () => dtTriggerReport('weekly'));
 }
 
 // ── Helpers ────────────────────────────────────────
