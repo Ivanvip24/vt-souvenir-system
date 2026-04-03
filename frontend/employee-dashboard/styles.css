@@ -3540,7 +3540,7 @@ textarea {
 .dtm-panel {
     background: #fff;
     border-radius: 20px;
-    width: min(520px, 92vw);
+    width: min(1040px, 92vw);
     max-height: 88vh;
     overflow-y: auto;
     box-shadow: 0 24px 80px rgba(0,0,0,.18);
