@@ -59,15 +59,7 @@ async function loadDesignersList() {
 // ── Stats Cards ────────────────────────────────────
 
 async function loadDTStats() {
-  try {
-    const data = await apiGet('/designer-tasks/stats');
-    if (!data.success) return;
-
-    // Render designer cards
-    renderDesignerCards(data.designers);
-  } catch (err) {
-    console.error('Error loading DT stats:', err);
-  }
+  // Stats cards removed — no-op
 }
 
 function renderDesignerCards(designers) {
