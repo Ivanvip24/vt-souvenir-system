@@ -45,12 +45,9 @@ async function loadDesignersList() {
     const data = await apiGet('/designer-tasks/designers');
     if (data.success) {
       dtState.designers = data.designers;
-      const filterSelect = document.getElementById('dt-filter-designer');
       const formSelect = document.getElementById('dt-form-designer');
       for (const d of data.designers) {
-        const opt1 = new Option(d.name, d.id);
         const opt2 = new Option(d.name, d.name);
-        filterSelect.appendChild(opt1);
         formSelect.appendChild(opt2);
       }
     }
@@ -65,19 +62,6 @@ async function loadDTStats() {
   try {
     const data = await apiGet('/designer-tasks/stats');
     if (!data.success) return;
-
-    const t = data.totals;
-    document.getElementById('dt-stat-total').textContent = t.total || 0;
-    document.getElementById('dt-stat-done').textContent = t.completed || 0;
-    document.getElementById('dt-stat-pending').textContent = t.pending || 0;
-    document.getElementById('dt-stat-correction').textContent = t.in_correction || 0;
-    document.getElementById('dt-stat-overdue').textContent = t.overdue || 0;
-
-    // Animate stat cards on load
-    document.querySelectorAll('.dt-stat-card').forEach((card, i) => {
-      card.style.animationDelay = `${i * 60}ms`;
-      card.classList.add('dt-stat-animate');
-    });
 
     // Render designer cards
     renderDesignerCards(data.designers);
@@ -468,18 +452,6 @@ function initDTEventListeners() {
   document.getElementById('dt-refresh-btn').addEventListener('click', () => loadDesignerTracking());
   document.getElementById('dt-new-task-btn').addEventListener('click', openDTModal);
 
-  document.getElementById('dt-filter-designer').addEventListener('change', (e) => {
-    dtState.filters.designer_id = e.target.value;
-    loadDTTasks();
-  });
-  document.getElementById('dt-filter-status').addEventListener('change', (e) => {
-    dtState.filters.status = e.target.value;
-    loadDTTasks();
-  });
-  document.getElementById('dt-filter-type').addEventListener('change', (e) => {
-    dtState.filters.task_type = e.target.value;
-    loadDTTasks();
-  });
 
   document.querySelectorAll('.dt-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {

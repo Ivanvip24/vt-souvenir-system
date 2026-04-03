@@ -305,6 +305,10 @@ function renderShippingTable() {
           ? `<div class="address-card-missing">Falta: ${missing.join(', ')}</div>`
           : ''
         }
+        ${client.destination
+          ? `<div class="address-card-destination">📍 ${escapeHtml(client.destination)}</div>`
+          : ''
+        }
         ${client.order_count > 0
           ? `<div class="address-card-orders">${client.order_count} pedido${client.order_count > 1 ? 's' : ''}</div>`
           : ''
@@ -340,7 +344,7 @@ function renderShippingList() {
             <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelectClient(${client.id})" />
           </td>
         ` : ''}
-        <td class="col-name"><strong>${escapeHtml(client.name)}</strong></td>
+        <td class="col-name"><strong>${escapeHtml(client.name)}</strong>${client.destination ? `<div class="address-card-destination" style="margin-top:2px;">📍 ${escapeHtml(client.destination)}</div>` : ''}</td>
         <td class="col-location">${escapeHtml(location)}</td>
         <td class="col-email">${client.email ? `<a href="mailto:${escapeHtml(client.email)}" onclick="event.stopPropagation()">${escapeHtml(client.email)}</a>` : ''}</td>
         <td class="col-phone">${escapeHtml(client.phone || '')}</td>
@@ -450,6 +454,10 @@ async function showClientDetailPopup(clientId) {
         </div>
 
         <div class="client-popup-body">
+          ${(() => {
+            const dest = client.orders && client.orders.find(o => o.destination);
+            return dest ? `<div class="client-popup-destination">📍 ${escapeHtml(dest.destination)}</div>` : '';
+          })()}
           <div class="client-popup-section">
             <h4>📦 Direcciones${client.addresses && client.addresses.length > 0 ? ' (' + client.addresses.length + ')' : ''}</h4>
             ${client.addresses && client.addresses.length > 0 ? `

@@ -228,11 +228,10 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
 
         // Log payment
         await query(
-          `INSERT INTO payments (order_id, payment_type, payment_method, status, amount, stripe_session_id)
-           VALUES ($1, 'deposit', 'stripe', 'completed', $2, $3)
-           ON CONFLICT DO NOTHING`,
-          [orderId, amountPaid, session.id]
-        ).catch(() => {});
+          `INSERT INTO payments (order_id, payment_type, payment_method, status, amount, stripe_payment_intent_id, payment_date)
+           VALUES ($1, 'deposit', 'stripe', 'completed', $2, $3, NOW())`,
+          [orderId, amountPaid, session.payment_intent || session.id]
+        );
 
         console.log(`✅ Order ${orderId} auto-approved via Stripe payment`);
       } catch (dbErr) {
@@ -5089,7 +5088,8 @@ app.get('/api/clients', authMiddleware, async (req, res) => {
         c.created_at,
         c.updated_at,
         COUNT(DISTINCT o.id) as order_count,
-        MAX(o.order_date) as last_order_date
+        MAX(o.order_date) as last_order_date,
+        (SELECT destination FROM orders WHERE client_id = c.id AND destination IS NOT NULL AND destination != '' ORDER BY order_date DESC LIMIT 1) as destination
       FROM clients c
       LEFT JOIN orders o ON c.id = o.client_id
       ${whereClause}
@@ -5609,7 +5609,8 @@ app.get('/api/clients/:id', authMiddleware, async (req, res) => {
             'orderNumber', o.order_number,
             'orderDate', o.order_date,
             'totalPrice', o.total_price,
-            'status', o.status
+            'status', o.status,
+            'destination', o.destination
           ) ORDER BY o.order_date DESC
         ) FILTER (WHERE o.id IS NOT NULL) as orders
       FROM clients c
