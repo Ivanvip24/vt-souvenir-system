@@ -5844,6 +5844,12 @@ app.delete('/api/clients/:id', authMiddleware, async (req, res) => {
     // Unlink any shipping labels from this client
     await query('UPDATE shipping_labels SET client_id = NULL WHERE client_id = $1', [id]);
 
+    // Unlink whatsapp conversations
+    await query('UPDATE whatsapp_conversations SET client_id = NULL WHERE client_id = $1', [id]);
+
+    // Unlink quotes
+    await query('UPDATE quotes SET client_id = NULL WHERE client_id = $1', [id]).catch(() => {});
+
     // Then delete the client
     const result = await query('DELETE FROM clients WHERE id = $1 RETURNING *', [id]);
 
