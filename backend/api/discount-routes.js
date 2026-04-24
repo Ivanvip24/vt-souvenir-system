@@ -6,6 +6,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -116,9 +117,9 @@ async function ensureTablesExist() {
       CREATE INDEX IF NOT EXISTS idx_special_client_prices_client ON special_client_prices(special_client_id)
     `);
 
-    console.log('✅ Special clients tables initialized');
+    log('info', 'discount.special-clients-tables-initialized');
   } catch (error) {
-    console.error('Error creating special clients tables:', error);
+    logError('discount.error-creating-special-clients-tables', error);
   }
 }
 
@@ -162,7 +163,7 @@ router.get('/search-clients', async (req, res) => {
 
     res.json({ success: true, clients: result.rows });
   } catch (error) {
-    console.error('Error searching clients:', error);
+    logError('discount.error-searching-clients', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -191,7 +192,7 @@ router.get('/special-clients', async (req, res) => {
 
     res.json({ success: true, clients: result.rows });
   } catch (error) {
-    console.error('Error fetching special clients:', error);
+    logError('discount.error-fetching-special-clients', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -249,7 +250,7 @@ router.get('/special-clients/:id', async (req, res) => {
       totp
     });
   } catch (error) {
-    console.error('Error fetching special client:', error);
+    logError('discount.error-fetching-special-client', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -298,7 +299,7 @@ router.post('/special-clients', async (req, res) => {
       client: clientResult.rows[0]
     });
   } catch (error) {
-    console.error('Error creating special client:', error);
+    logError('discount.error-creating-special-client', error);
     if (error.code === '23505') { // Unique violation
       res.status(400).json({ success: false, error: 'Ya existe un cliente con ese email' });
     } else {
@@ -346,7 +347,7 @@ router.put('/special-clients/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Cliente actualizado exitosamente' });
   } catch (error) {
-    console.error('Error updating special client:', error);
+    logError('discount.error-updating-special-client', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -363,7 +364,7 @@ router.delete('/special-clients/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Cliente eliminado exitosamente' });
   } catch (error) {
-    console.error('Error deleting special client:', error);
+    logError('discount.error-deleting-special-client', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -386,7 +387,7 @@ router.get('/special-clients/:id/totp', async (req, res) => {
 
     res.json({ success: true, totp });
   } catch (error) {
-    console.error('Error generating TOTP:', error);
+    logError('discount.error-generating-totp', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -457,7 +458,7 @@ router.post('/validate-code', async (req, res) => {
       customPrices
     });
   } catch (error) {
-    console.error('Error validating promo code:', error);
+    logError('discount.error-validating-promo-code', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
