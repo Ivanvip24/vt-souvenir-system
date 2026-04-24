@@ -4,6 +4,7 @@
  */
 
 import { query } from '../../shared/database.js';
+import { logError } from '../../shared/logger.js';
 
 /**
  * Get all order alerts categorized by urgency
@@ -247,7 +248,7 @@ export async function getOrderAlerts() {
     return alerts;
 
   } catch (error) {
-    console.error('Error getting order alerts:', error);
+    logError('orderAlerts.getOrderAlerts.fail', error);
     throw error;
   }
 }
