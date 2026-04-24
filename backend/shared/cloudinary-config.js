@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import { log, logError } from './logger.js';
 
 // Cloudinary configuration from environment variables or defaults
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || 'demo';
@@ -6,7 +7,7 @@ const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || '123456789';
 const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || 'demo-secret';
 
 // Log configuration status (without exposing secrets)
-console.log('🔧 Cloudinary Config:', {
+log('info', 'cloudinary.init', {
   cloud_name: CLOUDINARY_CLOUD_NAME,
   api_key_set: !!process.env.CLOUDINARY_API_KEY,
   api_secret_set: !!process.env.CLOUDINARY_API_SECRET,
@@ -46,7 +47,7 @@ export async function uploadImage(file, folder = 'payment-receipts', publicId = 
 
     const result = await cloudinary.uploader.upload(file, options);
 
-    console.log(`✅ Image uploaded to Cloudinary: ${result.secure_url}`);
+    log('info', 'cloudinary.upload.ok', { url: result.secure_url });
 
     return {
       success: true,
@@ -59,7 +60,7 @@ export async function uploadImage(file, folder = 'payment-receipts', publicId = 
     };
 
   } catch (error) {
-    console.error('❌ Cloudinary upload error:', error.message);
+    logError('cloudinary.upload.fail', error);
     throw new Error(`Failed to upload image: ${error.message}`);
   }
 }
@@ -73,14 +74,14 @@ export async function deleteImage(publicId) {
   try {
     const result = await cloudinary.uploader.destroy(publicId);
 
-    console.log(`🗑️ Image deleted from Cloudinary: ${publicId}`);
+    log('info', 'cloudinary.delete.ok', { publicId });
 
     return {
       success: result.result === 'ok',
       result: result.result
     };
   } catch (error) {
-    console.error('❌ Cloudinary delete error:', error.message);
+    logError('cloudinary.delete.fail', error);
     throw new Error(`Failed to delete image: ${error.message}`);
   }
 }
