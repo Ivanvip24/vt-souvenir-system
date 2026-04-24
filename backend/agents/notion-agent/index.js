@@ -1,6 +1,7 @@
 import { Client } from '@notionhq/client';
 import { notionConfig, propertyMappings, validateConfig, mapStatusToNotion } from './config.js';
 import { retry, sanitizeText } from '../../shared/utils.js';
+import { log, logError } from '../../shared/logger.js';
 
 // Initialize Notion client
 validateConfig();
@@ -13,7 +14,7 @@ const notion = new Client({ auth: notionConfig.auth });
  */
 export async function createOrder(orderData) {
   try {
-    console.log('📝 Creating order in Notion:', orderData.orderNumber);
+    log('info', 'notionAgent.createOrder.start', { orderNumber: orderData.orderNumber });
 
     const properties = buildOrderProperties(orderData);
 
@@ -25,7 +26,7 @@ export async function createOrder(orderData) {
       });
     });
 
-    console.log('✅ Order created successfully:', response.id);
+    log('info', 'notionAgent.createOrder.ok', { pageId: response.id });
 
     return {
       success: true,
@@ -35,7 +36,7 @@ export async function createOrder(orderData) {
     };
 
   } catch (error) {
-    console.error('❌ Error creating order in Notion:', error);
+    logError('notionAgent.createOrder.fail', error);
     throw new Error(`Failed to create Notion page: ${error.message}`);
   }
 }
@@ -48,7 +49,7 @@ export async function createOrder(orderData) {
  */
 export async function updateOrder(pageId, updates) {
   try {
-    console.log('📝 Updating order in Notion:', pageId);
+    log('info', 'notionAgent.updateOrder.start', { pageId });
 
     const properties = buildOrderProperties(updates, true);
 
@@ -59,7 +60,7 @@ export async function updateOrder(pageId, updates) {
       });
     });
 
-    console.log('✅ Order updated successfully');
+    log('info', 'notionAgent.updateOrder.ok', { pageId });
 
     return {
       success: true,
@@ -67,7 +68,7 @@ export async function updateOrder(pageId, updates) {
     };
 
   } catch (error) {
-    console.error('❌ Error updating order in Notion:', error);
+    logError('notionAgent.updateOrder.fail', error, { pageId });
     throw new Error(`Failed to update Notion page: ${error.message}`);
   }
 }
@@ -91,7 +92,7 @@ export async function getOrder(pageId) {
     };
 
   } catch (error) {
-    console.error('❌ Error retrieving order from Notion:', error);
+    logError('notionAgent.getOrder.fail', error);
     throw new Error(`Failed to retrieve Notion page: ${error.message}`);
   }
 }
@@ -103,7 +104,7 @@ export async function getOrder(pageId) {
  */
 export async function queryOrders(filters = {}) {
   try {
-    console.log('🔍 Querying orders from Notion...');
+    log('info', 'notionAgent.queryOrders.start');
 
     const notionFilters = buildNotionFilters(filters);
 
@@ -122,7 +123,7 @@ export async function queryOrders(filters = {}) {
 
     const orders = response.results.map(page => parseNotionPage(page));
 
-    console.log(`✅ Found ${orders.length} orders`);
+    log('info', 'notionAgent.queryOrders.ok', { count: orders.length });
 
     return {
       success: true,
@@ -131,7 +132,7 @@ export async function queryOrders(filters = {}) {
     };
 
   } catch (error) {
-    console.error('❌ Error querying orders from Notion:', error);
+    logError('notionAgent.queryOrders.fail', error);
     throw new Error(`Failed to query Notion database: ${error.message}`);
   }
 }
@@ -161,7 +162,7 @@ export async function syncToNotion(localOrder) {
       return await createOrder(localOrder);
     }
   } catch (error) {
-    console.error('❌ Error syncing to Notion:', error);
+    logError('notionAgent.syncToNotion.fail', error);
     throw error;
   }
 }
