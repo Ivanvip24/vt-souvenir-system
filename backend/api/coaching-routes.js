@@ -8,6 +8,7 @@
 import { Router } from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = Router();
 
@@ -31,7 +32,7 @@ router.get('/conversations/:conversationId/pills', async (req, res) => {
 
     res.json({ success: true, pills: result.rows });
   } catch (error) {
-    console.error('Error fetching coaching pills:', error);
+    logError('coaching.error-fetching-coaching-pills', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -58,7 +59,7 @@ router.post('/pills/:id/follow', async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error following coaching pill:', error);
+    logError('coaching.error-following-coaching-pill', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -84,7 +85,7 @@ router.post('/pills/:id/ignore', async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error ignoring coaching pill:', error);
+    logError('coaching.error-ignoring-coaching-pill', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -136,7 +137,7 @@ router.post('/push', async (req, res) => {
 
     res.json({ success: true, pushed });
   } catch (error) {
-    console.error('Error pushing coaching suggestions:', error);
+    logError('coaching.error-pushing-coaching-suggestions', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -173,7 +174,7 @@ router.get('/stats', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching coaching stats:', error);
+    logError('coaching.error-fetching-coaching-stats', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -291,7 +292,7 @@ router.get('/dashboard', async (req, res) => {
       learnings: learnings.rows
     });
   } catch (error) {
-    console.error('Error fetching dashboard data:', error);
+    logError('coaching.error-fetching-dashboard-data', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -379,7 +380,7 @@ router.get('/insights', async (req, res) => {
       nextUpdate: nextUpdate.toISOString()
     });
   } catch (error) {
-    console.error('Error fetching insights:', error);
+    logError('coaching.error-fetching-insights', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -417,10 +418,10 @@ router.post('/insights/:id/apply', async (req, res) => {
       ins.confidence || 'medium'
     ]);
 
-    console.log(`🧠 Insight #${req.params.id} applied as learning #${result.rows[0].id}`);
+    log('info', 'coaching.insight-applied-as-learning');
     res.json({ success: true, learningId: result.rows[0].id });
   } catch (error) {
-    console.error('Error applying insight:', error);
+    logError('coaching.error-applying-insight', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -520,7 +521,7 @@ router.post('/simulate', async (req, res) => {
 
     res.json({ success: true, conversationId: convId, reply: result.reply, intent: result.intent });
   } catch (err) {
-    console.error('Simulation error:', err);
+    logError('coaching.simulation-error', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -535,7 +536,7 @@ router.post('/digest', async (req, res) => {
     const result = await triggerSalesDigest();
     res.json({ success: true, ...result });
   } catch (err) {
-    console.error('Error triggering sales digest:', err);
+    logError('coaching.error-triggering-sales-digest', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -551,7 +552,7 @@ router.post('/analyze', async (req, res) => {
     const learnings = await query('SELECT id, type, category, insight, confidence, applied FROM sales_learnings ORDER BY created_at DESC');
     res.json({ success: true, totalLearnings: learnings.rows.length, learnings: learnings.rows });
   } catch (err) {
-    console.error('Error triggering analysis:', err);
+    logError('coaching.error-triggering-analysis', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -576,7 +577,7 @@ router.get('/conversations/active', async (req, res) => {
 
     res.json({ success: true, conversations: result.rows });
   } catch (error) {
-    console.error('Error fetching active conversations:', error);
+    logError('coaching.error-fetching-active-conversations', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
