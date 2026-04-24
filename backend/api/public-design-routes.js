@@ -8,13 +8,14 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 
 // Lazy-load Stripe to avoid crashing server if package not available
 let Stripe;
 try {
   Stripe = (await import('stripe')).default;
 } catch (e) {
-  console.warn('⚠️ stripe package not installed — credit purchase routes will be limited');
+  log('warn', 'public-design.stripe-package-not-installed-credit-purchase-route');
 }
 
 const router = express.Router();
@@ -27,10 +28,10 @@ const STRIPE_DESIGN_WEBHOOK_SECRET = process.env.STRIPE_DESIGN_WEBHOOK_SECRET;
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
 if (!DESIGN_JWT_SECRET) {
-  console.warn('⚠️ DESIGN_JWT_SECRET not set — subscriber auth will use JWT_SECRET');
+  log('warn', 'public-design.designjwtsecret-not-set-subscriber-auth-will-use-j');
 }
 if (!STRIPE_SECRET_KEY) {
-  console.warn('⚠️ STRIPE_SECRET_KEY not set — credit purchase features disabled');
+  log('warn', 'public-design.stripesecretkey-not-set-credit-purchase-features-d');
 }
 
 // ── Credit Packs ────────────────────────────────────────
@@ -162,7 +163,7 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Public gallery error:', error);
+    logError('public-design.public-gallery-error', error);
     res.status(500).json({ success: false, error: 'Error al cargar diseños' });
   }
 });
@@ -182,7 +183,7 @@ router.get('/categories', async (req, res) => {
 
     res.json({ success: true, categories: result.rows });
   } catch (error) {
-    console.error('Public categories error:', error);
+    logError('public-design.public-categories-error', error);
     res.status(500).json({ success: false, error: 'Error al cargar categorías' });
   }
 });
@@ -232,7 +233,7 @@ router.post('/auth/register', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Register error:', error);
+    logError('public-design.register-error', error);
     res.status(500).json({ success: false, error: 'Error al crear cuenta' });
   }
 });
@@ -280,7 +281,7 @@ router.post('/auth/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    logError('public-design.login-error', error);
     res.status(500).json({ success: false, error: 'Error al iniciar sesión' });
   }
 });
@@ -310,7 +311,7 @@ router.get('/auth/me', subscriberAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Me error:', error);
+    logError('public-design.me-error', error);
     res.status(500).json({ success: false, error: 'Error al obtener perfil' });
   }
 });
@@ -397,7 +398,7 @@ router.get('/:id/download', subscriberAuth, async (req, res) => {
       [id]
     );
 
-    console.log(`📥 Design download: subscriber=${subscriberId}, design=${id}, credits_remaining=${deduct.rows[0].credits_balance}`);
+    log('info', 'public-design.design-download-subscriber-design-creditsremaining');
 
     res.json({
       success: true,
@@ -408,7 +409,7 @@ router.get('/:id/download', subscriberAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Download error:', error);
+    logError('public-design.download-error', error);
     res.status(500).json({ success: false, error: 'Error al descargar' });
   }
 });
@@ -516,7 +517,7 @@ router.post('/credits/purchase', subscriberAuth, async (req, res) => {
     res.json({ success: true, checkout_url: session.url });
 
   } catch (error) {
-    console.error('Credit purchase error:', error);
+    logError('public-design.credit-purchase-error', error);
     res.status(500).json({ success: false, error: 'Error al crear sesión de pago' });
   }
 });
@@ -556,7 +557,7 @@ router.get('/credits/history', subscriberAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Credits history error:', error);
+    logError('public-design.credits-history-error', error);
     res.status(500).json({ success: false, error: 'Error al obtener historial' });
   }
 });
@@ -575,11 +576,11 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     const sig = req.headers['stripe-signature'];
     event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_DESIGN_WEBHOOK_SECRET);
   } catch (err) {
-    console.error('⚠️ Stripe webhook signature verification failed:', err.message);
+    logError('public-design.stripe-webhook-signature-verification-failed', err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log(`🔔 Stripe design webhook: ${event.type}`);
+  log('info', 'public-design.stripe-design-webhook');
 
   try {
     switch (event.type) {
@@ -592,7 +593,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
         const pack = CREDIT_PACKS[packKey];
         if (!pack) {
-          console.error(`❌ Unknown pack_key in webhook: ${packKey}`);
+          log('error', 'public-design.unknown-packkey-in-webhook');
           break;
         }
 
@@ -602,7 +603,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
           [session.id]
         );
         if (existing.rows.length > 0) {
-          console.log(`ℹ️ Credit purchase already processed for session ${session.id}`);
+          log('info', 'public-design.credit-purchase-already-processed-for-session');
           break;
         }
 
@@ -624,7 +625,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
           [session.payment_intent, session.id]
         );
 
-        console.log(`✅ ${pack.credits} credits added for subscriber ${subscriberId} (session: ${session.id})`);
+        log('info', 'public-design.credits-added-for-subscriber-session');
         break;
       }
 
@@ -636,12 +637,12 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
            WHERE stripe_payment_intent = $1 AND status = 'pending'`,
           [paymentIntent.id]
         );
-        console.log(`⚠️ Payment failed: ${paymentIntent.id}`);
+        log('info', 'public-design.payment-failed');
         break;
       }
     }
   } catch (error) {
-    console.error('Webhook processing error:', error);
+    logError('public-design.webhook-processing-error', error);
   }
 
   res.json({ received: true });
