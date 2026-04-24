@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXKAN Diseños - WhatsApp Profile</title>
+<style>
+  @font-face {
+    font-family: 'RL AQVA';
+    src: url('../../AXKAN_SOURCES/RLAQVA.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #f0f0f0;
+    font-family: system-ui, sans-serif;
+  }
+
+  .canvas-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+  }
+
+  /* The actual profile picture */
+  .pfp {
+    width: 640px;
+    height: 640px;
+    background: #e72a88;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Subtle radial glow behind jaguar */
+  .pfp::before {
+    content: '';
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -54%);
+  }
+
+  /* Decorative corner grecas */
+  .greca-tl, .greca-tr, .greca-bl, .greca-br {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    opacity: 0.15;
+  }
+  .greca-tl { top: 20px; left: 20px; border-top: 4px solid #fff; border-left: 4px solid #fff; }
+  .greca-tr { top: 20px; right: 20px; border-top: 4px solid #fff; border-right: 4px solid #fff; }
+  .greca-bl { bottom: 20px; left: 20px; border-bottom: 4px solid #fff; border-left: 4px solid #fff; }
+  .greca-br { bottom: 20px; right: 20px; border-bottom: 4px solid #fff; border-right: 4px solid #fff; }
+
+  .jaguar-container {
+    position: relative;
+    z-index: 2;
+    margin-top: -20px;
+  }
+
+  .jaguar-container img {
+    width: 360px;
+    height: auto;
+    filter: brightness(0) invert(1) drop-shadow(0 4px 20px rgba(0,0,0,0.2));
+  }
+
+  .text-block {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .text-disenos {
+    font-family: 'RL AQVA', system-ui, sans-serif;
+    font-size: 46px;
+    font-weight: normal;
+    letter-spacing: 16px;
+    text-transform: uppercase;
+    color: #fff;
+    text-indent: 16px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  }
+
+  /* Thin divider line */
+  .divider {
+    width: 120px;
+    height: 2px;
+    background: rgba(255,255,255,0.4);
+    margin: 0 auto 10px;
+    border-radius: 1px;
+  }
+
+  /* Circle preview */
+  .preview-label {
+    font-size: 14px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .circle-preview {
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  }
+
+  .circle-preview .pfp {
+    width: 320px;
+    height: 320px;
+  }
+
+  .circle-preview .pfp::before {
+    width: 260px;
+    height: 260px;
+  }
+
+  .circle-preview .jaguar-container img {
+    width: 180px;
+  }
+
+  .circle-preview .text-disenos {
+    font-size: 23px;
+    letter-spacing: 8px;
+    text-indent: 8px;
+  }
+
+  .circle-preview .divider {
+    width: 60px;
+    height: 1px;
+    margin-bottom: 5px;
+  }
+
+  .circle-preview .greca-tl,
+  .circle-preview .greca-tr,
+  .circle-preview .greca-bl,
+  .circle-preview .greca-br {
+    width: 40px;
+    height: 40px;
+    border-width: 2px;
+  }
+  .circle-preview .greca-tl { top: 10px; left: 10px; }
+  .circle-preview .greca-tr { top: 10px; right: 10px; }
+  .circle-preview .greca-bl { bottom: 10px; left: 10px; }
+  .circle-preview .greca-br { bottom: 10px; right: 10px; }
+
+  .circle-preview .jaguar-container {
+    margin-top: -10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="canvas-wrapper">
+
+  <!-- Full 640x640 version (for saving) -->
+  <p class="preview-label">640 x 640 — save this as profile picture</p>
+  <div class="pfp" id="pfp-full">
+    <div class="greca-tl"></div>
+    <div class="greca-tr"></div>
+    <div class="greca-bl"></div>
+    <div class="greca-br"></div>
+
+    <div class="jaguar-container">
+      <img src="../../AXKAN_SOURCES/JAGUAR.png" alt="AXKAN Jaguar">
+    </div>
+
+    <div class="text-block">
+      <div class="divider"></div>
+      <div class="text-disenos">Diseños</div>
+    </div>
+  </div>
+
+  <!-- Circle preview (how it looks on WhatsApp) -->
+  <p class="preview-label">Circle preview (WhatsApp)</p>
+  <div class="circle-preview">
+    <div class="pfp">
+      <div class="greca-tl"></div>
+      <div class="greca-tr"></div>
+      <div class="greca-bl"></div>
+      <div class="greca-br"></div>
+
+      <div class="jaguar-container">
+        <img src="../../AXKAN_SOURCES/JAGUAR.png" alt="AXKAN Jaguar">
+      </div>
+
+      <div class="text-block">
+        <div class="divider"></div>
+        <div class="text-disenos">Diseños</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
