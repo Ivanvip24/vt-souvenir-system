@@ -17,6 +17,7 @@ import { calculateTieredPrice, MOQ } from '../shared/pricing.js';
 import { verifyPaymentReceipt, isConfigured as isAIConfigured } from '../services/payment-receipt-verifier.js';
 import { validateTransfer, downloadCEP, resolveBankCode } from '../services/cep-service.js';
 import Stripe from 'stripe';
+import { log, logError } from '../shared/logger.js';
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
@@ -95,7 +96,7 @@ router.get('/products', async (req, res) => {
       count: result.rows.length
     });
   } catch (error) {
-    console.error('Error fetching products:', error);
+    logError('client.error-fetching-products', error);
     res.status(500).json({
       success: false,
       error: 'Error al cargar productos'
@@ -126,7 +127,7 @@ router.get('/products/:id', async (req, res) => {
       product: result.rows[0]
     });
   } catch (error) {
-    console.error('Error fetching product:', error);
+    logError('client.error-fetching-product', error);
     res.status(500).json({
       success: false,
       error: 'Error al cargar producto'
@@ -188,7 +189,7 @@ router.post('/orders/submit', async (req, res) => {
 
     // Honeypot anti-bot check: if this hidden field is filled, it's a bot
     if (req.body.website || req.body.company_url) {
-      console.warn(`🤖 Bot detected on order submit — honeypot filled from IP: ${req.ip}`);
+      log('warn', 'client.bot-detected-on-order-submit-honeypot-filled-from-');
       // Return fake success so bots think it worked
       return res.json({ success: true, orderId: 0, orderNumber: 'AXK0' });
     }
@@ -262,10 +263,10 @@ router.post('/orders/submit', async (req, res) => {
 
       // Log if client sent different price (potential manipulation attempt)
       if (item.unitPrice && Math.abs(parseFloat(item.unitPrice) - pricing.unitPrice) > 0.01) {
-        console.warn(`⚠️ PRICE MISMATCH DETECTED for ${displayName}:`);
-        console.warn(`   Client sent: $${item.unitPrice}`);
-        console.warn(`   Server calculated: $${pricing.unitPrice}`);
-        console.warn(`   Using server price (secure)`);
+        log('warn', 'client.price-mismatch-detected-for');
+        log('warn', 'client.client-sent');
+        log('warn', 'client.server-calculated');
+        log('warn', 'client.using-server-price-secure');
       }
 
       const unitPrice = pricing.unitPrice; // ALWAYS use server-calculated price
@@ -359,11 +360,11 @@ router.post('/orders/submit', async (req, res) => {
       shippingMethod: 'standard'
     });
 
-    console.log(`📅 Delivery dates calculated for ${totalQuantity} items:`);
-    console.log(`   Production deadline: ${deliveryDates.productionDeadlineFormatted}`);
-    console.log(`   Estimated delivery: ${deliveryDates.estimatedDeliveryFormatted}`);
+    log('info', 'client.delivery-dates-calculated-for-items');
+    log('info', 'client.production-deadline');
+    log('info', 'client.estimated-delivery');
     if (deliveryDates.isRushOrder) {
-      console.log(`   ⚠️ RUSH ORDER - Event date is before estimated delivery!`);
+      log('info', 'client.rush-order-event-date-is-before-estimated-delivery');
     }
 
     const orderResult = await query(
@@ -423,7 +424,7 @@ router.post('/orders/submit', async (req, res) => {
       try {
         await query('UPDATE orders SET shipping_address_id = $1 WHERE id = $2', [addressIdNum, orderId]);
       } catch (e) {
-        console.warn('⚠️  Could not set shipping_address_id:', e.message);
+        log('warn', 'client.could-not-set-shippingaddressid');
       }
     }
 
@@ -442,11 +443,11 @@ router.post('/orders/submit', async (req, res) => {
     // NOTE: Automatic tasks are created when order is APPROVED, not on submission
     setImmediate(async () => {
       try {
-        console.log(`🔄 Syncing order ${orderNumber} to Notion...`);
+        log('info', 'client.syncing-order-to-notion');
         await notionSync.syncOrderToNotion(orderId);
-        console.log(`✅ Order ${orderNumber} synced to Notion successfully`);
+        log('info', 'client.order-synced-to-notion-successfully');
       } catch (notionError) {
-        console.error('❌ Failed to sync to Notion:', notionError);
+        log('error', 'client.debug');
         // Order is safely in database, Notion can be synced later
       }
     });
@@ -456,7 +457,7 @@ router.post('/orders/submit', async (req, res) => {
       try {
         await sendAdminNotification(orderId, orderNumber, clientName, subtotal, depositAmount);
       } catch (emailError) {
-        console.error('Failed to send admin notification:', emailError);
+        log('error', 'client.debug');
       }
     });
 
@@ -467,8 +468,8 @@ router.post('/orders/submit', async (req, res) => {
       // No AI verification, generate PDF now with default 50% deposit
       setImmediate(async () => {
         try {
-          console.log(`📄 Generating PDF receipt for order ${orderNumber} (no AI verification)...`);
-          console.log(`   Subtotal: $${subtotal}, DepositAmount: $${depositAmount}`);
+          log('info', 'client.generating-pdf-receipt-for-order-no-ai-verificatio');
+          log('info', 'client.subtotal-depositamount');
 
           const remainingBalance = subtotal - depositAmount;
 
@@ -494,17 +495,17 @@ router.post('/orders/submit', async (req, res) => {
             isStorePickup: isStorePickup || false
           });
 
-          console.log(`✅ PDF receipt generated: ${pdfPath}`);
+          log('info', 'client.pdf-receipt-generated');
 
           const pdfUrl = getReceiptUrl(pdfPath);
           await query(
             `UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2`,
             [pdfUrl, orderId]
           );
-          console.log(`💾 PDF URL saved to database: ${pdfUrl}`);
+          log('info', 'client.pdf-url-saved-to-database');
 
         } catch (pdfError) {
-          console.error('❌ Failed to generate PDF receipt:', pdfError.message);
+          log('error', 'client.debug');
         }
       });
     }
@@ -519,13 +520,13 @@ router.post('/orders/submit', async (req, res) => {
           await new Promise(resolve => setTimeout(resolve, 2000));
 
           if (!isAIConfigured()) {
-            console.log('⚠️ AI verification skipped - Anthropic API not configured');
+            log('info', 'client.ai-verification-skipped-anthropic-api-not-configur');
             return;
           }
 
-          console.log(`\n🤖 Starting automatic AI verification for order ${orderNumber}...`);
-          console.log(`   Receipt URL: ${paymentProofUrl}`);
-          console.log(`   Expected amount: $${depositAmount.toFixed(2)}`);
+          log('info', 'client.n-starting-automatic-ai-verification-for-order');
+          log('info', 'client.receipt-url');
+          log('info', 'client.expected-amount');
 
           // Verify receipt with Claude Vision
           const verificationResult = await verifyPaymentReceipt(
@@ -535,21 +536,21 @@ router.post('/orders/submit', async (req, res) => {
           );
 
           if (!verificationResult.success) {
-            console.log(`⚠️ AI verification failed for order ${orderNumber}: ${verificationResult.error}`);
-            console.log(`📋 Order ${orderNumber} stays pending - requires manual review`);
+            log('info', 'client.ai-verification-failed-for-order');
+            log('info', 'client.order-stays-pending-requires-manual-review');
             return; // Don't auto-approve if AI verification failed
           }
 
-          console.log(`📊 AI Analysis result: ${verificationResult.recommendation}`);
-          console.log(`📊 Is valid receipt: ${verificationResult.analysis?.is_valid_receipt}`);
-          console.log(`📊 Confidence level: ${verificationResult.analysis?.confidence_level}`);
-          console.log(`📊 Suspicious indicators: ${JSON.stringify(verificationResult.analysis?.suspicious_indicators || [])}`);
+          log('info', 'client.ai-analysis-result');
+          log('info', 'client.is-valid-receipt');
+          log('info', 'client.confidence-level');
+          log('info', 'client.suspicious-indicators');
 
           // Only auto-approve if AI confirms it's a valid bank receipt
           if (verificationResult.recommendation !== 'AUTO_APPROVE') {
-            console.log(`⚠️ AI recommends MANUAL_REVIEW for order ${orderNumber}`);
-            console.log(`   Reason: ${verificationResult.recommendation_reason}`);
-            console.log(`📋 Order stays pending - admin must review manually`);
+            log('info', 'client.ai-recommends-manualreview-for-order');
+            log('info', 'client.reason');
+            log('info', 'client.order-stays-pending-admin-must-review-manually');
 
             // Update internal notes with AI analysis for admin review
             await query(
@@ -561,7 +562,7 @@ router.post('/orders/submit', async (req, res) => {
             return; // Don't auto-approve
           }
 
-          console.log(`✅ AI verified - AUTO-APPROVING order ${orderNumber}`);
+          log('info', 'client.ai-verified-auto-approving-order');
 
           // ============================================
           // CEP VALIDATION — Verify against Banxico
@@ -573,12 +574,12 @@ router.post('/orders/submit', async (req, res) => {
 
           if (claveRastreo && process.env.AXKAN_CLABE) {
             try {
-              console.log(`🏦 Starting CEP validation for order ${orderNumber}...`);
+              log('info', 'client.starting-cep-validation-for-order');
 
               // Resolve bank name to code
               const emisorCode = resolveBankCode(sourceBank);
               if (!emisorCode) {
-                console.log(`⚠️ CEP: Could not resolve bank code for "${sourceBank}", skipping CEP`);
+                log('info', 'client.cep-could-not-resolve-bank-code-for-skipping-cep');
               } else {
                 // Format date for Banxico (DD-MM-YYYY)
                 let fechaBanxico;
@@ -642,21 +643,21 @@ router.post('/orders/submit', async (req, res) => {
                         [cepPdfUrl, orderId, claveRastreo]
                       );
 
-                      console.log(`📄 CEP PDF stored: ${cepPdfUrl}`);
+                      log('info', 'client.cep-pdf-stored');
                     }
                   } catch (pdfErr) {
-                    console.error(`⚠️ CEP PDF download/upload failed: ${pdfErr.message}`);
+                    log('error', 'client.cep-pdf-downloadupload-failed');
                   }
                 }
 
-                console.log(`🏦 CEP result: ${cepStatus} for order ${orderNumber}`);
+                log('info', 'client.cep-result-for-order');
               }
             } catch (cepError) {
-              console.error(`⚠️ CEP validation failed (non-fatal): ${cepError.message}`);
+              log('error', 'client.cep-validation-failed-non-fatal');
               // CEP failure is non-blocking — we still proceed with Vision-only approval
             }
           } else {
-            console.log(`ℹ️ CEP: Skipped (no clave_rastreo extracted or AXKAN_CLABE not set)`);
+            log('info', 'client.cep-skipped-no-claverastreo-extracted-or-axkanclab');
           }
           // ============================================
           // END CEP VALIDATION
@@ -670,10 +671,10 @@ router.post('/orders/submit', async (req, res) => {
           const actualDepositAmount = (detectedAmount > 0) ? detectedAmount : depositAmount;
           const amountChanged = Math.abs(actualDepositAmount - depositAmount) > 0.01;
 
-          console.log(`💰 Deposit calculation: raw=${rawDetectedAmount}, parsed=${detectedAmount}, final=${actualDepositAmount}, expected=${depositAmount}`);
+          log('info', 'client.deposit-calculation-raw-parsed-final-expected');
 
           if (amountChanged) {
-            console.log(`💰 Amount adjustment: Expected $${depositAmount.toFixed(2)} → Detected $${actualDepositAmount.toFixed(2)}`);
+            log('info', 'client.amount-adjustment-expected-detected');
           }
 
           const cepNote = cepResult
@@ -705,8 +706,8 @@ router.post('/orders/submit', async (req, res) => {
             const pdfRemainingBalance = parseFloat(actualRemainingBalance) || (parseFloat(subtotal) - pdfDepositAmount);
             const pdfTotalPrice = parseFloat(subtotal) || 0;
 
-            console.log(`📄 Generating PDF receipt with AI-verified amount: $${pdfDepositAmount.toFixed(2)}...`);
-            console.log(`   PDF values: total=${pdfTotalPrice}, deposit=${pdfDepositAmount}, remaining=${pdfRemainingBalance}`);
+            log('info', 'client.generating-pdf-receipt-with-ai-verified-amount');
+            log('info', 'client.pdf-values-total-deposit-remaining');
 
             const pdfTotalWithShipping = pdfTotalPrice + (parseFloat(shippingCost) || 0);
             const newPdfPath = await generateReceipt({
@@ -731,9 +732,9 @@ router.post('/orders/submit', async (req, res) => {
             });
             pdfUrl = getReceiptUrl(newPdfPath);
             await query('UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2', [pdfUrl, orderId]);
-            console.log(`✅ PDF receipt generated with deposit: $${pdfDepositAmount.toFixed(2)}`);
+            log('info', 'client.pdf-receipt-generated-with-deposit');
           } catch (pdfError) {
-            console.error('❌ Failed to generate PDF:', pdfError.message, pdfError.stack);
+            log('error', 'client.debug');
             // Try to get existing PDF as fallback
             const pdfResult = await query('SELECT receipt_pdf_url FROM orders WHERE id = $1', [orderId]);
             pdfUrl = pdfResult.rows[0]?.receipt_pdf_url;
@@ -761,28 +762,28 @@ router.post('/orders/submit', async (req, res) => {
                   eventType
                 }
               );
-              console.log(`📧 Confirmation email sent to ${clientEmail}`);
+              log('info', 'client.confirmation-email-sent-to');
             }
           } catch (emailError) {
-            console.error('❌ Failed to send confirmation email:', emailError.message);
+            log('error', 'client.debug');
           }
 
-          console.log(`🎉 Order ${orderNumber} automatically approved!`);
-          console.log(`   Deposit amount: $${actualDepositAmount.toFixed(2)}`);
-          console.log(`   Remaining balance: $${actualRemainingBalance.toFixed(2)}`);
+          log('info', 'client.order-automatically-approved');
+          log('info', 'client.deposit-amount');
+          log('info', 'client.remaining-balance');
 
           // Log the AI analysis details
           if (verificationResult.analysis) {
-            console.log(`   AI detected: $${verificationResult.analysis.amount_detected || 'N/A'}`);
-            console.log(`   Confidence: ${verificationResult.analysis.confidence_level || 'N/A'}`);
-            console.log(`   Bank: ${verificationResult.analysis.source_bank || 'N/A'}`);
+            log('info', 'client.ai-detected');
+            log('info', 'client.confidence');
+            log('info', 'client.bank');
             if (verificationResult.analysis.suspicious_indicators?.length > 0) {
-              console.log(`   ⚠️ Notes: ${verificationResult.analysis.suspicious_indicators.join(', ')}`);
+              log('info', 'client.notes');
             }
           }
 
         } catch (aiError) {
-          console.error('❌ AI verification error:', aiError.message);
+          log('error', 'client.debug');
           // Order remains in pending_review status - admin can review manually
         }
       });
@@ -817,7 +818,7 @@ router.post('/orders/submit', async (req, res) => {
 
   } catch (error) {
     await query('ROLLBACK');
-    console.error('Error creating order:', error);
+    logError('client.error-creating-order', error);
     res.status(500).json({
       success: false,
       error: 'Error al procesar el pedido'
@@ -852,7 +853,7 @@ router.post('/upload-file', upload.single('file'), async (req, res) => {
     const fileExtension = req.file.originalname.split('.').pop();
     const fileName = `${fileType || 'file'}-${orderNumber || 'unknown'}-${timestamp}.${fileExtension}`;
 
-    console.log(`📤 Uploading file to Google Drive: ${fileName}`);
+    log('info', 'client.uploading-file-to-google-drive');
 
     // Upload to Google Drive
     const result = await uploadToGoogleDrive({
@@ -861,7 +862,7 @@ router.post('/upload-file', upload.single('file'), async (req, res) => {
       mimeType: req.file.mimetype
     });
 
-    console.log(`✅ File uploaded successfully: ${result.directImageUrl}`);
+    log('info', 'client.file-uploaded-successfully');
 
     res.json({
       success: true,
@@ -873,7 +874,7 @@ router.post('/upload-file', upload.single('file'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error uploading file:', error);
+    logError('client.error-uploading-file', error);
     res.status(500).json({
       success: false,
       error: 'Error al subir el archivo'
@@ -923,7 +924,7 @@ router.post('/orders/:orderId/upload-proof', async (req, res) => {
     try {
       await sendPaymentProofNotification(orderId);
     } catch (emailError) {
-      console.error('Failed to send payment proof notification:', emailError);
+      log('error', 'client.debug');
     }
 
     res.json({
@@ -932,7 +933,7 @@ router.post('/orders/:orderId/upload-proof', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error uploading payment proof:', error);
+    logError('client.error-uploading-payment-proof', error);
     res.status(500).json({
       success: false,
       error: 'Error al subir comprobante'
@@ -994,7 +995,7 @@ router.post('/orders/:orderId/second-payment', async (req, res) => {
       [receiptUrl, orderId]
     );
 
-    console.log(`✅ Second payment receipt uploaded via client route for order ${orderId}`);
+    log('info', 'client.second-payment-receipt-uploaded-via-client-route-f');
 
     // AI Verification (if configured)
     if (isAIConfigured()) {
@@ -1013,7 +1014,7 @@ router.post('/orders/:orderId/second-payment', async (req, res) => {
           [verificationNote, orderId]
         );
       } catch (aiErr) {
-        console.error('AI verification failed (non-blocking):', aiErr.message);
+        logError('client.ai-verification.error', aiErr);
       }
     }
 
@@ -1023,7 +1024,7 @@ router.post('/orders/:orderId/second-payment', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error uploading second payment receipt:', error);
+    logError('client.error-uploading-second-payment-receipt', error);
     res.status(500).json({ success: false, error: 'Error al subir comprobante' });
   }
 });
@@ -1072,7 +1073,7 @@ router.post('/stripe-checkout', async (req, res) => {
 
     res.json({ success: true, url: session.url });
   } catch (error) {
-    console.error('Stripe checkout error:', error);
+    logError('client.stripe-checkout-error', error);
     res.status(500).json({ success: false, error: 'Error al crear sesión de pago' });
   }
 });
@@ -1136,7 +1137,7 @@ router.get('/orders/:orderId/status', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error checking order status:', error);
+    logError('client.error-checking-order-status', error);
     res.status(500).json({
       success: false,
       error: 'Error al consultar estado del pedido'
@@ -1248,7 +1249,7 @@ router.post('/address/save', async (req, res) => {
       );
     }
 
-    console.log(`📦 Client address saved via /envio form: ${clientName} (${clientPhone}) - Destino: ${destinationName || 'N/A'}`);
+    log('info', 'client.client-address-saved-via-envio-form-destino');
 
     res.json({
       success: true,
@@ -1256,7 +1257,7 @@ router.post('/address/save', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error saving client address:', error);
+    logError('client.error-saving-client-address', error);
     res.status(500).json({
       success: false,
       error: 'Error al guardar la direccion'
@@ -1337,7 +1338,7 @@ router.post('/info', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error looking up client:', error);
+    logError('client.error-looking-up-client', error);
     res.status(500).json({
       success: false,
       error: 'Error al buscar cliente'
@@ -1570,7 +1571,7 @@ router.post('/orders/lookup', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error looking up orders:', error);
+    logError('client.error-looking-up-orders', error);
     res.status(500).json({
       success: false,
       error: 'Error al buscar pedidos'
@@ -1590,12 +1591,12 @@ async function triggerMakeWebhook(data) {
   const webhookUrl = process.env.MAKE_WEBHOOK_URL;
 
   if (!webhookUrl) {
-    console.log('ℹ️  Make.com webhook not configured (MAKE_WEBHOOK_URL not set)');
+    log('info', 'client.makecom-webhook-not-configured-makewebhookurl-not-');
     return { success: false, reason: 'webhook_not_configured' };
   }
 
   try {
-    console.log('📲 Triggering Make.com webhook for instant notification...');
+    log('info', 'client.triggering-makecom-webhook-for-instant-notificatio');
 
     const response = await fetch(webhookUrl, {
       method: 'POST',
@@ -1610,15 +1611,15 @@ async function triggerMakeWebhook(data) {
     });
 
     if (response.ok) {
-      console.log('✅ Make.com webhook triggered successfully');
+      log('info', 'client.makecom-webhook-triggered-successfully');
       return { success: true };
     } else {
       const errorText = await response.text();
-      console.error('❌ Make.com webhook failed:', response.status, errorText);
+      log('error', 'client.debug');
       return { success: false, error: errorText };
     }
   } catch (error) {
-    console.error('❌ Error triggering Make.com webhook:', error.message);
+    logError('client.error-triggering-makecom-webhook', error);
     return { success: false, error: 'Error de conexión con webhook' };
   }
 }
@@ -1856,7 +1857,7 @@ async function sendAdminNotification(orderId, orderNumber, clientName, total, de
       attachments
     });
 
-    console.log(`✅ Admin notification email sent to ${adminEmail} for order ${orderNumber}`);
+    log('info', 'client.admin-notification-email-sent-to-for-order');
 
     // Also trigger Make.com webhook for instant phone notifications
     await triggerMakeWebhook({
@@ -1875,7 +1876,7 @@ async function sendAdminNotification(orderId, orderNumber, clientName, total, de
     });
 
   } catch (error) {
-    console.error('❌ Error sending admin notification:', error);
+    logError('client.error-sending-admin-notification', error);
     throw error;
   }
 }
@@ -1930,7 +1931,7 @@ router.get('/addresses', async (req, res) => {
     );
     res.json({ addresses: addresses.rows });
   } catch (error) {
-    console.error('Error fetching addresses:', error);
+    logError('client.error-fetching-addresses', error);
     res.status(500).json({ error: 'Error al obtener direcciones' });
   }
 });
@@ -1989,7 +1990,7 @@ router.post('/addresses', async (req, res) => {
 
     res.json({ success: true, address: result.rows[0] });
   } catch (error) {
-    console.error('Error creating address:', error);
+    logError('client.error-creating-address', error);
     res.status(500).json({ error: 'Error al crear dirección' });
   }
 });
@@ -2028,7 +2029,7 @@ router.put('/addresses/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Address not found' });
     res.json({ success: true, address: result.rows[0] });
   } catch (error) {
-    console.error('Error updating address:', error);
+    logError('client.error-updating-address', error);
     res.status(500).json({ error: 'Error al actualizar dirección' });
   }
 });
@@ -2043,7 +2044,7 @@ router.delete('/addresses/:id', async (req, res) => {
     await query('DELETE FROM client_addresses WHERE id = $1', [id]);
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting address:', error);
+    logError('client.error-deleting-address', error);
     res.status(500).json({ error: 'Error al eliminar dirección' });
   }
 });
@@ -2063,7 +2064,7 @@ router.post('/addresses/:id/set-default', async (req, res) => {
     await query('UPDATE client_addresses SET is_default = true, last_used_at = NOW() WHERE id = $1', [id]);
     res.json({ success: true });
   } catch (error) {
-    console.error('Error setting default address:', error);
+    logError('client.error-setting-default-address', error);
     res.status(500).json({ error: 'Error al establecer dirección predeterminada' });
   }
 });
