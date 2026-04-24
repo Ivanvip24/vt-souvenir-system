@@ -1,0 +1,4712 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>AXKAN Studio</title>
+<style>
+  /* ============================================================
+     AXKAN Studio — Design System
+     Desktop-only (>=1280px). Warm cream canvas. Rosa Mexicano
+     reserved exclusively for the single primary CTA per screen.
+     ============================================================ */
+
+  :root {
+    /* Brand palette */
+    --rosa: #E72A88;
+    --rosa-ink: #B8206C;
+    --rosa-soft: rgba(231, 42, 136, 0.12);
+    --turquesa: #09ADC2;
+    --turquesa-soft: rgba(9, 173, 194, 0.14);
+    --verde: #8AB73B;
+    --verde-soft: rgba(138, 183, 59, 0.16);
+    --naranja: #F39223;
+    --naranja-soft: rgba(243, 146, 35, 0.16);
+
+    /* Neutrals */
+    --cream: #FAF7F0;
+    --cream-sink: #F2EDE1;
+    --surface: #FFFFFF;
+    --ink: #1A1A1A;
+    --ink-muted: #6B6B6B;
+    --ink-faint: #A8A39A;
+    --line: #E8E2D3;
+    --line-soft: #F0EADB;
+
+    /* Spacing — 8pt grid */
+    --s-1: 8px;
+    --s-2: 16px;
+    --s-3: 24px;
+    --s-4: 32px;
+    --s-5: 40px;
+    --s-6: 48px;
+    --s-8: 64px;
+    --s-10: 80px;
+
+    /* Radius */
+    --r-input: 8px;
+    --r-card: 12px;
+    --r-btn: 16px;
+    --r-pill: 999px;
+
+    /* Shadows */
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 4px 18px rgba(0, 0, 0, 0.08);
+    --shadow-pop: 0 12px 48px rgba(26, 26, 26, 0.18);
+
+    /* Typography */
+    --font-sans: -apple-system, "SF Pro Display", "Inter", system-ui, sans-serif;
+    --font-display: -apple-system, "SF Pro Display", "Inter", system-ui, sans-serif;
+
+    /* Motion */
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --dur: 200ms;
+
+    /* Chrome sizes */
+    --topbar-h: 40px;
+    --sidebar-w: 240px;
+    --actionbar-h: 80px;
+  }
+
+  /* ---------- Reset ---------- */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-width: 1280px;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01", "cv11";
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { background: none; border: 0; cursor: pointer; padding: 0; }
+  a { color: inherit; text-decoration: none; }
+  svg { display: block; }
+
+  /* ---------- Typography scale ---------- */
+  .t-display {
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .t-h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .t-h2 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  .t-body { font-size: 15px; line-height: 1.55; }
+  .t-small { font-size: 13px; line-height: 1.4; }
+  .t-micro {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+  }
+  .t-muted { color: var(--ink-muted); }
+  .t-faint { color: var(--ink-faint); }
+
+  /* ---------- Focus ring ---------- */
+  :focus { outline: none; }
+  :focus-visible {
+    outline: 2px solid var(--rosa);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ============================================================
+     APP SHELL LAYOUT
+     Grid: topbar spans top; sidebar + main below.
+     ============================================================ */
+  .app {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    grid-template-rows: var(--topbar-h) 1fr;
+    min-height: 100vh;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    grid-column: 1 / -1;
+    height: var(--topbar-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--s-3);
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+  .topbar__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--s-1);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+  .topbar__jaguar {
+    font-size: 16px;
+    filter: saturate(1.1);
+  }
+  .topbar__title {
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .topbar__divider {
+    width: 1px;
+    height: 16px;
+    background: var(--line);
+    margin: 0 var(--s-1);
+  }
+  .topbar__crumb {
+    color: var(--ink-muted);
+    font-size: 13px;
+  }
+  .topbar__right {
+    display: flex;
+    align-items: center;
+    gap: var(--s-1);
+  }
+  .iconbtn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--ink-muted);
+    transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+  .iconbtn:hover {
+    background: var(--cream-sink);
+    color: var(--ink);
+  }
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    background: var(--cream-sink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: var(--font-sans);
+  }
+  .kbd-inline {
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+  .palette-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-1);
+    padding: 4px 8px 4px 10px;
+    border-radius: 8px;
+    color: var(--ink-muted);
+    font-size: 13px;
+    transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+  .palette-trigger:hover {
+    background: var(--cream-sink);
+    color: var(--ink);
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+    background: linear-gradient(135deg, var(--turquesa) 0%, #0C8A9B 100%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    grid-column: 1;
+    grid-row: 2;
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    padding: var(--s-4) var(--s-3);
+    position: sticky;
+    top: var(--topbar-h);
+    align-self: start;
+    height: calc(100vh - var(--topbar-h));
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+  }
+  .sidebar__label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    padding: 0 var(--s-1);
+  }
+
+  /* Stepper */
+  .stepper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    width: 100%;
+    padding: 10px var(--s-1);
+    border-radius: 10px;
+    text-align: left;
+    color: var(--ink-faint);
+    font-size: 14px;
+    font-weight: 500;
+    transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+    position: relative;
+    cursor: not-allowed;
+  }
+  .step__dot {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--surface);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-faint);
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+    z-index: 1;
+  }
+  .step__label { flex: 1; }
+  .step__index {
+    font-size: 10px;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  /* connector line behind dots */
+  .stepper::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--s-1) + 10px);
+    top: 22px;
+    bottom: 22px;
+    width: 2px;
+    background: var(--line-soft);
+    z-index: 0;
+  }
+  /* Reachable (can be clicked) */
+  .step.is-reachable {
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .step.is-reachable:hover {
+    background: var(--cream-sink);
+  }
+  /* Completed */
+  .step.is-done .step__dot {
+    background: var(--verde);
+    border-color: var(--verde);
+    color: white;
+  }
+  .step.is-done { color: var(--ink); cursor: pointer; }
+  .step.is-done:hover { background: var(--cream-sink); }
+  /* Active */
+  .step.is-active {
+    color: var(--ink);
+    background: var(--rosa-soft);
+    cursor: default;
+  }
+  .step.is-active .step__dot {
+    background: var(--rosa);
+    border-color: var(--rosa);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(231, 42, 136, 0.14);
+  }
+  .step.is-active .step__label { font-weight: 600; }
+
+  /* Video-only steps (Generadas / Prompts video) are hidden by default.
+     body[data-flow="video"] reveals them. Set by JS when contentType='video'. */
+  .step[data-video-only] { display: none; }
+  body[data-flow="video"] .step[data-video-only] { display: flex; }
+
+  .sidebar__meta {
+    margin-top: auto;
+    padding: var(--s-2);
+    background: var(--cream);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-card);
+  }
+  .sidebar__meta-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  .sidebar__meta-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sidebar__meta-time {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Main ---------- */
+  .main {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - var(--topbar-h));
+  }
+  #screen-root {
+    flex: 1;
+    padding: var(--s-6) var(--s-8);
+    max-width: 1040px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* ---------- Action bar ---------- */
+  .actionbar {
+    position: sticky;
+    bottom: 0;
+    height: var(--actionbar-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--s-6);
+    background: rgba(250, 247, 240, 0.92);
+    backdrop-filter: saturate(1.2) blur(10px);
+    -webkit-backdrop-filter: saturate(1.2) blur(10px);
+    border-top: 1px solid var(--line);
+    z-index: 20;
+  }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-1);
+    padding: 10px 14px;
+    border-radius: var(--r-btn);
+    color: var(--ink-muted);
+    font-size: 14px;
+    font-weight: 500;
+    transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .btn-ghost:hover {
+    color: var(--ink);
+    background: var(--cream-sink);
+  }
+  .btn-ghost[hidden] { display: none !important; }
+
+  /* Primary CTA — Rosa Mexicano. Scarce. */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 48px;
+    min-width: 180px;
+    padding: 0 var(--s-3);
+    border-radius: var(--r-btn);
+    background: var(--rosa);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    box-shadow: 0 6px 20px rgba(231, 42, 136, 0.28);
+    transition: transform var(--dur) var(--ease),
+                box-shadow var(--dur) var(--ease),
+                background var(--dur) var(--ease),
+                opacity var(--dur) var(--ease);
+  }
+  .btn-primary:hover {
+    background: var(--rosa-ink);
+    box-shadow: 0 10px 28px rgba(231, 42, 136, 0.34);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary[disabled],
+  .btn-primary.is-disabled {
+    background: var(--line);
+    color: var(--ink-faint);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+  .btn-primary .kbd-hint {
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.72;
+    font-variant-numeric: tabular-nums;
+  }
+  .btn-primary[disabled] .kbd-hint,
+  .btn-primary.is-disabled .kbd-hint { opacity: 0.5; }
+
+  /* ---------- Utility classes ---------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-card);
+    box-shadow: var(--shadow-card);
+  }
+  .stack { display: flex; flex-direction: column; }
+  .stack > * + * { margin-top: var(--s-3); }
+  .row { display: flex; align-items: center; }
+  .row.gap-1 { gap: var(--s-1); }
+  .row.gap-2 { gap: var(--s-2); }
+  .row.gap-3 { gap: var(--s-3); }
+  .spacer { flex: 1; }
+  .hidden { display: none !important; }
+  .input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: var(--r-input);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 14px;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  }
+  .input:hover { border-color: var(--ink-faint); }
+  .input:focus-visible {
+    border-color: var(--rosa);
+    box-shadow: 0 0 0 3px var(--rosa-soft);
+    outline: none;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: var(--r-pill);
+    background: var(--turquesa-soft);
+    color: #067884;
+    letter-spacing: 0.02em;
+  }
+  .badge-warn { background: var(--naranja-soft); color: #B26514; }
+  .badge-ok { background: var(--verde-soft); color: #5C7C1F; }
+
+  /* ============================================================
+     COMMAND PALETTE
+     ============================================================ */
+  dialog.palette {
+    border: 0;
+    padding: 0;
+    width: 480px;
+    max-width: calc(100vw - 48px);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow-pop);
+    color: var(--ink);
+    margin: 12vh auto auto;
+  }
+  dialog.palette::backdrop {
+    background: rgba(26, 26, 26, 0.36);
+    backdrop-filter: blur(2px);
+  }
+  .palette__search {
+    display: flex;
+    align-items: center;
+    gap: var(--s-1);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .palette__search svg { color: var(--ink-faint); flex: 0 0 auto; }
+  .palette__input {
+    flex: 1;
+    height: 28px;
+    border: 0;
+    background: transparent;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .palette__input::placeholder { color: var(--ink-faint); }
+  .palette__input:focus { outline: none; }
+  .palette__list {
+    list-style: none;
+    margin: 0;
+    padding: var(--s-1);
+    max-height: 360px;
+    overflow-y: auto;
+  }
+  .palette__group {
+    padding: 10px 12px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+  }
+  .palette__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--ink);
+    text-align: left;
+    transition: background var(--dur) var(--ease);
+  }
+  .palette__item:hover,
+  .palette__item[aria-selected="true"] {
+    background: var(--cream-sink);
+  }
+  .palette__item-icon {
+    flex: 0 0 22px;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: var(--turquesa-soft);
+    color: var(--turquesa);
+    font-size: 13px;
+  }
+  .palette__item-label { flex: 1; }
+  .palette__item-hint {
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+  .palette__footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+
+  /* ============================================================
+     SCREEN CONTAINER HELPERS (for agent B to style into)
+     ============================================================ */
+  .screen {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+  }
+  .screen__eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--turquesa);
+  }
+  .screen__title { /* alias of t-display */
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0;
+  }
+  .screen__subtitle {
+    font-size: 17px;
+    color: var(--ink-muted);
+    max-width: 640px;
+    margin: 0;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= TOP BAR ================= -->
+  <header class="topbar" role="banner">
+    <div class="topbar__brand">
+      <span class="topbar__jaguar" aria-hidden="true">🐆</span>
+      <span class="topbar__title">AXKAN Studio</span>
+      <span class="topbar__divider" aria-hidden="true"></span>
+      <span class="topbar__crumb" id="topbar-crumb">Nueva sesión</span>
+    </div>
+    <div class="topbar__right">
+      <button type="button" class="palette-trigger" id="palette-open" aria-label="Abrir paleta de comandos">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span>Buscar</span>
+        <span class="kbd">⌘K</span>
+      </button>
+      <button type="button" class="iconbtn" aria-label="Ayuda" title="Ayuda">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.7-2.5 2-2.5 4"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+      </button>
+      <div class="avatar" aria-label="Usuario Ivan">I</div>
+    </div>
+  </header>
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" aria-label="Progreso de la sesión">
+    <div class="sidebar__label">Progreso</div>
+    <!-- Stepper. data-video-only steps are hidden via CSS/JS unless
+         contentType === 'video'. JS sets body.dataset.flow = 'image' | 'video'
+         and the step dots are renumbered live from the visible .step elements. -->
+    <nav class="stepper" id="stepper" aria-label="Pasos">
+      <button type="button" class="step is-active" data-step="tipo" aria-current="step">
+        <span class="step__dot">1</span>
+        <span class="step__label">Tipo</span>
+      </button>
+      <button type="button" class="step" data-step="detalles">
+        <span class="step__dot">2</span>
+        <span class="step__label">Detalles</span>
+      </button>
+      <button type="button" class="step" data-step="imagenes">
+        <span class="step__dot">3</span>
+        <span class="step__label">Imágenes</span>
+      </button>
+      <button type="button" class="step" data-step="prompts">
+        <span class="step__dot">4</span>
+        <span class="step__label">Prompts</span>
+      </button>
+      <button type="button" class="step" data-step="generadas" data-video-only>
+        <span class="step__dot">5</span>
+        <span class="step__label">Generadas</span>
+      </button>
+      <button type="button" class="step" data-step="prompts-video" data-video-only>
+        <span class="step__dot">6</span>
+        <span class="step__label">Prompts video</span>
+      </button>
+      <button type="button" class="step" data-step="enviar">
+        <span class="step__dot">5</span>
+        <span class="step__label">Enviar</span>
+      </button>
+    </nav>
+
+    <div class="sidebar__meta">
+      <div class="sidebar__meta-label">Sesión</div>
+      <div class="sidebar__meta-name" id="session-name">sesion-borrador</div>
+      <div class="sidebar__meta-time" id="session-time">—</div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="main" id="app-main" role="main">
+
+    <div id="screen-root"><!-- ============================================================
+     AXKAN Content Studio — Screens module
+     Owns: 7 screen sections + switching + local interactions
+     Does NOT own: app shell, sidebar, topbar, backend calls
+     ============================================================ -->
+
+<style>
+  /* ---------- Screen container + transitions ---------- */
+  #screens {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-4);
+    box-sizing: border-box;
+  }
+
+  .screen {
+    display: none;
+    animation: screenIn 220ms cubic-bezier(.2,.7,.2,1);
+  }
+  .screen.active { display: block; }
+
+  @keyframes screenIn {
+    0%   { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen h1 {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--space-2) 0;
+    line-height: 1.1;
+  }
+  .screen h2 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+    margin: 0 0 var(--space-3) 0;
+    line-height: 1.15;
+  }
+  .screen .sub {
+    font-size: 20px;
+    color: var(--muted);
+    margin: 0 0 var(--space-4) 0;
+    line-height: 1.4;
+  }
+  .screen .tiny {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- Screen 1 (welcome) ---------- */
+  #screen-1 {
+    text-align: center;
+    padding-top: var(--space-6);
+  }
+  #screen-1 h1 { font-size: 72px; }
+  #screen-1 .sub { font-size: 24px; }
+  #screen-1 .hint {
+    margin-top: var(--space-4);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  #screen-1 .hint kbd {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    color: var(--ink);
+    margin: 0 2px;
+  }
+
+  /* ---------- Card grids (screens 2 + 3) ---------- */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+    max-width: 1100px;
+  }
+  .card-grid.more-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 720px; }
+  #sub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 720px; }
+
+  .type-card {
+    min-height: 240px;
+    background: #ffffff;
+    border: 2px solid #E5DFCF;
+    border-radius: 16px;
+    padding: 24px;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    outline: none;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    position: relative;
+  }
+  .type-card:hover {
+    border-color: #09ADC2;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(9,173,194,0.14);
+  }
+  .type-card:focus-visible {
+    border-color: #E72A88;
+    outline: 3px solid rgba(231,42,136,0.22);
+    outline-offset: 2px;
+  }
+  .type-card:active { transform: translateY(-1px); }
+  .type-card.selected {
+    border-color: #E72A88;
+    background: #FFF5FA;
+    box-shadow: 0 10px 32px rgba(231,42,136,0.22);
+  }
+  .type-card.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #E72A88;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    animation: check-pop 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes check-pop {
+    0%   { transform: scale(0); opacity: 0; }
+    60%  { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .type-card .icon { font-size: 56px; line-height: 1; margin-bottom: 16px; pointer-events: none; }
+  .type-card .name { font-size: 22px; font-weight: 700; color: #1A1A1A; pointer-events: none; }
+  .type-card .desc { font-size: 13px; color: #6B6B6B; margin-top: 4px; pointer-events: none; }
+  .type-card * { pointer-events: none; }
+
+  /* Pulse/unlock animation for the primary CTA when it goes from disabled→enabled */
+  @keyframes cta-unlock {
+    0%   { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(231, 42, 136, 0.5); }
+    50%  { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(231, 42, 136, 0.0); }
+    100% { transform: scale(1);    box-shadow: 0 6px 20px rgba(231, 42, 136, 0.28); }
+  }
+  .btn-primary.just-unlocked { animation: cta-unlock 520ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  .more-link {
+    display: inline-block;
+    margin-top: var(--space-2);
+    font-size: 14px;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--border);
+    cursor: pointer;
+    padding-bottom: 2px;
+  }
+  .more-link:hover { color: var(--ink); border-bottom-color: var(--muted); }
+  .more-cards { margin-top: var(--space-3); }
+  .more-cards.hidden { display: none; }
+
+  /* ---------- Screen 4 (theme + destination) ---------- */
+  .field {
+    margin-bottom: var(--space-3);
+  }
+  .field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: var(--space-1);
+  }
+  .field input[type="text"],
+  .field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    font-size: 18px;
+    font-family: inherit;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-input);
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+    line-height: 1.5;
+  }
+  .field input[type="text"]:focus,
+  .field textarea:focus {
+    border-color: var(--turquesa);
+    box-shadow: 0 0 0 3px rgba(9,173,194,0.15);
+  }
+  .field textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  /* Ghost text layer — sits behind the real textarea */
+  .ghost-wrap {
+    position: relative;
+  }
+  .ghost-layer {
+    position: absolute;
+    top: 0; left: 0;
+    padding: 14px 16px;
+    font-size: 18px;
+    font-family: inherit;
+    line-height: 1.5;
+    color: #B8B4AA;
+    pointer-events: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  .ghost-layer .caret {
+    display: inline-block;
+    width: 1px;
+    background: #B8B4AA;
+    margin-left: 1px;
+    animation: ghostBlink 1s steps(1) infinite;
+    vertical-align: baseline;
+    height: 1em;
+  }
+  @keyframes ghostBlink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+  .ghost-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .ghost-hint kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+  }
+
+  /* ---------- Screen 5 (upload) ---------- */
+  .drop-zone {
+    width: 640px;
+    max-width: 100%;
+    height: 360px;
+    margin: 0 auto var(--space-3);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-card);
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+  }
+  .drop-zone:hover {
+    border-color: var(--turquesa);
+  }
+  .drop-zone.drag-over {
+    background: rgba(9,173,194,0.08);
+    border-color: var(--turquesa);
+    transform: scale(1.01);
+  }
+  .drop-zone .dz-icon { font-size: 48px; margin-bottom: var(--space-2); }
+  .drop-zone .dz-title { font-size: 20px; font-weight: 600; color: var(--ink); }
+  .drop-zone .dz-sub { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  .thumb-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    min-height: 96px;
+  }
+  .thumb {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    border-radius: var(--radius-input);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #fff;
+    animation: bounceIn 260ms cubic-bezier(.2,1.3,.3,1);
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .rm {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 20px; height: 20px;
+    background: rgba(26,26,26,0.82);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 20px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .thumb .rm:hover { background: var(--rosa); }
+  @keyframes bounceIn {
+    0%   { opacity: 0; transform: scale(0.6); }
+    70%  { opacity: 1; transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  /* ---------- Screen 6 (prompts) ---------- */
+  .prompt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .prompt-card {
+    background: #FFFFFF;
+    border: 1px solid #E5DFCF;
+    border-radius: 14px;
+    padding: 20px;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .prompt-card:hover {
+    border-color: var(--turquesa);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  }
+  .prompt-card.editing {
+    border-color: var(--rosa);
+    box-shadow: 0 0 0 3px rgba(231,42,136,0.12);
+  }
+  .prompt-card .p-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #7A6F54;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .prompt-card .p-text {
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.55;
+    white-space: pre-wrap;
+    cursor: text;
+  }
+  .prompt-card textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink);
+    border: 1px solid #E5DFCF;
+    border-radius: 8px;
+    background: #FAF7F0;
+    outline: none;
+    resize: vertical;
+    min-height: 100px;
+    padding: 10px 12px;
+  }
+  .prompt-card__footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid #F0EADB;
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+  .prompt-card__send {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--turquesa);
+    background: #FFFFFF;
+    color: var(--turquesa);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 80ms ease, background 120ms ease, color 120ms ease;
+  }
+  .prompt-card__send:hover {
+    background: var(--turquesa);
+    color: #FFFFFF;
+  }
+  .prompt-card__send:active { transform: translateY(1px); }
+  .prompt-card__send[data-state="sending"] {
+    opacity: 0.6; pointer-events: none;
+  }
+  .prompt-card__send[data-state="done"] {
+    background: #E8F7F0; color: #1B7A4F; border-color: #B8E0C9;
+  }
+  .prompt-card__edit-hint {
+    font-size: 12px;
+    color: #9C8F72;
+    margin-right: auto;
+  }
+
+  /* ---------- Screen 7 (done) ---------- */
+  #screen-7 { text-align: center; }
+  #screen-7 h1 { font-size: 56px; }
+  .progress-list {
+    text-align: left;
+    max-width: 520px;
+    margin: var(--space-4) auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .progress-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-input);
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .progress-item .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--turquesa);
+    animation: pulseDot 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .done-actions {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: center;
+    margin-top: var(--space-3);
+  }
+  .btn-secondary {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-btn);
+    padding: 12px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 140ms ease, color 140ms ease;
+    font-family: inherit;
+  }
+  .btn-secondary:hover,
+  .btn-secondary:focus-visible {
+    border-color: var(--turquesa);
+    color: var(--turquesa);
+    outline: none;
+  }
+</style>
+
+<div id="screens">
+
+  <!-- Screen 1 (welcome) merged into Screen 2 per desktop flow: start directly at "What are we making?" -->
+  <section id="screen-1" class="screen" data-step="tipo" hidden></section>
+
+  <!-- ================= Screen 2 — Content type (first screen) ================= -->
+  <section id="screen-2" class="screen active" data-step="tipo">
+    <h2>¿Qué vamos a crear?</h2>
+    <div class="card-grid" id="type-grid" role="radiogroup" aria-label="Tipo de contenido">
+      <div class="type-card" role="radio" tabindex="0" data-type="imagen" aria-checked="false">
+        <div class="icon">📸</div>
+        <div>
+          <div class="name">Imagen</div>
+          <div class="desc">para feed de Instagram</div>
+        </div>
+      </div>
+      <div class="type-card" role="radio" tabindex="0" data-type="video" aria-checked="false">
+        <div class="icon">🎬</div>
+        <div>
+          <div class="name">Video</div>
+          <div class="desc">para Reels o TikTok</div>
+        </div>
+      </div>
+      <div class="type-card" role="radio" tabindex="0" data-type="pitch" aria-checked="false">
+        <div class="icon">📄</div>
+        <div>
+          <div class="name">Pitch</div>
+          <div class="desc">presentación para clientes</div>
+        </div>
+      </div>
+    </div>
+    <a class="more-link" id="more-link" tabindex="0">¿necesitas algo más?</a>
+    <div class="card-grid more-cards hidden" id="more-cards">
+      <div class="type-card" role="radio" tabindex="0" data-type="post" aria-checked="false">
+        <div class="icon">📝</div>
+        <div>
+          <div class="name">Post</div>
+          <div class="desc">caption + imagen</div>
+        </div>
+      </div>
+      <div class="type-card" role="radio" tabindex="0" data-type="pitch-b2b" aria-checked="false">
+        <div class="icon">💼</div>
+        <div>
+          <div class="name">Pitch B2B</div>
+          <div class="desc">para empresas grandes</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Screen 3 — Sub-type (video only) ================= -->
+  <section id="screen-3" class="screen" data-step="tipo">
+    <h2>Elige el estilo de tu video</h2>
+    <div class="card-grid" id="sub-grid" role="radiogroup" aria-label="Estilo de video">
+      <div class="type-card" role="radio" tabindex="0" data-sub="carousel-loop" aria-checked="false">
+        <div class="icon">🔁</div>
+        <div>
+          <div class="name">Carousel Loop</div>
+          <div class="desc">seamless, 3–8 sec</div>
+        </div>
+      </div>
+      <div class="type-card" role="radio" tabindex="0" data-sub="personaje-hablando" aria-checked="false">
+        <div class="icon">🎭</div>
+        <div>
+          <div class="name">Personaje Hablando</div>
+          <div class="desc">9:16 con diálogo</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Screen 4 — Details ================= -->
+  <section id="screen-4" class="screen" data-step="detalles">
+    <h2>¿De qué va?</h2>
+    <div class="field">
+      <label for="dest-input">📍 ¿A dónde?</label>
+      <input type="text" id="dest-input" placeholder="Tulum, Chichén Itzá, Mérida…" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="theme-input">✨ ¿Cuál es el vibe?</label>
+      <div class="ghost-wrap">
+        <div class="ghost-layer" id="ghost-layer" aria-hidden="true"></div>
+        <textarea id="theme-input" rows="4" placeholder=""></textarea>
+      </div>
+      <div class="ghost-hint">Presiona <kbd>Tab</kbd> para aceptar la sugerencia.</div>
+    </div>
+  </section>
+
+  <!-- ================= Screen 5 — Upload ================= -->
+  <section id="screen-5" class="screen" data-step="imagenes">
+    <h2>Sube tus imágenes</h2>
+    <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Zona de carga de imágenes">
+      <div class="dz-icon">🖼️</div>
+      <div class="dz-title">Arrastra tus imágenes aquí</div>
+      <div class="dz-sub">o haz click para elegir · o pega con ⌘V</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" multiple style="display:none" />
+    <div class="thumb-row" id="thumb-row"></div>
+  </section>
+
+  <!-- ================= Screen 6 — Prompts ================= -->
+  <section id="screen-6" class="screen" data-step="prompts">
+    <h2>Tus prompts están listos</h2>
+    <p class="sub">Revísalos y edita lo que quieras. Click en cualquier card.</p>
+    <div class="prompt-list" id="prompt-list"></div>
+  </section>
+
+  <!-- ============== Screen 8 — Sube imágenes generadas (video flows only) ============== -->
+  <!-- User has already sent Phase 1 prompts to Envato ImageGen, picked the best
+       variations, and downloaded them. Now they upload those curated images
+       so Claude can do a second-pass analysis and write motion prompts. -->
+  <section id="screen-8" class="screen" data-step="generadas">
+    <h2>Sube las imágenes que generaste</h2>
+    <p class="sub">De las que generaste en Envato ImageGen, sube las que elegiste. Claude las analizará para escribir los prompts de video.</p>
+    <div class="drop-zone" id="drop-zone-gen" tabindex="0" role="button" aria-label="Zona de carga de imágenes generadas">
+      <div class="dz-icon">🎬</div>
+      <div class="dz-title">Arrastra las imágenes generadas aquí</div>
+      <div class="dz-sub">o haz click para elegir · o pega con ⌘V</div>
+    </div>
+    <input type="file" id="file-input-gen" accept="image/*" multiple style="display:none" />
+    <div class="thumb-row" id="thumb-row-gen"></div>
+  </section>
+
+  <!-- ============== Screen 9 — Prompts de video (Phase 2, video flows only) ============== -->
+  <!-- Claude's second-pass output: MOTION prompts (not scene prompts).
+       For personaje-hablando, each prompt also includes `speech` (Spanish dialogue). -->
+  <section id="screen-9" class="screen" data-step="prompts-video">
+    <h2>Tus prompts de video están listos</h2>
+    <p class="sub">Revisa el prompt de movimiento de cada clip. Envíalos a Envato Video Gen.</p>
+    <div class="prompt-list" id="prompt-list-video"></div>
+  </section>
+
+  <!-- ================= Screen 7 — Sent ================= -->
+  <section id="screen-7" class="screen" data-step="enviar">
+    <h1>¡Todo listo! 🎉</h1>
+    <p class="sub">Tus videos están generándose en Envato</p>
+    <div class="progress-list" id="progress-list"></div>
+    <div class="done-actions">
+      <button type="button" class="btn-secondary" id="btn-envato">Ver en Envato</button>
+      <button type="button" class="btn-secondary" id="btn-new">Crear otro proyecto</button>
+    </div>
+  </section>
+
+</div>
+
+
+</div>
+
+    <!-- ================= ACTION BAR ================= -->
+    <footer class="actionbar" role="contentinfo">
+      <button type="button" class="btn-ghost" id="btn-atras" hidden>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        <span>Atrás</span>
+      </button>
+      <div class="spacer"></div>
+      <button type="button" class="btn-primary" id="btn-continuar" disabled>
+        <span>Continuar</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 5 7 7-7 7"/></svg>
+        <span class="kbd-hint" aria-label="Atajo Cmd Enter">⌘↵</span>
+      </button>
+    </footer>
+  </main>
+</div>
+
+<!-- ================= COMMAND PALETTE ================= -->
+<dialog class="palette" id="palette" aria-label="Paleta de comandos">
+  <div class="palette__search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input type="text" class="palette__input" id="palette-input" placeholder="Buscar comandos, pasos, ajustes…" autocomplete="off" />
+    <button type="button" class="kbd" id="palette-close" aria-label="Cerrar">Esc</button>
+  </div>
+  <ul class="palette__list" role="listbox">
+    <li class="palette__group">Navegación</li>
+    <li><button type="button" class="palette__item" data-cmd="go:tipo" aria-selected="true">
+      <span class="palette__item-icon">1</span>
+      <span class="palette__item-label">Ir a Tipo</span>
+      <span class="palette__item-hint">Paso 1</span>
+    </button></li>
+    <li><button type="button" class="palette__item" data-cmd="go:detalles">
+      <span class="palette__item-icon">2</span>
+      <span class="palette__item-label">Ir a Detalles</span>
+      <span class="palette__item-hint">Paso 2</span>
+    </button></li>
+    <li><button type="button" class="palette__item" data-cmd="go:imagenes">
+      <span class="palette__item-icon">3</span>
+      <span class="palette__item-label">Ir a Imágenes</span>
+      <span class="palette__item-hint">Paso 3</span>
+    </button></li>
+    <li><button type="button" class="palette__item" data-cmd="go:prompts">
+      <span class="palette__item-icon">4</span>
+      <span class="palette__item-label">Ir a Prompts</span>
+      <span class="palette__item-hint">Paso 4</span>
+    </button></li>
+    <li><button type="button" class="palette__item" data-cmd="go:enviar">
+      <span class="palette__item-icon">5</span>
+      <span class="palette__item-label">Ir a Enviar</span>
+      <span class="palette__item-hint">Paso 5</span>
+    </button></li>
+    <li class="palette__group">Acciones</li>
+    <li><button type="button" class="palette__item" data-cmd="new-session">
+      <span class="palette__item-icon" style="background: var(--rosa-soft); color: var(--rosa);">＋</span>
+      <span class="palette__item-label">Nueva sesión</span>
+      <span class="palette__item-hint">⌘N</span>
+    </button></li>
+    <li><button type="button" class="palette__item" data-cmd="continue">
+      <span class="palette__item-icon" style="background: var(--verde-soft); color: #5C7C1F;">→</span>
+      <span class="palette__item-label">Continuar al siguiente paso</span>
+      <span class="palette__item-hint">⌘↵</span>
+    </button></li>
+    <li><button type="button" class="palette__item" data-cmd="help">
+      <span class="palette__item-icon" style="background: var(--naranja-soft); color: #B26514;">?</span>
+      <span class="palette__item-label">Mostrar ayuda</span>
+      <span class="palette__item-hint">?</span>
+    </button></li>
+  </ul>
+  <div class="palette__footer">
+    <span>↑↓ navegar · ↵ abrir</span>
+    <span>AXKAN Studio</span>
+  </div>
+</dialog>
+
+
+
+
+
+<script>
+// Bundled scripts — auto-extracted for browser execution reliability
+
+
+//  ======== SCRIPT {} — THE STORE + ACTIONS (Stage 1) ========
+//
+// The notebook, the secretary, the intercom.
+// Everything else in the app will eventually go through here.
+//
+// Contract:
+//   - AXKAN.store.state is the notebook. Read it anywhere.
+//   - AXKAN.actions.* is the secretary. Only way to write.
+//   - window events "axkan:state-changed" + "axkan:reset" are the intercom.
+//
+(function(){
+  'use strict';
+  window.AXKAN = window.AXKAN || {};
+  const AXKAN = window.AXKAN;
+
+  // ===== ENFORCEMENT LAYERS =====
+  // Level 1 — Input validation: actions refuse bad input with a visible warning.
+  // Level 2 — Write-lock: AXKAN.state is a Proxy; only actions can mutate (via a
+  //           private "ticket" flag). External code that does
+  //           `AXKAN.state.foo = bar` throws immediately and loudly.
+
+  // ---------- 0. Validation helpers ----------
+  const VALID_CONTENT_TYPES = ['imagen', 'video', 'pitch', 'post', 'pitch-b2b'];
+  const VALID_SUB_TYPES     = ['carousel-loop', 'personaje-hablando'];
+  const STEPS               = ['tipo', 'detalles', 'imagenes', 'prompts', 'generadas', 'prompts-video', 'enviar'];
+
+  function warn(...args){
+    // Single channel for architectural violations. Easy to grep for in devtools.
+    console.warn('[AXKAN]', ...args);
+  }
+  function die(msg){
+    // Thrown errors are the Level-2 enforcement. They make violations impossible
+    // to miss — any attempt to bypass the secretary crashes loudly.
+    throw new Error('[AXKAN] ' + msg);
+  }
+
+  // ---------- 1. The Notebook (the raw store) ----------
+  const LS_KEY = 'axkan.studio.state.v2';
+
+  const PERSISTABLE = [
+    'currentScreen', 'reachedSteps',
+    'contentType',   'subType',
+    'destination',   'theme',
+    'prompts',       'sessionId', 'filePaths',
+    'flowStamp',
+    // Two-phase video pipeline state
+    'phase',           'imagePrompts',   'videoPrompts',
+    'generatedPaths',  'generatedSessionId',
+  ];
+  const PERSISTABLE_SET = new Set(PERSISTABLE);
+  // Every legitimate field on state. The write-guard rejects unknown keys so
+  // typos like AXKAN.state.content_type don't silently add a shadow field.
+  const KNOWN_FIELDS = new Set([
+    ...PERSISTABLE, 'files', 'generatedImages', 'isBusy'
+  ]);
+
+  function freshState(){
+    return {
+      currentScreen: 2,
+      reachedSteps:  ['tipo'],
+
+      contentType:   null,
+      subType:       null,
+      destination:   '',
+      theme:         '',
+
+      // ── Phase 1: reference images + image prompts ──
+      files:         [],   // File objects for reference images (in-memory only)
+      filePaths:     [],   // server paths for reference images (persistable)
+      imagePrompts:  [],   // Claude's Phase 1 output (image-gen prompts)
+      sessionId:     null,
+
+      // ── Phase 2: generated first-frame images + motion prompts ──
+      //   For video flows only. Phase 2 starts AFTER user has run Phase 1's
+      //   image prompts through Envato ImageGen and curated the results.
+      generatedImages:     [],   // File objects for curated images (in-memory)
+      generatedPaths:      [],   // server paths to curated images (persistable)
+      generatedSessionId:  null, // session id where the curated images were uploaded
+      videoPrompts:        [],   // Claude's Phase 2 output (motion prompts, +speech)
+
+      // ── Which phase is "active" (controls which prompts the UI renders) ──
+      //   'images' — image-gen flow or Phase 1 of a video flow
+      //   'videos' — Phase 2 of a video flow
+      phase:         'images',
+
+      // ── prompts is a compatibility alias: points to whichever phase's prompts
+      //     are currently being rendered. Kept as a real array (not a getter)
+      //     so the existing render code that reads AXKAN.state.prompts works
+      //     unchanged. Actions keep it in sync with imagePrompts / videoPrompts.
+      prompts:       [],
+
+      isBusy:        false,
+      flowStamp:     null,
+    };
+  }
+
+  // Private raw object — only code inside this IIFE touches it directly.
+  const _raw = freshState();
+
+  // Level-2: mutation ticket. Actions set this flag, mutate, then clear it.
+  // The Proxy trap checks the flag; if it's not set, any write throws.
+  let _mutationAllowed = false;
+  function mutate(fn){
+    _mutationAllowed = true;
+    try { return fn(); }
+    finally { _mutationAllowed = false; }
+  }
+
+  // Level-2: the Proxy that wraps the raw object.
+  // Reads pass through. Writes require the ticket.
+  function makeStateProxy(target){
+    return new Proxy(target, {
+      set(obj, key, value){
+        if (!_mutationAllowed) {
+          die('Direct state write is forbidden. Use AXKAN.actions.* instead.\n' +
+              '  Attempted: AXKAN.state.' + String(key) + ' = ' + JSON.stringify(value));
+        }
+        if (typeof key === 'string' && !KNOWN_FIELDS.has(key)) {
+          warn('setting unknown state field:', key, '— did you mean something else?');
+        }
+        obj[key] = value;
+        return true;
+      },
+      deleteProperty(obj, key){
+        if (!_mutationAllowed) {
+          die('Direct state delete is forbidden. Use AXKAN.actions.* instead.\n' +
+              '  Attempted: delete AXKAN.state.' + String(key));
+        }
+        delete obj[key];
+        return true;
+      },
+    });
+  }
+
+  const stateProxy = makeStateProxy(_raw);
+
+  // Publish on AXKAN and AXKAN.store — both point at the same locked proxy.
+  AXKAN.store = { state: stateProxy };
+  AXKAN.state = stateProxy;
+
+  // ---------- 2. The Intercom ----------
+  function announce(type, detail){
+    window.dispatchEvent(new CustomEvent(type, { detail: detail || {} }));
+  }
+  function stateChanged(patch){
+    announce('axkan:state-changed', { patch: patch || {}, state: stateProxy });
+  }
+
+  // ---------- 3. Persistence ----------
+  // Backup key — sessionStorage survives same-tab refresh even if
+  // localStorage is somehow cleared by another tab or extension.
+  var SS_KEY = 'axkan.studio.state.v2.backup';
+
+  function persist(){
+    try {
+      var snapshot = {};
+      for (var i = 0; i < PERSISTABLE.length; i++) {
+        var k = PERSISTABLE[i];
+        snapshot[k] = _raw[k];
+      }
+      var json = JSON.stringify(snapshot);
+      localStorage.setItem(LS_KEY, json);
+      // Redundant backup in sessionStorage (survives same-tab refresh)
+      try { sessionStorage.setItem(SS_KEY, json); } catch(_e){}
+    } catch (e) { console.error('[AXKAN] persist() FAILED:', e); }
+  }
+
+  // Safety net: persist on page unload so no in-flight state is lost
+  window.addEventListener('beforeunload', function(){
+    try {
+      var snapshot = {};
+      for (var i = 0; i < PERSISTABLE.length; i++) {
+        var k = PERSISTABLE[i];
+        snapshot[k] = _raw[k];
+      }
+      var json = JSON.stringify(snapshot);
+      localStorage.setItem(LS_KEY, json);
+      sessionStorage.setItem(SS_KEY, json);
+    } catch(_e){}
+  });
+
+  function _safeNormalizePrompt(p, i) {
+    if (!p || typeof p !== 'object') return {
+      slide_number: i + 1, slide_name: 'Slide ' + (i + 1),
+      prompt_text: '', speech: '', estimated_time: ''
+    };
+    return {
+      slide_number:   p.slide_number   != null ? p.slide_number : (i + 1),
+      slide_name:     p.slide_name     || p.title || ('Slide ' + (i + 1)),
+      prompt_text:    p.prompt_text    || p.text  || '',
+      speech:         p.speech         || '',
+      estimated_time: p.estimated_time || '',
+    };
+  }
+
+  function _safeNormalizeArray(arr) {
+    if (!Array.isArray(arr)) return [];
+    var out = [];
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i]) out.push(_safeNormalizePrompt(arr[i], i));
+    }
+    return out;
+  }
+
+  function restore(){
+    // Try localStorage first, fall back to sessionStorage backup
+    var raw = null;
+    try { raw = localStorage.getItem(LS_KEY); } catch(_e){}
+    if (!raw) {
+      try { raw = sessionStorage.getItem(SS_KEY); } catch(_e){}
+      if (raw) console.warn('[AXKAN] restored from sessionStorage backup');
+    }
+    if (!raw) {
+      try {
+        var legacy = localStorage.getItem('axkan.studio.state.v1');
+        if (legacy) {
+          raw = legacy;
+          try { localStorage.removeItem('axkan.studio.state.v1'); } catch (_e) {}
+        }
+      } catch(_e){}
+    }
+    if (!raw) {
+      console.warn('[AXKAN] no saved state found');
+      return;
+    }
+    var saved;
+    try { saved = JSON.parse(raw); } catch(e) {
+      console.error('[AXKAN] corrupt localStorage JSON — keeping defaults');
+      return;
+    }
+    if (!saved || typeof saved !== 'object') return;
+
+    console.log('[AXKAN] restore: found saved state — screen', saved.currentScreen,
+      '| type:', saved.contentType, '| sub:', saved.subType,
+      '| phase:', saved.phase,
+      '| vp:', (saved.videoPrompts||[]).length,
+      '| ip:', (saved.imagePrompts||[]).length,
+      '| gp:', (saved.generatedPaths||[]).length,
+      '| fp:', (saved.filePaths||[]).length);
+
+    mutate(function(){
+      for (var i = 0; i < PERSISTABLE.length; i++) {
+        var k = PERSISTABLE[i];
+        if (k in saved) _raw[k] = saved[k];
+      }
+      // Normalize prompt arrays safely
+      _raw.prompts      = _safeNormalizeArray(_raw.prompts);
+      _raw.imagePrompts = _safeNormalizeArray(_raw.imagePrompts);
+      _raw.videoPrompts = _safeNormalizeArray(_raw.videoPrompts);
+      // Rebuild prompts alias from phase
+      if (_raw.phase === 'videos' && _raw.videoPrompts.length) {
+        _raw.prompts = _raw.videoPrompts;
+      } else if (_raw.imagePrompts.length) {
+        _raw.prompts = _raw.imagePrompts;
+      }
+    });
+  }
+
+  function makeFlowStamp(){
+    const t = _raw.contentType;
+    const s = _raw.subType;
+    if (!t) return null;
+    return s ? (t + ':' + s) : t;
+  }
+
+  // ---------- 4. The Secretary (the actions) ----------
+  // Every action: VALIDATE → MUTATE (through ticket) → PERSIST → ANNOUNCE.
+  // Actions refuse invalid input with a warn() and return early — bad data
+  // never touches the store.
+  const actions = {
+
+    selectContentType(type){
+      if (!VALID_CONTENT_TYPES.includes(type)) {
+        warn('selectContentType: invalid type', type, '— expected one of', VALID_CONTENT_TYPES);
+        return;
+      }
+      if (_raw.contentType === type) return;
+      mutate(() => {
+        _raw.contentType = type;
+        _raw.subType     = null;
+        // Cascade: type change invalidates ALL phase data.
+        _raw.imagePrompts = [];
+        _raw.videoPrompts = [];
+        _raw.prompts      = [];
+        _raw.flowStamp    = null;
+        _raw.phase        = 'images';
+        // Generated-image state is tied to a specific flow; wipe it too.
+        _raw.generatedImages    = [];
+        _raw.generatedPaths     = [];
+        _raw.generatedSessionId = null;
+      });
+      persist();
+      stateChanged({ contentType: type });
+    },
+
+    selectSubType(sub){
+      if (!VALID_SUB_TYPES.includes(sub)) {
+        warn('selectSubType: invalid sub-type', sub, '— expected one of', VALID_SUB_TYPES);
+        return;
+      }
+      if (!_raw.contentType) {
+        warn('selectSubType called before contentType was set — ignored');
+        return;
+      }
+      if (_raw.subType === sub) return;
+      mutate(() => {
+        _raw.subType   = sub;
+        // Sub-type change within a flow invalidates Phase-2 state (motion
+        // prompts are sub-type specific — carousel-loop vs personaje-hablando
+        // have different speech/motion structure).
+        _raw.videoPrompts       = [];
+        _raw.generatedImages    = [];
+        _raw.generatedPaths     = [];
+        _raw.generatedSessionId = null;
+        _raw.phase              = 'images';
+        // Also wipe Phase 1 — different sub-type means different scene focus.
+        _raw.imagePrompts  = [];
+        _raw.prompts       = [];
+        _raw.flowStamp     = null;
+      });
+      persist();
+      stateChanged({ subType: sub });
+    },
+
+    setDetails(destination, theme){
+      let changed = false;
+      mutate(() => {
+        if (typeof destination === 'string' && destination !== _raw.destination) {
+          _raw.destination = destination;
+          changed = true;
+        }
+        if (typeof theme === 'string' && theme !== _raw.theme) {
+          _raw.theme = theme;
+          changed = true;
+        }
+      });
+      if (!changed) return;
+      persist();
+      stateChanged({ destination: _raw.destination, theme: _raw.theme });
+    },
+
+    addFiles(fileList){
+      if (!fileList || !fileList.length) return 0;
+      const existing = _raw.files;
+      const seen = new Set(
+        existing.map(f => f.name + '|' + f.size + '|' + f.lastModified)
+      );
+      let added = 0;
+      mutate(() => {
+        for (const f of fileList) {
+          if (!f || !f.type) continue;
+          if (!/^image\/(png|jpe?g|webp|gif)$/.test(f.type)) {
+            warn('addFiles: rejecting', f.name, 'type', f.type);
+            continue;
+          }
+          const key = f.name + '|' + f.size + '|' + f.lastModified;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          existing.push(f);
+          added++;
+        }
+      });
+      if (!added) return 0;
+      stateChanged({ files: existing.length });
+      return added;
+    },
+
+    removeFile(index){
+      const arr = _raw.files;
+      if (!Number.isInteger(index) || index < 0 || index >= arr.length) {
+        warn('removeFile: index out of range', index, '(files length:', arr.length, ')');
+        return;
+      }
+      mutate(() => { arr.splice(index, 1); });
+      stateChanged({ files: arr.length });
+    },
+
+    clearFiles(){
+      if (!_raw.files.length) return;
+      mutate(() => { _raw.files = []; });
+      stateChanged({ files: 0 });
+    },
+
+    setUploaded(sessionId, filePaths){
+      if (sessionId && typeof sessionId !== 'string') {
+        warn('setUploaded: sessionId must be string or null');
+        return;
+      }
+      mutate(() => {
+        _raw.sessionId = sessionId || null;
+        _raw.filePaths = Array.isArray(filePaths) ? filePaths.slice() : [];
+      });
+      persist();
+      stateChanged({ sessionId: _raw.sessionId, filePaths: _raw.filePaths });
+    },
+
+    // Normalize any prompt-shaped input into the canonical shape.
+    // Accepts several legacy shapes so back-end drift doesn't silently produce
+    // blank cards: prompt_text OR text OR video_prompt. Same for title aliases.
+    _normalizePrompts(list){
+      return list.map((p, i) => {
+        if (!p || typeof p !== 'object') {
+          return { slide_number: i + 1, slide_name: 'Slide ' + (i + 1), prompt_text: '', speech: '', estimated_time: '' };
+        }
+        return {
+          slide_number:   p.slide_number   != null ? p.slide_number : (i + 1),
+          slide_name:     p.slide_name     || p.title || ('Slide ' + (i + 1)),
+          prompt_text:    p.prompt_text    || p.video_prompt || p.text || '',
+          speech:         p.speech         || '',
+          estimated_time: p.estimated_time || '',
+        };
+      });
+    },
+
+    // Back-compat: set the prompts for the CURRENT phase. Routes to
+    // setImagePrompts / setVideoPrompts under the hood so the phase-specific
+    // field stays authoritative.
+    setPrompts(list){
+      if (!Array.isArray(list)) {
+        warn('setPrompts: expected array, got', typeof list);
+        return;
+      }
+      if (_raw.phase === 'videos') return this.setVideoPrompts(list);
+      return this.setImagePrompts(list);
+    },
+
+    // Phase 1: image-gen prompts. Stored in imagePrompts; prompts is kept
+    // in sync as a compatibility alias for the existing render code.
+    setImagePrompts(list){
+      if (!Array.isArray(list)) {
+        warn('setImagePrompts: expected array, got', typeof list);
+        return;
+      }
+      const normalized = actions._normalizePrompts(list);
+      mutate(() => {
+        _raw.imagePrompts = normalized;
+        if (_raw.phase === 'images') _raw.prompts = normalized;
+        _raw.flowStamp = makeFlowStamp();
+      });
+      persist();
+      stateChanged({ imagePrompts: normalized, prompts: _raw.prompts });
+    },
+
+    // Phase 2: video motion prompts (carousel-loop or personaje-hablando).
+    setVideoPrompts(list){
+      if (!Array.isArray(list)) {
+        warn('setVideoPrompts: expected array, got', typeof list);
+        return;
+      }
+      const normalized = actions._normalizePrompts(list);
+      mutate(() => {
+        _raw.videoPrompts = normalized;
+        if (_raw.phase === 'videos') _raw.prompts = normalized;
+        _raw.flowStamp = makeFlowStamp();
+      });
+      persist();
+      stateChanged({ videoPrompts: normalized, prompts: _raw.prompts });
+    },
+
+    // Switch which phase's prompts are "active" (shown on the Prompts screen).
+    // Syncs the prompts alias so the render layer doesn't need phase logic.
+    setPhase(phase){
+      if (phase !== 'images' && phase !== 'videos') {
+        warn('setPhase: must be "images" or "videos", got', phase);
+        return;
+      }
+      if (_raw.phase === phase) return;
+      mutate(() => {
+        _raw.phase = phase;
+        _raw.prompts = phase === 'videos' ? _raw.videoPrompts : _raw.imagePrompts;
+      });
+      persist();
+      stateChanged({ phase, prompts: _raw.prompts });
+    },
+
+    // Add curated (generated) images for Phase 2. Same dedup + MIME filter
+    // as addFiles, but writes to generatedImages instead of files so the
+    // two collections never collide.
+    addGeneratedImages(fileList){
+      if (!fileList || !fileList.length) return 0;
+      const existing = _raw.generatedImages;
+      const seen = new Set(existing.map(f => f.name + '|' + f.size + '|' + f.lastModified));
+      let added = 0;
+      mutate(() => {
+        for (const f of fileList) {
+          if (!f || !f.type) continue;
+          if (!/^image\/(png|jpe?g|webp|gif)$/.test(f.type)) {
+            warn('addGeneratedImages: rejecting', f.name, 'type', f.type);
+            continue;
+          }
+          const key = f.name + '|' + f.size + '|' + f.lastModified;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          existing.push(f);
+          added++;
+        }
+      });
+      if (!added) return 0;
+      stateChanged({ generatedImages: existing.length });
+      return added;
+    },
+
+    removeGeneratedImage(index){
+      const arr = _raw.generatedImages;
+      if (!Number.isInteger(index) || index < 0 || index >= arr.length) {
+        warn('removeGeneratedImage: index out of range', index);
+        return;
+      }
+      mutate(() => { arr.splice(index, 1); });
+      stateChanged({ generatedImages: arr.length });
+    },
+
+    clearGeneratedImages(){
+      if (!_raw.generatedImages.length) return;
+      mutate(() => { _raw.generatedImages = []; });
+      stateChanged({ generatedImages: 0 });
+    },
+
+    // After POST /api/images/upload-generated succeeds, the server returns a
+    // (possibly new) session id and the paths of the saved files. Record
+    // them so refresh can re-fetch the curated images.
+    setGeneratedUploaded(sessionId, paths){
+      if (sessionId && typeof sessionId !== 'string') {
+        warn('setGeneratedUploaded: sessionId must be string or null');
+        return;
+      }
+      mutate(() => {
+        _raw.generatedSessionId = sessionId || null;
+        _raw.generatedPaths     = Array.isArray(paths) ? paths.slice() : [];
+      });
+      persist();
+      stateChanged({ generatedSessionId: _raw.generatedSessionId, generatedPaths: _raw.generatedPaths });
+    },
+
+    updatePrompt(index, newText){
+      const arr = _raw.prompts;
+      if (!Number.isInteger(index) || index < 0 || index >= arr.length) {
+        warn('updatePrompt: index out of range', index, '(prompts length:', arr.length, ')');
+        return;
+      }
+      const trimmed = (newText || '').trim();
+      if (arr[index].prompt_text === trimmed) return;
+      mutate(() => {
+        arr[index].prompt_text = trimmed;
+        // Also update the underlying phase-specific array (since prompts is an alias).
+        const phaseArr = _raw.phase === 'videos' ? _raw.videoPrompts : _raw.imagePrompts;
+        if (phaseArr[index]) phaseArr[index].prompt_text = trimmed;
+      });
+      persist();
+      stateChanged({ prompts: arr });
+    },
+
+    setReached(step){
+      if (!STEPS.includes(step)) {
+        warn('setReached: invalid step', step);
+        return;
+      }
+      const idx = STEPS.indexOf(step);
+      const set = new Set(_raw.reachedSteps);
+      for (let i = 0; i <= idx; i++) set.add(STEPS[i]);
+      mutate(() => { _raw.reachedSteps = Array.from(set); });
+      persist();
+    },
+
+    goToScreen(n){
+      if (!Number.isInteger(n) || n < 1 || n > 9) {
+        warn('goToScreen: screen must be integer 1..9, got', n);
+        return;
+      }
+      // "Has files" means either in-memory File objects (fresh) OR server
+      // filePaths (from a prior session — rehydration will refill state.files
+      // shortly after boot). Without this, a refresh on screen 5/6 with
+      // persisted server paths would bounce back to screen 5.
+      const hasAnyFiles = (_raw.files && _raw.files.length > 0)
+                       || (_raw.filePaths && _raw.filePaths.length > 0);
+      const hasAnyGenerated = (_raw.generatedImages && _raw.generatedImages.length > 0)
+                           || (_raw.generatedPaths && _raw.generatedPaths.length > 0);
+      const isVideo = _raw.contentType === 'video';
+
+      // Common guards
+      if (n >= 5 && !hasAnyFiles) n = 5;
+      if (n === 3 && !isVideo) n = 2;
+      if (n >= 3 && !_raw.contentType) n = 2;
+
+      // Image-prompt screen guards (screen 6)
+      if (n === 6 && (!_raw.imagePrompts || _raw.imagePrompts.length === 0)
+                  && (!_raw.prompts || _raw.prompts.length === 0)) n = 5;
+      if (n === 6 && _raw.flowStamp && _raw.flowStamp !== makeFlowStamp()) {
+        mutate(() => {
+          _raw.imagePrompts = [];
+          _raw.videoPrompts = [];
+          _raw.prompts      = [];
+          _raw.flowStamp    = null;
+        });
+        n = 5;
+      }
+
+      // Phase-2 screen guards — video-only
+      if (n === 8 && !isVideo) n = 6;                                    // non-video has no Phase 2
+      if (n === 8 && (!_raw.imagePrompts || _raw.imagePrompts.length === 0)) n = 6;
+      if (n === 9 && !isVideo) n = 6;
+      if (n === 9 && !hasAnyGenerated) n = 8;
+      if (n === 9 && (!_raw.videoPrompts || _raw.videoPrompts.length === 0)) n = 8;
+
+      // Screen 7 (Done) is only reachable via goToDone(); guard rewrites it to
+      // the "natural next" screen (which is 6 for image, 9 for video).
+      if (n === 7) n = isVideo ? 9 : 6;
+      if (_raw.currentScreen === n) {
+        announce('axkan:navigate', { screen: n });
+        return;
+      }
+      mutate(() => { _raw.currentScreen = n; });
+      persist();
+      announce('axkan:navigate', { screen: n });
+      stateChanged({ currentScreen: n });
+    },
+
+    setBusy(busy){
+      const b = !!busy;
+      if (_raw.isBusy === b) return;
+      mutate(() => { _raw.isBusy = b; });
+      stateChanged({ isBusy: b });
+    },
+
+    // Jump to the "done" screen (7). Separate action because goToScreen clamps
+    // 7→6 for all nav-button callers — only the post-send flow should land here.
+    goToDone(){
+      if (_raw.currentScreen === 7) {
+        announce('axkan:navigate', { screen: 7 });
+        return;
+      }
+      mutate(() => { _raw.currentScreen = 7; });
+      persist();
+      announce('axkan:navigate', { screen: 7 });
+      stateChanged({ currentScreen: 7 });
+    },
+
+    resetAll(){
+      const fresh = freshState();
+      mutate(() => {
+        for (const k of Object.keys(_raw))   delete _raw[k];
+        for (const k of Object.keys(fresh))  _raw[k] = fresh[k];
+      });
+      try { localStorage.removeItem(LS_KEY); } catch (e) {}
+      try { sessionStorage.removeItem(SS_KEY); } catch (e) {}
+      announce('axkan:reset', {});
+      stateChanged({ reset: true });
+    },
+  };
+  // Freeze the actions object so no one can monkey-patch a bad action in.
+  AXKAN.actions = Object.freeze(actions);
+
+  // ---------- 5. Boot: restore any previous session ----------
+  restore();
+
+  // Dev helper: snapshot of the notebook for console inspection.
+  window.__axkan = {
+    state:   () => JSON.parse(JSON.stringify({ ..._raw, files: _raw.files.length })),
+    reset:   () => actions.resetAll(),
+    actions: actions,
+  };
+
+})();
+
+
+//  ======== SCRIPT {} ========
+
+
+(function(){
+  'use strict';
+
+  // -------------------- Shared state --------------------
+  // AXKAN.state and AXKAN.actions are already set up by the store IIFE above.
+  // We do NOT re-assign state here; doing so would replace the Proxy with a
+  // raw object and break Level-2 enforcement.
+  window.AXKAN = window.AXKAN || {};
+  const AXKAN = window.AXKAN;
+  if (!AXKAN.state || !AXKAN.actions) {
+    throw new Error('[AXKAN] Store IIFE did not run — index_v2.html script block is out of order.');
+  }
+
+  // Safe shims in case the shell agent hasn't wired these yet.
+  // For callback registrars (onContinuar/onAtras), remember the last callback
+  // passed so the real shell implementation can pick it up after DOMContentLoaded.
+  // Without this, any cb registered here would be lost when the shell replaces
+  // the shim, and the CTA click would dispatch to nothing.
+  AXKAN.__pendingContinuar = null;
+  AXKAN.__pendingAtras = null;
+  AXKAN.setStep     = AXKAN.setStep     || function(){};
+  AXKAN.enableCTA   = AXKAN.enableCTA   || function(){};
+  AXKAN.showAtras   = AXKAN.showAtras   || function(){};
+  AXKAN.onContinuar = AXKAN.onContinuar || function(cb){ AXKAN.__pendingContinuar = cb; };
+  AXKAN.onAtras     = AXKAN.onAtras     || function(cb){ AXKAN.__pendingAtras = cb; };
+  AXKAN.setCTALabel = AXKAN.setCTALabel || function(){};
+
+  // Exposed for agent C
+  AXKAN.getUploadedFiles = function(){ return AXKAN.state.files.slice(); };
+  AXKAN.getState = function(){ return AXKAN.state; };
+
+  // -------------------- Screen switching --------------------
+  // showScreen is now a PURE DOM renderer — it does not write state.
+  // All navigation goes through AXKAN.actions.goToScreen(n), which writes
+  // state and emits 'axkan:navigate'. This handler listens for that event
+  // and updates the DOM. One writer, one renderer.
+  const screens = Array.from(document.querySelectorAll('.screen'));
+  let current = 2;
+
+  function renderScreen(n){
+    if (n < 1 || n > 9) return;
+    if (current === n) {
+      onEnter(n);
+      return;
+    }
+    const prev = document.getElementById('screen-' + current);
+    const next = document.getElementById('screen-' + n);
+    if (prev) prev.classList.remove('active');
+    if (next) {
+      next.classList.add('active');
+      next.style.animation = 'none';
+      void next.offsetWidth;
+      next.style.animation = '';
+    }
+    current = n;
+    onEnter(n);
+  }
+
+  // Back-compat shim: old callers say showScreen(n); route it through actions.
+  function showScreen(n){
+    AXKAN.actions.goToScreen(n);
+  }
+  AXKAN.showScreen = showScreen;
+
+  window.addEventListener('axkan:navigate', (e) => {
+    const n = e.detail && e.detail.screen;
+    if (typeof n === 'number') renderScreen(n);
+  });
+
+  function onEnter(n){
+    const sec = document.getElementById('screen-' + n);
+    const step = sec && sec.dataset.step;
+    if (step) AXKAN.setStep(step);
+
+    // Flag on <body> so CSS can reveal video-only stepper rows.
+    const isVideo = AXKAN.state.contentType === 'video';
+    document.body.dataset.flow = isVideo ? 'video' : 'image';
+
+    // Back-button visibility: all screens except Tipo (2) and Done (7) show Atrás.
+    // Screens 8 + 9 are Phase 2 (video-only); they also show Atrás.
+    AXKAN.showAtras(n !== 2 && n !== 7);
+
+    // CTA label per screen
+    let ctaLabel = 'Continuar';
+    if (n === 6 && !isVideo) ctaLabel = 'Enviar a Envato';            // image bulk send
+    else if (n === 6 && isVideo) ctaLabel = 'Continuar a generadas';  // Phase 1 → Phase 2 handoff
+    else if (n === 9) ctaLabel = 'Enviar a Envato Video';             // Phase 2 bulk send
+    AXKAN.setCTALabel(ctaLabel);
+
+    switch(n){
+      case 1: enterWelcome(); break;
+      case 2: enterType(); break;
+      case 3: enterSubType(); break;
+      case 4: enterDetails(); break;
+      case 5: enterUpload(); break;
+      case 6: enterPrompts(); break;
+      case 7: enterDone(); break;
+      case 8: enterGeneratedUpload(); break;   // Phase 2: upload curated images
+      case 9: enterVideoPrompts(); break;      // Phase 2: motion prompts
+    }
+  }
+
+  // Map the UI's content type to the backend's content_type + is_video params.
+  // Kept in one place so case 5 + case 6 agree.
+  function backendContentType() {
+    const t = AXKAN.state.contentType;
+    const s = AXKAN.state.subType;
+    if (t === 'video' && s === 'carousel-loop')      return { content_type: 'living',              is_video: true,  loop: true  };
+    if (t === 'video' && s === 'personaje-hablando') return { content_type: 'character',           is_video: true,  loop: false };
+    if (t === 'video')                                return { content_type: 'reel',                is_video: true,  loop: false };
+    if (t === 'pitch' || t === 'pitch-b2b')           return { content_type: 'pitch',               is_video: false, loop: false };
+    if (t === 'post')                                 return { content_type: 'post',                is_video: false, loop: false };
+    /* default: imagen */                             return { content_type: 'instagram_carousel',  is_video: false, loop: false };
+  }
+
+  // Continuar → forward logic per screen
+  AXKAN.onContinuar(function(){
+    switch(current){
+      case 2:
+        if (!AXKAN.state.contentType) return;
+        showScreen(AXKAN.state.contentType === 'video' ? 3 : 4);
+        break;
+      case 3:
+        if (!AXKAN.state.subType) return;
+        showScreen(4);
+        break;
+      case 4:
+        if (!validateDetails()) return;
+        showScreen(5);
+        break;
+      case 5: {
+        // Screen 5 → 6: upload files, then generate prompts.
+        if (AXKAN.state.files.length < 1) return;
+        const api = window.AXKAN && window.AXKAN.api;
+        const showToast = (window.AXKAN && window.AXKAN.showToast) || function(){};
+        const showLoading = (window.AXKAN && window.AXKAN.showLoading) || function(){};
+        const hideLoading = (window.AXKAN && window.AXKAN.hideLoading) || function(){};
+        if (!api) {
+          // No backend wired — fall back to placeholders so the UI still flows.
+          AXKAN.actions.setPrompts(defaultPrompts());
+          showScreen(6);
+          return;
+        }
+        AXKAN.enableCTA(false);
+        showLoading('Subiendo imágenes…');
+        const cfg = backendContentType();
+        (async function(){
+          try {
+            // Upload every File in AXKAN.state.files
+            const uploadRes = await api.uploadImages(AXKAN.state.files);
+            AXKAN.actions.setUploaded(
+              uploadRes.session_id,
+              (uploadRes.files || []).map(function(f){ return f.path; })
+            );
+
+            showLoading('Claude está escribiendo tus prompts… ~22s');
+            // slidesCount: how many image prompts Claude should produce for Phase 1.
+            //   - Carousel Loop: one prompt per reference image (min 3 so the user
+            //     has enough material for a varied video).
+            //   - Personaje Hablando: EXACTLY 1 prompt (the user will generate
+            //     3 variations of a single character portrait in Envato; variety
+            //     comes from the variations dropdown, not from multiple prompts).
+            //   - Image / Pitch / Post: one per reference image, min 3.
+            const isPersonaje = AXKAN.state.subType === 'personaje-hablando';
+            const slidesCount = isPersonaje ? 1 : Math.max(AXKAN.state.files.length, 3);
+            const promptPayload = {
+              destination: AXKAN.state.destination || '',
+              slides: slidesCount,
+              product_type: 'iman',
+              content_type: cfg.content_type,
+              theme: AXKAN.state.theme || '',
+              is_video: cfg.is_video,
+              session_id: AXKAN.state.sessionId,
+            };
+            const res = await api.generatePrompts(promptPayload);
+            const list = (res && res.prompts) || [];
+            if (!list.length) {
+              throw new Error('El servidor no devolvió prompts. Revisa la conexión a Claude.');
+            }
+            // Video flows: Phase 1 produces IMAGE prompts. Store them under
+            // imagePrompts so Phase 2 can keep them as context for Claude's
+            // second-pass analysis.
+            const isVideo = AXKAN.state.contentType === 'video';
+            if (isVideo) {
+              AXKAN.actions.setPhase('images');
+              AXKAN.actions.setImagePrompts(list);
+            } else {
+              AXKAN.actions.setPrompts(list);
+            }
+            hideLoading();
+            showToast('Prompts listos ✨', 'success');
+            showScreen(6);
+          } catch (e) {
+            hideLoading();
+            AXKAN.enableCTA(true);
+            showToast('Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        })();
+        break;
+      }
+      case 6: {
+        // Screen 6 (Prompts). Two different futures:
+        //   Image flow: bulk-send all prompts to Envato ImageGen, then screen 7 (Done).
+        //   Video flow: these are Phase 1 IMAGE prompts. Don't bulk-send on Continuar.
+        //               Instead, advance to screen 8 (Sube generadas) so user can
+        //               curate the images they already generated via per-card Send.
+        const isVideo = AXKAN.state.contentType === 'video';
+        if (isVideo) {
+          // Phase 1 → Phase 2 handoff. Per-card Send buttons on this screen
+          // fire /api/envato/send as usual; Continuar moves forward.
+          showScreen(8);
+          break;
+        }
+        // Image-flow bulk send (unchanged behaviour for imagen / pitch / post).
+        const api = window.AXKAN && window.AXKAN.api;
+        const showToast = (window.AXKAN && window.AXKAN.showToast) || function(){};
+        const showLoading = (window.AXKAN && window.AXKAN.showLoading) || function(){};
+        const hideLoading = (window.AXKAN && window.AXKAN.hideLoading) || function(){};
+        if (!api) { showScreen(7); return; }
+        AXKAN.enableCTA(false);
+        showLoading('Enviando a Envato…');
+        (async function(){
+          try {
+            const prompts = AXKAN.state.prompts || [];
+            const refDataUrls = await gatherReferenceDataURLs();
+            for (let i = 0; i < prompts.length; i++) {
+              showLoading('Enviando ' + (i + 1) + ' de ' + prompts.length + ' a Envato…');
+              await api.sendToEnvato({
+                prompt:      prompts[i].prompt_text,
+                aspectRatio: '1:2',
+                referenceImages: refDataUrls,
+              }, 'image');
+            }
+            hideLoading();
+            showToast('Enviado a Envato 🚀', 'success');
+            showScreen(7);
+          } catch (e) {
+            hideLoading();
+            AXKAN.enableCTA(true);
+            showToast('Error al enviar: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        })();
+        break;
+      }
+      case 8: {
+        // Screen 8 → 9: upload curated images → Claude Phase 2 → motion prompts
+        if (AXKAN.state.generatedImages.length < 1) {
+          // User must provide at least one generated image
+          return;
+        }
+        const api = window.AXKAN && window.AXKAN.api;
+        const showToast = (window.AXKAN && window.AXKAN.showToast) || function(){};
+        const showLoading = (window.AXKAN && window.AXKAN.showLoading) || function(){};
+        const hideLoading = (window.AXKAN && window.AXKAN.hideLoading) || function(){};
+        if (!api || !api.uploadGeneratedImages || !api.generateVideoPrompts) {
+          showToast('Backend no soporta Phase 2', 'error');
+          return;
+        }
+        AXKAN.enableCTA(false);
+        showLoading('Subiendo imágenes generadas…');
+        const cfg = backendContentType();
+        (async function(){
+          try {
+            // Save curated images into sessions/<sid>/clean/ so video_prompts_generate
+            // reads from there (it prefers /clean/ over /uploads/).
+            const uploadRes = await api.uploadGeneratedImages(
+              AXKAN.state.generatedImages,
+              AXKAN.state.sessionId  // reuse Phase 1 session_id if we have it
+            );
+            AXKAN.actions.setGeneratedUploaded(
+              uploadRes.session_id,
+              (uploadRes.files || []).map(function(f){ return f.path; })
+            );
+
+            showLoading('Claude está analizando las imágenes… ~25s');
+            const videoRes = await api.generateVideoPrompts({
+              session_id:        uploadRes.session_id,
+              destination:       AXKAN.state.destination || '',
+              content_type:      cfg.content_type,    // 'living' or 'character'
+              theme:             AXKAN.state.theme || '',
+              video_clip_count:  AXKAN.state.generatedImages.length,
+              original_prompts:  AXKAN.state.imagePrompts || [],
+            });
+            // Backend returns {video_prompts: [...]}; tolerate {prompts: [...]}
+            // in case the endpoint is updated to use the canonical shape later.
+            const list = (videoRes && (videoRes.video_prompts || videoRes.prompts)) || [];
+            if (!list.length) {
+              throw new Error('Claude no devolvió prompts de video.');
+            }
+            AXKAN.actions.setVideoPrompts(list);
+            AXKAN.actions.setPhase('videos');
+            hideLoading();
+            showToast('Prompts de video listos 🎬', 'success');
+            showScreen(9);
+          } catch (e) {
+            hideLoading();
+            AXKAN.enableCTA(true);
+            showToast('Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        })();
+        break;
+      }
+      case 9: {
+        // Screen 9 → 7: bulk-send motion prompts to Envato VideoGen.
+        const api = window.AXKAN && window.AXKAN.api;
+        const showToast = (window.AXKAN && window.AXKAN.showToast) || function(){};
+        const showLoading = (window.AXKAN && window.AXKAN.showLoading) || function(){};
+        const hideLoading = (window.AXKAN && window.AXKAN.hideLoading) || function(){};
+        const cfg = backendContentType();
+        if (!api) { showScreen(7); return; }
+        AXKAN.enableCTA(false);
+        (async function(){
+          try {
+            const prompts = AXKAN.state.videoPrompts || [];
+            const paths   = AXKAN.state.generatedPaths || [];
+            if (!prompts.length) {
+              throw new Error('No hay prompts de video para enviar.');
+            }
+            if (prompts.length > 1) {
+              showLoading('Enviando ' + prompts.length + ' clips a Envato Video Gen…');
+              await api.sendToEnvato({
+                prompts:    prompts.map(function(p){ return p.prompt_text; }),
+                speeches:   prompts.map(function(p){ return p.speech || ''; }),
+                imagePaths: prompts.map(function(_, i){ return paths[i] || paths[0] || null; }),
+                loop: cfg.loop,
+              }, true);  // bulk = true → /api/envato/send-all-video
+            } else {
+              const p = prompts[0] || { prompt_text: '', speech: '' };
+              showLoading('Enviando a Envato Video Gen…');
+              await api.sendToEnvato({
+                prompt:    p.prompt_text,
+                speech:    p.speech || '',
+                imagePath: paths[0] || null,
+                loop:      cfg.loop,
+              });
+            }
+            hideLoading();
+            showToast('Enviado a Envato Video 🚀', 'success');
+            showScreen(7);
+          } catch (e) {
+            hideLoading();
+            AXKAN.enableCTA(true);
+            showToast('Error: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+          }
+        })();
+        break;
+      }
+      case 7: /* no-op */ break;
+    }
+  });
+
+  AXKAN.onAtras(function(){
+    switch(current){
+      case 3: showScreen(2); break;
+      case 4:
+        showScreen(AXKAN.state.contentType === 'video' ? 3 : 2);
+        break;
+      case 5: showScreen(4); break;
+      case 6: showScreen(5); break;
+      case 8: showScreen(6); break;                 // Phase 2 upload → back to image prompts
+      case 9: showScreen(8); break;                 // Video prompts → back to generadas
+      default: break; // 2 (start) and 7 (done) don't show back
+    }
+  });
+
+  // Welcome screen removed — app starts at content-type selection
+  function enterWelcome(){ showScreen(2); }
+
+  // -------------------- Screen 2: type --------------------
+  const typeGrid = document.getElementById('type-grid');
+  const moreCards = document.getElementById('more-cards');
+  const moreLink = document.getElementById('more-link');
+
+  function allTypeCards(){
+    return Array.from(document.querySelectorAll('.type-card[data-type]'));
+  }
+
+  function selectType(card){
+    allTypeCards().forEach(c => {
+      c.classList.remove('selected');
+      c.setAttribute('aria-checked','false');
+    });
+    card.classList.add('selected');
+    card.setAttribute('aria-checked','true');
+    AXKAN.actions.selectContentType(card.dataset.type);
+    AXKAN.enableCTA(true);
+  }
+
+  allTypeCards().forEach(card => {
+    card.addEventListener('click', () => selectType(card));
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectType(card);
+      }
+    });
+  });
+
+  // Arrow key nav between cards on screen 2
+  document.addEventListener('keydown', function(e){
+    if (current !== 2) return;
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const cards = allTypeCards();
+    const active = document.activeElement;
+    let idx = cards.indexOf(active);
+    if (idx === -1) idx = 0;
+    const delta = e.key === 'ArrowRight' ? 1 : -1;
+    const next = cards[(idx + delta + cards.length) % cards.length];
+    if (next) { next.focus(); e.preventDefault(); }
+  });
+
+  moreLink.addEventListener('click', function(){
+    moreCards.classList.toggle('hidden');
+  });
+  moreLink.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      moreCards.classList.toggle('hidden');
+    }
+  });
+
+  function enterType(){
+    AXKAN.enableCTA(!!AXKAN.state.contentType);
+    // Restore visual selection
+    allTypeCards().forEach(c => {
+      const on = c.dataset.type === AXKAN.state.contentType;
+      c.classList.toggle('selected', on);
+      c.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+  }
+
+  // -------------------- Screen 3: sub-type --------------------
+  const subGrid = document.getElementById('sub-grid');
+  function allSubCards(){
+    return Array.from(subGrid.querySelectorAll('.type-card[data-sub]'));
+  }
+  function selectSub(card){
+    allSubCards().forEach(c => {
+      c.classList.remove('selected');
+      c.setAttribute('aria-checked','false');
+    });
+    card.classList.add('selected');
+    card.setAttribute('aria-checked','true');
+    AXKAN.actions.selectSubType(card.dataset.sub);
+    AXKAN.enableCTA(true);
+  }
+  allSubCards().forEach(card => {
+    card.addEventListener('click', () => selectSub(card));
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectSub(card);
+      }
+    });
+  });
+
+  function enterSubType(){
+    AXKAN.enableCTA(!!AXKAN.state.subType);
+    allSubCards().forEach(c => {
+      const on = c.dataset.sub === AXKAN.state.subType;
+      c.classList.toggle('selected', on);
+      c.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+  }
+
+  // -------------------- Screen 4: details + ghost text --------------------
+  const destInput  = document.getElementById('dest-input');
+  const themeInput = document.getElementById('theme-input');
+  const ghostLayer = document.getElementById('ghost-layer');
+
+  const GHOST_PROMPTS = [
+    'atardecer dorado, vibes tropicales, cámara flotando lento',
+    'colores saturados, hora dorada, hojas de palma',
+    'luz cenital suave, primer plano del detalle artesanal',
+    'amanecer pastel, niebla suave, partículas de polen',
+    'textura de madera y tinta, macro cinemático',
+    'mercado mexicano vibrante, pan handheld'
+  ];
+
+  let ghost = {
+    idx: 0,
+    charIdx: 0,
+    phase: 'typing', // 'typing' | 'pausing' | 'deleting'
+    timer: null,
+    enabled: false,
+    accepted: false
+  };
+
+  function ghostRender(){
+    const text = GHOST_PROMPTS[ghost.idx].slice(0, ghost.charIdx);
+    ghostLayer.innerHTML = '';
+    const span = document.createElement('span');
+    span.textContent = text;
+    ghostLayer.appendChild(span);
+    const caret = document.createElement('span');
+    caret.className = 'caret';
+    caret.textContent = ' ';
+    ghostLayer.appendChild(caret);
+  }
+
+  function ghostClear(){
+    ghostLayer.innerHTML = '';
+  }
+
+  function ghostStep(){
+    if (!ghost.enabled) return;
+    const full = GHOST_PROMPTS[ghost.idx];
+    if (ghost.phase === 'typing') {
+      if (ghost.charIdx < full.length) {
+        ghost.charIdx++;
+        ghostRender();
+        ghost.timer = setTimeout(ghostStep, 50);
+      } else {
+        ghost.phase = 'pausing';
+        ghost.timer = setTimeout(ghostStep, 2500);
+      }
+    } else if (ghost.phase === 'pausing') {
+      ghost.phase = 'deleting';
+      ghost.timer = setTimeout(ghostStep, 30);
+    } else if (ghost.phase === 'deleting') {
+      if (ghost.charIdx > 0) {
+        ghost.charIdx--;
+        ghostRender();
+        ghost.timer = setTimeout(ghostStep, 20);
+      } else {
+        ghost.idx = (ghost.idx + 1) % GHOST_PROMPTS.length;
+        ghost.phase = 'typing';
+        ghost.timer = setTimeout(ghostStep, 300);
+      }
+    }
+  }
+
+  function ghostStart(){
+    if (ghost.enabled) return;
+    if (themeInput.value.length > 0) return; // user typed, don't start
+    ghost.enabled = true;
+    ghost.idx = 0;
+    ghost.charIdx = 0;
+    ghost.phase = 'typing';
+    ghostStep();
+  }
+
+  function ghostStop(){
+    ghost.enabled = false;
+    if (ghost.timer) { clearTimeout(ghost.timer); ghost.timer = null; }
+    ghostClear();
+  }
+
+  function validateDetails(){
+    return destInput.value.trim().length >= 2;
+  }
+
+  function syncDetailsCTA(){
+    AXKAN.actions.setDetails(destInput.value.trim(), themeInput.value.trim());
+    AXKAN.enableCTA(validateDetails());
+  }
+
+  destInput.addEventListener('input', syncDetailsCTA);
+
+  themeInput.addEventListener('input', function(){
+    if (themeInput.value.length > 0 && ghost.enabled) ghostStop();
+    AXKAN.actions.setDetails(undefined, themeInput.value.trim());
+  });
+
+  themeInput.addEventListener('keydown', function(e){
+    if (e.key === 'Tab' && ghost.enabled && !e.shiftKey) {
+      // Accept current ghost text
+      const accepted = GHOST_PROMPTS[ghost.idx].slice(0, ghost.charIdx);
+      if (accepted.length > 0) {
+        e.preventDefault();
+        themeInput.value = accepted;
+        AXKAN.actions.setDetails(undefined, accepted);
+        ghostStop();
+      }
+    }
+  });
+
+  function enterDetails(){
+    // Restore visible values FIRST — otherwise syncDetailsCTA reads empty
+    // inputs and overwrites the saved state with empty strings (Bug #4).
+    destInput.value = AXKAN.state.destination || '';
+    themeInput.value = AXKAN.state.theme || '';
+    AXKAN.enableCTA(validateDetails());
+    setTimeout(() => destInput.focus(), 60);
+    if (!themeInput.value) ghostStart();
+  }
+
+  // -------------------- Screen 5: upload --------------------
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const thumbRow = document.getElementById('thumb-row');
+
+  function addFiles(fileList){
+    const added = AXKAN.actions.addFiles(fileList);
+    renderThumbs();
+    AXKAN.enableCTA(AXKAN.state.files.length >= 1);
+    // Friendly warning if some files were rejected (HEIC, non-image, dups).
+    const incomingCount = fileList ? fileList.length : 0;
+    const rejected = incomingCount - added;
+    if (rejected > 0 && AXKAN.showToast) {
+      AXKAN.showToast(
+        rejected + ' archivo' + (rejected > 1 ? 's' : '') + ' rechazado' + (rejected > 1 ? 's' : '') +
+        ' (usa PNG, JPG, WebP o GIF — sin duplicados)',
+        'warn'
+      );
+    }
+  }
+
+  function renderThumbs(){
+    thumbRow.innerHTML = '';
+    const files = AXKAN.state.files || [];
+    const paths = AXKAN.state.filePaths || [];
+
+    // If fresh File objects exist, render them (canonical path).
+    if (files.length) {
+      files.forEach((file, i) => {
+        const t = document.createElement('div');
+        t.className = 'thumb';
+        const img = document.createElement('img');
+        const reader = new FileReader();
+        reader.onload = (e) => { img.src = e.target.result; };
+        reader.readAsDataURL(file);
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'rm';
+        rm.setAttribute('aria-label','Eliminar imagen');
+        rm.textContent = '×';
+        rm.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          AXKAN.actions.removeFile(i);
+          renderThumbs();
+          AXKAN.enableCTA(AXKAN.state.files.length >= 1);
+        });
+        t.appendChild(img);
+        t.appendChild(rm);
+        thumbRow.appendChild(t);
+      });
+      return;
+    }
+
+    // Post-refresh, pre-hydration: files is empty but we have server paths.
+    // Render thumbs directly from the server URLs so the user sees their
+    // images immediately. When rehydration completes, renderThumbs() will
+    // be called again and will follow the files-based branch above.
+    paths.forEach((p, i) => {
+      const t = document.createElement('div');
+      t.className = 'thumb';
+      const img = document.createElement('img');
+      img.src = p;  // served by Flask /sessions/<sid>/uploads/...
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'rm';
+      rm.setAttribute('aria-label','Eliminar imagen');
+      rm.textContent = '×';
+      rm.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        // We're operating on paths, not files. Drop the path and let the
+        // next action rebuild. Use setUploaded to rewrite the path array.
+        const remaining = paths.slice();
+        remaining.splice(i, 1);
+        AXKAN.actions.setUploaded(AXKAN.state.sessionId, remaining);
+        renderThumbs();
+        const stillHas = (AXKAN.state.files && AXKAN.state.files.length) ||
+                         (AXKAN.state.filePaths && AXKAN.state.filePaths.length);
+        AXKAN.enableCTA(!!stillHas);
+      });
+      t.appendChild(img);
+      t.appendChild(rm);
+      thumbRow.appendChild(t);
+    });
+  }
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files.length) addFiles(e.target.files);
+    fileInput.value = '';
+  });
+  ['dragenter','dragover'].forEach(ev => {
+    dropZone.addEventListener(ev, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.add('drag-over');
+    });
+  });
+  ['dragleave','drop'].forEach(ev => {
+    dropZone.addEventListener(ev, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropZone.classList.remove('drag-over');
+    });
+  });
+  dropZone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    if (dt && dt.files && dt.files.length) addFiles(dt.files);
+  });
+  // Prevent browser from opening dropped file outside the zone
+  window.addEventListener('dragover', (e) => { if (current === 5) e.preventDefault(); });
+  window.addEventListener('drop',     (e) => { if (current === 5) e.preventDefault(); });
+
+  // Cmd+V / Ctrl+V paste support — accepts images from clipboard when on upload screen.
+  // Uses AXKAN.state.currentScreen (the notebook) rather than the local `current`
+  // closure so this works even if renderScreen hasn't run yet (e.g. right after
+  // reload, before the initial axkan:navigate propagates).
+  window.addEventListener('paste', (e) => {
+    const screen = (AXKAN.state && AXKAN.state.currentScreen) || current;
+    if (screen !== 5) return;
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    const pasted = [];
+    // Stamp pasted files with a unique name so dedup doesn't reject consecutive
+    // screenshot pastes (macOS gives every screenshot name "image.png" with
+    // lastModified=0, so dedup by name+size+mtime would drop the second one).
+    const stamp = Date.now();
+    let idx = 0;
+    for (const it of items) {
+      if (it.kind === 'file') {
+        const f = it.getAsFile();
+        if (f && f.type && f.type.startsWith('image/')) {
+          // Wrap so addFiles sees a distinct identity per paste action.
+          const ext = (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+          const name = 'pasted-' + stamp + '-' + (idx++) + '.' + ext;
+          try {
+            pasted.push(new File([f], name, { type: f.type, lastModified: stamp + idx }));
+          } catch (_err) {
+            // File constructor unavailable — fall back to the raw blob-as-File.
+            pasted.push(f);
+          }
+        }
+      }
+    }
+    if (pasted.length) {
+      e.preventDefault();
+      addFiles(pasted);
+      dropZone.classList.add('drag-over');
+      setTimeout(() => dropZone.classList.remove('drag-over'), 180);
+      if (AXKAN.showToast) AXKAN.showToast(pasted.length + ' imagen' + (pasted.length > 1 ? 'es' : '') + ' pegada' + (pasted.length > 1 ? 's' : ''), 'success');
+    }
+  });
+
+  function enterUpload(){
+    renderThumbs();
+    // Enable CTA if we have in-memory files OR persisted server filePaths
+    // (rehydration will restore File objects shortly, so UX should not
+    // falsely show "no images" after a refresh).
+    const hasFiles = (AXKAN.state.files && AXKAN.state.files.length > 0)
+                  || (AXKAN.state.filePaths && AXKAN.state.filePaths.length > 0);
+    AXKAN.enableCTA(hasFiles);
+  }
+
+  // -------------------- Screen 8: Sube imágenes generadas (Phase 2 upload) --------------------
+  // Mirrors the screen-5 uploader but writes to state.generatedImages and
+  // state.generatedPaths. Drag-drop, file-picker, and ⌘V paste all supported.
+  const dropZoneGen   = document.getElementById('drop-zone-gen');
+  const fileInputGen  = document.getElementById('file-input-gen');
+  const thumbRowGen   = document.getElementById('thumb-row-gen');
+
+  function addGeneratedFiles(fileList){
+    const added = AXKAN.actions.addGeneratedImages(fileList);
+    renderGeneratedThumbs();
+    const hasAny = (AXKAN.state.generatedImages && AXKAN.state.generatedImages.length > 0)
+                || (AXKAN.state.generatedPaths && AXKAN.state.generatedPaths.length > 0);
+    AXKAN.enableCTA(hasAny);
+    const incomingCount = fileList ? fileList.length : 0;
+    const rejected = incomingCount - added;
+    if (rejected > 0 && AXKAN.showToast) {
+      AXKAN.showToast(
+        rejected + ' archivo' + (rejected > 1 ? 's' : '') + ' rechazado' + (rejected > 1 ? 's' : '') +
+        ' (usa PNG, JPG, WebP o GIF)',
+        'warn'
+      );
+    }
+  }
+
+  function renderGeneratedThumbs(){
+    if (!thumbRowGen) return;
+    thumbRowGen.innerHTML = '';
+    const files = AXKAN.state.generatedImages || [];
+    const paths = AXKAN.state.generatedPaths  || [];
+
+    if (files.length) {
+      files.forEach((file, i) => {
+        const t = document.createElement('div');
+        t.className = 'thumb';
+        const img = document.createElement('img');
+        const reader = new FileReader();
+        reader.onload = (e) => { img.src = e.target.result; };
+        reader.readAsDataURL(file);
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'rm';
+        rm.setAttribute('aria-label', 'Eliminar imagen generada');
+        rm.textContent = '×';
+        rm.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          AXKAN.actions.removeGeneratedImage(i);
+          renderGeneratedThumbs();
+          AXKAN.enableCTA(AXKAN.state.generatedImages.length >= 1);
+        });
+        t.appendChild(img);
+        t.appendChild(rm);
+        thumbRowGen.appendChild(t);
+      });
+      return;
+    }
+
+    // Post-refresh: render from server paths directly
+    paths.forEach((p, i) => {
+      const t = document.createElement('div');
+      t.className = 'thumb';
+      const img = document.createElement('img');
+      img.src = p;
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'rm';
+      rm.setAttribute('aria-label', 'Eliminar imagen generada');
+      rm.textContent = '×';
+      rm.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const remaining = paths.slice();
+        remaining.splice(i, 1);
+        AXKAN.actions.setGeneratedUploaded(AXKAN.state.generatedSessionId, remaining);
+        renderGeneratedThumbs();
+        const stillHas = (AXKAN.state.generatedImages && AXKAN.state.generatedImages.length) ||
+                         (AXKAN.state.generatedPaths && AXKAN.state.generatedPaths.length);
+        AXKAN.enableCTA(!!stillHas);
+      });
+      t.appendChild(img);
+      t.appendChild(rm);
+      thumbRowGen.appendChild(t);
+    });
+  }
+
+  if (dropZoneGen && fileInputGen) {
+    dropZoneGen.addEventListener('click', () => fileInputGen.click());
+    dropZoneGen.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputGen.click(); }
+    });
+    fileInputGen.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length) addGeneratedFiles(e.target.files);
+      fileInputGen.value = '';
+    });
+    ['dragenter','dragover'].forEach(ev => {
+      dropZoneGen.addEventListener(ev, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        dropZoneGen.classList.add('drag-over');
+      });
+    });
+    ['dragleave','drop'].forEach(ev => {
+      dropZoneGen.addEventListener(ev, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        dropZoneGen.classList.remove('drag-over');
+      });
+    });
+    dropZoneGen.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length) addGeneratedFiles(dt.files);
+    });
+  }
+
+  // ⌘V paste handler — only active when user is on screen 8
+  window.addEventListener('paste', (e) => {
+    if (AXKAN.state.currentScreen !== 8) return;
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    const pasted = [];
+    const stamp = Date.now();
+    let idx = 0;
+    for (const it of items) {
+      if (it.kind === 'file') {
+        const f = it.getAsFile();
+        if (f && f.type && f.type.startsWith('image/')) {
+          const ext = (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+          const name = 'pasted-gen-' + stamp + '-' + (idx++) + '.' + ext;
+          try {
+            pasted.push(new File([f], name, { type: f.type, lastModified: stamp + idx }));
+          } catch (_e) {
+            pasted.push(f);
+          }
+        }
+      }
+    }
+    if (pasted.length) {
+      e.preventDefault();
+      addGeneratedFiles(pasted);
+      if (dropZoneGen) {
+        dropZoneGen.classList.add('drag-over');
+        setTimeout(() => dropZoneGen.classList.remove('drag-over'), 180);
+      }
+      if (AXKAN.showToast) AXKAN.showToast(pasted.length + ' imagen' + (pasted.length > 1 ? 'es' : '') + ' pegada' + (pasted.length > 1 ? 's' : ''), 'success');
+    }
+  });
+
+  function enterGeneratedUpload(){
+    renderGeneratedThumbs();
+    const hasAny = (AXKAN.state.generatedImages && AXKAN.state.generatedImages.length > 0)
+                || (AXKAN.state.generatedPaths && AXKAN.state.generatedPaths.length > 0);
+    AXKAN.enableCTA(hasAny);
+  }
+
+  // -------------------- Screen 9: Prompts de video (Phase 2 output) --------------------
+  const promptListVideo = document.getElementById('prompt-list-video');
+
+  // Reuse renderPrompts' card template but target the video list and use
+  // videoPrompts / sendSingleVideoToEnvato. Kept separate because the per-card
+  // send hits /api/envato/send-video (not /api/envato/send) and pairs each
+  // prompt with its corresponding generated image (not reference images).
+  async function sendSingleVideoToEnvato(index, btn){
+    const p = AXKAN.state.videoPrompts[index];
+    if (!p || !p.prompt_text) {
+      if (AXKAN.showToast) AXKAN.showToast('Este prompt está vacío', 'warn');
+      return;
+    }
+    const api = window.AXKAN && window.AXKAN.api;
+    if (!api) {
+      if (AXKAN.showToast) AXKAN.showToast('Backend no disponible', 'error');
+      return;
+    }
+    const paths = AXKAN.state.generatedPaths || [];
+    const imagePath = paths[index] || paths[0] || null;
+    if (!imagePath) {
+      if (AXKAN.showToast) AXKAN.showToast('Sin imagen generada para este clip', 'warn');
+      return;
+    }
+    const cfg = backendContentType();
+
+    btn.dataset.state = 'sending';
+    const origLabel = btn.textContent;
+    btn.textContent = 'Enviando…';
+    try {
+      await api.sendToEnvato({
+        prompt:    p.prompt_text,
+        speech:    p.speech || '',
+        imagePath: imagePath,
+        loop:      cfg.loop,
+      });  // bulk=false → /api/envato/send-video
+      btn.dataset.state = 'done';
+      btn.textContent = '✓ Enviado';
+      if (AXKAN.showToast) AXKAN.showToast('Prompt de video ' + (index + 1) + ' enviado', 'success');
+    } catch (err) {
+      btn.dataset.state = '';
+      btn.textContent = origLabel;
+      if (AXKAN.showToast) AXKAN.showToast('Error: ' + (err && err.message ? err.message : 'desconocido'), 'error');
+    }
+  }
+
+  function renderVideoPrompts(){
+    if (!promptListVideo) return;
+    promptListVideo.innerHTML = '';
+    const list = AXKAN.state.videoPrompts || [];
+    list.forEach((p, i) => {
+      const card = document.createElement('div');
+      card.className = 'prompt-card';
+
+      const title = document.createElement('div');
+      title.className = 'p-title';
+      title.textContent = p.slide_name || ('Clip ' + (i + 1));
+
+      const text = document.createElement('div');
+      text.className = 'p-text';
+      text.tabIndex = 0;
+      text.textContent = p.prompt_text || '';
+
+      // Personaje-hablando prompts include speech — show as a secondary field.
+      let speechEl = null;
+      if (p.speech) {
+        speechEl = document.createElement('div');
+        speechEl.className = 'p-text';
+        speechEl.style.marginTop = '6px';
+        speechEl.style.color = '#7A6F54';
+        speechEl.style.fontStyle = 'italic';
+        speechEl.textContent = '🎤 ' + p.speech;
+      }
+
+      const footer = document.createElement('div');
+      footer.className = 'prompt-card__footer';
+
+      const hint = document.createElement('span');
+      hint.className = 'prompt-card__edit-hint';
+      hint.textContent = 'Click el texto para editar';
+
+      const sendBtn = document.createElement('button');
+      sendBtn.type = 'button';
+      sendBtn.className = 'prompt-card__send';
+      sendBtn.textContent = '→ Enviar a Envato Video';
+      sendBtn.setAttribute('aria-label', 'Enviar este clip a Envato Video Gen');
+      sendBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        sendSingleVideoToEnvato(i, sendBtn);
+      });
+
+      footer.appendChild(hint);
+      footer.appendChild(sendBtn);
+
+      card.appendChild(title);
+      card.appendChild(text);
+      if (speechEl) card.appendChild(speechEl);
+      card.appendChild(footer);
+
+      // Inline edit (same pattern as image prompts)
+      function enterEdit(){
+        if (card.classList.contains('editing')) return;
+        card.classList.add('editing');
+        const ta = document.createElement('textarea');
+        ta.value = p.prompt_text || '';
+        ta.rows = Math.max(4, Math.ceil((ta.value.length || 0) / 70));
+        card.replaceChild(ta, text);
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        function save(){
+          const newText = ta.value.trim();
+          // Phase 2 edit — mutate videoPrompts directly via the phase-aware
+          // updatePrompt action (phase is 'videos' when this screen is active).
+          AXKAN.actions.setPhase('videos');
+          AXKAN.actions.updatePrompt(i, newText);
+          text.textContent = AXKAN.state.videoPrompts[i].prompt_text;
+          if (ta.parentNode === card) card.replaceChild(text, ta);
+          card.classList.remove('editing');
+        }
+        ta.addEventListener('blur', save);
+        ta.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ta.blur(); }
+          else if (e.key === 'Escape') { e.preventDefault(); ta.value = p.prompt_text || ''; ta.blur(); }
+        });
+      }
+      text.addEventListener('click', enterEdit);
+
+      promptListVideo.appendChild(card);
+    });
+  }
+
+  function enterVideoPrompts(){
+    AXKAN.actions.setPhase('videos');
+    renderVideoPrompts();
+    AXKAN.enableCTA(AXKAN.state.videoPrompts.length > 0);
+  }
+
+  // -------------------- Screen 6: prompts --------------------
+  const promptList = document.getElementById('prompt-list');
+
+  // Default placeholders when backend isn't wired (dev / offline). They use
+  // the SAME canonical shape as backend-generated prompts — slide_name + prompt_text.
+  function defaultPrompts(){
+    return [
+      { slide_number: 1, slide_name: 'Slide 1', prompt_text: 'Cinematic drone shot of a golden-hour beach in Tulum, turquoise water, palm shadows stretching long across white sand, slow dolly in.' },
+      { slide_number: 2, slide_name: 'Slide 2', prompt_text: 'Close-up macro of handcrafted Mexican textile, warm tungsten light, shallow depth of field, fibers catching sunlight, subtle handheld movement.' },
+      { slide_number: 3, slide_name: 'Slide 3', prompt_text: 'Bustling mercado in Mérida at dusk, vibrant fabrics and produce, handheld POV walking through, soft bokeh of market lights at golden-blue hour.' }
+    ];
+  }
+
+  // Convert File objects to data URLs (base64) — Envato ImageGen expects
+  // referenceImages as an array of data URL strings.
+  function filesToDataURLs(files){
+    return Promise.all(files.map(file => new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    })));
+  }
+
+  // Fallback: after refresh, state.files is empty (File objects can't be
+  // serialized) but state.filePaths survives. Fetch those server paths back
+  // as blobs, then convert to data URLs so the backend's Envato flow can
+  // use them just like fresh uploads.
+  async function filePathsToDataURLs(filePaths){
+    const out = [];
+    for (const p of filePaths) {
+      try {
+        const resp = await fetch(p);
+        if (!resp.ok) continue;
+        const blob = await resp.blob();
+        const url = await new Promise((resolve) => {
+          const r = new FileReader();
+          r.onload  = () => resolve(r.result);
+          r.onerror = () => resolve(null);
+          r.readAsDataURL(blob);
+        });
+        if (url) out.push(url);
+      } catch (_e) {}
+    }
+    return out;
+  }
+
+  // Gather reference images as data URLs for Envato sends.
+  // filePaths (set by setUploaded after the server round-trip) is the source
+  // of truth — it reflects exactly what was uploaded.  state.files can drift
+  // (addFiles appends, rehydration can duplicate) so we only use it when the
+  // count matches filePaths.  If counts diverge, fall back to fetching from
+  // the server paths which are guaranteed correct.
+  async function gatherReferenceDataURLs(){
+    const paths = AXKAN.state.filePaths || [];
+    const files = AXKAN.state.files || [];
+
+    // If filePaths exists and counts match, use in-memory File objects (fast).
+    if (paths.length && files.length === paths.length) {
+      return (await filesToDataURLs(files)).filter(Boolean);
+    }
+    // filePaths is authoritative — fetch from server.
+    if (paths.length) {
+      return await filePathsToDataURLs(paths);
+    }
+    // No server paths yet (pre-upload) — use whatever files we have.
+    if (files.length) {
+      return (await filesToDataURLs(files)).filter(Boolean);
+    }
+    return [];
+  }
+
+  // Send ONE prompt to Envato ImageGen (https://app.envato.com/image-gen).
+  // Per-card sends run in parallel — Envato doesn't rate-limit and each
+  // send spawns its own tab + automation, so there's no need to serialize.
+  async function sendSinglePromptToEnvato(index, btn){
+    const p = AXKAN.state.prompts[index];
+    if (!p || !p.prompt_text) {
+      if (AXKAN.showToast) AXKAN.showToast('Este prompt está vacío', 'warn');
+      return;
+    }
+    const api = window.AXKAN && window.AXKAN.api;
+    if (!api) {
+      if (AXKAN.showToast) AXKAN.showToast('Backend no disponible', 'error');
+      return;
+    }
+
+    btn.dataset.state = 'sending';
+    const origLabel = btn.textContent;
+    btn.textContent = 'Enviando…';
+    try {
+      const dataUrls = await gatherReferenceDataURLs();
+      await api.sendToEnvato({
+        prompt: p.prompt_text,
+        aspectRatio: '1:2',
+        referenceImages: dataUrls,
+      }, 'image');
+      btn.dataset.state = 'done';
+      btn.textContent = dataUrls.length
+        ? '✓ Enviado (' + dataUrls.length + ' ref)'
+        : '✓ Enviado';
+      if (AXKAN.showToast) {
+        const refInfo = dataUrls.length
+          ? ' con ' + dataUrls.length + ' referencia' + (dataUrls.length > 1 ? 's' : '')
+          : ' (solo texto)';
+        AXKAN.showToast('Prompt ' + (index + 1) + ' enviado a Envato ImageGen' + refInfo, 'success');
+      }
+    } catch (err) {
+      btn.dataset.state = '';
+      btn.textContent = origLabel;
+      if (AXKAN.showToast) AXKAN.showToast('Error: ' + (err && err.message ? err.message : 'desconocido'), 'error');
+    }
+  }
+
+  function renderPrompts(){
+    promptList.innerHTML = '';
+    AXKAN.state.prompts.forEach((p, i) => {
+      const card = document.createElement('div');
+      card.className = 'prompt-card';
+
+      // --- header ---
+      const title = document.createElement('div');
+      title.className = 'p-title';
+      title.textContent = p.slide_name || ('Slide ' + (i + 1));
+
+      // --- body (click-to-edit area) ---
+      const text = document.createElement('div');
+      text.className = 'p-text';
+      text.tabIndex = 0;
+      text.textContent = p.prompt_text || '';
+
+      // --- footer with per-card Send button ---
+      const footer = document.createElement('div');
+      footer.className = 'prompt-card__footer';
+
+      const hint = document.createElement('span');
+      hint.className = 'prompt-card__edit-hint';
+      hint.textContent = 'Click el texto para editar';
+
+      const sendBtn = document.createElement('button');
+      sendBtn.type = 'button';
+      sendBtn.className = 'prompt-card__send';
+      sendBtn.textContent = '→ Enviar a Envato';
+      sendBtn.setAttribute('aria-label', 'Enviar este prompt a Envato ImageGen');
+      sendBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        sendSinglePromptToEnvato(i, sendBtn);
+      });
+
+      footer.appendChild(hint);
+      footer.appendChild(sendBtn);
+
+      card.appendChild(title);
+      card.appendChild(text);
+      card.appendChild(footer);
+
+      // --- inline edit on the text body ---
+      function enterEdit(){
+        if (card.classList.contains('editing')) return;
+        card.classList.add('editing');
+        const ta = document.createElement('textarea');
+        ta.value = p.prompt_text || '';
+        ta.rows = Math.max(4, Math.ceil((ta.value.length || 0) / 70));
+        card.replaceChild(ta, text);
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+
+        function save(){
+          const newText = ta.value.trim();
+          AXKAN.actions.updatePrompt(i, newText);
+          text.textContent = AXKAN.state.prompts[i].prompt_text;
+          if (ta.parentNode === card) card.replaceChild(text, ta);
+          card.classList.remove('editing');
+        }
+        ta.addEventListener('blur', save);
+        ta.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            ta.blur();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            ta.value = p.prompt_text || '';
+            ta.blur();
+          }
+        });
+      }
+
+      text.addEventListener('click', enterEdit);
+      text.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); enterEdit(); }
+      });
+
+      promptList.appendChild(card);
+    });
+  }
+
+  AXKAN.setPrompts = function(list){
+    if (Array.isArray(list)) {
+      AXKAN.actions.setPrompts(list);
+      if (current === 6) renderPrompts();
+    }
+  };
+
+  function enterPrompts(){
+    // Screen 6 shows Phase 1 prompts (image-gen). Force phase='images' so
+    // the prompts alias points at imagePrompts and renderPrompts reads them.
+    AXKAN.actions.setPhase('images');
+    if (!AXKAN.state.prompts || AXKAN.state.prompts.length === 0) {
+      AXKAN.actions.setPrompts(defaultPrompts());
+    }
+    renderPrompts();
+    AXKAN.enableCTA(true);
+  }
+
+  // -------------------- Screen 7: done --------------------
+  const progressList = document.getElementById('progress-list');
+  const btnEnvato = document.getElementById('btn-envato');
+  const btnNew = document.getElementById('btn-new');
+
+  function renderProgress(){
+    progressList.innerHTML = '';
+    const isVid = AXKAN.state.contentType === 'video';
+    const prompts = AXKAN.state.prompts || [];
+    const n = Math.max(1, prompts.length);
+    const icon = isVid ? '🎬' : '📸';
+    const noun = isVid ? 'Video'   : 'Imagen';
+    const eta  = isVid ? '~30-60s' : '~20s';
+    for (let i = 0; i < n; i++) {
+      const p = prompts[i] || {};
+      const row = document.createElement('div');
+      row.className = 'progress-item';
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      const txt = document.createElement('span');
+      const label = p.slide_name ? (noun + ' — ' + p.slide_name) : (noun + ' ' + (i + 1));
+      txt.textContent = icon + ' ' + label + ' · generando en Envato… ' + eta;
+      row.appendChild(dot);
+      row.appendChild(txt);
+      progressList.appendChild(row);
+    }
+  }
+
+  btnEnvato.addEventListener('click', function(){
+    const isVid = AXKAN.state.contentType === 'video';
+    const url = isVid ? 'https://app.envato.com/video-gen' : 'https://app.envato.com/image-gen';
+    window.open(url, '_blank', 'noopener');
+  });
+
+  btnNew.addEventListener('click', function(){
+    AXKAN.actions.resetAll();
+  });
+
+  // Listen for reset announcement — clean up this IIFE's DOM.
+  window.addEventListener('axkan:reset', function(){
+    if (destInput) destInput.value = '';
+    if (themeInput) themeInput.value = '';
+    allTypeCards().forEach(c => {
+      c.classList.remove('selected');
+      c.setAttribute('aria-checked','false');
+    });
+    allSubCards().forEach(c => {
+      c.classList.remove('selected');
+      c.setAttribute('aria-checked','false');
+    });
+    if (thumbRow) thumbRow.innerHTML = '';
+    if (thumbRowGen) thumbRowGen.innerHTML = '';
+    if (promptList) promptList.innerHTML = '';
+    if (promptListVideo) promptListVideo.innerHTML = '';
+    // resetAll mutates state in place (same Proxy), so no re-binding needed.
+    AXKAN.actions.goToScreen(2);
+  });
+
+  function enterDone(){
+    AXKAN.showAtras(false);
+    AXKAN.enableCTA(false);
+    renderProgress();
+  }
+
+  // -------------------- Stepper navigation --------------------
+  // Map step id → screen number. 'tipo' covers screens 2 (type) and 3
+  // (sub-type); clicking it sends you to 2 so you can re-pick.
+  const STEP_TO_SCREEN = {
+    tipo: 2, detalles: 4, imagenes: 5, prompts: 6,
+    generadas: 8, 'prompts-video': 9, enviar: 7,
+  };
+
+  // Shell dispatches axkan:step-clicked from the stepper. Route through the
+  // ONE nav writer (actions.goToScreen); guards (missing files, stale
+  // prompts, etc.) live inside the action so every caller gets them.
+  window.addEventListener('axkan:step-clicked', (e) => {
+    const step = e.detail && e.detail.step;
+    const target = STEP_TO_SCREEN[step];
+    if (!target) return;
+    AXKAN.actions.goToScreen(target);
+  });
+
+  // -------------------- File rehydration --------------------
+  // localStorage can't serialize File objects, so on refresh AXKAN.state.files
+  // always boots empty. But we DO still have state.filePaths (server paths
+  // like "/sessions/abc123/uploads/img.png"). This refetches those files
+  // from the server, reconstructs File objects, and feeds them back through
+  // actions.addFiles so the notebook has them again.
+  //
+  // Runs async so the initial screen render is not blocked. When it
+  // finishes, renderThumbs() repaints and the CTA re-enables.
+  async function rehydrateFilesFromServer(){
+    const paths = AXKAN.state.filePaths || [];
+    if (!paths.length) return;                       // nothing to restore
+    if (AXKAN.state.files.length === paths.length) return;  // already hydrated
+    const restored = [];
+    for (const p of paths) {
+      try {
+        const resp = await fetch(p);
+        if (!resp.ok) continue;                       // session pruned; skip
+        const blob = await resp.blob();
+        const name = p.split('/').pop() || 'restored.png';
+        const type = blob.type || 'image/png';
+        restored.push(new File([blob], name, { type, lastModified: Date.now() }));
+      } catch (_e) {
+        // network/server down — leave filePaths intact; retry next boot
+      }
+    }
+    if (!restored.length) {
+      if (AXKAN.actions && AXKAN.actions.setUploaded) {
+        AXKAN.actions.setUploaded(null, []);
+      }
+      return;
+    }
+    // Clear stale in-memory files before restoring from server paths —
+    // prevents accumulation across rehydrations / sessions.
+    AXKAN.actions.clearFiles();
+    AXKAN.actions.addFiles(restored);
+    if (current === 5) {
+      renderThumbs();
+      AXKAN.enableCTA(AXKAN.state.files.length >= 1);
+    }
+  }
+
+  // Same pattern for Phase 2 generated images (Phase 2's counterpart to
+  // rehydrateFilesFromServer). After refresh on screen 8/9, state.generatedImages
+  // is empty but state.generatedPaths may list server paths — re-fetch them.
+  async function rehydrateGeneratedFromServer(){
+    const paths = AXKAN.state.generatedPaths || [];
+    if (!paths.length) return;
+    if (AXKAN.state.generatedImages.length >= paths.length) return;
+    const restored = [];
+    for (const p of paths) {
+      try {
+        const resp = await fetch(p);
+        if (!resp.ok) continue;
+        const blob = await resp.blob();
+        const name = p.split('/').pop() || 'gen-restored.png';
+        const type = blob.type || 'image/png';
+        restored.push(new File([blob], name, { type, lastModified: Date.now() }));
+      } catch (_e) {}
+    }
+    if (!restored.length) {
+      // All paths 404'd — server restart or session pruned. Clear so the
+      // guards don't think we still have usable generated images.
+      if (AXKAN.actions && AXKAN.actions.setGeneratedUploaded) {
+        AXKAN.actions.setGeneratedUploaded(null, []);
+      }
+      return;
+    }
+    AXKAN.actions.addGeneratedImages(restored);
+    if (current === 8) {
+      renderGeneratedThumbs();
+      AXKAN.enableCTA(AXKAN.state.generatedImages.length >= 1);
+    }
+  }
+
+  // -------------------- Initial state --------------------
+  // Boot: pass the saved screen through actions.goToScreen, which applies
+  // all guards (missing files, stale prompts, bad contentType, etc.) in ONE
+  // place. If the current screen happens to equal the saved one (default
+  // = 2), goToScreen still fires axkan:navigate so the renderer runs.
+  setTimeout(() => {
+    const saved = (AXKAN.state && typeof AXKAN.state.currentScreen === 'number')
+      ? AXKAN.state.currentScreen
+      : 2;
+    console.log('[AXKAN] boot: restoring screen', saved, '| phase:', AXKAN.state.phase,
+      '| videoPrompts:', (AXKAN.state.videoPrompts||[]).length,
+      '| imagePrompts:', (AXKAN.state.imagePrompts||[]).length,
+      '| generatedPaths:', (AXKAN.state.generatedPaths||[]).length,
+      '| filePaths:', (AXKAN.state.filePaths||[]).length);
+    AXKAN.actions.goToScreen(saved);
+    // Fire-and-forget: pull uploaded files back from the server so
+    // refresh doesn't silently lose the user's images.
+    rehydrateFilesFromServer();
+    rehydrateGeneratedFromServer();
+  }, 0);
+
+})();
+
+
+
+//  ======== SCRIPT {} ========
+
+
+(function () {
+  "use strict";
+
+  // ---------- Element refs ----------
+  const paletteEl    = document.getElementById("palette");
+  const paletteInput = document.getElementById("palette-input");
+  const paletteOpen  = document.getElementById("palette-open");
+  const paletteClose = document.getElementById("palette-close");
+  const stepperEl    = document.getElementById("stepper");
+  const stepEls      = Array.from(stepperEl.querySelectorAll(".step"));
+  const crumbEl      = document.getElementById("topbar-crumb");
+  const btnContinuar = document.getElementById("btn-continuar");
+  const btnAtras     = document.getElementById("btn-atras");
+  const sessionTimeEl = document.getElementById("session-time");
+
+  // ---------- Canonical step order ----------
+  const STEPS = ["tipo", "detalles", "imagenes", "prompts", "generadas", "prompts-video", "enviar"];
+  const STEP_LABELS = {
+    tipo: "Tipo", detalles: "Detalles", imagenes: "Imágenes",
+    prompts: "Prompts", generadas: "Generadas",
+    "prompts-video": "Prompts video", enviar: "Enviar"
+  };
+
+  // ---------- Internal state ----------
+  const state = {
+    current: "tipo",
+    reached: new Set(["tipo"]),
+    continuarCb: null,
+    atrasCb: null,
+  };
+
+  // ---------- Session time in sidebar ----------
+  function fmtTime() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+           " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  sessionTimeEl.textContent = fmtTime();
+  setInterval(() => { sessionTimeEl.textContent = fmtTime(); }, 60 * 1000);
+
+  // ---------- Stepper rendering ----------
+  function renderStepper() {
+    stepEls.forEach((btn) => {
+      const step = btn.dataset.step;
+      btn.classList.remove("is-active", "is-done", "is-reachable");
+      btn.removeAttribute("aria-current");
+
+      const isCurrent = step === state.current;
+      const currentIdx = STEPS.indexOf(state.current);
+      const myIdx = STEPS.indexOf(step);
+      const reached = state.reached.has(step);
+
+      if (isCurrent) {
+        btn.classList.add("is-active");
+        btn.setAttribute("aria-current", "step");
+      } else if (reached && myIdx < currentIdx) {
+        btn.classList.add("is-done");
+      } else if (reached) {
+        btn.classList.add("is-reachable");
+      }
+    });
+    crumbEl.textContent = STEP_LABELS[state.current] || "—";
+  }
+
+  // ---------- Emit step-click event ----------
+  // Distinct event name from axkan:navigate (which carries a screen number).
+  // The screens IIFE listens for axkan:step-clicked and routes through
+  // actions.goToScreen — that's the only writer of currentScreen.
+  function emitNavigate(step) {
+    window.dispatchEvent(new CustomEvent("axkan:step-clicked", {
+      detail: { step }
+    }));
+  }
+
+  // Clicking a step (only if reached)
+  stepperEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".step");
+    if (!btn) return;
+    const step = btn.dataset.step;
+    if (!state.reached.has(step)) return;
+    if (step === state.current) return;
+    emitNavigate(step);
+  });
+
+  // Full reset contract — shell clears its private "reached" Set and
+  // re-renders the stepper with only 'tipo' visible as reached.
+  window.addEventListener('axkan:reset', () => {
+    state.reached = new Set(['tipo']);
+    state.current = 'tipo';
+    renderStepper();
+  });
+
+  // ---------- Command palette ----------
+  function openPalette() {
+    if (paletteEl.open) return;
+    if (typeof paletteEl.showModal === "function") {
+      paletteEl.showModal();
+    } else {
+      paletteEl.setAttribute("open", "");
+    }
+    paletteInput.value = "";
+    requestAnimationFrame(() => paletteInput.focus());
+  }
+  function closePalette() {
+    if (!paletteEl.open) return;
+    paletteEl.close();
+  }
+  function togglePalette() { paletteEl.open ? closePalette() : openPalette(); }
+
+  paletteOpen.addEventListener("click", openPalette);
+  paletteClose.addEventListener("click", closePalette);
+  paletteEl.addEventListener("click", (e) => {
+    // Click outside inner content (on backdrop area) → close
+    const rect = paletteEl.getBoundingClientRect();
+    const inside =
+      e.clientX >= rect.left && e.clientX <= rect.right &&
+      e.clientY >= rect.top  && e.clientY <= rect.bottom;
+    if (!inside) closePalette();
+  });
+
+  // Palette command dispatch
+  paletteEl.addEventListener("click", (e) => {
+    const item = e.target.closest(".palette__item");
+    if (!item) return;
+    const cmd = item.dataset.cmd || "";
+    if (cmd.startsWith("go:")) {
+      const step = cmd.slice(3);
+      if (state.reached.has(step)) {
+        emitNavigate(step);
+        closePalette();
+      }
+    } else if (cmd === "continue") {
+      closePalette();
+      if (!btnContinuar.disabled && state.continuarCb) state.continuarCb();
+    } else if (cmd === "new-session") {
+      closePalette();
+      if (window.AXKAN && window.AXKAN.actions && window.AXKAN.actions.resetAll) {
+        window.AXKAN.actions.resetAll();
+      } else {
+        window.dispatchEvent(new CustomEvent("axkan:new-session"));
+      }
+    } else if (cmd === "help") {
+      closePalette();
+      window.dispatchEvent(new CustomEvent("axkan:help"));
+    }
+  });
+
+  // Filter palette items as you type
+  paletteInput.addEventListener("input", () => {
+    const q = paletteInput.value.trim().toLowerCase();
+    paletteEl.querySelectorAll(".palette__item").forEach((item) => {
+      const label = item.querySelector(".palette__item-label").textContent.toLowerCase();
+      const match = !q || label.includes(q);
+      item.parentElement.style.display = match ? "" : "none";
+    });
+  });
+
+  // ---------- Global keyboard ----------
+  document.addEventListener("keydown", (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+
+    // ⌘K — toggle palette
+    if (mod && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      togglePalette();
+      return;
+    }
+    // Esc — close palette (native dialog also handles, but explicit for safety)
+    if (e.key === "Escape" && paletteEl.open) {
+      e.preventDefault();
+      closePalette();
+      return;
+    }
+    // ⌘↵ — advance when CTA enabled
+    if (mod && e.key === "Enter" && !btnContinuar.disabled) {
+      // Allow Cmd+Enter in inline-edit textareas (prompt cards) to save+close,
+      // but fire Continuar for form textareas (Detalles vibe field, etc.).
+      // Inline editors have a parent with class 'prompt-card'.
+      const t = e.target;
+      const isInlineEdit = t && t.tagName === "TEXTAREA"
+                        && t.closest && t.closest('.prompt-card');
+      if (!isInlineEdit) {
+        e.preventDefault();
+        if (state.continuarCb) state.continuarCb();
+      }
+    }
+  });
+
+  // ---------- Action bar buttons ----------
+  btnContinuar.addEventListener("click", () => {
+    if (btnContinuar.disabled) return;
+    if (state.continuarCb) state.continuarCb();
+  });
+  btnAtras.addEventListener("click", () => {
+    if (state.atrasCb) state.atrasCb();
+  });
+
+  // ---------- Public API ----------
+  // NB: merge (Object.assign) instead of replace, so the screens-agent's
+  // state + helpers installed before DOMContentLoaded survive. Otherwise
+  // window.AXKAN.state is wiped out and clicks can't record contentType.
+  Object.assign(window.AXKAN = window.AXKAN || {}, {
+    /**
+     * Set the active step. Also marks all prior steps as reached.
+     * @param {string} step — one of "tipo", "detalles", "imagenes", "prompts", "enviar"
+     */
+    setStep(step) {
+      if (!STEPS.includes(step)) {
+        console.warn("[AXKAN] unknown step:", step);
+        return;
+      }
+      const idx = STEPS.indexOf(step);
+      for (let i = 0; i <= idx; i++) state.reached.add(STEPS[i]);
+      state.current = step;
+      renderStepper();
+    },
+
+    /** Current active step id. */
+    getStep() { return state.current; },
+
+    /** Enable / disable the primary CTA. Plays a rosa-pulse "unlock" animation
+     *  on the disabled→enabled transition so the user sees it become interactive. */
+    enableCTA(enabled) {
+      const wasDisabled = btnContinuar.disabled;
+      btnContinuar.disabled = !enabled;
+      btnContinuar.classList.toggle("is-disabled", !enabled);
+      if (enabled && wasDisabled) {
+        btnContinuar.classList.remove("just-unlocked");
+        // Force reflow so the animation re-triggers
+        // eslint-disable-next-line no-unused-expressions
+        btnContinuar.offsetWidth;
+        btnContinuar.classList.add("just-unlocked");
+      }
+    },
+
+    /** Set the CTA label text (keeps the arrow and shortcut hint). */
+    setCTALabel(text) {
+      const span = btnContinuar.querySelector("span:first-child");
+      if (span) span.textContent = text;
+    },
+
+    /** Show or hide the "Atrás" ghost button. */
+    showAtras(show) {
+      btnAtras.hidden = !show;
+    },
+
+    /** Register the Continuar callback. */
+    onContinuar(cb) { state.continuarCb = typeof cb === "function" ? cb : null; },
+
+    /** Register the Atrás callback. */
+    onAtras(cb)     { state.atrasCb     = typeof cb === "function" ? cb : null; },
+
+    /** Programmatically open the palette. */
+    openPalette,
+
+    /** Programmatically close the palette. */
+    closePalette,
+
+    /** Set the session name shown in the sidebar meta card. */
+    setSessionName(name) {
+      const el = document.getElementById("session-name");
+      if (el && typeof name === "string") el.textContent = name;
+    },
+
+    /** Canonical step order (read-only copy). */
+    STEPS: STEPS.slice(),
+  });
+
+  // Pick up any callbacks the screens/backend scripts registered BEFORE this
+  // shell IIFE ran (they registered into the queue-based shims above).
+  if (typeof window.AXKAN.__pendingContinuar === "function") {
+    state.continuarCb = window.AXKAN.__pendingContinuar;
+  }
+  if (typeof window.AXKAN.__pendingAtras === "function") {
+    state.atrasCb = window.AXKAN.__pendingAtras;
+  }
+
+  // ---------- Initial render ----------
+  renderStepper();
+})();
+
+
+//  ======== SCRIPT {} ========
+
+
+/* ============================================================
+   AXKAN Content Studio — Backend Wiring Layer + Command Palette
+   ============================================================
+   Pure glue code. No markup, no CSS. Assumes window.AXKAN,
+   its state object, and shell helpers already exist.
+   ============================================================ */
+(function () {
+  'use strict';
+
+  // ---------- safety: bootstrap namespace if store IIFE hasn't run ----------
+  // Under normal conditions the store IIFE (first <script> block) runs first
+  // and installs the Proxy on AXKAN.state. This || fallback is a safety net
+  // for out-of-order loads; in practice it should short-circuit every time.
+  window.AXKAN = window.AXKAN || {};
+  const A = window.AXKAN;
+  if (!A.state) {
+    console.error('[AXKAN] Store IIFE missing — backend running without the locked store.');
+  }
+
+  const API_BASE = (window.location && window.location.origin) || 'http://localhost:8080';
+
+  // ============================================================
+  // 1. API HELPER
+  // ============================================================
+  async function _json(res) {
+    let body = null;
+    try { body = await res.json(); } catch (e) { /* non-json */ }
+    if (!res.ok) {
+      const msg = (body && (body.error || body.message)) || ('HTTP ' + res.status);
+      const err = new Error(msg);
+      err.status = res.status;
+      err.body = body;
+      throw err;
+    }
+    if (body && body.success === false) {
+      throw new Error(body.error || 'Request failed');
+    }
+    return body;
+  }
+
+  A.api = {
+    async uploadImages(files) {
+      if (!files || !files.length) throw new Error('No hay archivos para subir');
+      const fd = new FormData();
+      for (const f of files) fd.append('files', f);
+      const res = await fetch(API_BASE + '/api/images/upload', {
+        method: 'POST',
+        body: fd,
+      });
+      return _json(res);
+    },
+
+    // Upload CURATED (Phase 2) images into sessions/<sid>/clean/. Reuses
+    // the Phase 1 session_id if provided so Claude's /api/video-prompts/generate
+    // can see both the original reference images and the curated ones.
+    async uploadGeneratedImages(files, sessionId) {
+      if (!files || !files.length) throw new Error('No hay imágenes generadas para subir');
+      const fd = new FormData();
+      for (const f of files) fd.append('files', f);
+      if (sessionId) fd.append('session_id', sessionId);
+      const res = await fetch(API_BASE + '/api/images/upload-generated', {
+        method: 'POST',
+        body: fd,
+      });
+      return _json(res);
+    },
+
+    async generatePrompts(payload) {
+      const res = await fetch(API_BASE + '/api/prompts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return _json(res);
+    },
+
+    async generateVideoPrompts(payload) {
+      const res = await fetch(API_BASE + '/api/video-prompts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return _json(res);
+    },
+
+    async sendToEnvato(payload, bulk) {
+      // bulk => /api/envato/send-all-video
+      // image (static) => /api/envato/send
+      // default video => /api/envato/send-video
+      let endpoint = '/api/envato/send-video';
+      if (bulk === true) endpoint = '/api/envato/send-all-video';
+      else if (bulk === 'image') endpoint = '/api/envato/send';
+      const res = await fetch(API_BASE + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return _json(res);
+    },
+
+    async abort() {
+      const res = await fetch(API_BASE + '/api/abort', { method: 'POST' });
+      return _json(res).catch(() => ({ success: true }));
+    },
+  };
+
+  // ============================================================
+  // 4. TOAST / BANNER
+  // ============================================================
+  function ensureToastHost() {
+    let host = document.getElementById('axkan-toast-host');
+    if (host) return host;
+    host = document.createElement('div');
+    host.id = 'axkan-toast-host';
+    Object.assign(host.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      zIndex: '99999',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px',
+      pointerEvents: 'none',
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+    });
+    document.body.appendChild(host);
+    return host;
+  }
+
+  const TOAST_COLORS = {
+    info:    { bg: '#2AB7B7', fg: '#0C1016' }, // turquesa
+    success: { bg: '#34C759', fg: '#0C1016' }, // verde
+    error:   { bg: '#FF3B8A', fg: '#FFFFFF' }, // rosa
+    warn:    { bg: '#F0A800', fg: '#0C1016' },
+  };
+
+  function showToast(message, type) {
+    type = type || 'info';
+    const host = ensureToastHost();
+    const t = document.createElement('div');
+    const c = TOAST_COLORS[type] || TOAST_COLORS.info;
+    Object.assign(t.style, {
+      background: c.bg,
+      color: c.fg,
+      padding: '12px 16px',
+      borderRadius: '12px',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05)',
+      fontSize: '13px',
+      fontWeight: '500',
+      letterSpacing: '0.01em',
+      minWidth: '240px',
+      maxWidth: '360px',
+      pointerEvents: 'auto',
+      transform: 'translateX(420px)',
+      opacity: '0',
+      transition: 'transform .28s cubic-bezier(.2,.9,.25,1), opacity .28s ease',
+    });
+    t.textContent = message;
+    host.appendChild(t);
+    // animate in
+    requestAnimationFrame(() => {
+      t.style.transform = 'translateX(0)';
+      t.style.opacity = '1';
+    });
+    const remove = () => {
+      t.style.transform = 'translateX(420px)';
+      t.style.opacity = '0';
+      setTimeout(() => t.remove(), 300);
+    };
+    setTimeout(remove, 4000);
+    t.addEventListener('click', remove);
+    return t;
+  }
+  A.showToast = showToast;
+
+  // inline red error banner (lives at top of main)
+  function showErrorBanner(message) {
+    clearErrorBanner();
+    const main = document.querySelector('main') || document.getElementById('main') || document.body;
+    const b = document.createElement('div');
+    b.id = 'axkan-error-banner';
+    Object.assign(b.style, {
+      background: 'linear-gradient(90deg, rgba(255,59,138,0.15), rgba(255,59,138,0.05))',
+      border: '1px solid rgba(255,59,138,0.5)',
+      color: '#FF3B8A',
+      padding: '12px 16px',
+      borderRadius: '10px',
+      margin: '12px 16px',
+      fontSize: '13px',
+      fontWeight: '500',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      fontFamily: 'Inter, system-ui, sans-serif',
+    });
+    b.innerHTML = '<span>⚠ ' + escapeHtml(message) + '</span>';
+    const close = document.createElement('button');
+    close.textContent = '✕';
+    Object.assign(close.style, {
+      background: 'transparent', border: 'none', color: '#FF3B8A',
+      cursor: 'pointer', fontSize: '14px', marginLeft: '12px',
+    });
+    close.addEventListener('click', clearErrorBanner);
+    b.appendChild(close);
+    main.insertBefore(b, main.firstChild);
+  }
+  function clearErrorBanner() {
+    const ex = document.getElementById('axkan-error-banner');
+    if (ex) ex.remove();
+  }
+  A.showErrorBanner = showErrorBanner;
+  A.clearErrorBanner = clearErrorBanner;
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // ============================================================
+  // 3. LOADING STATES
+  // ============================================================
+  function showLoading(message) {
+    hideLoading();
+    const main = document.querySelector('main') || document.getElementById('main') || document.body;
+    const overlay = document.createElement('div');
+    overlay.id = 'axkan-loading-overlay';
+    Object.assign(overlay.style, {
+      position: 'absolute',
+      inset: '0',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '20px',
+      background: 'rgba(12,16,22,0.75)',
+      backdropFilter: 'blur(6px)',
+      webkitBackdropFilter: 'blur(6px)',
+      zIndex: '1000',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      color: '#EDEFF3',
+    });
+
+    const spinner = document.createElement('div');
+    Object.assign(spinner.style, {
+      width: '44px',
+      height: '44px',
+      borderRadius: '50%',
+      border: '3px solid rgba(255,255,255,0.1)',
+      borderTopColor: '#2AB7B7',
+      animation: 'axkan-spin 0.9s linear infinite',
+    });
+
+    // ensure keyframes exist
+    if (!document.getElementById('axkan-spin-kf')) {
+      const s = document.createElement('style');
+      s.id = 'axkan-spin-kf';
+      s.textContent = '@keyframes axkan-spin{to{transform:rotate(360deg)}}';
+      document.head.appendChild(s);
+    }
+
+    const label = document.createElement('div');
+    Object.assign(label.style, {
+      fontSize: '13px',
+      color: 'rgba(237,239,243,0.75)',
+      letterSpacing: '0.01em',
+      textAlign: 'center',
+      maxWidth: '340px',
+    });
+    label.textContent = message || 'Cargando…';
+
+    overlay.appendChild(spinner);
+    overlay.appendChild(label);
+
+    // need relative parent
+    const cs = getComputedStyle(main);
+    if (cs.position === 'static') main.style.position = 'relative';
+    main.appendChild(overlay);
+
+    if (A.enableCTA) A.enableCTA(false);
+  }
+  function hideLoading() {
+    const ex = document.getElementById('axkan-loading-overlay');
+    if (ex) ex.remove();
+    if (A.enableCTA) A.enableCTA(true);
+  }
+  A.showLoading = showLoading;
+  A.hideLoading = hideLoading;
+
+  // ============================================================
+  // 2. FLOW ORCHESTRATION
+  // ============================================================
+  function mapContentTypeForBackend() {
+    const ct = (A.state.contentType || '').toString().toLowerCase();
+    const st = (A.state.subType || '').toString().toLowerCase();
+    if (ct === 'imagen' || ct === 'imagengen' || ct === 'image') {
+      return { content_type: 'carousel', is_video: false };
+    }
+    if (ct === 'pitch') {
+      return { content_type: 'pitch', is_video: false };
+    }
+    if (ct === 'video') {
+      if (st.includes('carousel') || st.includes('loop')) {
+        return { content_type: 'living', is_video: true };
+      }
+      if (st.includes('personaje') || st.includes('character') || st.includes('hablando')) {
+        return { content_type: 'character', is_video: true };
+      }
+      return { content_type: 'living', is_video: true };
+    }
+    return { content_type: 'carousel', is_video: false };
+  }
+
+  function isVideoFlow() {
+    return (A.state.contentType || '').toString().toLowerCase() === 'video';
+  }
+  function isCarouselLoop() {
+    const st = (A.state.subType || '').toString().toLowerCase();
+    return isVideoFlow() && (st.includes('carousel') || st.includes('loop'));
+  }
+
+  async function handleScreen5To6() {
+    clearErrorBanner();
+    const files = (A.getUploadedFiles && A.getUploadedFiles()) || A.state.files || [];
+    if (!files || files.length === 0) {
+      showErrorBanner('Selecciona al menos una imagen antes de continuar.');
+      return;
+    }
+
+    try {
+      // --- upload
+      const up = showToast('Subiendo imágenes…', 'info');
+      showLoading('Subiendo ' + files.length + ' imagen' + (files.length === 1 ? '' : 'es') + '…');
+      const uploadRes = await A.api.uploadImages(files);
+      A.actions.setUploaded(
+        uploadRes.session_id,
+        (uploadRes.files || []).map(f => f.path)
+      );
+
+      // --- generate prompts
+      showLoading('Claude está escribiendo tus prompts… ~22s');
+      const map = mapContentTypeForBackend();
+      let promptsRes;
+
+      if (isVideoFlow() && isCarouselLoop()) {
+        // Carousel Loop: first we need base prompts (living), then per-clip video prompts
+        const base = await A.api.generatePrompts({
+          destination: A.state.destination,
+          slides: files.length,
+          product_type: A.state.productType || null,
+          content_type: map.content_type,
+          theme: A.state.theme,
+          session_id: A.state.sessionId,
+        });
+        // basePrompts is a transient intermediate value in the carousel-loop
+        // flow — we just need it to feed the next API call below, so use a
+        // local variable instead of polluting the store.
+        const basePrompts = base.prompts || [];
+        showLoading('Generando prompts de video por clip…');
+        promptsRes = await A.api.generateVideoPrompts({
+          session_id: A.state.sessionId,
+          destination: A.state.destination,
+          content_type: map.content_type,
+          theme: A.state.theme,
+          video_clip_count: files.length,
+          original_prompts: base.prompts || [],
+        });
+      } else if (isVideoFlow()) {
+        // Personaje Hablando — normal prompt generate with is_video flag
+        promptsRes = await A.api.generatePrompts({
+          destination: A.state.destination,
+          slides: files.length,
+          product_type: A.state.productType || null,
+          content_type: map.content_type,
+          theme: A.state.theme,
+          session_id: A.state.sessionId,
+          is_video: true,
+        });
+      } else {
+        promptsRes = await A.api.generatePrompts({
+          destination: A.state.destination,
+          slides: files.length,
+          product_type: A.state.productType || null,
+          content_type: map.content_type,
+          theme: A.state.theme,
+          session_id: A.state.sessionId,
+        });
+      }
+
+      A.actions.setPrompts(promptsRes.prompts || []);
+
+      renderPromptCards(A.state.prompts);
+
+      hideLoading();
+      showToast('Prompts listos (' + A.state.prompts.length + ')', 'success');
+      A.actions.goToScreen(6);
+    } catch (err) {
+      hideLoading();
+      console.error('[AXKAN] 5→6 failed', err);
+      showErrorBanner('No se pudo procesar: ' + (err && err.message ? err.message : 'error desconocido'));
+      showToast('Error al generar prompts', 'error');
+    }
+  }
+
+  function renderPromptCards(prompts) {
+    const list = document.getElementById('prompts-list');
+    if (!list) return;
+    list.innerHTML = '';
+    prompts.forEach((p, i) => {
+      const card = document.createElement('article');
+      card.className = 'prompt-card';
+      card.dataset.index = String(i);
+      card.innerHTML =
+        '<header class="prompt-card__head">' +
+          '<span class="prompt-card__num">' + (p.slide_number || (i + 1)) + '</span>' +
+          '<h3 class="prompt-card__title">' + escapeHtml(p.slide_name || ('Slide ' + (i + 1))) + '</h3>' +
+          '<span class="prompt-card__eta">~' + escapeHtml(p.estimated_time || '8s') + '</span>' +
+        '</header>' +
+        '<div class="prompt-card__body">' +
+          '<label class="prompt-card__label">Prompt</label>' +
+          '<textarea class="prompt-card__prompt" data-field="prompt_text" rows="4">' + escapeHtml(p.prompt_text || '') + '</textarea>' +
+          (p.speech != null ?
+            '<label class="prompt-card__label">Speech</label>' +
+            '<textarea class="prompt-card__speech" data-field="speech" rows="2">' + escapeHtml(p.speech || '') + '</textarea>'
+            : '') +
+        '</div>';
+
+      // wire edits back into state
+      card.querySelectorAll('textarea').forEach(ta => {
+        ta.addEventListener('input', e => {
+          const field = e.target.dataset.field;
+          if (A.state.prompts[i]) {
+            A.state.prompts[i][field] = e.target.value;
+            persistState();
+          }
+        });
+      });
+      list.appendChild(card);
+    });
+  }
+  A.renderPromptCards = renderPromptCards;
+
+  async function handleScreen6To7() {
+    clearErrorBanner();
+    const prompts = A.state.prompts || [];
+    if (!prompts.length) {
+      showErrorBanner('No hay prompts para enviar.');
+      return;
+    }
+
+    // seed status list
+    renderStatusList(prompts);
+    A.actions.goToDone();
+    if (A.setStep) A.setStep('enviar');
+
+    const paths = A.state.filePaths || [];
+    const loop = isCarouselLoop();
+    const isImage = !isVideoFlow();
+
+    try {
+      showToast('Enviando a Envato…', 'info');
+
+      if (isImage) {
+        // ImageGen flow — /api/envato/send per prompt (static)
+        // Convert file paths to data URLs so the backend can decode them.
+        // (Per-card sends already do this via gatherReferenceDataURLs.)
+        const refDataUrls = await gatherReferenceDataURLs();
+        for (let i = 0; i < prompts.length; i++) {
+          const p = prompts[i];
+          updateStatus(i, '🎨 Imagen ' + (i + 1) + ' · enviando…');
+          await A.api.sendToEnvato({
+            prompt: p.prompt_text,
+            aspectRatio: A.state.aspectRatio || '9:16',
+            referenceImages: refDataUrls,
+          }, 'image');
+          updateStatus(i, '🎨 Imagen ' + (i + 1) + ' · generando…');
+        }
+      } else if (prompts.length > 1) {
+        // bulk video
+        for (let i = 0; i < prompts.length; i++) {
+          updateStatus(i, '🎬 Video ' + (i + 1) + ' · en cola…');
+        }
+        await A.api.sendToEnvato({
+          prompts: prompts.map(p => p.prompt_text),
+          speeches: prompts.map(p => p.speech || ''),
+          imagePaths: paths,
+          loop: loop,
+        }, true);
+        for (let i = 0; i < prompts.length; i++) {
+          updateStatus(i, '🎬 Video ' + (i + 1) + ' · generando…');
+        }
+      } else {
+        // single
+        updateStatus(0, '🎬 Video 1 · enviando…');
+        await A.api.sendToEnvato({
+          prompt: prompts[0].prompt_text,
+          speech: prompts[0].speech || '',
+          imagePath: paths[0],
+          loop: loop,
+        }, false);
+        updateStatus(0, '🎬 Video 1 · generando…');
+      }
+
+      showToast('Enviado a Envato correctamente', 'success');
+    } catch (err) {
+      console.error('[AXKAN] 6→7 failed', err);
+      showToast('Error al enviar: ' + (err.message || 'desconocido'), 'error');
+      showErrorBanner('Falló el envío a Envato: ' + (err.message || 'error desconocido'));
+    }
+  }
+
+  function renderStatusList(prompts) {
+    const list = document.getElementById('status-list');
+    if (!list) return;
+    list.innerHTML = '';
+    prompts.forEach((p, i) => {
+      const li = document.createElement('li');
+      li.className = 'status-item';
+      li.dataset.index = String(i);
+      const label = isVideoFlow()
+        ? '🎬 Video ' + (i + 1) + ' · preparando…'
+        : '🎨 Imagen ' + (i + 1) + ' · preparando…';
+      li.textContent = label;
+      list.appendChild(li);
+    });
+  }
+  function updateStatus(i, text) {
+    const list = document.getElementById('status-list');
+    if (!list) return;
+    const item = list.querySelector('[data-index="' + i + '"]');
+    if (item) item.textContent = text;
+  }
+  A.updateStatus = updateStatus;
+
+  // ---------- master continuar dispatcher (disabled legacy path) ----------
+  // Kept only for API compatibility; the screens IIFE owns Continuar.
+  async function handleContinuar() {
+    const s = A.state.currentScreen || 1;
+    switch (s) {
+      case 1:
+      case 2:
+      case 3:
+      case 4:
+        A.actions.goToScreen(s + 1);
+        break;
+      case 5:
+        await handleScreen5To6();
+        break;
+      case 6:
+        await handleScreen6To7();
+        break;
+    }
+  }
+
+  function handleAtras() {
+    const s = A.state.currentScreen || 1;
+    A.actions.goToScreen(Math.max(1, s - 1));
+  }
+
+  // NOTE: Disabled — the screens agent already installed the authoritative
+  // flow handler via A.onContinuar. Re-registering here would overwrite it
+  // (only the last cb passed to onContinuar wins). Backend work (upload,
+  // prompt gen, send) will be invoked by the screens handler through A.api.*
+  // when we wire that up in a later pass.
+  // if (A.onContinuar) A.onContinuar(handleContinuar);
+  // if (A.onAtras) A.onAtras(handleAtras);
+  A.handleContinuar = handleContinuar;
+  A.handleAtras = handleAtras;
+
+  // ============================================================
+  // 7. SESSION PERSISTENCE — superseded by AXKAN.store (Stage 1 migration).
+  // These are no-op shims so any legacy caller remains harmless.
+  // The real persistence lives in the store IIFE at the top of the file.
+  // ============================================================
+  const LS_KEY = 'axkan.studio.state.v2';
+  function persistState() { /* no-op — actions persist internally */ }
+  function restoreState() { /* no-op — store restores at boot */ }
+  A.persistState = persistState;
+  A.restoreState = restoreState;
+  A.setState = function (patch) {
+    // Thin shim for any legacy palette code. Prefer AXKAN.actions.*
+    Object.assign(A.state, patch || {});
+  };
+
+  // ============================================================
+  // 5. COMMAND PALETTE
+  // ============================================================
+  const COMMANDS = [
+    {
+      id: 'nuevo-proyecto',
+      icon: '✨',
+      label: 'Nuevo proyecto',
+      desc: 'Reinicia todo y vuelve al inicio',
+      shortcut: '⌘⇧N',
+      run: () => {
+        A.actions.resetAll();
+        showToast('Proyecto nuevo', 'success');
+      },
+    },
+    {
+      id: 'goto-tipo', icon: '🎯', label: 'Ir a Tipo', desc: 'Paso 1 — tipo de contenido', shortcut: '⌘1',
+      run: () => { A.actions.goToScreen(2); },
+    },
+    {
+      id: 'goto-detalles', icon: '⚙️', label: 'Ir a Detalles', desc: 'Paso 2 — destino y tema', shortcut: '⌘2',
+      run: () => {
+        if (!A.state.contentType) { showToast('Primero elige un tipo', 'warn'); return; }
+        A.actions.goToScreen(4);
+      },
+    },
+    {
+      id: 'goto-imagenes', icon: '🖼️', label: 'Ir a Imágenes', desc: 'Paso 3 — subir imágenes', shortcut: '⌘3',
+      run: () => {
+        if (!A.state.destination) { showToast('Completa los detalles primero', 'warn'); return; }
+        A.actions.goToScreen(5);
+      },
+    },
+    {
+      id: 'goto-prompts', icon: '📝', label: 'Ir a Prompts', desc: 'Paso 4 — revisar prompts', shortcut: '⌘4',
+      run: () => {
+        if (!A.state.prompts || !A.state.prompts.length) { showToast('Aún no hay prompts generados', 'warn'); return; }
+        A.actions.goToScreen(6);
+      },
+    },
+    {
+      id: 'abort', icon: '⏹️', label: 'Abortar automatización', desc: 'Detiene cualquier envío a Envato en curso', shortcut: '⌘.',
+      run: async () => {
+        try { await A.api.abort(); showToast('Automatización abortada', 'success'); }
+        catch (e) { showToast('Error al abortar: ' + e.message, 'error'); }
+      },
+    },
+    {
+      id: 'envato', icon: '🌐', label: 'Ver Envato (labs)', desc: 'Abre el panel de Envato Video Gen', shortcut: '',
+      run: () => window.open('https://app.envato.com/video-gen', '_blank', 'noopener'),
+    },
+    {
+      id: 'theme', icon: '🎨', label: 'Cambiar tema visual', desc: 'Alternar apariencia (próximamente)', shortcut: '',
+      run: () => showToast('Cambio de tema próximamente', 'info'),
+    },
+  ];
+
+  // palette state
+  let paletteIndex = 0;
+  let paletteFiltered = COMMANDS.slice();
+
+  function paletteEls() {
+    return {
+      dlg: document.getElementById('palette'),
+      input: document.getElementById('palette-search'),
+      list: document.getElementById('palette-commands'),
+    };
+  }
+
+  function renderPalette() {
+    const { list } = paletteEls();
+    if (!list) return;
+    list.innerHTML = '';
+    if (paletteFiltered.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'palette-empty';
+      empty.style.cssText = 'padding:16px;color:rgba(237,239,243,0.5);font-size:13px;text-align:center;';
+      empty.textContent = 'Sin resultados';
+      list.appendChild(empty);
+      return;
+    }
+    paletteFiltered.forEach((cmd, i) => {
+      const li = document.createElement('li');
+      li.className = 'palette-item' + (i === paletteIndex ? ' is-active' : '');
+      li.dataset.id = cmd.id;
+      li.style.cssText =
+        'display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;cursor:pointer;' +
+        'font-family:Inter,system-ui,sans-serif;font-size:13px;color:#EDEFF3;' +
+        (i === paletteIndex ? 'background:rgba(42,183,183,0.15);outline:1px solid rgba(42,183,183,0.35);' : '');
+      li.innerHTML =
+        '<span style="font-size:18px;width:22px;text-align:center;">' + cmd.icon + '</span>' +
+        '<span style="flex:1;">' +
+          '<div style="font-weight:500;">' + escapeHtml(cmd.label) + '</div>' +
+          '<div style="font-size:11px;color:rgba(237,239,243,0.5);margin-top:2px;">' + escapeHtml(cmd.desc) + '</div>' +
+        '</span>' +
+        (cmd.shortcut
+          ? '<kbd style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.06);color:rgba(237,239,243,0.7);border:1px solid rgba(255,255,255,0.08);">' + escapeHtml(cmd.shortcut) + '</kbd>'
+          : '');
+      li.addEventListener('mouseenter', () => {
+        paletteIndex = i; renderPalette();
+      });
+      li.addEventListener('click', () => runPaletteAt(i));
+      list.appendChild(li);
+    });
+  }
+
+  function filterPalette(q) {
+    const needle = (q || '').toLowerCase().trim();
+    if (!needle) { paletteFiltered = COMMANDS.slice(); }
+    else {
+      paletteFiltered = COMMANDS.filter(c =>
+        c.label.toLowerCase().includes(needle) ||
+        c.desc.toLowerCase().includes(needle) ||
+        c.id.toLowerCase().includes(needle)
+      );
+    }
+    paletteIndex = 0;
+    renderPalette();
+  }
+
+  function runPaletteAt(i) {
+    const cmd = paletteFiltered[i];
+    if (!cmd) return;
+    closePalette();
+    try { cmd.run(); } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  }
+
+  function openPalette() {
+    const { dlg, input } = paletteEls();
+    if (!dlg) return;
+    paletteFiltered = COMMANDS.slice();
+    paletteIndex = 0;
+    if (input) input.value = '';
+    renderPalette();
+    if (typeof dlg.showModal === 'function' && !dlg.open) {
+      try { dlg.showModal(); } catch (e) { dlg.setAttribute('open', ''); }
+    } else {
+      dlg.setAttribute('open', '');
+    }
+    setTimeout(() => { if (input) input.focus(); }, 10);
+  }
+  function closePalette() {
+    const { dlg } = paletteEls();
+    if (!dlg) return;
+    if (dlg.open && typeof dlg.close === 'function') {
+      try { dlg.close(); } catch (e) { dlg.removeAttribute('open'); }
+    } else {
+      dlg.removeAttribute('open');
+    }
+  }
+  function togglePalette() {
+    const { dlg } = paletteEls();
+    if (!dlg) return;
+    if (dlg.open) closePalette(); else openPalette();
+  }
+  A.openPalette = openPalette;
+  A.closePalette = closePalette;
+  A.togglePalette = togglePalette;
+  A.renderPalette = renderPalette;
+
+  // wire palette search + key navigation once DOM ready
+  function wirePalette() {
+    const { dlg, input, list } = paletteEls();
+    if (!dlg || !input || !list) return false;
+    input.addEventListener('input', e => filterPalette(e.target.value));
+    input.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        paletteIndex = Math.min(paletteFiltered.length - 1, paletteIndex + 1);
+        renderPalette();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        paletteIndex = Math.max(0, paletteIndex - 1);
+        renderPalette();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        runPaletteAt(paletteIndex);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closePalette();
+      }
+    });
+    dlg.addEventListener('close', () => { /* no-op */ });
+    // seed list
+    renderPalette();
+    return true;
+  }
+
+  // ============================================================
+  // 6. GLOBAL KEYBOARD SHORTCUTS
+  // ============================================================
+  // undo stack (optional, low-pri)
+  const undoStack = [];
+  let lastSnapshot = null;
+  function snapshot() {
+    try {
+      const s = JSON.stringify({ ...A.state, files: undefined });
+      if (s !== lastSnapshot) {
+        undoStack.push(lastSnapshot);
+        if (undoStack.length > 20) undoStack.shift();
+        lastSnapshot = s;
+      }
+    } catch (e) {}
+  }
+  function undo() {
+    const prev = undoStack.pop();
+    if (!prev) { showToast('Nada que deshacer', 'info'); return; }
+    try {
+      Object.assign(A.state, JSON.parse(prev));
+      persistState();
+      if (A.showScreen && A.state.currentScreen) A.showScreen(A.state.currentScreen);
+      showToast('Deshecho', 'info');
+    } catch (e) {}
+  }
+  A.undo = undo;
+
+  document.addEventListener('keydown', (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+
+    // ⌘K handling is owned by the shell IIFE (single owner — Bug #3 fix).
+    // Do NOT toggle here; the shell's handler already fires on the same event
+    // and a second toggle immediately closes it again (open-then-close flicker).
+    if (mod && (e.key === 'k' || e.key === 'K')) {
+      return;
+    }
+
+    // Esc handling also owned by shell. Skip to avoid double-close races.
+    if (e.key === 'Escape') {
+      return;
+    }
+
+    // don't hijack while user is typing in the palette input or an editable field
+    const tgt = e.target;
+    const inField = tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable);
+
+    // ⌘↵ Continuar
+    if (mod && e.key === 'Enter' && !inField) {
+      e.preventDefault();
+      handleContinuar();
+      return;
+    }
+    // Also allow ⌘↵ inside palette = same as Enter (handled there)
+    if (mod && e.key === 'Enter' && tgt && tgt.id === 'palette-search') {
+      // palette handles its own Enter
+      return;
+    }
+
+    // ⌘⌫ Atrás
+    if (mod && (e.key === 'Backspace' || e.key === 'Delete') && !inField) {
+      e.preventDefault();
+      handleAtras();
+      return;
+    }
+
+    // ⌘Z undo
+    if (mod && !e.shiftKey && (e.key === 'z' || e.key === 'Z') && !inField) {
+      e.preventDefault();
+      undo();
+      return;
+    }
+  });
+
+  // snapshot state before each continuar
+  // Backend wrapper disabled (see note above). Undo/snapshot still
+  // happens on state changes, just not via re-registering onContinuar.
+  // const _origContinuar = handleContinuar;
+  // const _wrappedContinuar = async function () {
+  //   snapshot();
+  //   return _origContinuar.apply(null, arguments);
+  // };
+  // if (A.onContinuar) A.onContinuar(_wrappedContinuar);
+  // A.handleContinuar = _wrappedContinuar;
+
+  // ============================================================
+  // BOOT
+  // ============================================================
+  function boot() {
+    ensureToastHost();
+    if (!wirePalette()) {
+      // retry once DOM mounts palette markup
+      const obs = new MutationObserver(() => {
+        if (wirePalette()) obs.disconnect();
+      });
+      obs.observe(document.documentElement, { childList: true, subtree: true });
+    }
+    // initial persistence snapshot
+    snapshot();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+  // expose commands list for introspection/tests
+  A._commands = COMMANDS;
+
+  console.log('[AXKAN] backend wiring ready');
+})();
+
+</script>
+</body>
+</html>

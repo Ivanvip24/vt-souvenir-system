@@ -81,8 +81,6 @@
       background: var(--obsidiana);
       color: var(--texto);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
       font-weight: 500;
       letter-spacing: 0.01em;
       overflow-x: hidden;
@@ -207,12 +205,10 @@
     .container {
       max-width: 780px;
       margin: 0 auto;
-      padding: 40px 24px 100px;
-      width: 100%;
-      flex: 1;
+      padding: 40px 48px 100px;
       transition: max-width 0.3s;
     }
-    .container.wide { max-width: 1400px; }
+    .container.wide { max-width: 1100px; }
 
     /* ===== SCREENS ===== */
     .screen { display: none; }
@@ -555,12 +551,13 @@
     /* ===== PROMPT CARDS — HORIZONTAL GRID ===== */
     .prompts-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
       margin-top: 8px;
+      min-width: 0;
+      width: 100%;
     }
-    @media (max-width: 1200px) { .prompts-grid { grid-template-columns: repeat(4, 1fr); } }
-    @media (max-width: 900px) { .prompts-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 900px) { .prompts-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 600px) { .prompts-grid { grid-template-columns: repeat(2, 1fr); } }
     .prompt-card {
       background: var(--cenote);
@@ -570,6 +567,7 @@
       transition: border-color 0.2s;
       display: flex;
       flex-direction: column;
+      min-width: 0;
     }
     .prompt-card:hover { border-color: var(--rosa); box-shadow: 0 2px 12px rgba(231,42,136,0.08); }
     .prompt-card-head {
@@ -592,6 +590,8 @@
       max-height: 90px;
       overflow: hidden;
       position: relative;
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
     .prompt-text.expanded { max-height: none; }
     .prompt-text::after {
@@ -666,6 +666,99 @@
       padding: 8px;
     }
 
+
+    /* ===== CHAT INTERFACE ===== */
+    .chat-screen { display:flex; flex-direction:column; height:calc(100vh - 80px); justify-content:center; transition:justify-content 0.3s; }
+    .chat-screen.has-messages { justify-content:flex-start; }
+    .chat-header { text-align:center; padding:0 0 30px; }
+    .chat-header h1 { font-family:var(--font-display); font-size:2.8rem; font-weight:900; margin:0; }
+    .chat-header .subtitle { font-size:0.85rem; color:var(--texto-dim); margin-top:10px; }
+    .chat-messages { overflow-y:auto; padding:20px 0; display:flex; flex-direction:column; gap:12px; max-height:0; transition:max-height 0.3s; }
+    .chat-screen.has-messages .chat-messages { flex:1; max-height:none; }
+    .chat-screen.has-messages .chat-header h1 { font-size:1.6rem; }
+    .chat-screen.has-messages .chat-header { padding:10px 0 10px; }
+    .chat-bubble { max-width:80%; padding:14px 18px; border-radius:16px; font-size:0.85rem; line-height:1.5; animation:slideUp 0.3s ease; }
+    .chat-bubble-user { align-self:flex-end; background:var(--rosa); color:white; border-bottom-right-radius:4px; }
+    .chat-bubble-ai { align-self:flex-start; background:var(--piedra); color:var(--texto); border-bottom-left-radius:4px; }
+    .chat-bubble-ai strong { color:var(--rosa); }
+    .chat-suggestions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .chat-suggestion { padding:8px 14px; border:1px solid var(--rosa); border-radius:20px; font-size:0.75rem; color:var(--rosa); cursor:pointer; font-family:var(--font-display); font-weight:600; transition:all 0.15s; }
+    .chat-suggestion:hover { background:var(--rosa); color:white; transform:translateY(-1px); }
+
+    /* Glassmorphism AI popup */
+    .chat-glass-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.3); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:1000; display:flex; align-items:center; justify-content:center; animation:glassFadeIn 0.3s ease; }
+    .chat-glass-popup { background:rgba(255,255,255,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(231,42,136,0.15); border-radius:20px; padding:28px 32px; max-width:520px; width:90%; box-shadow:0 24px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.3) inset; animation:glassSlideUp 0.35s cubic-bezier(0.16,1,0.3,1); }
+    .chat-glass-popup h3 { font-family:var(--font-display); font-size:1.1rem; font-weight:900; margin:0 0 6px; color:var(--texto); }
+    .chat-glass-popup .glass-subtitle { font-size:0.78rem; color:var(--texto-dim); margin:0 0 18px; line-height:1.5; }
+    .chat-glass-popup .glass-suggestions { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+    .chat-glass-popup .glass-sug-item { padding:12px 16px; border:1px solid var(--borde); border-radius:12px; font-size:0.82rem; color:var(--texto); cursor:pointer; transition:all 0.15s; background:rgba(255,255,255,0.6); font-family:var(--font-body); line-height:1.4; }
+    .chat-glass-popup .glass-sug-item:hover { border-color:var(--rosa); background:var(--rosa-glow); transform:translateX(4px); }
+    .chat-glass-popup .glass-close { position:absolute; top:14px; right:16px; width:28px; height:28px; border-radius:50%; border:none; background:rgba(0,0,0,0.05); color:var(--texto-dim); cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center; }
+    .chat-glass-popup .glass-close:hover { background:rgba(231,42,136,0.1); color:var(--rosa); }
+    @keyframes glassFadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes glassSlideUp { from{opacity:0;transform:translateY(20px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+    /* Action card — glassmorphism ready card */
+    .chat-action-card { margin-top:16px; padding:20px 24px; border-radius:16px; background:rgba(255,255,255,0.8); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(231,42,136,0.12); animation:glassSlideUp 0.35s cubic-bezier(0.16,1,0.3,1); }
+    .chat-action-card h3 { font-family:var(--font-display); font-size:1.1rem; margin:0 0 4px; color:var(--rosa); font-weight:900; }
+    .chat-action-card p { font-size:0.78rem; color:var(--texto-dim); margin:0 0 14px; line-height:1.4; }
+    .chat-action-card .config-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+    .chat-action-card .config-tag { padding:4px 10px; border-radius:8px; font-size:0.68rem; font-weight:700; font-family:var(--font-display); letter-spacing:0.05em; text-transform:uppercase; }
+    .chat-action-card .config-tag.type { background:var(--rosa); color:white; }
+    .chat-action-card .config-tag.dest { background:var(--turquesa); color:white; }
+    .chat-action-card .config-tag.slides { background:var(--naranja); color:white; }
+
+    /* Visual morphing — background + effects shift as conversation progresses */
+    .chat-screen { --morph-bg:transparent; background:var(--morph-bg); transition:all 0.8s ease; position:relative; overflow:hidden; }
+    .chat-screen::before { content:''; position:absolute; width:300px; height:300px; border-radius:50%; filter:blur(80px); opacity:0; transition:all 1.2s ease; pointer-events:none; z-index:0; }
+    .chat-screen > * { position:relative; z-index:1; }
+    .chat-screen.morph-1 { --morph-bg:rgba(231,42,136,0.015); }
+    .chat-screen.morph-1::before { opacity:0.4; background:radial-gradient(circle, rgba(231,42,136,0.08) 0%, transparent 70%); top:-50px; right:-50px; width:400px; height:400px; }
+    .chat-screen.morph-2 { --morph-bg:rgba(231,42,136,0.03); }
+    .chat-screen.morph-2::before { opacity:0.5; background:radial-gradient(circle, rgba(9,173,194,0.1) 0%, transparent 70%); bottom:-80px; left:-60px; width:500px; height:500px; }
+    .chat-screen.morph-3 { --morph-bg:linear-gradient(160deg, rgba(231,42,136,0.025) 0%, rgba(9,173,194,0.025) 50%, rgba(243,146,35,0.02) 100%); }
+    .chat-screen.morph-3::before { opacity:0.6; background:conic-gradient(from 180deg, rgba(231,42,136,0.08), rgba(9,173,194,0.06), rgba(243,146,35,0.06), rgba(138,183,59,0.04), rgba(231,42,136,0.08)); top:50%; left:50%; transform:translate(-50%,-50%); width:600px; height:600px; animation:morphRotate 12s linear infinite; }
+    @keyframes morphRotate { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+
+    /* Bubble entrance animations */
+    .chat-bubble-user { animation:bubbleInRight 0.35s cubic-bezier(0.16,1,0.3,1); }
+    .chat-bubble-ai { animation:bubbleInLeft 0.35s cubic-bezier(0.16,1,0.3,1); }
+    @keyframes bubbleInRight { from{opacity:0; transform:translateX(20px) scale(0.95)} to{opacity:1; transform:translateX(0) scale(1)} }
+    @keyframes bubbleInLeft { from{opacity:0; transform:translateX(-20px) scale(0.95)} to{opacity:1; transform:translateX(0) scale(1)} }
+
+    /* Suggestion chip entrance — staggered */
+    .chat-suggestions .chat-suggestion { animation:chipIn 0.3s cubic-bezier(0.16,1,0.3,1) backwards; }
+    .chat-suggestions .chat-suggestion:nth-child(1) { animation-delay:0.05s; }
+    .chat-suggestions .chat-suggestion:nth-child(2) { animation-delay:0.1s; }
+    .chat-suggestions .chat-suggestion:nth-child(3) { animation-delay:0.15s; }
+    @keyframes chipIn { from{opacity:0; transform:translateY(8px) scale(0.9)} to{opacity:1; transform:translateY(0) scale(1)} }
+
+    /* Action card pulse glow */
+    .chat-action-card { animation:glassSlideUp 0.35s cubic-bezier(0.16,1,0.3,1), cardPulse 2s ease-in-out 0.5s; }
+    @keyframes cardPulse { 0%{box-shadow:0 8px 32px rgba(231,42,136,0.12)} 50%{box-shadow:0 8px 48px rgba(231,42,136,0.25)} 100%{box-shadow:0 8px 32px rgba(231,42,136,0.12)} }
+
+    /* Send button press */
+    .chat-send-btn:active { transform:scale(0.9); }
+
+    /* Glass popup hover ripple bar */
+    .chat-glass-popup .glass-sug-item { position:relative; overflow:hidden; }
+    .chat-glass-popup .glass-sug-item::after { content:''; position:absolute; top:50%; left:0; width:4px; height:0; background:var(--rosa); border-radius:2px; transition:height 0.2s; transform:translateY(-50%); }
+    .chat-glass-popup .glass-sug-item:hover::after { height:60%; }
+    .chat-input-area { padding:16px 0; display:flex; gap:10px; align-items:flex-end; max-width:640px; width:100%; margin:0 auto; }
+    .chat-screen.has-messages .chat-input-area { border-top:1px solid var(--borde); max-width:100%; }
+    .chat-input-area textarea { flex:1; resize:none; border:2px solid var(--borde); border-radius:16px; padding:14px 18px; font-family:var(--font-body); font-size:0.9rem; min-height:48px; max-height:120px; outline:none; background:var(--cenote); transition:border-color 0.2s; }
+    .chat-input-area textarea:focus { border-color:var(--rosa); box-shadow:0 0 0 3px rgba(231,42,136,0.1); }
+    .chat-send-btn { width:44px; height:44px; border-radius:50%; border:none; background:var(--rosa); color:white; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center; transition:all 0.15s; flex-shrink:0; }
+    .chat-send-btn:hover { transform:scale(1.05); box-shadow:0 4px 16px rgba(231,42,136,0.3); }
+    .chat-send-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+    .chat-img-btn { width:44px; height:44px; border-radius:50%; border:1px solid var(--borde); background:var(--piedra); color:var(--texto-dim); cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .chat-img-previews { display:flex; gap:8px; padding:4px 0; }
+    .chat-img-previews img { width:48px; height:48px; object-fit:cover; border-radius:8px; border:2px solid var(--rosa); }
+    .chat-typing { align-self:flex-start; padding:14px 18px; background:var(--piedra); border-radius:16px; border-bottom-left-radius:4px; }
+    .chat-typing span { display:inline-block; width:8px; height:8px; background:var(--texto-dim); border-radius:50%; animation:typingDot 1.4s infinite; margin:0 2px; }
+    .chat-typing span:nth-child(2) { animation-delay:0.2s; }
+    .chat-typing span:nth-child(3) { animation-delay:0.4s; }
+    @keyframes typingDot { 0%,60%,100%{opacity:0.3;transform:translateY(0)} 30%{opacity:1;transform:translateY(-4px)} }
 
     /* ===== UPLOAD ZONE ===== */
     .upload-zone {
@@ -1042,14 +1135,14 @@
   <!-- HEADER -->
   <header class="header">
     <div class="header-left">
-      <img src="assets/logos/LOGO-FULL-JAGUAR-WORDMARK-ALT.png" alt="AXKAN">
+      <a href="/" style="display:flex;align-items:center;text-decoration:none;"><img src="assets/logos/LOGO-FULL-JAGUAR-WORDMARK-ALT.png" alt="AXKAN"></a>
       <div class="header-tagline">Recuerdos Hechos Souvenir</div>
     </div>
     <div class="header-right">
-      <div>
+      <a href="/" style="text-decoration:none; color:inherit;">
         <div class="header-studio">Studio</div>
         <div class="header-session" id="sessionLabel">pipeline de contenido</div>
-      </div>
+      </a>
     </div>
   </header>
 
@@ -1072,7 +1165,29 @@
   </nav>
 
   <!-- MAIN -->
-  <div class="container">
+  <div class="container" style="width:900px !important; max-width:900px !important; margin-left:auto !important; margin-right:auto !important; background:rgba(255,0,0,0.15) !important; border:5px solid blue !important; overflow:hidden !important;">
+
+    <!-- ===== SCREEN: AI CHAT (default landing) ===== -->
+    <div class="screen" id="screen-chat">
+      <div class="chat-screen">
+        <div class="chat-header">
+          <h1>&iquest;Qu&eacute; quieres crear hoy?</h1>
+          <div class="subtitle">Describe tu proyecto y te ayudo a crearlo</div>
+          <a onclick="goToScreen('type');" style="font-size:0.72rem; color:var(--texto-dim); cursor:pointer; margin-top:8px; display:inline-block; font-family:var(--font-display);">Modo avanzado &rarr;</a>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-img-previews" id="chatImagePreviews"></div>
+        <div class="chat-input-area">
+          <button class="chat-img-btn" onclick="document.getElementById('chatImgInput').click()">&#x1F4CE;</button>
+          <input type="file" id="chatImgInput" accept="image/*" multiple style="display:none" onchange="handleChatImageUpload(this)">
+          <textarea id="chatInput" rows="1" placeholder="Describe tu proyecto..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
+          <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">&rarr;</button>
+        </div>
+        <div id="chatForceGenerate" style="display:none; text-align:center; padding:4px 0;">
+          <button class="btn btn-gradient" style="max-width:400px;" onclick="forceGenerateFromChat()">Generar con lo que tengo &rarr;</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ===== SCREEN 1: CONTENT TYPE ===== -->
     <div class="screen active" id="screen-type">
@@ -1095,8 +1210,8 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><path d="M14 12l4-3v10l-4-3z"/><rect x="14" y="3" width="7" height="18" rx="1" opacity="0.3"/></svg>
           </div>
           <div class="type-card-ratio">9:16</div>
-          <div class="type-card-name">Carousel Animado</div>
-          <div class="type-card-desc">Slides en video con IA</div>
+          <div class="type-card-name">Carousel Loop</div>
+          <div class="type-card-desc">Video loop: misma imagen inicio y fin</div>
         </div>
         <div class="type-card" onclick="selectType('post')">
           <div class="type-card-icon" style="background:rgba(9,173,194,0.1); color:var(--turquesa);">
@@ -1143,7 +1258,7 @@
 
     <!-- ===== SCREEN: CHARACTER SPEAKING ===== -->
     <div class="screen" id="screen-character">
-      <a class="back-link" onclick="goToScreen('type');">&larr; Cambiar formato</a>
+      <a class="back-link" onclick="goToScreen('type');">&larr; Volver al inicio</a>
       <div class="section-head">
         <div class="section-kicker" style="color:var(--turquesa);">Personaje Hablando</div>
         <div class="section-title">Crea un personaje<br>que habla</div>
@@ -1166,29 +1281,99 @@
           <input type="text" class="form-input" id="charDestination" placeholder="Ej: Cancun, Oaxaca, CDMX">
         </div>
         <div class="form-group">
-          <label class="form-label">Referencia visual (opcional)</label>
-          <div id="charRefZone" class="ref-zone" onclick="document.getElementById('charRefInput').click()" ondragover="event.preventDefault(); this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleCharRefDrop(event)">
+          <label class="form-label">Referencia visual (opcional) <span style="font-size:0.7rem; font-weight:400; color:var(--texto-dim);">&mdash; hasta 3 im&aacute;genes</span></label>
+          <div id="charRefZone" class="ref-zone" onclick="if(charRefImages.length < 3) document.getElementById('charRefInput').click()" ondragover="event.preventDefault(); this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleCharRefDrop(event)">
             <div id="charRefEmpty">
               <div style="font-size:1.2rem; margin-bottom:8px; opacity:0.4;">&uarr;</div>
               <div class="ref-zone-hint">Arrastra o haz clic para subir referencia</div>
+              <div style="font-size:0.65rem; color:var(--texto-dim); opacity:0.6; margin-top:4px;">PNG, JPG &mdash; m&aacute;ximo 3</div>
+            </div>
+            <div id="charRefList" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; align-items:center;"></div>
+          </div>
+          <input type="file" id="charRefInput" accept="image/*" multiple style="display:none" onchange="handleCharRefSelect(this)">
+        </div>
+        <button class="btn btn-gradient" style="margin-bottom:10px;" onclick="generateCharFirstFrame()">Generar First Frame</button>
+        <div id="charStatus" style="margin-top:12px; font-size:0.8rem; color:var(--texto-dim);"></div>
+      </div>
+
+      </div>
+    </div>
+
+    <!-- ===== SCREEN: CHARACTER PROMPT RESULT ===== -->
+    <div class="screen" id="screen-char-prompt">
+      <a class="back-link" onclick="goToScreen('character');">&larr; Volver al personaje</a>
+      <div class="section-head">
+        <div class="section-kicker" style="color:var(--turquesa);">Prompt generado</div>
+        <div class="section-title">First Frame</div>
+        <div class="section-desc">Prompt profesional generado por Claude. Env&iacute;alo a Envato para generar la imagen.</div>
+      </div>
+      <div class="prompt-card" style="margin-bottom:14px;">
+        <div class="prompt-card-head">
+          <span class="badge" style="background:var(--turquesa);">First Frame</span>
+        </div>
+        <div class="prompt-card-body">
+          <div class="prompt-text expanded" id="charPromptText" style="max-height:none;"></div>
+        </div>
+        <div class="prompt-actions">
+          <button class="prompt-btn" onclick="navigator.clipboard.writeText(document.getElementById('charPromptText').textContent);this.textContent='Copiado';setTimeout(()=>this.textContent='Copiar',2000);">Copiar</button>
+          <button class="prompt-btn prompt-btn-envato" onclick="sendCharToEnvato(this)">Envato Image</button>
+        </div>
+      </div>
+      <button class="btn btn-gradient" onclick="sendCharToEnvato()">Generar Im&aacute;genes</button>
+      <button class="btn btn-outline" style="margin-top:10px;" onclick="goToScreen('char-video')">Siguiente: Video Prompts &rarr;</button>
+    </div>
+
+    <!-- ===== SCREEN: CHARACTER VIDEO PROMPTS ===== -->
+    <div class="screen" id="screen-char-video">
+      <a class="back-link" onclick="goToScreen('character');">&larr; Volver al personaje</a>
+      <div class="section-head">
+        <div class="section-kicker" style="color:var(--turquesa);">Personaje &rarr; Video</div>
+        <div class="section-title">Sube tu first frame<br>y genera clips</div>
+        <div class="section-desc">Sube la imagen generada en Envato. Claude crear&aacute; prompts de video conectados que cuentan una historia.</div>
+      </div>
+
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">First Frame (imagen generada)</label>
+          <div class="ref-zone" onclick="document.getElementById('charVideoFrameInput').click()" ondragover="event.preventDefault(); this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleCharVideoDrop(event)">
+            <div id="charVideoFrameEmpty">
+              <div style="font-size:1.2rem; margin-bottom:8px; opacity:0.4;">&uarr;</div>
+              <div class="ref-zone-hint">Arrastra o haz clic para subir tu first frame</div>
               <div style="font-size:0.65rem; color:var(--texto-dim); opacity:0.6; margin-top:4px;">PNG, JPG</div>
             </div>
-            <div id="charRefPreview" style="display:none; align-items:center; gap:14px; justify-content:center;">
-              <img id="charRefThumb" style="width:52px; height:52px; object-fit:cover; border-radius:10px; border:2px solid var(--turquesa);">
-              <div style="font-size:0.78rem; font-weight:700;">Referencia activa</div>
-              <button onclick="event.stopPropagation(); removeCharRef();" style="width:28px; height:28px; border-radius:50%; border:1px solid var(--borde); background:var(--piedra); color:var(--texto-dim); cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center;">&times;</button>
+            <div id="charVideoFramePreview" style="display:none; align-items:center; gap:14px; justify-content:center;">
+              <img id="charVideoFrameThumb" style="width:80px; height:80px; object-fit:cover; border-radius:10px; border:2px solid var(--turquesa);">
+              <div style="font-size:0.78rem; font-weight:700; color:var(--turquesa);">First frame listo</div>
+              <button onclick="event.stopPropagation(); removeCharVideoFrame();" style="width:28px; height:28px; border-radius:50%; border:1px solid var(--borde); background:var(--piedra); color:var(--texto-dim); cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center;">&times;</button>
             </div>
           </div>
-          <input type="file" id="charRefInput" accept="image/*" style="display:none" onchange="handleCharRefSelect(this)">
+          <input type="file" id="charVideoFrameInput" accept="image/*" style="display:none" onchange="handleCharVideoFrameSelect(this)">
         </div>
-        <button class="btn-generate" id="btnCharGenerate" onclick="generateCharacterVideo()">Generar Personaje + Video</button>
-        <div id="charStatus" style="margin-top:12px; font-size:0.8rem; color:var(--texto-dim);"></div>
+
+        <div class="form-group">
+          <label class="form-label">Clips de video adicionales</label>
+          <div class="form-hint" style="margin-bottom:10px;">Cada clip dura ~8 segundos. El primer clip usa tu first frame. Los siguientes extienden la historia.</div>
+          <div class="count-selector">
+            <div class="count-opt" data-clips="1" onclick="selectCharClips(1, this)"><div class="num">1</div><div class="lbl">clip</div></div>
+            <div class="count-opt sel" data-clips="2" onclick="selectCharClips(2, this)"><div class="num">2</div><div class="lbl">clips</div></div>
+            <div class="count-opt" data-clips="4" onclick="selectCharClips(4, this)"><div class="num">4</div><div class="lbl">clips</div></div>
+            <div class="count-opt" data-clips="6" onclick="selectCharClips(6, this)"><div class="num">6</div><div class="lbl">clips</div></div>
+          </div>
+        </div>
+
+        <button class="btn btn-gradient" id="btnCharVideoPrompts" onclick="generateCharVideoPrompts()">Generar Video Prompts</button>
+        <div id="charVideoStatus" style="margin-top:12px; font-size:0.8rem; color:var(--texto-dim);"></div>
+      </div>
+
+      <div id="charVideoPromptsList" class="prompts-grid" style="margin-top:16px;"></div>
+      <div id="charVideoActions" style="display:none; margin-top:14px;">
+        <button class="btn btn-gradient" onclick="sendAllCharVideosToEnvato()">Enviar Todos a Envato Video</button>
       </div>
     </div>
 
     <!-- ===== SCREEN: IMAGE TO VIDEO ===== -->
     <div class="screen" id="screen-img2vid">
-      <a class="back-link" onclick="goToScreen('type');">&larr; Cambiar formato</a>
+      <a class="back-link" onclick="goToScreen('type');">&larr; Volver al inicio</a>
       <div class="section-head">
         <div class="section-kicker" style="color:var(--rosa);">Imagen &rarr; Video</div>
         <div class="section-title">Crea video<br>desde imagen</div>
@@ -1247,7 +1432,7 @@
 
     <!-- ===== SCREEN 2: CONFIGURE ===== -->
     <div class="screen" id="screen-config">
-      <a class="back-link" onclick="goToScreen('type');">&larr; Cambiar formato</a>
+      <a class="back-link" onclick="goToScreen('type');">&larr; Volver al inicio</a>
       <div class="section-head">
         <div class="section-kicker">Configurar <span id="configTypeLabel" class="badge badge-rosa" style="margin-left:8px; vertical-align: middle;"></span></div>
         <div class="section-title">Datos del<br>proyecto</div>
@@ -1290,6 +1475,7 @@
           </div>
         </div>
         <button class="btn btn-rosa" id="btnGenerate" onclick="generatePrompts()">Generar Prompts</button>
+        <button class="btn" id="btnSkipToUpload" onclick="skipToUpload()" style="display:none; background:transparent; border:2px solid var(--turquesa); color:var(--turquesa); margin-top:12px; font-size:0.85rem;">Ya tengo mis im&aacute;genes &rarr;</button>
         <button class="btn" id="btnCancelGenerate" onclick="cancelGeneration()" style="display:none; background:#333; color:white; margin-top:8px; font-size:0.85rem;">Cancelar</button>
         <div id="generateStatus" style="margin-top:8px; font-size:0.78rem; color:var(--texto-dim);"></div>
       </div>
@@ -1297,7 +1483,7 @@
 
     <!-- ===== SCREEN 3: PROMPTS + RULES ===== -->
     <div class="screen" id="screen-prompts">
-      <a class="back-link" onclick="goToStep(2);">&larr; Editar configuraci&oacute;n</a>
+      <a class="back-link" onclick="window.location.href='/';">&larr; Nuevo proyecto</a>
       <div class="section-head">
         <div class="section-kicker">Prompts generados</div>
         <div class="section-title" id="promptsTitleDest">Listos</div>
@@ -1323,6 +1509,12 @@
             <button class="prompt-btn" id="btnImg2Vid" onclick="sendAllImageToVideo(this)" style="display:none; border-color:var(--turquesa); color:var(--turquesa);">Imagen&rarr;Video</button>
             <button class="prompt-btn" onclick="abortAllAutomation()" style="border-color:#e72a88; color:#e72a88; font-weight:800;">ABORT</button>
           </div>
+          <div style="display:flex; gap:8px; justify-content:center; margin-top:8px; flex-wrap:wrap;">
+            <button class="prompt-btn" onclick="blockCurrentTab()" style="border-color:var(--naranja); color:var(--naranja);">&#x1F512; Bloquear tab activa</button>
+            <button class="prompt-btn" onclick="unblockCurrentTab()" style="border-color:var(--verde); color:var(--verde);">&#x1F513; Desbloquear tab</button>
+            <button class="prompt-btn" onclick="blockAllTabs()" style="border-color:var(--naranja); color:var(--naranja);">Bloquear todas</button>
+            <button class="prompt-btn" onclick="unblockAllTabs()" style="border-color:var(--verde); color:var(--verde);">Desbloquear todas</button>
+          </div>
         </details>
       </div>
 
@@ -1341,6 +1533,26 @@
       </div>
 
       <div id="promptsList" class="prompts-grid"></div>
+
+      <div style="margin-top:20px; text-align:center;">
+        <button class="btn btn-turquesa" onclick="generateSocialCopy()">Generar Copy para Redes Sociales</button>
+      </div>
+    </div>
+
+    <!-- ===== SCREEN: SOCIAL COPY ===== -->
+    <div class="screen" id="screen-social-copy">
+      <a class="back-link" onclick="goToStep(3);">&larr; Volver a prompts</a>
+      <div class="section-head">
+        <div class="section-kicker" style="color:var(--turquesa);">Copy generado</div>
+        <div class="section-title">Social Media<br>Copy</div>
+        <div class="section-desc">Copy optimizado para cada plataforma basado en tu proyecto.</div>
+      </div>
+      <div id="socialCopyStatus" style="font-size:0.8rem; color:var(--texto-dim); margin-bottom:14px;"></div>
+      <div id="socialCopyCards" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px;"></div>
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <button class="btn btn-gradient" onclick="generateAllToEnvato(this)" style="flex:1;">Generar Im&aacute;genes</button>
+        <button class="btn btn-outline" onclick="goToStep(4)" style="flex:1;">Ya tengo mis im&aacute;genes &rarr;</button>
+      </div>
     </div>
 
     <!-- ===== SCREEN 4: UPLOAD & CLEAN ===== -->
@@ -1604,15 +1816,6 @@
         const saved = localStorage.getItem(STATE_KEY);
         if (saved) return { ...DEFAULT_STATE, ...JSON.parse(saved) };
       } catch (e) {}
-      // Try migrating from old single-session key
-      try {
-        const old = localStorage.getItem('axkan_studio_state');
-        if (old) {
-          const parsed = { ...DEFAULT_STATE, ...JSON.parse(old) };
-          localStorage.setItem(STATE_KEY, JSON.stringify(parsed));
-          return parsed;
-        }
-      } catch (e) {}
       return { ...DEFAULT_STATE };
     }
 
@@ -1641,6 +1844,27 @@
     });
 
     // =================================================================
+    // IMAGE RESIZE HELPER (compress large images before sending to API)
+    // =================================================================
+    function resizeImageDataUrl(dataUrl, maxWidth = 1200) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          if (img.width <= maxWidth) { resolve(dataUrl); return; }
+          const scale = maxWidth / img.width;
+          const canvas = document.createElement('canvas');
+          canvas.width = maxWidth;
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
+    }
+
+    // =================================================================
     // REFERENCE IMAGES (up to 3)
     // =================================================================
     function handleRefDrop(e) {
@@ -1657,8 +1881,9 @@
     function loadRefImage(file) {
       if (refImages.length >= 3) return;
       const reader = new FileReader();
-      reader.onload = (e) => {
-        refImages.push({ dataUrl: e.target.result, name: file.name });
+      reader.onload = async (e) => {
+        const resized = await resizeImageDataUrl(e.target.result, 1200);
+        refImages.push({ dataUrl: resized, name: file.name });
         renderRefImages();
         try { localStorage.setItem(REF_IMG_KEY, JSON.stringify(refImages)); } catch(e) {}
       };
@@ -1720,7 +1945,7 @@
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById('screen-' + name).classList.add('active');
       const nav = document.getElementById('pipelineNav');
-      nav.classList.toggle('visible', name !== 'type');
+      nav.classList.toggle('visible', name !== 'type' && name !== 'chat');
     }
 
     function goToStep(step) {
@@ -1743,6 +1968,318 @@
       if (step === 5) fetchOverlaySpecs();
       if (step === 6) loadCaptionScreen();
       if (step === 7) checkPublishStatus();
+    }
+
+    // =================================================================
+    // AI CHAT INTERFACE
+    // =================================================================
+    let chatHistory = [];
+    let chatImages = [];
+    const MAX_CHAT_IMAGES = 3;
+
+    function handleChatImageUpload(input) {
+      const files = [...input.files].filter(f => f.type.startsWith('image/'));
+      files.slice(0, MAX_CHAT_IMAGES - chatImages.length).forEach(file => {
+        if (chatImages.length >= MAX_CHAT_IMAGES) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const resized = await resizeImageDataUrl(e.target.result, 1200);
+          chatImages.push({ dataUrl: resized, name: file.name });
+          renderChatImagePreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+      input.value = '';
+    }
+
+    function removeChatImage(idx) {
+      chatImages.splice(idx, 1);
+      renderChatImagePreviews();
+    }
+
+    function renderChatImagePreviews() {
+      const el = document.getElementById('chatImagePreviews');
+      el.innerHTML = chatImages.map((img, i) => `
+        <div style="position:relative; display:inline-block;">
+          <img src="${img.dataUrl}">
+          <button onclick="removeChatImage(${i})" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;border:none;background:var(--rosa);color:white;font-size:0.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    // Paste images anywhere in the chat
+    document.addEventListener('paste', (e) => {
+      if (!document.getElementById('screen-chat').classList.contains('active')) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/') && chatImages.length < MAX_CHAT_IMAGES) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+              const resized = await resizeImageDataUrl(ev.target.result, 1200);
+              chatImages.push({ dataUrl: resized, name: 'pasted.png' });
+              renderChatImagePreviews();
+            };
+            reader.readAsDataURL(file);
+          }
+          return;
+        }
+      }
+    });
+
+    // Drag & drop images on the chat area
+    const chatScreen = document.getElementById('screen-chat');
+    chatScreen.addEventListener('dragover', (e) => { e.preventDefault(); });
+    chatScreen.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+      files.slice(0, MAX_CHAT_IMAGES - chatImages.length).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const resized = await resizeImageDataUrl(ev.target.result, 1200);
+          chatImages.push({ dataUrl: resized, name: file.name });
+          renderChatImagePreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    function addChatBubble(role, content) {
+      document.querySelector('.chat-screen').classList.add('has-messages');
+      // Show "generate now" button after first AI response
+      if (role === 'ai') document.getElementById('chatForceGenerate').style.display = 'block';
+      const el = document.getElementById('chatMessages');
+      const bubble = document.createElement('div');
+      bubble.className = role === 'user' ? 'chat-bubble chat-bubble-user' : 'chat-bubble chat-bubble-ai';
+      // Simple markdown: **bold** → <strong>
+      let html = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\n/g, '<br>');
+      bubble.innerHTML = html;
+      el.appendChild(bubble);
+      el.scrollTop = el.scrollHeight;
+      return bubble;
+    }
+
+    let _chatMorphLevel = 0;
+
+    function addChatSuggestions(suggestions) {
+      if (!suggestions || !suggestions.length) return;
+
+      // Morph the background as conversation progresses
+      _chatMorphLevel = Math.min(_chatMorphLevel + 1, 3);
+      const screen = document.querySelector('.chat-screen');
+      screen.classList.remove('morph-1','morph-2','morph-3');
+      screen.classList.add('morph-' + _chatMorphLevel);
+
+      // Show glassmorphism popup with suggestions
+      showGlassPopup(suggestions);
+
+      // Also add inline suggestions in the chat for reference
+      const el = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = 'chat-suggestions';
+      div.innerHTML = suggestions.map(s => `<span class="chat-suggestion" onclick="applyChatSuggestion(this.textContent)">${s}</span>`).join('');
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function showGlassPopup(suggestions) {
+      // Remove any existing popup
+      document.querySelectorAll('.chat-glass-overlay').forEach(e => e.remove());
+
+      const overlay = document.createElement('div');
+      overlay.className = 'chat-glass-overlay';
+      overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+      const popup = document.createElement('div');
+      popup.className = 'chat-glass-popup';
+      popup.style.position = 'relative';
+      popup.innerHTML = `
+        <button class="glass-close" onclick="this.closest('.chat-glass-overlay').remove()">&times;</button>
+        <h3>Sugerencias</h3>
+        <div class="glass-subtitle">Toca una opci\u00f3n o escribe tu propia respuesta</div>
+        <div class="glass-suggestions">
+          ${suggestions.map(s => `<div class="glass-sug-item" onclick="applyChatSuggestion('${s.replace(/'/g,"\\'")}'); this.closest('.chat-glass-overlay').remove();">${s}</div>`).join('')}
+        </div>
+      `;
+      overlay.appendChild(popup);
+      document.body.appendChild(overlay);
+    }
+
+    function addChatActionCard(config) {
+      // Max morph level
+      const screen = document.querySelector('.chat-screen');
+      screen.classList.remove('morph-1','morph-2','morph-3');
+      screen.classList.add('morph-3');
+
+      const el = document.getElementById('chatMessages');
+      const labels = {carousel:'Carousel',reel:'Reel',post:'Post',character:'Personaje',living:'Carousel Loop',pitch:'Pitch B2B'};
+      const card = document.createElement('div');
+      card.className = 'chat-action-card';
+      card.innerHTML = `
+        <div class="config-tags">
+          <span class="config-tag type">${labels[config.content_type] || config.content_type}</span>
+          ${config.destination ? `<span class="config-tag dest">${config.destination}</span>` : ''}
+          <span class="config-tag slides">${config.slides || 6} slides</span>
+        </div>
+        <h3>Tu proyecto est\u00e1 listo</h3>
+        <p>${config.theme || ''}</p>
+        <button class="btn btn-gradient" onclick="startFromChat(${JSON.stringify(config).replace(/"/g,'&quot;')})">Generar \u2192</button>
+      `;
+      el.appendChild(card);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function addTypingIndicator() {
+      const el = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = 'chat-typing';
+      div.id = 'chatTyping';
+      div.innerHTML = '<span></span><span></span><span></span>';
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      const el = document.getElementById('chatTyping');
+      if (el) el.remove();
+    }
+
+    function applyChatSuggestion(text) {
+      document.getElementById('chatInput').value = text;
+      document.getElementById('chatInput').focus();
+    }
+
+    async function forceGenerateFromChat() {
+      // Tell Claude to stop asking and generate with what it has
+      const btn = document.querySelector('#chatForceGenerate button');
+      btn.disabled = true; btn.textContent = 'Generando...';
+      chatHistory.push({ role: 'user', content: 'Quiero continuar con lo que tenemos. Resume lo que entendiste de mi proyecto, confirma los detalles clave (tipo de contenido, cuántos slides o clips, destino, estilo). Si te falta algo esencial pregúntame solo eso de forma rápida. Si ya tienes todo, responde con ready:true.' });
+      addTypingIndicator();
+      try {
+        const resp = await fetch(API + '/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: 'Quiero continuar con lo que tenemos. Resume lo que entendiste de mi proyecto, confirma los detalles clave (tipo de contenido, cuántos slides o clips, destino, estilo). Si te falta algo esencial pregúntame solo eso de forma rápida. Si ya tienes todo, responde con ready:true.',
+            images: [],
+            history: chatHistory,
+          }),
+        });
+        removeTypingIndicator();
+        const data = await resp.json();
+        if (data.message) {
+          addChatBubble('ai', data.message);
+          chatHistory.push({ role: 'ai', content: data.message });
+        }
+        if (data.ready && data.config) {
+          addChatActionCard(data.config);
+        } else if (data.config) {
+          addChatActionCard(data.config);
+        } else {
+          // Force a config from what we have in history
+          addChatBubble('ai', 'Generando con la información disponible...');
+          const fallbackConfig = {
+            content_type: 'carousel',
+            destination: 'Mexico',
+            slides: 6,
+            theme: chatHistory.filter(h => h.role === 'user').map(h => h.content).join('. '),
+            is_video: false,
+          };
+          addChatActionCard(fallbackConfig);
+        }
+      } catch (e) {
+        removeTypingIndicator();
+        addChatBubble('ai', 'Error. Intenta de nuevo.');
+      }
+      btn.disabled = false; btn.textContent = 'Generar con lo que tengo \u2192';
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const msg = input.value.trim();
+      if (!msg && chatImages.length === 0) return;
+
+      const btn = document.getElementById('chatSendBtn');
+      btn.disabled = true;
+      input.value = '';
+
+      // Show user bubble
+      if (msg) addChatBubble('user', msg);
+      if (chatImages.length > 0) {
+        const imgBubble = document.createElement('div');
+        imgBubble.className = 'chat-bubble chat-bubble-user';
+        imgBubble.innerHTML = chatImages.map(img => `<img src="${img.dataUrl}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;margin:2px;">`).join('');
+        document.getElementById('chatMessages').appendChild(imgBubble);
+      }
+
+      chatHistory.push({ role: 'user', content: msg });
+      addTypingIndicator();
+
+      try {
+        const resp = await fetch(API + '/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: msg,
+            images: chatImages.map(i => i.dataUrl),
+            history: chatHistory,
+          }),
+        });
+        removeTypingIndicator();
+        const data = await resp.json();
+
+        if (data.message) {
+          addChatBubble('ai', data.message);
+          chatHistory.push({ role: 'ai', content: data.message });
+        }
+        if (data.suggestions && data.suggestions.length) {
+          addChatSuggestions(data.suggestions);
+        }
+        if (data.ready && data.config) {
+          addChatActionCard(data.config);
+        }
+      } catch (e) {
+        removeTypingIndicator();
+        addChatBubble('ai', 'Error de conexi\u00f3n. Intenta de nuevo.');
+      }
+
+      chatImages = [];
+      renderChatImagePreviews();
+      btn.disabled = false;
+      input.focus();
+    }
+
+    function startFromChat(config) {
+      state.contentType = config.content_type || 'carousel';
+      state.destination = config.destination || 'Mexico';
+      state.slides = config.slides || 6;
+      state.isReel = config.content_type === 'reel' || config.content_type === 'living';
+      state.isVideo = state.isReel || config.content_type === 'living';
+      saveState();
+
+      // Fill the config form
+      document.getElementById('inputDestination').value = config.destination || '';
+      document.getElementById('inputTheme').value = config.theme || '';
+
+      // If character type, go to character screen
+      if (config.content_type === 'character') {
+        document.getElementById('charDescription').value = config.theme || '';
+        goToScreen('character');
+        return;
+      }
+
+      // Copy chat images to refImages
+      if (chatImages.length > 0) {
+        refImages = chatImages.map(i => ({dataUrl: i.dataUrl, name: i.name}));
+        renderRefImages();
+      }
+
+      // Go to config step (pre-filled) or directly generate
+      goToStep(2);
     }
 
     // =================================================================
@@ -1772,7 +2309,7 @@
       state.contentType = type;
       state.isReel = (type === 'reel');
       state.isVideo = (type === 'reel' || type === 'living');
-      const labels = { carousel:'Carousel', living:'Carousel Animado', post:'Post', reel:'Reel', pitch:'Pitch B2B', character:'Personaje Hablando', img2vid:'Img \u2192 Video' };
+      const labels = { carousel:'Carousel', living:'Carousel Loop', post:'Post', reel:'Reel', pitch:'Pitch B2B', character:'Personaje Hablando', img2vid:'Img \u2192 Video' };
       document.getElementById('configTypeLabel').textContent = labels[type] || '';
       saveState();
       const slideGroup = document.getElementById('slideCountGroup');
@@ -1798,7 +2335,20 @@
         slideGroup.style.display = 'none';
         if (type === 'post') state.slides = 1;
       }
+      // Show "Ya tengo mis imágenes" button only for Carousel Loop
+      const skipBtn = document.getElementById('btnSkipToUpload');
+      if (skipBtn) skipBtn.style.display = (type === 'living') ? 'block' : 'none';
+
       goToStep(2);
+    }
+
+    async function skipToUpload() {
+      state.destination = document.getElementById('inputDestination').value.trim() || 'Mexico';
+      state.theme = document.getElementById('inputTheme').value.trim();
+      state.isVideo = true;
+      state.isReel = false;
+      saveState();
+      goToStep(4);
     }
 
     // =================================================================
@@ -1820,10 +2370,29 @@
       const btn = document.getElementById('btnGenerate');
       const cancelBtn = document.getElementById('btnCancelGenerate');
       const statusEl = document.getElementById('generateStatus');
-      btn.disabled = true; btn.classList.add('loading'); btn.textContent = '';
+      btn.disabled = true;
+      btn.style.position = 'relative';
+      btn.style.overflow = 'hidden';
+      btn.innerHTML = '<span style="position:relative;z-index:1;">0%</span><div id="btnProgressFill" style="position:absolute;left:0;top:0;height:100%;width:0%;background:rgba(255,255,255,0.25);transition:width 0.5s ease;border-radius:inherit;"></div>';
       cancelBtn.style.display = 'block';
-      statusEl.textContent = 'Claude esta analizando tu referencia y generando prompts...';
+      statusEl.textContent = 'Analizando referencias...';
       statusEl.style.color = 'var(--turquesa)';
+
+      // Poll progress
+      let _progressInterval = setInterval(async () => {
+        try {
+          const pr = await fetch(API + '/api/progress');
+          const pg = await pr.json();
+          const pct = pg.percent;
+          const fill = document.getElementById('btnProgressFill');
+          const label = btn.querySelector('span');
+          if (fill) fill.style.width = pct + '%';
+          if (label) label.textContent = pct + '%';
+          if (pg.phase === 'analyzing') statusEl.textContent = 'Analizando im\u00e1genes de referencia... ' + pct + '%';
+          else if (pg.phase === 'generating') statusEl.textContent = 'Generando prompts... ' + pg.done + '/' + pg.total + ' (' + pct + '%)';
+          else if (pg.phase === 'complete') { statusEl.textContent = '\u00a1Listo!'; clearInterval(_progressInterval); }
+        } catch(e) {}
+      }, 800);
 
       _generateController = new AbortController();
 
@@ -1861,7 +2430,8 @@
           statusEl.style.color = 'var(--rosa)';
         }
       }
-      btn.disabled = false; btn.classList.remove('loading'); btn.textContent = 'Generar Prompts';
+      clearInterval(_progressInterval);
+      btn.disabled = false; btn.textContent = 'Generar Prompts'; btn.style.overflow = '';
       cancelBtn.style.display = 'none';
       _generateController = null;
     }
@@ -1891,11 +2461,45 @@
       } catch(e) {}
     }
 
-    // ═══ DOUBLE-ESC EMERGENCY ABORT ═══
+    async function blockCurrentTab() {
+      const r = await fetch(API + '/api/watchdog/block-tab', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'block'}) });
+      const d = await r.json();
+      updateStatus('active', '🔒 ' + (d.result || 'Tab bloqueada'));
+    }
+    async function unblockCurrentTab() {
+      const r = await fetch(API + '/api/watchdog/block-tab', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'unblock'}) });
+      const d = await r.json();
+      updateStatus('active', '🔓 ' + (d.result || 'Tab desbloqueada'));
+    }
+    async function blockAllTabs() {
+      const r = await fetch(API + '/api/watchdog/block-all', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'block'}) });
+      const d = await r.json();
+      updateStatus('active', '🔒 ' + (d.result || 'Todas bloqueadas'));
+    }
+    async function unblockAllTabs() {
+      const r = await fetch(API + '/api/watchdog/block-all', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'unblock'}) });
+      const d = await r.json();
+      updateStatus('active', '🔓 ' + (d.result || 'Todas desbloqueadas'));
+    }
+
+    // ═══ KEYBOARD SHORTCUTS ═══
     let _lastEscTime = 0;
     document.addEventListener('keydown', (e) => {
+      // Cmd+Enter or Ctrl+Enter = send chat message
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput && document.getElementById('screen-chat').classList.contains('active')) {
+          sendChatMessage();
+        }
+        return;
+      }
+
+      // Single ESC = close glassmorphism popup or go back
       if (e.key === 'Escape') {
         const now = Date.now();
+
+        // Double ESC = abort all automation
         if (now - _lastEscTime < 500) {
           _lastEscTime = 0;
           console.log('DOUBLE ESC — aborting all automation');
@@ -1908,6 +2512,19 @@
           return;
         }
         _lastEscTime = now;
+
+        // Single ESC = close glass popup if open, otherwise go back to chat
+        const glassOverlay = document.querySelector('.chat-glass-overlay');
+        if (glassOverlay) {
+          glassOverlay.remove();
+          return;
+        }
+
+        // If not on chat screen, go back to chat
+        const chatScreen = document.getElementById('screen-chat');
+        if (!chatScreen.classList.contains('active')) {
+          goToScreen('type');
+        }
       }
     });
 
@@ -1923,7 +2540,7 @@
       state.isVideo = isVideo;
       const unitLabel = isReel ? 'clips' : (isVideo ? 'slides animados' : 'prompts');
       document.getElementById('promptsTitleDest').innerHTML = data.destination;
-      const contentTypeLabels = { carousel:'Carousel', living:'Carousel Animado', post:'Post', reel:'Reel', pitch:'Pitch B2B', img2vid:'Img \u2192 Video', character:'Personaje Hablando' };
+      const contentTypeLabels = { carousel:'Carousel', living:'Carousel Loop', post:'Post', reel:'Reel', pitch:'Pitch B2B', img2vid:'Img \u2192 Video', character:'Personaje Hablando' };
       document.getElementById('promptsProductLabel').textContent = contentTypeLabels[state.contentType] || state.contentType;
       document.getElementById('promptsSummary').textContent =
         `${data.total_slides} ${unitLabel} listos para generar.`;
@@ -1972,34 +2589,7 @@
       }
     }
 
-    function renderRules() {
-      const product = document.getElementById('inputProduct').value;
-      const rules = PRODUCT_RULES[product] || [];
-      document.getElementById('rulesPanelTitle').textContent = `Reglas: ${product.toUpperCase()}`;
-      const list = document.getElementById('rulesList');
-      list.innerHTML = rules.map((r, i) => `
-        <div class="rule-item">
-          <div class="rule-check ${r.critical ? 'critical' : ''}" id="rc-${i}" onclick="toggleRule(${i})">&#10003;</div>
-          <div>
-            <div class="rule-name">${r.critical ? '<span style="color:var(--rosa);">*</span> ' : ''}${r.title}</div>
-            <div class="rule-desc">${r.desc}</div>
-          </div>
-        </div>
-      `).join('');
-      updateRulesProgress();
-    }
-
-    function toggleRule(idx) {
-      const el = document.getElementById('rc-' + idx);
-      el.classList.toggle('checked');
-      updateRulesProgress();
-    }
-
-    function updateRulesProgress() {
-      const total = document.querySelectorAll('.rule-check').length;
-      const checked = document.querySelectorAll('.rule-check.checked').length;
-      document.getElementById('rulesProgress').textContent = `${checked} / ${total} verificadas`;
-    }
+    // renderRules, toggleRule, updateRulesProgress removed (product rules no longer used)
 
     function toggleExpand(idx) {
       document.getElementById('pt-' + idx).classList.toggle('expanded');
@@ -2074,6 +2664,68 @@
         updateStatus('error', e.message);
         setTimeout(() => { btn.textContent = label; }, 2500);
       }
+    }
+
+    // =================================================================
+    // SOCIAL MEDIA COPY GENERATOR
+    // =================================================================
+    async function generateSocialCopy() {
+      if (!state.prompts || !state.prompts.length) return;
+      const statusEl = document.getElementById('socialCopyStatus');
+      statusEl.textContent = 'Claude está generando copy para cada plataforma...';
+      statusEl.style.color = 'var(--turquesa)';
+      goToScreen('social-copy');
+
+      const context = state.prompts.map(p => p.prompt_text).join('\n').substring(0, 500);
+
+      try {
+        const resp = await fetch(API + '/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `Genera copy para redes sociales basado en este proyecto de ${state.contentType} sobre "${state.destination}". Contexto: ${context}. Tema: ${state.prompts[0]?.prompt_text?.substring(0, 200) || ''}.
+
+Responde con JSON: {"message":"resumen","copies":[{"platform":"Instagram","icon":"📸","title":"titulo","copy":"copy con emojis","hashtags":"#tag1 #tag2..."},{"platform":"TikTok","icon":"🎵","title":"titulo","copy":"copy","hashtags":"#tags"},{"platform":"Facebook","icon":"📘","title":"titulo","copy":"copy","hashtags":"#tags"},{"platform":"YouTube","icon":"🎬","title":"titulo para video","copy":"descripcion","hashtags":"#tags"},{"platform":"LinkedIn","icon":"💼","title":"titulo profesional","copy":"copy B2B","hashtags":"#tags"}],"ready":false,"config":null,"suggestions":[]}`,
+            images: [],
+            history: [],
+          }),
+        });
+        const data = await resp.json();
+
+        if (data.copies) {
+          renderSocialCopy(data.copies);
+          statusEl.textContent = '5 plataformas listas. Copia el que necesites.';
+          statusEl.style.color = 'var(--verde)';
+        } else if (data.message) {
+          // AI responded with text, try to extract copies
+          statusEl.textContent = data.message;
+          statusEl.style.color = 'var(--verde)';
+        }
+      } catch (e) {
+        statusEl.textContent = 'Error: ' + e.message;
+        statusEl.style.color = 'var(--rosa)';
+      }
+    }
+
+    function renderSocialCopy(copies) {
+      const container = document.getElementById('socialCopyCards');
+      const colors = { Instagram:'#E72A88', TikTok:'#09ADC2', Facebook:'#1877F2', YouTube:'#FF0000', LinkedIn:'#0A66C2' };
+      container.innerHTML = copies.map(c => `
+        <div class="prompt-card">
+          <div class="prompt-card-head" style="background:${colors[c.platform] || 'var(--obsidiana)'};">
+            <span style="font-size:1.1rem;">${c.icon || '📱'}</span>
+            <span class="badge" style="background:rgba(255,255,255,0.2); color:white;">${c.platform}</span>
+          </div>
+          <div class="prompt-card-body">
+            <div style="font-family:var(--font-display); font-size:0.85rem; font-weight:800; margin-bottom:8px;">${escHtml(c.title || '')}</div>
+            <div style="font-size:0.78rem; color:var(--texto-dim); line-height:1.6; white-space:pre-wrap;">${escHtml(c.copy || '')}</div>
+            ${c.hashtags ? `<div style="font-size:0.7rem; color:var(--turquesa); margin-top:10px; line-height:1.5;">${escHtml(c.hashtags)}</div>` : ''}
+          </div>
+          <div class="prompt-actions">
+            <button class="prompt-btn" onclick="navigator.clipboard.writeText(this.closest('.prompt-card').querySelector('.prompt-card-body').innerText);this.textContent='Copiado';setTimeout(()=>this.textContent='Copiar',2000);">Copiar</button>
+          </div>
+        </div>
+      `).join('');
     }
 
     async function generateAllToEnvato(btn) {
@@ -2284,7 +2936,7 @@
     async function generateAllImages(btn) {
       if (!state.prompts || !state.prompts.length) return;
 
-      // Carousel Animado: two-step flow (generate start frame → animate)
+      // Carousel Loop: two-step flow (generate start frame → animate)
       if (state.contentType === 'living') {
         return generateLivingCarousel(btn);
       }
@@ -2400,7 +3052,14 @@
 
       try {
         const res = await fetch(API + '/api/images/upload', { method: 'POST', body: formData });
-        const data = await res.json();
+        let data;
+        try {
+          data = await res.json();
+        } catch (parseErr) {
+          if (res.status === 413) throw new Error('Imagen demasiado grande. Reduce el tamano o sube menos archivos a la vez.');
+          throw new Error(`Server returned HTTP ${res.status} (non-JSON response)`);
+        }
+        if (!res.ok) throw new Error(data.error || `Upload failed (HTTP ${res.status})`);
         if (data.success) {
           state.sessionId = data.session_id;
           state.uploadedFiles = data.files;
@@ -2408,10 +3067,16 @@
           saveState();
           renderFileList(data.files);
           // Skip watermark — show action button
-          document.getElementById('cleanSection').style.display = 'block';
-          document.getElementById('cleanCount').textContent = `${data.files.length} imagenes subidas`;
+          const cleanSec = document.getElementById('cleanSection');
+          if (cleanSec) cleanSec.style.display = 'block';
+          const cleanCnt = document.getElementById('cleanCount');
+          if (cleanCnt) cleanCnt.textContent = `${data.files.length} imagenes subidas`;
           const afterBtn = document.getElementById('btnAfterUpload');
-          if (afterBtn && state.isVideo) afterBtn.textContent = 'Generar Prompts de Video';
+          if (afterBtn && state.isVideo) {
+            afterBtn.textContent = state.contentType === 'living' ? 'Generar Loop Videos' : 'Generar Prompts de Video';
+            const vcs = document.getElementById('videoClipSelector');
+            if (vcs) vcs.style.display = state.contentType === 'living' ? 'none' : 'block';
+          }
         }
       } catch (e) { alert('Upload failed: ' + e.message); }
     }
@@ -2448,7 +3113,10 @@
           document.getElementById('cleanSection').style.display = 'block';
           document.getElementById('cleanCount').textContent = `${data.files.length} im\u00e1genes limpias`;
           const afterBtn2 = document.getElementById('btnAfterUpload');
-          if (afterBtn2 && state.isVideo) afterBtn2.textContent = 'Generar Prompts de Video';
+          if (afterBtn2 && state.isVideo) {
+            afterBtn2.textContent = 'Generar Prompts de Video';
+            document.getElementById('videoClipSelector').style.display = 'block';
+          }
           document.querySelectorAll('.file-status').forEach(s => {
             s.className = 'file-status clean';
             s.textContent = 'Limpio';
@@ -2461,16 +3129,31 @@
     // =================================================================
     // VIDEO PROMPTS (Step 2 of video flow)
     // =================================================================
+    let _videoClipCount = 3;
+    function selectVideoClipCount(n, el) {
+      _videoClipCount = n;
+      el.parentElement.querySelectorAll('.count-opt').forEach(o => o.classList.remove('sel'));
+      el.classList.add('sel');
+    }
+
     function afterUploadNext() {
       if (state.isVideo) {
         // For video projects: directly generate video prompts (analyzes images + generates cinematic prompts)
         const btn = document.getElementById('btnAfterUpload');
         btn.disabled = true; btn.textContent = 'Generando prompts de video...';
+        // For Carousel Loop: one video per image, so clip count = number of uploaded images
+        if (state.contentType === 'living') {
+          _videoClipCount = (state.uploadedFiles || []).length;
+        }
+        // Override slides count with video clip count
+        state.slides = _videoClipCount;
         generateVideoPrompts().then(() => {
           // After generation, go to the video prompts screen to show results
           document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
           document.getElementById('screen-vidprompts').classList.add('active');
-          btn.disabled = false; btn.textContent = 'Generar Prompts de Video';
+          state.currentScreen = 'vidprompts';
+          saveState();
+          btn.disabled = false; btn.textContent = state.contentType === 'living' ? 'Generar Loop Videos' : 'Generar Prompts de Video';
         }).catch(() => {
           btn.disabled = false; btn.textContent = 'Generar Prompts de Video';
         });
@@ -2502,9 +3185,9 @@
           body: JSON.stringify({
             session_id: state.sessionId,
             destination: state.destination,
-            content_type: state.contentType,
-            product_type: state.product_type || 'iman',
+            content_type: state.contentType || 'carousel',
             theme: state.theme || '',
+            video_clip_count: _videoClipCount,
             original_prompts: (state.prompts || []).map(p => ({ slide_name: p.slide_name, prompt_text: p.prompt_text, speech: p.speech || '' })),
           }),
           signal: _vidPromptsController.signal,
@@ -2513,6 +3196,8 @@
         const data = await resp.json();
         if (data.success && data.video_prompts) {
           videoPrompts = data.video_prompts;
+          state.videoPrompts = videoPrompts;
+          saveState();
           statusEl.textContent = `${videoPrompts.length} prompts de video generados`;
           statusEl.style.color = 'var(--verde)';
           renderVideoPrompts(videoPrompts);
@@ -2574,21 +3259,13 @@
       if (!vp) return;
       btn.disabled = true; btn.textContent = 'Enviando...';
       try {
-        // Get the corresponding uploaded image as reference
-        const refs = [];
+        // Get the corresponding uploaded image path (server-side)
         const files = state.uploadedFiles || state.cleanFiles || [];
-        if (idx < files.length && files[idx]?.path) {
-          try {
-            const imgResp = await fetch(API + files[idx].path);
-            const blob = await imgResp.blob();
-            const dataUrl = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
-            refs.push(dataUrl);
-          } catch(e) { console.warn('Could not load ref image:', e); }
-        }
+        const imagePath = (idx < files.length && files[idx]?.path) ? files[idx].path : null;
         const resp = await fetch(API + '/api/envato/send-video', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: vp.video_prompt, speech: vp.speech || '', referenceImages: refs }),
+          body: JSON.stringify({ prompt: vp.video_prompt, speech: vp.speech || '', imagePath: imagePath, loop: state.contentType === 'living' }),
         });
         if (!resp.ok) throw new Error('Error ' + resp.status);
         btn.classList.add('sent'); btn.textContent = 'Enviado';
@@ -2602,26 +3279,17 @@
     async function sendAllVideoToEnvato() {
       if (!videoPrompts.length) return;
       try {
-        // Load uploaded images as reference/start frames for each video
-        const refs = [];
+        // Get server-side image paths for each video
         const files = state.uploadedFiles || state.cleanFiles || [];
-        for (let i = 0; i < videoPrompts.length; i++) {
-          if (i < files.length && files[i]?.path) {
-            try {
-              const imgResp = await fetch(API + files[i].path);
-              const blob = await imgResp.blob();
-              const dataUrl = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
-              refs.push(dataUrl);
-            } catch(e) { refs.push(null); }
-          } else { refs.push(null); }
-        }
+        const imagePaths = videoPrompts.map((_, i) => (i < files.length && files[i]?.path) ? files[i].path : null);
         const resp = await fetch(API + '/api/envato/send-all-video', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             prompts: videoPrompts.map(vp => vp.video_prompt),
             speeches: videoPrompts.map(vp => vp.speech || ''),
-            referenceImages: refs,
+            imagePaths: imagePaths,
+            loop: state.contentType === 'living',
           }),
         });
         if (!resp.ok) throw new Error('Error ' + resp.status);
@@ -3086,34 +3754,267 @@
     // =================================================================
     // CHARACTER SPEAKING FLOW
     // =================================================================
-    let charRefDataUrl = null;
+    let charRefImages = []; // Array of {dataUrl, name}
+
+    // Backward compat
+    Object.defineProperty(window, 'charRefDataUrl', {
+      get() { return charRefImages.length > 0 ? charRefImages[0].dataUrl : null; }
+    });
 
     function handleCharRefDrop(e) {
       e.preventDefault();
       e.currentTarget.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) loadCharRef(file);
+      const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+      files.slice(0, 3 - charRefImages.length).forEach(f => loadCharRef(f));
     }
     function handleCharRefSelect(input) {
-      if (input.files[0]) loadCharRef(input.files[0]);
+      const files = [...input.files].filter(f => f.type.startsWith('image/'));
+      files.slice(0, 3 - charRefImages.length).forEach(f => loadCharRef(f));
       input.value = '';
     }
     function loadCharRef(file) {
+      if (charRefImages.length >= 3) return;
       const reader = new FileReader();
-      reader.onload = (e) => {
-        charRefDataUrl = e.target.result;
-        document.getElementById('charRefThumb').src = charRefDataUrl;
-        document.getElementById('charRefEmpty').style.display = 'none';
-        document.getElementById('charRefPreview').style.display = 'flex';
-        document.getElementById('charRefZone').classList.add('has-image');
+      reader.onload = async (e) => {
+        const resized = await resizeImageDataUrl(e.target.result, 1200);
+        charRefImages.push({ dataUrl: resized, name: file.name });
+        renderCharRefImages();
       };
       reader.readAsDataURL(file);
     }
-    function removeCharRef() {
-      charRefDataUrl = null;
-      document.getElementById('charRefEmpty').style.display = '';
-      document.getElementById('charRefPreview').style.display = 'none';
-      document.getElementById('charRefZone').classList.remove('has-image');
+    function removeCharRefImage(idx) {
+      charRefImages.splice(idx, 1);
+      renderCharRefImages();
+    }
+    function renderCharRefImages() {
+      const list = document.getElementById('charRefList');
+      const empty = document.getElementById('charRefEmpty');
+      const zone = document.getElementById('charRefZone');
+      if (charRefImages.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = '';
+        zone.classList.remove('has-image');
+        return;
+      }
+      empty.style.display = 'none';
+      zone.classList.add('has-image');
+      list.innerHTML = charRefImages.map((img, i) => `
+        <div style="position:relative; display:inline-flex; flex-direction:column; align-items:center; gap:4px;">
+          <img src="${img.dataUrl}" style="width:56px; height:56px; object-fit:cover; border-radius:10px; border:2px solid var(--turquesa);">
+          <div style="font-size:0.6rem; color:var(--turquesa); font-weight:700;">Ref ${i+1}</div>
+          <button onclick="event.stopPropagation(); removeCharRefImage(${i});" style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; border:1px solid var(--borde); background:var(--piedra); color:var(--texto-dim); cursor:pointer; font-size:0.75rem; display:flex; align-items:center; justify-content:center; line-height:1;">&times;</button>
+        </div>
+      `).join('') + (charRefImages.length < 3 ? `
+        <div onclick="event.stopPropagation(); document.getElementById('charRefInput').click();" style="width:56px; height:56px; border:2px dashed var(--borde); border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.2rem; color:var(--texto-dim); opacity:0.5;">+</div>
+      ` : '');
+    }
+
+    let _charEnhancedPrompt = '';
+
+    async function generateCharFirstFrame() {
+      const description = document.getElementById('charDescription').value.trim();
+      if (!description) { document.getElementById('charDescription').focus(); return; }
+      const destination = document.getElementById('charDestination').value.trim();
+      const dialogue = document.getElementById('charDialogue').value.trim();
+      const statusEl = document.getElementById('charStatus');
+      const btn = document.querySelector('#screen-character .btn-gradient');
+      btn.disabled = true; btn.classList.add('loading'); btn.textContent = '';
+      statusEl.textContent = 'Claude est\u00e1 creando un prompt profesional para tu personaje...';
+      statusEl.style.color = 'var(--turquesa)';
+      try {
+        const refs = charRefImages.map(r => r.dataUrl);
+        const promptResp = await fetch(API + '/api/prompts/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            destination: destination || 'Mexico',
+            slides: 1,
+            content_type: 'character',
+            theme: 'Character design: ' + description + (dialogue ? '. The character will say: ' + dialogue : ''),
+            reference_images: refs,
+          }),
+        });
+        const promptData = await promptResp.json();
+        if (!promptData.success || !promptData.prompts.length) throw new Error('No prompt generated');
+        _charEnhancedPrompt = promptData.prompts[0].prompt_text;
+        document.getElementById('charPromptText').textContent = _charEnhancedPrompt;
+        statusEl.textContent = '';
+        // Navigate to the prompt result screen
+        goToScreen('char-prompt');
+      } catch (e) {
+        statusEl.textContent = e.message || 'Error';
+        statusEl.style.color = 'var(--rosa)';
+      }
+      btn.disabled = false; btn.classList.remove('loading'); btn.textContent = 'Generar First Frame';
+    }
+
+    // =================================================================
+    // CHARACTER VIDEO PROMPTS FLOW
+    // =================================================================
+    let _charVideoFrameDataUrl = null;
+    let _charVideoClips = 2;
+    let _charVideoPrompts = [];
+
+    function selectCharClips(n, el) {
+      _charVideoClips = n;
+      el.parentElement.querySelectorAll('.count-opt').forEach(o => o.classList.remove('sel'));
+      el.classList.add('sel');
+    }
+
+    function handleCharVideoDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) loadCharVideoFrame(file);
+    }
+    function handleCharVideoFrameSelect(input) {
+      if (input.files[0]) loadCharVideoFrame(input.files[0]);
+      input.value = '';
+    }
+    function loadCharVideoFrame(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        _charVideoFrameDataUrl = e.target.result;
+        document.getElementById('charVideoFrameThumb').src = _charVideoFrameDataUrl;
+        document.getElementById('charVideoFrameEmpty').style.display = 'none';
+        document.getElementById('charVideoFramePreview').style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    }
+    function removeCharVideoFrame() {
+      _charVideoFrameDataUrl = null;
+      document.getElementById('charVideoFrameEmpty').style.display = '';
+      document.getElementById('charVideoFramePreview').style.display = 'none';
+    }
+
+    async function generateCharVideoPrompts() {
+      if (!_charVideoFrameDataUrl) { alert('Sube tu first frame primero'); return; }
+      const description = document.getElementById('charDescription').value.trim();
+      const dialogue = document.getElementById('charDialogue').value.trim();
+      const destination = document.getElementById('charDestination').value.trim();
+      const totalClips = _charVideoClips;
+
+      const btn = document.getElementById('btnCharVideoPrompts');
+      const statusEl = document.getElementById('charVideoStatus');
+      btn.disabled = true; btn.classList.add('loading'); btn.textContent = '';
+      statusEl.textContent = 'Claude est\u00e1 generando ' + totalClips + ' prompts de video conectados...';
+      statusEl.style.color = 'var(--turquesa)';
+
+      try {
+        const resp = await fetch(API + '/api/prompts/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            destination: destination || 'Mexico',
+            slides: totalClips,
+            content_type: 'reel',
+            theme: 'CONNECTED VIDEO STORY for an animated character. Character: ' + description +
+              (dialogue ? '. Dialogue/voiceover: ' + dialogue : '') +
+              '. Clip 1 uses the first frame image as starting point. Each subsequent clip EXTENDS the story — they are sequential scenes of the SAME narrative. All clips together tell ONE cohesive story. Each clip is ~8 seconds.',
+            reference_images: [_charVideoFrameDataUrl],
+          }),
+        });
+        const data = await resp.json();
+        if (!data.success || !data.prompts.length) throw new Error('No prompts generated');
+
+        _charVideoPrompts = data.prompts;
+        const accentColors = ['#E72A88','#09ADC2','#F39223','#8AB73B','#E72A88','#F39223'];
+        const list = document.getElementById('charVideoPromptsList');
+        list.innerHTML = data.prompts.map((p, i) => `
+          <div class="prompt-card">
+            <div class="prompt-card-head">
+              <span class="badge" style="background:${accentColors[i % accentColors.length]};">Clip ${i+1}</span>
+              <span style="font-size:0.62rem; color:var(--texto-dim);">~8s</span>
+            </div>
+            <div class="prompt-card-body">
+              <div class="prompt-text" id="cvpt-${i}">${escHtml(p.prompt_text)}</div>
+              ${p.speech ? '<div class="speech-block"><div class="speech-label">Voz</div><div class="speech-text">"' + escHtml(p.speech) + '"</div></div>' : ''}
+            </div>
+            <div class="prompt-actions">
+              <button class="prompt-btn" onclick="navigator.clipboard.writeText(_charVideoPrompts[${i}].prompt_text);this.textContent='Copiado';setTimeout(()=>this.textContent='Copiar',2000);">Copiar</button>
+              <button class="prompt-btn prompt-btn-envato" onclick="sendCharVideoClipToEnvato(${i}, this)">Envato Video</button>
+              <button class="prompt-btn-expand" onclick="document.getElementById('cvpt-${i}').classList.toggle('expanded')">Ver todo</button>
+            </div>
+          </div>
+        `).join('');
+        document.getElementById('charVideoActions').style.display = 'block';
+        statusEl.textContent = totalClips + ' prompts generados. Todos cuentan una historia conectada.';
+        statusEl.style.color = 'var(--verde)';
+      } catch (e) {
+        statusEl.textContent = e.message || 'Error';
+        statusEl.style.color = 'var(--rosa)';
+      }
+      btn.disabled = false; btn.classList.remove('loading'); btn.textContent = 'Generar Video Prompts';
+    }
+
+    async function sendCharVideoClipToEnvato(idx, btn) {
+      const vp = _charVideoPrompts[idx];
+      if (!vp) return;
+      if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+      try {
+        const refs = idx === 0 && _charVideoFrameDataUrl ? [_charVideoFrameDataUrl] : [];
+        const resp = await fetch(API + '/api/envato/send-video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: vp.prompt_text, speech: vp.speech || '', referenceImages: refs }),
+        });
+        if (!resp.ok) throw new Error('Error ' + resp.status);
+        if (btn) { btn.classList.add('sent'); btn.textContent = 'Enviado'; setTimeout(() => { btn.classList.remove('sent'); btn.textContent = 'Envato Video'; btn.disabled = false; }, 3000); }
+      } catch (e) {
+        if (btn) { btn.textContent = 'Error'; btn.disabled = false; setTimeout(() => { btn.textContent = 'Envato Video'; }, 2500); }
+      }
+    }
+
+    async function sendAllCharVideosToEnvato() {
+      if (!_charVideoPrompts.length) return;
+      const statusEl = document.getElementById('charVideoStatus');
+      statusEl.textContent = 'Enviando ' + _charVideoPrompts.length + ' clips a Envato Video...';
+      statusEl.style.color = 'var(--turquesa)';
+      try {
+        const refs = [];
+        for (let i = 0; i < _charVideoPrompts.length; i++) {
+          refs.push(i === 0 && _charVideoFrameDataUrl ? _charVideoFrameDataUrl : null);
+        }
+        const resp = await fetch(API + '/api/envato/send-all-video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompts: _charVideoPrompts.map(p => p.prompt_text),
+            speeches: _charVideoPrompts.map(p => p.speech || ''),
+            referenceImages: refs,
+          }),
+        });
+        if (!resp.ok) throw new Error('Error ' + resp.status);
+        statusEl.textContent = _charVideoPrompts.length + ' clips enviados a Envato Video.';
+        statusEl.style.color = 'var(--verde)';
+      } catch (e) {
+        statusEl.textContent = e.message || 'Error';
+        statusEl.style.color = 'var(--rosa)';
+      }
+    }
+
+    async function sendCharToEnvato(btn) {
+      if (!_charEnhancedPrompt) return;
+      const statusEl = document.getElementById('charStatus');
+      statusEl.textContent = 'Enviando a Envato ImageGen...';
+      statusEl.style.color = 'var(--turquesa)';
+      if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+      try {
+        const refs = charRefImages.map(r => r.dataUrl);
+        const resp = await fetch(API + '/api/envato/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: _charEnhancedPrompt, aspectRatio: '1:2', referenceImages: refs }),
+        });
+        if (!resp.ok) throw new Error('Error ' + resp.status);
+        statusEl.innerHTML = 'Enviado a Envato ImageGen. <em>Revisa la pesta\u00f1a de Chrome.</em>';
+        statusEl.style.color = 'var(--verde)';
+        if (btn) { btn.textContent = 'Enviado'; setTimeout(() => { btn.textContent = 'Envato Image'; btn.disabled = false; }, 3000); }
+      } catch (e) {
+        statusEl.textContent = e.message || 'Error';
+        statusEl.style.color = 'var(--rosa)';
+        if (btn) { btn.textContent = 'Envato Image'; btn.disabled = false; }
+      }
     }
 
     async function generateCharacterVideo() {
@@ -3130,7 +4031,7 @@
       statusEl.style.color = 'var(--turquesa)';
 
       try {
-        const refs = charRefDataUrl ? [charRefDataUrl] : [];
+        const refs = charRefImages.map(r => r.dataUrl);
 
         const resp = await fetch(API + '/api/character/generate', {
           method: 'POST',
@@ -3167,7 +4068,7 @@
       // Restore form fields
       if (state.destination) document.getElementById('inputDestination').value = state.destination;
       if (state.contentType) {
-        const labels = { carousel:'Carousel', living:'Carousel Animado', post:'Post', reel:'Reel', pitch:'Pitch B2B', character:'Personaje Hablando', img2vid:'Img \u2192 Video' };
+        const labels = { carousel:'Carousel', living:'Carousel Loop', post:'Post', reel:'Reel', pitch:'Pitch B2B', character:'Personaje Hablando', img2vid:'Img \u2192 Video' };
         document.getElementById('configTypeLabel').textContent = labels[state.contentType] || '';
       }
 
@@ -3186,13 +4087,30 @@
         });
       }
 
+      // Restore video prompts
+      if (state.videoPrompts && state.videoPrompts.length) {
+        videoPrompts = state.videoPrompts;
+        renderVideoPrompts(videoPrompts);
+        document.getElementById('vidPromptsActions').style.display = 'block';
+      }
+
       // Restore caption
       if (state.caption) {
         document.getElementById('captionText').value = state.caption;
       }
 
-      // Navigate to saved step
-      goToStep(state.currentStep);
+      // Navigate to saved step — but character/img2vid/vidprompts have their own screens
+      if (state.contentType === 'character') {
+        goToScreen('character');
+        document.getElementById('pipelineNav').classList.remove('visible');
+      } else if (state.contentType === 'img2vid') {
+        goToScreen('img2vid');
+        document.getElementById('pipelineNav').classList.remove('visible');
+      } else if (state.currentScreen === 'vidprompts' && state.videoPrompts && state.videoPrompts.length) {
+        goToScreen('vidprompts');
+      } else {
+        goToStep(state.currentStep);
+      }
     })();
   </script>
 </body>

@@ -1,0 +1,11 @@
+# AXKAN Studio — Python dependencies
+# Install with: ./venv/bin/pip install -r requirements.txt
+#
+# Pinned to the versions validated 2026-04-22. Update cautiously — Flask 3
+# and google-generativeai 0.8 have breaking changes you'd need to audit.
+
+Flask==3.1.3
+flask-cors==6.0.2
+google-generativeai==0.8.6
+pillow==12.2.0
+requests==2.33.1

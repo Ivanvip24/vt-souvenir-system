@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Envato Video — Test Harness</title>
+<style>
+  :root{--bg:#0a0a0a;--panel:#161616;--text:#eaeaea;--muted:#8a8a8a;--accent:#8ab73b;--pink:#e72a88;--border:#2a2a2a;--ok:#4ade80;--err:#f87171;}
+  *{box-sizing:border-box;font-family:-apple-system,system-ui,sans-serif;}
+  body{margin:0;padding:24px;background:var(--bg);color:var(--text);}
+  h1{margin:0 0 4px;font-size:22px;}
+  .sub{color:var(--muted);margin-bottom:24px;font-size:13px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;}
+  .panel h2{margin:0 0 12px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+  button{background:var(--accent);color:#000;border:0;padding:14px 22px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-right:8px;margin-bottom:8px;}
+  button:hover{filter:brightness(1.1);}
+  button:disabled{opacity:.5;cursor:wait;}
+  button.secondary{background:#333;color:var(--text);}
+  button.danger{background:var(--pink);color:#fff;}
+  pre{background:#000;border:1px solid var(--border);border-radius:6px;padding:12px;font-size:12px;line-height:1.45;max-height:300px;overflow:auto;white-space:pre-wrap;word-break:break-word;}
+  .step{padding:6px 10px;border-left:3px solid var(--border);margin-bottom:4px;font-size:13px;font-family:ui-monospace,Menlo,monospace;}
+  .step.ok{border-color:var(--ok);}
+  .step.err{border-color:var(--err);color:#fca5a5;}
+  .step .t{color:var(--muted);margin-right:8px;}
+  .opts{display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+  label{font-size:13px;color:var(--muted);}
+  input[type="text"]{background:#000;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;width:100%;font-size:13px;}
+  textarea{background:#000;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;width:100%;font-size:13px;font-family:ui-monospace,Menlo,monospace;min-height:80px;}
+  .kv{display:flex;gap:8px;padding:4px 0;font-size:12px;}
+  .kv .k{color:var(--muted);min-width:120px;}
+  .kv .v{color:var(--text);}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#333;margin-right:4px;}
+  .pill.ok{background:var(--ok);color:#000;}
+  .pill.err{background:var(--err);color:#000;}
+</style>
+</head>
+<body>
+<h1>Envato Video — Test Harness</h1>
+<div class="sub">
+  Click <b>Simulate Envato Video</b> to run the exact same flow the studio uses:
+  (1) upload <code>axolotl_ref.jpg</code> → (2) POST <code>/api/envato/send-video</code> with <code>loop:true</code> → (3) AppleScript opens Envato VideoGen, pastes prompt, uploads Start Frame + End Frame.
+  <br>Then click <b>Inspect Envato Tab</b> to read the live DOM state and see what actually happened.
+</div>
+
+<div class="opts">
+  <label><input type="checkbox" id="loop" checked> loop (Start Frame + End Frame)</label>
+</div>
+<div class="opts">
+  <label style="flex:1">Prompt:<br>
+    <textarea id="prompt">Axolotl gentle floating animation, seamless loop, cinematic lighting</textarea>
+  </label>
+</div>
+
+<div style="margin-bottom:24px;">
+  <button id="run">▶ Simulate Envato Video</button>
+  <button id="inspect" class="secondary">🔍 Inspect Envato Tab</button>
+  <button id="inspect-loop" class="secondary">🔁 Inspect every 2s (20s)</button>
+  <button id="close-tabs" class="secondary">✕ Close Envato Tabs</button>
+  <button id="abort" class="danger">⏹ Abort Automation</button>
+  <button id="dump-modal" class="secondary">🔬 Dump Modal DOM (osascript — needs Chrome focused)</button>
+  <button id="get-last-dump" class="secondary">📥 Show Last DUMP Button Snapshot</button>
+</div>
+<div class="sub" style="margin-top:8px">
+  <b>Easier flow:</b> In the Envato tab, click the teal <b>AXKAN: DUMP</b> button (bottom-left corner). It snapshots the DOM and sends it here. Then click <b>📥 Show Last DUMP Button Snapshot</b> to see it.
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <h2>Run Log</h2>
+    <div id="log"></div>
+  </div>
+  <div class="panel">
+    <h2>Envato DOM Inspection</h2>
+    <pre id="dom">(click "Inspect Envato Tab" to read the page state)</pre>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8080';
+const logEl = document.getElementById('log');
+const domEl = document.getElementById('dom');
+
+function log(msg, cls=''){
+  const ts = new Date().toTimeString().slice(0,8);
+  const d = document.createElement('div');
+  d.className = 'step ' + cls;
+  d.innerHTML = `<span class="t">${ts}</span>${msg}`;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+async function run(){
+  const btn = document.getElementById('run');
+  btn.disabled = true;
+  logEl.innerHTML = '';
+  try{
+    // Step 1: upload axolotl_ref.jpg (fetch it from studio, repost as multipart)
+    log('Fetching axolotl_ref.jpg from studio...');
+    const fr = await fetch(API + '/axolotl_ref.jpg');
+    if(!fr.ok) throw new Error('axolotl_ref.jpg not found (HTTP '+fr.status+')');
+    const blob = await fr.blob();
+    log(`Fetched: ${(blob.size/1024).toFixed(1)} KB, type=${blob.type}`, 'ok');
+
+    log('POST /api/images/upload (multipart)...');
+    const fd = new FormData();
+    fd.append('files', new File([blob], 'axolotl_ref.jpg', {type: 'image/jpeg'}));
+    const ur = await fetch(API + '/api/images/upload', {method:'POST', body:fd});
+    const ud = await ur.json();
+    log(`Upload → HTTP ${ur.status}: ${JSON.stringify(ud).substring(0,200)}`, ur.ok?'ok':'err');
+    if(!ud.success) throw new Error('upload failed');
+    const imagePath = ud.files[0].path;
+    log(`imagePath: <b>${imagePath}</b>`, 'ok');
+
+    // Step 2: POST /api/envato/send-video with loop flag
+    const loop = document.getElementById('loop').checked;
+    const prompt = document.getElementById('prompt').value;
+    log(`POST /api/envato/send-video (loop=${loop})...`);
+    const sr = await fetch(API + '/api/envato/send-video', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt, speech:'', imagePath, loop}),
+    });
+    const sd = await sr.json();
+    log(`send-video → HTTP ${sr.status}: ${JSON.stringify(sd)}`, sr.ok?'ok':'err');
+
+    log('AppleScript is running async. Chrome will open labs.envato.com/video-gen.', 'ok');
+    log('The automation takes ~15-20s. Click <b>Inspect Envato Tab</b> to see live state.', 'ok');
+  }catch(e){
+    log('ERROR: '+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function inspect(){
+  domEl.textContent = '(inspecting...)';
+  try{
+    const r = await fetch(API + '/api/test/inspect-envato');
+    const d = await r.json();
+    if(!d.success){ domEl.textContent = 'ERROR: '+(d.error||JSON.stringify(d)); return; }
+    const out = [];
+    out.push('URL: ' + d.url);
+    out.push('');
+    out.push('=== PROMPT FIELD ===');
+    out.push(d.prompt_chars + ' chars');
+    if(d.prompt_sample) out.push('sample: ' + d.prompt_sample);
+    out.push('');
+    out.push('=== FILE INPUTS ===');
+    out.push('count: ' + d.file_inputs.count);
+    d.file_inputs.details.forEach((f,i)=>out.push(`  [${i}] files=${f.files} w=${f.w} h=${f.h} accept=${f.accept}`));
+    out.push('');
+    out.push('=== FRAME CARDS ===');
+    d.frames.forEach(f=>out.push(`  ${f.label}: ${f.has_thumb?'HAS THUMB ('+f.thumb_size+')':'EMPTY'}`));
+    out.push('');
+    out.push('=== PREVIEW IMAGES ===');
+    out.push('blob/data >100px count: ' + d.preview_imgs.big_count);
+    d.preview_imgs.samples.forEach(s=>out.push('  '+s));
+    out.push('');
+    out.push('=== VISIBLE MODAL BUTTONS ===');
+    d.modal_buttons.forEach(b=>out.push('  '+b));
+    domEl.textContent = out.join('\n');
+  }catch(e){
+    domEl.textContent = 'ERROR: '+e.message;
+  }
+}
+
+async function inspectLoop(){
+  const btn = document.getElementById('inspect-loop');
+  btn.disabled = true;
+  for(let i=0;i<10;i++){
+    await inspect();
+    await new Promise(r=>setTimeout(r, 2000));
+  }
+  btn.disabled = false;
+}
+
+async function closeTabs(){
+  log('Closing Envato tabs...');
+  const r = await fetch(API + '/api/test/close-envato-tabs', {method:'POST'});
+  const d = await r.json();
+  log('Closed: '+JSON.stringify(d), 'ok');
+}
+
+async function abort(){
+  log('Abort sent');
+  await fetch(API + '/api/abort', {method:'POST'});
+}
+
+async function dumpModal(){
+  domEl.textContent = '(dumping modal DOM...)';
+  try{
+    const r = await fetch(API + '/api/test/dump-modal-dom');
+    const d = await r.json();
+    if(!d.success){ domEl.textContent = 'ERROR: '+JSON.stringify(d); return; }
+    const out = [];
+    out.push(`Total elements scanned: ${d.total_scanned}`);
+    out.push('');
+    out.push('=== "Upload an image" ELEMENTS ===');
+    if (!d.upload_elements.length) {
+      out.push('NONE FOUND — the modal may not be open right now. Trigger the upload and dump again.');
+    } else {
+      d.upload_elements.forEach(u => out.push(`  <${u.tag}> ${u.w}x${u.h} @ (${u.x},${u.y}) text="${u.text}" cls="${u.cls}"`));
+    }
+    out.push('');
+    out.push('=== X / CLOSE CANDIDATES ===');
+    if (!d.x_candidates.length) {
+      out.push('NONE via aria/text.');
+    } else {
+      d.x_candidates.forEach(x => out.push(`  <${x.tag}> ${x.w}x${x.h} @ (${x.x},${x.y}) aria="${x.aria}" text="${x.text}"`));
+    }
+    out.push('');
+    out.push('=== ALL SHORT-TEXT ELEMENTS (may contain X variations) ===');
+    d.short_text_elements.forEach(s => out.push(`  <${s.tag}> ${s.w}x${s.h} @ (${s.x},${s.y}) text="${s.text}" aria="${s.aria}" cls="${s.cls}"`));
+    domEl.textContent = out.join('\n');
+  }catch(e){
+    domEl.textContent = 'ERROR: '+e.message;
+  }
+}
+
+document.getElementById('run').onclick = run;
+document.getElementById('inspect').onclick = inspect;
+document.getElementById('inspect-loop').onclick = inspectLoop;
+document.getElementById('close-tabs').onclick = closeTabs;
+document.getElementById('abort').onclick = abort;
+async function showLastDump(){
+  domEl.textContent = '(fetching last dump...)';
+  try{
+    const r = await fetch(API + '/api/test/get-last-dump');
+    const d = await r.json();
+    if(!d.success){ domEl.textContent = 'ERROR: '+JSON.stringify(d); return; }
+    const out = [];
+    out.push(`received_at: ${d.received_at}`);
+    out.push(`url: ${d.url}`);
+    out.push(`title: ${d.title}`);
+    out.push(`total elements: ${(d.elements || []).length}`);
+    out.push('');
+    // Highlight upload/close/generate candidates
+    const uploads = [], xs = [], generates = [], shortText = [];
+    for (const e of (d.elements || [])) {
+      const tx = e.text || '';
+      const aria = (e.aria || '').toLowerCase();
+      if (tx === 'Upload an image' || tx === 'Upload animage') uploads.push(e);
+      else if (tx === 'X' || tx === 'x' || tx === '×' || tx === '✕' || aria.includes('close') || aria.includes('cancel')) xs.push(e);
+      else if (tx === 'Generate') generates.push(e);
+      else if (tx && tx.length <= 5) shortText.push(e);
+    }
+    out.push('=== UPLOAD AN IMAGE ===');
+    uploads.forEach(e => out.push(`  <${e.tag}> ${e.w}x${e.h} @ (${e.x},${e.y}) cls="${e.cls}"`));
+    if (!uploads.length) out.push('  (none found — modal not open?)');
+    out.push('');
+    out.push('=== X / CLOSE CANDIDATES ===');
+    xs.forEach(e => out.push(`  <${e.tag}> ${e.w}x${e.h} @ (${e.x},${e.y}) text="${e.text}" aria="${e.aria}" cls="${e.cls}"`));
+    if (!xs.length) out.push('  (none found via text/aria)');
+    out.push('');
+    out.push('=== GENERATE ===');
+    generates.forEach(e => out.push(`  <${e.tag}> ${e.w}x${e.h} @ (${e.x},${e.y}) cls="${e.cls}"`));
+    out.push('');
+    out.push('=== SHORT-TEXT ELEMENTS (may include X variants) ===');
+    shortText.slice(0, 40).forEach(e => out.push(`  <${e.tag}> ${e.w}x${e.h} @ (${e.x},${e.y}) text="${e.text}" cls="${e.cls}"`));
+    domEl.textContent = out.join('\n');
+  }catch(e){
+    domEl.textContent = 'ERROR: '+e.message;
+  }
+}
+
+document.getElementById('dump-modal').onclick = dumpModal;
+document.getElementById('get-last-dump').onclick = showLastDump;
+</script>
+</body>
+</html>
