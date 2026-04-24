@@ -11,6 +11,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -195,7 +196,7 @@ router.get('/clients', async (req, res) => {
             await query('UPDATE clients SET state = $1, updated_at = NOW() WHERE id = $2 AND (state IS NULL OR state = \'\')', [fix.state, fix.id]);
           } catch (e) { /* ignore */ }
         }
-        console.log(`Auto-fixed state for ${clientsToFixInDB.length} clients from postal codes`);
+        log('info', 'client-admin.auto-fixed-state-for-clients-from-postal-codes');
       })();
     }
 
@@ -215,7 +216,7 @@ router.get('/clients', async (req, res) => {
       stats: statsResult.rows[0]
     });
   } catch (error) {
-    console.error('Error fetching clients:', error);
+    logError('client-admin.error-fetching-clients', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -295,7 +296,7 @@ router.post('/clients/autocomplete-addresses', async (req, res) => {
       message: `${updated} clientes actualizados con datos de codigo postal`
     });
   } catch (error) {
-    console.error('Error auto-completing addresses:', error);
+    logError('client-admin.error-auto-completing-addresses', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -335,7 +336,7 @@ function parseGoogleMapsUrl(url) {
         result.lng = parseFloat(lng4d[1]);
       }
     }
-  } catch (e) { console.error('Error parsing Google Maps URL:', e); }
+  } catch (e) { logError('client-admin.error-parsing-google-maps-url', e); }
   return result;
 }
 
@@ -348,7 +349,7 @@ async function resolveGoogleMapsUrl(url) {
       const location = resp.headers.get('location');
       if (location) return location;
     }
-  } catch (e) { console.error('Error resolving shortened URL:', e); }
+  } catch (e) { logError('client-admin.error-resolving-shortened-url', e); }
   return url;
 }
 
@@ -396,7 +397,7 @@ async function scrapeGoogleMapsPage(url) {
       result.address = metaDescMatch[1].trim();
     }
 
-  } catch (e) { console.error('Error scraping Google Maps page:', e.message); }
+  } catch (e) { logError('client-admin.error-scraping-google-maps-page', e); }
   return result;
 }
 
@@ -419,7 +420,7 @@ async function reverseGeocodeNominatim(lat, lng) {
       state: addr.state || null,
       postal_code: addr.postcode || null
     };
-  } catch (e) { console.error('Error reverse geocoding:', e.message); return null; }
+  } catch (e) { logError('client-admin.error-reverse-geocoding', e); return null; }
 }
 
 router.post('/clients/from-google-maps', async (req, res) => {
@@ -495,7 +496,7 @@ router.post('/clients/from-google-maps', async (req, res) => {
             }
           }
         }
-      } catch (e) { console.error('SEPOMEX fallback error:', e.message); }
+      } catch (e) { logError('client-admin.sepomex-fallback-error', e); }
     }
 
     const filledFields = Object.values(result).filter(v => v !== null).length;
@@ -503,7 +504,7 @@ router.post('/clients/from-google-maps', async (req, res) => {
 
     res.json({ success: true, data: result, sources, confidence });
   } catch (error) {
-    console.error('Error extracting Google Maps data:', error);
+    logError('client-admin.error-extracting-google-maps-data', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -644,7 +645,7 @@ router.post('/shipping/labels/bulk', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error generating bulk labels:', error);
+    logError('client-admin.error-generating-bulk-labels', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -691,7 +692,7 @@ router.get('/clients/:id', async (req, res) => {
 
     res.json({ success: true, data: clientData });
   } catch (error) {
-    console.error('Error fetching client:', error);
+    logError('client-admin.error-fetching-client', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -713,7 +714,7 @@ router.get('/payment-notes/client/:clientId', async (req, res) => {
     );
     res.json({ success: true, data: result.rows });
   } catch (error) {
-    console.error('Error fetching payment notes:', error);
+    logError('client-admin.error-fetching-payment-notes', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -731,7 +732,7 @@ router.get('/payment-notes/cuenta/:cuentaId', async (req, res) => {
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error fetching cuenta:', error);
+    logError('client-admin.error-fetching-cuenta', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -753,7 +754,7 @@ router.post('/payment-notes', async (req, res) => {
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error creating cuenta:', error);
+    logError('client-admin.error-creating-cuenta', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -793,7 +794,7 @@ router.put('/payment-notes/cuenta/:cuentaId', async (req, res) => {
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating cuenta:', error);
+    logError('client-admin.error-updating-cuenta', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -808,7 +809,7 @@ router.delete('/payment-notes/cuenta/:cuentaId', async (req, res) => {
     await query('DELETE FROM payment_notes WHERE id = $1', [cuentaId]);
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting cuenta:', error);
+    logError('client-admin.error-deleting-cuenta', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -833,7 +834,7 @@ router.post('/clients', async (req, res) => {
 
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error creating client:', error);
+    logError('client-admin.error-creating-client', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -870,7 +871,7 @@ router.put('/clients/:id', async (req, res) => {
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating client:', error);
+    logError('client-admin.error-updating-client', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -904,7 +905,7 @@ router.delete('/clients/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Client deleted successfully' });
   } catch (error) {
-    console.error('Error deleting client:', error);
+    logError('client-admin.error-deleting-client', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
