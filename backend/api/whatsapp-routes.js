@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 import { authMiddleware } from './admin-routes.js';
 import { processIncomingMessage, generateConversationInsights, ensureAiToggleColumn, getAiModel, setAiModel, getGlobalAiEnabled, setGlobalAiEnabled } from '../services/whatsapp-ai.js';
 import { migrate as migrateLabelsArchive } from '../migrations/add-whatsapp-labels-archive.js';
@@ -17,7 +18,7 @@ async function ensureLabelsArchiveColumns() {
     if (err.message?.includes('already exists')) {
       labelsArchiveMigrated = true;
     } else {
-      console.error('🏷️ Labels/archive migration warning:', err.message);
+      logError('whatsapp.labelsarchive-migration-warning', err);
     }
   }
 }
@@ -189,7 +190,7 @@ router.get('/webhook', (req, res) => {
   const challenge = req.query['hub.challenge'];
 
   if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-    console.log('🟢 WhatsApp webhook verified');
+    log('info', 'whatsapp.whatsapp-webhook-verified');
     return res.status(200).send(challenge);
   }
 
@@ -224,7 +225,7 @@ router.post('/webhook', (req, res) => {
         [waMessageId]
       );
       if (existingMsg.rows.length > 0) {
-        console.log(`🟢 WhatsApp duplicate webhook skipped: ${waMessageId}`);
+        log('info', 'whatsapp.whatsapp-duplicate-webhook-skipped');
         return;
       }
 
@@ -234,7 +235,7 @@ router.post('/webhook', (req, res) => {
       let mediaUrl = null;
       let messageMetadata = null;
 
-      console.log('🟢 WhatsApp message from', waId, '— type:', message.type);
+      log('info', 'whatsapp.whatsapp-message-from');
 
       try {
         if (message.type === 'text') {
@@ -315,7 +316,7 @@ router.post('/webhook', (req, res) => {
           // Emoji reaction — store it but don't trigger AI response
           var emoji = message.reaction?.emoji || '👍';
           var reactedMsgId = message.reaction?.message_id || null;
-          console.log('🟢 WhatsApp reaction: ' + emoji + ' on message ' + reactedMsgId);
+          log('info', 'whatsapp.reaction.received', { emoji, reactedMsgId });
           // Save reaction to DB so admin can see it
           await query(
             `INSERT INTO whatsapp_messages (conversation_id, wa_message_id, direction, sender, message_type, content, metadata)
@@ -326,7 +327,7 @@ router.post('/webhook', (req, res) => {
         }
         else {
           // Unsupported message types (stickers, contacts, etc.) — just ignore, don't trigger AI
-          console.log(`🟢 WhatsApp: Ignoring unsupported message type: ${message.type}`);
+          log('info', 'whatsapp.whatsapp-ignoring-unsupported-message-type');
 
           // Store it but don't process with AI
           await query(
@@ -338,11 +339,11 @@ router.post('/webhook', (req, res) => {
           return; // Don't trigger AI for unsupported types
         }
       } catch (mediaErr) {
-        console.error('🟢 WhatsApp media processing error:', mediaErr.message);
+        log('error', 'whatsapp.debug');
         messageText = messageText || '[Error procesando media]';
       }
 
-      console.log('🟢 WhatsApp content:', messageText.substring(0, 100));
+      log('info', 'whatsapp.content.received');
 
       // Dedup: skip if we already stored this message
       const existing = await query(
@@ -405,7 +406,7 @@ router.post('/webhook', (req, res) => {
           `, [conversationId]);
 
           if (followedCoaching.rows.length > 0) {
-              console.log(`📊 Sales coaching: client responded to ${followedCoaching.rows[0].coaching_type} advice (coaching #${followedCoaching.rows[0].id})`);
+              log('info', 'whatsapp.sales-coaching-client-responded-to-advice-coaching');
           }
           // Also expire stale pending pills — new message means context changed
           await query(`
@@ -417,7 +418,7 @@ router.post('/webhook', (req, res) => {
           `, [conversationId]);
       } catch (coachErr) {
           // Non-blocking — don't interrupt message flow
-          console.error('📊 Sales coaching tracking error:', coachErr.message);
+          log('error', 'whatsapp.debug');
       }
 
       // Increment unread count + set 23hr re-engagement timer
@@ -444,7 +445,7 @@ router.post('/webhook', (req, res) => {
           return; // Skip AI processing
         }
       } catch (designerErr) {
-        console.error('📋 Designer task error:', designerErr.message);
+        log('error', 'whatsapp.debug');
         // Don't block normal flow on error
       }
 
@@ -471,10 +472,10 @@ router.post('/webhook', (req, res) => {
              VALUES ($1, $2, 'client', $3, $4, $5, $6)`,
             [design.id, design.order_id, clientName || 'Cliente', msgType, msgContent, `client_${Date.now()}`]
           );
-          console.log(`🎨 Client has active design — message bridged, AI skipped`);
+          log('info', 'whatsapp.client-has-active-design-message-bridged-ai-skippe');
         }
       } catch (bridgeErr) {
-        console.error('🎨 Design portal bridge error:', bridgeErr.message);
+        log('error', 'whatsapp.debug');
       }
 
       if (designerHandling) {
@@ -511,7 +512,7 @@ router.post('/webhook', (req, res) => {
 
       // Skip AI processing if ai_enabled is false for this conversation
       if (aiEnabled === false) {
-        console.log(`🟢 WhatsApp AI disabled for conversation ${conversationId} — skipping auto-reply`);
+        log('info', 'whatsapp.whatsapp-ai-disabled-for-conversation-skipping-aut');
         return;
       }
 
@@ -533,11 +534,11 @@ router.post('/webhook', (req, res) => {
           });
           const answer = (visionResponse.content[0].text || '').toLowerCase().trim();
           if (answer.startsWith('yes') || answer.startsWith('sí') || answer.startsWith('si')) {
-            console.log('🧾 Claude Vision confirmed: image is a payment receipt');
+            log('info', 'whatsapp.claude-vision-confirmed-image-is-a-payment-receipt');
             receiptHandled = true;
           }
         } catch (visionErr) {
-          console.error('🧾 Receipt vision check failed:', visionErr.message);
+          log('error', 'whatsapp.debug');
         }
       }
 
@@ -546,7 +547,7 @@ router.post('/webhook', (req, res) => {
 
       // If AI is globally disabled, skip replying entirely
       if (aiResult.skipped) {
-        console.log(`🤖 AI disabled globally — skipping reply to ${waId}`);
+        log('info', 'whatsapp.ai-disabled-globally-skipping-reply-to');
         return;
       }
 
@@ -576,7 +577,7 @@ router.post('/webhook', (req, res) => {
         try {
           await sendWhatsAppMessage(waId, shippingMsg);
         } catch (shipErr) {
-          console.error('📦 Shipping message error:', shipErr.message);
+          log('error', 'whatsapp.debug');
         }
       }
 
@@ -587,7 +588,7 @@ router.post('/webhook', (req, res) => {
           try {
             await sendWhatsAppImage(waId, img.imageUrl, img.productName || '');
           } catch (imgErr) {
-            console.error('🟢 WhatsApp image send error:', imgErr.message);
+            log('error', 'whatsapp.debug');
           }
         }
       }
@@ -631,10 +632,10 @@ router.post('/webhook', (req, res) => {
                  VALUES ($1, $2, 'outbound', 'ai', 'video', $3, $4)`,
                 [conversationId, videoTag + '_' + Date.now(), videoCaption, videoUrl]
               );
-              console.log(`📹 Auto-sent ${videoTag} to ${waId}`);
+              log('info', 'whatsapp.auto-sent-to');
             }
           } catch (vidErr) {
-            console.error('📹 Video auto-send error:', vidErr.message);
+            log('error', 'whatsapp.debug');
           }
         }
       }
@@ -650,7 +651,7 @@ router.post('/webhook', (req, res) => {
             await sendWhatsAppMessage(waId, result.fallbackText);
           }
         } catch (listErr) {
-          console.error('🟢 WhatsApp list send error:', listErr.message);
+          log('error', 'whatsapp.debug');
         }
       }
 
@@ -665,7 +666,7 @@ router.post('/webhook', (req, res) => {
             await sendWhatsAppMessage(waId, result.fallbackText);
           }
         } catch (btnErr) {
-          console.error('🟢 WhatsApp button send error:', btnErr.message);
+          log('error', 'whatsapp.debug');
         }
       }
 
@@ -676,7 +677,7 @@ router.post('/webhook', (req, res) => {
             await sendWhatsAppDocument(waId, doc.url, doc.filename || 'documento.pdf', doc.caption || '');
           }
         } catch (docErr) {
-          console.error('🟢 WhatsApp document send error:', docErr.message);
+          log('error', 'whatsapp.debug');
         }
       }
 
@@ -685,7 +686,7 @@ router.post('/webhook', (req, res) => {
         try {
           await sendWhatsAppReaction(waId, waMessageId, aiResult.reactionEmoji);
         } catch (reactErr) {
-          console.error('🟢 WhatsApp reaction send error:', reactErr.message);
+          log('error', 'whatsapp.debug');
         }
       }
 
@@ -698,7 +699,7 @@ router.post('/webhook', (req, res) => {
             await sendWhatsAppMessage(waId, result.fallbackText);
           }
         } catch (locErr) {
-          console.error('🟢 WhatsApp location request error:', locErr.message);
+          log('error', 'whatsapp.debug');
         }
       }
 
@@ -707,7 +708,7 @@ router.post('/webhook', (req, res) => {
         try {
           await sendWhatsAppCarousel(waId, aiResult.carouselCards);
         } catch (carouselErr) {
-          console.error('🟢 WhatsApp carousel send error:', carouselErr.message);
+          log('error', 'whatsapp.debug');
         }
       }
 
@@ -727,7 +728,7 @@ router.post('/webhook', (req, res) => {
               await sendWhatsAppMessage(waId, result.fallbackText);
             }
           } catch (flowErr) {
-            console.error('🟢 WhatsApp flow send error:', flowErr.message);
+            log('error', 'whatsapp.debug');
           }
         }
       }
@@ -827,7 +828,7 @@ router.post('/webhook', (req, res) => {
             const order = existingOrder.rows[0];
             const pendingAmount = parseFloat(order.total_price) - parseFloat(order.deposit_amount || 0);
 
-            console.log(`💰 Second payment receipt detected for order ${order.order_number} — pending: $${pendingAmount}`);
+            log('info', 'whatsapp.second-payment-receipt-detected-for-order-pending');
 
             // AI verification: check if receipt is real + amount matches
             let verificationResult = { verified: false, amount: null };
@@ -851,7 +852,7 @@ router.post('/webhook', (req, res) => {
                 verificationResult.amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : null;
               }
             } catch (vErr) {
-              console.error('💰 AI verification failed:', vErr.message);
+              log('error', 'whatsapp.debug');
               verificationResult.verified = true; // Assume valid if AI fails
             }
 
@@ -870,21 +871,21 @@ router.post('/webhook', (req, res) => {
                 await sendWhatsAppMessage(waId, `Recibí ${amountStr} para el pedido *${order.order_number}*. Pago completo ✅\n\nEn breve te envío la guía de envío.`);
                 // Auto-mark as fully paid
                 await query(`UPDATE orders SET deposit_paid = true, updated_at = NOW() WHERE id = $1`, [order.id]);
-                console.log(`💰 Second payment verified and approved: ${order.order_number} — $${verificationResult.amount}`);
+                log('info', 'whatsapp.second-payment-verified-and-approved');
               } else {
                 await sendWhatsAppMessage(waId, `Recibí tu comprobante para el pedido *${order.order_number}*.\n\nEl saldo pendiente era $${pendingAmount.toLocaleString('es-MX')}. Estamos verificando tu pago.`);
-                console.log(`💰 Second payment received but amount mismatch: got $${verificationResult.amount}, expected $${pendingAmount}`);
+                log('info', 'whatsapp.second-payment-received-but-amount-mismatch-got-ex');
               }
             } else {
               await sendWhatsAppMessage(waId, `Recibí tu imagen pero no parece ser un comprobante de pago. ¿Podrías enviar la captura de la transferencia?`);
             }
 
             // Skip draft order creation — this was a second payment
-            console.log(`💰 Skipping draft order — handled as second payment for ${order.order_number}`);
+            log('info', 'whatsapp.skipping-draft-order-handled-as-second-payment-for');
           } else {
             // No existing approved order — create new draft order
 
-          console.log(`📦 Payment receipt detected from ${waId} — creating WhatsApp draft order...`);
+          log('info', 'whatsapp.payment-receipt-detected-from-creating-whatsapp-dr');
           try {
           // Get client info from conversation
           const convInfo = await query(
@@ -1004,13 +1005,13 @@ router.post('/webhook', (req, res) => {
               );
             }
 
-            console.log(`📦 WhatsApp draft order created: ${orderNumber} — ${quantity}x ${productName} = $${totalPrice} for ${conv.client_name || waId}`);
+            log('info', 'whatsapp.whatsapp-draft-order-created-x-for');
 
             // Learn from successful order for sales learning engine (fire-and-forget)
             try {
               const { learnFromOrder } = await import('../services/sales-learning-engine.js');
               learnFromOrder(orderResult.rows[0].id).catch(err =>
-                console.error('🧠 Order learning error:', err.message)
+                logError('whatsapp.order-learning-error', err)
               );
             } catch (e) {}
 
@@ -1041,7 +1042,7 @@ router.post('/webhook', (req, res) => {
                 await sendWhatsAppMessage(waId, `Para completar tu envío, llena tus datos aquí:\nhttps://axkan.art/pedidos`);
               }
 
-              console.log(`📦 Order confirmation + data collection sent: ${orderNumber} (hasAddress: ${hasAddress}, hasEmail: ${hasEmail})`);
+              log('info', 'whatsapp.order-confirmation-data-collection-sent-hasaddress');
 
               // AI verification: check receipt amount matches anticipo
               try {
@@ -1067,7 +1068,7 @@ router.post('/webhook', (req, res) => {
                     `UPDATE orders SET approval_status = 'approved', status = 'new', deposit_paid = true, updated_at = NOW() WHERE id = $1`,
                     [orderResult.rows[0].id]
                   );
-                  console.log(`✅ Auto-approved order ${orderNumber}: receipt $${receiptAmount} >= anticipo $${expectedAnticipo}`);
+                  log('info', 'whatsapp.auto-approved-order-receipt-anticipo');
 
                   // Notify you (Ivan) via WhatsApp
                   const ivanPhone = process.env.IVAN_WHATSAPP_NUMBER || '5215538253251';
@@ -1076,32 +1077,32 @@ router.post('/webhook', (req, res) => {
                       `🔔 Pedido auto-aprobado:\n*${orderNumber}*\n${quantity} ${productName} — $${totalPrice.toLocaleString('es-MX')}\nAnticipo: $${receiptAmount.toLocaleString('es-MX')}\nCliente: ${conv.client_name || waId}`
                     );
                   } catch (notifyErr) {
-                    console.error('📦 Failed to notify Ivan:', notifyErr.message);
+                    log('error', 'whatsapp.debug');
                   }
                 } else {
-                  console.log(`⚠️ Receipt amount $${receiptAmount} doesn't match anticipo $${expectedAnticipo} — pending manual review`);
+                  log('info', 'whatsapp.receipt-amount-doesnt-match-anticipo-pending-manua');
                 }
               } catch (verifyErr) {
-                console.error('🧾 Receipt verification failed:', verifyErr.message);
+                log('error', 'whatsapp.debug');
                 // Keep as pending_review if verification fails
               }
 
             } catch (confirmErr) {
-              console.error('📦 Failed to send order confirmation:', confirmErr.message);
+              log('error', 'whatsapp.debug');
             }
           } else {
-            console.log(`📦 Draft order already exists for conversation ${conversationId}, skipping`);
+            log('info', 'whatsapp.draft-order-already-exists-for-conversation-skippi');
           }
           } catch (draftErr) {
-            console.error('📦 WhatsApp draft order error:', draftErr.message);
+            log('error', 'whatsapp.debug');
           }
         } // close else (not second payment — draft order creation)
         } catch (receiptErr) {
-          console.error('🧾 Receipt processing error:', receiptErr.message);
+          log('error', 'whatsapp.debug');
         }
       }
     } catch (err) {
-      console.error('🟢 WhatsApp webhook error:', err);
+      logError('whatsapp.whatsapp-webhook-error', err);
     }
   })();
 });
@@ -1132,7 +1133,7 @@ router.post('/flow-endpoint', async (req, res) => {
 
     res.json({ data: {} });
   } catch (err) {
-    console.error('🟢 WhatsApp flow endpoint error:', err.message);
+    logError('whatsapp.whatsapp-flow-endpoint-error', err);
     res.status(500).json({ data: { error: 'Error interno del servidor' } });
   }
 });
@@ -1163,7 +1164,7 @@ router.get('/conversations', authMiddleware, async (req, res) => {
     `, [showArchived]);
     res.json({ success: true, data: result.rows });
   } catch (err) {
-    console.error('🟢 WhatsApp conversations list error:', err);
+    logError('whatsapp.whatsapp-conversations-list-error', err);
     res.status(500).json({ success: false, error: 'Failed to fetch conversations' });
   }
 });
@@ -1208,7 +1209,7 @@ router.get('/conversations/search', authMiddleware, async (req, res) => {
 
     res.json({ success: true, data: result.rows });
   } catch (err) {
-    console.error('Search error:', err);
+    logError('whatsapp.search-error', err);
     res.status(500).json({ success: false, error: 'Search failed' });
   }
 });
@@ -1231,7 +1232,7 @@ router.get('/conversations/my-assigned', employeeAuth, async (req, res) => {
 
     res.json({ success: true, data: result.rows });
   } catch (err) {
-    console.error('Fetch assigned conversations error:', err);
+    logError('whatsapp.fetch-assigned-conversations-error', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1279,7 +1280,7 @@ router.put('/conversations/:id/assign', authMiddleware, async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error('Assign conversation error:', err);
+    logError('whatsapp.assign-conversation-error', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1327,7 +1328,7 @@ router.post('/conversations/:id/employee-reply', employeeAuth, async (req, res) 
 
     res.json({ success: true });
   } catch (err) {
-    console.error('Employee reply error:', err);
+    logError('whatsapp.employee-reply-error', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1343,7 +1344,7 @@ router.get('/conversations/:id/messages', authMiddleware, async (req, res) => {
     );
     res.json({ success: true, data: result.rows });
   } catch (err) {
-    console.error('🟢 WhatsApp messages list error:', err);
+    logError('whatsapp.whatsapp-messages-list-error', err);
     res.status(500).json({ success: false, error: 'Failed to fetch messages' });
   }
 });
@@ -1386,7 +1387,7 @@ router.post('/conversations/:id/reply', authMiddleware, async (req, res) => {
       : (sendResult && sendResult.messages && sendResult.messages[0])
         ? sendResult.messages[0].id
         : 'admin_' + Date.now();
-    console.log('📨 Admin reply wamid:', realWamid, '| sendResult keys:', sendResult ? Object.keys(sendResult) : 'null');
+    log('info', 'whatsapp.admin-reply.sent', { wamid: realWamid });
     const outboundWaId = realWamid;
     const msgType = videoUrl ? 'video' : imageUrl ? 'image' : 'text';
     const mediaUrl = videoUrl || imageUrl || null;
@@ -1407,14 +1408,14 @@ router.post('/conversations/:id/reply', authMiddleware, async (req, res) => {
       try {
         const { detectCorrection } = await import('../services/sales-learning-engine.js');
         detectCorrection(parseInt(req.params.id), message).catch(err =>
-          console.error('🧠 Correction detection error:', err.message)
+          logError('whatsapp.correction-detection-error', err)
         );
       } catch (e) {}
     }
 
     res.json({ success: true });
   } catch (err) {
-    console.error('🟢 WhatsApp admin reply error:', err);
+    logError('whatsapp.whatsapp-admin-reply-error', err);
     res.status(500).json({ success: false, error: 'Failed to send reply' });
   }
 });
@@ -1431,7 +1432,7 @@ router.post('/send', authMiddleware, async (req, res) => {
     await sendWhatsAppMessage(to, message);
     res.json({ success: true });
   } catch (err) {
-    console.error('🟢 WhatsApp send error:', err);
+    logError('whatsapp.whatsapp-send-error', err);
     res.status(500).json({ success: false, error: 'Failed to send message' });
   }
 });
@@ -1447,7 +1448,7 @@ router.put('/conversations/:id/read', authMiddleware, async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
-    console.error('🟢 WhatsApp mark read error:', err);
+    logError('whatsapp.whatsapp-mark-read-error', err);
     res.status(500).json({ success: false, error: 'Failed to mark as read' });
   }
 });
@@ -1464,7 +1465,7 @@ router.put('/conversations/:id/unread', authMiddleware, async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
-    console.error('Mark unread error:', err);
+    logError('whatsapp.mark-unread-error', err);
     res.status(500).json({ success: false, error: 'Failed to mark as unread' });
   }
 });
@@ -1488,10 +1489,10 @@ router.patch('/conversations/:id/settings', authMiddleware, async (req, res) => 
       return res.status(404).json({ success: false, error: 'Conversation not found' });
     }
 
-    console.log(`🟢 WhatsApp AI ${ai_enabled ? 'enabled' : 'disabled'} for conversation ${req.params.id}`);
+    log('info', 'whatsapp.whatsapp-ai-for-conversation');
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error('🟢 WhatsApp settings update error:', err);
+    logError('whatsapp.whatsapp-settings-update-error', err);
     res.status(500).json({ success: false, error: 'Failed to update settings' });
   }
 });
@@ -1542,7 +1543,7 @@ router.post('/conversations/:id/recap', authMiddleware, async (req, res) => {
         );
 
         if (aiResult.skipped || !aiResult.reply) {
-          console.log(`🔄 Recap skipped for ${conversationId}: ${aiResult.reason || 'no reply'}`);
+          log('info', 'whatsapp.recap-skipped-for');
           return;
         }
 
@@ -1563,13 +1564,13 @@ router.post('/conversations/:id/recap', authMiddleware, async (req, res) => {
           );
         }
 
-        console.log(`🔄 Recap sent for conversation ${conversationId} (${conv.client_name || conv.wa_id})`);
+        log('info', 'whatsapp.recap-sent-for-conversation');
       } catch (bgErr) {
-        console.error(`🔄 Recap background error for ${conversationId}:`, bgErr.message);
+        log('error', 'whatsapp.debug');
       }
     })();
   } catch (err) {
-    console.error('🔄 Recap error:', err);
+    logError('whatsapp.recap-error', err);
     res.status(500).json({ success: false, error: 'Recap failed' });
   }
 });
@@ -1620,7 +1621,7 @@ router.post('/conversations/:id/insights', authMiddleware, async (req, res) => {
       cached: result.cached
     });
   } catch (err) {
-    console.error('🟢 WhatsApp insights error:', err);
+    logError('whatsapp.whatsapp-insights-error', err);
     res.status(500).json({ success: false, error: 'Failed to generate insights' });
   }
 });
@@ -1643,7 +1644,7 @@ router.post('/conversations/:id/react', authMiddleware, async (req, res) => {
     const result = await sendWhatsAppReaction(conv.rows[0].wa_id, messageId, emoji);
     res.json(result);
   } catch (err) {
-    console.error('🟢 WhatsApp admin reaction error:', err);
+    logError('whatsapp.whatsapp-admin-reaction-error', err);
     res.status(500).json({ success: false, error: 'Failed to send reaction' });
   }
 });
@@ -1684,7 +1685,7 @@ router.get('/labels', authMiddleware, async (req, res) => {
     `);
     res.json({ success: true, data: labels.rows });
   } catch (err) {
-    console.error('🏷️ WhatsApp labels list error:', err);
+    logError('whatsapp.whatsapp-labels-list-error', err);
     res.status(500).json({ success: false, error: 'Failed to fetch labels' });
   }
 });
@@ -1705,7 +1706,7 @@ router.post('/labels', authMiddleware, async (req, res) => {
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error('🏷️ WhatsApp create label error:', err);
+    logError('whatsapp.whatsapp-create-label-error', err);
     res.status(500).json({ success: false, error: 'Failed to create label' });
   }
 });
@@ -1718,7 +1719,7 @@ router.delete('/labels/:id', authMiddleware, async (req, res) => {
     await query('DELETE FROM whatsapp_labels WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
-    console.error('🏷️ WhatsApp delete label error:', err);
+    logError('whatsapp.whatsapp-delete-label-error', err);
     res.status(500).json({ success: false, error: 'Failed to delete label' });
   }
 });
@@ -1735,7 +1736,7 @@ router.post('/conversations/:id/labels/:labelId', authMiddleware, async (req, re
     );
     res.json({ success: true });
   } catch (err) {
-    console.error('🏷️ WhatsApp assign label error:', err);
+    logError('whatsapp.whatsapp-assign-label-error', err);
     res.status(500).json({ success: false, error: 'Failed to assign label' });
   }
 });
@@ -1751,7 +1752,7 @@ router.delete('/conversations/:id/labels/:labelId', authMiddleware, async (req, 
     );
     res.json({ success: true });
   } catch (err) {
-    console.error('🏷️ WhatsApp remove label error:', err);
+    logError('whatsapp.whatsapp-remove-label-error', err);
     res.status(500).json({ success: false, error: 'Failed to remove label' });
   }
 });
@@ -1769,7 +1770,7 @@ router.patch('/conversations/:id/archive', authMiddleware, async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
-    console.error('📥 WhatsApp archive error:', err);
+    logError('whatsapp.whatsapp-archive-error', err);
     res.status(500).json({ success: false, error: 'Failed to toggle archive' });
   }
 });
@@ -1787,7 +1788,7 @@ router.patch('/conversations/:id/pin', authMiddleware, async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
-    console.error('📌 WhatsApp pin error:', err);
+    logError('whatsapp.whatsapp-pin-error', err);
     res.status(500).json({ success: false, error: 'Failed to toggle pin' });
   }
 });
@@ -1804,7 +1805,7 @@ router.delete('/conversations/:id', authMiddleware, async (req, res) => {
     await query('DELETE FROM whatsapp_conversations WHERE id = $1', [convId]);
     res.json({ success: true });
   } catch (err) {
-    console.error('🗑️ WhatsApp delete conversation error:', err);
+    logError('whatsapp.whatsapp-delete-conversation-error', err);
     res.status(500).json({ success: false, error: 'Failed to delete conversation' });
   }
 });
@@ -1829,7 +1830,7 @@ router.delete('/conversations/:convId/messages/:msgId', authMiddleware, async (r
     await query('DELETE FROM whatsapp_messages WHERE id = $1 AND conversation_id = $2', [msgId, convId]);
     res.json({ success: true });
   } catch (err) {
-    console.error('🗑️ WhatsApp delete message error:', err);
+    logError('whatsapp.whatsapp-delete-message-error', err);
     res.status(500).json({ success: false, error: 'Failed to delete message' });
   }
 });
@@ -1868,7 +1869,7 @@ router.patch('/conversations/:id/follow-up', authMiddleware, async (req, res) =>
 
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error('⏱ WhatsApp follow-up error:', err);
+    logError('whatsapp.whatsapp-follow-up-error', err);
     res.status(500).json({ success: false, error: 'Failed to set follow-up' });
   }
 });
@@ -1890,7 +1891,7 @@ async function ensureSalesColumns() {
     if (err.message?.includes('already exists')) {
       salesColumnsMigrated = true;
     } else {
-      console.error('📊 Sales columns migration warning:', err.message);
+      logError('whatsapp.sales-columns-migration-warning', err);
     }
   }
 }
@@ -1905,7 +1906,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
     // Safe query wrapper — returns empty result on failure
     async function safeQuery(sql, params = []) {
       try { return await query(sql, params); }
-      catch (e) { console.error('📊 Query failed:', e.message); return { rows: [] }; }
+      catch (e) { logError('whatsapp.query-failed', e); return { rows: [] }; }
     }
 
     // 1. Overview
@@ -2336,7 +2337,7 @@ router.get('/sales-analytics', authMiddleware, async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('📊 WhatsApp sales analytics error:', err);
+    logError('whatsapp.whatsapp-sales-analytics-error', err);
     res.status(500).json({ success: false, error: 'Failed to generate sales analytics' });
   }
 });
@@ -2479,7 +2480,7 @@ router.post('/sales-analytics/learn', authMiddleware, async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('📊 WhatsApp sales learning error:', err);
+    logError('whatsapp.whatsapp-sales-learning-error', err);
     res.status(500).json({ success: false, error: 'Failed to run sales learning' });
   }
 });
