@@ -1,5 +1,6 @@
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, subWeeks, subMonths } from 'date-fns';
 import { query } from './database.js';
+import { log } from './logger.js';
 
 /**
  * Generate unique order number
@@ -162,7 +163,7 @@ export async function retry(fn, maxAttempts = 3, delay = 1000) {
       if (attempt === maxAttempts) {
         throw error;
       }
-      console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
+      log('warn', 'utils.retry', { attempt, nextDelayMs: delay });
       await sleep(delay);
       delay *= 2; // Exponential backoff
     }
