@@ -8,6 +8,7 @@ import PDFDocument from 'pdfkit';
 import https from 'https';
 import http from 'http';
 import { format } from 'date-fns';
+import { log } from '../shared/logger.js';
 
 // AXKAN Brand Colors
 const AXKAN_COLORS = {
@@ -318,7 +319,7 @@ export async function generateReferenceSheet(order) {
             });
             imageDrawn = true;
           } catch (err) {
-            console.warn(`Could not process base64 image for design ${idx + 1}:`, err.message);
+            log('warn', 'refSheet.base64ImageFail', { design: idx + 1, error: err.message });
           }
         }
 
@@ -333,7 +334,7 @@ export async function generateReferenceSheet(order) {
             });
             imageDrawn = true;
           } catch (err) {
-            console.warn(`Could not download image for design ${idx + 1}:`, err.message);
+            log('warn', 'refSheet.downloadImageFail', { design: idx + 1, error: err.message });
           }
         }
 
