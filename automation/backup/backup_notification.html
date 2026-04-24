@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup Notification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: transparent;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .notification {
+            width: 380px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.4),
+                0 10px 25px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Success Theme */
+        .notification.success {
+            background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+        }
+
+        .notification.success .icon-ring {
+            background: linear-gradient(135deg, #34d399 0%, #6ee7b7 100%);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Partial/Warning Theme */
+        .notification.partial {
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%);
+        }
+
+        .notification.partial .icon-ring {
+            background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%);
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.5);
+        }
+
+        /* Failed Theme */
+        .notification.failed {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+        }
+
+        .notification.failed .icon-ring {
+            background: linear-gradient(135deg, #f87171 0%, #fca5a5 100%);
+            box-shadow: 0 8px 32px rgba(239, 68, 68, 0.5);
+        }
+
+        .notification-content {
+            padding: 28px;
+            position: relative;
+        }
+
+        .notification-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .icon-ring {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        .icon {
+            font-size: 28px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .title-block {
+            flex: 1;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            letter-spacing: -0.3px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: rgba(255,255,255,0.85);
+            margin-top: 3px;
+            font-weight: 500;
+        }
+
+        .stats-container {
+            background: rgba(0,0,0,0.15);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .stat-row:not(:last-child) {
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .directories {
+            margin-top: 16px;
+        }
+
+        .dir-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .dir-icon {
+            font-size: 18px;
+        }
+
+        .dir-name {
+            font-size: 13px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(0,0,0,0.4);
+            transform: scale(1.1);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 0 0 20px 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: rgba(255,255,255,0.6);
+            animation: countdown 8s linear forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes countdown {
+            from {
+                width: 100%;
+            }
+            to {
+                width: 0%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification {{STATUS_CLASS}}" id="notification">
+        <div class="notification-content">
+            <button class="close-btn" onclick="window.close()">×</button>
+
+            <div class="header">
+                <div class="icon-ring">
+                    <span class="icon">{{ICON}}</span>
+                </div>
+                <div class="title-block">
+                    <div class="title">{{TITLE}}</div>
+                    <div class="subtitle">Google Drive Backup</div>
+                </div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-row">
+                    <span class="stat-label">Status</span>
+                    <span class="stat-value">{{STATUS_TEXT}}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Date</span>
+                    <span class="stat-value">{{DATE}}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Time</span>
+                    <span class="stat-value">{{TIME}}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Directories</span>
+                    <span class="stat-value">{{DIR_COUNT}} backed up</span>
+                </div>
+            </div>
+
+            <div class="directories">
+                {{DIRECTORIES}}
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-close after 8 seconds
+        setTimeout(() => {
+            window.close();
+        }, 8000);
+
+        // Close on click outside
+        document.body.addEventListener('click', (e) => {
+            if (e.target === document.body) {
+                window.close();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.close();
+            }
+        });
+    </script>
+</body>
+</html>
