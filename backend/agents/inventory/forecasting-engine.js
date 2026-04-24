@@ -5,6 +5,7 @@
 
 import { query, getClient } from '../../shared/database.js';
 import { calculatePendingOrdersRequirements } from './bom-manager.js';
+import { logError } from '../../shared/logger.js';
 
 /**
  * Calculate consumption forecast for a material
@@ -255,7 +256,7 @@ export async function generateAllAlerts() {
         alerts.push(alert);
       }
     } catch (error) {
-      console.error(`Error generating alert for material ${material.id}:`, error);
+      logError('forecastingEngine.generateAlert.fail', error, { materialId: material.id });
     }
   }
 
