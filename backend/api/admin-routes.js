@@ -6,13 +6,14 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
 // JWT secret from environment (REQUIRED)
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-  console.error('CRITICAL: JWT_SECRET environment variable is not set!');
+  log('error', 'admin.config.missing', { variable: 'JWT_SECRET' });
   // Don't crash - but log loudly
 }
 
@@ -20,7 +21,7 @@ if (!JWT_SECRET) {
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
 if (!ADMIN_PASSWORD_HASH) {
-  console.error('CRITICAL: ADMIN_PASSWORD_HASH not set! Admin login will fail.');
+  log('error', 'admin.config.missing', { variable: 'ADMIN_PASSWORD_HASH' });
 }
 
 // Pre-computed dummy hash for timing-safe comparison on wrong usernames
@@ -83,7 +84,7 @@ router.post('/login', async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Login error:', error);
+    logError('admin.login.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al iniciar sesión'
@@ -125,7 +126,7 @@ router.get('/verify', async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Token verification error:', error);
+    logError('admin.verify.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al verificar token'
@@ -161,7 +162,7 @@ export function authMiddleware(req, res, next) {
       });
     }
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    logError('admin.auth.middleware.error', error);
     res.status(500).json({
       success: false,
       error: 'Error de autenticación'
@@ -179,7 +180,7 @@ export function authMiddleware(req, res, next) {
  */
 router.post('/run-migration', authMiddleware, async (req, res) => {
   try {
-    console.log('🔄 Running Employee System migration via API...');
+    log('info', 'admin.migration.start', { migration: 'employee-system' });
 
     // Create employees table
     await query(`
@@ -371,7 +372,7 @@ router.post('/run-migration', authMiddleware, async (req, res) => {
       `);
     }
 
-    console.log('✅ Migration completed successfully!');
+    log('info', 'admin.migration.complete', { migration: 'employee-system' });
 
     res.json({
       success: true,
@@ -379,7 +380,7 @@ router.post('/run-migration', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    logError('admin.migration.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -444,7 +445,7 @@ router.post('/create-manager', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create manager error:', error);
+    logError('admin.create-manager.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -458,41 +459,41 @@ router.post('/create-manager', authMiddleware, async (req, res) => {
  */
 router.post('/run-gallery-archive-migration', authMiddleware, async (req, res) => {
   try {
-    console.log('🔄 Running Gallery Archive migration via API...');
+    log('info', 'admin.migration.start', { migration: 'gallery-archive' });
 
     // Add is_archived column
     await query(`
       ALTER TABLE design_gallery
       ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
     `);
-    console.log('✅ Added is_archived column');
+    log('info', 'admin.migration.column-added', { column: 'is_archived' });
 
     // Add archived_at timestamp
     await query(`
       ALTER TABLE design_gallery
       ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP;
     `);
-    console.log('✅ Added archived_at column');
+    log('info', 'admin.migration.column-added', { column: 'archived_at' });
 
     // Add archived_by reference
     await query(`
       ALTER TABLE design_gallery
       ADD COLUMN IF NOT EXISTS archived_by INTEGER REFERENCES employees(id) ON DELETE SET NULL;
     `);
-    console.log('✅ Added archived_by column');
+    log('info', 'admin.migration.column-added', { column: 'archived_by' });
 
     // Add download_count
     await query(`
       ALTER TABLE design_gallery
       ADD COLUMN IF NOT EXISTS download_count INTEGER DEFAULT 0;
     `);
-    console.log('✅ Added download_count column');
+    log('info', 'admin.migration.column-added', { column: 'download_count' });
 
     // Add index for archived status
     await query(`
       CREATE INDEX IF NOT EXISTS idx_design_gallery_archived ON design_gallery(is_archived);
     `);
-    console.log('✅ Created index on is_archived');
+    log('info', 'admin.migration.index-created', { index: 'idx_design_gallery_archived' });
 
     res.json({
       success: true,
@@ -501,7 +502,7 @@ router.post('/run-gallery-archive-migration', authMiddleware, async (req, res) =
     });
 
   } catch (error) {
-    console.error('Gallery archive migration error:', error);
+    logError('admin.migration.gallery-archive.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -556,7 +557,7 @@ router.get('/employees', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List employees error:', error);
+    logError('admin.employees.list.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar empleados'
@@ -592,7 +593,7 @@ router.get('/employees/:id', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get employee error:', error);
+    logError('admin.employees.get.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener empleado'
@@ -665,7 +666,7 @@ router.post('/employees', authMiddleware, async (req, res) => {
       [email.toLowerCase().trim(), passwordHash, name, role, department, phone]
     );
 
-    console.log(`✅ Employee created by admin: ${name} (${email})`);
+    log('info', 'admin.employees.created', { name, email });
 
     res.status(201).json({
       success: true,
@@ -673,7 +674,7 @@ router.post('/employees', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create employee error:', error);
+    logError('admin.employees.create.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al crear empleado'
@@ -746,7 +747,7 @@ router.put('/employees/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log(`✅ Employee updated by admin: ${result.rows[0].name}`);
+    log('info', 'admin.employees.updated', { name: result.rows[0].name });
 
     res.json({
       success: true,
@@ -754,7 +755,7 @@ router.put('/employees/:id', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update employee error:', error);
+    logError('admin.employees.update.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar empleado'
@@ -807,7 +808,7 @@ router.put('/employees/:id/password', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log(`✅ Password reset by admin for: ${result.rows[0].name}`);
+    log('info', 'admin.employees.password-reset', { name: result.rows[0].name });
 
     res.json({
       success: true,
@@ -815,7 +816,7 @@ router.put('/employees/:id/password', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Reset password error:', error);
+    logError('admin.employees.password-reset.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al restablecer contraseña'
@@ -843,7 +844,7 @@ router.delete('/employees/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log(`✅ Employee deactivated by admin: ${result.rows[0].name}`);
+    log('info', 'admin.employees.deactivated', { name: result.rows[0].name });
 
     res.json({
       success: true,
@@ -851,7 +852,7 @@ router.delete('/employees/:id', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete employee error:', error);
+    logError('admin.employees.delete.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al desactivar empleado'
@@ -927,7 +928,7 @@ router.get('/tasks', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin list tasks error:', error);
+    logError('admin.tasks.list.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar tareas'
@@ -970,7 +971,7 @@ router.get('/tasks/stats', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin task stats error:', error);
+    logError('admin.tasks.stats.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener estadísticas'
@@ -1016,7 +1017,7 @@ router.get('/tasks/:id', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin get task error:', error);
+    logError('admin.tasks.get.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener tarea'
@@ -1072,7 +1073,7 @@ router.post('/tasks', authMiddleware, async (req, res) => {
       [result.rows[0].id]
     );
 
-    console.log(`✅ Task created by admin: ${title}`);
+    log('info', 'admin.tasks.created', { title });
 
     res.status(201).json({
       success: true,
@@ -1080,7 +1081,7 @@ router.post('/tasks', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin create task error:', error);
+    logError('admin.tasks.create.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al crear tarea'
@@ -1152,7 +1153,7 @@ router.put('/tasks/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log(`✅ Task updated by admin: ${result.rows[0].title}`);
+    log('info', 'admin.tasks.updated', { title: result.rows[0].title });
 
     res.json({
       success: true,
@@ -1160,7 +1161,7 @@ router.put('/tasks/:id', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin update task error:', error);
+    logError('admin.tasks.update.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar tarea'
@@ -1217,7 +1218,7 @@ router.put('/tasks/:id/status', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log(`✅ Task status updated by admin: ${result.rows[0].title} -> ${status}`);
+    log('info', 'admin.tasks.status-updated', { title: result.rows[0].title, status });
 
     res.json({
       success: true,
@@ -1225,7 +1226,7 @@ router.put('/tasks/:id/status', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin update task status error:', error);
+    logError('admin.tasks.status-update.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar estado'
@@ -1282,7 +1283,7 @@ router.put('/tasks/:id/assign', authMiddleware, async (req, res) => {
       [id]
     );
 
-    console.log(`✅ Task assigned by admin: ${result.rows[0].title}`);
+    log('info', 'admin.tasks.assigned', { title: result.rows[0].title });
 
     res.json({
       success: true,
@@ -1290,7 +1291,7 @@ router.put('/tasks/:id/assign', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin assign task error:', error);
+    logError('admin.tasks.assign.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al asignar tarea'
@@ -1318,7 +1319,7 @@ router.delete('/tasks/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log(`✅ Task deleted by admin: ${result.rows[0].title}`);
+    log('info', 'admin.tasks.deleted', { title: result.rows[0].title });
 
     res.json({
       success: true,
@@ -1326,7 +1327,7 @@ router.delete('/tasks/:id', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin delete task error:', error);
+    logError('admin.tasks.delete.error', error);
     res.status(500).json({
       success: false,
       error: 'Error al eliminar tarea'
@@ -1390,7 +1391,7 @@ router.post('/import-clients', authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: 'No clients data provided' });
     }
 
-    console.log(`📦 Starting import of ${clients.length} clients...`);
+    log('info', 'admin.import-clients.start', { count: clients.length });
 
     let imported = 0;
     let skipped = 0;
@@ -1463,7 +1464,7 @@ router.post('/import-clients', authMiddleware, async (req, res) => {
       }
     }
 
-    console.log(`✅ Import complete: ${imported} imported, ${skipped} skipped, ${errors.length} errors`);
+    log('info', 'admin.import-clients.complete', { imported, skipped, errors: errors.length });
 
     res.json({
       success: true,
@@ -1474,7 +1475,7 @@ router.post('/import-clients', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Import error:', error);
+    logError('admin.import-clients.error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
