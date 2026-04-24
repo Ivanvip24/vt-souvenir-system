@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARMADO AI — AXKAN</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="assets/jaguar-color.png">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <img src="assets/jaguar-color.png" alt="AXKAN" class="header-logo">
+      <div class="header-titles">
+        <span class="header-title">ARMADO</span>
+        <span class="header-badge">AI</span>
+      </div>
+    </div>
+    <div class="header-rainbow"></div>
+  </header>
+
+  <main class="app">
+    <!-- Left: Input Panel -->
+    <section class="panel panel-input">
+      <!-- Drop Zone -->
+      <div id="dropZone" class="drop-zone">
+        <div class="drop-zone-content" id="dropContent">
+          <div class="drop-icon">
+            <img src="assets/jaguar-color.png" alt="" class="drop-jaguar">
+          </div>
+          <p class="drop-text">Suelta tu diseno aqui</p>
+          <p class="drop-subtext">.png .jpg .ai</p>
+        </div>
+        <div class="drop-preview" id="dropPreview" style="display:none">
+          <img id="previewImg" src="" alt="Preview">
+          <div class="preview-info">
+            <span id="fileName" class="file-name"></span>
+            <button id="clearFile" class="clear-btn">&times;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Selector -->
+      <div class="selector-group">
+        <span class="selector-label">Producto</span>
+        <div class="selector-buttons" id="productSelector">
+          <button class="sel-btn active" data-value="IMANES">Imanes</button>
+          <button class="sel-btn" data-value="LLAVEROS">Llaveros</button>
+          <button class="sel-btn" data-value="DESTAPADOR">Destapador</button>
+          <button class="sel-btn" data-value="PORTALLAVES">Portallaves</button>
+          <button class="sel-btn" data-value="LIBRETA">Libreta</button>
+        </div>
+      </div>
+
+      <!-- Size Selector (IMANES only) -->
+      <div class="selector-group" id="sizeGroup">
+        <span class="selector-label">Tamano</span>
+        <div class="selector-buttons" id="sizeSelector">
+          <button class="sel-btn" data-value="Mini">Mini</button>
+          <button class="sel-btn active" data-value="Mediano">Mediano</button>
+          <button class="sel-btn" data-value="Grande">Grande</button>
+        </div>
+      </div>
+
+      <!-- Count -->
+      <div class="selector-group">
+        <span class="selector-label">Piezas</span>
+        <div class="count-control">
+          <button class="count-btn" id="countDown">-</button>
+          <input type="number" id="countInput" class="count-input" value="20" min="1" max="100">
+          <button class="count-btn" id="countUp">+</button>
+        </div>
+        <div class="count-presets" id="countPresets">
+          <button class="preset-btn" data-count="12">12</button>
+          <button class="preset-btn active" data-count="20">20</button>
+          <button class="preset-btn" data-count="42">42</button>
+        </div>
+      </div>
+
+      <!-- GO Button -->
+      <button id="goBtn" class="go-btn" disabled>
+        <span class="go-text">ARMAR</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+
+      <!-- Command Input (advanced) -->
+      <div class="advanced-toggle">
+        <button id="toggleAdvanced" class="toggle-btn">Comando manual</button>
+      </div>
+      <div class="input-area" id="advancedInput" style="display:none">
+        <input type="text" id="commandInput" class="command-input" placeholder="20 imanes medianos..." autocomplete="off" spellcheck="false">
+        <button id="sendBtn" class="send-btn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Right: Output Panel -->
+    <section class="panel panel-output">
+      <!-- Progress Bar -->
+      <div id="progressBar" class="progress-bar" style="display:none">
+        <div class="fill" id="progressFill" style="width:0%"></div>
+      </div>
+
+      <!-- Status Area -->
+      <div id="statusArea" class="status-area">
+        <div id="statusMessages" class="status-messages">
+          <div class="status-welcome">
+            <img src="assets/jaguar-color.png" alt="" class="welcome-jaguar">
+            <p class="welcome-title">Listo para armar</p>
+            <p class="welcome-sub">Suelta una imagen, selecciona producto y tamano, presiona ARMAR.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Card -->
+      <div id="resultCard" class="result-card" style="display:none">
+        <div class="result-header">
+          <span class="result-icon" id="resultIcon"></span>
+          <span class="result-count" id="resultCount"></span>
+          <span class="result-product" id="resultProduct"></span>
+          <span class="result-badge" id="resultBadge"></span>
+        </div>
+        <div class="result-details">
+          <div class="result-row">
+            <span class="result-label">Tamano pieza</span>
+            <span class="result-value" id="resultSize"></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">Patron</span>
+            <span class="result-value" id="resultPattern"></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">Uso de hoja</span>
+            <span class="result-value" id="resultUtil"></span>
+          </div>
+        </div>
+        <div class="result-actions">
+          <button class="result-action-btn" id="retryBtn">Repetir</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <img src="assets/jaguar-color.png" alt="">
+    <span>AXKAN</span>
+    <span class="footer-sep">|</span>
+    <span class="footer-tagline">Recuerdos Hechos Souvenir</span>
+  </footer>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
