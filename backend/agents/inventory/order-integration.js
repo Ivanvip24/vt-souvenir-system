@@ -11,21 +11,21 @@ import {
 import { recordConsumption } from './material-manager.js';
 import { generateAllAlerts } from './forecasting-engine.js';
 import { query, getClient } from '../../shared/database.js';
+import { log, logError } from '../../shared/logger.js';
 
 /**
  * Hook: Called when a new order is created
  * Reserves materials for the order
  */
 export async function onOrderCreated(orderId) {
-  console.log(`[Inventory] Order ${orderId} created - checking fulfillment...`);
+  log('info', 'inventory.orderCreated.checkFulfillment', { orderId });
 
   try {
     // Check if order can be fulfilled
     const fulfillment = await checkOrderFulfillment(orderId);
 
     if (!fulfillment.canFulfill) {
-      console.warn(`[Inventory] Order ${orderId} cannot be fulfilled!`);
-      console.warn('Insufficient materials:', fulfillment.insufficientMaterials);
+      log('warn', 'inventory.orderCreated.cannotFulfill', { orderId, insufficientMaterials: fulfillment.insufficientMaterials });
 
       return {
         success: false,
@@ -38,7 +38,7 @@ export async function onOrderCreated(orderId) {
     // Reserve materials
     const reservation = await reserveMaterialsForOrder(orderId);
 
-    console.log(`[Inventory] Materials reserved for order ${orderId}:`, reservation.reservations);
+    log('info', 'inventory.orderCreated.reserved', { orderId, reservations: reservation.reservations });
 
     // Generate alerts after reservation
     await generateAllAlerts();
@@ -50,7 +50,7 @@ export async function onOrderCreated(orderId) {
     };
 
   } catch (error) {
-    console.error(`[Inventory] Error processing order ${orderId}:`, error);
+    logError('inventory.orderCreated.fail', error, { orderId });
     throw error;
   }
 }
@@ -60,25 +60,25 @@ export async function onOrderCreated(orderId) {
  * Manages material consumption based on status
  */
 export async function onOrderStatusChanged(orderId, oldStatus, newStatus) {
-  console.log(`[Inventory] Order ${orderId} status: ${oldStatus} → ${newStatus}`);
+  log('info', 'inventory.statusChanged', { orderId, oldStatus, newStatus });
 
   try {
     // When order moves to production (printing), consume materials
     if (newStatus === 'printing' && oldStatus !== 'printing') {
       await consumeMaterialsForOrder(orderId);
-      console.log(`[Inventory] Materials consumed for order ${orderId}`);
+      log('info', 'inventory.materialsConsumed', { orderId });
     }
 
     // When order is cancelled, release reservations
     if (newStatus === 'cancelled') {
       await releaseMaterialsForOrder(orderId);
-      console.log(`[Inventory] Materials released for cancelled order ${orderId}`);
+      log('info', 'inventory.materialsReleased', { orderId, reason: 'cancelled' });
     }
 
     // When order is delivered, ensure materials are fully consumed
     if (newStatus === 'delivered' && oldStatus !== 'delivered') {
       await ensureMaterialsConsumed(orderId);
-      console.log(`[Inventory] Materials finalized for delivered order ${orderId}`);
+      log('info', 'inventory.materialsFinalized', { orderId });
     }
 
     // Regenerate alerts
@@ -87,7 +87,7 @@ export async function onOrderStatusChanged(orderId, oldStatus, newStatus) {
     return { success: true };
 
   } catch (error) {
-    console.error(`[Inventory] Error on status change for order ${orderId}:`, error);
+    logError('inventory.statusChanged.fail', error, { orderId });
     throw error;
   }
 }
@@ -97,7 +97,7 @@ export async function onOrderStatusChanged(orderId, oldStatus, newStatus) {
  * Releases all material reservations
  */
 export async function onOrderDeleted(orderId) {
-  console.log(`[Inventory] Order ${orderId} deleted - releasing materials...`);
+  log('info', 'inventory.orderDeleted.releaseMaterials', { orderId });
 
   try {
     await releaseMaterialsForOrder(orderId);
@@ -108,7 +108,7 @@ export async function onOrderDeleted(orderId) {
     return { success: true };
 
   } catch (error) {
-    console.error(`[Inventory] Error releasing materials for order ${orderId}:`, error);
+    logError('inventory.orderDeleted.fail', error, { orderId });
     throw error;
   }
 }
@@ -133,7 +133,7 @@ async function consumeMaterialsForOrder(orderId) {
     `, [orderId]);
 
     if (reservations.rows.length === 0) {
-      console.warn(`[Inventory] No pending reservations for order ${orderId}`);
+      log('warn', 'inventory.consume.noPendingReservations', { orderId });
       await client.query('ROLLBACK');
       return;
     }
@@ -151,7 +151,7 @@ async function consumeMaterialsForOrder(orderId) {
           performedBy: 'System'
         });
 
-        console.log(`[Inventory] Consumed ${quantityToConsume} ${reservation.material_name} for order ${orderId}`);
+        log('info', 'inventory.consume.material', { orderId, material: reservation.material_name, quantity: quantityToConsume });
       }
     }
 
@@ -197,7 +197,7 @@ async function ensureMaterialsConsumed(orderId) {
           performedBy: 'System'
         });
 
-        console.log(`[Inventory] Final consumption of ${remaining} ${reservation.material_name} for order ${orderId}`);
+        log('info', 'inventory.finalConsume.material', { orderId, material: reservation.material_name, quantity: remaining });
       }
     }
 
@@ -349,7 +349,7 @@ export async function recalculateAllReservations() {
 
         updated++;
       } catch (error) {
-        console.error(`Error recalculating order ${order.id}:`, error.message);
+        logError('inventory.recalculate.fail', error, { orderId: order.id });
       }
     }
 
