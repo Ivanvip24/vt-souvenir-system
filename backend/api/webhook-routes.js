@@ -1,12 +1,13 @@
 import express from 'express';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
 // Security: Webhook secret for Make.com authentication
 const WEBHOOK_SECRET = process.env.MAKE_WEBHOOK_SECRET;
 if (!WEBHOOK_SECRET) {
-  console.error('CRITICAL: MAKE_WEBHOOK_SECRET not set! Webhook endpoints will reject all requests.');
+  log('error', 'webhook.critical-makewebhooksecret-not-set-webhook-endpoin');
 }
 
 // Middleware to verify webhook authenticity
@@ -14,7 +15,7 @@ function verifyWebhookSecret(req, res, next) {
   const secret = req.headers['x-webhook-secret'] || req.query.secret;
 
   if (secret !== WEBHOOK_SECRET) {
-    console.warn('⚠️ Unauthorized webhook attempt');
+    log('warn', 'webhook.unauthorized-webhook-attempt');
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -66,7 +67,7 @@ router.get('/pending-orders', verifyWebhookSecret, async (req, res) => {
 
     const result = await query(queryStr, params);
 
-    console.log(`📤 Webhook: Returning ${result.rows.length} pending orders`);
+    log('info', 'webhook.webhook-returning-pending-orders');
 
     res.json({
       success: true,
@@ -75,7 +76,7 @@ router.get('/pending-orders', verifyWebhookSecret, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Webhook error (pending-orders):', error);
+    logError('webhook.webhook-error-pending-orders', error);
     res.status(500).json({ error: 'Failed to fetch pending orders' });
   }
 });
@@ -117,7 +118,7 @@ router.get('/order/:identifier', verifyWebhookSecret, async (req, res) => {
       items: itemsResult.rows
     };
 
-    console.log(`📤 Webhook: Returning order ${identifier}`);
+    log('info', 'webhook.webhook-returning-order');
 
     res.json({
       success: true,
@@ -125,7 +126,7 @@ router.get('/order/:identifier', verifyWebhookSecret, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Webhook error (order details):', error);
+    logError('webhook.webhook-error-order-details', error);
     res.status(500).json({ error: 'Failed to fetch order' });
   }
 });
@@ -148,7 +149,7 @@ router.get('/low-inventory', verifyWebhookSecret, async (req, res) => {
       ORDER BY (minimum_quantity - current_quantity) DESC
     `);
 
-    console.log(`📤 Webhook: Returning ${result.rows.length} low inventory items`);
+    log('info', 'webhook.webhook-returning-low-inventory-items');
 
     res.json({
       success: true,
@@ -157,7 +158,7 @@ router.get('/low-inventory', verifyWebhookSecret, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Webhook error (low-inventory):', error);
+    logError('webhook.webhook-error-low-inventory', error);
     res.status(500).json({ error: 'Failed to fetch inventory' });
   }
 });
@@ -210,7 +211,7 @@ router.get('/analytics/daily', verifyWebhookSecret, async (req, res) => {
       ORDER BY profit_margin ASC
     `, [targetDate]);
 
-    console.log(`📤 Webhook: Returning analytics for ${targetDate}`);
+    log('info', 'webhook.webhook-returning-analytics-for');
 
     res.json({
       success: true,
@@ -221,7 +222,7 @@ router.get('/analytics/daily', verifyWebhookSecret, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Webhook error (analytics):', error);
+    logError('webhook.webhook-error-analytics', error);
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
@@ -260,7 +261,7 @@ router.post('/order/:orderId/status', verifyWebhookSecret, async (req, res) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    console.log(`✅ Webhook: Updated order ${orderId} status to ${status}`);
+    log('info', 'webhook.webhook-updated-order-status-to');
 
     res.json({
       success: true,
@@ -268,7 +269,7 @@ router.post('/order/:orderId/status', verifyWebhookSecret, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Webhook error (update status):', error);
+    logError('webhook.webhook-error-update-status', error);
     res.status(500).json({ error: 'Failed to update order' });
   }
 });
@@ -286,13 +287,13 @@ router.post('/log-event', verifyWebhookSecret, async (req, res) => {
       VALUES ($1, $2, $3, $4, NOW())
     `, [event_type, order_id || null, description, JSON.stringify(metadata || {})]);
 
-    console.log(`📝 Webhook: Logged event '${event_type}'`);
+    log('info', 'webhook.webhook-logged-event');
 
     res.json({ success: true });
 
   } catch (error) {
     // Table might not exist yet, that's OK
-    console.warn('⚠️ Could not log webhook event (table may not exist):', error.message);
+    log('warn', 'webhook.could-not-log-webhook-event-table-may-not-exist');
     res.json({ success: true, warning: 'Event logging not configured' });
   }
 });
@@ -351,7 +352,7 @@ router.get('/orders-filter', verifyWebhookSecret, async (req, res) => {
       LIMIT 100
     `, params);
 
-    console.log(`📤 Webhook: Filtered orders (${result.rows.length} results)`);
+    log('info', 'webhook.webhook-filtered-orders-results');
 
     res.json({
       success: true,
@@ -360,7 +361,7 @@ router.get('/orders-filter', verifyWebhookSecret, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Webhook error (orders-filter):', error);
+    logError('webhook.webhook-error-orders-filter', error);
     res.status(500).json({ error: 'Failed to filter orders' });
   }
 });
@@ -370,7 +371,7 @@ router.get('/orders-filter', verifyWebhookSecret, async (req, res) => {
 // ========================================
 // Make.com can use this to test connectivity
 router.get('/test', verifyWebhookSecret, (req, res) => {
-  console.log('🧪 Webhook test called');
+  log('info', 'webhook.webhook-test-called');
   res.json({
     success: true,
     message: 'Webhook endpoint is working!',
