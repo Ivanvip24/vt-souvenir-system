@@ -5,6 +5,7 @@ import handlebars from 'handlebars';
 import { formatCurrency, formatDate, formatDateMX } from '../../shared/utils.js';
 import * as revenueCalculator from './revenue-calculator.js';
 import { query } from '../../shared/database.js';
+import { log, logError } from '../../shared/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,7 +22,7 @@ handlebars.registerHelper('lt', (a, b) => a < b);
  */
 export async function generateDailyReport(date = new Date()) {
   try {
-    console.log('📊 Generating daily report...');
+    log('info', 'reportGenerator.daily.start');
 
     const startDate = new Date(date);
     startDate.setHours(0, 0, 0, 0);
@@ -88,7 +89,7 @@ export async function generateDailyReport(date = new Date()) {
     const template = handlebars.compile(templateSource);
     const html = template(templateData);
 
-    console.log('✅ Daily report generated successfully');
+    log('info', 'reportGenerator.daily.ok');
 
     return {
       html,
@@ -98,7 +99,7 @@ export async function generateDailyReport(date = new Date()) {
     };
 
   } catch (error) {
-    console.error('❌ Error generating daily report:', error);
+    logError('reportGenerator.daily.fail', error);
     throw error;
   }
 }
@@ -108,7 +109,7 @@ export async function generateDailyReport(date = new Date()) {
  */
 export async function generateMonthlyReport(year, month) {
   try {
-    console.log(`📊 Generating monthly report for ${year}-${month}...`);
+    log('info', 'reportGenerator.monthly.start', { year, month });
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
@@ -221,7 +222,7 @@ export async function generateMonthlyReport(year, month) {
     const template = handlebars.compile(templateSource);
     const html = template(templateData);
 
-    console.log('✅ Monthly report generated successfully');
+    log('info', 'reportGenerator.monthly.ok', { year, month });
 
     // Save report history
     await saveReportHistory({
@@ -246,7 +247,7 @@ export async function generateMonthlyReport(year, month) {
     };
 
   } catch (error) {
-    console.error('❌ Error generating monthly report:', error);
+    logError('reportGenerator.monthly.fail', error);
     throw error;
   }
 }
@@ -256,7 +257,7 @@ export async function generateMonthlyReport(year, month) {
  */
 export async function generateWeeklyReport(date = new Date()) {
   try {
-    console.log('📊 Generating weekly report...');
+    log('info', 'reportGenerator.weekly.start');
 
     // Use monthly template but with weekly data
     const summary = await revenueCalculator.getAnalyticsSummary('this_week');
@@ -266,7 +267,7 @@ export async function generateWeeklyReport(date = new Date()) {
     return await generateDailyReport(date);
 
   } catch (error) {
-    console.error('❌ Error generating weekly report:', error);
+    logError('reportGenerator.weekly.fail', error);
     throw error;
   }
 }
@@ -375,7 +376,7 @@ async function saveReportHistory(reportData) {
       ]
     );
   } catch (error) {
-    console.error('Error saving report history:', error);
+    logError('reportGenerator.saveHistory.fail', error);
     // Don't throw - report generation should continue even if history save fails
   }
 }
