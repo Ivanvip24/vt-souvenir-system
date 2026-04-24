@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+    <!-- Dynamic SEO tags (set by JS on load) -->
+    <title id="pageTitle">AXKAN</title>
+    <meta name="description" id="metaDescription" content="Souvenirs premium de M&eacute;xico con corte l&aacute;ser. Imanes, llaveros y recuerdos.">
+    <meta name="keywords" id="metaKeywords" content="souvenirs mexico, imanes mexico, llaveros mexico">
+    <meta name="robots" id="metaRobots" content="index, follow, max-image-preview:large, max-snippet:-1">
+    <meta name="author" content="AXKAN">
+    <link rel="canonical" id="canonicalLink" href="https://axkan.art/souvenirs">
+
+    <!-- Open Graph -->
+    <meta property="og:title" id="ogTitle" content="AXKAN">
+    <meta property="og:description" id="ogDescription" content="Souvenirs premium de M&eacute;xico con corte l&aacute;ser.">
+    <meta property="og:image" id="ogImage" content="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800">
+    <meta property="og:type" content="product">
+    <meta property="og:url" id="ogUrl" content="https://axkan.art/souvenirs">
+    <meta property="og:site_name" content="AXKAN">
+    <meta property="og:locale" content="es_MX">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" id="twTitle" content="AXKAN">
+    <meta name="twitter:description" id="twDescription" content="Souvenirs premium de M&eacute;xico con corte l&aacute;ser.">
+    <meta name="twitter:image" id="twImage" content="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=800">
+
+    <!-- Geo -->
+    <meta name="geo.region" content="MX">
+    <meta name="geo.placename" id="geoPlace" content="M&eacute;xico">
+    <link rel="alternate" hreflang="es-MX" id="hreflangLink" href="https://axkan.art/souvenirs">
+    <link rel="alternate" hreflang="x-default" id="hreflangLinkDefault" href="https://axkan.art/souvenirs">
+
+    <link rel="icon" type="image/png" href="/assets/LOGO-01.png">
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json" id="jsonLdProduct">{}</script>
+    <script type="application/ld+json" id="jsonLdBreadcrumb">{}</script>
+
+    <link rel="stylesheet" href="/styles/_variables.css">
+    <link rel="stylesheet" href="/styles/components/nav-mega.css">
+    <link rel="stylesheet" href="/styles/components/mobile-menu-mega.css">
+    <link rel="stylesheet" href="/landing/souvenirs/souvenirs-page.css">
+    <!-- @HEAD_COMMON -->
+</head>
+<body>
+    <!-- @NAV:mega -->
+    <!-- @MOBILE_MENU:mega -->
+
+    <!-- Loading state -->
+    <div id="loadingState" class="dest-loading">
+      <div class="spinner"></div>
+      <p>Cargando destino...</p>
+    </div>
+
+    <!-- 404 state -->
+    <div id="notFoundState" class="dest-notfound" style="display:none;">
+      <h1>Destino no encontrado</h1>
+      <p>No tenemos souvenirs para este destino todav&iacute;a. Explora nuestro cat&aacute;logo completo.</p>
+      <a href="/souvenirs" class="btn">Ver Todos los Destinos</a>
+    </div>
+
+    <!-- Main content (hidden until loaded) -->
+    <div id="mainContent" style="display:none;">
+
+      <!-- Compact header -->
+      <header class="dest-header">
+        <a href="/souvenirs" class="dest-header-back">&larr;</a>
+        <div>
+          <h1 id="heroName"></h1>
+          <span class="dest-state" id="heroState"></span>
+        </div>
+      </header>
+
+      <!-- Breadcrumb: Inicio › México › Estado › Destino (above the image, left-aligned) -->
+      <nav class="dest-breadcrumb" aria-label="Breadcrumb">
+        <ol id="destBreadcrumb"></ol>
+      </nav>
+
+      <!-- Spotlight -->
+      <section class="spotlight-section">
+        <div class="spotlight-frame" id="spotlightFrame">
+          <img class="spotlight-img" id="spotlightImg" src="" alt="">
+          <div class="wm" id="spotWm"></div>
+          <div class="tap-ring">
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+        <div class="spotlight-meta">
+          <span class="spotlight-counter" id="spotCounter"></span>
+          <span class="spotlight-hint">Toca para ver otro</span>
+        </div>
+        <div class="spotlight-dots" id="spotDots"></div>
+      </section>
+
+      <!-- Design grid -->
+      <section class="grid-section">
+        <p class="grid-label" id="gridLabel">Todos los dise&ntilde;os</p>
+        <div class="design-grid" id="designGrid"></div>
+      </section>
+
+      <!-- Related destinations -->
+      <section class="related-section" id="relatedSection">
+        <p class="related-label">Otros destinos</p>
+        <div class="related-scroll" id="relatedGrid"></div>
+      </section>
+
+      <!-- 3D Globe -->
+      <section class="globe-section" id="destinos">
+        <div class="globe-nav">
+          <button class="globe-nav-btn active" data-view="globe" id="nav-globe">Mundo</button>
+          <span class="globe-nav-separator hidden" id="nav-sep1">&rsaquo;</span>
+          <button class="globe-nav-btn hidden" data-view="country" id="nav-country"></button>
+          <span class="globe-nav-separator hidden" id="nav-sep2">&rsaquo;</span>
+          <button class="globe-nav-btn hidden" data-view="state" id="nav-state"></button>
+        </div>
+        <div id="globe-view" class="globe-wrapper">
+          <div id="globe-3d" class="globe-canvas-container">
+            <div class="globe-loading" id="globe-loading">
+              <div class="globe-loading-sphere"></div>
+            </div>
+          </div>
+          <button class="globe-cta" id="globe-explore-btn">Explorar M&eacute;xico &rarr;</button>
+        </div>
+        <div id="mexico-view" class="mexico-map-view">
+          <canvas id="mexico-canvas" class="mexico-map-canvas"></canvas>
+        </div>
+        <div id="mexico-tooltip" class="mexico-tooltip"></div>
+        <div id="state-view" class="state-detail-panel">
+          <div class="state-detail-header">
+            <h3 class="state-detail-title" id="state-name"></h3>
+          </div>
+          <div class="destinations-grid" id="state-destinations"></div>
+        </div>
+        <div class="globe-stats">
+          <div class="globe-stat">
+            <span class="globe-stat-number">233+</span>
+            <span class="globe-stat-label">Destinos</span>
+          </div>
+          <div class="globe-stat">
+            <span class="globe-stat-number">2</span>
+            <span class="globe-stat-label">Pa&iacute;ses</span>
+          </div>
+          <div class="globe-stat">
+            <span class="globe-stat-number">1000+</span>
+            <span class="globe-stat-label">Dise&ntilde;os</span>
+          </div>
+        </div>
+      </section>
+
+      <footer class="dest-footer">
+        <p>&copy; 2026 AXKAN. Souvenirs Premium de M&eacute;xico.</p>
+      </footer>
+    </div>
+
+    <!-- Sticky CTA -->
+    <div class="sticky-cta" id="stickyCta" style="display:none;">
+      <a href="/pedidos" class="cta-btn cta-pedido">Hacer Pedido</a>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox-overlay" id="lightbox">
+      <button class="lightbox-close" id="lightboxClose">&times;</button>
+      <div class="lightbox-img-wrap">
+        <img class="lightbox-img" id="lightboxImg" src="" alt="Dise&ntilde;o completo">
+        <div class="wm"></div>
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      // --- Resolve destination slug from URL ---
+      var pathParts = window.location.pathname.replace(/\/$/, '').split('/');
+      var slug = pathParts[pathParts.length - 1] || '';
+      if (pathParts.length >= 2 && (pathParts[pathParts.length - 2] === 'souvenirs' || pathParts[pathParts.length - 2] === 'catalogo')) {
+        slug = pathParts[pathParts.length - 1];
+      }
+      if (!slug || slug === 'souvenirs' || slug === 'catalogo') {
+        window.location.href = '/souvenirs';
+        return;
+      }
+
+      var loadingEl = document.getElementById('loadingState');
+      var notFoundEl = document.getElementById('notFoundState');
+      var mainEl = document.getElementById('mainContent');
+
+      function showNotFound() {
+        loadingEl.style.display = 'none';
+        notFoundEl.style.display = '';
+        mainEl.style.display = 'none';
+        document.title = 'Destino no encontrado | AXKAN';
+      }
+
+      // --- Fetch data ---
+      Promise.all([
+        fetch('/destination-images.json').then(function(r) { return r.ok ? r.json() : null; }),
+        fetch('/landing/souvenirs/destinations-meta.json').then(function(r) { return r.ok ? r.json() : null; })
+      ]).then(function(results) {
+        var images = results[0];
+        var allMeta = results[1];
+        if (!images || !allMeta) { showNotFound(); return; }
+        var destImages = images[slug];
+        var destMeta = allMeta[slug];
+        if (!destImages || !destMeta) { showNotFound(); return; }
+        renderPage(slug, destImages, destMeta, allMeta);
+      }).catch(function() { showNotFound(); });
+
+      function renderPage(slug, destImages, meta, allMeta) {
+        var name = meta.name || slug;
+        var state = meta.state || '';
+        var stateDisplay = state ? state + ', M\u00e9xico' : 'M\u00e9xico';
+        var desc = meta.description || 'Souvenirs premium de ' + name + ' con corte l\u00e1ser.';
+        var ogImage = meta.ogImage || destImages.hero || '';
+        var products = destImages.products || [];
+        var related = meta.related || [];
+        var keywords = meta.keywords || '';
+        var url = 'https://axkan.art/souvenirs/' + slug;
+
+        // --- SEO ---
+        document.title = name + ' \u2014 Imanes, Llaveros y Recuerdos | AXKAN';
+        setAttr('metaDescription', 'content', desc);
+        setAttr('metaKeywords', 'content', keywords);
+        setAttr('canonicalLink', 'href', url);
+        setAttr('ogTitle', 'content', name + ' \u2014 Imanes y Llaveros Premium | AXKAN');
+        setAttr('ogDescription', 'content', desc);
+        setAttr('ogImage', 'content', ogImage);
+        setAttr('ogUrl', 'content', url);
+        setAttr('twTitle', 'content', name + ' \u2014 AXKAN');
+        setAttr('twDescription', 'content', desc);
+        setAttr('twImage', 'content', ogImage);
+        setAttr('geoPlace', 'content', name + ', M\u00e9xico');
+        setAttr('hreflangLink', 'href', url);
+        setAttr('hreflangLinkDefault', 'href', url);
+
+        // --- JSON-LD ---
+        document.getElementById('jsonLdProduct').textContent = JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": name + " - AXKAN",
+          "description": desc,
+          "brand": {"@type": "Brand", "name": "AXKAN"},
+          "image": ogImage,
+          "category": "Souvenirs > " + name,
+          "material": "MDF con corte l\u00e1ser",
+          "countryOfOrigin": "M\u00e9xico",
+          "offers": {
+            "@type": "AggregateOffer",
+            "priceCurrency": "MXN",
+            "lowPrice": "7",
+            "highPrice": "120",
+            "offerCount": "4",
+            "availability": "https://schema.org/InStock"
+          }
+        });
+        // Build breadcrumb items: Inicio › México › [Estado] › Destino
+        var crumbs = [
+          { label: 'Inicio', href: '/' },
+          { label: 'M\u00e9xico', href: '/souvenirs' }
+        ];
+        if (state) {
+          crumbs.push({
+            label: state,
+            href: '/souvenirs#' + encodeURIComponent(state.toLowerCase())
+          });
+        }
+        crumbs.push({ label: name, href: url, current: true });
+
+        document.getElementById('jsonLdBreadcrumb').textContent = JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": crumbs.map(function(c, i) {
+            return {
+              "@type": "ListItem",
+              "position": i + 1,
+              "name": c.label,
+              "item": c.href.indexOf('http') === 0 ? c.href : ('https://axkan.art' + c.href)
+            };
+          })
+        });
+
+        // Render visible breadcrumb
+        var crumbList = document.getElementById('destBreadcrumb');
+        while (crumbList.firstChild) crumbList.removeChild(crumbList.firstChild);
+        crumbs.forEach(function(c, i) {
+          var li = document.createElement('li');
+          li.className = 'crumb' + (c.current ? ' crumb--current' : '');
+          if (c.current) {
+            li.setAttribute('aria-current', 'page');
+            li.textContent = c.label;
+          } else {
+            var a = document.createElement('a');
+            a.href = c.href;
+            a.textContent = c.label;
+            li.appendChild(a);
+          }
+          crumbList.appendChild(li);
+          if (i < crumbs.length - 1) {
+            var sep = document.createElement('li');
+            sep.className = 'crumb-sep';
+            sep.setAttribute('aria-hidden', 'true');
+            sep.textContent = '\u203a';
+            crumbList.appendChild(sep);
+          }
+        });
+
+        // --- Fill header ---
+        setText('heroName', name);
+        setText('heroState', stateDisplay);
+
+        // --- Spotlight ---
+        var currentIdx = 0;
+        var spotImg = document.getElementById('spotlightImg');
+        var spotCounter = document.getElementById('spotCounter');
+        var spotDots = document.getElementById('spotDots');
+        var frame = document.getElementById('spotlightFrame');
+
+        spotImg.src = products[0] || '';
+        spotImg.alt = 'Dise\u00f1o souvenir ' + name + ' M\u00e9xico - AXKAN';
+        updateSpotMeta();
+
+        // Build dots
+        products.forEach(function(_, i) {
+          var dot = document.createElement('div');
+          dot.className = 'sp-dot' + (i === 0 ? ' active' : '');
+          dot.addEventListener('click', function() { goTo(i); });
+          spotDots.appendChild(dot);
+        });
+
+        function updateSpotMeta() {
+          spotCounter.textContent = '';
+          var strong = document.createElement('strong');
+          strong.textContent = (currentIdx + 1);
+          spotCounter.appendChild(strong);
+          spotCounter.appendChild(document.createTextNode(' / ' + products.length));
+
+          spotDots.querySelectorAll('.sp-dot').forEach(function(d, i) {
+            d.classList.toggle('active', i === currentIdx);
+          });
+          document.querySelectorAll('.grid-item').forEach(function(item, i) {
+            item.classList.toggle('active-thumb', i === currentIdx);
+          });
+        }
+
+        function goTo(idx) {
+          if (idx === currentIdx) return;
+          currentIdx = idx;
+          spotImg.classList.add('fading');
+          setTimeout(function() {
+            spotImg.src = products[currentIdx];
+            spotImg.classList.remove('fading');
+            updateSpotMeta();
+          }, 300);
+        }
+
+        function nextDesign() {
+          goTo((currentIdx + 1) % products.length);
+        }
+
+        // Tap to cycle
+        frame.addEventListener('click', nextDesign);
+
+        // Swipe on spotlight
+        var startX = 0;
+        frame.addEventListener('touchstart', function(e) {
+          startX = e.touches[0].clientX;
+        }, { passive: true });
+        frame.addEventListener('touchend', function(e) {
+          var diff = e.changedTouches[0].clientX - startX;
+          if (Math.abs(diff) > 40) {
+            if (diff < 0) goTo((currentIdx + 1) % products.length);
+            else goTo((currentIdx - 1 + products.length) % products.length);
+          }
+        });
+
+        // Auto-rotate
+        var autoTimer = setInterval(nextDesign, 4000);
+        frame.addEventListener('touchstart', function() { clearInterval(autoTimer); }, { passive: true });
+        frame.addEventListener('mousedown', function() { clearInterval(autoTimer); });
+
+        // --- Grid ---
+        var grid = document.getElementById('designGrid');
+        var count = products.length;
+        setText('gridLabel', 'Todos los dise\u00f1os \u00b7 ' + count);
+
+        products.forEach(function(src, i) {
+          var item = document.createElement('div');
+          item.className = 'grid-item' + (i === 0 ? ' active-thumb' : '');
+          var img = document.createElement('img');
+          img.src = src;
+          img.alt = 'Dise\u00f1o ' + (i + 1) + ' souvenir ' + name + ' M\u00e9xico - AXKAN';
+          img.loading = 'lazy';
+          img.draggable = false;
+          item.appendChild(img);
+          var wm = document.createElement('div');
+          wm.className = 'wm';
+          item.appendChild(wm);
+          item.addEventListener('click', function() {
+            goTo(i);
+            openLightbox(src);
+          });
+          grid.appendChild(item);
+        });
+
+        // --- Related ---
+        var relatedGrid = document.getElementById('relatedGrid');
+        if (related.length > 0) {
+          related.forEach(function(r) {
+            var card = document.createElement('a');
+            card.href = '/souvenirs/' + r.slug;
+            card.className = 'related-card';
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'related-name';
+            nameSpan.textContent = r.name;
+            var stateSpan = document.createElement('span');
+            stateSpan.className = 'related-state';
+            stateSpan.textContent = r.state;
+            card.appendChild(nameSpan);
+            card.appendChild(stateSpan);
+            relatedGrid.appendChild(card);
+          });
+        } else {
+          document.getElementById('relatedSection').style.display = 'none';
+        }
+
+        // Show content
+        loadingEl.style.display = 'none';
+        mainEl.style.display = '';
+        document.getElementById('stickyCta').style.display = '';
+
+        // --- Lightbox ---
+        initLightbox();
+
+      }
+
+      function initLightbox() {
+        var overlay = document.getElementById('lightbox');
+        var lbImg = document.getElementById('lightboxImg');
+        var lbClose = document.getElementById('lightboxClose');
+
+        function closeLb() {
+          overlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+        overlay.addEventListener('click', closeLb);
+        lbClose.addEventListener('click', function(e) { e.stopPropagation(); closeLb(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLb(); });
+
+        window.openLightbox = function(src) {
+          lbImg.src = src;
+          overlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        };
+      }
+
+      function setText(id, text) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = text;
+      }
+      function setAttr(id, attr, val) {
+        var el = document.getElementById(id);
+        if (el) el.setAttribute(attr, val);
+      }
+    })();
+    </script>
+    <!-- 3D Globe loader -->
+    <script>
+    (function() {
+        if (!document.getElementById('destinos')) return;
+        var threeReady = false, topoReady = false;
+        function onBothReady() {
+            if (!threeReady) return;
+            var s = document.createElement('script');
+            s.src = '/globe-section.js?v=13';
+            document.head.appendChild(s);
+        }
+        var threeScript = document.createElement('script');
+        threeScript.src = '/landing/vendor/three.min.js';
+        threeScript.crossOrigin = 'anonymous';
+        threeScript.onload = function() { threeReady = true; if (topoReady) onBothReady(); };
+        threeScript.onerror = function() {
+            var l = document.getElementById('globe-loading');
+            if (l) l.style.display = 'none';
+        };
+        var topoScript = document.createElement('script');
+        topoScript.src = '/landing/vendor/topojson-client.min.js';
+        topoScript.crossOrigin = 'anonymous';
+        topoScript.onload = function() { topoReady = true; if (threeReady) onBothReady(); };
+        topoScript.onerror = function() { topoReady = true; if (threeReady) onBothReady(); };
+        document.head.appendChild(threeScript);
+        document.head.appendChild(topoScript);
+    })();
+    </script>
+    <!-- Image protection: block right-click, drag, copy, open-in-new-tab on ALL images -->
+    <script>
+    document.addEventListener("contextmenu",function(e){if(e.target.tagName==="IMG"||e.target.closest(".spotlight-frame,.lightbox-overlay,.grid-item"))e.preventDefault()});
+    document.addEventListener("dragstart",function(e){if(e.target.tagName==="IMG")e.preventDefault()});
+    document.addEventListener("copy",function(e){if(document.getSelection().toString()==="")e.preventDefault()});
+    document.addEventListener("keydown",function(e){if((e.ctrlKey||e.metaKey)&&e.key==="s")e.preventDefault()});
+    </script>
+    <style>
+    .spotlight-img,.grid-item img,.lightbox-img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;pointer-events:none;}
+    </style>
+    <script src="/landing/global-search.js" defer></script>
+    <!-- @WHATSAPP -->
+</body>
+</html>

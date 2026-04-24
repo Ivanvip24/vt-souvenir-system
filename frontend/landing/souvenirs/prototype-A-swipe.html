@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Prototype A — Swipe Cards | Acayucan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'RL Aqva';
+            src: url('/fonts/rl-aqva-black.otf') format('opentype');
+            font-weight: 900;
+            font-display: swap;
+        }
+
+        :root {
+            --rosa: #e72a88;
+            --rosa-light: #fce4f0;
+            --rosa-glow: rgba(231, 42, 136, 0.15);
+            --verde: #8ab73b;
+            --naranja: #f39223;
+            --turquesa: #09adc2;
+            --rojo: #e52421;
+            --ink: #1a1a1a;
+            --ink-50: #888;
+            --surface: #fafaf8;
+            --card-bg: #fff;
+            --radius: 20px;
+            --font-display: 'RL Aqva', 'Space Grotesk', sans-serif;
+            --font-body: 'Space Grotesk', -apple-system, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-body);
+            background: var(--surface);
+            color: var(--ink);
+            overflow-x: hidden;
+            padding-bottom: 80px;
+        }
+
+        /* HEADER */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(250, 250, 248, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-left {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .header h1 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        .header .state {
+            font-size: 0.8rem;
+            color: var(--ink-50);
+            font-weight: 400;
+        }
+        .header-back {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--ink);
+            font-size: 1.1rem;
+            transition: background 0.2s;
+        }
+        .header-back:hover { background: rgba(0,0,0,0.1); }
+
+        /* SWIPE CARDS */
+        .swipe-section {
+            padding: 24px 20px 8px;
+            position: relative;
+        }
+        .swipe-container {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            margin: 0 auto;
+            aspect-ratio: 3 / 3.6;
+            perspective: 1200px;
+        }
+        .swipe-card {
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            background: var(--card-bg);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+            overflow: hidden;
+            cursor: grab;
+            touch-action: pan-y;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        opacity 0.4s ease,
+                        box-shadow 0.3s ease;
+            will-change: transform;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .swipe-card:active { cursor: grabbing; }
+        .swipe-card.dragging { transition: none; }
+
+        .swipe-card .card-img {
+            width: 100%;
+            height: 78%;
+            object-fit: contain;
+            padding: 20px;
+            background: linear-gradient(180deg, #f8f6f3 0%, #f0ede8 100%);
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
+        .swipe-card .card-info {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .swipe-card .card-counter {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--ink-50);
+        }
+        .swipe-card .card-counter strong {
+            color: var(--rosa);
+            font-size: 1.1rem;
+        }
+        .swipe-card .card-tap-hint {
+            font-size: 0.75rem;
+            color: var(--ink-50);
+            opacity: 0.7;
+        }
+
+        /* Stack depth */
+        .swipe-card[data-depth="0"] { z-index: 3; }
+        .swipe-card[data-depth="1"] {
+            z-index: 2;
+            transform: scale(0.95) translateY(12px);
+            opacity: 0.7;
+        }
+        .swipe-card[data-depth="2"] {
+            z-index: 1;
+            transform: scale(0.9) translateY(24px);
+            opacity: 0.4;
+        }
+        .swipe-card.swiped-left {
+            transform: translateX(-150%) rotate(-20deg) !important;
+            opacity: 0 !important;
+            transition: transform 0.45s ease, opacity 0.4s ease !important;
+        }
+        .swipe-card.swiped-right {
+            transform: translateX(150%) rotate(20deg) !important;
+            opacity: 0 !important;
+            transition: transform 0.45s ease, opacity 0.4s ease !important;
+        }
+
+        /* Dots */
+        .swipe-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 16px 0 8px;
+        }
+        .swipe-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.12);
+            transition: all 0.3s ease;
+        }
+        .swipe-dot.active {
+            background: var(--rosa);
+            width: 20px;
+            border-radius: 3px;
+        }
+
+        .swipe-hint {
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--ink-50);
+            opacity: 0.6;
+            padding: 4px 0 0;
+            animation: swipeHintFade 3s ease-in-out infinite;
+        }
+        @keyframes swipeHintFade {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+
+        /* GRID */
+        .grid-section { padding: 32px 16px 24px; }
+        .grid-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding: 0 4px;
+        }
+        .grid-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            letter-spacing: -0.01em;
+        }
+        .grid-count { font-size: 0.8rem; color: var(--ink-50); }
+        .design-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .grid-item {
+            aspect-ratio: 1;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #f0ede8;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .grid-item:hover {
+            transform: scale(1.04);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 8px;
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
+        .grid-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('/assets/axkan/JAGUAR.png') center/45% no-repeat;
+            opacity: 0.1;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+        }
+
+        /* RELATED */
+        .related-section { padding: 24px 16px 32px; }
+        .related-section h3 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            margin-bottom: 14px;
+            padding: 0 4px;
+        }
+        .related-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 4px;
+        }
+        .related-scroll::-webkit-scrollbar { display: none; }
+        .related-chip {
+            flex-shrink: 0;
+            scroll-snap-align: start;
+            padding: 12px 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-decoration: none;
+            color: var(--ink);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .related-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            text-decoration: none;
+        }
+        .related-chip .chip-name { font-weight: 600; font-size: 0.9rem; display: block; }
+        .related-chip .chip-state { font-size: 0.75rem; color: var(--ink-50); }
+
+        /* STICKY CTA */
+        .sticky-cta {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(0,0,0,0.08);
+            padding: 12px 16px;
+            display: flex;
+            gap: 10px;
+        }
+        .cta-btn {
+            flex: 1;
+            padding: 14px 16px;
+            border-radius: 14px;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .cta-btn:active { transform: scale(0.97); }
+        .cta-pedido {
+            background: var(--rosa);
+            color: white;
+            box-shadow: 0 4px 20px rgba(231, 42, 136, 0.3);
+        }
+        .cta-whatsapp {
+            background: #25D366;
+            color: white;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.25);
+        }
+
+        /* LIGHTBOX */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0,0,0,0.9);
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
+        }
+        .lightbox.active { display: flex; }
+        .lightbox img {
+            max-width: 92vw;
+            max-height: 88vh;
+            object-fit: contain;
+            border-radius: 12px;
+            animation: lbIn 0.25s ease;
+            -webkit-user-drag: none;
+            user-select: none;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 32px;
+            color: white;
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 10000;
+            opacity: 0.8;
+        }
+        @keyframes lbIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+
+        .prototype-label {
+            position: fixed;
+            top: 60px;
+            right: -32px;
+            background: var(--rosa);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 4px 40px;
+            transform: rotate(45deg);
+            z-index: 999;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="prototype-label">Prototype A</div>
+
+<header class="header">
+    <a href="/souvenirs" class="header-back">&larr;</a>
+    <div class="header-left">
+        <h1>Acayucan</h1>
+        <span class="state">Veracruz, MX</span>
+    </div>
+    <div style="width:36px"></div>
+</header>
+
+<section class="swipe-section">
+    <div class="swipe-container" id="swipeContainer"></div>
+    <div class="swipe-indicators" id="swipeDots"></div>
+    <p class="swipe-hint">Desliza para explorar</p>
+</section>
+
+<section class="grid-section">
+    <div class="grid-header">
+        <h2>Todos los Disenos</h2>
+        <span class="grid-count" id="gridCount"></span>
+    </div>
+    <div class="design-grid" id="designGrid"></div>
+</section>
+
+<section class="related-section">
+    <h3>Otros destinos</h3>
+    <div class="related-scroll">
+        <a href="/souvenirs/oaxaca" class="related-chip">
+            <span class="chip-name">Oaxaca</span>
+            <span class="chip-state">Oaxaca</span>
+        </a>
+        <a href="/souvenirs/chiapas" class="related-chip">
+            <span class="chip-name">Chiapas</span>
+            <span class="chip-state">Chiapas</span>
+        </a>
+        <a href="/souvenirs/campeche" class="related-chip">
+            <span class="chip-name">Campeche</span>
+            <span class="chip-state">Campeche</span>
+        </a>
+        <a href="/souvenirs/cancun" class="related-chip">
+            <span class="chip-name">Cancun</span>
+            <span class="chip-state">Quintana Roo</span>
+        </a>
+        <a href="/souvenirs/puebla" class="related-chip">
+            <span class="chip-name">Puebla</span>
+            <span class="chip-state">Puebla</span>
+        </a>
+    </div>
+</section>
+
+<div class="sticky-cta">
+    <a href="/pedidos" class="cta-btn cta-pedido">Hacer Pedido</a>
+    <a href="https://wa.me/5215538253251?text=Hola!%20Me%20interesan%20souvenirs%20de%20Acayucan" target="_blank" class="cta-btn cta-whatsapp">WhatsApp</a>
+</div>
+
+<div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lbClose">&times;</button>
+    <img id="lbImg" src="" alt="Diseno completo">
+</div>
+
+<script>
+(function() {
+    var designs = [
+        "https://cdn.shopify.com/s/files/1/0568/7813/7421/files/ACAYUCANJARCOHOSEIGLESIA.png?v=1741210294",
+        "https://cdn.shopify.com/s/files/1/0568/7813/7421/files/ACAYUCANLARGOPLAZA.png?v=1741210294",
+        "https://cdn.shopify.com/s/files/1/0568/7813/7421/files/ACAYUCANCUADRADOKIOSKO.png?v=1741210294"
+    ];
+
+    var currentIndex = 0;
+    var container = document.getElementById('swipeContainer');
+    var dotsContainer = document.getElementById('swipeDots');
+
+    function buildCards() {
+        container.textContent = '';
+        dotsContainer.textContent = '';
+
+        designs.forEach(function(src, i) {
+            var dot = document.createElement('div');
+            dot.className = 'swipe-dot' + (i === 0 ? ' active' : '');
+            dotsContainer.appendChild(dot);
+
+            var card = document.createElement('div');
+            card.className = 'swipe-card';
+            card.dataset.index = i;
+            var depth = i - currentIndex;
+            if (depth < 0) depth += designs.length;
+            if (depth > 2) card.style.display = 'none';
+            card.dataset.depth = Math.min(depth, 2);
+
+            var img = document.createElement('img');
+            img.className = 'card-img';
+            img.src = src;
+            img.alt = 'Diseno ' + (i + 1) + ' Acayucan';
+            img.draggable = false;
+
+            var info = document.createElement('div');
+            info.className = 'card-info';
+
+            var counter = document.createElement('span');
+            counter.className = 'card-counter';
+            var numStrong = document.createElement('strong');
+            numStrong.textContent = (i + 1);
+            counter.appendChild(numStrong);
+            counter.appendChild(document.createTextNode(' / ' + designs.length));
+
+            var hint = document.createElement('span');
+            hint.className = 'card-tap-hint';
+            hint.textContent = 'Desliza \u2192';
+
+            info.appendChild(counter);
+            info.appendChild(hint);
+            card.appendChild(img);
+            card.appendChild(info);
+            container.appendChild(card);
+        });
+
+        initSwipe();
+    }
+
+    function updateStack() {
+        var cards = container.querySelectorAll('.swipe-card');
+        var dots = dotsContainer.querySelectorAll('.swipe-dot');
+
+        cards.forEach(function(card) {
+            var idx = parseInt(card.dataset.index);
+            var depth = idx - currentIndex;
+            if (depth < 0) depth += designs.length;
+
+            card.classList.remove('swiped-left', 'swiped-right');
+            card.style.display = '';
+            card.style.transform = '';
+            card.style.opacity = '';
+
+            if (depth > 2) {
+                card.style.display = 'none';
+                card.dataset.depth = 3;
+            } else {
+                card.dataset.depth = depth;
+            }
+        });
+
+        dots.forEach(function(dot, i) {
+            dot.classList.toggle('active', i === currentIndex);
+        });
+    }
+
+    function initSwipe() {
+        var cards = container.querySelectorAll('.swipe-card');
+
+        cards.forEach(function(card) {
+            var startX = 0, currentX = 0, isDragging = false;
+
+            function onStart(e) {
+                if (parseInt(card.dataset.depth) !== 0) return;
+                isDragging = true;
+                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                card.classList.add('dragging');
+            }
+
+            function onMove(e) {
+                if (!isDragging) return;
+                var x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                currentX = x - startX;
+                var rotate = currentX * 0.08;
+                card.style.transform = 'translateX(' + currentX + 'px) rotate(' + rotate + 'deg)';
+            }
+
+            function onEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+                card.classList.remove('dragging');
+
+                if (Math.abs(currentX) > 80) {
+                    card.classList.add(currentX > 0 ? 'swiped-right' : 'swiped-left');
+                    currentIndex = (currentIndex + 1) % designs.length;
+                    setTimeout(updateStack, 450);
+                } else {
+                    card.style.transform = '';
+                }
+                currentX = 0;
+            }
+
+            card.addEventListener('mousedown', onStart);
+            card.addEventListener('mousemove', onMove);
+            card.addEventListener('mouseup', onEnd);
+            card.addEventListener('mouseleave', onEnd);
+            card.addEventListener('touchstart', onStart, { passive: true });
+            card.addEventListener('touchmove', onMove, { passive: true });
+            card.addEventListener('touchend', onEnd);
+        });
+    }
+
+    buildCards();
+
+    // Grid
+    var grid = document.getElementById('designGrid');
+    document.getElementById('gridCount').textContent = designs.length + ' disenos';
+    designs.forEach(function(src, i) {
+        var item = document.createElement('div');
+        item.className = 'grid-item';
+        var img = document.createElement('img');
+        img.src = src;
+        img.alt = 'Diseno ' + (i + 1);
+        img.loading = 'lazy';
+        img.draggable = false;
+        item.appendChild(img);
+        item.addEventListener('click', function() { openLightbox(src); });
+        grid.appendChild(item);
+    });
+
+    // Lightbox
+    var lb = document.getElementById('lightbox');
+    var lbImg = document.getElementById('lbImg');
+    function openLightbox(src) {
+        lbImg.src = src;
+        lb.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLb() {
+        lb.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    lb.addEventListener('click', closeLb);
+    document.getElementById('lbClose').addEventListener('click', function(e) { e.stopPropagation(); closeLb(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLb(); });
+})();
+</script>
+</body>
+</html>
