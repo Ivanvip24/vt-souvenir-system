@@ -5,6 +5,8 @@
  * Frontend should query this, not have its own hardcoded prices.
  */
 
+import { log } from './logger.js';
+
 // Tiered pricing configuration - SINGLE SOURCE OF TRUTH
 // NOTE: Actual minimum is 50 pieces, but marketing displays "100 pieces minimum"
 export const PRICING_TIERS = {
@@ -158,8 +160,7 @@ export function validateOrderPricing(items, productMap) {
 
     // Check if frontend sent a different price (potential manipulation)
     if (item.unitPrice && Math.abs(item.unitPrice - pricing.unitPrice) > 0.01) {
-      console.warn(`⚠️ Price mismatch for ${product.name}: ` +
-        `Client sent $${item.unitPrice}, server calculated $${pricing.unitPrice}`);
+      log('warn', 'pricing.priceMismatch', { product: product.name, clientPrice: item.unitPrice, serverPrice: pricing.unitPrice });
     }
 
     correctedItems.push({
