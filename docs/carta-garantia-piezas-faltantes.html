@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXKAN - Carta de Garantía por Piezas Faltantes</title>
+<style>
+  @page {
+    size: letter;
+    margin: 0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #2c2c2c;
+    background: #fff;
+    line-height: 1.6;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    width: 816px;
+    min-height: 1056px;
+    margin: 0 auto;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Top accent bar */
+  .top-bar {
+    height: 8px;
+    background: linear-gradient(90deg, #e72a88 0%, #f39223 25%, #8ab73b 50%, #09adc2 75%, #e52421 100%);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 30px 60px 20px;
+    border-bottom: 2px solid #e72a88;
+  }
+  .header img {
+    height: 70px;
+  }
+  .header-info {
+    text-align: right;
+    font-size: 11px;
+    color: #666;
+    line-height: 1.5;
+  }
+  .header-info strong {
+    color: #e72a88;
+    font-size: 12px;
+  }
+
+  /* Content */
+  .content {
+    padding: 40px 60px;
+  }
+
+  .document-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 800;
+    color: #e72a88;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  .document-subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 35px;
+    letter-spacing: 1px;
+  }
+
+  .date-line {
+    text-align: right;
+    font-size: 13px;
+    color: #444;
+    margin-bottom: 30px;
+  }
+
+  .body-text {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #333;
+    text-align: justify;
+    margin-bottom: 20px;
+  }
+
+  .order-box {
+    background: #f0f8ff;
+    border-left: 4px solid #09adc2;
+    padding: 24px 28px;
+    margin: 30px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .order-box h3 {
+    font-size: 15px;
+    color: #09adc2;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .order-box table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  .order-box th {
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #09adc2;
+    padding: 6px 10px;
+    border-bottom: 2px solid #09adc2;
+  }
+  .order-box td {
+    padding: 8px 10px;
+    color: #444;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .order-box .total-row td {
+    border-top: 2px solid #09adc2;
+    border-bottom: none;
+    padding-top: 10px;
+  }
+
+  .commitment-box {
+    background: #fdf2f8;
+    border-left: 4px solid #e72a88;
+    padding: 24px 28px;
+    margin: 30px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .commitment-box h3 {
+    font-size: 15px;
+    color: #e72a88;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .commitment-box p {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: #444;
+  }
+
+  .conditions-box {
+    background: #f0fdf4;
+    border-left: 4px solid #8ab73b;
+    padding: 24px 28px;
+    margin: 30px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .conditions-box h3 {
+    font-size: 15px;
+    color: #8ab73b;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .conditions-box ul {
+    list-style: none;
+    padding: 0;
+  }
+  .conditions-box li {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: #444;
+    padding: 6px 0;
+    padding-left: 20px;
+    position: relative;
+  }
+  .conditions-box li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 8px;
+    height: 8px;
+    background: #8ab73b;
+    border-radius: 50%;
+  }
+
+  /* Signatures */
+  .signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 60px;
+    padding: 0 20px;
+  }
+  .signature-block {
+    text-align: center;
+    width: 40%;
+  }
+  .signature-line {
+    border-top: 1.5px solid #2c2c2c;
+    margin-top: 60px;
+    padding-top: 10px;
+  }
+  .signature-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+  }
+  .signature-role {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  /* Footer */
+  .footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px 60px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: #999;
+  }
+  .footer-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .footer-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* Bottom accent bar */
+  .bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #e72a88 0%, #f39223 25%, #8ab73b 50%, #09adc2 75%, #e52421 100%);
+  }
+
+  @media print {
+    body { background: #fff; }
+    .page { margin: 0; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top-bar"></div>
+
+  <div class="header">
+    <img src="../../AXKAN_SOURCES/JAGUAR_LETTERS.png" alt="AXKAN Logo">
+    <div class="header-info">
+      <strong>AXKAN</strong><br>
+      Souvenirs Premium Mexicanos<br>
+      hola@axkan.mx | @axkan.mx<br>
+      vtanunciando.com
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="document-title">Carta de Garantia</div>
+    <div class="document-subtitle">Responsabilidad por Piezas Faltantes en Entrega</div>
+
+    <div class="date-line">Ciudad de Mexico, 16 de Abril de 2026</div>
+
+    <p class="body-text">
+      Por medio de la presente, <strong>AXKAN</strong> establece formalmente el siguiente compromiso con la cliente <strong>Lilian Alejandra</strong> en relacion a la entrega de mercancia del proyecto <strong>Imanes Mundial 2026 — 10,000 piezas totales</strong>, realizada en la fecha indicada. Los modelos, cantidades y especificaciones correspondientes son los acordados y compartidos mediante imagenes y conversacion en el grupo.
+    </p>
+
+    <div class="commitment-box">
+      <h3>Compromiso AXKAN</h3>
+      <p>
+        En caso de que la mercancia entregada presente piezas faltantes respecto a la cantidad acordada, <strong>AXKAN se hace responsable de entregar las piezas faltantes y de cubrir todos los gastos correspondientes</strong> que se generen por dicha reposicion, incluyendo costos de produccion y envio.
+      </p>
+    </div>
+
+    <div class="conditions-box">
+      <h3>Condiciones para Hacer Valida esta Garantia</h3>
+      <ul>
+        <li>El cliente debera presentar un <strong>video como evidencia</strong> del conteo de las piezas recibidas.</li>
+        <li>El video debera ser de <strong>buena calidad</strong>, con resolucion suficiente para apreciar claramente cada pieza.</li>
+        <li>El video debera ser <strong>continuo, sin cortes y sin edicion</strong> de ningun tipo.</li>
+        <li>El conteo debera realizarse de manera <strong>individual por modelo</strong>, mostrando claramente la cantidad de piezas de cada tipo.</li>
+        <li>El video debera mostrar la <strong>cantidad exacta de piezas faltantes</strong> respecto al pedido original.</li>
+      </ul>
+    </div>
+
+    <p class="body-text">
+      Este compromiso refleja los valores de <strong>AXKAN</strong> de transparencia, confianza y responsabilidad con cada uno de nuestros clientes. Nos respalda la calidad de nuestro proceso de produccion y empaque, y estamos seguros de cumplir con cada pedido de manera integra.
+    </p>
+
+    <div class="signatures">
+      <div class="signature-block">
+        <div class="signature-line">
+          <div class="signature-label">AXKAN</div>
+          <div class="signature-role">Representante</div>
+        </div>
+      </div>
+      <div class="signature-block">
+        <div class="signature-line">
+          <div class="signature-label">Cliente</div>
+          <div class="signature-role">Nombre y Firma</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">
+      <span class="footer-dot" style="background:#e72a88;"></span>
+      <span class="footer-dot" style="background:#8ab73b;"></span>
+      <span class="footer-dot" style="background:#f39223;"></span>
+      <span class="footer-dot" style="background:#09adc2;"></span>
+      <span class="footer-dot" style="background:#e52421;"></span>
+      <span>Recuerdos Hechos Souvenir</span>
+    </div>
+    <div>axkan.mx</div>
+  </div>
+
+  <div class="bottom-bar"></div>
+</div>
+</body>
+</html>

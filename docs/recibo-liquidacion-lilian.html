@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>AXKAN - Recibo de Liquidación</title>
+<style>
+@page{size:letter;margin:0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#2c2c2c;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:816px;min-height:1056px;margin:0 auto;position:relative}
+.top-bar{height:8px;background:linear-gradient(90deg,#e72a88,#f39223 25%,#8ab73b 50%,#09adc2 75%,#e52421)}
+.header{display:flex;justify-content:space-between;align-items:flex-start;padding:30px 60px 20px}
+.logo span{font-size:42px;font-weight:800;letter-spacing:14px}
+.logo span:nth-child(1){color:#e72a88}.logo span:nth-child(2){color:#8ab73b}.logo span:nth-child(3){color:#f39223}.logo span:nth-child(4){color:#09adc2}.logo span:nth-child(5){color:#e52421}
+.logo-sub{font-size:10px;letter-spacing:6px;color:#999;margin-top:2px}
+.header-right{text-align:right}
+.header-right h2{font-size:18px;letter-spacing:4px;color:#e72a88;font-weight:800}
+.header-right .num{font-size:12px;color:#666;margin-top:4px}
+.pink-line{width:40px;height:3px;background:#e72a88;margin:20px 60px 0}
+.meta{display:flex;gap:40px;padding:20px 60px;font-size:12px}
+.meta-item label{display:block;font-size:9px;letter-spacing:3px;color:#999;font-weight:700;margin-bottom:4px}
+.meta-item span{color:#333}
+.section-label{font-size:9px;letter-spacing:4px;color:#e72a88;font-weight:700;padding:20px 60px 8px}
+.client-box{margin:0 60px;border-left:3px solid #f39223;padding:16px 20px;background:#fafafa}
+.client-box h3{font-size:22px;font-weight:700}.client-box p{font-size:12px;color:#888}
+.concept-box{margin:20px 60px;background:#f8f8f8;padding:20px 24px;border-radius:6px}
+.concept-box label{font-size:9px;letter-spacing:3px;color:#999;font-weight:700;display:block;margin-bottom:8px}
+.concept-box p{font-size:13px;line-height:1.6;color:#444}
+table.products{width:calc(100% - 120px);margin:10px 60px;border-collapse:collapse;font-size:12px}
+table.products thead{background:#f0f0f0}
+table.products th{text-align:left;padding:8px 10px;font-size:9px;letter-spacing:2px;color:#e72a88;font-weight:700}
+table.products th:nth-child(n+3){text-align:right}
+table.products td{padding:10px;border-bottom:1px solid #eee}
+table.products td:nth-child(n+3){text-align:right}
+.totals{width:calc(100% - 120px);margin:0 60px;border-top:2px solid #e72a88}
+.totals .row{display:flex;justify-content:flex-end;gap:30px;padding:8px 10px;font-size:13px}
+.totals .row.big{font-weight:800;font-size:15px}
+.payment-banner{margin:25px 60px;background:linear-gradient(135deg,#e72a88,#aa1e6b);border-radius:10px;padding:28px 30px;display:flex;justify-content:space-between;align-items:center;color:#fff}
+.payment-banner .label-tag{background:rgba(255,255,255,.2);padding:4px 14px;border-radius:4px;font-size:9px;letter-spacing:3px;font-weight:700;margin-bottom:8px;display:inline-block}
+.payment-banner .desc{font-size:13px;opacity:.85}
+.payment-banner .amount{text-align:right}
+.payment-banner .currency{font-size:14px;opacity:.8}
+.payment-banner .big-num{font-size:48px;font-weight:800}
+.payment-banner .big-num sup{font-size:20px;vertical-align:super}
+.payment-banner .words{font-size:11px;opacity:.7;margin-top:4px}
+.details{margin:20px 60px;font-size:13px}
+.details .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;align-items:center}
+.details .row .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:10px}
+.details .row .val{font-weight:700}
+.details .row .green{color:#8ab73b}
+.terms-box{margin:25px 60px;border:1px solid #eee;border-radius:8px;padding:20px 24px}
+.terms-box h4{font-size:9px;letter-spacing:3px;color:#999;font-weight:700;margin-bottom:12px}
+.terms-box p{font-size:12px;color:#555;line-height:1.7;padding:3px 0}
+.signatures{display:flex;justify-content:space-between;margin:50px 80px 0;padding-top:10px}
+.sig{text-align:center;width:38%}
+.sig .line{border-top:1.5px solid #333;padding-top:8px;margin-top:50px}
+.sig .name{font-size:13px;font-weight:700}.sig .role{font-size:10px;color:#999;letter-spacing:2px}
+.footer{position:absolute;bottom:0;left:0;right:0}
+.footer-content{display:flex;justify-content:space-between;align-items:center;padding:12px 60px;border-top:1px solid #eee;font-size:10px;color:#999}
+.footer-content b{color:#e72a88}
+.bottom-bar{height:6px;background:linear-gradient(90deg,#e72a88,#f39223 25%,#8ab73b 50%,#09adc2 75%,#e52421)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top-bar"></div>
+  <div class="header">
+    <div>
+      <div class="logo"><span>A</span><span>X</span><span>K</span><span>A</span><span>N</span></div>
+      <div class="logo-sub">R E C U E R D O S &nbsp; H E C H O S &nbsp; S O U V E N I R</div>
+    </div>
+    <div class="header-right">
+      <h2>R E C I B O &nbsp; D E &nbsp; L I Q U I D A C I Ó N</h2>
+      <div class="num">No. AXK-2026-0416-002</div>
+    </div>
+  </div>
+  <div class="pink-line"></div>
+
+  <div class="meta">
+    <div class="meta-item"><label>F E C H A &nbsp; D E &nbsp; E M I S I Ó N</label><span>16 de Abril de 2026</span></div>
+    <div class="meta-item"><label>L U G A R</label><span>México</span></div>
+    <div class="meta-item"><label>T I P O &nbsp; D E &nbsp; D O C U M E N T O</label><span>Liquidación de Proyecto</span></div>
+  </div>
+
+  <div class="section-label">D A T O S &nbsp; D E L &nbsp; C L I E N T E</div>
+  <div class="client-box">
+    <h3>Lilian Alejandra</h3>
+    <p>Cliente — Proyecto Imanes Mundial 2026</p>
+  </div>
+
+  <div class="section-label">C O N C E P T O</div>
+  <div class="concept-box">
+    <label>D E S C R I P C I Ó N</label>
+    <p>Pago de liquidación del proyecto <strong>Imanes Mundial 2026</strong> — 10,000 piezas totales.<br>
+    Este pago complementa el adelanto recibido el 26 de Febrero de 2026 y completa el monto total del proyecto.</p>
+  </div>
+
+  <div class="section-label">D E S G L O S E &nbsp; D E &nbsp; P R O D U C T O S</div>
+  <table class="products">
+    <thead><tr><th>P R O D U C T O</th><th>T A M A Ñ O</th><th>C A N T I D A D</th><th>P. U N I T A R I O</th><th>T O T A L</th></tr></thead>
+    <tbody>
+      <tr><td>Imanes 3D</td><td>Grande</td><td>3,000</td><td>$11.50</td><td>$34,500.00</td></tr>
+      <tr><td>Imán MDF</td><td>Mediano</td><td>5,000</td><td>$7.50</td><td>$37,500.00</td></tr>
+      <tr><td>Imán MDF</td><td>Chico</td><td>2,000</td><td>$6.00</td><td>$12,000.00</td></tr>
+    </tbody>
+  </table>
+  <div class="totals">
+    <div class="row big"><span>Total del Proyecto (10,000 pzas):</span><span>$84,000.00</span></div>
+  </div>
+
+  <div class="payment-banner">
+    <div>
+      <div class="label-tag">LIQUIDACIÓN RECIBIDA</div><br>
+      <div class="desc">Pago final — Proyecto completamente liquidado</div>
+    </div>
+    <div class="amount">
+      <div class="currency">MXN</div>
+      <div class="big-num">$42,000<sup>.00</sup></div>
+      <div class="words">( Cuarenta y dos mil pesos 00/100 M.N. )</div>
+    </div>
+  </div>
+
+  <div class="section-label">D E T A L L E S &nbsp; D E &nbsp; L A &nbsp; O P E R A C I Ó N</div>
+  <div class="details">
+    <div class="row"><span><span class="dot" style="background:#e72a88"></span>Total del Proyecto</span><span class="val">$84,000.00 MXN</span></div>
+    <div class="row"><span><span class="dot" style="background:#f39223"></span>Adelanto (26 Feb 2026)</span><span class="val">$42,000.00 MXN</span></div>
+    <div class="row"><span><span class="dot" style="background:#09adc2"></span>Liquidación (16 Abr 2026)</span><span class="val">$42,000.00 MXN</span></div>
+    <div class="row"><span><span class="dot" style="background:#8ab73b"></span>Saldo Pendiente</span><span class="val green">$0.00 MXN — LIQUIDADO</span></div>
+    <div class="row"><span><span class="dot" style="background:#f39223"></span>Fecha del Pago</span><span class="val">16 de Abril de 2026</span></div>
+    <div class="row"><span><span class="dot" style="background:#8ab73b"></span>Estado del Pago</span><span class="val green">✓ Proyecto Liquidado</span></div>
+  </div>
+
+  <div class="terms-box">
+    <h4>T É R M I N O S &nbsp; Y &nbsp; C O N D I C I O N E S</h4>
+    <p>— Este recibo ampara la liquidación total del proyecto Imanes Mundial 2026.</p>
+    <p>— El proyecto queda completamente pagado con este segundo pago.</p>
+    <p>— Los tiempos de entrega aplican a partir de la aprobación del diseño final.</p>
+    <p>— Garantía válida 7 días posteriores a la entrega con evidencia fotográfica.</p>
+  </div>
+
+  <div class="signatures">
+    <div class="sig"><div class="line"><div class="name">AXKAN</div><div class="role">E M I S O R — E M P R E S A</div></div></div>
+    <div class="sig"><div class="line"><div class="name">Lilian Alejandra</div><div class="role">R E C E P T O R — C L I E N T E</div></div></div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-content">
+      <div><b>@</b> hola@axkan.mx &nbsp;&nbsp; <b>IG</b> @axkan.mx &nbsp;&nbsp; <b>Web</b> vtanunciando.com</div>
+      <div>A X K A N &nbsp; © &nbsp; 2 0 2 6</div>
+    </div>
+    <div class="bottom-bar"></div>
+  </div>
+</div>
+</body>
+</html>

