@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
+import { log, logError } from '../shared/logger.js';
 
 const require = createRequire(import.meta.url);
 const XLSX = require('xlsx');
@@ -162,7 +163,7 @@ router.get('/dashboard', async (req, res) => {
       `);
       insightsRows = insightsQuery.rows;
     } catch (insightError) {
-      console.warn('pricing_insights table may not exist:', insightError.message);
+      log('warn', 'price.pricinginsights-table-may-not-exist');
     }
 
     res.json({
@@ -178,7 +179,7 @@ router.get('/dashboard', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching price dashboard:', error);
+    logError('price.error-fetching-price-dashboard', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -207,7 +208,7 @@ router.get('/products', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching products pricing:', error);
+    logError('price.error-fetching-products-pricing', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -249,7 +250,7 @@ router.get('/products/:productId/history', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching product price history:', error);
+    logError('price.error-fetching-product-price-history', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -317,7 +318,7 @@ router.post('/products/:productId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating product price:', error);
+    logError('price.error-updating-product-price', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -361,7 +362,7 @@ router.get('/materials/:materialId/history', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching material cost history:', error);
+    logError('price.error-fetching-material-cost-history', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -424,7 +425,7 @@ router.post('/materials/:materialId/cost', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error recording material cost:', error);
+    logError('price.error-recording-material-cost', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -469,7 +470,7 @@ router.get('/trends', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching price trends:', error);
+    logError('price.error-fetching-price-trends', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -507,7 +508,7 @@ router.get('/margins', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching margin analysis:', error);
+    logError('price.error-fetching-margin-analysis', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -559,7 +560,7 @@ router.get('/insights', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching pricing insights:', error);
+    logError('price.error-fetching-pricing-insights', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -620,7 +621,7 @@ router.post('/insights', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating insight:', error);
+    logError('price.error-creating-insight', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -651,7 +652,7 @@ router.put('/insights/:insightId/dismiss', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error dismissing insight:', error);
+    logError('price.error-dismissing-insight', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -679,7 +680,7 @@ router.post('/insights/:insightId/implement', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error implementing insight:', error);
+    logError('price.error-implementing-insight', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -731,7 +732,7 @@ router.get('/benchmarks', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching benchmarks:', error);
+    logError('price.error-fetching-benchmarks', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -784,7 +785,7 @@ router.post('/benchmarks', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error adding benchmark:', error);
+    logError('price.error-adding-benchmark', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -817,7 +818,7 @@ function readXlsxSheet(sheetName) {
     // range:2 skips the merged title + section-label rows — headers live in row 3.
     return XLSX.utils.sheet_to_json(sheet, { range: 2, defval: '', raw: true });
   } catch (err) {
-    console.error(`Error reading xlsx sheet ${sheetName}:`, err.message);
+    logError('price.error-reading-xlsx-sheet', err);
     return null;
   }
 }
@@ -877,7 +878,7 @@ function readCsvFile(filename) {
     const text = fs.readFileSync(filePath, 'utf-8');
     return parseCsv(text);
   } catch (err) {
-    console.error(`Error reading ${filename}:`, err.message);
+    logError('price.error-reading', err);
     return [];
   }
 }
@@ -1044,7 +1045,7 @@ router.get('/cost-sheet', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error loading cost sheet:', error);
+    logError('price.error-loading-cost-sheet', error);
     res.status(500).json({
       success: false,
       error: 'Error leyendo products/ CSVs: ' + error.message
