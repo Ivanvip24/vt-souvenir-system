@@ -41,6 +41,7 @@ import { initializeCepRetryScheduler, stopCepRetryScheduler } from '../services/
 import { initializeShippingNotificationScheduler, stopShippingNotificationScheduler } from '../services/shipping-notification-scheduler.js';
 import publicDesignRoutes from './public-design-routes.js';
 import facebookRoutes from './facebook-routes.js';
+import * as facebookScheduler from '../services/facebook-scheduler.js';
 import { initializeDesignerScheduler, stopDesignerScheduler } from '../services/designer-scheduler.js';
 import { initializeFollowupScheduler, stopFollowupScheduler } from '../services/followup-scheduler.js';
 import designerTaskRoutes from './designer-routes.js';
