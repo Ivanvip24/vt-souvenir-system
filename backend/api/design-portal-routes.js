@@ -12,6 +12,7 @@ import {
   requireManager,
   logActivity
 } from './middleware/employee-auth.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -37,7 +38,7 @@ async function mirrorToAdminChat(clientPhone, designerName, content, messageType
       );
     }
   } catch (err) {
-    console.error('Mirror to admin chat failed (non-blocking):', err.message);
+    logError('design-portal.mirror-to-admin-chat-failed-non-blocking', err);
   }
 }
 
@@ -94,7 +95,7 @@ router.get('/my-designs', employeeAuth, async (req, res) => {
 
     res.json({ success: true, designs: result.rows });
   } catch (error) {
-    console.error('Error fetching my designs:', error);
+    logError('design-portal.error-fetching-my-designs', error);
     res.status(500).json({ success: false, error: 'Error al obtener diseños' });
   }
 });
@@ -120,7 +121,7 @@ router.get('/order/:orderId/designs', employeeAuth, async (req, res) => {
 
     res.json({ success: true, designs: result.rows });
   } catch (error) {
-    console.error('Error fetching order designs:', error);
+    logError('design-portal.error-fetching-order-designs', error);
     res.status(500).json({ success: false, error: 'Error al obtener diseños del pedido' });
   }
 });
@@ -161,7 +162,7 @@ router.get('/designs/:id', employeeAuth, async (req, res) => {
 
     res.json({ success: true, design: result.rows[0] });
   } catch (error) {
-    console.error('Error fetching design detail:', error);
+    logError('design-portal.error-fetching-design-detail', error);
     res.status(500).json({ success: false, error: 'Error al obtener detalle del diseño' });
   }
 });
@@ -192,7 +193,7 @@ router.get('/messages/:orderId', employeeAuth, async (req, res) => {
 
     res.json({ success: true, messages: result.rows });
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    logError('design-portal.error-fetching-messages', error);
     res.status(500).json({ success: false, error: 'Error al obtener mensajes' });
   }
 });
@@ -215,7 +216,7 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
     const nameWithoutExt = req.file.originalname.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
     const uploadResult = await uploadImage(dataUri, folder, `${Date.now()}-${nameWithoutExt}`);
     const fileUrl = uploadResult.url || uploadResult.secure_url;
-    console.log('Cloudinary upload result URL:', fileUrl);
+    log('info', 'design-portal.cloudinary-upload-result-url');
 
     const designerName = req.employee.name;
     const designerId = req.employee.id;
@@ -264,7 +265,7 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
         let waImageUrl = fileUrl;
         if (isImage && fileUrl.includes('cloudinary.com')) {
           waImageUrl = fileUrl.replace('/image/upload/', '/image/upload/w_1000,q_80,f_jpg/');
-          console.log('Cloudinary compressed URL:', waImageUrl);
+          log('info', 'design-portal.cloudinary-compressed-url');
         }
 
         const mediaType = isImage ? 'image' : 'document';
@@ -272,7 +273,7 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
           ? { link: waImageUrl, caption: waCaption }
           : { link: fileUrl, caption: waCaption, filename: req.file.originalname };
 
-        console.log(`Sending WhatsApp ${mediaType} to ${clientPhone}, url: ${isImage ? waImageUrl : fileUrl}`);
+        log('info', 'design-portal.sending-whatsapp-to-url');
 
         const sendResp = await metaApiFetch(`/${getPhoneNumberId()}/messages`, {
           method: 'POST',
@@ -289,23 +290,23 @@ router.post('/messages/upload', employeeAuth, upload.single('file'), async (req,
           const sendData = await sendResp.json();
           const waMessageId = sendData?.messages?.[0]?.id;
           if (waMessageId) await query(`UPDATE design_messages SET wa_message_id = $1 WHERE id = $2`, [waMessageId, savedMessage.id]);
-          console.log('WhatsApp media message sent successfully');
+          log('info', 'design-portal.whatsapp-media-message-sent-successfully');
         } else {
           const errText = await sendResp.text();
-          console.error('WhatsApp media send failed:', errText);
+          log('error', 'design-portal.debug');
           // Fallback: send as text with link
           const { sendWhatsAppMessage } = await import('../services/whatsapp-api.js');
           await sendWhatsAppMessage(clientPhone, `${waCaption}\n📎 ${req.file.originalname}\n${fileUrl}`);
         }
       } catch (waError) {
-        console.error('WhatsApp file send error:', waError.message);
+        log('error', 'design-portal.debug');
       }
     }
 
     // Return with the URL so frontend can display it
     res.json({ success: true, message: { ...savedMessage, file_url: fileUrl } });
   } catch (error) {
-    console.error('Error uploading file:', error);
+    logError('design-portal.error-uploading-file', error);
     res.status(500).json({ success: false, error: 'Error uploading file' });
   }
 });
@@ -375,7 +376,7 @@ router.post('/messages/send', employeeAuth, async (req, res) => {
         } else {
           const { sendWhatsAppMessage } = await import('../services/whatsapp-api.js');
           const waResult = await sendWhatsAppMessage(clientPhone, prefixedContent);
-          console.log('WhatsApp send result:', JSON.stringify(waResult));
+          log('info', 'design-portal.whatsapp-send.success');
           const waMessageId = waResult?.data?.messages?.[0]?.id || waResult?.messages?.[0]?.id;
           if (waMessageId) {
             await query(`UPDATE design_messages SET wa_message_id = $1 WHERE id = $2`,
@@ -383,14 +384,14 @@ router.post('/messages/send', employeeAuth, async (req, res) => {
           }
         }
       } catch (waError) {
-        console.error('Error sending WhatsApp message from designer portal:', waError.message);
+        log('error', 'design-portal.debug');
         // Don't fail the request — message is saved in DB
       }
     }
 
     res.json({ success: true, message: savedMessage });
   } catch (error) {
-    console.error('Error sending message:', error);
+    logError('design-portal.error-sending-message', error);
     res.status(500).json({ success: false, error: 'Error al enviar mensaje' });
   }
 });
@@ -434,7 +435,7 @@ router.put('/designs/:id/status', employeeAuth, async (req, res) => {
 
     res.json({ success: true, design: result.rows[0] });
   } catch (error) {
-    console.error('Error updating design status:', error);
+    logError('design-portal.error-updating-design-status', error);
     res.status(500).json({ success: false, error: 'Error al actualizar estado' });
   }
 });
@@ -485,7 +486,7 @@ router.put('/designs/:id/image', employeeAuth, upload.single('file'), async (req
 
     res.json({ success: true, imageUrl, designId: Number(designId) });
   } catch (error) {
-    console.error('Error uploading design image:', error);
+    logError('design-portal.error-uploading-design-image', error);
     res.status(500).json({ error: 'Failed to upload design image' });
   }
 });
@@ -537,7 +538,7 @@ router.post('/orders/:orderId/add-slot', employeeAuth, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error adding design slot:', error);
+    logError('design-portal.error-adding-design-slot', error);
     res.status(500).json({ error: 'Failed to add design slot' });
   }
 });
@@ -587,7 +588,7 @@ router.delete('/orders/:orderId/remove-slot', employeeAuth, async (req, res) => 
 
     res.json({ success: true, removedDesignNumber: slot.design_number, newTotal });
   } catch (error) {
-    console.error('Error removing design slot:', error);
+    logError('design-portal.error-removing-design-slot', error);
     res.status(500).json({ error: 'Failed to remove design slot' });
   }
 });
@@ -649,7 +650,7 @@ router.post('/generate-order', employeeAuth, async (req, res) => {
     res.json({ success: true, payload });
 
   } catch (error) {
-    console.error('Error generating order:', error);
+    logError('design-portal.error-generating-order', error);
     res.status(500).json({ error: 'Failed to generate order' });
   }
 });
@@ -699,7 +700,7 @@ router.post('/assign', employeeAuth, requireManager, async (req, res) => {
 
     res.json({ success: true, assignments: created });
   } catch (error) {
-    console.error('Error creating design assignments:', error);
+    logError('design-portal.error-creating-design-assignments', error);
     res.status(500).json({ success: false, error: 'Error al crear asignaciones' });
   }
 });
@@ -715,7 +716,7 @@ router.get('/window-status', employeeAuth, async (req, res) => {
     const statuses = await getDesignWindowStatus();
     res.json({ success: true, windows: statuses });
   } catch (error) {
-    console.error('Error getting window status:', error);
+    logError('design-portal.error-getting-window-status', error);
     res.status(500).json({ success: false, error: 'Error al obtener estado de ventanas' });
   }
 });
@@ -789,7 +790,7 @@ router.post('/complete-order', employeeAuth, async (req, res) => {
         await sendWhatsAppMessage(clientPhone, message);
         whatsappSent = true;
       } catch (waError) {
-        console.error('WhatsApp notification failed (non-blocking):', waError);
+        logError('design-portal.whatsapp-notification.error', waError);
       }
     }
 
@@ -801,7 +802,7 @@ router.post('/complete-order', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error completing order:', error);
+    logError('design-portal.error-completing-order', error);
     res.status(500).json({ error: 'Failed to complete order' });
   }
 });
