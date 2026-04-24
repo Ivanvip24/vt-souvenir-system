@@ -1,0 +1,133 @@
+{
+  "name": "Acapulco",
+  "slug": "acapulco",
+  "state": "Guerrero, México",
+  "coords": "16.8531° N · 99.8237° W",
+  "accent": "naranja",
+  "tagline": "Donde el Pacífico se tiñe de oro cada atardecer",
+  "metaDescription": "Descubre Acapulco: los clavadistas de La Quebrada, bahías doradas del Pacífico y la era dorada de Hollywood en el puerto más legendario de México.",
+  "ogDescription": "La Quebrada, bahías doradas y la leyenda del Pacífico mexicano.",
+  "heroImage": "https://images.unsplash.com/photo-1585996838523-0cd8d2f3e0c8?w=1400&q=80",
+  "heroAlt": "Bahía de Acapulco al atardecer",
+
+  "stats": [
+    { "value": 35, "suffix": "m", "color": "naranja", "label": "Altura La Quebrada" },
+    { "value": 3000, "suffix": "+", "color": "rojo", "label": "Años de historia" },
+    { "value": 12, "suffix": "", "color": "turquesa", "label": "Bahías" },
+    { "value": 300, "suffix": "+", "color": "verde", "label": "Días de sol al año" }
+  ],
+
+  "facts1": [
+    { "emoji": "🤸", "text": "Clavadistas saltan de 35 metros desde 1934" },
+    { "emoji": "🌅", "text": "Pie de la Cuesta tiene los mejores atardeceres de México" },
+    { "emoji": "🎬", "text": "Hollywood lo llamó \"la Riviera Mexicana\"" },
+    { "emoji": "🏰", "text": "Fuerte de San Diego tiene 400+ años" },
+    { "emoji": "🐢", "text": "Playa Revolcadero: santuario de tortuga laúd" },
+    { "emoji": "🌊", "text": "La bahía tiene forma de herradura perfecta" }
+  ],
+  "facts2": [
+    { "emoji": "🎭", "text": "\"Acapulco\" significa \"cañas grandes\" en náhuatl" },
+    { "emoji": "⛵", "text": "Fue puerto clave del Galeón de Manila" },
+    { "emoji": "🌴", "text": "Isla de la Roqueta tiene playa submarina" },
+    { "emoji": "💃", "text": "El pozole rojo nació en Guerrero" },
+    { "emoji": "🏊", "text": "La Costera Miguel Alemán tiene 6 km" },
+    { "emoji": "⭐", "text": "Elvis y Sinatra vacacionaban aquí" }
+  ],
+  "facts3": [
+    { "emoji": "🌮", "text": "Los jueves son de pozole en todo Guerrero" },
+    { "emoji": "🎶", "text": "La chilena guerrerense es patrimonio cultural" },
+    { "emoji": "🏊", "text": "La bahía tiene hasta 30°C de temperatura" },
+    { "emoji": "⛵", "text": "Isla Roqueta está a 10 minutos en lancha" },
+    { "emoji": "🐠", "text": "La Virgen Sumergida se ve haciendo snorkel" },
+    { "emoji": "🌿", "text": "La Laguna de Coyuca es santuario de aves" },
+    { "emoji": "⭐", "text": "Fun in Acapulco: Elvis filmó aquí en 1963" },
+    { "emoji": "📸", "text": "El zócalo está a pasos de la bahía" }
+  ],
+
+  "pillsLabel": "Explora Acapulco",
+  "pills": [
+    {
+      "emoji": "🏖️", "label": "Playas",
+      "image": "https://images.unsplash.com/photo-1535482680988-03ca4e4ba2d6?w=800&q=80",
+      "imageAlt": "Playa Condesa Acapulco",
+      "title": "Playa Condesa",
+      "text": "El corazón de la Costera. Olas perfectas para bodyboard, restaurantes con los pies en la arena y la energía que hizo famoso a Acapulco. <strong>Aquí la fiesta nunca se detiene.</strong>",
+      "factEmoji": "🌊", "factText": "La playa más icónica del Pacífico", "factColor": "naranja"
+    },
+    {
+      "emoji": "🤸", "label": "Clavadistas",
+      "image": "https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800&q=80",
+      "imageAlt": "Clavadistas La Quebrada",
+      "title": "La Quebrada",
+      "text": "Desde 1934, hombres se lanzan al vacío desde <strong>35 metros de altura</strong> hacia una grieta de apenas 3 metros de ancho. Esperan la ola exacta y saltan. Nadie en el mundo hace algo así.",
+      "factEmoji": "🤸", "factText": "90 años de tradición ininterrumpida", "factColor": "rojo"
+    },
+    {
+      "emoji": "🏰", "label": "Historia",
+      "image": "https://images.unsplash.com/photo-1590076215667-875d4ef2d7de?w=800&q=80",
+      "imageAlt": "Fuerte de San Diego",
+      "title": "Fuerte de San Diego",
+      "text": "Construido en 1616 para defender el oro del Galeón de Manila. Hoy es museo de historia con <strong>muros de 3 metros de grosor</strong> y vistas a la bahía que los piratas codiciaban.",
+      "factEmoji": "🏰", "factText": "400+ años de historia militar", "factColor": "oro"
+    },
+    {
+      "emoji": "🌅", "label": "Aventura",
+      "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
+      "imageAlt": "Aventura en Acapulco",
+      "title": "Aventura Pacífico",
+      "text": "Surf en Revolcadero, paracaidismo sobre la bahía, snorkel en Isla Roqueta. <strong>Pie de la Cuesta</strong> tiene los atardeceres más cinematográficos de México — y lanchas que te llevan a la Laguna de Coyuca.",
+      "factEmoji": "🌅", "factText": "Atardeceres legendarios", "factColor": "turquesa"
+    },
+    {
+      "emoji": "🍽️", "label": "Sabor",
+      "image": "https://images.unsplash.com/photo-1615870216519-2f9fa575fa5c?w=800&q=80",
+      "imageAlt": "Pozole guerrerense",
+      "title": "Sabor Guerrerense",
+      "text": "El pozole rojo nació aquí. Los jueves son sagrados: familias enteras se sientan a comer el caldo espeso con tostadas, aguacate y chile. <strong>Ceviche de la costa, tamales de chivo, mezcal de Guerrero.</strong>",
+      "factEmoji": "🍽️", "factText": "Capital mundial del pozole", "factColor": "verde"
+    }
+  ],
+
+  "parallax": [
+    {
+      "image": "https://images.unsplash.com/photo-1570737543098-0c80e0832a15?w=1400&q=80",
+      "alt": "Vista aérea bahía de Acapulco",
+      "title": "La bahía más famosa de México",
+      "subtitle": "Donde las estrellas de Hollywood encontraron el paraíso"
+    },
+    {
+      "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1400&q=80",
+      "alt": "Atardecer en el Pacífico",
+      "title": "Atardeceres que no existen en otro lugar",
+      "subtitle": "El Pacífico se incendia cada tarde en Pie de la Cuesta"
+    }
+  ],
+
+  "timelineTitle": "Historia de Acapulco",
+  "timeline": [
+    { "year": "1000 a.C. — 1500 d.C.", "color": "oro", "title": "Pueblos Yopes y Nahuas", "desc": "Los yopes habitan la costa guerrerense. Acapulco es punto de pesca y comercio en el Pacífico antes de la llegada española." },
+    { "year": "1565 — 1815", "color": "rojo", "title": "El Galeón de Manila", "desc": "Durante 250 años, la Nao de China conecta Asia con América vía Acapulco. Seda, porcelana y especias llegan aquí antes que a cualquier otro puerto de América." },
+    { "year": "1934", "color": "naranja", "title": "Nacen los Clavadistas", "desc": "Los primeros hombres se lanzan desde La Quebrada por apuesta. La tradición se convierte en el símbolo más reconocido de Acapulco en el mundo entero." },
+    { "year": "1950 — 1970", "color": "rosa", "title": "Era Dorada de Hollywood", "desc": "Frank Sinatra, Elizabeth Taylor, Elvis y JFK eligen Acapulco. Los hoteles más lujosos del mundo se construyen frente a la bahía. México brilla desde el Pacífico." },
+    { "year": "2025", "color": "turquesa", "title": "El Renacimiento", "desc": "Acapulco renace. Nuevos proyectos, la misma magia. La bahía sigue pintándose de naranja cada atardecer y los clavadistas siguen saltando." }
+  ],
+
+  "blurTitle": "Rincones Legendarios",
+  "blurCards": [
+    { "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80", "alt": "Pie de la Cuesta", "label": "Pie de la Cuesta", "title": "Pie de la Cuesta", "text": "El mejor atardecer de México. Una franja de arena entre el océano Pacífico y la Laguna de Coyuca. Hamacas, coco frío y cielos que se incendian de naranja." },
+    { "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80", "alt": "Isla de la Roqueta", "label": "Isla Roqueta", "title": "Isla de la Roqueta", "text": "A 10 minutos en lancha. Snorkel sobre la Virgen Sumergida, playas sin oleaje y senderos con fauna silvestre. El secreto mejor guardado de la bahía." },
+    { "image": "https://images.unsplash.com/photo-1590076215667-875d4ef2d7de?w=600&q=80", "alt": "Fuerte de San Diego", "label": "Fuerte de San Diego", "title": "Fuerte de San Diego", "text": "Fortaleza del siglo XVII que defendía los tesoros del Galeón de Manila. Hoy es el mejor museo de historia del Pacífico mexicano." },
+    { "image": "https://images.unsplash.com/photo-1615870216519-2f9fa575fa5c?w=600&q=80", "alt": "Zócalo de Acapulco", "label": "Zócalo", "title": "Zócalo de Acapulco", "text": "La plaza central con la catedral neomudéjar de fondo. Pozole los jueves, artesanías cada día y la vida real del Acapulco que no sale en las postales." }
+  ],
+
+  "carouselLabelColor": "rojo",
+  "carouselTitle": "El Pacífico en Imágenes",
+  "carousel": [
+    { "image": "https://images.unsplash.com/photo-1585996838523-0cd8d2f3e0c8?w=800&q=80", "alt": "Bahía", "title": "Bahía de Acapulco", "subtitle": "La herradura perfecta" },
+    { "image": "https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800&q=80", "alt": "Clavadista", "title": "La Quebrada", "subtitle": "35 metros de pura valentía" },
+    { "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80", "alt": "Atardecer", "title": "Pie de la Cuesta", "subtitle": "Atardeceres infinitos" },
+    { "image": "https://images.unsplash.com/photo-1535482680988-03ca4e4ba2d6?w=800&q=80", "alt": "Playa", "title": "Playa Condesa", "subtitle": "Corazón de la Costera" },
+    { "image": "https://images.unsplash.com/photo-1590076215667-875d4ef2d7de?w=800&q=80", "alt": "Fuerte", "title": "Fuerte de San Diego", "subtitle": "400 años de historia" },
+    { "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80", "alt": "Roqueta", "title": "Isla Roqueta", "subtitle": "Paraíso escondido" }
+  ]
+}

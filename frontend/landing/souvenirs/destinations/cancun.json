@@ -1,0 +1,133 @@
+{
+  "name": "Cancún",
+  "slug": "cancun",
+  "state": "Quintana Roo, México",
+  "coords": "21.1619° N · 86.8515° W",
+  "accent": "rosa",
+  "tagline": "Donde el Caribe susurra historias antiguas",
+  "metaDescription": "Descubre Cancún: cenotes sagrados, ruinas mayas frente al mar y el azul infinito del Caribe mexicano.",
+  "ogDescription": "Cenotes sagrados, ruinas mayas y el azul infinito del Caribe mexicano.",
+  "heroImage": "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=1400&q=80",
+  "heroAlt": "Aguas turquesa de Cancún",
+
+  "stats": [
+    { "value": 22, "suffix": "km", "color": "turquesa", "label": "Zona hotelera" },
+    { "value": 1200, "suffix": "+", "color": "verde", "label": "Años de historia" },
+    { "value": 7, "suffix": "", "color": "naranja", "label": "Tortugas" },
+    { "value": 6000, "suffix": "+", "color": "rosa", "label": "Cenotes" }
+  ],
+
+  "facts1": [
+    { "emoji": "🌊", "text": "7 tonos de azul visibles desde Cancún" },
+    { "emoji": "🐢", "text": "7 especies de tortuga marina" },
+    { "emoji": "🏛️", "text": "47 estructuras mayas en zona hotelera" },
+    { "emoji": "💎", "text": "Cenotes de 66 millones de años" },
+    { "emoji": "🦈", "text": "800+ tiburones ballena cada verano" },
+    { "emoji": "🌅", "text": "Bioluminiscencia en Isla Holbox" }
+  ],
+  "facts2": [
+    { "emoji": "🦩", "text": "40,000+ flamingos en Río Lagartos" },
+    { "emoji": "🤿", "text": "500+ esculturas en el MUSA" },
+    { "emoji": "📏", "text": "22.5 km de zona hotelera" },
+    { "emoji": "🏝️", "text": "117 habitantes en 1970" },
+    { "emoji": "🐊", "text": "Cocodrilos en Laguna Nichupté" },
+    { "emoji": "🎭", "text": "\"Nido de serpientes\" en maya" }
+  ],
+  "facts3": [
+    { "emoji": "🌮", "text": "Los tacos de cochinita pibil son herencia maya" },
+    { "emoji": "🎶", "text": "El Caribe tiene su propio ritmo: cumbia sonidera" },
+    { "emoji": "🏊", "text": "El cenote más profundo tiene 119 metros" },
+    { "emoji": "⛵", "text": "Isla Mujeres está a solo 20 minutos en ferry" },
+    { "emoji": "🦜", "text": "Hay 500+ especies de aves en la Riviera Maya" },
+    { "emoji": "🌿", "text": "La selva maya es la segunda más grande de América" },
+    { "emoji": "⭐", "text": "Chichén Itzá es una de las 7 maravillas modernas" },
+    { "emoji": "📸", "text": "30+ millones de turistas visitan Cancún cada año" }
+  ],
+
+  "pillsLabel": "Explora Cancún",
+  "pills": [
+    {
+      "emoji": "🏖️", "label": "Playas",
+      "image": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80",
+      "imageAlt": "Playa Delfines",
+      "title": "Playa Delfines",
+      "text": "El mirador más icónico del Caribe mexicano. Arena blanca, agua turquesa y el letrero gigante donde todos se toman la foto. <strong>Sin hoteles al frente</strong> — solo tú y el mar infinito.",
+      "factEmoji": "🌊", "factText": "Votada #1 playa de Cancún", "factColor": "turquesa"
+    },
+    {
+      "emoji": "💎", "label": "Cenotes",
+      "image": "https://images.unsplash.com/photo-1535262412227-85541e910204?w=800&q=80",
+      "imageAlt": "Cenote Ik Kil",
+      "title": "Cenotes Sagrados",
+      "text": "Para los mayas eran <strong>puertas al inframundo</strong>. Hoy son piscinas naturales de agua cristalina donde las raíces de la selva tocan el agua. Formados hace 66 millones de años.",
+      "factEmoji": "💎", "factText": "6,000+ cenotes en Yucatán", "factColor": "verde"
+    },
+    {
+      "emoji": "🏛️", "label": "Ruinas",
+      "image": "https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80",
+      "imageAlt": "Tulum",
+      "title": "Ruinas Mayas",
+      "text": "Tulum es la única ciudad maya construida frente al mar. Chichén Itzá, maravilla del mundo, está a 2 horas. Y El Rey tiene <strong>iguanas tomando el sol</strong> entre pirámides en la zona hotelera.",
+      "factEmoji": "🏛️", "factText": "1,200+ años de historia maya", "factColor": "naranja"
+    },
+    {
+      "emoji": "🤿", "label": "Aventura",
+      "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
+      "imageAlt": "Snorkeling",
+      "title": "Aventura Submarina",
+      "text": "El MUSA tiene <strong>500+ esculturas bajo el mar</strong>. De junio a septiembre nadas con tiburones ballena. El segundo arrecife más grande del mundo empieza aquí.",
+      "factEmoji": "🤿", "factText": "Museo subacuático más grande del mundo", "factColor": "rosa"
+    },
+    {
+      "emoji": "🌅", "label": "Islas",
+      "image": "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=800&q=80",
+      "imageAlt": "Isla Mujeres",
+      "title": "Islas del Caribe",
+      "text": "Isla Mujeres: colores que no caben en una foto. Isla Holbox: calles de arena, bioluminiscencia nocturna y cero coches. <strong>El Cancún que el tiempo olvidó.</strong>",
+      "factEmoji": "🌅", "factText": "Bioluminiscencia natural", "factColor": "turquesa"
+    }
+  ],
+
+  "parallax": [
+    {
+      "image": "https://images.unsplash.com/photo-1602088113235-229c19758e9f?w=1400&q=80",
+      "alt": "Vista aérea zona hotelera Cancún",
+      "title": "22 km de paraíso caribeño",
+      "subtitle": "La zona hotelera más famosa de Latinoamérica"
+    },
+    {
+      "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1400&q=80",
+      "alt": "Mundo submarino de Cancún",
+      "title": "Un mundo bajo las olas",
+      "subtitle": "El segundo arrecife más grande del planeta empieza aquí"
+    }
+  ],
+
+  "timelineTitle": "Historia de Cancún",
+  "timeline": [
+    { "year": "200 — 1500 d.C.", "color": "naranja", "title": "Civilización Maya", "desc": "Los mayas construyen ciudades costeras como El Rey y El Meco. Cancún es punto de comercio y observación astronómica." },
+    { "year": "1517", "color": "rojo", "title": "Llegada Española", "desc": "Francisco Hernández de Córdoba avista la costa de Quintana Roo. La península permanece mayormente indómita por siglos." },
+    { "year": "1970", "color": "turquesa", "title": "Nace el Proyecto Cancún", "desc": "FONATUR selecciona una isla desierta de pescadores como sede del nuevo megaproyecto turístico de México. Población: 117 personas." },
+    { "year": "1988", "color": "verde", "title": "Huracán Gilberto", "desc": "El huracán más destructivo en la historia de México golpea Cancún. La ciudad se reconstruye más fuerte y moderna." },
+    { "year": "2025", "color": "rosa", "title": "Capital del Caribe", "desc": "Más de 30 millones de visitantes al año. La zona hotelera tiene 22km de playas y Cancún es el destino #1 de Latinoamérica." }
+  ],
+
+  "blurTitle": "Destinos Secretos",
+  "blurCards": [
+    { "image": "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=600&q=80", "alt": "Isla Mujeres", "label": "Isla Mujeres", "title": "Isla Mujeres", "text": "A 20 minutos en ferry. Playa Norte está entre las 10 mejores del mundo. Snorkel con tortugas y atardeceres que pintan el cielo de fuego." },
+    { "image": "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=600&q=80", "alt": "MUSA Cancún", "label": "MUSA", "title": "Museo Subacuático", "text": "500+ esculturas de Jason deCaires Taylor sumergidas entre 4 y 8 metros de profundidad. Arte que se convierte en arrecife artificial." },
+    { "image": "https://images.unsplash.com/photo-1518638150340-f706e86654de?w=600&q=80", "alt": "Tulum", "label": "Tulum", "title": "Tulum", "text": "La única ciudad maya frente al mar. Su Castillo vigila el Caribe desde un acantilado de 12 metros, justo donde nace cada amanecer." },
+    { "image": "https://images.unsplash.com/photo-1518638150340-f706e86654de?w=600&q=80", "alt": "Chichén Itzá", "label": "Chichén Itzá", "title": "Chichén Itzá", "text": "La serpiente emplumada desciende cada equinoccio por la escalinata de El Castillo. Una de las 7 maravillas del mundo moderno." }
+  ],
+
+  "carouselLabelColor": "verde",
+  "carouselTitle": "El Caribe en Imágenes",
+  "carousel": [
+    { "image": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80", "alt": "Playa", "title": "Playa Delfines", "subtitle": "El mirador icónico" },
+    { "image": "https://images.unsplash.com/photo-1535262412227-85541e910204?w=800&q=80", "alt": "Cenote", "title": "Cenote Ik Kil", "subtitle": "Piscina sagrada maya" },
+    { "image": "https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&q=80", "alt": "Tulum", "title": "Tulum", "subtitle": "Historia y mar" },
+    { "image": "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=800&q=80", "alt": "Isla Mujeres", "title": "Isla Mujeres", "subtitle": "Paraíso de colores" },
+    { "image": "https://images.unsplash.com/photo-1570737543098-0c80e0832a15?w=800&q=80", "alt": "Chichén Itzá", "title": "Chichén Itzá", "subtitle": "Maravilla del mundo" },
+    { "image": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80", "alt": "Snorkel", "title": "Arrecife", "subtitle": "Mundo submarino" }
+  ]
+}
