@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configuration
-const AXKAN_PATH = process.env.AXKAN_REPO_PATH || path.resolve(__dirname, '../assets/axkan');
+const AXKAN_PATH = process.env.AXKAN_REPO_PATH || path.resolve(__dirname, '../../brand');
 
 const MARKDOWN_FILES = [
   'CLAUDE.md',
