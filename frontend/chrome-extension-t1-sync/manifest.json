@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "AXKAN T1 Sync",
+  "version": "1.0.0",
+  "description": "Auto-syncs T1 Envios shipments to the AXKAN admin dashboard",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://shipping.t1.com/shippings/my-shippings*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://shipping.t1.com/shippings/create-shipping*"],
+      "js": ["autofill.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
