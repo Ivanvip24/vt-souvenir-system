@@ -1,6 +1,7 @@
 import { query } from '../../shared/database.js';
 import { getDateRange, formatCurrency } from '../../shared/utils.js';
 import { format } from 'date-fns';
+import { logError } from '../../shared/logger.js';
 
 /**
  * Calculate revenue for a specific time period
@@ -33,7 +34,7 @@ export async function calculateRevenue(startDate, endDate) {
       avgOrderValue: parseFloat(data.avg_order_value)
     };
   } catch (error) {
-    console.error('Error calculating revenue:', error);
+    logError('revenueCalculator.calculateRevenue.fail', error);
     throw error;
   }
 }
@@ -76,7 +77,7 @@ export async function getDailyRevenue(startDate, endDate) {
       profitMargin: parseFloat(row.profit_margin)
     }));
   } catch (error) {
-    console.error('Error getting daily revenue:', error);
+    logError('revenueCalculator.getDailyRevenue.fail', error);
     throw error;
   }
 }
@@ -153,7 +154,7 @@ export async function getTopProducts(startDate, endDate, limit = 10) {
       profitMargin: parseFloat(row.avg_profit_margin || 0)
     }));
   } catch (error) {
-    console.error('Error getting top products:', error);
+    logError('revenueCalculator.getTopProducts.fail', error);
     throw error;
   }
 }
@@ -192,7 +193,7 @@ export async function getTopClients(startDate, endDate, limit = 10) {
       lastOrderDate: row.last_order_date
     }));
   } catch (error) {
-    console.error('Error getting top clients:', error);
+    logError('revenueCalculator.getTopClients.fail', error);
     throw error;
   }
 }
@@ -220,7 +221,7 @@ export async function getOrdersByStatus(startDate, endDate) {
       revenue: parseFloat(row.revenue)
     }));
   } catch (error) {
-    console.error('Error getting orders by status:', error);
+    logError('revenueCalculator.getOrdersByStatus.fail', error);
     throw error;
   }
 }
@@ -260,7 +261,7 @@ export async function getLowMarginOrders(threshold = 20, limit = 10) {
       status: row.status
     }));
   } catch (error) {
-    console.error('Error getting low margin orders:', error);
+    logError('revenueCalculator.getLowMarginOrders.fail', error);
     throw error;
   }
 }
@@ -304,7 +305,7 @@ export async function getProductionMetrics(startDate, endDate) {
       avgCompletionDays: parseFloat(data.avg_completion_days || 0).toFixed(1)
     };
   } catch (error) {
-    console.error('Error getting production metrics:', error);
+    logError('revenueCalculator.getProductionMetrics.fail', error);
     throw error;
   }
 }
