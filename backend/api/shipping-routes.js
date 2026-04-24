@@ -10,6 +10,7 @@ import * as pickupScheduler from '../services/pickup-scheduler.js';
 import { writeFileSync, unlinkSync, mkdtempSync, rmdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -102,7 +103,7 @@ router.get('/origin-address', async (req, res) => {
       address: result.rows[0].value
     });
   } catch (error) {
-    console.error('Error fetching origin address:', error);
+    logError('shipping.error-fetching-origin-address', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -147,7 +148,7 @@ router.put('/origin-address', async (req, res) => {
     // Update the in-memory ORIGIN_ADDRESS in skydropx service
     skydropx.updateOriginAddress(addressData);
 
-    console.log('✅ Origin address updated:', addressData.street, addressData.number);
+    log('info', 'shipping.origin-address-updated');
 
     res.json({
       success: true,
@@ -155,7 +156,7 @@ router.put('/origin-address', async (req, res) => {
       address: addressData
     });
   } catch (error) {
-    console.error('Error updating origin address:', error);
+    logError('shipping.error-updating-origin-address', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -202,8 +203,8 @@ router.post('/orders/:orderId/generate', async (req, res) => {
     // Use manual count if provided, otherwise use calculated
     const labelsCount = manualLabelsCount || (autoCalculate ? totalBoxes : 1);
 
-    console.log(`📦 Order ${order.order_number} - Calculated ${totalBoxes} boxes:`, breakdown);
-    console.log(`   Generating ${labelsCount} label(s)`);
+    log('info', 'shipping.debug');
+    log('info', 'shipping.generating-labels');
 
 
     // Check if order is approved (labels are generated on approval)
@@ -242,7 +243,7 @@ router.post('/orders/:orderId/generate', async (req, res) => {
       reference_notes: order.reference_notes
     };
 
-    console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for order ${order.order_number}`);
+    log('info', 'shipping.creating-multigua-with-packages-for-order');
 
     // Get quote for shipping (with multiple packages for multiguía)
     const quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, labelsCount);
@@ -266,7 +267,7 @@ router.post('/orders/:orderId/generate', async (req, res) => {
       labelsCount  // Number of packages in this multiguía
     );
 
-    console.log(`✅ Multiguía created with ${shipment.packages?.length || labelsCount} packages`);
+    log('info', 'shipping.multigua-created-with-packages');
 
     // Save each package as a record in the database
     const generatedLabels = [];
@@ -311,9 +312,9 @@ router.post('/orders/:orderId/generate', async (req, res) => {
             shipment.shipment_id,
             shipment.carrier
           );
-          console.log(`📦 Pickup for multiguía: ${pickupResult.message}`);
+          log('info', 'shipping.pickup-for-multigua');
         } catch (pickupError) {
-          console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+          logError('shipping.pickup.error', pickupError);
         }
       });
     }
@@ -346,7 +347,7 @@ router.post('/orders/:orderId/generate', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error generating shipping label:', error);
+    logError('shipping.error-generating-shipping-label', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -400,7 +401,7 @@ router.get('/orders/:orderId/calculate-boxes', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error calculating boxes:', error);
+    logError('shipping.error-calculating-boxes', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -431,7 +432,7 @@ router.get('/orders/:orderId/labels', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error getting shipping labels:', error);
+    logError('shipping.error-getting-shipping-labels', error);
     res.status(500).json({ error: 'Error obteniendo guías' });
   }
 });
@@ -543,7 +544,7 @@ router.get('/labels', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error listing shipping labels:', error);
+    logError('shipping.error-listing-shipping-labels', error);
     res.status(500).json({ error: 'Error obteniendo guías' });
   }
 });
@@ -663,7 +664,7 @@ router.get('/analytics', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error getting shipping analytics:', error);
+    logError('shipping.error-getting-shipping-analytics', error);
     res.status(500).json({ error: 'Error obteniendo analíticas de envío' });
   }
 });
@@ -702,7 +703,7 @@ router.get('/labels/:labelId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error getting shipping label:', error);
+    logError('shipping.error-getting-shipping-label', error);
     res.status(500).json({ error: 'Error obteniendo guía' });
   }
 });
@@ -749,7 +750,7 @@ router.patch('/labels/:labelId/status', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error updating shipping label:', error);
+    logError('shipping.error-updating-shipping-label', error);
     res.status(500).json({ error: 'Error actualizando guía' });
   }
 });
@@ -809,7 +810,7 @@ router.post('/labels/:labelId/refresh', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error refreshing shipping label:', error);
+    logError('shipping.error-refreshing-shipping-label', error);
     res.status(500).json({ error: 'Error actualizando información de guía' });
   }
 });
@@ -902,7 +903,7 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
     const { totalBoxes, breakdown } = calculateBoxesForOrder(itemsResult.rows);
     const packagesCount = Math.max(1, totalBoxes);
 
-    console.log(`📦 Getting shipping quotes for order ${order.order_number} (${packagesCount} package(s))`, breakdown);
+    log('info', 'shipping.box-calculation', { totalBoxes, packagesCount });
 
     // Get quote from Skydropx with correct package count
     const quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount);
@@ -942,7 +943,7 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
     // If ALL options are $200 or more, only show the cheapest one
     if (filteredRates.length === 0 && allowedRates.length > 0) {
       filteredRates = [allowedRates[0]]; // Only the cheapest
-      console.log(`⚠️ All rates >= $${MAX_PRICE_THRESHOLD}, showing only cheapest: ${allowedRates[0].carrier} $${allowedRates[0].total_price}`);
+      log('info', 'shipping.all-rates-showing-only-cheapest');
     }
 
     // Limit to 3 cheapest options max
@@ -984,7 +985,7 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error getting shipping quotes:', error);
+    logError('shipping.error-getting-shipping-quotes', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -1078,9 +1079,9 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
     const { totalBoxes, breakdown } = calculateBoxesForOrder(itemsResult.rows);
     const labelsCount = Math.max(1, totalBoxes);
 
-    console.log(`📦 Client confirmed shipping for order ${orderData.order_number}: ${carrier} - ${service}`);
-    console.log(`   Calculated ${labelsCount} box(es):`, breakdown);
-    console.log(`   Generating multiguía...`);
+    log('info', 'shipping.client-confirmed-shipping-for-order');
+    log('info', 'shipping.box-calculation', { totalBoxes, labelsCount });
+    log('info', 'shipping.generating-multigua');
 
     const selectedRate = {
       rate_id: rate_id,
@@ -1141,7 +1142,7 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
       WHERE id = $2
     `, [labelsCount, orderId]);
 
-    console.log(`✅ ${labelsCount} label(s) generated for order ${orderData.order_number}: ${shipment.tracking_number}`);
+    log('info', 'shipping.labels-generated-for-order');
 
     // Auto-request pickup (non-blocking)
     if (shipment.shipment_id && shipment.carrier) {
@@ -1151,9 +1152,9 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
             shipment.shipment_id,
             shipment.carrier
           );
-          console.log(`📦 Pickup for label: ${pickupResult.message}`);
+          log('info', 'shipping.pickup-for-label');
         } catch (pickupError) {
-          console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+          logError('shipping.pickup.error', pickupError);
         }
       });
     }
@@ -1174,7 +1175,7 @@ router.post('/orders/:orderId/select-rate', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error generating shipping label:', error);
+    logError('shipping.error-generating-shipping-label', error);
     res.status(500).json({ error: 'Error generando guía de envío: ' + (error.message || 'Error interno') });
   }
 });
@@ -1237,8 +1238,8 @@ router.post('/orders/:orderId/generate-selected', async (req, res) => {
       reference_notes: order.reference_notes
     };
 
-    console.log(`📦 Generating label with client-selected rate for order ${order.order_number}`);
-    console.log(`   Selected: ${order.selected_carrier} - ${order.selected_service}`);
+    log('info', 'shipping.generating-label-with-client-selected-rate-for-ord');
+    log('info', 'shipping.selected');
 
     // Create shipment with client's selected rate
     const selectedRate = {
@@ -1282,7 +1283,7 @@ router.post('/orders/:orderId/generate-selected', async (req, res) => {
       shipment.label_url ? 'label_generated' : 'processing'
     ]);
 
-    console.log(`✅ Label generated for order ${order.order_number}`);
+    log('info', 'shipping.label-generated-for-order');
 
     // Auto-request pickup for this carrier (if not already scheduled)
     if (shipment.shipment_id && shipment.carrier) {
@@ -1292,9 +1293,9 @@ router.post('/orders/:orderId/generate-selected', async (req, res) => {
             shipment.shipment_id,
             shipment.carrier
           );
-          console.log(`📦 Pickup for label: ${pickupResult.message}`);
+          log('info', 'shipping.pickup-for-label');
         } catch (pickupError) {
-          console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+          logError('shipping.pickup.error', pickupError);
         }
       });
     }
@@ -1314,7 +1315,7 @@ router.post('/orders/:orderId/generate-selected', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error generating label with selected rate:', error);
+    logError('shipping.error-generating-label-with-selected-rate', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -1357,7 +1358,7 @@ router.get('/orders/:orderId/can-generate', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error checking shipping eligibility:', error);
+    logError('shipping.error-checking-shipping-eligibility', error);
     res.status(500).json({ error: 'Error verificando elegibilidad' });
   }
 });
@@ -1397,7 +1398,7 @@ router.post('/labels/:labelId/refresh-tracking', async (req, res) => {
     }
 
     // Fetch from Skydropx
-    console.log(`🔄 Refreshing tracking for label ${labelId}, shipment ${label.shipment_id}`);
+    log('info', 'shipping.refreshing-tracking-for-label-shipment');
     const shipmentDetails = await skydropx.getShipment(label.shipment_id);
 
     if (shipmentDetails.tracking_number) {
@@ -1413,7 +1414,7 @@ router.post('/labels/:labelId/refresh-tracking', async (req, res) => {
         labelId
       ]);
 
-      console.log(`✅ Updated tracking number for label ${labelId}: ${shipmentDetails.tracking_number}`);
+      log('info', 'shipping.updated-tracking-number-for-label');
 
       return res.json({
         success: true,
@@ -1430,7 +1431,7 @@ router.post('/labels/:labelId/refresh-tracking', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error refreshing tracking:', error);
+    logError('shipping.error-refreshing-tracking', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -1460,7 +1461,7 @@ router.post('/refresh-pending-tracking', async (req, res) => {
       });
     }
 
-    console.log(`🔄 Refreshing tracking for ${labelsResult.rows.length} pending labels...`);
+    log('info', 'shipping.refreshing-tracking-for-pending-labels');
 
     let updated = 0;
     const results = [];
@@ -1517,7 +1518,7 @@ router.post('/refresh-pending-tracking', async (req, res) => {
       }
     }
 
-    console.log(`✅ Updated ${updated} of ${labelsResult.rows.length} labels`);
+    log('info', 'shipping.updated-of-labels');
 
     res.json({
       success: true,
@@ -1528,7 +1529,7 @@ router.post('/refresh-pending-tracking', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error refreshing pending tracking:', error);
+    logError('shipping.error-refreshing-pending-tracking', error);
     res.status(500).json({ error: 'Error actualizando rastreos pendientes' });
   }
 });
@@ -1549,7 +1550,7 @@ router.get('/pickups/status', async (req, res) => {
       ...status
     });
   } catch (error) {
-    console.error('❌ Error getting pickup status:', error);
+    logError('shipping.error-getting-pickup-status', error);
     res.status(500).json({ error: 'Error obteniendo estado de recolecciones' });
   }
 });
@@ -1562,12 +1563,12 @@ router.post('/pickups/request', async (req, res) => {
   const { pickupDate, timeFrom, timeTo, triggerAll } = req.body;
 
   try {
-    console.log('📦 Manual pickup request triggered from API');
+    log('info', 'shipping.manual-pickup-request-triggered-from-api');
 
     // If triggerAll is true, request pickups for all pending labels grouped by carrier
     if (triggerAll) {
       // First, get pending labels and verify with Skydropx
-      console.log('🔍 Verifying shipment statuses with Skydropx...');
+      log('info', 'shipping.verifying-shipment-statuses-with-skydropx');
       const verifiedLabels = await skydropx.getPendingShipmentsForPickup({ verifyWithSkydropx: true });
 
       if (verifiedLabels.length === 0) {
@@ -1689,7 +1690,7 @@ router.post('/pickups/request', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('❌ Error requesting pickup:', error);
+    logError('shipping.error-requesting-pickup', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -1706,9 +1707,9 @@ router.post('/pickups/request/carrier', async (req, res) => {
   }
 
   try {
-    console.log(`📦 Carrier-specific pickup request for: ${carrier}`);
-    console.log(`   Date: ${pickupDate}, Time: ${timeFrom} - ${timeTo}`);
-    console.log(`   Shipment IDs provided: ${shipmentIds?.length || 0}`);
+    log('info', 'shipping.carrier-specific-pickup-request-for');
+    log('info', 'shipping.date-time');
+    log('info', 'shipping.shipment-ids-provided');
 
     // Get pending labels for this carrier if no shipmentIds provided
     let labelsToPickup = [];
@@ -1724,7 +1725,7 @@ router.post('/pickups/request/carrier', async (req, res) => {
         .map(l => l.shipment_id);
     }
 
-    console.log(`   Labels to pickup: ${labelsToPickup.length}`);
+    log('info', 'shipping.labels-to-pickup');
 
     const hasLabels = labelsToPickup.length > 0;
 
@@ -1742,14 +1743,14 @@ router.post('/pickups/request/carrier', async (req, res) => {
       });
       skydropxSuccess = pickupResult.success;
     } catch (skydropxError) {
-      console.log(`⚠️ Skydropx pickup request failed: ${skydropxError.message}`);
+      log('info', 'shipping.skydropx-pickup-request-failed');
       // If Skydropx fails (especially for empty pickups), save locally
       pickupResult = { success: false, error: skydropxError.message };
     }
 
     // If Skydropx didn't work (or we have no labels), save pickup locally
     if (!skydropxSuccess) {
-      console.log('📝 Saving pickup request locally...');
+      log('info', 'shipping.saving-pickup-request-locally');
       localPickupId = `local-${carrier.toLowerCase()}-${Date.now()}`;
 
       await query(`
@@ -1859,7 +1860,7 @@ router.post('/pickups/request/carrier', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('❌ Error requesting carrier pickup:', error);
+    logError('shipping.error-requesting-carrier-pickup', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1892,7 +1893,7 @@ router.get('/pickups/pending', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error getting pending pickups:', error);
+    logError('shipping.error-getting-pending-pickups', error);
     res.status(500).json({ error: 'Error obteniendo envíos pendientes' });
   }
 });
@@ -1940,7 +1941,7 @@ router.get('/pickups/history', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error getting pickup history:', error);
+    logError('shipping.error-getting-pickup-history', error);
     res.status(500).json({ error: 'Error obteniendo historial de recolecciones' });
   }
 });
@@ -2082,7 +2083,7 @@ router.get('/pickups/:pickupId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error getting pickup details:', error);
+    logError('shipping.error-getting-pickup-details', error);
     res.status(500).json({ error: 'Error obteniendo detalles de recolección' });
   }
 });
@@ -2148,7 +2149,7 @@ router.patch('/pickups/:pickupId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error updating pickup:', error);
+    logError('shipping.error-updating-pickup', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -2176,7 +2177,7 @@ router.delete('/pickups/:pickupId', async (req, res) => {
       try {
         await skydropx.cancelPickup(pickupId);
       } catch (skydropxErr) {
-        console.log(`⚠️ Could not cancel in Skydropx: ${skydropxErr.message}`);
+        log('info', 'shipping.could-not-cancel-in-skydropx');
       }
     }
 
@@ -2198,7 +2199,7 @@ router.delete('/pickups/:pickupId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error cancelling pickup:', error);
+    logError('shipping.error-cancelling-pickup', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -2271,8 +2272,8 @@ router.post('/clients/:clientId/generate', async (req, res) => {
       reference_notes: client.reference_notes
     };
 
-    console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for client ${client.name} (no order)`);
-    console.log(`   Address: ${destAddress.street} ${destAddress.street_number}, ${destAddress.colonia}, ${destAddress.city}, ${destAddress.state} CP ${destAddress.postal}`);
+    log('info', 'shipping.creating-multigua-with-packages-for-client-no-orde');
+    log('info', 'shipping.address-cp');
 
     // Use the original quotation_id from the user's selected rate directly.
     // The quoting endpoint already fired 4+ parallel quotes and returned the
@@ -2283,7 +2284,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
 
     if (quotationId && rateId && selectedRate) {
       // Use the original quotation_id + rate_id from the quoting step
-      console.log(`📦 Using original quote: ${selectedRate.carrier} - ${selectedRate.service} (quotation: ${quotationId})`);
+      log('info', 'shipping.using-original-quote-quotation');
       finalRate = selectedRate;
       finalQuotationId = quotationId;
 
@@ -2291,7 +2292,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
       // multiple packages, the quotation_id won't work. This shouldn't happen anymore
       // (quoting endpoint now filters these out), but guard against it.
       if (selectedRate.isEstimated && labelsCount > 1) {
-        console.log(`   ⚠️ Rate was single-package estimate for ${labelsCount} packages — attempting fresh multi-package quote...`);
+        log('info', 'shipping.rate-was-single-package-estimate-for-packages-atte');
         const freshQuotePromises = [];
         for (let i = 0; i < 3; i++) {
           freshQuotePromises.push(
@@ -2306,7 +2307,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
             r.carrier === selectedRate.carrier && r.service === selectedRate.service
           );
           if (match) {
-            console.log(`   ✅ Found ${match.carrier} - ${match.service} in fresh multi-package quote`);
+            log('info', 'shipping.found-in-fresh-multi-package-quote');
             finalRate = match;
             finalQuotationId = q.quotation_id;
             found = true;
@@ -2314,7 +2315,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
           }
         }
         if (!found) {
-          console.log(`   ❌ ${selectedRate.carrier} - ${selectedRate.service} not available for ${labelsCount} packages`);
+          log('info', 'shipping.not-available-for-packages');
           return res.status(400).json({
             success: false,
             error: `${selectedRate.carrier} – ${selectedRate.service} no soporta envíos de ${labelsCount} paquetes. Por favor selecciona otra paquetería.`
@@ -2323,7 +2324,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
       }
     } else {
       // No pre-selected rate — get a fresh quote and pick cheapest
-      console.log(`📦 No pre-selected rate, getting fresh quote...`);
+      log('info', 'shipping.no-pre-selected-rate-getting-fresh-quote');
       const quote = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, labelsCount);
       if (!quote?.rates?.length) {
         return res.status(400).json({
@@ -2336,8 +2337,8 @@ router.post('/clients/:clientId/generate', async (req, res) => {
     }
 
     // Generate ONE shipment with multiple packages (MULTIGUÍA)
-    console.log(`📦 Creating MULTIGUÍA with ${labelsCount} package(s) for client ${client.name}`);
-    console.log(`   Carrier: ${finalRate.carrier} - ${finalRate.service} - $${finalRate.total_price}`);
+    log('info', 'shipping.creating-multigua-with-packages-for-client');
+    log('info', 'shipping.carrier');
 
     const shipment = await skydropx.createShipment(
       finalQuotationId,
@@ -2391,14 +2392,14 @@ router.post('/clients/:clientId/generate', async (req, res) => {
             shipment.shipment_id,
             shipment.carrier
           );
-          console.log(`📦 Pickup for multiguía: ${pickupResult.message}`);
+          log('info', 'shipping.pickup-for-multigua');
         } catch (pickupError) {
-          console.error('⚠️ Pickup request error (non-fatal):', pickupError.message);
+          logError('shipping.pickup.error', pickupError);
         }
       });
     }
 
-    console.log(`✅ Generated MULTIGUÍA with ${packagesArray.length} package(s) for client ${client.name}`);
+    log('info', 'shipping.generated-multigua-with-packages-for-client');
 
     res.json({
       success: true,
@@ -2421,7 +2422,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error generating shipping label for client:', error);
+    logError('shipping.error-generating-shipping-label-for-client', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2488,7 +2489,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
       reference_notes: addr.reference_notes || client.reference_notes
     };
 
-    console.log(`📦 Getting shipping quotes for client ${client.name} (${packagesCount} packages)`);
+    log('info', 'shipping.getting-shipping-quotes-for-client-packages');
 
     // Strategy: Skydropx multi-package quotes are INCONSISTENT — they randomly
     // omit carriers (e.g. FedEx) even though they support multi-package.
@@ -2502,7 +2503,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
     // Fire all quote requests in parallel: 1 single + 3 multi
     const quotePromises = [
       skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, 1).catch(err => {
-        console.log(`   ⚠️ Single quote error: ${err.message}`);
+        log('info', 'shipping.single-quote-error');
         return null;
       })
     ];
@@ -2512,7 +2513,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
       for (let i = 0; i < 3; i++) {
         quotePromises.push(
           skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount).catch(err => {
-            console.log(`   ⚠️ Multi quote ${i + 1} error: ${err.message}`);
+            log('info', 'shipping.multi-quote-error');
             return null;
           })
         );
@@ -2539,11 +2540,11 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
       }
     }
 
-    console.log(`   ✅ Quotes: ${singlePackageQuote?.rates?.length || 0} single carriers, ${multiRatesMap.size} multi carriers (from ${multiResults.filter(r => r?.rates?.length > 0).length}/3 successful multi quotes)`);
+    log('info', 'shipping.quotes-single-carriers-multi-carriers-from-3-succe');
 
     // If everything failed, retry once more
     if ((!singlePackageQuote?.rates?.length) && multiRatesMap.size === 0) {
-      console.log(`   🔄 No rates from any quote, retrying...`);
+      log('info', 'shipping.no-rates-from-any-quote-retrying');
       await new Promise(r => setTimeout(r, 1500));
       try {
         const retry = await skydropx.getQuote(destAddress, skydropx.DEFAULT_PACKAGE, packagesCount > 1 ? packagesCount : 1);
@@ -2558,7 +2559,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
           }
         }
       } catch (err) {
-        console.log(`   ⚠️ Retry error: ${err.message}`);
+        log('info', 'shipping.retry-error');
       }
     }
 
@@ -2622,7 +2623,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
         } else if (!existing && packagesCount > 1) {
           // Multi-package order: carrier ONLY in single quote — skip it.
           // Its quotation_id is for 1 package and will fail at generation time.
-          console.log(`   ⏭️ Skipping ${rate.carrier} - ${rate.service}: only available in single-package quote (incompatible with ${packagesCount} packages)`);
+          log('info', 'shipping.skipping-only-available-in-single-package-quote-in');
         } else if (existing && estimatedTotal < existing.total_price) {
           // Carrier exists in both — single × N is cheaper, use lower price
           // but keep the multi-package quotation_id so generation works
@@ -2675,7 +2676,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error getting shipping quotes for client:', error);
+    logError('shipping.error-getting-shipping-quotes-for-client', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -2791,7 +2792,7 @@ router.post('/labels/print', async (req, res) => {
 
     res.json({ success: true, printed, failed, errors: errors.length > 0 ? errors : undefined });
   } catch (error) {
-    console.error('Print error:', error);
+    logError('shipping.print-error', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
