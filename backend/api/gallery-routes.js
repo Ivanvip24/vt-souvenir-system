@@ -16,6 +16,7 @@ import {
   requireDepartment,
   logActivity
 } from './middleware/employee-auth.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -48,7 +49,7 @@ router.get('/', employeeAuth, async (req, res) => {
   try {
     const { category_id, storage_type, tags, search, include_archived, limit = 200, offset = 0 } = req.query;
 
-    console.log(`📸 Gallery request: limit=${limit}, category=${category_id || 'all'}, search=${search || 'none'}`);
+    log('info', 'gallery.gallery-request-limit-category-search');
 
     let sql = `
       SELECT g.*,
@@ -125,7 +126,7 @@ router.get('/', employeeAuth, async (req, res) => {
 
     const countResult = await query(countSql, countValues);
 
-    console.log(`📸 Gallery response: returning ${result.rows.length} designs, total=${countResult.rows[0].count}`);
+    log('info', 'gallery.gallery-response-returning-designs-total');
 
     res.json({
       success: true,
@@ -136,7 +137,7 @@ router.get('/', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List gallery error:', error);
+    logError('gallery.list-gallery-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar diseños'
@@ -181,7 +182,7 @@ router.get('/archived', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List archived gallery error:', error);
+    logError('gallery.list-archived-gallery-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar diseños archivados'
@@ -227,7 +228,7 @@ router.get('/search', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Search gallery error:', error);
+    logError('gallery.search-gallery-error', error);
     res.status(500).json({
       success: false,
       error: 'Error en búsqueda'
@@ -268,7 +269,7 @@ router.get('/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get design error:', error);
+    logError('gallery.get-design-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener diseño'
@@ -343,7 +344,7 @@ router.post('/', employeeAuth, requireDepartment('design'), async (req, res) => 
     });
 
   } catch (error) {
-    console.error('Create design error:', error);
+    logError('gallery.create-design-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al crear diseño'
@@ -411,7 +412,7 @@ router.put('/:id', employeeAuth, requireDepartment('design'), async (req, res) =
     });
 
   } catch (error) {
-    console.error('Update design error:', error);
+    logError('gallery.update-design-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar diseño'
@@ -455,7 +456,7 @@ router.delete('/:id', employeeAuth, requireDepartment('design'), async (req, res
     });
 
   } catch (error) {
-    console.error('Delete design error:', error);
+    logError('gallery.delete-design-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al eliminar diseño'
@@ -493,7 +494,7 @@ router.post('/:id/use', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Track design use error:', error);
+    logError('gallery.track-design-use-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al registrar uso'
@@ -542,7 +543,7 @@ router.post('/:id/download', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Download design error:', error);
+    logError('gallery.download-design-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al descargar diseño'
@@ -586,7 +587,7 @@ router.post('/:id/archive', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Archive design error:', error);
+    logError('gallery.archive-design-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al archivar diseño'
@@ -630,7 +631,7 @@ router.post('/:id/restore', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Restore design error:', error);
+    logError('gallery.restore-design-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al restaurar diseño'
@@ -679,7 +680,7 @@ router.patch('/:id/visibility', employeeAuth, requireManager, async (req, res) =
     });
 
   } catch (error) {
-    console.error('Visibility toggle error:', error);
+    logError('gallery.visibility-toggle-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al cambiar visibilidad'
@@ -718,12 +719,12 @@ router.post('/reanalyze', employeeAuth, requireDepartment('design'), async (req,
             `UPDATE design_gallery SET name = $1, description = COALESCE($2, description) WHERE id = $3`,
             [analysis.title, analysis.description || null, design.id]
           );
-          console.log(`✅ Reanalyzed design ${design.id}: "${design.name}" → "${analysis.title}"`);
+          log('info', 'gallery.reanalyzed-design');
           updated++;
         }
       } catch (err) {
         errors.push({ id: design.id, name: design.name, error: err.message });
-        console.warn(`⚠️ Failed to reanalyze design ${design.id}: ${err.message}`);
+        log('warn', 'gallery.failed-to-reanalyze-design');
       }
     }
 
@@ -735,7 +736,7 @@ router.post('/reanalyze', employeeAuth, requireDepartment('design'), async (req,
     });
 
   } catch (error) {
-    console.error('Reanalyze error:', error);
+    logError('gallery.reanalyze-error', error);
     res.status(500).json({ success: false, error: 'Error al re-analizar diseños' });
   }
 });
@@ -761,7 +762,7 @@ router.get('/stats/summary', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Gallery stats error:', error);
+    logError('gallery.gallery-stats-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener estadísticas'
@@ -795,13 +796,13 @@ router.post('/upload', employeeAuth, upload.single('design'), async (req, res) =
       });
     }
 
-    console.log(`📤 Uploading design: ${name} (${req.file.size} bytes)`);
+    log('info', 'gallery.uploading-design-bytes');
 
     // Convert HEIC to JPEG if needed
     let fileBuffer = req.file.buffer;
     let fileMimetype = req.file.mimetype;
     if (isHeicFile(req.file)) {
-      console.log('🔄 Converting HEIC to JPEG...');
+      log('info', 'gallery.converting-heic-to-jpeg');
       const converted = await convertHeicToJpeg(fileBuffer);
       fileBuffer = converted.buffer;
       fileMimetype = converted.mimetype;
@@ -854,7 +855,7 @@ router.post('/upload', employeeAuth, upload.single('design'), async (req, res) =
 
     await logActivity(req.employee.id, 'design_uploaded', 'design_gallery', result.rows[0].id, { name });
 
-    console.log(`✅ Design uploaded successfully: ${name}`);
+    log('info', 'gallery.design-uploaded-successfully');
 
     res.status(201).json({
       success: true,
@@ -863,7 +864,7 @@ router.post('/upload', employeeAuth, upload.single('design'), async (req, res) =
     });
 
   } catch (error) {
-    console.error('Upload design error:', error);
+    logError('gallery.upload-design-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -897,7 +898,7 @@ router.post('/download-zip', employeeAuth, async (req, res) => {
       });
     }
 
-    console.log(`📦 Creating ZIP with ${design_ids.length} designs...`);
+    log('info', 'gallery.creating-zip-with-designs');
 
     // Get design info from database
     const placeholders = design_ids.map((_, i) => `$${i + 1}`).join(',');
@@ -926,7 +927,7 @@ router.post('/download-zip', employeeAuth, async (req, res) => {
     });
 
     archive.on('error', (err) => {
-      console.error('Archive error:', err);
+      logError('gallery.archive-error', err);
       if (!res.headersSent) {
         res.status(500).json({
           success: false,
@@ -943,7 +944,7 @@ router.post('/download-zip', employeeAuth, async (req, res) => {
       try {
         const response = await fetch(design.file_url);
         if (!response.ok) {
-          console.warn(`⚠️ Could not fetch design ${design.id}: ${response.status}`);
+          log('warn', 'gallery.could-not-fetch-design');
           return null;
         }
 
@@ -954,7 +955,7 @@ router.post('/download-zip', employeeAuth, async (req, res) => {
 
         return { fileName, buffer: Buffer.from(buffer) };
       } catch (err) {
-        console.warn(`⚠️ Error fetching design ${design.id}:`, err.message);
+        log('warn', 'gallery.error-fetching-design');
         return null;
       }
     });
@@ -988,10 +989,10 @@ router.post('/download-zip', employeeAuth, async (req, res) => {
     // Finalize archive
     await archive.finalize();
 
-    console.log(`✅ ZIP created with ${files.filter(f => f).length} files`);
+    log('info', 'gallery.zip-created-with-files');
 
   } catch (error) {
-    console.error('ZIP download error:', error);
+    logError('gallery.zip-download-error', error);
     if (!res.headersSent) {
       res.status(500).json({
         success: false,
@@ -1039,7 +1040,7 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
     const { category_id, auto_analyze = 'true' } = req.body;
     const useAI = auto_analyze === 'true';
 
-    console.log(`📤 Uploading ${req.files.length} designs (AI: ${useAI ? 'ON' : 'OFF'})...`);
+    log('info', 'gallery.uploading-designs-ai');
 
     const results = [];
     const errors = [];
@@ -1048,13 +1049,13 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
       const file = req.files[i];
 
       try {
-        console.log(`  Processing ${i + 1}/${req.files.length}: ${file.originalname}`);
+        log('info', 'gallery.processing');
 
         // Convert HEIC to JPEG if needed
         let fileBuffer = file.buffer;
         let fileMimetype = file.mimetype;
         if (isHeicFile(file)) {
-          console.log(`🔄 Converting HEIC to JPEG: ${file.originalname}`);
+          log('info', 'gallery.converting-heic-to-jpeg');
           const converted = await convertHeicToJpeg(fileBuffer);
           fileBuffer = converted.buffer;
           fileMimetype = converted.mimetype;
@@ -1081,7 +1082,7 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
               description = analysis.description || '';
             }
           } catch (aiError) {
-            console.warn(`  ⚠️ AI analysis failed for ${file.originalname}:`, aiError.message);
+            log('warn', 'gallery.ai-analysis-failed-for');
             // Continue with original name
           }
         }
@@ -1129,7 +1130,7 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
         });
 
       } catch (fileError) {
-        console.error(`  ❌ Error processing ${file.originalname}:`, fileError.message);
+        log('error', 'gallery.debug');
         errors.push({
           originalName: file.originalname,
           error: fileError.message
@@ -1137,7 +1138,7 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
       }
     }
 
-    console.log(`✅ Batch upload complete: ${results.length} success, ${errors.length} failed`);
+    log('info', 'gallery.batch-upload-complete-success-failed');
 
     res.status(201).json({
       success: true,
@@ -1148,7 +1149,7 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
     });
 
   } catch (error) {
-    console.error('Batch upload error:', error);
+    logError('gallery.batch-upload-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1178,7 +1179,7 @@ router.post('/analyze', employeeAuth, upload.single('design'), async (req, res) 
       });
     }
 
-    console.log(`🔍 Analyzing design...`);
+    log('info', 'gallery.analyzing-design');
 
     const analysis = await analyzeDesign(imageUrl, imageBuffer, mimeType);
 
@@ -1191,7 +1192,7 @@ router.post('/analyze', employeeAuth, upload.single('design'), async (req, res) 
     });
 
   } catch (error) {
-    console.error('Analysis error:', error);
+    logError('gallery.analysis-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1224,7 +1225,7 @@ router.get('/categories/list', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List categories error:', error);
+    logError('gallery.list-categories-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar categorías'
@@ -1260,7 +1261,7 @@ router.post('/categories', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create category error:', error);
+    logError('gallery.create-category-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al crear categoría'
@@ -1333,7 +1334,7 @@ router.put('/categories/:id', employeeAuth, requireManager, async (req, res) => 
     });
 
   } catch (error) {
-    console.error('Update category error:', error);
+    logError('gallery.update-category-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar categoría'
@@ -1373,7 +1374,7 @@ router.delete('/categories/:id', employeeAuth, requireManager, async (req, res) 
     });
 
   } catch (error) {
-    console.error('Delete category error:', error);
+    logError('gallery.delete-category-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al eliminar categoría'
@@ -1404,7 +1405,7 @@ router.get('/tags/list', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List tags error:', error);
+    logError('gallery.list-tags-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar etiquetas'
