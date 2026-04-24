@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporte Mensual - {{companyName}}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      border-bottom: 4px solid #3B82F6;
+      padding-bottom: 30px;
+      margin-bottom: 40px;
+    }
+    .header h1 {
+      color: #1F2937;
+      margin: 0 0 15px 0;
+      font-size: 36px;
+    }
+    .header .period {
+      color: #6B7280;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .summary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+    }
+    .summary h2 {
+      margin: 0 0 20px 0;
+      font-size: 24px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .summary-item h3 {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .summary-item .value {
+      font-size: 28px;
+      font-weight: bold;
+      margin: 10px 0 5px 0;
+    }
+    .summary-item .change {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .comparison-card {
+      background-color: #F9FAFB;
+      border: 2px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .comparison-card h3 {
+      margin: 0 0 15px 0;
+      color: #374151;
+      font-size: 16px;
+    }
+    .comparison-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #1F2937;
+      margin-bottom: 10px;
+    }
+    .comparison-change {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .comparison-change.positive {
+      color: #059669;
+    }
+    .comparison-change.negative {
+      color: #DC2626;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    .section h2 {
+      color: #1F2937;
+      font-size: 24px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #E5E7EB;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th {
+      background-color: #F3F4F6;
+      padding: 14px;
+      text-align: left;
+      font-weight: 600;
+      color: #374151;
+      border-bottom: 2px solid #E5E7EB;
+      font-size: 14px;
+    }
+    td {
+      padding: 14px;
+      border-bottom: 1px solid #E5E7EB;
+      font-size: 14px;
+    }
+    tr:hover {
+      background-color: #F9FAFB;
+    }
+    .chart-placeholder {
+      background-color: #F3F4F6;
+      border: 2px dashed #D1D5DB;
+      border-radius: 8px;
+      padding: 60px 20px;
+      text-align: center;
+      color: #6B7280;
+      margin: 20px 0;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .metric-box {
+      background-color: white;
+      border: 2px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+    .metric-box h4 {
+      margin: 0 0 10px 0;
+      color: #6B7280;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .metric-box .value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #1F2937;
+    }
+    .alert {
+      background-color: #FEF2F2;
+      border-left: 4px solid #EF4444;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 4px;
+    }
+    .alert h3 {
+      margin: 0 0 10px 0;
+      color: #991B1B;
+      font-size: 18px;
+    }
+    .insight {
+      background-color: #EFF6FF;
+      border-left: 4px solid #3B82F6;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .insight h4 {
+      margin: 0 0 10px 0;
+      color: #1E40AF;
+      font-size: 16px;
+    }
+    .insight p {
+      margin: 0;
+      color: #1E3A8A;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 3px solid #E5E7EB;
+      text-align: center;
+      color: #6B7280;
+    }
+    .footer p {
+      margin: 5px 0;
+    }
+    @media print {
+      body {
+        background-color: white;
+      }
+      .container {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📈 Reporte Mensual</h1>
+      <div class="period">{{period}}</div>
+      <div class="period">{{companyName}}</div>
+    </div>
+
+    <div class="summary">
+      <h2>💰 Resumen Ejecutivo</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <h3>Ingresos Totales</h3>
+          <div class="value">{{totalRevenue}}</div>
+          <div class="change">{{revenueChange}}</div>
+        </div>
+        <div class="summary-item">
+          <h3>Ganancia Neta</h3>
+          <div class="value">{{totalProfit}}</div>
+          <div class="change">{{profitChange}}</div>
+        </div>
+        <div class="summary-item">
+          <h3>Órdenes</h3>
+          <div class="value">{{totalOrders}}</div>
+          <div class="change">{{orderChange}}</div>
+        </div>
+        <div class="summary-item">
+          <h3>Margen Promedio</h3>
+          <div class="value">{{avgMargin}}%</div>
+          <div class="change">{{marginChange}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="comparison">
+      <div class="comparison-card">
+        <h3>Ingresos vs Mes Anterior</h3>
+        <div class="comparison-value">{{currentRevenue}}</div>
+        <div class="comparison-change {{revenueChangeClass}}">
+          {{revenueChangeIcon}} {{revenueChangePercent}}% vs mes anterior
+        </div>
+      </div>
+      <div class="comparison-card">
+        <h3>Ganancia vs Mes Anterior</h3>
+        <div class="comparison-value">{{currentProfit}}</div>
+        <div class="comparison-change {{profitChangeClass}}">
+          {{profitChangeIcon}} {{profitChangePercent}}% vs mes anterior
+        </div>
+      </div>
+    </div>
+
+    {{#if hasLowMarginOrders}}
+    <div class="alert">
+      <h3>⚠️ Alerta: Órdenes con Bajo Margen</h3>
+      <p>Se detectaron {{lowMarginCount}} órdenes con margen inferior al {{lowMarginThreshold}}%. Revise los costos de producción y precios.</p>
+    </div>
+    {{/if}}
+
+    <div class="section">
+      <h2>📊 Métricas de Producción</h2>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <h4>Tasa de Finalización</h4>
+          <div class="value">{{completionRate}}%</div>
+        </div>
+        <div class="metric-box">
+          <h4>Entregas a Tiempo</h4>
+          <div class="value">{{onTimeRate}}%</div>
+        </div>
+        <div class="metric-box">
+          <h4>Días Promedio</h4>
+          <div class="value">{{avgCompletionDays}}</div>
+        </div>
+      </div>
+
+      {{#if insights.production}}
+      <div class="insight">
+        <h4>💡 Insight de Producción</h4>
+        <p>{{insights.production}}</p>
+      </div>
+      {{/if}}
+    </div>
+
+    <div class="section">
+      <h2>🏆 Top 10 Productos</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Producto</th>
+            <th>Vendidos</th>
+            <th>Ingresos</th>
+            <th>Ganancia</th>
+            <th>Margen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each topProducts}}
+          <tr>
+            <td><strong>{{this.rank}}</strong></td>
+            <td>{{this.productName}}</td>
+            <td>{{this.totalQuantity}}</td>
+            <td>{{this.revenueFormatted}}</td>
+            <td>{{this.profitFormatted}}</td>
+            <td>{{this.profitMargin}}%</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      {{#if insights.products}}
+      <div class="insight">
+        <h4>💡 Insight de Productos</h4>
+        <p>{{insights.products}}</p>
+      </div>
+      {{/if}}
+    </div>
+
+    <div class="section">
+      <h2>👥 Top 10 Clientes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Cliente</th>
+            <th>Órdenes</th>
+            <th>Total Gastado</th>
+            <th>Ganancia Generada</th>
+            <th>Valor Promedio</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each topClients}}
+          <tr>
+            <td><strong>{{this.rank}}</strong></td>
+            <td>{{this.clientName}}</td>
+            <td>{{this.orderCount}}</td>
+            <td>{{this.totalSpentFormatted}}</td>
+            <td>{{this.totalProfitFormatted}}</td>
+            <td>{{this.avgOrderValueFormatted}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      {{#if insights.clients}}
+      <div class="insight">
+        <h4>💡 Insight de Clientes</h4>
+        <p>{{insights.clients}}</p>
+      </div>
+      {{/if}}
+    </div>
+
+    {{#if dailyRevenue.length}}
+    <div class="section">
+      <h2>📅 Ingresos Diarios</h2>
+      <div class="chart-placeholder">
+        <p>📊 Gráfico de ingresos diarios</p>
+        <p style="font-size: 12px;">Los datos están disponibles en el archivo PDF adjunto</p>
+      </div>
+    </div>
+    {{/if}}
+
+    <div class="section">
+      <h2>📋 Estado de Órdenes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Estado</th>
+            <th>Cantidad</th>
+            <th>Ingresos</th>
+            <th>Porcentaje</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each ordersByStatus}}
+          <tr>
+            <td>{{this.statusText}}</td>
+            <td>{{this.count}}</td>
+            <td>{{this.revenueFormatted}}</td>
+            <td>{{this.percentage}}%</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+
+    {{#if recommendations.length}}
+    <div class="section">
+      <h2>🎯 Recomendaciones</h2>
+      {{#each recommendations}}
+      <div class="insight">
+        <h4>{{this.title}}</h4>
+        <p>{{this.description}}</p>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    <div class="footer">
+      <p><strong>Reporte generado el {{generatedAt}}</strong></p>
+      <p>{{companyName}} | {{companyEmail}}</p>
+      <p style="margin-top: 15px;">🤖 Powered by Souvenir Management System</p>
+    </div>
+  </div>
+</body>
+</html>
