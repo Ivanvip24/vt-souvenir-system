@@ -18,6 +18,7 @@ import {
   getDepartmentQueue,
   getEmployeeTasks
 } from '../services/task-generator.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -98,7 +99,7 @@ router.get('/', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List tasks error:', error);
+    logError('task.list-tasks-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar tareas'
@@ -126,7 +127,7 @@ router.get('/my-tasks', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get my tasks error:', error);
+    logError('task.get-my-tasks-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener mis tareas'
@@ -160,7 +161,7 @@ router.get('/queue/:department', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get department queue error:', error);
+    logError('task.get-department-queue-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener cola del departamento'
@@ -216,7 +217,7 @@ router.get('/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get task error:', error);
+    logError('task.get-task-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener tarea'
@@ -286,7 +287,7 @@ router.post('/', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create task error:', error);
+    logError('task.create-task-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al crear tarea'
@@ -378,7 +379,7 @@ router.put('/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update task error:', error);
+    logError('task.update-task-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar tarea'
@@ -462,7 +463,7 @@ router.put('/:id/status', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update task status error:', error);
+    logError('task.update-task-status-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar estado'
@@ -533,7 +534,7 @@ router.post('/:id/start', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Start task error:', error);
+    logError('task.start-task-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al iniciar tarea'
@@ -617,7 +618,7 @@ router.post('/:id/complete', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Complete task error:', error);
+    logError('task.complete-task-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al completar tarea'
@@ -687,7 +688,7 @@ router.post('/:id/cancel', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Cancel task error:', error);
+    logError('task.cancel-task-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al cancelar tarea'
@@ -743,7 +744,7 @@ router.put('/:id/assign', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Assign task error:', error);
+    logError('task.assign-task-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al asignar tarea'
@@ -799,7 +800,7 @@ router.delete('/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete task error:', error);
+    logError('task.delete-task-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al eliminar tarea'
@@ -827,7 +828,7 @@ router.get('/templates/list', employeeAuth, requireManager, async (req, res) => 
     });
 
   } catch (error) {
-    console.error('List templates error:', error);
+    logError('task.list-templates-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar plantillas'
@@ -863,7 +864,7 @@ router.post('/templates', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create template error:', error);
+    logError('task.create-template-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al crear plantilla'
@@ -944,7 +945,7 @@ router.put('/templates/:id', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update template error:', error);
+    logError('task.update-template-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar plantilla'
@@ -978,7 +979,7 @@ router.delete('/templates/:id', employeeAuth, requireManager, async (req, res) =
     });
 
   } catch (error) {
-    console.error('Delete template error:', error);
+    logError('task.delete-template-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al eliminar plantilla'
