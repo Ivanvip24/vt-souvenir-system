@@ -1,0 +1,44 @@
+{
+    "order_name": "Puerto Arista - Tortugas",
+    "instructions": "50 piezas de cada diseno - Tema de tortugas marinas",
+    "extracted_from_image": true,
+    "extraction_notes": "Image showed 6 designs in 2x3 grid with Puerto Arista turtle theme",
+    "designs": [
+        {
+            "design_number": 1,
+            "type": "Imanes",
+            "quantity": 50,
+            "description": "Puerto Arista sunset with sea turtle and flowers"
+        },
+        {
+            "design_number": 2,
+            "type": "Imanes",
+            "quantity": 50,
+            "description": "Puerto Arista beach scene with baby turtles"
+        },
+        {
+            "design_number": 3,
+            "type": "Llaveros",
+            "quantity": 50,
+            "description": "Puerto Arista colorful tropical turtle design"
+        },
+        {
+            "design_number": 4,
+            "type": "Llaveros",
+            "quantity": 50,
+            "description": "Puerto Arista surfing turtle with coconut"
+        },
+        {
+            "design_number": 5,
+            "type": "Destapadores",
+            "quantity": 50,
+            "description": "Chiapas Puerto Arista bottle opener - turtle beach design"
+        },
+        {
+            "design_number": 6,
+            "type": "Destapadores",
+            "quantity": 50,
+            "description": "Puerto Arista sunset bottle opener - swimming turtles"
+        }
+    ]
+}

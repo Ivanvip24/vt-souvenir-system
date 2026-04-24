@@ -1,0 +1,56 @@
+{
+  "order_name": "TEST - Imagenes Grandes",
+  "instructions": "100 piezas de cada diseno",
+  "designs": [
+    {
+      "type": "Imanes",
+      "quantity": 100,
+      "image_path": "test_images/design_1.png"
+    },
+    {
+      "type": "Imanes",
+      "quantity": 100,
+      "image_path": "test_images/design_2.png"
+    },
+    {
+      "type": "Llaveros",
+      "quantity": 100,
+      "image_path": "test_images/design_3.png"
+    },
+    {
+      "type": "Llaveros",
+      "quantity": 100,
+      "image_path": "test_images/design_4.png"
+    },
+    {
+      "type": "Destapadores",
+      "quantity": 100,
+      "image_path": "test_images/design_5.png"
+    },
+    {
+      "type": "Destapadores",
+      "quantity": 100,
+      "image_path": "test_images/design_6.png"
+    },
+    {
+      "type": "Imanes",
+      "quantity": 100,
+      "image_path": "test_images/design_7.png"
+    },
+    {
+      "type": "Llaveros",
+      "quantity": 100,
+      "image_path": "test_images/design_8.png"
+    },
+    {
+      "type": "Imanes",
+      "quantity": 100,
+      "image_path": "test_images/design_9.png"
+    },
+    {
+      "type": "Destapadores",
+      "quantity": 100,
+      "image_path": "test_images/design_10.png"
+    }
+  ]
+}

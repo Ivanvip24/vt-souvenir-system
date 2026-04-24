@@ -1,0 +1,167 @@
+#!/usr/bin/env python3
+"""
+Google Drive Quick Setup Helper
+Guides you through downloading credentials.json
+"""
+
+import webbrowser
+import os
+import time
+
+print("=" * 70)
+print("Google Drive Setup - Quick Start")
+print("=" * 70)
+print()
+
+# Check if credentials already exist
+if os.path.exists('credentials.json'):
+    print("✓ credentials.json already exists!")
+    print()
+    choice = input("Do you want to replace it? (y/n): ").lower()
+    if choice != 'y':
+        print("Keeping existing credentials.json")
+        exit(0)
+
+print("Follow these steps to get credentials.json:")
+print()
+print("STEP 1: Create Google Cloud Project")
+print("-" * 70)
+print("I'll open Google Cloud Console in your browser...")
+print()
+input("Press ENTER to open Google Cloud Console...")
+
+webbrowser.open("https://console.cloud.google.com/projectcreate")
+print("✓ Opened in browser")
+print()
+print("In the browser:")
+print("  1. Enter project name: 'VT Orders'")
+print("  2. Click 'CREATE'")
+print("  3. Wait for project creation")
+print()
+input("Press ENTER when project is created...")
+
+print()
+print("STEP 2: Enable Google Drive API")
+print("-" * 70)
+print("I'll open the API library...")
+print()
+input("Press ENTER to open API library...")
+
+webbrowser.open("https://console.cloud.google.com/apis/library/drive.googleapis.com")
+print("✓ Opened in browser")
+print()
+print("In the browser:")
+print("  1. Make sure your 'VT Orders' project is selected (top left)")
+print("  2. Click 'ENABLE'")
+print("  3. Wait for API to be enabled")
+print()
+input("Press ENTER when API is enabled...")
+
+print()
+print("STEP 3: Configure OAuth Consent Screen")
+print("-" * 70)
+print("I'll open the OAuth consent configuration...")
+print()
+input("Press ENTER to open OAuth consent screen...")
+
+webbrowser.open("https://console.cloud.google.com/apis/credentials/consent")
+print("✓ Opened in browser")
+print()
+print("In the browser:")
+print("  1. Select 'External' user type")
+print("  2. Click 'CREATE'")
+print("  3. Fill in:")
+print("     - App name: VT Orders System")
+print("     - User support email: (your email)")
+print("     - Developer contact: (your email)")
+print("  4. Click 'SAVE AND CONTINUE' (3 times)")
+print("  5. On 'Test users' page:")
+print("     - Click '+ ADD USERS'")
+print("     - Enter your Gmail address")
+print("     - Click 'ADD'")
+print("  6. Click 'SAVE AND CONTINUE'")
+print("  7. Click 'BACK TO DASHBOARD'")
+print()
+input("Press ENTER when OAuth consent screen is configured...")
+
+print()
+print("STEP 4: Create OAuth Credentials")
+print("-" * 70)
+print("I'll open the credentials page...")
+print()
+input("Press ENTER to open credentials page...")
+
+webbrowser.open("https://console.cloud.google.com/apis/credentials")
+print("✓ Opened in browser")
+print()
+print("In the browser:")
+print("  1. Click '+ CREATE CREDENTIALS' (top)")
+print("  2. Select 'OAuth client ID'")
+print("  3. For 'Application type', select 'Desktop app'")
+print("  4. Name: 'VT Orders Desktop'")
+print("  5. Click 'CREATE'")
+print("  6. In the popup, click 'DOWNLOAD JSON'")
+print("  7. Save the file")
+print()
+print("⚠️  IMPORTANT: Rename the downloaded file to 'credentials.json'")
+print()
+input("Press ENTER when you've downloaded the file...")
+
+print()
+print("STEP 5: Move credentials.json to this folder")
+print("-" * 70)
+print()
+print("Current folder:")
+print(f"  {os.getcwd()}")
+print()
+print("Move/copy the downloaded 'credentials.json' to this folder")
+print()
+
+# Wait for file to appear
+print("Waiting for credentials.json to appear in this folder...")
+for i in range(60):  # Wait up to 60 seconds
+    if os.path.exists('credentials.json'):
+        print()
+        print("✓ credentials.json found!")
+        break
+    time.sleep(1)
+    print(".", end="", flush=True)
+else:
+    print()
+    print()
+    print("⚠️  credentials.json not found yet")
+    print()
+    print("Please:")
+    print("  1. Locate the downloaded JSON file")
+    print("  2. Rename it to 'credentials.json'")
+    print("  3. Move it to:")
+    print(f"     {os.getcwd()}")
+    print()
+    input("Press ENTER when you've moved the file...")
+
+    if not os.path.exists('credentials.json'):
+        print("❌ Still can't find credentials.json")
+        print()
+        print("Manual steps:")
+        print("  1. Find your Downloads folder")
+        print("  2. Look for a file like: client_secret_xxx.json")
+        print("  3. Rename it to: credentials.json")
+        print("  4. Move it to this folder")
+        exit(1)
+
+print()
+print("=" * 70)
+print("✅ SUCCESS - Google Drive Setup Complete!")
+print("=" * 70)
+print()
+print("credentials.json is ready!")
+print()
+print("Next steps:")
+print("  1. Run: python3 notion_quick.py")
+print("  2. A browser will open for one-time authentication")
+print("  3. Sign in and grant permissions")
+print("  4. Done! Images will appear in Notion")
+print()
+print("Note: You only need to authenticate once.")
+print("      The script will create 'token.pickle' to remember your login.")
+print()

@@ -1,0 +1,12 @@
+node_modules/
+*.db
+*.sqlite
+.env
+uploads/
+temp_images/
+*.log
+.DS_Store
+
+# Google Drive OAuth credentials
+credentials.json
+token.pickle

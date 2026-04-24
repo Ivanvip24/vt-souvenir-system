@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXKAN - Somos Fabricantes | IG Carousel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rosa: #e72a88;
+    --verde: #8ab73b;
+    --naranja: #f39223;
+    --turquesa: #09adc2;
+    --rojo: #e52421;
+    --guinda: #a6191d;
+    --teal: #106c7f;
+    --oro: #D4A574;
+    --dark: #1a1118;
+    --cream: #fef9f4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding: 40px;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .slide-label {
+    color: #666;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: -30px;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .slide {
+    width: 1080px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  /* ========================================
+     SLIDE 1 - HERO / HOOK
+     ======================================== */
+  .slide-1 {
+    background: var(--dark);
+    background: linear-gradient(145deg, #1a0a14 0%, #0d0a0f 50%, #0a1215 100%);
+  }
+
+  .slide-1 .noise {
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.5;
+  }
+
+  .slide-1 .diagonal-cut {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 55%;
+    height: 100%;
+    background: var(--rosa);
+    clip-path: polygon(35% 0, 100% 0, 100% 100%, 0% 100%);
+    opacity: 0.08;
+  }
+
+  .slide-1 .accent-line {
+    position: absolute;
+    top: 80px;
+    left: 80px;
+    width: 6px;
+    height: 200px;
+    background: linear-gradient(to bottom, var(--rosa), var(--naranja), var(--turquesa));
+    border-radius: 3px;
+  }
+
+  .slide-1 .corner-dots {
+    position: absolute;
+    top: 60px;
+    right: 60px;
+    display: grid;
+    grid-template-columns: repeat(3, 12px);
+    gap: 10px;
+  }
+
+  .slide-1 .corner-dots .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .slide-1 .corner-dots .dot:nth-child(1) { background: var(--rosa); }
+  .slide-1 .corner-dots .dot:nth-child(2) { background: var(--verde); }
+  .slide-1 .corner-dots .dot:nth-child(3) { background: var(--naranja); }
+  .slide-1 .corner-dots .dot:nth-child(4) { background: var(--turquesa); }
+  .slide-1 .corner-dots .dot:nth-child(5) { background: var(--rojo); }
+  .slide-1 .corner-dots .dot:nth-child(6) { background: var(--rosa); opacity: 0.4; }
+  .slide-1 .corner-dots .dot:nth-child(7) { background: var(--verde); opacity: 0.4; }
+  .slide-1 .corner-dots .dot:nth-child(8) { background: var(--naranja); opacity: 0.4; }
+  .slide-1 .corner-dots .dot:nth-child(9) { background: var(--turquesa); opacity: 0.4; }
+
+  .slide-1 .main-text {
+    position: absolute;
+    left: 120px;
+    top: 200px;
+  }
+
+  .slide-1 .pre-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    letter-spacing: 12px;
+    text-transform: uppercase;
+    color: var(--naranja);
+    margin-bottom: 20px;
+  }
+
+  .slide-1 .title-somos {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 130px;
+    line-height: 0.9;
+    color: white;
+    letter-spacing: -3px;
+  }
+
+  .slide-1 .title-fabricantes {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 130px;
+    line-height: 0.9;
+    letter-spacing: -3px;
+    background: linear-gradient(135deg, var(--rosa), var(--naranja));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .slide-1 .subtitle {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 300;
+    font-size: 32px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 40px;
+    letter-spacing: 2px;
+  }
+
+  .slide-1 .bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--rosa), var(--verde), var(--naranja), var(--turquesa), var(--rojo));
+  }
+
+  .slide-1 .logo-area {
+    position: absolute;
+    bottom: 50px;
+    left: 120px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .slide-1 .logo-letters {
+    display: flex;
+    gap: 4px;
+  }
+
+  .slide-1 .logo-letters span {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    font-weight: 400;
+  }
+
+  .slide-1 .logo-letters span:nth-child(1) { color: var(--rosa); }
+  .slide-1 .logo-letters span:nth-child(2) { color: var(--verde); }
+  .slide-1 .logo-letters span:nth-child(3) { color: var(--naranja); }
+  .slide-1 .logo-letters span:nth-child(4) { color: var(--turquesa); }
+  .slide-1 .logo-letters span:nth-child(5) { color: var(--rojo); }
+
+  .slide-1 .swipe-hint {
+    position: absolute;
+    bottom: 60px;
+    right: 80px;
+    color: rgba(255,255,255,0.3);
+    font-size: 18px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .slide-1 .swipe-hint .arrow {
+    width: 40px;
+    height: 2px;
+    background: rgba(255,255,255,0.3);
+    position: relative;
+  }
+
+  .slide-1 .swipe-hint .arrow::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid rgba(255,255,255,0.3);
+    transform: rotate(45deg);
+  }
+
+  /* Decorative Mayan spiral */
+  .slide-1 .caracol {
+    position: absolute;
+    bottom: 180px;
+    right: 100px;
+    width: 320px;
+    height: 320px;
+    opacity: 0.04;
+  }
+
+  .slide-1 .caracol svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ========================================
+     SLIDE 2 - LASER CUTTING / PROCESS
+     ======================================== */
+  .slide-2 {
+    background: var(--cream);
+  }
+
+  .slide-2 .top-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--rosa), var(--verde), var(--naranja), var(--turquesa), var(--rojo));
+  }
+
+  .slide-2 .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .slide-2 .big-number {
+    position: absolute;
+    top: 60px;
+    right: 70px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 220px;
+    color: var(--rosa);
+    opacity: 0.06;
+    line-height: 1;
+  }
+
+  .slide-2 .content-area {
+    position: absolute;
+    top: 100px;
+    left: 90px;
+    right: 90px;
+  }
+
+  .slide-2 .section-tag {
+    display: inline-block;
+    background: var(--rosa);
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 10px 24px;
+    border-radius: 4px;
+    margin-bottom: 40px;
+  }
+
+  .slide-2 .headline {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 88px;
+    line-height: 0.95;
+    color: var(--dark);
+    margin-bottom: 30px;
+  }
+
+  .slide-2 .headline .accent {
+    color: var(--rosa);
+  }
+
+  .slide-2 .body-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    color: #555;
+    line-height: 1.5;
+    max-width: 700px;
+  }
+
+  .slide-2 .laser-graphic {
+    position: absolute;
+    bottom: 60px;
+    left: 90px;
+    right: 90px;
+    height: 360px;
+    background: var(--dark);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide-2 .laser-graphic .inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide-2 .laser-beam {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    width: 3px;
+    height: 140px;
+    background: linear-gradient(to bottom, transparent, var(--rojo), #ff6b3d, #ffd93d);
+    filter: blur(0.5px);
+    box-shadow: 0 0 20px var(--rojo), 0 0 60px rgba(231,42,136,0.3);
+  }
+
+  .slide-2 .laser-beam::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, #ffd93d, var(--naranja), transparent);
+    border-radius: 50%;
+    box-shadow: 0 0 30px var(--naranja), 0 0 60px var(--rojo);
+  }
+
+  .slide-2 .cut-pieces {
+    display: flex;
+    gap: 30px;
+    margin-top: 60px;
+  }
+
+  .slide-2 .cut-piece {
+    width: 120px;
+    height: 120px;
+    border: 2px solid var(--oro);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .slide-2 .cut-piece svg {
+    width: 60px;
+    height: 60px;
+    fill: var(--oro);
+    opacity: 0.8;
+  }
+
+  .slide-2 .cut-piece::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 1px solid rgba(212,165,116,0.2);
+    border-radius: 20px;
+  }
+
+  .slide-2 .mdf-label {
+    position: absolute;
+    bottom: 30px;
+    right: 40px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: var(--oro);
+    text-transform: uppercase;
+  }
+
+  /* ========================================
+     SLIDE 3 - PRODUCTS SHOWCASE
+     ======================================== */
+  .slide-3 {
+    background: linear-gradient(160deg, #0f1923 0%, #0a1118 50%, #140a18 100%);
+  }
+
+  .slide-3 .glow-circle {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.15;
+  }
+
+  .slide-3 .glow-circle.pink {
+    background: var(--rosa);
+    top: -200px;
+    left: -100px;
+  }
+
+  .slide-3 .glow-circle.cyan {
+    background: var(--turquesa);
+    bottom: -200px;
+    right: -100px;
+  }
+
+  .slide-3 .top-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--rosa), var(--verde), var(--naranja), var(--turquesa), var(--rojo));
+  }
+
+  .slide-3 .header-area {
+    position: absolute;
+    top: 70px;
+    left: 90px;
+    right: 90px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .slide-3 .headline {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 72px;
+    line-height: 0.95;
+    color: white;
+  }
+
+  .slide-3 .headline .accent {
+    background: linear-gradient(135deg, var(--turquesa), var(--verde));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .slide-3 .product-grid {
+    position: absolute;
+    top: 260px;
+    left: 60px;
+    right: 60px;
+    bottom: 60px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .slide-3 .product-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s;
+  }
+
+  .slide-3 .product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .slide-3 .product-card:nth-child(1)::before { background: var(--rosa); }
+  .slide-3 .product-card:nth-child(2)::before { background: var(--verde); }
+  .slide-3 .product-card:nth-child(3)::before { background: var(--naranja); }
+  .slide-3 .product-card:nth-child(4)::before { background: var(--turquesa); }
+  .slide-3 .product-card:nth-child(5)::before { background: var(--rojo); }
+  .slide-3 .product-card:nth-child(6)::before { background: linear-gradient(90deg, var(--rosa), var(--naranja)); }
+
+  .slide-3 .product-icon {
+    font-size: 64px;
+    margin-bottom: 12px;
+  }
+
+  .slide-3 .product-name {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    color: white;
+    margin-bottom: 6px;
+  }
+
+  .slide-3 .product-desc {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 300;
+    font-size: 19px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.3;
+  }
+
+  /* ========================================
+     SLIDE 4 - NUMBERS / STATS
+     ======================================== */
+  .slide-4 {
+    background: var(--rosa);
+    position: relative;
+  }
+
+  .slide-4 .pattern-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 80%, rgba(0,0,0,0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%);
+  }
+
+  .slide-4 .diagonal-texture {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 40px,
+      rgba(255,255,255,0.02) 40px,
+      rgba(255,255,255,0.02) 42px
+    );
+  }
+
+  .slide-4 .top-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--rosa), var(--verde), var(--naranja), var(--turquesa), var(--rojo));
+  }
+
+  .slide-4 .header {
+    position: absolute;
+    top: 80px;
+    left: 90px;
+    right: 90px;
+  }
+
+  .slide-4 .header .tag {
+    display: inline-block;
+    border: 2px solid rgba(255,255,255,0.4);
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 10px 24px;
+    border-radius: 100px;
+    margin-bottom: 30px;
+  }
+
+  .slide-4 .header .title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 78px;
+    color: white;
+    line-height: 0.95;
+  }
+
+  .slide-4 .stats-grid {
+    position: absolute;
+    top: 360px;
+    left: 90px;
+    right: 90px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+  }
+
+  .slide-4 .stat-item {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 44px 40px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .slide-4 .stat-number {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 80px;
+    color: white;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .slide-4 .stat-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .slide-4 .bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--rosa), var(--verde), var(--naranja), var(--turquesa), var(--rojo));
+  }
+
+  /* ========================================
+     SLIDE 5 - DIFFERENTIATORS
+     ======================================== */
+  .slide-5 {
+    background: linear-gradient(170deg, #fef9f4 0%, #fff5ee 100%);
+  }
+
+  .slide-5 .top-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--rosa), var(--verde), var(--naranja), var(--turquesa), var(--rojo));
+  }
+
+  .slide-5 .accent-block {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 100%;
+    background: var(--naranja);
+    opacity: 0.04;
+    clip-path: polygon(50% 0, 100% 0, 100% 100%, 0% 100%);
+  }
+
+  .slide-5 .header {
+    position: absolute;
+    top: 70px;
+    left: 90px;
+    right: 90px;
+  }
+
+  .slide-5 .header .title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 70px;
+    line-height: 0.95;
+    color: var(--dark);
+  }
+
+  .slide-5 .header .title .pink { color: var(--rosa); }
+  .slide-5 .header .title .orange { color: var(--naranja); }
+
+  .slide-5 .features-list {
+    position: absolute;
+    top: 280px;
+    left: 90px;
+    right: 90px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .slide-5 .feature-row {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 28px 32px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+    border-left: 6px solid;
+  }
+
+  .slide-5 .feature-row:nth-child(1) { border-left-color: var(--rosa); }
+  .slide-5 .feature-row:nth-child(2) { border-left-color: var(--verde); }
+  .slide-5 .feature-row:nth-child(3) { border-left-color: var(--naranja); }
+  .slide-5 .feature-row:nth-child(4) { border-left-color: var(--turquesa); }
+  .slide-5 .feature-row:nth-child(5) { border-left-color: var(--rojo); }
+
+  .slide-5 .feature-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    flex-shrink: 0;
+  }
+
+  .slide-5 .feature-row:nth-child(1) .feature-icon { background: rgba(231,42,136,0.1); }
+  .slide-5 .feature-row:nth-child(2) .feature-icon { background: rgba(138,183,59,0.1); }
+  .slide-5 .feature-row:nth-child(3) .feature-icon { background: rgba(243,146,35,0.1); }
+  .slide-5 .feature-row:nth-child(4) .feature-icon { background: rgba(9,173,194,0.1); }
+  .slide-5 .feature-row:nth-child(5) .feature-icon { background: rgba(229,36,33,0.1); }
+
+  .slide-5 .feature-text .feat-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    color: var(--dark);
+    margin-bottom: 2px;
+  }
+
+  .slide-5 .feature-text .feat-desc {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 400;
+    font-size: 21px;
+    color: #888;
+  }
+
+  /* ========================================
+     SLIDE 6 - CTA / CLOSING
+     ======================================== */
+  .slide-6 {
+    background: var(--dark);
+    background: linear-gradient(145deg, #1a0a14 0%, #0d0a0f 40%, #0a1215 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .slide-6 .glow-orb {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: var(--rosa);
+    filter: blur(150px);
+    opacity: 0.12;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .slide-6 .top-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--rosa), var(--verde), var(--naranja), var(--turquesa), var(--rojo));
+  }
+
+  .slide-6 .ring-decoration {
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .slide-6 .ring-decoration::after {
+    content: '';
+    position: absolute;
+    inset: 40px;
+    border: 1px solid rgba(255,255,255,0.03);
+    border-radius: 50%;
+  }
+
+  .slide-6 .logo-big {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .slide-6 .logo-big span {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 120px;
+    line-height: 1;
+  }
+
+  .slide-6 .logo-big span:nth-child(1) { color: var(--rosa); }
+  .slide-6 .logo-big span:nth-child(2) { color: var(--verde); }
+  .slide-6 .logo-big span:nth-child(3) { color: var(--naranja); }
+  .slide-6 .logo-big span:nth-child(4) { color: var(--turquesa); }
+  .slide-6 .logo-big span:nth-child(5) { color: var(--rojo); }
+
+  .slide-6 .cta-headline {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 62px;
+    color: white;
+    line-height: 1.05;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+  }
+
+  .slide-6 .cta-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 300;
+    font-size: 30px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 50px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .slide-6 .cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, var(--rosa), #c4206f);
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 24px 56px;
+    border-radius: 100px;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 10px 40px rgba(231,42,136,0.4);
+  }
+
+  .slide-6 .handle {
+    position: absolute;
+    bottom: 60px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 3px;
+    z-index: 2;
+  }
+
+  .slide-6 .bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--rosa), var(--verde), var(--naranja), var(--turquesa), var(--rojo));
+  }
+
+  /* ========================================
+     SLIDE INDICATOR DOTS
+     ======================================== */
+  .slide-dots {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+  }
+
+  .slide-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .slide-1 .slide-dots .dot:nth-child(1),
+  .slide-6 .slide-dots .dot:nth-child(6) { background: white; width: 24px; border-radius: 4px; }
+  .slide-2 .slide-dots .dot:nth-child(2) { background: var(--rosa); width: 24px; border-radius: 4px; }
+  .slide-3 .slide-dots .dot:nth-child(3) { background: white; width: 24px; border-radius: 4px; }
+  .slide-4 .slide-dots .dot:nth-child(4) { background: white; width: 24px; border-radius: 4px; }
+  .slide-5 .slide-dots .dot:nth-child(5) { background: var(--rosa); width: 24px; border-radius: 4px; }
+
+  .slide-2 .slide-dots .dot { background: rgba(0,0,0,0.15); }
+  .slide-5 .slide-dots .dot { background: rgba(0,0,0,0.15); }
+
+  /* Mayan geometric border elements */
+  .grecas-border {
+    position: absolute;
+    display: flex;
+  }
+
+  .grecas-border .greca {
+    width: 20px;
+    height: 20px;
+    border: 2px solid;
+    border-right: none;
+    border-top: none;
+    opacity: 0.15;
+  }
+
+  /* Print helpers */
+  @media print {
+    body { background: white; }
+    .slide { break-after: page; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ SLIDE 1: HERO HOOK ============ -->
+<p class="slide-label">Slide 1 / 6 &mdash; Hook</p>
+<div class="slide slide-1">
+  <div class="noise"></div>
+  <div class="diagonal-cut"></div>
+  <div class="accent-line"></div>
+
+  <div class="corner-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+
+  <div class="caracol">
+    <svg viewBox="0 0 200 200" fill="none" stroke="white" stroke-width="2">
+      <path d="M100 20 C140 20, 180 60, 180 100 C180 140, 140 180, 100 180 C60 180, 30 150, 30 120 C30 90, 55 65, 80 65 C105 65, 125 85, 125 105 C125 125, 110 140, 95 140 C80 140, 68 128, 68 115 C68 102, 78 92, 90 92"/>
+    </svg>
+  </div>
+
+  <div class="main-text">
+    <div class="pre-title">En AXKAN</div>
+    <div class="title-somos">SOMOS</div>
+    <div class="title-fabricantes">FABRI&shy;CANTES</div>
+    <div class="subtitle">No revendemos. Creamos.</div>
+  </div>
+
+  <div class="logo-area">
+    <div class="logo-letters">
+      <span>A</span><span>X</span><span>K</span><span>A</span><span>N</span>
+    </div>
+  </div>
+
+  <div class="swipe-hint">
+    Desliza <span class="arrow"></span>
+  </div>
+
+  <div class="slide-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+
+  <div class="bottom-bar"></div>
+</div>
+
+<!-- ============ SLIDE 2: LASER / PROCESS ============ -->
+<p class="slide-label">Slide 2 / 6 &mdash; Proceso</p>
+<div class="slide slide-2">
+  <div class="top-strip"></div>
+  <div class="grid-bg"></div>
+  <div class="big-number">02</div>
+
+  <div class="content-area">
+    <div class="section-tag">Nuestro Proceso</div>
+    <div class="headline">
+      Corte <span class="accent">Laser</span><br>
+      de Precision
+    </div>
+    <div class="body-text">
+      Cada pieza nace en nuestra planta con tecnologia laser
+      sobre MDF premium. Diseñamos, cortamos, limpiamos,
+      armamos y empacamos &mdash; todo bajo un mismo techo.
+    </div>
+  </div>
+
+  <div class="laser-graphic">
+    <div class="inner">
+      <div class="laser-beam"></div>
+      <div class="cut-pieces">
+        <!-- Magnet shape -->
+        <div class="cut-piece">
+          <svg viewBox="0 0 60 60"><rect x="5" y="5" width="50" height="50" rx="12" stroke="currentColor" stroke-width="2" fill="none" style="color: #D4A574"/><text x="30" y="38" text-anchor="middle" fill="#D4A574" font-size="22" font-family="'Bebas Neue'">M</text></svg>
+        </div>
+        <!-- Keychain shape -->
+        <div class="cut-piece">
+          <svg viewBox="0 0 60 60"><circle cx="30" cy="24" r="16" stroke="#D4A574" stroke-width="2" fill="none"/><rect x="25" y="38" width="10" height="16" rx="3" stroke="#D4A574" stroke-width="2" fill="none"/></svg>
+        </div>
+        <!-- Opener shape -->
+        <div class="cut-piece">
+          <svg viewBox="0 0 60 60"><rect x="10" y="8" width="40" height="44" rx="10" stroke="#D4A574" stroke-width="2" fill="none"/><circle cx="30" cy="22" r="8" stroke="#D4A574" stroke-width="2" fill="none"/></svg>
+        </div>
+        <!-- Key holder shape -->
+        <div class="cut-piece">
+          <svg viewBox="0 0 60 60"><rect x="4" y="15" width="52" height="30" rx="6" stroke="#D4A574" stroke-width="2" fill="none"/><circle cx="15" cy="30" r="4" fill="#D4A574" opacity="0.5"/><circle cx="30" cy="30" r="4" fill="#D4A574" opacity="0.5"/><circle cx="45" cy="30" r="4" fill="#D4A574" opacity="0.5"/></svg>
+        </div>
+      </div>
+      <div class="mdf-label">MDF Premium &bull; Corte Laser</div>
+    </div>
+  </div>
+
+  <div class="slide-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 3: PRODUCTS ============ -->
+<p class="slide-label">Slide 3 / 6 &mdash; Productos</p>
+<div class="slide slide-3">
+  <div class="glow-circle pink"></div>
+  <div class="glow-circle cyan"></div>
+  <div class="top-strip"></div>
+
+  <div class="header-area">
+    <div class="headline">
+      Nuestros<br><span class="accent">Productos</span>
+    </div>
+  </div>
+
+  <div class="product-grid">
+    <div class="product-card">
+      <div class="product-icon">🧲</div>
+      <div>
+        <div class="product-name">Imanes</div>
+        <div class="product-desc">Clasicos, 3D y con foil metalico para cada destino</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-icon">🔑</div>
+      <div>
+        <div class="product-name">Llaveros</div>
+        <div class="product-desc">Con argolla reforzada y diseño regional autentico</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-icon">🍺</div>
+      <div>
+        <div class="product-name">Destapadores</div>
+        <div class="product-desc">Iman trasero + doble remache, funcional y decorativo</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-icon">🏠</div>
+      <div>
+        <div class="product-name">Portallaves</div>
+        <div class="product-desc">MDF 4.5mm con diseño exclusivo para el hogar</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-icon">📓</div>
+      <div>
+        <div class="product-name">Libretas</div>
+        <div class="product-desc">Pasta dura con ilustraciones premium de cada region</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-icon">✨</div>
+      <div>
+        <div class="product-name">Especiales</div>
+        <div class="product-desc">Foil metalico, 3D y ediciones limitadas por temporada</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 4: STATS ============ -->
+<p class="slide-label">Slide 4 / 6 &mdash; Numeros</p>
+<div class="slide slide-4">
+  <div class="pattern-overlay"></div>
+  <div class="diagonal-texture"></div>
+  <div class="top-strip"></div>
+
+  <div class="header">
+    <div class="tag">Nuestra Capacidad</div>
+    <div class="title">Numeros que<br>Hablan</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-number">5,000+</div>
+      <div class="stat-label">Piezas por semana</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">100%</div>
+      <div class="stat-label">Hecho en Mexico</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">A → Z</div>
+      <div class="stat-label">Control total del proceso</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">8 dias</div>
+      <div class="stat-label">Entrega desde 100 pzas</div>
+    </div>
+  </div>
+
+  <div class="slide-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+
+  <div class="bottom-bar"></div>
+</div>
+
+<!-- ============ SLIDE 5: DIFFERENTIATORS ============ -->
+<p class="slide-label">Slide 5 / 6 &mdash; Diferenciadores</p>
+<div class="slide slide-5">
+  <div class="top-strip"></div>
+  <div class="accent-block"></div>
+
+  <div class="header">
+    <div class="title">
+      <span class="pink">Por que</span><br>
+      Somos <span class="orange">Diferentes</span>
+    </div>
+  </div>
+
+  <div class="features-list">
+    <div class="feature-row">
+      <div class="feature-icon">🎨</div>
+      <div class="feature-text">
+        <div class="feat-title">Diseño Autentico</div>
+        <div class="feat-desc">Cada destino tiene su diseño unico — nada de plantillas genericas</div>
+      </div>
+    </div>
+    <div class="feature-row">
+      <div class="feature-icon">🏭</div>
+      <div class="feature-text">
+        <div class="feat-title">Manufactura Propia</div>
+        <div class="feat-desc">Diseño, corte, armado y empaque — todo en nuestra planta</div>
+      </div>
+    </div>
+    <div class="feature-row">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-text">
+        <div class="feat-title">Tecnologia Laser</div>
+        <div class="feat-desc">Precision y escalabilidad que la competencia no tiene</div>
+      </div>
+    </div>
+    <div class="feature-row">
+      <div class="feature-icon">🤝</div>
+      <div class="feature-text">
+        <div class="feat-title">B2B Colaborativo</div>
+        <div class="feat-desc">Alianzas con proveedores locales para diseño regional perfecto</div>
+      </div>
+    </div>
+    <div class="feature-row">
+      <div class="feature-icon">💎</div>
+      <div class="feature-text">
+        <div class="feat-title">Calidad Premium</div>
+        <div class="feat-desc">Souvenirs que generan orgullo — no basura de tienda turistica</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 6: CTA ============ -->
+<p class="slide-label">Slide 6 / 6 &mdash; CTA</p>
+<div class="slide slide-6">
+  <div class="glow-orb"></div>
+  <div class="top-strip"></div>
+  <div class="ring-decoration"></div>
+
+  <div class="logo-big">
+    <span>A</span><span>X</span><span>K</span><span>A</span><span>N</span>
+  </div>
+
+  <div class="cta-headline">
+    Souvenirs Que Si<br>Importan
+  </div>
+
+  <div class="cta-sub">Recuerdos Hechos Souvenir</div>
+
+  <div class="cta-button">
+    Cotiza Tu Pedido →
+  </div>
+
+  <div class="handle">@axkan.mx</div>
+
+  <div class="slide-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+
+  <div class="bottom-bar"></div>
+</div>
+
+</body>
+</html>

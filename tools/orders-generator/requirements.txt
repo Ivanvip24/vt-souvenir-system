@@ -1,0 +1,20 @@
+# PDF Reference Sheet Generator - macOS Requirements
+
+reportlab>=4.0.0      # PDF generation and form fields
+Pillow>=10.0.0        # Image processing and clipboard support (macOS native)
+PyYAML>=6.0           # YAML configuration parsing
+
+# Notion Integration
+notion-client>=2.2.1  # Official Notion API client
+python-dotenv>=1.0.0  # Load environment variables from .env file
+
+# Google Drive Integration (for image hosting)
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+google-api-python-client>=2.100.0
+
+# Backend Integration (VT Souvenir System)
+requests>=2.31.0      # HTTP client for backend API calls
+
+# Note: tkinter is included with Python on macOS (no need to install separately)

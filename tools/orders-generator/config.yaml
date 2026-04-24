@@ -1,0 +1,46 @@
+# Configuration for PDF Reference Sheet Generator - macOS Version
+
+# Output path for generated PDFs (macOS format)
+# Options:
+# - Local folder: "~/Documents/Orders" or "/Users/username/Documents/Orders"
+# - Network share (SMB): "/Volumes/TRABAJOS/2025/ARMADOS VT/ORDERS"
+output_path: "/Volumes/TRABAJOS/2026/ORDERS"
+
+# PDF Layout Settings
+layout:
+  page_size: "A4"  # A4, Letter, Legal
+  orientation: "portrait"  # portrait or landscape
+  columns: 3  # Number of columns in grid
+  margin: 20  # Margin in mm
+
+# Grid cell settings
+cell:
+  width: 180  # Width of each cell in points
+  height: 250  # Height of each cell in points
+  padding: 10  # Padding inside cell
+
+# Image settings
+image:
+  max_width: 160  # Maximum image width in points
+  max_height: 150  # Maximum image height in points
+
+# Font settings
+fonts:
+  title_size: 16
+  header_size: 12
+  body_size: 10
+  label_size: 9
+
+# Product types available
+product_types:
+  - "Imanes chicos"
+  - "Llaveros"
+  - "Destapadores"
+  - "Portallaves"
+  - "Llaverosx"
+
+# Form field settings
+form_fields:
+  enable_editable: true
+  field_height: 20
+  field_background_color: "#F0F0F0"

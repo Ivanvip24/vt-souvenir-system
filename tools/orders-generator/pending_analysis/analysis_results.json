@@ -1,0 +1,12 @@
+{
+  "order_name": "Puerto Arista - Tortugas",
+  "instructions": "50 piezas de cada diseño",
+  "designs": [
+    {"type": "Imanes", "quantity": 50},
+    {"type": "Imanes", "quantity": 50},
+    {"type": "Llaveros", "quantity": 50},
+    {"type": "Llaveros", "quantity": 50},
+    {"type": "Destapadores", "quantity": 50},
+    {"type": "Destapadores", "quantity": 50}
+  ]
+}
