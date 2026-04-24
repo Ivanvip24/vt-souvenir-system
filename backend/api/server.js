@@ -53,6 +53,7 @@ import productionRoutes from './production-routes.js';
 import designPortalRoutes from './design-portal-routes.js';
 import { generateCatalogPDF, getCatalogUrl } from '../services/catalog-generator.js';
 import pushService from '../services/push-notification.js';
+import { log, logError } from '../shared/logger.js';
 
 config();
 
@@ -112,7 +113,7 @@ app.use(cors({
     if (origin && origin.startsWith('chrome-extension://')) {
       return callback(null, true);
     }
-    console.warn(`⚠️ CORS blocked origin: ${origin}`);
+    log('warn', 'server.cors-blocked-origin');
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -193,18 +194,18 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
       event = JSON.parse(req.body.toString());
     }
   } catch (err) {
-    console.error('⚠️ Stripe webhook signature failed:', err.message);
+    logError('server.stripe-webhook-signature-failed', err);
     return res.status(400).send('Webhook signature verification failed');
   }
 
-  console.log(`💳 Stripe webhook: ${event.type}`);
+  log('info', 'server.stripe-webhook');
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const orderId = session.metadata?.orderId;
     const amountPaid = (session.amount_total || 0) / 100;
 
-    console.log(`✅ Stripe payment completed: Order ${orderId}, $${amountPaid} MXN`);
+    log('info', 'server.stripe-payment-completed-order-mxn');
 
     if (orderId) {
       try {
@@ -227,9 +228,9 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
           [orderId, amountPaid, session.payment_intent || session.id]
         );
 
-        console.log(`✅ Order ${orderId} auto-approved via Stripe payment`);
+        log('info', 'server.order-auto-approved-via-stripe-payment');
       } catch (dbErr) {
-        console.error('❌ Error updating order from Stripe webhook:', dbErr.message);
+        log('error', 'server.debug');
       }
     }
   }
@@ -246,7 +247,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Request logging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  log('info', 'server.action');
   next();
 });
 
@@ -255,16 +256,16 @@ app.use((req, res, next) => {
 // ========================================
 const receiptsPath = path.join(__dirname, '../order-receipts');
 app.use('/receipts', authMiddleware, express.static(receiptsPath));
-console.log(`📁 Serving order receipts from: ${receiptsPath} (auth protected)`);
+log('info', 'server.serving-order-receipts-from-auth-protected');
 
 const paymentReceiptsPath = path.join(__dirname, '../payment-verification-receipts');
 app.use('/payment-receipts', authMiddleware, express.static(paymentReceiptsPath));
-console.log(`📁 Serving payment verification receipts from: ${paymentReceiptsPath} (auth protected)`);
+log('info', 'server.serving-payment-verification-receipts-from-auth-pr');
 
 // Axkan brand assets (knowledge base images) - uses submodule
 const axkanPath = process.env.AXKAN_REPO_PATH || path.join(__dirname, '../assets/axkan');
 app.use('/axkan-assets', express.static(axkanPath));
-console.log(`📁 Serving Axkan assets from: ${axkanPath}`);
+log('info', 'server.serving-axkan-assets-from');
 
 // Quote PDFs
 const quotesPath = path.join(__dirname, '../quotes');
@@ -272,7 +273,7 @@ if (!fs.existsSync(quotesPath)) {
   fs.mkdirSync(quotesPath, { recursive: true });
 }
 app.use('/quotes', authMiddleware, express.static(quotesPath));
-console.log(`📁 Serving quotes from: ${quotesPath} (auth protected)`);
+log('info', 'server.serving-quotes-from-auth-protected');
 
 // Catalog PDFs
 const catalogsPath = path.join(__dirname, '../catalogs');
@@ -280,14 +281,14 @@ if (!fs.existsSync(catalogsPath)) {
   fs.mkdirSync(catalogsPath, { recursive: true });
 }
 app.use('/catalogs', express.static(catalogsPath));
-console.log(`📁 Serving catalogs from: ${catalogsPath}`);
+log('info', 'server.serving-catalogs-from');
 
 // WhatsApp-generated quotes (public, no auth — WhatsApp needs direct access)
 const whatsappQuotesPath = path.join(__dirname, '../catalogs/quotes');
 if (!fs.existsSync(whatsappQuotesPath)) {
   fs.mkdirSync(whatsappQuotesPath, { recursive: true });
 }
-console.log(`📁 WhatsApp quotes served publicly at: /catalogs/quotes/`);
+log('info', 'server.whatsapp-quotes-served-publicly-at-catalogsquotes');
 
 // Branded Receipt PDFs
 const brandedReceiptsPath = path.join(__dirname, '../branded-receipts');
@@ -295,7 +296,7 @@ if (!fs.existsSync(brandedReceiptsPath)) {
   fs.mkdirSync(brandedReceiptsPath, { recursive: true });
 }
 app.use('/branded-receipts', authMiddleware, express.static(brandedReceiptsPath));
-console.log(`📁 Serving branded receipts from: ${brandedReceiptsPath} (auth protected)`);
+log('info', 'server.serving-branded-receipts-from-auth-protected');
 
 // Shipping Labels PDFs
 const labelsPath = path.join(__dirname, '../labels');
@@ -303,7 +304,7 @@ if (!fs.existsSync(labelsPath)) {
   fs.mkdirSync(labelsPath, { recursive: true });
 }
 app.use('/labels', authMiddleware, express.static(labelsPath));
-console.log(`📁 Serving labels from: ${labelsPath} (auth protected)`);
+log('info', 'server.serving-labels-from-auth-protected');
 
 // Designer Reports PDFs
 const designerReportsPath = path.join(__dirname, '../designer-reports');
@@ -311,7 +312,7 @@ if (!fs.existsSync(designerReportsPath)) {
   fs.mkdirSync(designerReportsPath, { recursive: true });
 }
 app.use('/designer-reports', express.static(designerReportsPath));
-console.log(`📁 Serving designer reports from: ${designerReportsPath} (auth protected)`);
+log('info', 'server.serving-designer-reports-from-auth-protected');
 
 // Sales Digests PDFs
 const salesDigestsPath = path.join(__dirname, '../sales-digests');
@@ -319,7 +320,7 @@ if (!fs.existsSync(salesDigestsPath)) {
   fs.mkdirSync(salesDigestsPath, { recursive: true });
 }
 app.use('/sales-digests', express.static(salesDigestsPath));
-console.log(`📁 Serving sales digests from: ${salesDigestsPath} (public — WhatsApp needs direct access)`);
+log('info', 'server.serving-sales-digests-from-public-whatsapp-needs-d');
 
 // ========================================
 // HEALTH CHECK
@@ -368,7 +369,7 @@ app.get('/api/catalog', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error generating catalog:', error);
+    logError('server.error-generating-catalog', error);
     res.status(500).json({
       success: false,
       error: 'Error al generar el catálogo'
@@ -381,7 +382,7 @@ app.get('/api/catalog/download', async (req, res) => {
     const result = await generateCatalogPDF();
     res.download(result.filepath, 'catalogo-axkan.pdf');
   } catch (error) {
-    console.error('❌ Error downloading catalog:', error);
+    logError('server.error-downloading-catalog', error);
     res.status(500).json({ success: false, error: 'Error al generar catálogo' });
   }
 });
@@ -536,7 +537,7 @@ app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
     await pushService.saveSubscription(subscription, req.headers['user-agent']);
     res.json({ success: true, message: 'Subscribed' });
   } catch (error) {
-    console.error('Push subscribe error:', error);
+    logError('server.push-subscribe-error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -590,7 +591,7 @@ app.get('/api/clients/search', authMiddleware, async (req, res) => {
 
     res.json({ success: true, clients: result.rows });
   } catch (error) {
-    console.error('Error searching clients:', error);
+    logError('server.error-searching-clients', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -621,7 +622,7 @@ app.get('/', (req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
+  logError('server.unhandled-error', err);
 
   res.status(500).json({
     success: false,
@@ -635,14 +636,14 @@ app.use((err, req, res, next) => {
 
 async function startServer() {
   try {
-    console.log('\n🚀 Starting Souvenir Management System...\n');
+    log('info', 'server.n-starting-souvenir-management-systemn');
 
     // Test database connection
-    console.log('📊 Testing database connection...');
+    log('info', 'server.testing-database-connection');
     const dbConnected = await testConnection();
 
     if (!dbConnected) {
-      console.error('⚠️  Warning: Database connection failed. Some features may not work.');
+      log('error', 'server.warning-database-connection-failed-some-features-m');
     }
 
     // Run design subscriptions migration (idempotent — all IF NOT EXISTS)
@@ -679,7 +680,7 @@ async function startServer() {
         await query(`CREATE INDEX IF NOT EXISTS idx_download_log_date ON design_download_log(downloaded_at)`);
         // Mark all active designs as public (one-time seed)
         await query(`UPDATE design_gallery SET is_public = true WHERE (is_archived = false OR is_archived IS NULL) AND is_public = false`);
-        console.log('✅ Design subscriptions tables ready');
+        log('info', 'server.design-subscriptions-tables-ready');
 
         // Credit system tables (020-design-credits)
         await query(`ALTER TABLE design_subscribers ADD COLUMN IF NOT EXISTS credits_balance INTEGER DEFAULT 0`);
@@ -699,19 +700,19 @@ async function startServer() {
         await query(`CREATE INDEX IF NOT EXISTS idx_credit_purchases_subscriber ON credit_purchases(subscriber_id)`);
         await query(`CREATE INDEX IF NOT EXISTS idx_credit_purchases_stripe ON credit_purchases(stripe_session_id)`);
         await query(`ALTER TABLE design_download_log ADD COLUMN IF NOT EXISTS credits_spent INTEGER DEFAULT 1`);
-        console.log('✅ Design credits tables ready');
+        log('info', 'server.design-credits-tables-ready');
       } catch (e) {
-        console.warn('⚠️ Design subscriptions migration skipped:', e.message);
+        log('warn', 'server.design-subscriptions-migration-skipped');
       }
     }
 
     // Initialize Email Service
-    console.log('📧 Initializing email service...');
+    log('info', 'server.initializing-email-service');
     const emailInitialized = initializeEmailSender();
     if (emailInitialized) {
-      console.log('✅ Email service initialized successfully');
+      log('info', 'server.email-service-initialized-successfully');
     } else {
-      console.error('⚠️  Warning: Email service initialization failed. Emails will not be sent.');
+      log('error', 'server.warning-email-service-initialization-failed-emails');
     }
 
     // Initialize Analytics Agent (includes scheduler)
@@ -738,7 +739,7 @@ async function startServer() {
       const { initializeDesignKeepAlive } = await import('../services/design-keepalive-scheduler.js');
       initializeDesignKeepAlive();
     } catch (dkaErr) {
-      console.error('🎨 Design keep-alive scheduler init error:', dkaErr.message);
+      log('error', 'server.debug');
     }
 
     // Initialize Facebook Marketplace Scheduler (daily at 9 AM)
@@ -748,27 +749,27 @@ async function startServer() {
     try {
       const { migrate: migrateDesignerTracking } = await import('../migrations/add-designer-tracking.js');
       await migrateDesignerTracking();
-      console.log('✅ Designer tracking tables ready');
+      log('info', 'server.designer-tracking-tables-ready');
     } catch (dtErr) {
-      console.warn('⚠️  Designer tracking migration:', dtErr.message);
+      log('warn', 'server.designer-tracking-migration');
     }
 
     // Run sales coaching migration
     try {
       const { migrate: migrateSalesCoaching } = await import('../migrations/add-sales-coaching.js');
       await migrateSalesCoaching();
-      console.log('✅ Sales coaching tables ready');
+      log('info', 'server.sales-coaching-tables-ready');
     } catch (scErr) {
-      console.warn('⚠️  Sales coaching migration:', scErr.message);
+      log('warn', 'server.sales-coaching-migration');
     }
 
     // Run sales learnings migration (learning engine tables)
     try {
       const { migrate: migrateSalesLearnings } = await import('../migrations/add-sales-learnings.js');
       await migrateSalesLearnings();
-      console.log('✅ Sales learnings tables ready');
+      log('info', 'server.sales-learnings-tables-ready');
     } catch (slErr) {
-      console.warn('⚠️  Sales learnings migration:', slErr.message);
+      log('warn', 'server.sales-learnings-migration');
     }
 
     // Run sales insights migration (AI insights feed table)
@@ -776,16 +777,16 @@ async function startServer() {
       const { migrate: migrateSalesInsights } = await import('../migrations/add-sales-insights.js');
       await migrateSalesInsights();
     } catch (siErr) {
-      console.warn('⚠️  Sales insights migration:', siErr.message);
+      log('warn', 'server.sales-insights-migration');
     }
 
     // Run design portal migration (design_assignments + design_messages)
     try {
       const { migrate: migrateDesignPortal } = await import('../migrations/add-design-portal.js');
       await migrateDesignPortal();
-      console.log('✅ Design portal tables ready');
+      log('info', 'server.design-portal-tables-ready');
     } catch (dpErr) {
-      console.warn('⚠️  Design portal migration:', dpErr.message);
+      log('warn', 'server.design-portal-migration');
     }
 
     // Initialize Designer Task Tracking Scheduler (follow-ups + reports)
@@ -796,7 +797,7 @@ async function startServer() {
       const { migrate: migrateReengagement } = await import('../migrations/add-reengagement-timer.js');
       await migrateReengagement();
     } catch (reErr) {
-      console.warn('⚠️  Reengagement migration:', reErr.message);
+      log('warn', 'server.reengagement-migration');
     }
     initializeFollowupScheduler();
 
@@ -805,7 +806,7 @@ async function startServer() {
       const { addProductionTrackingLogs } = await import('../migrations/add-production-tracking-logs.js');
       await addProductionTrackingLogs();
     } catch (ptErr) {
-      console.warn('⚠️  Production tracking logs migration:', ptErr.message);
+      log('warn', 'server.production-tracking-logs-migration');
     }
 
     // Ensure is_store_pickup column exists (for store pickup feature)
@@ -814,33 +815,33 @@ async function startServer() {
         ALTER TABLE orders
         ADD COLUMN IF NOT EXISTS is_store_pickup BOOLEAN DEFAULT FALSE
       `);
-      console.log('✅ Store pickup column ready');
+      log('info', 'server.store-pickup-column-ready');
     } catch (err) {
-      console.warn('⚠️  Store pickup column migration:', err.message);
+      log('warn', 'server.store-pickup-column-migration');
     }
 
     // Build Knowledge Base Index
-    console.log('📚 Building knowledge base index...');
+    log('info', 'server.building-knowledge-base-index');
     try {
       await knowledgeIndex.buildIndex();
-      console.log('✅ Knowledge base indexed successfully');
+      log('info', 'server.knowledge-base-indexed-successfully');
     } catch (kbError) {
-      console.warn('⚠️  Warning: Knowledge base indexing failed:', kbError.message);
+      log('warn', 'server.warning-knowledge-base-indexing-failed');
     }
 
     // Run startup migrations
-    console.log('🔄 Running startup migrations...');
+    log('info', 'server.running-startup-migrations');
     try {
       // Allow NULL order_id in shipping_labels (for client-only labels)
       await query(`
         ALTER TABLE shipping_labels
         ALTER COLUMN order_id DROP NOT NULL
       `);
-      console.log('   ✅ shipping_labels.order_id is now nullable');
+      log('info', 'server.shippinglabelsorderid-is-now-nullable');
     } catch (migrationError) {
       // Ignore if already nullable or table doesn't exist
       if (!migrationError.message.includes('already')) {
-        console.log('   ℹ️  Migration skipped:', migrationError.message.split('\n')[0]);
+        log('info', 'server.migration-skipped');
       }
     }
 
@@ -861,9 +862,9 @@ async function startServer() {
       `);
       await query(`CREATE INDEX IF NOT EXISTS idx_salespeople_name ON salespeople(name)`);
       await query(`CREATE INDEX IF NOT EXISTS idx_salespeople_active ON salespeople(is_active)`);
-      console.log('   ✅ salespeople table ready');
+      log('info', 'server.salespeople-table-ready');
     } catch (spErr) {
-      console.log('   ℹ️  salespeople migration:', spErr.message.split('\n')[0]);
+      log('info', 'server.salespeople-migration.skipped');
     }
 
     // Add sales_rep and salesperson_id columns to orders
@@ -872,9 +873,9 @@ async function startServer() {
       await query(`CREATE INDEX IF NOT EXISTS idx_orders_sales_rep ON orders(sales_rep)`);
       await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS salesperson_id INTEGER REFERENCES salespeople(id)`);
       await query(`CREATE INDEX IF NOT EXISTS idx_orders_salesperson_id ON orders(salesperson_id)`);
-      console.log('   ✅ orders.sales_rep column ready');
+      log('info', 'server.orderssalesrep-column-ready');
     } catch (srErr) {
-      console.log('   ℹ️  sales_rep migration:', srErr.message.split('\n')[0]);
+      log('info', 'server.salesrep-migration.skipped');
     }
 
     // Insert default salespeople
@@ -886,17 +887,17 @@ async function startServer() {
           ('Ivan', 0.00, 'Propietario - sin comisión')
         ON CONFLICT (name) DO NOTHING
       `);
-      console.log('   ✅ Default salespeople ready');
+      log('info', 'server.default-salespeople-ready');
     } catch (defErr) {
-      console.log('   ℹ️  Default salespeople:', defErr.message.split('\n')[0]);
+      log('info', 'server.default-salespeople.skipped');
     }
 
     // Add confirmation_code column to pickups table
     try {
       await query(`ALTER TABLE pickups ADD COLUMN IF NOT EXISTS confirmation_code VARCHAR(100)`);
-      console.log('   ✅ pickups.confirmation_code column ready');
+      log('info', 'server.pickupsconfirmationcode-column-ready');
     } catch (pcErr) {
-      console.log('   ℹ️  pickups confirmation_code migration:', pcErr.message.split('\n')[0]);
+      log('info', 'server.pickups-confirmationcode-migration.skipped');
     }
 
     // Create system_settings table for editable config (origin address, etc.)
@@ -926,9 +927,9 @@ async function startServer() {
         email: 'valenciaperezivan24@gmail.com',
         reference: 'Interior 3'
       })]);
-      console.log('   ✅ system_settings table ready');
+      log('info', 'server.systemsettings-table-ready');
     } catch (ssErr) {
-      console.log('   ℹ️  system_settings migration:', ssErr.message.split('\n')[0]);
+      log('info', 'server.systemsettings-migration.skipped');
     }
 
     // Create payment_notes table for payment tracking (multiple cuentas per client)
@@ -952,25 +953,25 @@ async function startServer() {
       try {
         await query(`ALTER TABLE payment_notes DROP CONSTRAINT IF EXISTS payment_notes_client_id_key`);
       } catch (_) {}
-      console.log('   ✅ payment_notes table ready');
+      log('info', 'server.paymentnotes-table-ready');
     } catch (pnErr) {
-      console.log('   ℹ️  payment_notes migration:', pnErr.message.split('\n')[0]);
+      log('info', 'server.paymentnotes-migration.skipped');
     }
 
     // Load origin address from DB into skydropx service
     try {
       await skydropxService.loadOriginAddress();
     } catch (loadErr) {
-      console.log('   ℹ️  Origin address load:', loadErr.message.split('\n')[0]);
+      log('info', 'server.origin-address-load.skipped');
     }
 
     // Load AI Knowledge Content
-    console.log('🤖 Loading AI knowledge content...');
+    log('info', 'server.loading-ai-knowledge-content');
     try {
       await knowledgeAI.loadBrandContent();
-      console.log('✅ AI knowledge content loaded successfully');
+      log('info', 'server.ai-knowledge-content-loaded-successfully');
     } catch (aiError) {
-      console.warn('⚠️  Warning: AI knowledge loading failed:', aiError.message);
+      log('warn', 'server.warning-ai-knowledge-loading-failed');
     }
 
     // Auto-migration: add wholesale_price to products
@@ -986,27 +987,27 @@ async function startServer() {
         await query(`UPDATE products SET base_price = 8.00, wholesale_price = 6.00 WHERE id = 9`);
         await query(`UPDATE products SET base_price = 45.00, wholesale_price = 45.00 WHERE id = 10`);
         await query(`UPDATE products SET wholesale_price = base_price WHERE wholesale_price IS NULL`);
-        console.log('✅ Product price tiers migration applied');
+        log('info', 'server.product-price-tiers-migration-applied');
       }
     } catch (mErr) {
-      console.warn('⚠️  Price tiers migration:', mErr.message);
+      log('warn', 'server.price-tiers-migration');
     }
 
     // Add destination column to orders (if not exists)
     try {
       await query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS destination VARCHAR(150)`);
-      console.log('✅ Destination column ready');
+      log('info', 'server.destination-column-ready');
     } catch (mErr) {
-      console.warn('⚠️  Destination migration:', mErr.message);
+      log('warn', 'server.destination-migration');
     }
 
     // Add is_printed tracking to shipping_labels
     try {
       await query(`ALTER TABLE shipping_labels ADD COLUMN IF NOT EXISTS is_printed BOOLEAN DEFAULT false`);
       await query(`ALTER TABLE shipping_labels ADD COLUMN IF NOT EXISTS printed_at TIMESTAMP`);
-      console.log('✅ is_printed column ready');
+      log('info', 'server.isprinted-column-ready');
     } catch (mErr) {
-      console.warn('⚠️  is_printed migration:', mErr.message);
+      log('warn', 'server.isprinted-migration');
     }
 
     // Add "Urgencia" product if not exists
@@ -1014,10 +1015,10 @@ async function startServer() {
       const urgCheck = await query("SELECT id FROM products WHERE name = 'Urgencia'");
       if (urgCheck.rows.length === 0) {
         await query(`INSERT INTO products (name, base_price, production_cost, category, is_active, wholesale_price) VALUES ('Urgencia', 1.00, 0, 'SERVICIOS', true, 1.00)`);
-        console.log('✅ Urgencia product created');
+        log('info', 'server.urgencia-product-created');
       }
     } catch (mErr) {
-      console.warn('⚠️  Urgencia product:', mErr.message);
+      log('warn', 'server.urgencia-product');
     }
 
     // Run client_addresses migration (multi-address support per client)
@@ -1025,47 +1026,23 @@ async function startServer() {
       const { addClientAddresses } = await import('../migrations/add-client-addresses.js');
       await addClientAddresses();
     } catch (caErr) {
-      console.warn('⚠️  Client addresses migration:', caErr.message);
+      log('warn', 'server.client-addresses-migration');
     }
 
     // Start server
     app.listen(PORT, () => {
-      console.log('\n' + '='.repeat(60));
-      console.log(`✅ Server running on port ${PORT}`);
-      console.log(`📡 API URL: http://localhost:${PORT}`);
-      console.log(`💻 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log('='.repeat(60) + '\n');
-
-      console.log('📋 Available Endpoints:');
-      console.log('  GET  /health');
-      console.log('  POST /api/orders');
-      console.log('  GET  /api/orders');
-      console.log('  GET  /api/orders/:pageId');
-      console.log('  PATCH /api/orders/:orderId/status');
-      console.log('  POST /api/orders/:orderId/sync');
-      console.log('  GET  /api/analytics');
-      console.log('  GET  /api/analytics/revenue');
-      console.log('  GET  /api/analytics/products/top');
-      console.log('  GET  /api/analytics/clients/top');
-      console.log('  POST /api/reports/daily/send');
-      console.log('  POST /api/reports/monthly/send');
-      console.log('  GET  /api/reports/schedule');
-      console.log('  POST /api/test/email');
-      console.log('  📦 /api/inventory/* (Materials, Alerts, BOM, Forecasting)');
-      console.log('  💰 /api/prices/* (Price Tracking, Trends, Margins, Insights)');
-      console.log('  🔧 /api/bom/* (Bill of Materials, Components, Cost Calculations)');
-      console.log('  🔔 /api/reminders (Calendar Reminders - GET, POST, Complete, Delete)\n');
+      log('info', 'server.started', { port: PORT, env: process.env.NODE_ENV || 'development' });
     });
 
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    logError('server.failed-to-start-server', error);
     process.exit(1);
   }
 }
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Received SIGTERM signal, shutting down gracefully...');
+  log('info', 'server.n-received-sigterm-signal-shutting-down-gracefully');
   analyticsAgent.scheduler.stopAllJobs();
   stopCepRetryScheduler();
   stopShippingNotificationScheduler();
@@ -1075,7 +1052,7 @@ process.on('SIGTERM', () => {
 });
 
 process.on('SIGINT', () => {
-  console.log('\n🛑 Received SIGINT signal, shutting down gracefully...');
+  log('info', 'server.n-received-sigint-signal-shutting-down-gracefully');
   analyticsAgent.scheduler.stopAllJobs();
   stopCepRetryScheduler();
   stopShippingNotificationScheduler();
