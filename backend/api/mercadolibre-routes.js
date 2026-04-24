@@ -6,6 +6,7 @@
 import express from 'express';
 import { query } from '../shared/database.js';
 import * as mercadolibre from '../services/mercadolibre.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -31,7 +32,7 @@ router.get('/auth/status', async (req, res) => {
       res.json({ connected: false });
     }
   } catch (error) {
-    console.error('Error checking ML connection:', error);
+    logError('mercadolibre.error-checking-ml-connection', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -45,7 +46,7 @@ router.get('/auth/connect', (req, res) => {
     const authUrl = mercadolibre.getAuthorizationUrl();
     res.json({ authUrl });
   } catch (error) {
-    console.error('Error generating auth URL:', error);
+    logError('mercadolibre.error-generating-auth-url', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -59,7 +60,7 @@ router.get('/oauth/callback', async (req, res) => {
     const { code, error, error_description } = req.query;
 
     if (error) {
-      console.error('OAuth error:', error, error_description);
+      log('error', 'mercadolibre.debug');
       return res.redirect('/admin-dashboard/?ml_error=' + encodeURIComponent(error_description || error));
     }
 
@@ -68,11 +69,11 @@ router.get('/oauth/callback', async (req, res) => {
     }
 
     const result = await mercadolibre.exchangeCodeForTokens(code);
-    console.log('ML account connected, user ID:', result.userId);
+    log('info', 'mercadolibre.ml-account-connected-user-id');
 
     res.redirect('/admin-dashboard/?ml_connected=true');
   } catch (error) {
-    console.error('OAuth callback error:', error);
+    logError('mercadolibre.oauth-callback-error', error);
     res.redirect('/admin-dashboard/?ml_error=' + encodeURIComponent(error.message));
   }
 });
@@ -86,7 +87,7 @@ router.post('/auth/disconnect', async (req, res) => {
     await mercadolibre.disconnect();
     res.json({ success: true, message: 'Mercado Libre account disconnected' });
   } catch (error) {
-    console.error('Error disconnecting ML:', error);
+    logError('mercadolibre.error-disconnecting-ml', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -104,7 +105,7 @@ router.get('/products', async (req, res) => {
     const products = await mercadolibre.getProductsWithMLStatus();
     res.json({ products });
   } catch (error) {
-    console.error('Error getting products:', error);
+    logError('mercadolibre.error-getting-products', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -119,7 +120,7 @@ router.get('/products/:productId/listings', async (req, res) => {
     const listings = await mercadolibre.getListingsForProduct(parseInt(productId));
     res.json({ listings });
   } catch (error) {
-    console.error('Error getting listings:', error);
+    logError('mercadolibre.error-getting-listings', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -165,7 +166,7 @@ router.post('/products/:productId/publish', async (req, res) => {
       results
     });
   } catch (error) {
-    console.error('Error publishing product:', error);
+    logError('mercadolibre.error-publishing-product', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -213,7 +214,7 @@ router.post('/products/bulk-publish', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error bulk publishing:', error);
+    logError('mercadolibre.error-bulk-publishing', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -249,7 +250,7 @@ router.get('/listings', async (req, res) => {
     const result = await query(listingsQuery, params);
     res.json({ listings: result.rows });
   } catch (error) {
-    console.error('Error getting listings:', error);
+    logError('mercadolibre.error-getting-listings', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -283,7 +284,7 @@ router.patch('/listings/:listingId', async (req, res) => {
     const result = await mercadolibre.updateListing(mlItemId, updateData);
     res.json({ success: true, result });
   } catch (error) {
-    console.error('Error updating listing:', error);
+    logError('mercadolibre.error-updating-listing', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -308,7 +309,7 @@ router.post('/listings/:listingId/pause', async (req, res) => {
     const result = await mercadolibre.pauseListing(listingResult.rows[0].ml_item_id);
     res.json({ success: true, result });
   } catch (error) {
-    console.error('Error pausing listing:', error);
+    logError('mercadolibre.error-pausing-listing', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -333,7 +334,7 @@ router.post('/listings/:listingId/activate', async (req, res) => {
     const result = await mercadolibre.activateListing(listingResult.rows[0].ml_item_id);
     res.json({ success: true, result });
   } catch (error) {
-    console.error('Error activating listing:', error);
+    logError('mercadolibre.error-activating-listing', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -358,7 +359,7 @@ router.delete('/listings/:listingId', async (req, res) => {
     const result = await mercadolibre.closeListing(listingResult.rows[0].ml_item_id);
     res.json({ success: true, result });
   } catch (error) {
-    console.error('Error closing listing:', error);
+    logError('mercadolibre.error-closing-listing', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -382,7 +383,7 @@ router.post('/inventory/sync', async (req, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Error syncing inventory:', error);
+    logError('mercadolibre.error-syncing-inventory', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -410,7 +411,7 @@ router.get('/inventory/status', async (req, res) => {
 
     res.json({ listings: result.rows });
   } catch (error) {
-    console.error('Error getting inventory status:', error);
+    logError('mercadolibre.error-getting-inventory-status', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -429,7 +430,7 @@ router.get('/categories/:siteId', async (req, res) => {
     const categories = await mercadolibre.getCategoryTree(siteId);
     res.json({ categories });
   } catch (error) {
-    console.error('Error getting categories:', error);
+    logError('mercadolibre.error-getting-categories', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -444,7 +445,7 @@ router.get('/categories/:siteId/:categoryId/attributes', async (req, res) => {
     const attributes = await mercadolibre.getCategoryAttributes(categoryId);
     res.json({ attributes });
   } catch (error) {
-    console.error('Error getting category attributes:', error);
+    logError('mercadolibre.error-getting-category-attributes', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -464,7 +465,7 @@ router.post('/categories/predict', async (req, res) => {
     const prediction = await mercadolibre.predictCategory(title, siteId || 'MLM');
     res.json({ prediction });
   } catch (error) {
-    console.error('Error predicting category:', error);
+    logError('mercadolibre.error-predicting-category', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -484,7 +485,7 @@ router.post('/category-mappings', async (req, res) => {
     await mercadolibre.saveCategoryMapping(localCategory, siteId, mlCategoryId, mlCategoryName);
     res.json({ success: true, message: 'Category mapping saved' });
   } catch (error) {
-    console.error('Error saving category mapping:', error);
+    logError('mercadolibre.error-saving-category-mapping', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -501,7 +502,7 @@ router.get('/category-mappings', async (req, res) => {
     `);
     res.json({ mappings: result.rows });
   } catch (error) {
-    console.error('Error getting category mappings:', error);
+    logError('mercadolibre.error-getting-category-mappings', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -524,7 +525,7 @@ router.get('/me', async (req, res) => {
     const user = await response.json();
     res.json({ user });
   } catch (error) {
-    console.error('Error getting ML user:', error);
+    logError('mercadolibre.error-getting-ml-user', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -536,7 +537,7 @@ router.get('/me', async (req, res) => {
 router.post('/test-publish', async (req, res) => {
   try {
     const payload = req.body;
-    console.log('🧪 Test publish payload:', JSON.stringify(payload, null, 2));
+    log('info', 'mercadolibre.test-publish.start');
 
     const response = await mercadolibre.mlFetch('/items', {
       method: 'POST',
@@ -550,7 +551,7 @@ router.post('/test-publish', async (req, res) => {
       result
     });
   } catch (error) {
-    console.error('Error in test publish:', error);
+    logError('mercadolibre.error-in-test-publish', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -581,7 +582,7 @@ router.get('/stats', async (req, res) => {
       sites: mercadolibre.GLOBAL_SELLING_SITES
     });
   } catch (error) {
-    console.error('Error getting stats:', error);
+    logError('mercadolibre.error-getting-stats', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -604,7 +605,7 @@ router.get('/sync-history', async (req, res) => {
 
     res.json({ history: result.rows });
   } catch (error) {
-    console.error('Error getting sync history:', error);
+    logError('mercadolibre.error-getting-sync-history', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
