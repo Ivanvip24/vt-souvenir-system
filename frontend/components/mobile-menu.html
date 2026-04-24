@@ -1,0 +1,92 @@
+<div class="mobile-menu" aria-hidden="true">
+    <a href="/pedidos" class="mobile-menu-cta">Hacer Pedido</a>
+    <div class="mobile-menu-section">
+        <div class="mobile-menu-title">Productos</div>
+        <div class="mobile-products-grid">
+            <a href="/productos/imanes-mdf" class="mobile-product-link">
+                <img src="https://vtanunciando.com/cdn/shop/files/IMAGENES-IMANES-3.jpg?v=1727106231&width=100" alt="" class="mobile-product-icon" loading="lazy">
+                Imanes MDF
+            </a>
+            <a href="/productos/llaveros-mdf" class="mobile-product-link">
+                <img src="https://vtanunciando.com/cdn/shop/files/mockup-llavero.png?v=1744307278&width=100" alt="" class="mobile-product-icon" loading="lazy">
+                Llaveros MDF
+            </a>
+            <a href="/productos/imanes-3d" class="mobile-product-link">
+                <img src="https://vtanunciando.com/cdn/shop/files/tamasopo.png?v=1738361050&width=100" alt="" class="mobile-product-icon" loading="lazy">
+                Imán 3D
+            </a>
+            <a href="/productos/imanes-foil" class="mobile-product-link">
+                <img src="https://vtanunciando.com/cdn/shop/files/IMAN-FOIL-MOCKUP---vtweb.png?v=1738362023&width=100" alt="" class="mobile-product-icon" loading="lazy">
+                Imán con Foil
+            </a>
+            <a href="/productos/destapadores-mdf" class="mobile-product-link">
+                <img src="https://vtanunciando.com/cdn/shop/files/DESTAPADOR---VTWEB.png?v=1741044542&width=100" alt="" class="mobile-product-icon" loading="lazy">
+                Destapadores
+            </a>
+            <a href="/productos/botones" class="mobile-product-link">
+                <img src="https://vtanunciando.com/cdn/shop/files/fotobotones.png?v=1738362415&width=100" alt="" class="mobile-product-icon" loading="lazy">
+                Botones
+            </a>
+            <a href="/productos/portallaves-mdf" class="mobile-product-link">
+                <img src="https://vtanunciando.com/cdn/shop/files/PORTALLAVES-VTWEB.png?v=1736017105&width=100" alt="" class="mobile-product-icon" loading="lazy">
+                Portallaves
+            </a>
+            <a href="/productos/souvenir-box" class="mobile-product-link">
+                <img src="https://vtanunciando.com/cdn/shop/files/final-bundle-vtweb2.png?v=1738361702&width=100" alt="" class="mobile-product-icon" loading="lazy">
+                Souvenir Box
+            </a>
+            <a href="/productos" class="mobile-view-all">Ver todos los productos &rarr;</a>
+        </div>
+    </div>
+    <div class="mobile-menu-section">
+        <div class="mobile-menu-title">Diseños</div>
+        <div class="mobile-designs-list">
+            <a href="/diseños" class="mobile-design-card">
+                <div class="mobile-design-emoji" style="background: rgba(231,42,136,0.08);">🎨</div>
+                <div class="mobile-design-text">
+                    <strong>Galería de Diseños</strong>
+                    <span>+230 destinos de México</span>
+                </div>
+                <div class="mobile-design-arrow">&rsaquo;</div>
+            </a>
+            <a href="/pedidos" class="mobile-design-card">
+                <div class="mobile-design-emoji" style="background: rgba(138,183,59,0.08);">✏️</div>
+                <div class="mobile-design-text">
+                    <strong>Diseño Personalizado</strong>
+                    <span>Incluido en pedidos mayoreo</span>
+                </div>
+                <div class="mobile-design-arrow">&rsaquo;</div>
+            </a>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    var hamburger = document.querySelector('.nav-hamburger');
+    var mobileMenu = document.querySelector('.mobile-menu');
+    var nav = document.querySelector('.site-nav');
+    if (hamburger && mobileMenu) {
+        hamburger.addEventListener('click', function() {
+            var isActive = hamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+            hamburger.setAttribute('aria-expanded', isActive);
+            mobileMenu.setAttribute('aria-hidden', !isActive);
+            document.body.style.overflow = isActive ? 'hidden' : '';
+        });
+        mobileMenu.querySelectorAll('a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                hamburger.setAttribute('aria-expanded', 'false');
+                mobileMenu.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            });
+        });
+    }
+    if (nav) {
+        window.addEventListener('scroll', function() {
+            nav.classList.toggle('nav--scrolled', window.scrollY > 50);
+        });
+    }
+})();
+</script>
