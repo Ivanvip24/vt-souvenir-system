@@ -7,6 +7,7 @@
 import express from 'express';
 import { query } from '../shared/database.js';
 import * as t1 from '../services/t1-envios-service.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -28,7 +29,7 @@ router.get('/tracking/:trackingNumber', async (req, res) => {
     const result = await t1.getFullTracking(trackingNumber);
     res.json(result);
   } catch (error) {
-    console.error('T1 tracking error:', error.message);
+    logError('t1.t1-tracking-error', error);
     res.status(500).json({ error: 'Failed to fetch tracking info', details: error.message });
   }
 });
@@ -65,7 +66,7 @@ router.get('/tracking-bulk', async (req, res) => {
 
     res.json({ shipments, count: shipments.length });
   } catch (error) {
-    console.error('T1 bulk tracking error:', error.message);
+    logError('t1.t1-bulk-tracking-error', error);
     res.status(500).json({ error: 'Failed to fetch bulk tracking', details: error.message });
   }
 });
@@ -143,7 +144,7 @@ router.post('/tracking/link', async (req, res) => {
       message: `Tracking ${trackingNumber} linked successfully`
     });
   } catch (error) {
-    console.error('T1 link tracking error:', error.message);
+    logError('t1.t1-link-tracking-error', error);
     res.status(500).json({ error: 'Failed to link tracking number', details: error.message });
   }
 });
@@ -206,7 +207,7 @@ router.get('/shipments', async (req, res) => {
       offset: parseInt(offset)
     });
   } catch (error) {
-    console.error('T1 shipments list error:', error.message);
+    logError('t1.t1-shipments-list-error', error);
     res.status(500).json({ error: 'Failed to list T1 shipments', details: error.message });
   }
 });
@@ -290,7 +291,7 @@ router.post('/sync', async (req, res) => {
       skipped
     });
   } catch (error) {
-    console.error('T1 sync error:', error.message);
+    logError('t1.t1-sync-error', error);
     res.status(500).json({ error: 'Failed to sync T1 shipments', details: error.message });
   }
 });
@@ -335,7 +336,7 @@ router.post('/backfill-labels', async (req, res) => {
       total: missing.rows.length
     });
   } catch (error) {
-    console.error('T1 backfill error:', error.message);
+    logError('t1.t1-backfill-error', error);
     res.status(500).json({ error: 'Failed to backfill labels', details: error.message });
   }
 });
@@ -360,7 +361,7 @@ router.get('/products', async (req, res) => {
     const result = await t1.searchProducts(name, parseInt(page), parseInt(limit));
     res.json(result);
   } catch (error) {
-    console.error('T1 products error:', error.message);
+    logError('t1.t1-products-error', error);
     res.status(500).json({ error: 'Failed to search products', details: error.message });
   }
 });
