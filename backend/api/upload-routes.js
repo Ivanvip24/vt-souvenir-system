@@ -3,6 +3,7 @@ import multer from 'multer';
 import { uploadImage, deleteImage } from '../shared/cloudinary-config.js';
 import { isHeicFile, convertHeicToJpeg } from '../shared/heic-utils.js';
 import { uploadMediaToCloudinary } from '../services/whatsapp-media.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -41,13 +42,13 @@ router.post('/payment-receipt', upload.single('receipt'), async (req, res) => {
       });
     }
 
-    console.log(`📤 Uploading payment receipt: ${req.file.originalname} (${req.file.size} bytes) for phone: ${phone}`);
+    log('info', 'upload.uploading-payment-receipt-bytes-for-phone');
 
     // Convert HEIC to JPEG if needed
     let fileBuffer = req.file.buffer;
     let fileMimetype = req.file.mimetype;
     if (isHeicFile(req.file)) {
-      console.log('🔄 Converting HEIC to JPEG...');
+      log('info', 'upload.converting-heic-to-jpeg');
       const converted = await convertHeicToJpeg(fileBuffer);
       fileBuffer = converted.buffer;
       fileMimetype = converted.mimetype;
@@ -64,7 +65,7 @@ router.post('/payment-receipt', upload.single('receipt'), async (req, res) => {
     // Upload to Cloudinary
     const result = await uploadImage(dataURI, 'payment-receipts', publicId);
 
-    console.log(`✅ Payment receipt uploaded successfully: ${result.url}`);
+    log('info', 'upload.payment-receipt-uploaded-successfully');
 
     res.json({
       success: true,
@@ -76,13 +77,13 @@ router.post('/payment-receipt', upload.single('receipt'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Upload error:', error);
+    logError('upload.upload-error', error);
 
     // Log details server-side, return generic message to client
     let errorType = 'upload_failed';
     if (error.message && error.message.includes('cloud_name')) {
       errorType = 'config_error';
-      console.error('⚠️ Cloudinary config issue - check environment variables');
+      log('error', 'upload.cloudinary-config-issue-check-environment-variable');
     } else if (error.message && error.message.includes('Invalid image file')) {
       errorType = 'invalid_file';
     } else if (error.http_code === 401) {
@@ -119,7 +120,7 @@ router.post('/media', mediaUpload.single('receipt'), async (req, res) => {
     const isVideo = req.file.mimetype && req.file.mimetype.startsWith('video/');
     const isImage = req.file.mimetype && req.file.mimetype.startsWith('image/');
 
-    console.log(`📤 Uploading media: ${req.file.originalname} (${req.file.size} bytes, ${req.file.mimetype})`);
+    log('info', 'upload.uploading-media-bytes');
 
     let url;
 
@@ -142,10 +143,10 @@ router.post('/media', mediaUpload.single('receipt'), async (req, res) => {
       url = result.url;
     }
 
-    console.log(`✅ Media uploaded: ${url}`);
+    log('info', 'upload.media-uploaded');
     res.json({ success: true, url });
   } catch (error) {
-    console.error('❌ Media upload error:', error);
+    logError('upload.media-upload-error', error);
     res.status(500).json({ success: false, error: 'Error al subir el archivo' });
   }
 });
@@ -163,13 +164,13 @@ router.post('/multiple', upload.array('files', 5), async (req, res) => {
       });
     }
 
-    console.log(`📤 Uploading ${req.files.length} files`);
+    log('info', 'upload.uploading-files');
 
     const uploadPromises = req.files.map(async (file, index) => {
       let fileBuffer = file.buffer;
       let fileMimetype = file.mimetype;
       if (isHeicFile(file)) {
-        console.log(`🔄 Converting HEIC to JPEG: ${file.originalname}`);
+        log('info', 'upload.converting-heic-to-jpeg');
         const converted = await convertHeicToJpeg(fileBuffer);
         fileBuffer = converted.buffer;
         fileMimetype = converted.mimetype;
@@ -185,7 +186,7 @@ router.post('/multiple', upload.array('files', 5), async (req, res) => {
 
     const results = await Promise.all(uploadPromises);
 
-    console.log(`✅ ${results.length} files uploaded successfully`);
+    log('info', 'upload.files-uploaded-successfully');
 
     res.json({
       success: true,
@@ -199,7 +200,7 @@ router.post('/multiple', upload.array('files', 5), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Multi-upload error:', error.message);
+    logError('upload.multi-upload-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -225,7 +226,7 @@ router.delete('/image/:publicId', async (req, res) => {
     // Decode the public ID (it might be URL encoded)
     const decodedPublicId = decodeURIComponent(publicId);
 
-    console.log(`🗑️ Deleting image: ${decodedPublicId}`);
+    log('info', 'upload.deleting-image');
 
     const result = await deleteImage(decodedPublicId);
 
@@ -235,7 +236,7 @@ router.delete('/image/:publicId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Delete error:', error.message);
+    logError('upload.delete-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
