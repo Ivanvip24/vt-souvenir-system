@@ -1,0 +1,158 @@
+PDF AUTO-PRINT SYSTEM - CODEX GUIDE
+=====================================
+
+OVERVIEW
+--------
+This is a PDF Auto-Print & Archive System with Adobe Illustrator integration for macOS. The goal is to automatically print PDFs with correct scaling (30cm x 39cm output) using the SHARP MX-6580N printer.
+
+CRITICAL PROBLEM WE'RE SOLVING
+------------------------------
+- PDFs print at 29.9cm x 38.9cm instead of target 30cm x 39cm (missing 1mm in each dimension)
+- Need to achieve 100.2% scaling to get correct size
+- SHARP printer ignores command-line scaling parameters
+- GUI automation causes rotation and positioning issues
+
+KEY FILE PATHS
+--------------
+MAIN SCRIPT: /Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/PRINTING_PJ/Script_log/pdf_autoprint_fixed_syntax.scpt
+WATCH FOLDER: /Volumes/TRABAJOS/2025/ARMADOS VT/TO_PRINT
+ARCHIVE FOLDER: /Volumes/TRABAJOS/2025/ARMADOS VT/TO_PRINT/ARCHIVED
+PRINTER NAME: SHARP_MX_6580N__8513615400_
+PRINTER IP: 192.168.100.150
+ADHESIVO PRESET: Available but doesn't save scale settings properly
+
+CURRENT WORKING SOLUTION
+------------------------
+1. Script opens PDF in Preview.app
+2. Opens print dialog (Cmd+P)
+3. User manually verifies/adjusts these CRITICAL settings:
+   - Preset: ADHESIVE
+   - Paper Size: ADHESIVE (330 x 480 mm)
+   - Pages: Range from 1 to 1
+   - Preview → Auto Rotate: OFF
+   - Preview → Scale: 100.2% (MOST IMPORTANT - often shows as 101% and needs manual correction)
+4. User clicks Print manually
+5. Script archives file automatically
+
+WHAT WORKS
+----------
+✅ File detection and processing workflow
+✅ Preview confirmation before printing
+✅ Copy count specification
+✅ File archival after printing
+✅ ADHESIVO preset loads most settings correctly (paper size, page range, auto-rotate off)
+✅ Manual print dialog verification prevents errors
+✅ 100.2% scaling in GUI actually works (when set manually)
+
+WHAT DOESN'T WORK - AVOID THESE APPROACHES
+------------------------------------------
+❌ Command-line scaling with lp command (-o scaling=X) - SHARP printer ignores this completely
+❌ Custom page sizes larger than paper dimensions - causes content to be cut off
+❌ Margin controls (-o page-left=0, etc.) - no effect on actual print size
+❌ Python PDF preprocessing with PyPDF2/Quartz - causes rotation issues
+❌ Ghostscript PDF resizing - print jobs fail to send
+❌ Complex GUI automation to set print dialog values - unreliable and causes syntax errors
+❌ fit-to-page option - distorts aspect ratio and causes wrong orientation
+❌ Preview.app automated printing via System Events - causes rotation problems
+
+TECHNICAL FINDINGS
+------------------
+- SHARP MX-6580N does NOT support scaling parameter in lp command
+- Available printer options (via lpoptions -l) show no scaling capability
+- ADHESIVO preset saves paper size, page range, input slot but NOT scale percentage
+- Scale setting defaults to 101% but needs to be exactly 100.2% for correct output
+- GUI print dialog scaling works, command-line scaling does not
+- Printer has two configurations: PostScript driver and AirPrint driver
+
+PRINTER CONFIGURATION
+--------------------
+Driver Version: 10.4 (PostScript) and 4.0 (AirPrint)
+URI: dnssd://SHARP%20MX-6580N%20(8513615400)._printer._tcp.local./lp
+PPD: SHARP MX-6580N PPD
+Paper Size Support: Custom.WIDTHxHEIGHT format supported
+Input Slots: Bypass, Tray1-6
+Output Options: Multiple finishing options available
+
+CRITICAL SETTINGS FOR CORRECT OUTPUT
+------------------------------------
+1. Printer: SHARP MX-6580N (8513615400)
+2. Preset: ADHESIVE
+3. Paper Size: ADHESIVE 330 by 480 mm
+4. Pages: Range from 1 to 1 (first page only)
+5. Orientation: Portrait
+6. Double-sided: Off
+7. Preview section:
+   - Auto Rotate: UNCHECKED (very important)
+   - Scale: 100.2% (not "Scale to Fit")
+   - Print Entire Image: SELECTED
+
+SCRIPT ARCHITECTURE
+-------------------
+Main functions:
+- folderExists() - checks if watch folder exists
+- createArchivedFolder() - creates archive folder if needed
+- getPDFFiles() - scans for PDF files in watch folder
+- previewAndConfirm() - opens PDF in Preview for user confirmation
+- getCopyCount() - prompts user for number of copies
+- printPDF() - handles printing with dialog verification
+- moveToArchived() - moves processed files to archive
+
+Current printPDF() approach:
+1. Opens PDF in Preview.app
+2. Triggers print dialog with Cmd+P
+3. Shows user checklist of settings to verify
+4. User manually adjusts scale to 100.2% if needed
+5. User clicks Print when ready
+6. Confirms successful printing
+7. Closes Preview
+
+WORKFLOW SEQUENCE
+-----------------
+1. Script scans /Volumes/TRABAJOS/2025/ARMADOS VT/TO_PRINT for PDFs
+2. Shows summary of found files
+3. For each PDF:
+   a. Opens in Preview for visual confirmation
+   b. User decides to print or skip
+   c. If printing: user specifies copy count
+   d. Opens print dialog for settings verification
+   e. User manually ensures 100.2% scale and other settings
+   f. User clicks Print
+   g. File moves to ARCHIVED folder
+4. Shows final processing summary
+
+FUTURE DEVELOPMENT GUIDELINES
+-----------------------------
+- DO NOT attempt command-line scaling solutions
+- DO NOT use complex GUI automation
+- DO NOT try to modify PDF content before printing
+- FOCUS on print dialog verification and user control
+- MAINTAIN manual scale setting verification
+- KEEP fallback options for reliability
+- TEST with actual measurements, not assumptions
+
+MEASUREMENT VERIFICATION
+-----------------------
+Target size: 30cm x 39cm rectangle
+Current output without correction: 29.9cm x 38.9cm
+Required scaling: 100.2% (exactly)
+Test method: Print and physically measure output
+
+SYSTEM REQUIREMENTS
+-------------------
+- macOS 10.14 Mojave or later
+- Adobe Illustrator (for design workflow)
+- SHARP MX-6580N printer access
+- Network connection to shared folders
+- Preview.app (built-in)
+- Accessibility permissions for script automation
+
+ERROR HANDLING
+--------------
+- Folder existence checks
+- PDF file detection validation
+- Print job success confirmation
+- Fallback to command-line printing if GUI fails
+- Archive folder creation
+- Network drive connectivity verification
+
+This system successfully processes PDFs with user verification to ensure correct 30cm x 39cm output size while maintaining workflow automation for file management.
