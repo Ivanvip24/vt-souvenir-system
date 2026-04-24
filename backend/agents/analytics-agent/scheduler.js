@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import * as reportGenerator from './report-generator.js';
 import * as emailSender from './email-sender.js';
 import * as orderAlerts from '../alerts/order-alerts.js';
+import { log, logError } from '../../shared/logger.js';
 
 config();
 
@@ -12,7 +13,7 @@ const scheduledJobs = new Map();
  * Initialize all scheduled report jobs
  */
 export function initializeScheduler() {
-  console.log('🕐 Initializing report scheduler...\n');
+  log('info', 'scheduler.init.start');
 
   // Initialize email sender
   emailSender.initializeEmailSender();
@@ -37,7 +38,7 @@ export function initializeScheduler() {
     scheduleMonthlyReport(process.env.MONTHLY_REPORT_SCHEDULE || '0 10 1 * *');
   }
 
-  console.log(`\n✅ Scheduler initialized with ${scheduledJobs.size} jobs\n`);
+  log('info', 'scheduler.init.ok', { jobCount: scheduledJobs.size });
 
   // List all scheduled jobs
   listScheduledJobs();
@@ -50,13 +51,13 @@ export function initializeScheduler() {
 export function scheduleDailyDigest(cronExpression = '0 8 * * *') {
   try {
     const job = cron.schedule(cronExpression, async () => {
-      console.log('📋 Running scheduled daily order alerts digest...');
+      log('info', 'scheduler.dailyDigest.run');
 
       try {
         const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
 
         if (!adminEmail) {
-          console.log('⚠️  No ADMIN_EMAIL configured, skipping digest');
+          log('warn', 'scheduler.dailyDigest.noAdminEmail');
           return;
         }
 
@@ -72,14 +73,13 @@ export function scheduleDailyDigest(cronExpression = '0 8 * * *') {
             html: digest.html
           });
 
-          console.log(`✅ Daily digest sent to ${adminEmail}`);
-          console.log(`   Critical: ${digest.summary.criticalCount}, Warning: ${digest.summary.warningCount}, Upcoming: ${digest.summary.upcomingCount}`);
+          log('info', 'scheduler.dailyDigest.sent', { to: adminEmail, critical: digest.summary.criticalCount, warning: digest.summary.warningCount, upcoming: digest.summary.upcomingCount });
         } else {
-          console.log('ℹ️  No alerts to report, skipping digest email');
+          log('info', 'scheduler.dailyDigest.noAlerts');
         }
 
       } catch (error) {
-        console.error('❌ Error in daily digest job:', error);
+        logError('scheduler.dailyDigest.fail', error);
       }
     });
 
@@ -90,11 +90,10 @@ export function scheduleDailyDigest(cronExpression = '0 8 * * *') {
       job
     });
 
-    console.log(`✓ Daily digest scheduled: ${cronExpression}`);
-    console.log(`  Next run: ${getNextRunTime(cronExpression)}`);
+    log('info', 'scheduler.dailyDigest.scheduled', { cron: cronExpression, nextRun: getNextRunTime(cronExpression) });
 
   } catch (error) {
-    console.error('❌ Error scheduling daily digest:', error);
+    logError('scheduler.dailyDigest.scheduleFail', error);
   }
 }
 
@@ -105,7 +104,7 @@ export function scheduleDailyDigest(cronExpression = '0 8 * * *') {
 export function scheduleDailyReport(cronExpression = '0 8 * * *') {
   try {
     const job = cron.schedule(cronExpression, async () => {
-      console.log('📊 Running scheduled daily report...');
+      log('info', 'scheduler.dailyReport.run');
 
       try {
         const yesterday = new Date();
@@ -114,9 +113,9 @@ export function scheduleDailyReport(cronExpression = '0 8 * * *') {
         const report = await reportGenerator.generateDailyReport(yesterday);
         await emailSender.sendDailyReport(report.html, yesterday);
 
-        console.log('✅ Daily report sent successfully');
+        log('info', 'scheduler.dailyReport.sent');
       } catch (error) {
-        console.error('❌ Error in daily report job:', error);
+        logError('scheduler.dailyReport.fail', error);
       }
     });
 
@@ -127,11 +126,10 @@ export function scheduleDailyReport(cronExpression = '0 8 * * *') {
       job
     });
 
-    console.log(`✓ Daily report scheduled: ${cronExpression}`);
-    console.log(`  Next run: ${getNextRunTime(cronExpression)}`);
+    log('info', 'scheduler.dailyReport.scheduled', { cron: cronExpression, nextRun: getNextRunTime(cronExpression) });
 
   } catch (error) {
-    console.error('❌ Error scheduling daily report:', error);
+    logError('scheduler.dailyReport.scheduleFail', error);
   }
 }
 
@@ -142,15 +140,15 @@ export function scheduleDailyReport(cronExpression = '0 8 * * *') {
 export function scheduleWeeklyReport(cronExpression = '0 9 * * 1') {
   try {
     const job = cron.schedule(cronExpression, async () => {
-      console.log('📊 Running scheduled weekly report...');
+      log('info', 'scheduler.weeklyReport.run');
 
       try {
         const report = await reportGenerator.generateWeeklyReport();
         await emailSender.sendWeeklyReport(report.html);
 
-        console.log('✅ Weekly report sent successfully');
+        log('info', 'scheduler.weeklyReport.sent');
       } catch (error) {
-        console.error('❌ Error in weekly report job:', error);
+        logError('scheduler.weeklyReport.fail', error);
       }
     });
 
@@ -161,11 +159,10 @@ export function scheduleWeeklyReport(cronExpression = '0 9 * * 1') {
       job
     });
 
-    console.log(`✓ Weekly report scheduled: ${cronExpression}`);
-    console.log(`  Next run: ${getNextRunTime(cronExpression)}`);
+    log('info', 'scheduler.weeklyReport.scheduled', { cron: cronExpression, nextRun: getNextRunTime(cronExpression) });
 
   } catch (error) {
-    console.error('❌ Error scheduling weekly report:', error);
+    logError('scheduler.weeklyReport.scheduleFail', error);
   }
 }
 
@@ -176,7 +173,7 @@ export function scheduleWeeklyReport(cronExpression = '0 9 * * 1') {
 export function scheduleMonthlyReport(cronExpression = '0 10 1 * *') {
   try {
     const job = cron.schedule(cronExpression, async () => {
-      console.log('📊 Running scheduled monthly report...');
+      log('info', 'scheduler.monthlyReport.run');
 
       try {
         const lastMonth = new Date();
@@ -188,9 +185,9 @@ export function scheduleMonthlyReport(cronExpression = '0 10 1 * *') {
         const report = await reportGenerator.generateMonthlyReport(year, month);
         await emailSender.sendMonthlyReport(report.html, year, month);
 
-        console.log('✅ Monthly report sent successfully');
+        log('info', 'scheduler.monthlyReport.sent', { year, month });
       } catch (error) {
-        console.error('❌ Error in monthly report job:', error);
+        logError('scheduler.monthlyReport.fail', error);
       }
     });
 
@@ -201,11 +198,10 @@ export function scheduleMonthlyReport(cronExpression = '0 10 1 * *') {
       job
     });
 
-    console.log(`✓ Monthly report scheduled: ${cronExpression}`);
-    console.log(`  Next run: ${getNextRunTime(cronExpression)}`);
+    log('info', 'scheduler.monthlyReport.scheduled', { cron: cronExpression, nextRun: getNextRunTime(cronExpression) });
 
   } catch (error) {
-    console.error('❌ Error scheduling monthly report:', error);
+    logError('scheduler.monthlyReport.scheduleFail', error);
   }
 }
 
@@ -213,16 +209,16 @@ export function scheduleMonthlyReport(cronExpression = '0 10 1 * *') {
  * Manually trigger daily report (for testing)
  */
 export async function triggerDailyReport(date = new Date()) {
-  console.log('🚀 Manually triggering daily report...');
+  log('info', 'scheduler.triggerDailyReport.start');
 
   try {
     const report = await reportGenerator.generateDailyReport(date);
     const result = await emailSender.sendDailyReport(report.html, date);
 
-    console.log('✅ Daily report sent successfully');
+    log('info', 'scheduler.triggerDailyReport.ok');
     return result;
   } catch (error) {
-    console.error('❌ Error triggering daily report:', error);
+    logError('scheduler.triggerDailyReport.fail', error);
     throw error;
   }
 }
@@ -231,16 +227,16 @@ export async function triggerDailyReport(date = new Date()) {
  * Manually trigger monthly report (for testing)
  */
 export async function triggerMonthlyReport(year, month) {
-  console.log(`🚀 Manually triggering monthly report for ${year}-${month}...`);
+  log('info', 'scheduler.triggerMonthlyReport.start', { year, month });
 
   try {
     const report = await reportGenerator.generateMonthlyReport(year, month);
     const result = await emailSender.sendMonthlyReport(report.html, year, month);
 
-    console.log('✅ Monthly report sent successfully');
+    log('info', 'scheduler.triggerMonthlyReport.ok', { year, month });
     return result;
   } catch (error) {
-    console.error('❌ Error triggering monthly report:', error);
+    logError('scheduler.triggerMonthlyReport.fail', error);
     throw error;
   }
 }
@@ -254,10 +250,10 @@ export function stopJob(jobName) {
   if (jobInfo) {
     jobInfo.job.stop();
     scheduledJobs.delete(jobName);
-    console.log(`✅ Stopped job: ${jobName}`);
+    log('info', 'scheduler.stopJob.ok', { job: jobName });
     return true;
   } else {
-    console.log(`⚠️  Job not found: ${jobName}`);
+    log('warn', 'scheduler.stopJob.notFound', { job: jobName });
     return false;
   }
 }
@@ -266,37 +262,26 @@ export function stopJob(jobName) {
  * Stop all scheduled jobs
  */
 export function stopAllJobs() {
-  console.log('🛑 Stopping all scheduled jobs...');
+  log('info', 'scheduler.stopAll.start');
 
   scheduledJobs.forEach((jobInfo, name) => {
     jobInfo.job.stop();
-    console.log(`  ✓ Stopped: ${name}`);
+    log('info', 'scheduler.stopAll.stopped', { job: name });
   });
 
   scheduledJobs.clear();
-  console.log('✅ All jobs stopped');
+  log('info', 'scheduler.stopAll.ok');
 }
 
 /**
  * List all scheduled jobs
  */
 export function listScheduledJobs() {
-  console.log('📋 Scheduled Jobs:');
-  console.log('─'.repeat(60));
-
-  if (scheduledJobs.size === 0) {
-    console.log('  No jobs scheduled');
-    return;
-  }
-
+  const jobs = [];
   scheduledJobs.forEach((jobInfo, name) => {
-    console.log(`\n  ${jobInfo.name}`);
-    console.log(`    Schedule: ${jobInfo.schedule}`);
-    console.log(`    Description: ${jobInfo.description}`);
-    console.log(`    Next run: ${getNextRunTime(jobInfo.schedule)}`);
+    jobs.push({ name: jobInfo.name, schedule: jobInfo.schedule, description: jobInfo.description, nextRun: getNextRunTime(jobInfo.schedule) });
   });
-
-  console.log('\n' + '─'.repeat(60));
+  log('info', 'scheduler.listJobs', { count: jobs.length, jobs });
 }
 
 /**
