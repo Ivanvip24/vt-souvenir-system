@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXKAN — Cuenta</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   AXKAN PAYMENT TRACKER — BRAND DNA
+   Matches receipt design: recibo-adelanto
+   ═══════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'RL AQVA';
+  src: url('../assets/axkan/RLAQVA.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Objektiv';
+  src: url('../assets/axkan/FONT-OBJEKTIV-VF-BODY.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  /* AXKAN Brand — exact receipt palette */
+  --rosa-mexicano: #e72a88;
+  --verde-selva: #8ab73b;
+  --naranja-calido: #f39223;
+  --turquesa-caribe: #09adc2;
+  --rojo-mexicano: #e52421;
+  --oro-maya: #D4A574;
+  --guinda: #a6191d;
+  --magenta-oscuro: #aa1e6b;
+  --teal-oscuro: #106c7f;
+
+  /* Receipt neutrals */
+  --bg-cream: #faf8f5;
+  --text-dark: #1a1a1a;
+  --text-mid: #4a4a4a;
+  --text-light: #8a8a8a;
+  --border-soft: #e8e4df;
+
+  /* Functional (status) */
+  --paid: #22c55e;
+  --paid-bg: #f0fdf4;
+  --paid-border: #bbf7d0;
+  --partial: #f59e0b;
+  --partial-bg: #fffbeb;
+  --partial-border: #fde68a;
+  --pending: #ef4444;
+  --pending-bg: #fef2f2;
+  --pending-border: #fecaca;
+
+  /* Typography */
+  --font-display: 'RL AQVA', Georgia, serif;
+  --font-body: 'Objektiv', 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: #e8e4df;
+  color: var(--text-dark);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ═══════════ TOP COLOR BAND (Receipt DNA) ═══════════ */
+.top-band {
+  height: 8px;
+  background: linear-gradient(90deg,
+    var(--rosa-mexicano) 0%, var(--rosa-mexicano) 20%,
+    var(--naranja-calido) 20%, var(--naranja-calido) 40%,
+    var(--turquesa-caribe) 40%, var(--turquesa-caribe) 60%,
+    var(--verde-selva) 60%, var(--verde-selva) 80%,
+    var(--rojo-mexicano) 80%, var(--rojo-mexicano) 100%
+  );
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.bottom-band {
+  height: 5px;
+  background: linear-gradient(90deg,
+    var(--rosa-mexicano) 0%, var(--naranja-calido) 25%,
+    var(--turquesa-caribe) 50%, var(--verde-selva) 75%,
+    var(--rojo-mexicano) 100%
+  );
+}
+
+/* ═══════════ HEADER (Receipt style) ═══════════ */
+.app-header {
+  background: var(--bg-cream);
+  padding: 24px 50px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: sticky;
+  top: 8px;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  background: rgba(250,248,245,0.95);
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-jaguar {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+.brand-jaguar img { width: 100%; height: 100%; object-fit: contain; }
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.brand-letters { height: 28px; }
+.brand-letters img { height: 100%; width: auto; object-fit: contain; }
+
+.brand-tagline {
+  font-family: var(--font-body);
+  font-size: 7px;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.header-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.receipt-type {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--rosa-mexicano);
+  border-bottom: 2.5px solid var(--rosa-mexicano);
+  padding-bottom: 6px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ═══════════ BACK BUTTON ═══════════ */
+.back-btn {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border: 1px solid var(--border-soft);
+  background: white;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.3px;
+  text-decoration: none;
+}
+.back-btn:hover { background: var(--bg-cream); border-color: var(--rosa-mexicano); color: var(--rosa-mexicano); }
+
+/* ═══════════ CLIENT HEADER INFO ═══════════ */
+.client-header-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.client-header-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: var(--text-dark);
+}
+
+.cuenta-id-badge {
+  display: inline-block;
+  background: var(--turquesa-caribe);
+  color: white;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+}
+
+/* ═══════════ SAVE STATUS INDICATOR ═══════════ */
+.save-status {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-light);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.save-status.saving { color: var(--naranja-calido); }
+.save-status.saved { color: var(--verde-selva); }
+.save-status.error { color: var(--rojo-mexicano); }
+
+/* ═══════════ DIVIDER (Receipt DNA) ═══════════ */
+.divider {
+  margin: 18px 50px;
+  height: 1px;
+  background: var(--border-soft);
+  position: relative;
+}
+.divider::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 60px;
+  height: 2.5px;
+  background: var(--rosa-mexicano);
+}
+
+/* ═══════════ MAIN PAGE ═══════════ */
+.page-wrap {
+  background: var(--bg-cream);
+  position: relative;
+  overflow: hidden;
+  min-height: calc(100vh - 13px);
+}
+
+/* Jaguar watermark (Receipt DNA) */
+.jaguar-watermark {
+  position: fixed;
+  bottom: 80px;
+  right: -20px;
+  width: 320px;
+  height: 320px;
+  opacity: 0.035;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+.jaguar-watermark img { width: 100%; height: 100%; object-fit: contain; }
+
+/* ═══════════ CONTENT ═══════════ */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 50px 40px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══════════ SECTION TITLES (Receipt DNA) ═══════════ */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--turquesa-caribe);
+  margin-bottom: 10px;
+  margin-top: 28px;
+}
+
+/* ═══════════ BUTTONS (AXKAN styled) ═══════════ */
+.btn {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border: 1px solid var(--border-soft);
+  background: white;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+}
+
+.btn:hover { background: var(--bg-cream); border-color: #d0ccc7; }
+
+.btn-rosa {
+  background: var(--rosa-mexicano);
+  color: white;
+  border-color: var(--rosa-mexicano);
+  font-family: var(--font-display);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 10px;
+  padding: 8px 18px;
+}
+.btn-rosa:hover {
+  background: var(--magenta-oscuro);
+  border-color: var(--magenta-oscuro);
+  box-shadow: 0 4px 16px rgba(231, 42, 136, 0.25);
+}
+
+.btn-turquesa {
+  background: var(--turquesa-caribe);
+  color: white;
+  border-color: var(--turquesa-caribe);
+}
+.btn-turquesa:hover {
+  background: var(--teal-oscuro);
+  border-color: var(--teal-oscuro);
+}
+
+.btn-verde {
+  background: var(--verde-selva);
+  color: white;
+  border-color: var(--verde-selva);
+}
+.btn-verde:hover { background: #759d32; }
+
+.btn-danger { background: var(--rojo-mexicano); color: white; border-color: var(--rojo-mexicano); }
+.btn-danger:hover { background: var(--guinda); }
+.btn-sm { padding: 4px 8px; font-size: 10px; }
+.btn-icon { padding: 6px 8px; }
+
+/* ═══════════ CLIENT BAR ═══════════ */
+.client-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.client-select-wrap { flex: 1; min-width: 220px; }
+
+.client-select {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  border: 1px solid var(--border-soft);
+  background: white;
+  color: var(--text-dark);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238a8a8a' viewBox='0 0 16 16'%3E%3Cpath d='M4.47 5.97a.75.75 0 0 1 1.06 0L8 8.44l2.47-2.47a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 0 1 0-1.06z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  transition: border-color 0.15s;
+}
+.client-select:focus { outline: none; border-color: var(--rosa-mexicano); }
+
+.search-input {
+  padding: 9px 12px 9px 32px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  border: 1px solid var(--border-soft);
+  background: white;
+  color: var(--text-dark);
+  width: 240px;
+  transition: border-color 0.15s;
+}
+.search-input:focus { outline: none; border-color: var(--turquesa-caribe); }
+.search-wrap { position: relative; }
+.search-wrap::before {
+  content: '\2315';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+/* ═══════════ SUMMARY CARDS ═══════════ */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.summary-card {
+  background: white;
+  border: 1px solid var(--border-soft);
+  padding: 18px 20px;
+  position: relative;
+}
+
+.summary-card.total { border-left: 4px solid var(--rosa-mexicano); }
+.summary-card.paid { border-left: 4px solid var(--verde-selva); }
+.summary-card.pending-card { border-left: 4px solid var(--naranja-calido); }
+.summary-card.remaining { border-left: 4px solid var(--turquesa-caribe); }
+
+.summary-label {
+  font-family: var(--font-body);
+  font-size: 7.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--text-dark);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.summary-cents {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-light);
+  vertical-align: top;
+  margin-left: 1px;
+}
+
+.summary-detail {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--text-light);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.summary-value.text-verde { color: var(--verde-selva); }
+.summary-value.text-naranja { color: var(--naranja-calido); }
+.summary-value.text-rosa { color: var(--rosa-mexicano); }
+.summary-value.text-turquesa { color: var(--turquesa-caribe); }
+
+/* ═══════════ AMOUNT HERO (Receipt DNA) ═══════════ */
+.amount-hero {
+  background: var(--rosa-mexicano);
+  padding: 24px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.amount-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.amount-hero .jaguar-overlay {
+  position: absolute;
+  right: 180px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100px;
+  height: 100px;
+  opacity: 0.08;
+  pointer-events: none;
+}
+.amount-hero .jaguar-overlay img {
+  width: 100%; height: 100%; object-fit: contain;
+  filter: brightness(10);
+}
+
+.amount-label-group { position: relative; z-index: 1; }
+.amount-type-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 2px;
+  margin-bottom: 6px;
+}
+.amount-description {
+  font-family: var(--font-body);
+  color: rgba(255,255,255,0.8);
+  font-size: 11px;
+}
+
+.amount-value-group {
+  text-align: right;
+  position: relative;
+  z-index: 1;
+}
+.amount-currency {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: rgba(255,255,255,0.6);
+  display: block;
+  letter-spacing: 1px;
+}
+.amount-number {
+  font-family: var(--font-display);
+  font-size: 36px;
+  color: white;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.amount-cents-hero {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: rgba(255,255,255,0.7);
+  vertical-align: top;
+  margin-left: 2px;
+}
+.amount-subtext {
+  font-family: var(--font-body);
+  color: rgba(255,255,255,0.5);
+  font-size: 8px;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+/* ═══════════ PROGRESS BAR ═══════════ */
+.progress-wrap {
+  background: white;
+  border: 1px solid var(--border-soft);
+  padding: 16px 20px;
+  margin-bottom: 4px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.progress-title {
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.progress-percent {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.progress-bar-track {
+  height: 10px;
+  background: #f0ede8;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--naranja-calido), var(--verde-selva));
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-legend {
+  display: flex;
+  gap: 18px;
+  margin-top: 8px;
+  font-size: 9px;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* ═══════════ PRODUCT TABLE (Receipt DNA) ═══════════ */
+.table-section {
+  background: white;
+  border: 1px solid var(--border-soft);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.table-section-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-section-title {
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--turquesa-caribe);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-count {
+  background: var(--turquesa-caribe);
+  color: white;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.products-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Turquesa gradient header — exact receipt match */
+.products-table thead tr {
+  background: linear-gradient(135deg, var(--turquesa-caribe) 0%, var(--teal-oscuro) 100%);
+}
+
+.products-table th {
+  color: white;
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 9px 14px;
+  text-align: left;
+}
+.products-table th:nth-child(n+3) { text-align: right; }
+
+.products-table td {
+  font-family: var(--font-body);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dark);
+  vertical-align: middle;
+}
+.products-table td:nth-child(n+3) {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.products-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.015); }
+.products-table tbody tr:hover { background: rgba(9,173,194,0.04); }
+.products-table tbody tr:last-child td { border-bottom: none; }
+
+/* Inline editable cells */
+.editable-cell {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+  transition: background 0.15s, box-shadow 0.15s;
+  min-width: 40px;
+  display: inline-block;
+}
+.editable-cell:hover {
+  background: rgba(9,173,194,0.08);
+  box-shadow: 0 0 0 2px rgba(9,173,194,0.15);
+}
+.editable-cell.editing {
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--turquesa-caribe);
+}
+.inline-input {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  text-align: center;
+  padding: 0;
+  color: var(--text-dark);
+}
+.editable-name {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 1px 4px;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.editable-name:hover {
+  background: rgba(9,173,194,0.08);
+  box-shadow: 0 0 0 2px rgba(9,173,194,0.15);
+}
+.inline-name-input {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  padding: 0;
+  color: var(--text-dark);
+}
+@media print { .editable-cell:hover, .editable-name:hover { background: none; box-shadow: none; } }
+
+/* Submodels popup */
+.submodels-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.submodels-table thead tr { background: linear-gradient(135deg, var(--turquesa-caribe), var(--teal-oscuro)); }
+.submodels-table th {
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #fff;
+  padding: 8px 10px;
+  text-align: left;
+}
+.submodels-table th:nth-child(n+2) { text-align: center; }
+.submodels-table th:last-child { text-align: right; }
+.submodels-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13px;
+  vertical-align: middle;
+}
+.submodels-table td:nth-child(n+2) { text-align: center; }
+.submodels-table td:last-child { text-align: right; }
+.submodels-table tbody tr:hover { background: rgba(9,173,194,0.04); }
+.sub-input {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 6px 8px;
+  width: 100%;
+  text-align: center;
+  background: var(--bg-cream);
+  color: var(--text-dark);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.sub-input:focus { outline: none; border-color: var(--turquesa-caribe); box-shadow: 0 0 0 3px rgba(9,173,194,0.15); }
+.sub-input-name { text-align: left; font-family: var(--font-body); font-weight: 500; }
+.sub-total-cell { font-family: var(--font-mono); font-weight: 700; font-size: 12px; color: var(--text-dark); }
+.sub-remove-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: none;
+  background: var(--pending-bg); color: var(--pending); cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, transform 0.15s;
+}
+.sub-remove-btn:hover { background: var(--pending); color: #fff; transform: scale(1.1); }
+.sub-add-row {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px; border: 2px dashed var(--border-soft); border-radius: 8px;
+  margin-top: 12px; cursor: pointer; color: var(--turquesa-caribe);
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  transition: border-color 0.2s, background 0.2s;
+}
+.sub-add-row:hover { border-color: var(--turquesa-caribe); background: rgba(9,173,194,0.04); }
+.sub-summary {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 16px; margin-top: 16px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(9,173,194,0.08), rgba(138,183,59,0.08));
+  border: 1px solid rgba(9,173,194,0.15);
+}
+.sub-summary-label { font-family: var(--font-display); font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-mid); }
+.sub-summary-value { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--turquesa-caribe); }
+.sub-count-badge {
+  display: inline-block; background: var(--turquesa-caribe); color: #fff;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  padding: 2px 6px; border-radius: 10px; margin-left: 6px; vertical-align: middle;
+}
+
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-thumb {
+  width: 40px;
+  height: 40px;
+  background: var(--bg-cream);
+  border: 1px solid var(--border-soft);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.product-name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.product-note {
+  font-size: 9px;
+  color: var(--text-light);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.money { font-family: var(--font-mono); font-weight: 500; }
+
+/* Status badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-paid { background: var(--paid-bg); color: #15803d; border: 1px solid var(--paid-border); }
+.status-partial { background: var(--partial-bg); color: #b45309; border: 1px solid var(--partial-border); }
+.status-pending { background: var(--pending-bg); color: #dc2626; border: 1px solid var(--pending-border); }
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.status-paid .status-dot { background: var(--paid); }
+.status-partial .status-dot { background: var(--partial); }
+.status-pending .status-dot { background: var(--pending); }
+
+/* Table footer */
+.table-footer {
+  border-top: 2px solid var(--text-dark);
+}
+.table-footer td {
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 12px;
+  border-bottom: none !important;
+}
+
+/* ═══════════ PAYMENTS LOG (with colored dots like receipt details) ═══════════ */
+.payments-section {
+  background: white;
+  border: 1px solid var(--border-soft);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.payment-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.payment-item:last-child { border-bottom: none; }
+.payment-item:hover { background: rgba(0,0,0,0.01); }
+
+/* Colored dots like receipt detail rows */
+.payment-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.payment-dot.rosa { background: var(--rosa-mexicano); }
+.payment-dot.turquesa { background: var(--turquesa-caribe); }
+.payment-dot.naranja { background: var(--naranja-calido); }
+.payment-dot.verde { background: var(--verde-selva); }
+
+.payment-info { flex: 1; }
+.payment-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-dark);
+}
+.payment-meta {
+  font-family: var(--font-body);
+  font-size: 9px;
+  color: var(--text-light);
+  display: flex;
+  gap: 12px;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.payment-amount {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 13px;
+}
+.payment-amount.positive { color: var(--verde-selva); }
+
+.payment-actions { display: flex; gap: 4px; }
+
+/* ═══════════ NOTES (Receipt terms style) ═══════════ */
+.notes-area {
+  background: #f5f3f0;
+  border: 1px solid var(--border-soft);
+  padding: 18px 24px;
+  margin-bottom: 28px;
+}
+
+.notes-area textarea {
+  width: 100%;
+  min-height: 70px;
+  border: 1px solid var(--border-soft);
+  padding: 12px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-mid);
+  resize: vertical;
+  margin-top: 8px;
+  background: white;
+  transition: border-color 0.15s;
+  line-height: 1.6;
+}
+.notes-area textarea:focus { outline: none; border-color: var(--turquesa-caribe); }
+
+/* ═══════════ FOOTER (Receipt DNA) ═══════════ */
+.app-footer {
+  padding: 16px 50px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-contact { display: flex; gap: 24px; }
+.footer-item {
+  font-family: var(--font-body);
+  font-size: 8.5px;
+  color: var(--text-light);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-item:hover { color: var(--rosa-mexicano); }
+.footer-item span { color: var(--rosa-mexicano); font-weight: 600; }
+
+.footer-brand {
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--text-light);
+  letter-spacing: 3px;
+}
+
+/* ═══════════ MODALS ═══════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,26,26,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg-cream);
+  width: 90%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+}
+.modal-overlay.active .modal { transform: translateY(0) scale(1); }
+
+/* Modal top band */
+.modal::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg,
+    var(--rosa-mexicano) 0%, var(--naranja-calido) 25%,
+    var(--turquesa-caribe) 50%, var(--verde-selva) 75%,
+    var(--rojo-mexicano) 100%
+  );
+}
+
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--rosa-mexicano);
+}
+
+.modal-close {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-soft);
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  transition: all 0.15s;
+}
+.modal-close:hover { background: var(--bg-cream); color: var(--rosa-mexicano); border-color: var(--rosa-mexicano); }
+
+.modal-body { padding: 20px 24px; }
+
+.form-group { margin-bottom: 14px; }
+
+.form-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  border: 1px solid var(--border-soft);
+  background: white;
+  color: var(--text-dark);
+  transition: border-color 0.15s;
+  font-weight: 500;
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: var(--rosa-mexicano); }
+
+.form-input[type="number"] { font-family: var(--font-mono); }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ═══════════ TOAST ═══════════ */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 10px 18px;
+  background: var(--text-dark);
+  color: white;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards;
+}
+
+@keyframes toastIn { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-8px); } }
+
+/* ═══════════ EMPTY STATE ═══════════ */
+.empty-state {
+  padding: 50px 24px;
+  text-align: center;
+}
+.empty-state-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+  opacity: 0.4;
+}
+.empty-state-text {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+/* ═══════════ LOADING SPINNER ═══════════ */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(250,248,245,0.9);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-soft);
+  border-top-color: var(--rosa-mexicano);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+/* ═══════════ PRINT ═══════════ */
+@media print {
+  body { background: white; }
+  .app-header, .header-actions, .modal-overlay, .no-print, .toast-container, .jaguar-watermark, .loading-overlay { display: none !important; }
+  .page-wrap { min-height: auto; }
+  .app-container { padding: 0 20px; max-width: 100%; }
+  .summary-card, .table-section, .payments-section, .progress-wrap, .amount-hero { break-inside: avoid; }
+}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media (max-width: 768px) {
+  .app-header { padding: 16px 20px 0; flex-wrap: wrap; gap: 12px; }
+  .app-container { padding: 0 20px 40px; }
+  .divider { margin: 16px 20px; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .products-table th, .products-table td { padding: 8px 8px; }
+  .product-thumb { width: 32px; height: 32px; font-size: 14px; }
+  .client-bar { flex-direction: column; align-items: stretch; }
+  .search-input { width: 100%; }
+  .form-row { grid-template-columns: 1fr; }
+  .hide-mobile { display: none; }
+  .amount-hero { flex-direction: column; gap: 12px; text-align: center; }
+  .amount-value-group { text-align: center; }
+  .app-footer { flex-direction: column; gap: 8px; padding: 16px 20px; }
+  .client-header-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+
+/* ═══════════ ANIMATIONS ═══════════ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeInUp 0.35s ease both; }
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando cuenta...</div>
+</div>
+
+<!-- TOP COLOR BAND (Receipt DNA) -->
+<div class="top-band"></div>
+
+<div class="page-wrap">
+
+<!-- Jaguar watermark -->
+<div class="jaguar-watermark">
+  <img src="../assets/axkan/JAGUAR.png" alt="">
+</div>
+
+<!-- HEADER (Receipt style) -->
+<header class="app-header">
+  <div class="brand-block">
+    <div class="brand-jaguar">
+      <img src="../assets/axkan/JAGUAR.png" alt="AXKAN">
+    </div>
+    <div class="brand-info">
+      <div class="brand-letters">
+        <img src="../assets/axkan/LETTERS.png" alt="AXKAN">
+      </div>
+      <div class="brand-tagline">Recuerdos Hechos Souvenir</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="receipt-type">Cuenta de Cliente</div>
+    <div class="header-actions no-print">
+      <a href="index.html" class="back-btn">&#8592; Volver</a>
+      <span class="save-status" id="saveStatus"></span>
+      <button class="btn" onclick="exportData()">&#8595; Exportar</button>
+      <button class="btn" onclick="window.print()">&#9113; Imprimir</button>
+    </div>
+  </div>
+</header>
+
+<!-- Divider -->
+<div class="divider"></div>
+
+<!-- MAIN CONTENT -->
+<div class="app-container">
+
+  <!-- Client header bar -->
+  <div class="section-title animate-in">Cliente</div>
+  <div class="client-header-bar animate-in">
+    <div class="client-header-name" id="clientHeaderName">Cargando...</div>
+    <div class="cuenta-id-badge" id="cuentaIdBadge">---</div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="section-title animate-in" style="margin-top:16px">Acciones</div>
+  <div class="client-bar no-print animate-in">
+    <div class="search-wrap">
+      <input type="text" class="search-input" placeholder="Buscar modelo..." id="searchInput" oninput="filterProducts()">
+    </div>
+    <button class="btn btn-turquesa" onclick="showModal('addProductModal')">+ Modelo</button>
+    <button class="btn btn-verde" onclick="showModal('addPaymentModal')">$ Registrar Pago</button>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="section-title animate-in delay-1">Resumen Financiero</div>
+  <div class="summary-grid animate-in delay-1" id="summaryCards">
+    <div class="summary-card total">
+      <div class="summary-label">Total del Pedido</div>
+      <div class="summary-value" id="sumTotal">$0.00</div>
+      <div class="summary-detail" id="sumProductCount">0 modelos</div>
+    </div>
+    <div class="summary-card paid">
+      <div class="summary-label">Total Pagado</div>
+      <div class="summary-value text-verde" id="sumPaid">$0.00</div>
+      <div class="summary-detail" id="sumPaymentCount">0 pagos registrados</div>
+    </div>
+    <div class="summary-card remaining">
+      <div class="summary-label">Saldo Pendiente</div>
+      <div class="summary-value text-rosa" id="sumRemaining">$0.00</div>
+      <div class="summary-detail" id="sumRemainingDetail"></div>
+    </div>
+  </div>
+
+  <!-- Amount Hero (Receipt DNA) -->
+  <div class="amount-hero animate-in delay-2" id="amountHero">
+    <div class="jaguar-overlay">
+      <img src="../assets/axkan/JAGUAR.png" alt="">
+    </div>
+    <div class="amount-label-group">
+      <div class="amount-type-badge" id="heroBadge">Saldo Pendiente</div>
+      <div class="amount-description" id="heroDescription">Monto restante por cobrar</div>
+    </div>
+    <div class="amount-value-group">
+      <span class="amount-currency">MXN</span>
+      <span class="amount-number" id="heroAmount">$0</span><span class="amount-cents-hero" id="heroCents">.00</span>
+      <div class="amount-subtext" id="heroSubtext"></div>
+    </div>
+  </div>
+
+  <!-- Products table -->
+  <div class="section-title animate-in delay-2">Desglose de Modelos</div>
+  <div class="table-section animate-in delay-3">
+    <table class="products-table">
+      <thead>
+        <tr>
+          <th style="width:25%">Modelos</th>
+          <th style="width:10%">N&#250;m. Modelos</th>
+          <th style="width:12%">N&#250;m. Piezas Total</th>
+          <th style="width:12%">Precio Pieza</th>
+          <th style="width:14%">Subtotal</th>
+          <th style="width:14%">Estado</th>
+          <th style="width:6%" class="no-print">Acc.</th>
+        </tr>
+      </thead>
+      <tbody id="productsBody"></tbody>
+      <tfoot class="table-footer" id="tableFooter"></tfoot>
+    </table>
+  </div>
+
+  <!-- Payments log -->
+  <div class="section-title animate-in delay-4">Historial de Pagos <span class="table-count" id="paymentsCount" style="vertical-align:middle">0</span></div>
+  <div class="payments-section animate-in delay-4">
+    <div id="paymentsBody"></div>
+  </div>
+
+  <!-- Notes -->
+  <div class="section-title animate-in delay-5">Notas de la Cuenta</div>
+  <div class="notes-area animate-in delay-5">
+    <textarea id="clientNotes" placeholder="Agrega notas sobre esta cuenta, acuerdos de pago, condiciones especiales..." oninput="onNotesChange()"></textarea>
+  </div>
+
+  <!-- Footer -->
+  <div class="app-footer">
+    <div class="footer-contact">
+      <a href="mailto:informacion@axkan.art" class="footer-item"><span>@</span> informacion@axkan.art</a>
+      <a href="https://www.instagram.com/axkanoficial/" target="_blank" class="footer-item"><span>IG</span> @axkanoficial</a>
+      <a href="https://axkan.art" target="_blank" class="footer-item"><span>Web</span> axkan.art</a>
+    </div>
+    <div class="footer-brand">AXKAN &#169; 2026</div>
+  </div>
+
+</div><!-- end app-container -->
+</div><!-- end page-wrap -->
+
+<!-- BOTTOM COLOR BAND -->
+<div class="bottom-band"></div>
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- Add Product -->
+<div class="modal-overlay" id="addProductModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Agregar Modelo</div>
+      <button class="modal-close" onclick="hideModal('addProductModal')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nombre del modelo *</label>
+        <input type="text" class="form-input" id="prodName" placeholder="Ej: Tortugas, Leles, Camiones...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">N&#250;m. Modelos *</label>
+          <input type="number" class="form-input" id="prodQty" placeholder="0" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">N&#250;m. Piezas Total *</label>
+          <input type="number" class="form-input" id="prodPrice" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Precio Pieza *</label>
+          <input type="number" class="form-input" id="prodPiecePrice" placeholder="$0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deduccion / Descuento</label>
+          <input type="number" class="form-input" id="prodDeduction" placeholder="$0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-select" id="prodStatus">
+            <option value="pending">Pendiente</option>
+            <option value="partial">Pago parcial</option>
+            <option value="paid">Pagado</option>
+          </select>
+        </div>
+        <div class="form-group"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nota (opcional)</label>
+        <input type="text" class="form-input" id="prodNote" placeholder="Ej: Se restan $3,600 por defectos">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="hideModal('addProductModal')">Cancelar</button>
+      <button class="btn btn-turquesa" onclick="addProduct()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Payment -->
+<div class="modal-overlay" id="addPaymentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Registrar Pago</div>
+      <button class="modal-close" onclick="hideModal('addPaymentModal')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Monto *</label>
+        <input type="number" class="form-input" id="payAmount" placeholder="$0.00" min="0" step="0.01">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Metodo de pago</label>
+          <select class="form-select" id="payMethod">
+            <option value="transfer">Transferencia</option>
+            <option value="cash">Efectivo</option>
+            <option value="card">Tarjeta</option>
+            <option value="other">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input type="date" class="form-input" id="payDate">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Referencia / Nota</label>
+        <input type="text" class="form-input" id="payRef" placeholder="Ej: Folio SPEI 12345">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="hideModal('addPaymentModal')">Cancelar</button>
+      <button class="btn btn-verde" onclick="addPayment()">Registrar Pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Product -->
+<div class="modal-overlay" id="editProductModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Editar Modelo</div>
+      <button class="modal-close" onclick="hideModal('editProductModal')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editProdIdx">
+      <div class="form-group">
+        <label class="form-label">Nombre del modelo *</label>
+        <input type="text" class="form-input" id="editProdName">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">N&#250;m. Modelos *</label>
+          <input type="number" class="form-input" id="editProdQty" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">N&#250;m. Piezas Total *</label>
+          <input type="number" class="form-input" id="editProdPrice" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Precio Pieza *</label>
+          <input type="number" class="form-input" id="editProdPiecePrice" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deduccion / Descuento</label>
+          <input type="number" class="form-input" id="editProdDeduction" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-select" id="editProdStatus">
+            <option value="pending">Pendiente</option>
+            <option value="partial">Pago parcial</option>
+            <option value="paid">Pagado</option>
+          </select>
+        </div>
+        <div class="form-group"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nota (opcional)</label>
+        <input type="text" class="form-input" id="editProdNote">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="deleteProduct()">Eliminar</button>
+      <div style="flex:1"></div>
+      <button class="btn" onclick="hideModal('editProductModal')">Cancelar</button>
+      <button class="btn btn-rosa" onclick="saveProduct()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Submodels Modal -->
+<div class="modal-overlay" id="submodelsModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="subModalTitle">Disenos</div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:2px">Agrega los disenos y piezas de este pedido</div>
+      </div>
+      <button class="modal-close" onclick="hideModal('submodelsModal')">&#10005;</button>
+    </div>
+    <div class="modal-body" style="padding:16px">
+      <input type="hidden" id="subProdIdx">
+      <div id="submodelsBody"></div>
+      <div class="sub-add-row" onclick="addSubmodel()">+ Agregar Diseno</div>
+      <div class="sub-summary">
+        <div>
+          <div class="sub-summary-label">Total del Pedido</div>
+          <div style="font-size:11px;color:var(--text-light);margin-top:2px" id="subSummaryDetail">0 disenos &#183; 0 piezas</div>
+        </div>
+        <div class="sub-summary-value" id="subSummaryTotal">$0.00</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="hideModal('submodelsModal')">Cerrar</button>
+      <button class="btn btn-turquesa" onclick="saveSubmodels()">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// API CONFIGURATION
+// ═══════════════════════════════════════════════
+var API_BASE = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000/api'
+  : 'https://vt-souvenir-backend.onrender.com/api';
+
+function authHeaders() {
+  var token = localStorage.getItem('admin_token');
+  var h = { 'Content-Type': 'application/json' };
+  if (token) h['Authorization'] = 'Bearer ' + token;
+  return h;
+}
+
+// ═══════════════════════════════════════════════
+// URL PARAMS & STATE
+// ═══════════════════════════════════════════════
+var urlParams = new URLSearchParams(window.location.search);
+var paramClientId = urlParams.get('clientId');
+var paramCuentaId = urlParams.get('cuentaId');
+
+// In-memory cuenta data
+var cuentaData = {
+  id: paramCuentaId || null,
+  clientId: paramClientId || null,
+  clientName: '',
+  products: [],
+  payments: [],
+  notes: ''
+};
+
+// ═══════════════════════════════════════════════
+// SAFE DOM HELPERS
+// ═══════════════════════════════════════════════
+function esc(str) { var el = document.createElement('span'); el.textContent = str || ''; return el.textContent; }
+function createEl(tag, attrs, children) {
+  var el = document.createElement(tag);
+  if (attrs) { Object.entries(attrs).forEach(function(kv) {
+    if (kv[0] === 'className') el.className = kv[1];
+    else if (kv[0] === 'textContent') el.textContent = kv[1];
+    else if (kv[0].startsWith('on')) el.addEventListener(kv[0].slice(2).toLowerCase(), kv[1]);
+    else el.setAttribute(kv[0], kv[1]);
+  }); }
+  if (children) { if (typeof children === 'string') el.textContent = children;
+    else if (Array.isArray(children)) children.forEach(function(c) { if (c) el.appendChild(c); });
+    else el.appendChild(children); }
+  return el;
+}
+function clearEl(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+// ═══════════════════════════════════════════════
+// AUTO-SAVE WITH DEBOUNCE
+// ═══════════════════════════════════════════════
+var saveTimer = null;
+var isSaving = false;
+
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  updateSaveStatus('unsaved');
+  saveTimer = setTimeout(function() { saveCuentaToAPI(); }, 600);
+}
+
+function updateSaveStatus(state) {
+  var el = document.getElementById('saveStatus');
+  if (!el) return;
+  el.className = 'save-status';
+  if (state === 'saving') {
+    el.classList.add('saving');
+    el.textContent = 'Guardando...';
+  } else if (state === 'saved') {
+    el.classList.add('saved');
+    el.textContent = 'Guardado';
+  } else if (state === 'error') {
+    el.classList.add('error');
+    el.textContent = 'Error al guardar';
+  } else if (state === 'unsaved') {
+    el.textContent = 'Sin guardar';
+  } else {
+    el.textContent = '';
+  }
+}
+
+function saveCuentaToAPI() {
+  if (!cuentaData.id || isSaving) return;
+  isSaving = true;
+  updateSaveStatus('saving');
+
+  var payload = {
+    products: cuentaData.products,
+    payments: cuentaData.payments,
+    notes: cuentaData.notes
+  };
+
+  fetch(API_BASE + '/payment-notes/cuenta/' + encodeURIComponent(cuentaData.id), {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  })
+  .then(function(res) {
+    isSaving = false;
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    updateSaveStatus('saved');
+  })
+  .catch(function(err) {
+    isSaving = false;
+    console.error('Save failed:', err);
+    updateSaveStatus('error');
+  });
+}
+
+// ═══════════════════════════════════════════════
+// INITIALIZATION
+// ═══════════════════════════════════════════════
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+async function initPage() {
+  try {
+    // Fetch client name
+    if (paramClientId) {
+      try {
+        var clientRes = await fetch(API_BASE + '/clients/' + encodeURIComponent(paramClientId), { headers: authHeaders() });
+        if (clientRes.ok) {
+          var clientData = await clientRes.json();
+          cuentaData.clientName = clientData.name || clientData.client_name || 'Cliente';
+        }
+      } catch(e) {
+        console.warn('Could not fetch client name:', e);
+        cuentaData.clientName = 'Cliente #' + paramClientId;
+      }
+    }
+
+    // Load or create cuenta
+    if (paramCuentaId) {
+      // Load existing cuenta
+      var cuentaRes = await fetch(API_BASE + '/payment-notes/cuenta/' + encodeURIComponent(paramCuentaId), { headers: authHeaders() });
+      if (cuentaRes.ok) {
+        var data = await cuentaRes.json();
+        cuentaData.id = paramCuentaId;
+        cuentaData.products = data.products || [];
+        cuentaData.payments = data.payments || [];
+        cuentaData.notes = data.notes || '';
+        if (data.client_name && !cuentaData.clientName) {
+          cuentaData.clientName = data.client_name;
+        }
+        if (data.clientId) cuentaData.clientId = data.clientId;
+      } else {
+        toast('Error cargando cuenta (HTTP ' + cuentaRes.status + ')', 'warn');
+      }
+    } else if (paramClientId) {
+      // Create new cuenta
+      var createRes = await fetch(API_BASE + '/payment-notes', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ clientId: paramClientId, products: [], payments: [], notes: '' })
+      });
+      if (createRes.ok) {
+        var created = await createRes.json();
+        cuentaData.id = created.id || created.cuentaId;
+        // Update URL without reload
+        var newUrl = 'cuenta.html?clientId=' + encodeURIComponent(paramClientId) + '&cuentaId=' + encodeURIComponent(cuentaData.id);
+        window.history.replaceState({}, '', newUrl);
+        paramCuentaId = cuentaData.id;
+        toast('Nueva cuenta creada');
+      } else {
+        toast('Error creando cuenta', 'warn');
+      }
+    }
+
+    // Update header
+    var nameEl = document.getElementById('clientHeaderName');
+    nameEl.textContent = cuentaData.clientName || 'Cliente';
+    var badgeEl = document.getElementById('cuentaIdBadge');
+    badgeEl.textContent = cuentaData.id ? ('Cuenta #' + cuentaData.id) : '---';
+
+    // Set default date on payment form
+    document.getElementById('payDate').value = new Date().toISOString().split('T')[0];
+
+    // Initial render
+    render();
+
+    // Hide loading
+    var loadingEl = document.getElementById('loadingOverlay');
+    if (loadingEl) loadingEl.style.display = 'none';
+
+  } catch(err) {
+    console.error('Init error:', err);
+    toast('Error inicializando la pagina', 'warn');
+    var loadingEl2 = document.getElementById('loadingOverlay');
+    if (loadingEl2) loadingEl2.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// PRODUCT MANAGEMENT
+// ═══════════════════════════════════════════════
+function addProduct() {
+  var name = document.getElementById('prodName').value.trim();
+  var qty = parseInt(document.getElementById('prodQty').value) || 0;
+  var price = parseFloat(document.getElementById('prodPrice').value) || 0;
+  var piecePrice = parseFloat(document.getElementById('prodPiecePrice').value) || 0;
+  if (!name || qty <= 0 || price <= 0) { toast('Completa nombre, cantidad y piezas', 'warn'); return; }
+  cuentaData.products.push({
+    id: genId(), name: name, qty: qty, price: price, piecePrice: piecePrice,
+    deduction: parseFloat(document.getElementById('prodDeduction').value) || 0,
+    status: document.getElementById('prodStatus').value,
+    note: document.getElementById('prodNote').value.trim(),
+    addedAt: new Date().toISOString()
+  });
+  scheduleSave();
+  hideModal('addProductModal');
+  ['prodName','prodQty','prodPrice','prodPiecePrice','prodDeduction','prodNote'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('prodStatus').value = 'pending';
+  render();
+  toast('"' + esc(name) + '" agregado');
+}
+
+function editProduct(idx) {
+  var p = cuentaData.products[idx]; if (!p) return;
+  document.getElementById('editProdIdx').value = idx;
+  document.getElementById('editProdName').value = p.name;
+  document.getElementById('editProdQty').value = p.qty;
+  document.getElementById('editProdPrice').value = p.price;
+  document.getElementById('editProdPiecePrice').value = p.piecePrice || 0;
+  document.getElementById('editProdDeduction').value = p.deduction || 0;
+  document.getElementById('editProdStatus').value = p.status;
+  document.getElementById('editProdNote').value = p.note || '';
+  showModal('editProductModal');
+}
+
+function saveProduct() {
+  var idx = parseInt(document.getElementById('editProdIdx').value);
+  var p = cuentaData.products[idx]; if (!p) return;
+  p.name = document.getElementById('editProdName').value.trim();
+  p.qty = parseInt(document.getElementById('editProdQty').value) || 1;
+  p.price = parseInt(document.getElementById('editProdPrice').value) || 0;
+  p.piecePrice = parseFloat(document.getElementById('editProdPiecePrice').value) || 0;
+  p.deduction = parseFloat(document.getElementById('editProdDeduction').value) || 0;
+  p.status = document.getElementById('editProdStatus').value;
+  p.note = document.getElementById('editProdNote').value.trim();
+  scheduleSave();
+  hideModal('editProductModal');
+  render();
+  toast('Modelo actualizado');
+}
+
+function deleteProduct() {
+  var idx = parseInt(document.getElementById('editProdIdx').value);
+  if (!confirm('Eliminar este modelo?')) return;
+  cuentaData.products.splice(idx, 1);
+  scheduleSave();
+  hideModal('editProductModal');
+  render();
+  toast('Modelo eliminado');
+}
+
+// ═══════════════════════════════════════════════
+// INLINE EDITING
+// ═══════════════════════════════════════════════
+function inlineEdit(el, idx, field, type) {
+  if (el.querySelector('input')) return;
+  var p = cuentaData.products[idx]; if (!p) return;
+  var oldVal = p[field] || 0;
+  el.classList.add('editing');
+  var input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'inline-input';
+  input.value = oldVal;
+  input.min = '0';
+  input.step = type === 'money' ? '0.01' : '1';
+  el.textContent = '';
+  el.appendChild(input);
+  input.focus();
+  input.select();
+  function commit() {
+    var val = type === 'money' ? (parseFloat(input.value) || 0) : (parseInt(input.value) || 0);
+    p[field] = val;
+    scheduleSave();
+    el.classList.remove('editing');
+    render();
+  }
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { p[field] = oldVal; el.classList.remove('editing'); render(); }
+  });
+}
+
+function inlineEditName(el, idx) {
+  if (el.querySelector('input')) return;
+  var p = cuentaData.products[idx]; if (!p) return;
+  var oldVal = p.name;
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'inline-name-input';
+  input.value = oldVal;
+  el.textContent = '';
+  el.appendChild(input);
+  input.focus();
+  input.select();
+  function commit() {
+    var val = input.value.trim();
+    if (val) p.name = val;
+    scheduleSave();
+    render();
+  }
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { p.name = oldVal; render(); }
+  });
+}
+
+function cycleStatus(idx) {
+  var p = cuentaData.products[idx]; if (!p) return;
+  var order = ['pending', 'partial', 'paid'];
+  var cur = order.indexOf(p.status);
+  p.status = order[(cur + 1) % order.length];
+  scheduleSave();
+  render();
+  toast('Estado: ' + STATUS_LABELS[p.status]);
+}
+
+// ═══════════════════════════════════════════════
+// SUBMODELS (DESIGNS) MANAGEMENT
+// ═══════════════════════════════════════════════
+var tempSubmodels = [];
+
+function openSubmodels(idx) {
+  var p = cuentaData.products[idx]; if (!p) return;
+  document.getElementById('subProdIdx').value = idx;
+  document.getElementById('subModalTitle').textContent = p.name + ' \u2014 Disenos';
+  if (!p.submodels || p.submodels.length === 0) {
+    tempSubmodels = [{ id: genId(), name: 'Diseno 1', pieces: p.price || 0, piecePrice: p.piecePrice || 0 }];
+  } else {
+    tempSubmodels = p.submodels.map(function(s) { return { id: s.id, name: s.name, pieces: s.pieces, piecePrice: s.piecePrice }; });
+  }
+  renderSubmodels();
+  showModal('submodelsModal');
+}
+
+function renderSubmodels() {
+  var body = document.getElementById('submodelsBody');
+  clearEl(body);
+  var table = createEl('table', { className: 'submodels-table' });
+  var thead = createEl('thead');
+  var hRow = createEl('tr');
+  ['Diseno', 'Piezas', 'Precio Pieza', 'Subtotal', ''].forEach(function(t) {
+    hRow.appendChild(createEl('th', { textContent: t }));
+  });
+  thead.appendChild(hRow);
+  table.appendChild(thead);
+  var tbody = createEl('tbody');
+  var grandTotal = 0;
+  var totalPieces = 0;
+  tempSubmodels.forEach(function(sub, i) {
+    var tr = createEl('tr');
+    // Name
+    var td1 = createEl('td');
+    var nameInput = createEl('input', { type: 'text', className: 'sub-input sub-input-name', value: sub.name });
+    nameInput.dataset.idx = i;
+    nameInput.dataset.field = 'name';
+    nameInput.addEventListener('input', function() { tempSubmodels[i].name = this.value; });
+    td1.appendChild(nameInput);
+    tr.appendChild(td1);
+    // Pieces
+    var td2 = createEl('td');
+    var pcsInput = createEl('input', { type: 'number', className: 'sub-input', value: String(sub.pieces), min: '0' });
+    pcsInput.addEventListener('input', function() { tempSubmodels[i].pieces = parseInt(this.value) || 0; updateSubSummary(); });
+    td2.appendChild(pcsInput);
+    tr.appendChild(td2);
+    // Price
+    var td3 = createEl('td');
+    var prInput = createEl('input', { type: 'number', className: 'sub-input', value: String(sub.piecePrice), min: '0', step: '0.01' });
+    prInput.addEventListener('input', function() { tempSubmodels[i].piecePrice = parseFloat(this.value) || 0; updateSubSummary(); });
+    td3.appendChild(prInput);
+    tr.appendChild(td3);
+    // Subtotal
+    var sub_total = sub.pieces * sub.piecePrice;
+    grandTotal += sub_total;
+    totalPieces += sub.pieces;
+    var td4 = createEl('td', { className: 'sub-total-cell' });
+    td4.setAttribute('data-sub-total', i);
+    td4.textContent = formatMoney(sub_total);
+    tr.appendChild(td4);
+    // Remove
+    var td5 = createEl('td', { style: 'text-align:center' });
+    if (tempSubmodels.length > 1) {
+      var rmBtn = createEl('button', { className: 'sub-remove-btn', textContent: '\u00D7' });
+      (function(idx) { rmBtn.addEventListener('click', function() { tempSubmodels.splice(idx, 1); renderSubmodels(); }); })(i);
+      td5.appendChild(rmBtn);
+    }
+    tr.appendChild(td5);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  body.appendChild(table);
+  document.getElementById('subSummaryTotal').textContent = formatMoney(grandTotal);
+  document.getElementById('subSummaryDetail').textContent = tempSubmodels.length + ' diseno' + (tempSubmodels.length !== 1 ? 's' : '') + ' \u00B7 ' + totalPieces + ' piezas';
+}
+
+function updateSubSummary() {
+  var grandTotal = 0;
+  var totalPieces = 0;
+  tempSubmodels.forEach(function(sub, i) {
+    var st = sub.pieces * sub.piecePrice;
+    grandTotal += st;
+    totalPieces += sub.pieces;
+    var cell = document.querySelector('[data-sub-total="' + i + '"]');
+    if (cell) cell.textContent = formatMoney(st);
+  });
+  document.getElementById('subSummaryTotal').textContent = formatMoney(grandTotal);
+  document.getElementById('subSummaryDetail').textContent = tempSubmodels.length + ' diseno' + (tempSubmodels.length !== 1 ? 's' : '') + ' \u00B7 ' + totalPieces + ' piezas';
+}
+
+function addSubmodel() {
+  tempSubmodels.push({ id: genId(), name: 'Diseno ' + (tempSubmodels.length + 1), pieces: 0, piecePrice: 0 });
+  renderSubmodels();
+  var inputs = document.querySelectorAll('.submodels-table .sub-input-name');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function saveSubmodels() {
+  var idx = parseInt(document.getElementById('subProdIdx').value);
+  var p = cuentaData.products[idx]; if (!p) return;
+  p.submodels = tempSubmodels.map(function(s) { return { id: s.id, name: s.name, pieces: s.pieces, piecePrice: s.piecePrice }; });
+  // Auto-calculate parent row from submodels
+  p.qty = p.submodels.length;
+  p.price = p.submodels.reduce(function(s, sub) { return s + sub.pieces; }, 0);
+  var totalSub = p.submodels.reduce(function(s, sub) { return s + (sub.pieces * sub.piecePrice); }, 0);
+  p.piecePrice = p.price > 0 ? Math.round((totalSub / p.price) * 100) / 100 : 0;
+  scheduleSave();
+  hideModal('submodelsModal');
+  render();
+  toast('Disenos guardados (' + p.submodels.length + ')');
+}
+
+// ═══════════════════════════════════════════════
+// PAYMENT AUTO-ALLOCATION
+// ═══════════════════════════════════════════════
+function getProductNet(p) {
+  if (p.submodels && p.submodels.length > 0) {
+    return p.submodels.reduce(function(s, sm) { return s + (sm.pieces * sm.piecePrice); }, 0);
+  }
+  return p.price * (p.piecePrice || 0);
+}
+
+function allocatePayments() {
+  var totalPaid = cuentaData.payments.reduce(function(s, p) { return s + p.amount; }, 0);
+  var remaining = totalPaid;
+
+  cuentaData.products.forEach(function(p) {
+    var net = getProductNet(p);
+    if (net <= 0) {
+      p.amountPaid = 0;
+      p.status = 'paid';
+      return;
+    }
+    if (remaining >= net) {
+      p.amountPaid = net;
+      p.status = 'paid';
+      remaining -= net;
+    } else if (remaining > 0) {
+      p.amountPaid = Math.round(remaining * 100) / 100;
+      p.status = 'partial';
+      remaining = 0;
+    } else {
+      p.amountPaid = 0;
+      p.status = 'pending';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// PAYMENT MANAGEMENT
+// ═══════════════════════════════════════════════
+function addPayment() {
+  var amount = parseFloat(document.getElementById('payAmount').value) || 0;
+  if (amount <= 0) { toast('Ingresa un monto valido', 'warn'); return; }
+  cuentaData.payments.push({
+    id: genId(), amount: amount,
+    method: document.getElementById('payMethod').value,
+    date: document.getElementById('payDate').value || new Date().toISOString().split('T')[0],
+    reference: document.getElementById('payRef').value.trim(),
+    createdAt: new Date().toISOString()
+  });
+  allocatePayments();
+  scheduleSave();
+  hideModal('addPaymentModal');
+  ['payAmount','payRef'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('payDate').value = new Date().toISOString().split('T')[0];
+  render();
+  toast('Pago de ' + formatMoney(amount) + ' registrado \u2014 estados actualizados');
+}
+
+function deletePayment(idx) {
+  if (!confirm('Eliminar este pago?')) return;
+  cuentaData.payments.splice(idx, 1);
+  allocatePayments();
+  scheduleSave();
+  render();
+  toast('Pago eliminado \u2014 estados recalculados');
+}
+
+// ═══════════════════════════════════════════════
+// NOTES
+// ═══════════════════════════════════════════════
+function onNotesChange() {
+  cuentaData.notes = document.getElementById('clientNotes').value;
+  scheduleSave();
+}
+
+// ═══════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════
+function formatMoney(n) { return '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+var METHOD_LABELS = { transfer: 'Transferencia', cash: 'Efectivo', card: 'Tarjeta', other: 'Otro' };
+var STATUS_LABELS = { paid: 'Pagado', partial: 'Parcial', pending: 'Pendiente' };
+var DOT_COLORS = ['rosa', 'turquesa', 'naranja', 'verde'];
+
+function getProductIcon(name) {
+  var l = name.toLowerCase();
+  if (l.indexOf('tortuga') !== -1) return '\uD83D\uDC22';
+  if (l.indexOf('camion') !== -1) return '\uD83D\uDE8C';
+  if (l.indexOf('billete') !== -1) return '\uD83D\uDCB5';
+  if (l.indexOf('lele') !== -1) return '\uD83C\uDFAD';
+  if (l.indexOf('letras') !== -1 || l.indexOf('3d') !== -1) return '\uD83D\uDD24';
+  if (l.indexOf('placa') !== -1) return '\uD83C\uDFF7\uFE0F';
+  if (l.indexOf('modelo') !== -1) return '\uD83C\uDFA8';
+  if (l.indexOf('amlo') !== -1) return '\uD83D\uDDFF';
+  if (l.indexOf('iman') !== -1 || l.indexOf('im\u00E1n') !== -1) return '\uD83E\uDDF2';
+  var icons = ['\uD83D\uDCE6','\uD83E\uDDF2','\uD83C\uDFA8','\uD83D\uDC22','\uD83D\uDE8C','\uD83D\uDCB0','\uD83C\uDFF7\uFE0F','\uD83C\uDF81','\uD83D\uDDFF','\uD83C\uDFAD'];
+  var hash = 0; for (var i = 0; i < name.length; i++) hash = ((hash << 5) - hash) + name.charCodeAt(i);
+  return icons[Math.abs(hash) % icons.length];
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '\u2014';
+  try { var d = new Date(dateStr + 'T12:00:00'); return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }); } catch(e) { return dateStr; }
+}
+
+function render() {
+  var search = document.getElementById('searchInput').value.toLowerCase();
+
+  if (cuentaData.products.length === 0 && cuentaData.payments.length === 0) {
+    renderEmpty();
+    return;
+  }
+
+  allocatePayments();
+
+  var products = cuentaData.products.filter(function(p) { return !search || p.name.toLowerCase().indexOf(search) !== -1; });
+  var totalOrder = cuentaData.products.reduce(function(s,p){
+    if (p.submodels && p.submodels.length > 0) return s + p.submodels.reduce(function(ss,sub){ return ss + (sub.pieces * sub.piecePrice); }, 0);
+    return s + (p.price * (p.piecePrice || 0));
+  }, 0);
+  var effectiveTotal = totalOrder;
+  var totalPaid = cuentaData.payments.reduce(function(s,p){ return s + p.amount; }, 0);
+  var remaining = Math.max(0, effectiveTotal - totalPaid);
+  var paidPercent = effectiveTotal > 0 ? Math.min(100, (totalPaid / effectiveTotal) * 100) : 0;
+
+  // Summary
+  document.getElementById('sumTotal').textContent = formatMoney(effectiveTotal);
+  document.getElementById('sumProductCount').textContent = cuentaData.products.length + ' modelo' + (cuentaData.products.length !== 1 ? 's' : '') + ' \u00B7 Bruto: ' + formatMoney(totalOrder);
+  document.getElementById('sumPaid').textContent = formatMoney(totalPaid);
+  document.getElementById('sumPaymentCount').textContent = cuentaData.payments.length + ' pago' + (cuentaData.payments.length !== 1 ? 's' : '') + ' registrado' + (cuentaData.payments.length !== 1 ? 's' : '');
+  document.getElementById('sumRemaining').textContent = formatMoney(remaining);
+
+  var remEl = document.getElementById('sumRemaining');
+  if (remaining === 0 && effectiveTotal > 0) {
+    remEl.className = 'summary-value text-verde';
+    document.getElementById('sumRemainingDetail').textContent = '\u2713 Liquidado';
+  } else {
+    remEl.className = 'summary-value text-rosa';
+    document.getElementById('sumRemainingDetail').textContent = effectiveTotal > 0 ? (100 - paidPercent).toFixed(0) + '% pendiente' : '';
+  }
+
+  // Hero section
+  var heroEl = document.getElementById('amountHero');
+  if (remaining === 0 && effectiveTotal > 0) {
+    heroEl.style.background = 'var(--verde-selva)';
+    document.getElementById('heroBadge').textContent = 'Liquidado';
+    document.getElementById('heroDescription').textContent = 'Todos los pagos al corriente';
+  } else {
+    heroEl.style.background = 'var(--rosa-mexicano)';
+    document.getElementById('heroBadge').textContent = 'Saldo Pendiente';
+    document.getElementById('heroDescription').textContent = 'Monto restante por cobrar';
+  }
+  var parts = formatMoney(remaining).split('.');
+  document.getElementById('heroAmount').textContent = parts[0];
+  document.getElementById('heroCents').textContent = '.' + (parts[1] || '00');
+  document.getElementById('heroSubtext').textContent = paidPercent.toFixed(0) + '% pagado de ' + formatMoney(effectiveTotal);
+
+  // Products table
+  var tbody = document.getElementById('productsBody');
+  var tfoot = document.getElementById('tableFooter');
+  clearEl(tbody); clearEl(tfoot);
+
+  if (products.length === 0) {
+    var emptyRow = createEl('tr');
+    var emptyTd = createEl('td'); emptyTd.setAttribute('colspan', '7');
+    var emptyDiv = createEl('div', { className: 'empty-state' });
+    emptyDiv.appendChild(createEl('div', { className: 'empty-state-icon', textContent: '\uD83D\uDCE6' }));
+    emptyDiv.appendChild(createEl('div', { className: 'empty-state-text', textContent: search ? 'No se encontraron modelos' : 'Agrega modelos al pedido' }));
+    emptyTd.appendChild(emptyDiv); emptyRow.appendChild(emptyTd); tbody.appendChild(emptyRow);
+  } else {
+    products.forEach(function(p) {
+      var realIdx = cuentaData.products.indexOf(p);
+      var pp = p.piecePrice || 0;
+      var subtotal = (p.submodels && p.submodels.length > 0) ? p.submodels.reduce(function(ss,sub){ return ss + (sub.pieces * sub.piecePrice); }, 0) : (p.price * pp);
+      var tr = createEl('tr');
+
+      // Col 1: Modelos (name — click opens submodels)
+      var td1 = createEl('td', { style: 'cursor:pointer' });
+      var cell = createEl('div', { className: 'product-cell' });
+      cell.appendChild(createEl('div', { className: 'product-thumb', textContent: getProductIcon(p.name) }));
+      var nw = createEl('div');
+      var nameSpan = createEl('div', { className: 'product-name editable-name', textContent: p.name });
+      if (p.submodels && p.submodels.length > 0) {
+        nameSpan.appendChild(createEl('span', { className: 'sub-count-badge', textContent: String(p.submodels.length) }));
+      }
+      (function(idx) {
+        nameSpan.addEventListener('click', function() { openSubmodels(idx); });
+      })(realIdx);
+      nw.appendChild(nameSpan);
+      if (p.note) nw.appendChild(createEl('div', { className: 'product-note', textContent: p.note }));
+      if (p.submodels && p.submodels.length > 0) {
+        var subNames = p.submodels.map(function(s){ return s.name; }).join(', ');
+        nw.appendChild(createEl('div', { className: 'product-note', style: 'color:var(--turquesa-caribe)', textContent: subNames }));
+      }
+      cell.appendChild(nw); td1.appendChild(cell); tr.appendChild(td1);
+
+      // Col 2: Num. Modelos (qty — editable)
+      var td2 = createEl('td', { style: 'text-align:center' });
+      var qtySpan = createEl('span', { className: 'editable-cell', style: 'font-weight:600;font-family:var(--font-mono);font-size:11px', textContent: String(p.qty) });
+      (function(idx) {
+        qtySpan.addEventListener('click', function() { inlineEdit(this, idx, 'qty', 'number'); });
+      })(realIdx);
+      td2.appendChild(qtySpan); tr.appendChild(td2);
+
+      // Col 3: Num. Piezas Total (price — editable, plain number)
+      var td3 = createEl('td', { style: 'text-align:center' });
+      var priceSpan = createEl('span', { className: 'editable-cell', style: 'font-weight:600;font-family:var(--font-mono);font-size:11px', textContent: String(p.price) });
+      (function(idx) {
+        priceSpan.addEventListener('click', function() { inlineEdit(this, idx, 'price', 'number'); });
+      })(realIdx);
+      td3.appendChild(priceSpan); tr.appendChild(td3);
+
+      // Col 4: Precio Pieza (editable, with $)
+      var td4 = createEl('td', { style: 'text-align:right' });
+      var ppSpan = createEl('span', { className: 'editable-cell', style: 'font-weight:600;font-family:var(--font-mono);font-size:11px', textContent: formatMoney(pp) });
+      (function(idx) {
+        ppSpan.addEventListener('click', function() { inlineEdit(this, idx, 'piecePrice', 'money'); });
+      })(realIdx);
+      td4.appendChild(ppSpan); tr.appendChild(td4);
+
+      // Col 5: Subtotal (auto-calculated = Num. Piezas Total x Precio Pieza)
+      tr.appendChild(createEl('td', { className: 'money', style: 'font-weight:600', textContent: formatMoney(subtotal) }));
+
+      // Col 6: Estado (auto-calculated from payments)
+      var td6 = createEl('td');
+      var net = getProductNet(p);
+      var paid = p.amountPaid || 0;
+      var badge = createEl('span', { className: 'status-badge status-' + p.status });
+      badge.appendChild(createEl('span', { className: 'status-dot' }));
+      badge.appendChild(document.createTextNode(' ' + STATUS_LABELS[p.status]));
+      td6.appendChild(badge);
+      if (p.status === 'partial' && paid > 0) {
+        var resta = net - paid;
+        td6.appendChild(createEl('div', { style: 'font-size:9px;font-family:var(--font-mono);color:var(--verde-selva);margin-top:3px', textContent: 'Abono: ' + formatMoney(paid) }));
+        td6.appendChild(createEl('div', { style: 'font-size:9px;font-family:var(--font-mono);color:var(--pending);margin-top:1px', textContent: 'Resta: ' + formatMoney(resta) }));
+      }
+      tr.appendChild(td6);
+
+      // Col 7: Actions
+      var td7 = createEl('td', { className: 'no-print' });
+      var editBtn = createEl('button', { className: 'btn btn-sm btn-icon', title: 'Editar', textContent: '\u270E' });
+      editBtn.addEventListener('click', function() { editProduct(realIdx); });
+      td7.appendChild(editBtn); tr.appendChild(td7);
+      tbody.appendChild(tr);
+    });
+
+    var fTotal = products.reduce(function(s,p){
+      if (p.submodels && p.submodels.length > 0) return s + p.submodels.reduce(function(ss,sub){ return ss + (sub.pieces * sub.piecePrice); }, 0);
+      return s + (p.price * (p.piecePrice||0));
+    },0);
+    var fQty = products.reduce(function(s,p){ return s+p.qty; },0);
+    var fPiezas = products.reduce(function(s,p){ return s+p.price; },0);
+    var fRow = createEl('tr');
+    fRow.appendChild(createEl('td', { textContent: 'Total', style: 'font-family:var(--font-display);letter-spacing:2px;text-transform:uppercase;font-size:9px' }));
+    fRow.appendChild(createEl('td', { style: 'text-align:center;font-family:var(--font-mono)', textContent: String(fQty) }));
+    fRow.appendChild(createEl('td', { style: 'text-align:center;font-family:var(--font-mono)', textContent: String(fPiezas) }));
+    fRow.appendChild(createEl('td'));
+    fRow.appendChild(createEl('td', { style: 'text-align:right;font-family:var(--font-mono);font-weight:700', textContent: formatMoney(fTotal) }));
+    fRow.appendChild(createEl('td'));
+    fRow.appendChild(createEl('td', { className: 'no-print' }));
+    tfoot.appendChild(fRow);
+  }
+
+  // Payments
+  var paymentsDiv = document.getElementById('paymentsBody');
+  document.getElementById('paymentsCount').textContent = cuentaData.payments.length;
+  clearEl(paymentsDiv);
+
+  if (cuentaData.payments.length === 0) {
+    var ep = createEl('div', { className: 'empty-state' });
+    ep.appendChild(createEl('div', { className: 'empty-state-icon', textContent: '\uD83D\uDCB0' }));
+    ep.appendChild(createEl('div', { className: 'empty-state-text', textContent: 'No hay pagos registrados' }));
+    paymentsDiv.appendChild(ep);
+  } else {
+    var sorted = cuentaData.payments.map(function(p,i){ return { p:p, idx:i }; }).sort(function(a,b){ return a.p.date.localeCompare(b.p.date); });
+    var rt = 0;
+    sorted.forEach(function(item) { rt += item.p.amount; item.runningTotal = rt; });
+    sorted.reverse().forEach(function(item, si) {
+      var p = item.p;
+      var payItem = createEl('div', { className: 'payment-item' });
+      payItem.appendChild(createEl('div', { className: 'payment-dot ' + DOT_COLORS[si % 4] }));
+
+      var infoDiv = createEl('div', { className: 'payment-info' });
+      infoDiv.appendChild(createEl('div', { className: 'payment-label', textContent: METHOD_LABELS[p.method] + (p.reference ? ' \u2014 ' + p.reference : '') }));
+      var metaDiv = createEl('div', { className: 'payment-meta' });
+      metaDiv.appendChild(createEl('span', { textContent: formatDate(p.date) }));
+      metaDiv.appendChild(createEl('span', { textContent: 'Acum: ' + formatMoney(item.runningTotal) }));
+      infoDiv.appendChild(metaDiv);
+      payItem.appendChild(infoDiv);
+
+      payItem.appendChild(createEl('div', { className: 'payment-amount positive', textContent: '+' + formatMoney(p.amount) }));
+
+      var actDiv = createEl('div', { className: 'payment-actions no-print' });
+      var delBtn = createEl('button', { className: 'btn btn-sm btn-icon', title: 'Eliminar', textContent: '\u2715' });
+      (function(ci){ delBtn.addEventListener('click', function(){ deletePayment(ci); }); })(item.idx);
+      actDiv.appendChild(delBtn); payItem.appendChild(actDiv);
+      paymentsDiv.appendChild(payItem);
+    });
+  }
+
+  document.getElementById('clientNotes').value = cuentaData.notes || '';
+}
+
+function renderEmpty() {
+  document.getElementById('sumTotal').textContent = '$0.00';
+  document.getElementById('sumProductCount').textContent = '0 modelos';
+  document.getElementById('sumPaid').textContent = '$0.00';
+  document.getElementById('sumPaymentCount').textContent = '0 pagos';
+  document.getElementById('sumRemaining').textContent = '$0.00';
+  document.getElementById('sumRemainingDetail').textContent = '';
+  document.getElementById('heroAmount').textContent = '$0';
+  document.getElementById('heroCents').textContent = '.00';
+  document.getElementById('heroSubtext').textContent = '';
+  document.getElementById('paymentsCount').textContent = '0';
+
+  var heroEl = document.getElementById('amountHero');
+  heroEl.style.background = 'var(--rosa-mexicano)';
+  document.getElementById('heroBadge').textContent = 'Saldo Pendiente';
+  document.getElementById('heroDescription').textContent = 'Monto restante por cobrar';
+
+  var tbody = document.getElementById('productsBody'); clearEl(tbody);
+  var er = createEl('tr'); var et = createEl('td'); et.setAttribute('colspan','7');
+  var ed = createEl('div', { className: 'empty-state' });
+  ed.appendChild(createEl('div', { className: 'empty-state-icon', textContent: '\uD83D\uDCE6' }));
+  ed.appendChild(createEl('div', { className: 'empty-state-text', textContent: 'Agrega modelos al pedido' }));
+  et.appendChild(ed); er.appendChild(et); tbody.appendChild(er);
+  clearEl(document.getElementById('tableFooter'));
+
+  var pd = document.getElementById('paymentsBody'); clearEl(pd);
+  var ep = createEl('div', { className: 'empty-state' });
+  ep.appendChild(createEl('div', { className: 'empty-state-icon', textContent: '\uD83D\uDCB0' }));
+  ep.appendChild(createEl('div', { className: 'empty-state-text', textContent: 'No hay pagos registrados' }));
+  pd.appendChild(ep);
+  document.getElementById('clientNotes').value = cuentaData.notes || '';
+}
+
+function filterProducts() { render(); }
+
+// ═══════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════
+function showModal(id) { document.getElementById(id).classList.add('active'); setTimeout(function(){ var i = document.getElementById(id).querySelector('input:not([type=hidden])'); if(i)i.focus(); }, 200); }
+function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+
+document.querySelectorAll('.modal-overlay').forEach(function(o){ o.addEventListener('click', function(e){ if(e.target===o)o.classList.remove('active'); }); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.active').forEach(function(m){ m.classList.remove('active'); }); });
+
+function toast(msg, type) {
+  type = type || 'success';
+  var c = document.getElementById('toastContainer');
+  var t = createEl('div', { className: 'toast' });
+  t.textContent = (type === 'warn' ? '\u26A0 ' : '\u2713 ') + msg;
+  c.appendChild(t); setTimeout(function(){ t.remove(); }, 3000);
+}
+
+function exportData() {
+  if (cuentaData.products.length === 0) { toast('No hay datos para exportar', 'warn'); return; }
+  var clientName = cuentaData.clientName || 'Cliente';
+  var tO = cuentaData.products.reduce(function(s,p){
+    if (p.submodels && p.submodels.length > 0) return s + p.submodels.reduce(function(ss,sub){ return ss + (sub.pieces * sub.piecePrice); }, 0);
+    return s + (p.price*(p.piecePrice||0));
+  },0);
+  var tD = cuentaData.products.reduce(function(s,p){ return s+(p.deduction||0); },0);
+  var tP = cuentaData.payments.reduce(function(s,p){ return s+p.amount; },0);
+  var csv = 'CONTROL DE PAGOS \u2014 ' + clientName + ' \u2014 Cuenta #' + (cuentaData.id || '') + '\nGenerado: ' + new Date().toLocaleDateString('es-MX') + '\n\nMODELOS\nModelo,Num Modelos,Num Piezas Total,Precio Pieza,Subtotal,Deduccion,Estado,Nota\n';
+  cuentaData.products.forEach(function(p){ csv += '"'+p.name+'",'+p.qty+','+p.price+','+(p.piecePrice||0)+','+(p.price*(p.piecePrice||0))+','+(p.deduction||0)+','+STATUS_LABELS[p.status]+',"'+(p.note||'')+'"\n'; });
+  csv += '\nTOTALES\nBruto,'+tO+'\nDeducciones,'+tD+'\nNeto,'+(tO-tD)+'\nPagado,'+tP+'\nPendiente,'+Math.max(0,(tO-tD)-tP)+'\n\nPAGOS\nFecha,Monto,Metodo,Referencia\n';
+  cuentaData.payments.forEach(function(p){ csv += p.date+','+p.amount+','+METHOD_LABELS[p.method]+',"'+(p.reference||'')+'"\n'; });
+  if(cuentaData.notes) csv += '\nNOTAS\n"'+cuentaData.notes+'"\n';
+  var blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href = url; a.download = 'cuenta_'+clientName.replace(/\s+/g,'_').toLowerCase()+'_'+(cuentaData.id||'nueva')+'_'+new Date().toISOString().split('T')[0]+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  toast('CSV exportado');
+}
+
+// ═══════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════
+initPage();
+</script>
+</body>
+</html>
