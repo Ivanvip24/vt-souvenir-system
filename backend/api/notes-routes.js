@@ -10,6 +10,7 @@ import {
   requireManager,
   logActivity
 } from './middleware/employee-auth.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -58,7 +59,7 @@ router.get('/workspaces', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List workspaces error:', error);
+    logError('notes.list-workspaces-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar espacios de trabajo'
@@ -125,7 +126,7 @@ router.get('/workspaces/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get workspace error:', error);
+    logError('notes.get-workspace-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener espacio de trabajo'
@@ -169,7 +170,7 @@ router.post('/workspaces', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create workspace error:', error);
+    logError('notes.create-workspace-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al crear espacio de trabajo'
@@ -258,7 +259,7 @@ router.put('/workspaces/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update workspace error:', error);
+    logError('notes.update-workspace-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar espacio de trabajo'
@@ -302,7 +303,7 @@ router.delete('/workspaces/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete workspace error:', error);
+    logError('notes.delete-workspace-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al eliminar espacio de trabajo'
@@ -383,7 +384,7 @@ router.get('/', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List notes error:', error);
+    logError('notes.list-notes-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar notas'
@@ -465,7 +466,7 @@ router.get('/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get note error:', error);
+    logError('notes.get-note-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener nota'
@@ -535,7 +536,7 @@ router.post('/', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create note error:', error);
+    logError('notes.create-note-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al crear nota'
@@ -623,7 +624,7 @@ router.put('/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update note error:', error);
+    logError('notes.update-note-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar nota'
@@ -671,7 +672,7 @@ router.delete('/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete note error:', error);
+    logError('notes.delete-note-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al eliminar nota'
@@ -725,7 +726,7 @@ router.post('/:id/share', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Share note error:', error);
+    logError('notes.share-note-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al compartir nota'
@@ -779,7 +780,7 @@ router.post('/:id/duplicate', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Duplicate note error:', error);
+    logError('notes.duplicate-note-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al duplicar nota'
@@ -811,7 +812,7 @@ router.get('/templates/list', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List templates error:', error);
+    logError('notes.list-templates-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar plantillas'
