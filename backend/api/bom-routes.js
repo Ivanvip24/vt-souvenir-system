@@ -5,6 +5,7 @@
 
 import express from 'express';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 import { authMiddleware } from './admin-routes.js';
 
 const router = express.Router();
@@ -62,7 +63,7 @@ router.get('/materials', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching raw materials:', error);
+    logError('bom.materials.list.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -95,7 +96,7 @@ router.get('/materials/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching material:', error);
+    logError('bom.materials.get.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -171,7 +172,7 @@ router.post('/materials', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating material:', error);
+    logError('bom.materials.create.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -261,7 +262,7 @@ router.put('/materials/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating material:', error);
+    logError('bom.materials.update.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -299,7 +300,7 @@ router.delete('/materials/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error deleting material:', error);
+    logError('bom.materials.delete.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -348,7 +349,7 @@ router.get('/products/:productId/components', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching product components:', error);
+    logError('bom.components.list.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -403,7 +404,7 @@ router.post('/products/:productId/components', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error adding component:', error);
+    logError('bom.components.add.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -460,7 +461,7 @@ router.put('/products/:productId/components/:componentId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating component:', error);
+    logError('bom.components.update.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -484,7 +485,7 @@ router.delete('/products/:productId/components/:componentId', async (req, res) =
     });
 
   } catch (error) {
-    console.error('Error removing component:', error);
+    logError('bom.components.remove.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -565,7 +566,7 @@ router.get('/products/:productId/cost-breakdown', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error getting cost breakdown:', error);
+    logError('bom.cost-breakdown.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -590,7 +591,7 @@ router.get('/cost-summary', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching BOM cost summary:', error);
+    logError('bom.cost-summary.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -615,7 +616,7 @@ router.get('/material-usage', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching material usage:', error);
+    logError('bom.material-usage.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -652,7 +653,7 @@ router.post('/calculate-area-cost', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error calculating area cost:', error);
+    logError('bom.calculate-area-cost.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
