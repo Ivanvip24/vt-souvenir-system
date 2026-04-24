@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import * as notionAgent from './agents/notion-agent/index.js';
 import { uploadToGoogleDrive, isGoogleDriveConfigured } from './utils/google-drive.js';
+import { log, logError } from './shared/logger.js';
 
 config();
 
@@ -255,12 +256,7 @@ const demoProducts = [
   }
 ];
 
-console.log('\n' + '='.repeat(60));
-console.log('🎯 DEMO MODE - Souvenir Management System');
-console.log('='.repeat(60));
-console.log('⚠️  Running without database - data is temporary');
-console.log('📝 To enable full features, install PostgreSQL');
-console.log('='.repeat(60) + '\n');
+log('info', 'demoServer.init', { mode: 'demo', msg: 'Running without database - data is temporary' });
 
 // Health check
 app.get('/health', (req, res) => {
@@ -501,7 +497,7 @@ app.post('/api/client/orders/submit', (req, res) => {
 
     demoOrders.push(order);
 
-    console.log(`📦 New order created: ${orderNumber} from ${clientName}`);
+    log('info', 'demoServer.order.created', { orderNumber, clientName });
 
     // Response based on payment method
     const response = {
@@ -531,7 +527,7 @@ app.post('/api/client/orders/submit', (req, res) => {
     res.status(201).json(response);
 
   } catch (error) {
-    console.error('Error creating order:', error);
+    logError('demoServer.order.createFail', error);
     res.status(500).json({
       success: false,
       error: 'Error al procesar el pedido'
@@ -558,7 +554,7 @@ app.post('/api/client/orders/:orderId/upload-proof', async (req, res) => {
 
     // If Google Drive is configured, upload the image there
     if (isGoogleDriveConfigured() && proofUrl) {
-      console.log(`📤 Uploading payment proof to Google Drive for ${order.orderNumber}...`);
+      log('info', 'demoServer.paymentProof.uploading', { orderNumber: order.orderNumber });
 
       // Extract mime type from base64 data URL
       const mimeType = proofUrl.match(/data:([^;]+);/)?.[1] || 'image/jpeg';
@@ -575,14 +571,14 @@ app.post('/api/client/orders/:orderId/upload-proof', async (req, res) => {
         finalProofUrl = uploadResult.directImageUrl; // Use the direct image URL for displaying
         order.paymentProofDriveId = uploadResult.fileId;
         order.paymentProofDownloadUrl = uploadResult.downloadUrl;
-        console.log(`✅ Payment proof uploaded to Drive: ${fileName}`);
+        log('info', 'demoServer.paymentProof.uploaded', { fileName });
       }
     }
 
     order.paymentProofUrl = finalProofUrl;
     order.paymentProofUploadedAt = new Date().toISOString();
 
-    console.log(`💰 Payment proof uploaded for order ${order.orderNumber}`);
+    log('info', 'demoServer.paymentProof.saved', { orderNumber: order.orderNumber });
 
     res.json({
       success: true,
@@ -590,7 +586,7 @@ app.post('/api/client/orders/:orderId/upload-proof', async (req, res) => {
       proofUrl: finalProofUrl
     });
   } catch (error) {
-    console.error('Error uploading payment proof:', error);
+    logError('demoServer.paymentProof.fail', error);
     // Still save the base64 URL as fallback
     order.paymentProofUrl = proofUrl;
     order.paymentProofUploadedAt = new Date().toISOString();
@@ -665,7 +661,7 @@ app.post('/api/admin/login', (req, res) => {
       { expiresIn: '24h' }
     );
 
-    console.log(`✅ Admin login successful: ${username}`);
+    log('info', 'demoServer.admin.loginOk', { username });
 
     res.json({
       success: true,
@@ -677,7 +673,7 @@ app.post('/api/admin/login', (req, res) => {
       }
     });
   } else {
-    console.log(`❌ Failed login attempt for: ${username}`);
+    log('warn', 'demoServer.admin.loginFail', { username });
     res.status(401).json({
       success: false,
       error: 'Usuario o contraseña incorrectos'
@@ -762,7 +758,7 @@ app.post('/api/inventory/materials', authenticateToken, (req, res) => {
 
   demoMaterials.push(newMaterial);
 
-  console.log(`✅ Material created: ${name} (${materialBarcode})`);
+  log('info', 'demoServer.material.created', { name, barcode: materialBarcode });
 
   res.json({
     success: true,
@@ -829,7 +825,7 @@ app.post('/api/inventory/purchases', authenticateToken, (req, res) => {
 
   demoMaterialTransactions.push(transaction);
 
-  console.log(`📦 Purchase recorded: ${quantity} ${material.unit_type} of ${material.name}`);
+  log('info', 'demoServer.purchase.recorded', { quantity, unitType: material.unit_type, material: material.name });
 
   res.json({
     success: true,
@@ -889,7 +885,7 @@ app.post('/api/inventory/adjustments', authenticateToken, (req, res) => {
 
   demoMaterialTransactions.push(transaction);
 
-  console.log(`🔧 Stock adjusted: ${material.name} from ${stockBefore} to ${newQuantity}`);
+  log('info', 'demoServer.stock.adjusted', { material: material.name, from: stockBefore, to: newQuantity });
 
   res.json({
     success: true,
@@ -1074,7 +1070,7 @@ app.get('/api/inventory/alerts/summary', authenticateToken, (req, res) => {
 app.get('/api/inventory/materials/barcode/:barcode', authenticateToken, (req, res) => {
   const barcode = req.params.barcode.toUpperCase();
 
-  console.log(`🔍 Looking up material by barcode: ${barcode}`);
+  log('info', 'demoServer.barcode.lookup', { barcode });
 
   const material = demoMaterials.find(m => m.barcode === barcode);
 
@@ -1085,7 +1081,7 @@ app.get('/api/inventory/materials/barcode/:barcode', authenticateToken, (req, re
     });
   }
 
-  console.log(`✅ Material found: ${material.name}`);
+  log('info', 'demoServer.barcode.found', { material: material.name });
 
   res.json({
     success: true,
@@ -1103,7 +1099,7 @@ app.post('/api/inventory/quick-receive', authenticateToken, (req, res) => {
     unitCost
   } = req.body;
 
-  console.log(`📦 Quick receive: ${barcode} x ${quantity}`);
+  log('info', 'demoServer.quickReceive.start', { barcode, quantity });
 
   const material = demoMaterials.find(m => m.barcode === barcode);
 
@@ -1153,7 +1149,7 @@ app.post('/api/inventory/quick-receive', authenticateToken, (req, res) => {
 
   demoMaterialTransactions.push(transaction);
 
-  console.log(`✅ Quick receive completed: ${material.name} - New stock: ${stockAfter}`);
+  log('info', 'demoServer.quickReceive.ok', { material: material.name, newStock: stockAfter });
 
   res.json({
     success: true,
@@ -1175,7 +1171,7 @@ app.post('/api/inventory/quick-receive', authenticateToken, (req, res) => {
 // Process invoice image
 app.post('/api/inventory/invoices/process', authenticateToken, upload.single('invoice'), async (req, res) => {
   try {
-    console.log('📸 Processing invoice image...');
+    log('info', 'demoServer.invoice.processing');
 
     if (!req.file && !req.body.imageData) {
       return res.status(400).json({
@@ -1220,7 +1216,7 @@ app.post('/api/inventory/invoices/process', authenticateToken, upload.single('in
       notes: 'Extracted via AI vision processing'
     };
 
-    console.log(`✅ Invoice processed: ${extractedData.lineItems.length} items extracted`);
+    log('info', 'demoServer.invoice.processed', { items: extractedData.lineItems.length });
 
     res.json({
       success: true,
@@ -1228,7 +1224,7 @@ app.post('/api/inventory/invoices/process', authenticateToken, upload.single('in
     });
 
   } catch (error) {
-    console.error('Error processing invoice:', error);
+    logError('demoServer.invoice.fail', error);
     res.status(500).json({
       success: false,
       error: 'Failed to process invoice image'
@@ -1241,7 +1237,7 @@ app.post('/api/inventory/invoices/approve', authenticateToken, (req, res) => {
   try {
     const { invoiceData, lineItems } = req.body;
 
-    console.log(`📋 Approving invoice: ${invoiceData.invoiceNumber}`);
+    log('info', 'demoServer.invoice.approving', { invoiceNumber: invoiceData.invoiceNumber });
 
     const transactions = [];
     const errors = [];
@@ -1300,13 +1296,13 @@ app.post('/api/inventory/invoices/approve', authenticateToken, (req, res) => {
       demoMaterialTransactions.push(transaction);
       transactions.push(transaction);
 
-      console.log(`✅ Processed: ${material.name} - Qty: ${item.quantity}`);
+      log('info', 'demoServer.invoice.lineProcessed', { material: material.name, quantity: item.quantity });
     });
 
     if (errors.length > 0) {
-      console.log(`⚠️ Invoice approved with ${errors.length} errors`);
+      log('warn', 'demoServer.invoice.approvedWithErrors', { errorCount: errors.length });
     } else {
-      console.log(`✅ Invoice fully approved: ${transactions.length} transactions created`);
+      log('info', 'demoServer.invoice.approved', { transactions: transactions.length });
     }
 
     res.json({
@@ -1317,7 +1313,7 @@ app.post('/api/inventory/invoices/approve', authenticateToken, (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error approving invoice:', error);
+    logError('demoServer.invoice.approveFail', error);
     res.status(500).json({
       success: false,
       error: 'Failed to approve invoice'
@@ -1329,7 +1325,7 @@ app.post('/api/inventory/invoices/approve', authenticateToken, (req, res) => {
 app.get('/api/inventory/labels/generate', authenticateToken, (req, res) => {
   const materialIds = req.query.materials ? req.query.materials.split(',').map(id => parseInt(id)) : null;
 
-  console.log('🏷️ Generating labels...');
+  log('info', 'demoServer.labels.generating');
 
   // Filter materials if specific IDs provided
   const materialsToLabel = materialIds
@@ -1437,7 +1433,7 @@ app.get('/api/inventory/labels/generate', authenticateToken, (req, res) => {
 </html>
   `;
 
-  console.log(`✅ Generated ${labels.length} labels`);
+  log('info', 'demoServer.labels.generated', { count: labels.length });
 
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
@@ -1445,7 +1441,7 @@ app.get('/api/inventory/labels/generate', authenticateToken, (req, res) => {
 
 // Generate smart barcode sheet
 app.get('/api/inventory/smart-barcodes/sheet', authenticateToken, (req, res) => {
-  console.log('🏷️📊 Generating smart barcode sheet...');
+  log('info', 'demoServer.smartBarcodes.generating');
 
   const quantities = [1, 5, 10, 25, 50, 100, 200, 500, 1000];
   const actions = [
@@ -1709,7 +1705,7 @@ app.get('/api/inventory/smart-barcodes/sheet', authenticateToken, (req, res) => 
 </html>
   `;
 
-  console.log('✅ Smart barcode sheet generated');
+  log('info', 'demoServer.smartBarcodes.generated');
 
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
@@ -1733,7 +1729,7 @@ app.post('/api/orders/:orderId/reference-sheet', authenticateToken, async (req, 
 
   // In demo mode, create a simple text response indicating PDF would be generated
   // For full functionality, use the real server with pdfkit
-  console.log(`📋 [DEMO] Generating reference sheet for order ${order.orderNumber}`);
+  log('info', 'demoServer.refSheet.generating', { orderNumber: order.orderNumber });
 
   // Return a simple placeholder message
   // In production, this would return actual PDF binary
@@ -1758,7 +1754,7 @@ app.post('/api/orders/:orderId/reference-sheet/save', authenticateToken, (req, r
     });
   }
 
-  console.log(`📋 [DEMO] Saving reference sheet for order ${order.orderNumber}`);
+  log('info', 'demoServer.refSheet.saving', { orderNumber: order.orderNumber });
 
   order.productionSheetUrl = `demo://reference-sheet-${order.orderNumber}`;
 
@@ -1791,7 +1787,7 @@ app.post('/api/orders/:orderId/approve', authenticateToken, async (req, res) => 
   order.status = 'design'; // Move to design stage
   order.department = 'design';
 
-  console.log(`✅ Order ${order.orderNumber} approved by admin`);
+  log('info', 'demoServer.order.approved', { orderNumber: order.orderNumber });
 
   // Create page in Notion
   try {
@@ -1822,10 +1818,10 @@ app.post('/api/orders/:orderId/approve', authenticateToken, async (req, res) => 
     if (notionResult.success) {
       order.notionPageId = notionResult.notionPageId;
       order.notionPageUrl = notionResult.notionPageUrl;
-      console.log(`📝 Notion page created: ${notionResult.notionPageUrl}`);
+      log('info', 'demoServer.order.notionCreated', { url: notionResult.notionPageUrl });
     }
   } catch (error) {
-    console.error('⚠️ Failed to create Notion page:', error.message);
+    log('warn', 'demoServer.order.notionFail', { error: error.message });
     // Don't fail the approval if Notion fails
   }
 
@@ -1854,7 +1850,7 @@ app.post('/api/orders/:orderId/reject', authenticateToken, (req, res) => {
   order.status = 'cancelled';
   order.rejectionReason = reason;
 
-  console.log(`❌ Order ${order.orderNumber} rejected by admin. Reason: ${reason}`);
+  log('info', 'demoServer.order.rejected', { orderNumber: order.orderNumber, reason });
 
   res.json({
     success: true,
@@ -1930,22 +1926,7 @@ app.use((req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log('\n' + '='.repeat(60));
-  console.log(`✅ DEMO SERVER RUNNING`);
-  console.log(`📡 API URL: http://localhost:${PORT}`);
-  console.log(`💻 Mode: DEMO (temporary data storage)`);
-  console.log('='.repeat(60) + '\n');
-
-  console.log('📋 Try these commands:');
-  console.log(`   curl http://localhost:${PORT}/`);
-  console.log(`   curl http://localhost:${PORT}/api/system/info`);
-  console.log(`   curl http://localhost:${PORT}/health`);
-  console.log('\n💡 To enable full features:');
-  console.log('   1. Install PostgreSQL');
-  console.log('   2. Configure Notion credentials in .env');
-  console.log('   3. Run: npm run init-db');
-  console.log('   4. Run: npm start (instead of demo-server.js)');
-  console.log('='.repeat(60) + '\n');
+  log('info', 'demoServer.started', { port: PORT, mode: 'demo', url: `http://localhost:${PORT}` });
 });
 
 export default app;
