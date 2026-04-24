@@ -8,6 +8,7 @@ import express from 'express';
 import { employeeAuth } from './middleware/employee-auth.js';
 import * as knowledgeIndex from '../services/knowledge-index.js';
 import * as knowledgeAI from '../services/knowledge-ai.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -42,7 +43,7 @@ router.get('/search', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Knowledge search error:', error);
+    logError('knowledge.knowledge-search-error', error);
     res.status(500).json({
       success: false,
       error: 'Error en la búsqueda'
@@ -75,7 +76,7 @@ router.get('/document/:id', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get document error:', error);
+    logError('knowledge.get-document-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener documento'
@@ -103,7 +104,7 @@ router.get('/images', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get images error:', error);
+    logError('knowledge.get-images-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener imágenes'
@@ -122,7 +123,7 @@ router.get('/images', employeeAuth, async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     const stats = knowledgeIndex.getStats();
-    console.log('Knowledge stats requested:', stats);
+    log('info', 'knowledge.knowledge-stats-requested');
 
     res.json({
       success: true,
@@ -131,7 +132,7 @@ router.get('/stats', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get stats error:', error);
+    logError('knowledge.get-stats-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener estadísticas'
@@ -155,7 +156,7 @@ router.post('/reindex', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Reindex error:', error);
+    logError('knowledge.reindex-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al re-indexar'
@@ -187,7 +188,7 @@ router.post('/ask', async (req, res) => {
     res.json(result);
 
   } catch (error) {
-    console.error('Ask question error:', error);
+    logError('knowledge.ask-question-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al procesar la pregunta'
@@ -215,7 +216,7 @@ router.post('/chat', async (req, res) => {
     res.json(result);
 
   } catch (error) {
-    console.error('Chat error:', error);
+    logError('knowledge.chat-error', error);
     res.status(500).json({
       success: false,
       error: 'Error en el chat'
@@ -238,7 +239,7 @@ router.post('/chat/new', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('New conversation error:', error);
+    logError('knowledge.new-conversation-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al iniciar conversación'
@@ -267,7 +268,7 @@ router.get('/chat/:conversationId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get conversation error:', error);
+    logError('knowledge.get-conversation-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener conversación'
@@ -289,7 +290,7 @@ router.delete('/chat/:conversationId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete conversation error:', error);
+    logError('knowledge.delete-conversation-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al eliminar conversación'
@@ -311,7 +312,7 @@ router.get('/ai/stats', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('AI stats error:', error);
+    logError('knowledge.ai-stats-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener estadísticas'
@@ -335,7 +336,7 @@ router.post('/ai/reload', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Reload error:', error);
+    logError('knowledge.reload-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al recargar contenido'
@@ -367,7 +368,7 @@ router.get('/ai/models', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get models error:', error);
+    logError('knowledge.get-models-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener modelos'
@@ -408,7 +409,7 @@ router.post('/ai/model', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Set model error:', error);
+    logError('knowledge.set-model-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al cambiar modelo'
