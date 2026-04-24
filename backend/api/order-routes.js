@@ -20,6 +20,7 @@ import { verifyPaymentReceipt, isConfigured as isClaudeConfigured } from '../ser
 import pushService from '../services/push-notification.js';
 import { generateReferenceSheet } from '../utils/reference-sheet-generator.js';
 import { processReceipt } from '../services/receipt-ocr.js';
+import { log, logError } from '../shared/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,7 +50,7 @@ router.post('/', async (req, res) => {
       data: result
     });
   } catch (error) {
-    console.error('Error creating order:', error);
+    logError('order.error-creating-order', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -99,7 +100,7 @@ router.post('/quick', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error creating quick order:', error);
+    logError('order.error-creating-quick-order', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -107,7 +108,7 @@ router.post('/quick', async (req, res) => {
 // Get orders with filters - Query PostgreSQL directly
 router.get('/', async (req, res) => {
   try {
-    console.log('🔍 Querying orders from PostgreSQL...');
+    log('info', 'order.querying-orders-from-postgresql');
 
     // Build WHERE clause based on filters
     const conditions = [];
@@ -294,7 +295,7 @@ router.get('/', async (req, res) => {
       summary: order.client_notes || ''
     }));
 
-    console.log(`✅ Found ${orders.length} orders in PostgreSQL`);
+    log('info', 'order.found-orders-in-postgresql');
 
     res.json({
       success: true,
@@ -302,7 +303,7 @@ router.get('/', async (req, res) => {
       data: orders
     });
   } catch (error) {
-    console.error('Error querying orders:', error);
+    logError('order.error-querying-orders', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -319,7 +320,7 @@ router.get('/calendar', async (req, res) => {
     const startDate = start || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
     const endDate = end || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
-    console.log(`📅 Fetching calendar orders from ${startDate} to ${endDate}`);
+    log('info', 'order.fetching-calendar-orders-from-to');
 
     const result = await query(`
       SELECT
@@ -367,7 +368,7 @@ router.get('/calendar', async (req, res) => {
       items: order.items || []
     }));
 
-    console.log(`📅 Found ${orders.length} orders for calendar`);
+    log('info', 'order.found-orders-for-calendar');
 
     res.json({
       success: true,
@@ -375,7 +376,7 @@ router.get('/calendar', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Calendar data error:', error.message);
+    logError('order.calendar-data-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -507,7 +508,7 @@ reminderRouter.get('/', async (req, res) => {
 
     res.json({ success: true, data: reminders });
   } catch (error) {
-    console.error('Reminders fetch error:', error.message);
+    logError('order.reminders-fetch-error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -529,7 +530,7 @@ reminderRouter.post('/', async (req, res) => {
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Reminder create error:', error.message);
+    logError('order.reminder-create-error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -549,7 +550,7 @@ reminderRouter.post('/:id/complete', async (req, res) => {
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Reminder complete error:', error.message);
+    logError('order.reminder-complete-error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -566,7 +567,7 @@ reminderRouter.delete('/:id/complete', async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Reminder uncomplete error:', error.message);
+    logError('order.reminder-uncomplete-error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -578,7 +579,7 @@ reminderRouter.delete('/:id', async (req, res) => {
     await query('DELETE FROM calendar_reminders WHERE id = $1', [id]);
     res.json({ success: true });
   } catch (error) {
-    console.error('Reminder delete error:', error.message);
+    logError('order.reminder-delete-error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -592,7 +593,7 @@ router.get('/capacity', async (req, res) => {
     const startDate = start || new Date().toISOString().split('T')[0];
     const endDate = end || new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0];
 
-    console.log(`📊 Calculating capacity from ${startDate} to ${endDate}`);
+    log('info', 'order.calculating-capacity-from-to');
 
     // Get total pieces per day
     const result = await query(`
@@ -630,7 +631,7 @@ router.get('/capacity', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Capacity calculation error:', error.message);
+    logError('order.capacity-calculation-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -698,7 +699,7 @@ router.get('/next-available-date', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Next available date error:', error.message);
+    logError('order.next-available-date-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -718,7 +719,7 @@ router.get('/:orderId', async (req, res) => {
       });
     }
 
-    console.log(`🔍 Fetching order ${orderId} from PostgreSQL...`);
+    log('info', 'order.fetching-order-from-postgresql');
 
     // Query order with client info and items
     const result = await query(`
@@ -870,14 +871,14 @@ router.get('/:orderId', async (req, res) => {
       summary: order.client_notes || ''
     };
 
-    console.log(`✅ Found order ${orderId}`);
+    log('info', 'order.found-order');
 
     res.json({
       success: true,
       data: orderData
     });
   } catch (error) {
-    console.error('Error getting order:', error);
+    logError('order.error-getting-order', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -905,10 +906,10 @@ router.patch('/:orderId/shipping-cost', async (req, res) => {
       [cost, newTotal, orderId]
     );
 
-    console.log(`✅ Shipping cost updated for order ${orderId}: $${cost} (new total: $${newTotal})`);
+    log('info', 'order.shipping-cost-updated-for-order-new-total');
     res.json({ success: true, shippingCost: cost, totalPrice: newTotal });
   } catch (error) {
-    console.error('Error updating shipping cost:', error);
+    logError('order.error-updating-shipping-cost', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -938,9 +939,9 @@ router.patch('/:orderId/status', async (req, res) => {
     if (oldStatus && oldStatus !== status) {
       try {
         taskResult = await onOrderStatusChange(orderId, oldStatus, status);
-        console.log(`📋 Task generation for order ${orderId}: ${taskResult.newTasks.length} new tasks created`);
+        log('info', 'order.task-generation-for-order-new-tasks-created');
       } catch (taskError) {
-        console.error('Task generation failed (non-blocking):', taskError);
+        logError('order.task-generation.error', taskError);
       }
 
       // Push notification (fire-and-forget)
@@ -954,7 +955,7 @@ router.patch('/:orderId/status', async (req, res) => {
       tasks: taskResult
     });
   } catch (error) {
-    console.error('Error updating status:', error);
+    logError('order.error-updating-status', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -973,7 +974,7 @@ router.post('/:orderId/sync', async (req, res) => {
       data: result
     });
   } catch (error) {
-    console.error('Error syncing order:', error);
+    logError('order.error-syncing-order', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -993,7 +994,7 @@ router.post('/sync/bulk', async (req, res) => {
       data: result
     });
   } catch (error) {
-    console.error('Error in bulk sync:', error);
+    logError('order.error-in-bulk-sync', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1034,10 +1035,10 @@ router.post('/:orderId/cobrar-saldo', async (req, res) => {
       order_number: order.order_number
     });
 
-    console.log(`💰 Cobro enviado: ${order.order_number} — $${pendingAmount} a ${waPhone}`);
+    log('info', 'order.cobro-enviado-a');
     res.json({ success: true, message: 'Mensaje de cobro enviado' });
   } catch (err) {
-    console.error('💰 Error cobrando saldo:', err);
+    logError('order.error-cobrando-saldo', err);
     res.status(500).json({ success: false, error: 'Error enviando mensaje' });
   }
 });
@@ -1048,7 +1049,7 @@ router.post('/:orderId/approve', async (req, res) => {
     const orderId = parseInt(req.params.orderId);
     const { actualDepositAmount } = req.body;
 
-    console.log(`✅ Approving order ${orderId} with deposit: $${actualDepositAmount}...`);
+    log('info', 'order.approving-order-with-deposit');
 
     // Validate deposit amount
     if (!actualDepositAmount || actualDepositAmount <= 0) {
@@ -1110,7 +1111,7 @@ router.post('/:orderId/approve', async (req, res) => {
     const remainingBalance = order.total_price - actualDepositAmount;
 
     // Generate PDF receipt
-    console.log('📄 Generating PDF receipt...');
+    log('info', 'order.generating-pdf-receipt');
     const pdfPath = await generateReceipt({
       orderNumber: order.order_number,
       clientName: order.client_name,
@@ -1127,7 +1128,7 @@ router.post('/:orderId/approve', async (req, res) => {
     });
 
     const receiptUrl = getReceiptUrl(pdfPath);
-    console.log(`✅ PDF generated: ${receiptUrl}`);
+    log('info', 'order.pdf-generated');
 
     // Update order status and payment info in database
     await query(
@@ -1141,11 +1142,11 @@ router.post('/:orderId/approve', async (req, res) => {
     // Send receipt email to client in background - don't block response
     setImmediate(async () => {
       try {
-        console.log('📧 Attempting to send receipt email to client...');
-        console.log(`   Client: ${order.client_name}`);
-        console.log(`   Email: ${order.client_email}`);
-        console.log(`   Order: ${order.order_number}`);
-        console.log(`   PDF Path: ${pdfPath}`);
+        log('info', 'order.attempting-to-send-receipt-email-to-client');
+        log('info', 'order.client');
+        log('info', 'order.email');
+        log('info', 'order.order');
+        log('info', 'order.pdf-path');
 
         await sendReceiptEmail(
           {
@@ -1163,22 +1164,22 @@ router.post('/:orderId/approve', async (req, res) => {
           pdfPath
         );
 
-        console.log('✅ Receipt email sent successfully to:', order.client_email);
+        log('info', 'order.receipt-email-sent-successfully-to');
 
       } catch (emailError) {
-        console.error('❌ CRITICAL ERROR sending receipt email:');
-        console.error('   Error message:', emailError.message);
-        console.error('   Error stack:', emailError.stack);
-        console.error('   Client email:', order.client_email);
+        log('error', 'order.critical-error-sending-receipt-email');
+        log('error', 'order.debug');
+        log('error', 'order.debug');
+        log('error', 'order.debug');
 
         // Check if it's an authentication error
         if (emailError.message.includes('authentication') || emailError.message.includes('login')) {
-          console.error('⚠️  EMAIL AUTHENTICATION FAILED - Check EMAIL_USER and EMAIL_PASSWORD on Render!');
+          log('error', 'order.email-authentication-failed-check-emailuser-and-em');
         }
 
         // Check if transporter exists
         if (emailError.message.includes('transporter')) {
-          console.error('⚠️  EMAIL TRANSPORTER NOT INITIALIZED - Check email service configuration!');
+          log('error', 'order.email-transporter-not-initialized-check-email-serv');
         }
       }
     });
@@ -1187,13 +1188,13 @@ router.post('/:orderId/approve', async (req, res) => {
     try {
       await notionSync.syncOrderToNotion(orderId);
     } catch (notionError) {
-      console.error('Failed to sync approval to Notion:', notionError);
+      log('error', 'order.debug');
     }
 
     // Create automatic tasks for the approved order (background)
     setImmediate(async () => {
       try {
-        console.log(`📋 Creating automatic tasks for approved order ${order.order_number}...`);
+        log('info', 'order.creating-automatic-tasks-for-approved-order');
 
         // Task 1: Diseños
         await query(
@@ -1205,7 +1206,7 @@ router.post('/:orderId/approve', async (req, res) => {
             orderId
           ]
         );
-        console.log(`   ✅ Task created: Diseños - ${order.order_number}`);
+        log('info', 'order.task-created-diseos');
 
         // Task 2: Armado
         await query(
@@ -1217,11 +1218,11 @@ router.post('/:orderId/approve', async (req, res) => {
             orderId
           ]
         );
-        console.log(`   ✅ Task created: Armado - ${order.order_number}`);
+        log('info', 'order.task-created-armado');
 
-        console.log(`📋 Automatic tasks created successfully for order ${order.order_number}`);
+        log('info', 'order.automatic-tasks-created-successfully-for-order');
       } catch (taskError) {
-        console.error('❌ Failed to create automatic tasks:', taskError.message);
+        log('error', 'order.debug');
       }
     });
 
@@ -1231,8 +1232,8 @@ router.post('/:orderId/approve', async (req, res) => {
     // 2. Upload the second payment receipt
     // 3. The label is generated with their selected carrier/service
 
-    console.log(`✅ Order ${orderId} approved successfully`);
-    console.log(`📦 Shipping label will be generated when client selects shipping and uploads second payment`);
+    log('info', 'order.order-approved-successfully');
+    log('info', 'order.shipping-label-will-be-generated-when-client-selec');
 
     // Push notification (fire-and-forget)
     pushService.notifyOrderApproved(order.order_number, order.client_name);
@@ -1247,7 +1248,7 @@ router.post('/:orderId/approve', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error approving order:', error);
+    logError('order.error-approving-order', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1261,7 +1262,7 @@ router.post('/:orderId/reject', async (req, res) => {
     const orderId = parseInt(req.params.orderId);
     const { reason } = req.body;
 
-    console.log(`❌ Rejecting order ${orderId}...`);
+    log('info', 'order.rejecting-order');
 
     // Update order status in database
     await query(
@@ -1277,17 +1278,17 @@ router.post('/:orderId/reject', async (req, res) => {
     try {
       await notionSync.syncOrderToNotion(orderId);
     } catch (notionError) {
-      console.error('Failed to sync rejection to Notion:', notionError);
+      log('error', 'order.debug');
     }
 
-    console.log(`❌ Order ${orderId} rejected successfully`);
+    log('info', 'order.order-rejected-successfully');
 
     res.json({
       success: true,
       message: 'Order rejected successfully'
     });
   } catch (error) {
-    console.error('Error rejecting order:', error);
+    logError('order.error-rejecting-order', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1308,7 +1309,7 @@ router.post('/:orderId/payment-proof', async (req, res) => {
       });
     }
 
-    console.log(`💳 Uploading first payment proof for order ${orderId}: ${paymentProofUrl}`);
+    log('info', 'order.uploading-first-payment-proof-for-order');
 
     // Update order with payment proof URL
     const result = await query(
@@ -1323,7 +1324,7 @@ router.post('/:orderId/payment-proof', async (req, res) => {
       });
     }
 
-    console.log(`✅ First payment proof uploaded for order ${result.rows[0].order_number}`);
+    log('info', 'order.first-payment-proof-uploaded-for-order');
 
     res.json({
       success: true,
@@ -1331,7 +1332,7 @@ router.post('/:orderId/payment-proof', async (req, res) => {
       orderNumber: result.rows[0].order_number
     });
   } catch (error) {
-    console.error('Error uploading payment proof:', error);
+    logError('order.error-uploading-payment-proof', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1345,7 +1346,7 @@ router.post('/:orderId/second-payment', async (req, res) => {
     const orderId = parseInt(req.params.orderId);
     const { paymentProof, paymentProofUrl } = req.body; // Base64 encoded image or Cloudinary URL
 
-    console.log(`💰 Uploading second payment receipt for order ${orderId}...`);
+    log('info', 'order.uploading-second-payment-receipt-for-order');
 
     if (!paymentProof && !paymentProofUrl) {
       return res.status(400).json({
@@ -1393,14 +1394,14 @@ router.post('/:orderId/second-payment', async (req, res) => {
       imageUrl = paymentProofUrl;
       // Extract filename from Cloudinary URL or use a default
       filename = paymentProofUrl.split('/').pop().split('?')[0];
-      console.log(`✅ Using Cloudinary URL: ${imageUrl}`);
+      log('info', 'order.using-cloudinary-url');
     } else if (paymentProof) {
       // Legacy path: upload base64 to Google Drive or local storage
       filename = `second-payment-${order.order_number}-${Date.now()}.jpg`;
 
       if (isGoogleDriveConfigured()) {
         // Upload to Google Drive
-        console.log(`📤 Uploading to Google Drive: ${filename}`);
+        log('info', 'order.uploading-to-google-drive');
         const uploadResult = await uploadToGoogleDrive({
           fileData: paymentProof,
           fileName: filename,
@@ -1408,10 +1409,10 @@ router.post('/:orderId/second-payment', async (req, res) => {
         });
 
         imageUrl = uploadResult.directImageUrl; // URL that can be used in <img> tags
-        console.log(`✅ Uploaded to Google Drive: ${imageUrl}`);
+        log('info', 'order.uploaded-to-google-drive');
       } else {
         // Fallback to local storage if Google Drive not configured
-        console.log('⚠️  Google Drive not configured, saving locally');
+        log('info', 'order.google-drive-not-configured-saving-locally');
         const paymentsDir = path.join(__dirname, '../payment-verification-receipts');
         if (!fs.existsSync(paymentsDir)) {
           fs.mkdirSync(paymentsDir, { recursive: true });
@@ -1422,7 +1423,7 @@ router.post('/:orderId/second-payment', async (req, res) => {
         fs.writeFileSync(filepath, Buffer.from(base64Data, 'base64'));
 
         imageUrl = `/payment-receipts/${filename}`;
-        console.log(`✅ Payment proof saved locally: ${filepath}`);
+        log('info', 'order.payment-proof-saved-locally');
       }
     }
 
@@ -1432,7 +1433,7 @@ router.post('/:orderId/second-payment', async (req, res) => {
       [imageUrl, orderId]
     );
 
-    console.log(`✅ Second payment receipt uploaded and saved to database for order ${orderId}`);
+    log('info', 'order.second-payment-receipt-uploaded-and-saved-to-datab');
 
     // AI Verification for second payment
     let verificationResult = null;
@@ -1440,8 +1441,8 @@ router.post('/:orderId/second-payment', async (req, res) => {
     const expectedAmount = remainingBalance;
 
     if (isClaudeConfigured()) {
-      console.log(`🤖 Starting AI verification for second payment...`);
-      console.log(`   Expected amount: $${expectedAmount.toFixed(2)}`);
+      log('info', 'order.starting-ai-verification-for-second-payment');
+      log('info', 'order.expected-amount');
 
       try {
         verificationResult = await verifyPaymentReceipt(
@@ -1450,7 +1451,7 @@ router.post('/:orderId/second-payment', async (req, res) => {
           order.order_number
         );
 
-        console.log(`📊 AI Verification Result: ${verificationResult.recommendation}`);
+        log('info', 'order.ai-verification-result');
 
         // Build verification summary for notes
         const now = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
@@ -1480,7 +1481,7 @@ router.post('/:orderId/second-payment', async (req, res) => {
 
         // Auto-confirm if AI recommends it
         if (verificationResult.recommendation === 'AUTO_APPROVE') {
-          console.log(`✅ AI recommends AUTO_APPROVE for second payment - confirming automatically...`);
+          log('info', 'order.ai-recommends-autoapprove-for-second-payment-confi');
 
           // Update order status to delivered
           await query(`
@@ -1490,7 +1491,7 @@ router.post('/:orderId/second-payment', async (req, res) => {
           `, [orderId]);
 
           autoConfirmed = true;
-          console.log(`✅ Order ${orderId} second payment AUTO-CONFIRMED by Claude AI!`);
+          log('info', 'order.order-second-payment-auto-confirmed-by-claude-ai');
 
           // Send completion email to client in background
           setImmediate(async () => {
@@ -1555,15 +1556,15 @@ router.post('/:orderId/second-payment', async (req, res) => {
                   html: emailBody
                 });
 
-                console.log(`📧 Auto-confirmation email sent to ${fullOrder.client_email}`);
+                log('info', 'order.auto-confirmation-email-sent-to');
               }
             } catch (emailError) {
-              console.error('Failed to send auto-confirmation email:', emailError);
+              log('error', 'order.debug');
             }
           });
         }
       } catch (aiError) {
-        console.error('AI verification error (non-fatal):', aiError);
+        logError('order.ai-verification.error', aiError);
         // Continue without AI verification - manual review will be needed
       }
     }
@@ -1584,7 +1585,7 @@ router.post('/:orderId/second-payment', async (req, res) => {
       } : null
     });
   } catch (error) {
-    console.error('Error uploading second payment receipt:', error);
+    logError('order.error-uploading-second-payment-receipt', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1597,7 +1598,7 @@ router.post('/:orderId/confirm-second-payment', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
-    console.log(`✅ Confirming second payment for order ${orderId}...`);
+    log('info', 'order.confirming-second-payment-for-order');
 
     // Get order details for email
     const orderResult = await query(`
@@ -1623,7 +1624,7 @@ router.post('/:orderId/confirm-second-payment', async (req, res) => {
       WHERE id = $1
     `, [orderId]);
 
-    console.log(`✅ Order ${orderId} marked as completed`);
+    log('info', 'order.order-marked-as-completed');
 
     // Send completion email to client
     try {
@@ -1679,9 +1680,9 @@ router.post('/:orderId/confirm-second-payment', async (req, res) => {
         html: emailBody
       });
 
-      console.log(`📧 Completion email sent to ${order.client_email}`);
+      log('info', 'order.completion-email-sent-to');
     } catch (emailError) {
-      console.error('Failed to send completion email:', emailError);
+      log('error', 'order.debug');
       // Don't fail the request if email fails
     }
 
@@ -1691,7 +1692,7 @@ router.post('/:orderId/confirm-second-payment', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error confirming second payment:', error);
+    logError('order.error-confirming-second-payment', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1719,14 +1720,14 @@ router.post('/:orderId/archive', async (req, res) => {
       WHERE id = $2
     `, [archiveStatus, orderId]);
 
-    console.log(`📦 Order ${orderId} archived as ${archiveStatus}`);
+    log('info', 'order.order-archived-as');
 
     res.json({
       success: true,
       message: `Order archived as ${archiveStatus}`
     });
   } catch (error) {
-    console.error('Error archiving order:', error);
+    logError('order.error-archiving-order', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1748,7 +1749,7 @@ router.put('/:orderId/items/:itemId', async (req, res) => {
     const itemId = parseInt(req.params.itemId);
     const { notes, attachments } = req.body;
 
-    console.log(`📝 Updating item ${itemId} for order ${orderId}:`, { notes, attachments });
+    log('info', 'order.debug');
 
     // Verify the item belongs to the order
     const itemCheck = await query(
@@ -1771,7 +1772,7 @@ router.put('/:orderId/items/:itemId', async (req, res) => {
       RETURNING id, notes, attachments
     `, [notes || null, attachments ? JSON.stringify(attachments) : null, itemId]);
 
-    console.log('✅ Item updated successfully');
+    log('info', 'order.item-updated-successfully');
 
     res.json({
       success: true,
@@ -1779,7 +1780,7 @@ router.put('/:orderId/items/:itemId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating order item:', error);
+    logError('order.error-updating-order-item', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1804,7 +1805,7 @@ router.post('/:orderId/items/:itemId/attachment', async (req, res) => {
       });
     }
 
-    console.log(`📎 Adding attachment to item ${itemId}:`, { url, filename, type });
+    log('info', 'order.debug');
 
     // Get current attachments
     const itemResult = await query(
@@ -1845,7 +1846,7 @@ router.post('/:orderId/items/:itemId/attachment', async (req, res) => {
       RETURNING id, attachments
     `, [JSON.stringify(attachments), itemId]);
 
-    console.log('✅ Attachment added successfully');
+    log('info', 'order.attachment-added-successfully');
 
     res.json({
       success: true,
@@ -1853,7 +1854,7 @@ router.post('/:orderId/items/:itemId/attachment', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error adding attachment:', error);
+    logError('order.error-adding-attachment', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1878,7 +1879,7 @@ router.delete('/:orderId/items/:itemId/attachment', async (req, res) => {
       });
     }
 
-    console.log(`🗑️ Removing attachment from item ${itemId}:`, url);
+    log('info', 'order.debug');
 
     // Get current attachments
     const itemResult = await query(
@@ -1914,7 +1915,7 @@ router.delete('/:orderId/items/:itemId/attachment', async (req, res) => {
       RETURNING id, attachments
     `, [attachments.length > 0 ? JSON.stringify(attachments) : null, itemId]);
 
-    console.log('✅ Attachment removed successfully');
+    log('info', 'order.attachment-removed-successfully');
 
     res.json({
       success: true,
@@ -1922,7 +1923,7 @@ router.delete('/:orderId/items/:itemId/attachment', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error removing attachment:', error);
+    logError('order.error-removing-attachment', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -1948,7 +1949,7 @@ router.put('/:orderId/items/:itemId/modify', async (req, res) => {
     const finalUnitPrice = newUnitPrice !== undefined ? newUnitPrice : unitPrice;
     const priceChanged = newUnitPrice !== undefined && newUnitPrice !== unitPrice;
 
-    console.log(`✏️ Modifying item ${itemId} in order ${orderId}: ${oldQuantity} -> ${newQuantity}${priceChanged ? `, price: $${unitPrice} -> $${finalUnitPrice}` : ''}`);
+    log('info', 'order.modifying-item-in-order');
 
     // Verify the item belongs to the order
     const itemCheck = await query(
@@ -2095,13 +2096,13 @@ router.put('/:orderId/items/:itemId/modify', async (req, res) => {
           subject: `Actualizacion de tu pedido ${order.order_number} - AXKAN`,
           html: emailHtml
         });
-        console.log(`📧 Modification email sent to ${order.email}`);
+        log('info', 'order.modification-email-sent-to');
       } catch (emailError) {
-        console.error('Error sending modification email:', emailError);
+        log('error', 'order.debug');
       }
     }
 
-    console.log('✅ Item modified successfully');
+    log('info', 'order.item-modified-successfully');
 
     res.json({
       success: true,
@@ -2110,7 +2111,7 @@ router.put('/:orderId/items/:itemId/modify', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error modifying order item:', error);
+    logError('order.error-modifying-order-item', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2127,7 +2128,7 @@ router.post('/:orderId/items/add', async (req, res) => {
     const orderId = parseInt(req.params.orderId);
     const { productId, productName, quantity, unitPrice, reason } = req.body;
 
-    console.log(`➕ Adding new item to order ${orderId}: ${productName} x ${quantity}`);
+    log('info', 'order.adding-new-item-to-order-x');
 
     // Get the order and client info
     const orderResult = await query(`
@@ -2238,13 +2239,13 @@ router.post('/:orderId/items/add', async (req, res) => {
           subject: `Producto agregado a tu pedido ${order.order_number} - AXKAN`,
           html: emailHtml
         });
-        console.log(`📧 New product email sent to ${order.email}`);
+        log('info', 'order.new-product-email-sent-to');
       } catch (emailError) {
-        console.error('Error sending new product email:', emailError);
+        log('error', 'order.debug');
       }
     }
 
-    console.log('✅ New item added successfully');
+    log('info', 'order.new-item-added-successfully');
 
     res.json({
       success: true,
@@ -2254,7 +2255,7 @@ router.post('/:orderId/items/add', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error adding order item:', error);
+    logError('order.error-adding-order-item', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2284,7 +2285,7 @@ router.delete('/:orderId/items/:itemId', async (req, res) => {
     }
 
     const item = itemResult.rows[0];
-    console.log(`🗑️ Removing item ${itemId} (${item.product_name}) from order ${orderId}`);
+    log('info', 'order.removing-item-from-order');
 
     // Delete the item
     await query('DELETE FROM order_items WHERE id = $1', [itemId]);
@@ -2319,7 +2320,7 @@ router.delete('/:orderId/items/:itemId', async (req, res) => {
     const newNotes = (item.internal_notes || '') + changeLog;
     await query('UPDATE orders SET internal_notes = $1 WHERE id = $2', [newNotes, orderId]);
 
-    console.log('✅ Item removed successfully');
+    log('info', 'order.item-removed-successfully');
 
     res.json({
       success: true,
@@ -2328,7 +2329,7 @@ router.delete('/:orderId/items/:itemId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error removing order item:', error);
+    logError('order.error-removing-order-item', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -2346,7 +2347,7 @@ router.put('/:orderId/notes', async (req, res) => {
     const orderId = parseInt(req.params.orderId);
     const { internalNotes } = req.body;
 
-    console.log(`📝 Updating internal notes for order ${orderId}`);
+    log('info', 'order.updating-internal-notes-for-order');
 
     const updateResult = await query(`
       UPDATE orders
@@ -2362,7 +2363,7 @@ router.put('/:orderId/notes', async (req, res) => {
       });
     }
 
-    console.log('✅ Order notes updated successfully');
+    log('info', 'order.order-notes-updated-successfully');
 
     res.json({
       success: true,
@@ -2370,7 +2371,7 @@ router.put('/:orderId/notes', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating order notes:', error);
+    logError('order.error-updating-order-notes', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2394,7 +2395,7 @@ router.post('/:orderId/attachment', async (req, res) => {
       });
     }
 
-    console.log(`📎 Adding attachment to order ${orderId}:`, { url, filename, type });
+    log('info', 'order.debug');
 
     // Get current attachments
     const orderResult = await query(
@@ -2435,7 +2436,7 @@ router.post('/:orderId/attachment', async (req, res) => {
       RETURNING id, order_attachments
     `, [JSON.stringify(attachments), orderId]);
 
-    console.log('✅ Attachment added successfully');
+    log('info', 'order.attachment-added-successfully');
 
     res.json({
       success: true,
@@ -2443,7 +2444,7 @@ router.post('/:orderId/attachment', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error adding attachment:', error);
+    logError('order.error-adding-attachment', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2467,7 +2468,7 @@ router.delete('/:orderId/attachment', async (req, res) => {
       });
     }
 
-    console.log(`🗑️ Removing attachment from order ${orderId}:`, url);
+    log('info', 'order.debug');
 
     // Get current attachments
     const orderResult = await query(
@@ -2503,7 +2504,7 @@ router.delete('/:orderId/attachment', async (req, res) => {
       RETURNING id, order_attachments
     `, [attachments.length > 0 ? JSON.stringify(attachments) : null, orderId]);
 
-    console.log('✅ Attachment removed successfully');
+    log('info', 'order.attachment-removed-successfully');
 
     res.json({
       success: true,
@@ -2511,7 +2512,7 @@ router.delete('/:orderId/attachment', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error removing attachment:', error);
+    logError('order.error-removing-attachment', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2539,7 +2540,7 @@ router.post('/:orderId/production-sheet', async (req, res) => {
       });
     }
 
-    console.log(`📋 Saving production sheet for order ${orderId}: ${productionSheetUrl}`);
+    log('info', 'order.saving-production-sheet-for-order');
 
     // Update order with production sheet URL
     const result = await query(
@@ -2554,7 +2555,7 @@ router.post('/:orderId/production-sheet', async (req, res) => {
       });
     }
 
-    console.log(`✅ Production sheet saved for order ${orderId}`);
+    log('info', 'order.production-sheet-saved-for-order');
 
     res.json({
       success: true,
@@ -2562,7 +2563,7 @@ router.post('/:orderId/production-sheet', async (req, res) => {
       productionSheetUrl
     });
   } catch (error) {
-    console.error('Error saving production sheet:', error);
+    logError('order.error-saving-production-sheet', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2578,7 +2579,7 @@ router.delete('/:orderId/production-sheet', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
-    console.log(`🗑️ Removing production sheet for order ${orderId}`);
+    log('info', 'order.removing-production-sheet-for-order');
 
     const result = await query(
       'UPDATE orders SET production_sheet_url = NULL WHERE id = $1 RETURNING id',
@@ -2592,14 +2593,14 @@ router.delete('/:orderId/production-sheet', async (req, res) => {
       });
     }
 
-    console.log(`✅ Production sheet removed for order ${orderId}`);
+    log('info', 'order.production-sheet-removed-for-order');
 
     res.json({
       success: true,
       message: 'Production sheet removed successfully'
     });
   } catch (error) {
-    console.error('Error removing production sheet:', error);
+    logError('order.error-removing-production-sheet', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2620,7 +2621,7 @@ router.post('/reference-sheet/generate', async (req, res) => {
   try {
     const { orderName, instructions, numDesigns, designs, orderId } = req.body;
 
-    console.log(`📋 Generating custom reference sheet: ${orderName} with ${numDesigns} designs`);
+    log('info', 'order.generating-custom-reference-sheet-with-designs');
 
     // Build order data for PDF generator
     const orderData = {
@@ -2652,7 +2653,7 @@ router.post('/reference-sheet/generate', async (req, res) => {
         [dataUrl, parseInt(orderId)]
       );
 
-      console.log(`✅ Reference sheet saved to order ${orderId}`);
+      log('info', 'order.reference-sheet-saved-to-order');
     }
 
     // Set response headers
@@ -2663,12 +2664,12 @@ router.post('/reference-sheet/generate', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', pdfBuffer.length);
 
-    console.log(`✅ Custom reference sheet generated: ${filename} (${pdfBuffer.length} bytes)`);
+    log('info', 'order.custom-reference-sheet-generated-bytes');
 
     res.send(pdfBuffer);
 
   } catch (error) {
-    console.error('Error generating custom reference sheet:', error);
+    logError('order.error-generating-custom-reference-sheet', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2684,7 +2685,7 @@ router.post('/:orderId/reference-sheet', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
-    console.log(`📋 Generating reference sheet for order ${orderId}`);
+    log('info', 'order.generating-reference-sheet-for-order');
 
     // Get full order data including items and attachments
     const orderResult = await query(`
@@ -2760,12 +2761,12 @@ router.post('/:orderId/reference-sheet', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', pdfBuffer.length);
 
-    console.log(`✅ Reference sheet generated for order ${orderId} (${pdfBuffer.length} bytes)`);
+    log('info', 'order.reference-sheet-generated-for-order-bytes');
 
     res.send(pdfBuffer);
 
   } catch (error) {
-    console.error('Error generating reference sheet:', error);
+    logError('order.error-generating-reference-sheet', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2781,7 +2782,7 @@ router.post('/:orderId/reference-sheet/save', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
-    console.log(`📋 Generating and saving reference sheet for order ${orderId}`);
+    log('info', 'order.generating-and-saving-reference-sheet-for-order');
 
     // Get full order data
     const orderResult = await query(`
@@ -2860,7 +2861,7 @@ router.post('/:orderId/reference-sheet/save', async (req, res) => {
       [dataUrl, orderId]
     );
 
-    console.log(`✅ Reference sheet saved for order ${orderId}`);
+    log('info', 'order.reference-sheet-saved-for-order');
 
     res.json({
       success: true,
@@ -2870,7 +2871,7 @@ router.post('/:orderId/reference-sheet/save', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error generating/saving reference sheet:', error);
+    logError('order.error-generatingsaving-reference-sheet', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2896,7 +2897,7 @@ router.get('/:orderId/receipt/download', async (req, res) => {
       });
     }
 
-    console.log(`📄 Regenerating receipt for order ${orderId}...`);
+    log('info', 'order.regenerating-receipt-for-order');
 
     // Get order details with client and items
     const orderResult = await query(`
@@ -2967,19 +2968,19 @@ router.get('/:orderId/receipt/download', async (req, res) => {
     // Generate PDF
     const pdfPath = await generateReceipt(receiptData);
 
-    console.log(`✅ Receipt regenerated: ${pdfPath}`);
+    log('info', 'order.receipt-regenerated');
 
     // Send file as download
     res.download(pdfPath, `Recibo-${order.order_number}.pdf`, (err) => {
       if (err) {
-        console.error('Error sending PDF:', err);
+        logError('order.error-sending-pdf', err);
       }
       // Optionally delete the temp file after sending
       // fs.unlinkSync(pdfPath);
     });
 
   } catch (error) {
-    console.error('Error regenerating receipt:', error);
+    logError('order.error-regenerating-receipt', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -2992,7 +2993,7 @@ router.post('/:orderId/process-receipt', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
-    console.log(`\n🔍 Processing receipt for order ${orderId}...`);
+    log('info', 'order.n-processing-receipt-for-order');
 
     // Get order details including deposit receipt URL
     const orderResult = await query(`
@@ -3056,7 +3057,7 @@ router.post('/:orderId/process-receipt', async (req, res) => {
         WHERE id = $1
       `, [orderId]);
 
-      console.log(`✅ Order ${orderId} auto-approved! Amount matches: ${result.extractedAmount}`);
+      log('info', 'order.order-auto-approved-amount-matches');
 
       return res.json({
         success: true,
@@ -3087,7 +3088,7 @@ router.post('/:orderId/process-receipt', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error processing receipt:', error);
+    logError('order.error-processing-receipt', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -3104,7 +3105,7 @@ router.post('/:orderId/verify-payment', async (req, res) => {
   try {
     const orderId = parseInt(req.params.orderId);
 
-    console.log(`\n🤖 Claude AI verifying payment for order ${orderId}...`);
+    log('info', 'order.n-claude-ai-verifying-payment-for-order');
 
     // Check if Claude is configured
     if (!isClaudeConfigured()) {
@@ -3168,10 +3169,10 @@ router.post('/:orderId/verify-payment', async (req, res) => {
       ? parseFloat(order.deposit_amount)
       : parseFloat(order.total_price) * 0.5;
 
-    console.log(`   Order: ${order.order_number}`);
-    console.log(`   Client: ${order.client_name}`);
-    console.log(`   Expected deposit: $${expectedAmount.toFixed(2)}`);
-    console.log(`   Receipt URL: ${order.payment_proof_url}`);
+    log('info', 'order.order');
+    log('info', 'order.client');
+    log('info', 'order.expected-deposit');
+    log('info', 'order.receipt-url');
 
     // Verify with Claude Vision
     const verificationResult = await verifyPaymentReceipt(
@@ -3213,7 +3214,7 @@ router.post('/:orderId/verify-payment', async (req, res) => {
       const remainingBalance = parseFloat(order.total_price) - detectedAmount;
 
       // Generate PDF receipt
-      console.log('📄 Generating PDF receipt for auto-approved order...');
+      log('info', 'order.generating-pdf-receipt-for-auto-approved-order');
       const pdfPath = await generateReceipt({
         orderNumber: order.order_number,
         clientName: order.client_name,
@@ -3242,9 +3243,9 @@ router.post('/:orderId/verify-payment', async (req, res) => {
         WHERE id = $3
       `, [detectedAmount, receiptUrl, orderId]);
 
-      console.log(`✅ Order ${orderId} AUTO-APPROVED by Claude AI!`);
-      console.log(`   Detected amount: $${detectedAmount}`);
-      console.log(`   Receipt URL: ${receiptUrl}`);
+      log('info', 'order.order-auto-approved-by-claude-ai');
+      log('info', 'order.detected-amount');
+      log('info', 'order.receipt-url');
 
       // Send receipt email to client in background
       setImmediate(async () => {
@@ -3264,9 +3265,9 @@ router.post('/:orderId/verify-payment', async (req, res) => {
             },
             pdfPath
           );
-          console.log('✅ Receipt email sent to:', order.client_email);
+          log('info', 'order.receipt-email-sent-to');
         } catch (emailError) {
-          console.error('❌ Failed to send receipt email:', emailError.message);
+          log('error', 'order.debug');
         }
       });
 
@@ -3274,13 +3275,13 @@ router.post('/:orderId/verify-payment', async (req, res) => {
       try {
         await notionSync.syncOrderToNotion(orderId);
       } catch (notionError) {
-        console.error('Failed to sync to Notion:', notionError);
+        log('error', 'order.debug');
       }
 
       // Create automatic tasks for the auto-approved order (background)
       setImmediate(async () => {
         try {
-          console.log(`📋 Creating automatic tasks for AI auto-approved order ${order.order_number}...`);
+          log('info', 'order.creating-automatic-tasks-for-ai-auto-approved-orde');
 
           // Task 1: Diseños
           await query(
@@ -3304,9 +3305,9 @@ router.post('/:orderId/verify-payment', async (req, res) => {
             ]
           );
 
-          console.log(`📋 Automatic tasks created for AI auto-approved order ${order.order_number}`);
+          log('info', 'order.automatic-tasks-created-for-ai-auto-approved-order');
         } catch (taskError) {
-          console.error('❌ Failed to create automatic tasks:', taskError.message);
+          log('error', 'order.debug');
         }
       });
 
@@ -3332,7 +3333,7 @@ router.post('/:orderId/verify-payment', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error in Claude AI verification:', error);
+    logError('order.error-in-claude-ai-verification', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
