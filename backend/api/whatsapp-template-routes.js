@@ -13,6 +13,7 @@ import {
   listBroadcasts,
   seedDefaultTemplates
 } from '../services/whatsapp-templates.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = Router();
 
@@ -48,11 +49,11 @@ async function ensureTemplatesTables() {
       );
     `);
     templatesMigrated = true;
-    console.log('🟢 WhatsApp templates tables ready');
+    log('info', 'whatsapp-template.whatsapp-templates-tables-ready');
     // Auto-seed default templates on startup
     await seedDefaultTemplates();
   } catch (e) {
-    console.error('🟢 Templates migration error:', e.message);
+    logError('whatsapp-template.templates-migration-error', e);
   }
 }
 ensureTemplatesTables();
@@ -66,7 +67,7 @@ router.get('/templates', async (req, res) => {
     const templates = await listTemplates();
     res.json({ templates });
   } catch (err) {
-    console.error('🟢 Template list error:', err.message);
+    logError('whatsapp-template.template-list-error', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -77,7 +78,7 @@ router.post('/templates', async (req, res) => {
     const template = await createTemplate(req.body);
     res.json({ template });
   } catch (err) {
-    console.error('🟢 Template create error:', err.message);
+    logError('whatsapp-template.template-create-error', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -90,7 +91,7 @@ router.post('/templates/:name/send', async (req, res) => {
     const result = await sendTemplate(req.params.name, to, variables || {}, headerImageUrl);
     res.json({ result });
   } catch (err) {
-    console.error('🟢 Template send error:', err.message);
+    logError('whatsapp-template.template-send-error', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -110,7 +111,7 @@ router.post('/templates/:name/broadcast', async (req, res) => {
       totalFailed: results.filter(r => !r.success).length
     });
   } catch (err) {
-    console.error('🟢 Template broadcast error:', err.message);
+    logError('whatsapp-template.template-broadcast-error', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -121,7 +122,7 @@ router.get('/broadcasts', async (req, res) => {
     const broadcasts = await listBroadcasts();
     res.json({ broadcasts });
   } catch (err) {
-    console.error('🟢 Broadcast list error:', err.message);
+    logError('whatsapp-template.broadcast-list-error', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -146,7 +147,7 @@ router.put('/templates/:name', async (req, res) => {
     const updated = await query('SELECT * FROM whatsapp_templates WHERE name = $1', [req.params.name]);
     res.json({ template: updated.rows[0] });
   } catch (err) {
-    console.error('🟢 Template update error:', err.message);
+    logError('whatsapp-template.template-update-error', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -165,9 +166,9 @@ router.delete('/templates/:name', async (req, res) => {
           { method: 'DELETE' }
         );
         const metaData = await metaRes.json();
-        console.log('🟢 Meta template delete response:', JSON.stringify(metaData));
+        log('info', 'whatsapp-template.meta-template-delete-response');
       } catch (err) {
-        console.error('🟢 Meta template delete failed:', err.message);
+        logError('whatsapp-template.meta-template-delete-failed', err);
       }
     }
 
@@ -175,7 +176,7 @@ router.delete('/templates/:name', async (req, res) => {
     await query('DELETE FROM whatsapp_templates WHERE name = $1', [req.params.name]);
     res.json({ message: `Template "${req.params.name}" deleted from Meta and local DB` });
   } catch (err) {
-    console.error('🟢 Template delete error:', err.message);
+    logError('whatsapp-template.template-delete-error', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -187,7 +188,7 @@ router.post('/templates/seed', async (req, res) => {
     const templates = await listTemplates();
     res.json({ message: 'Default templates seeded', templates });
   } catch (err) {
-    console.error('🟢 Template seed error:', err.message);
+    logError('whatsapp-template.template-seed-error', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
