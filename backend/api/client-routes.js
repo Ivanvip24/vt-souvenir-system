@@ -1,0 +1,2100 @@
+/**
+ * Client-Facing API Routes
+ * For self-service order creation
+ */
+
+import express from 'express';
+import crypto from 'crypto';
+import multer from 'multer';
+import { query } from '../shared/database.js';
+import { generateOrderNumber, formatCurrency } from '../shared/utils.js';
+import * as notionSync from '../agents/notion-agent/sync.js';
+import * as emailSender from '../agents/analytics-agent/email-sender.js';
+import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../utils/google-drive.js';
+import { generateReceipt, getReceiptUrl } from '../services/pdf-generator.js';
+import { calculateDeliveryDates } from '../utils/delivery-calculator.js';
+import { calculateTieredPrice, MOQ } from '../shared/pricing.js';
+import { verifyPaymentReceipt, isConfigured as isAIConfigured } from '../services/payment-receipt-verifier.js';
+import { validateTransfer, downloadCEP, resolveBankCode } from '../services/cep-service.js';
+import Stripe from 'stripe';
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+const router = express.Router();
+
+// HTML escaping for email templates (prevents stored XSS)
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+// Configure multer for file uploads (in-memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos de imagen'), false);
+    }
+  }
+});
+
+// ========================================
+// PRODUCT CATALOG
+// ========================================
+
+/**
+ * GET /api/client/products
+ * Get all active products for client selection
+ */
+router.get('/products', async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT
+        id,
+        name,
+        description,
+        category,
+        base_price,
+        wholesale_price,
+        dimensions,
+        image_url,
+        display_order
+      FROM products
+      WHERE is_active = true
+      ORDER BY display_order ASC, name ASC
+    `);
+
+    // Group by category for better UX
+    const productsByCategory = result.rows.reduce((acc, product) => {
+      const category = product.category || 'general';
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push({
+        ...product,
+        basePriceFormatted: formatCurrency(product.base_price)
+      });
+      return acc;
+    }, {});
+
+    res.json({
+      success: true,
+      products: result.rows,
+      productsByCategory,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al cargar productos'
+    });
+  }
+});
+
+/**
+ * GET /api/client/products/:id
+ * Get single product details
+ */
+router.get('/products/:id', async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT * FROM products WHERE id = $1 AND is_active = true`,
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Producto no encontrado'
+      });
+    }
+
+    res.json({
+      success: true,
+      product: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al cargar producto'
+    });
+  }
+});
+
+// ========================================
+// ORDER SUBMISSION
+// ========================================
+
+/**
+ * POST /api/client/orders/submit
+ * Client submits a new order
+ */
+router.post('/orders/submit', async (req, res) => {
+  const client = await query('BEGIN');
+
+  try {
+    const {
+      // Product selections
+      items, // [{productId, quantity}, ...]
+
+      // Event details
+      eventType,
+      eventDate,
+      clientNotes,
+      destination,
+
+      // Client information
+      clientName,
+      clientPhone,
+      clientEmail,
+      clientAddress, // Legacy full address (will use if street not provided)
+      clientStreet, // New: Street name
+      clientStreetNumber, // New: Street number
+      clientColonia,
+      clientCity,
+      clientState,
+      clientPostal,
+      clientReferences,
+
+      // Payment method
+      paymentMethod, // 'stripe' or 'bank_transfer'
+      paymentProofUrl, // Cloudinary URL for payment receipt
+
+      // Sales rep from referral link
+      salesRep, // e.g., 'alejandra'
+
+      // Store pickup option (skips shipping when true)
+      isStorePickup,
+
+      // Shipping cost
+      shippingCost,
+
+      // Selected address from client_addresses table
+      shippingAddressId,
+    } = req.body;
+
+    // Honeypot anti-bot check: if this hidden field is filled, it's a bot
+    if (req.body.website || req.body.company_url) {
+      console.warn(`🤖 Bot detected on order submit — honeypot filled from IP: ${req.ip}`);
+      // Return fake success so bots think it worked
+      return res.json({ success: true, orderId: 0, orderNumber: 'AXK0' });
+    }
+
+    // Validation
+    if (!items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debes seleccionar al menos un producto'
+      });
+    }
+
+    if (!clientName || !clientPhone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nombre y teléfono son requeridos'
+      });
+    }
+
+    // Validate quantities
+    for (const item of items) {
+      if (!item.quantity || item.quantity <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'La cantidad debe ser mayor a cero'
+        });
+      }
+    }
+
+    // 1. Calculate totals and prepare order items WITH SERVER-SIDE TIERED PRICING
+    let subtotal = 0;
+    const orderItems = [];
+
+    for (const item of items) {
+      // Get product details
+      const productResult = await query(
+        `SELECT id, name, base_price, production_cost FROM products WHERE id = $1 AND is_active = true`,
+        [item.productId]
+      );
+
+      if (productResult.rows.length === 0) {
+        await query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: `Producto con ID ${item.productId} no encontrado`
+        });
+      }
+
+      const product = productResult.rows[0];
+
+      // Use frontend's productName if it includes size info (e.g. "Imanes de MDF (Chico)")
+      // This ensures size-specific pricing is applied correctly
+      const pricingName = item.productName || product.name;
+      const displayName = item.productName || product.name;
+
+      // SERVER-SIDE TIERED PRICING - This is the SOURCE OF TRUTH
+      const pricing = calculateTieredPrice(
+        pricingName,
+        item.quantity,
+        product.base_price
+      );
+
+      // Validate minimum order quantity
+      if (!pricing.isValid) {
+        await query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: pricing.error
+        });
+      }
+
+      // Log if client sent different price (potential manipulation attempt)
+      if (item.unitPrice && Math.abs(parseFloat(item.unitPrice) - pricing.unitPrice) > 0.01) {
+        console.warn(`⚠️ PRICE MISMATCH DETECTED for ${displayName}:`);
+        console.warn(`   Client sent: $${item.unitPrice}`);
+        console.warn(`   Server calculated: $${pricing.unitPrice}`);
+        console.warn(`   Using server price (secure)`);
+      }
+
+      const unitPrice = pricing.unitPrice; // ALWAYS use server-calculated price
+      const lineTotal = unitPrice * item.quantity;
+      subtotal += lineTotal;
+
+      orderItems.push({
+        productId: product.id,
+        productName: displayName,
+        quantity: item.quantity,
+        unitPrice: unitPrice,
+        unitCost: product.production_cost,
+        lineTotal,
+        tierInfo: pricing.tierInfo
+      });
+    }
+
+    // Calculate deposit amount (default 50% if not specified)
+    const depositPercentage = req.body.depositPercentage || 50;
+    const depositAmount = subtotal * (depositPercentage / 100);
+
+    // 2. Create or find client
+    let clientId;
+    const existingClient = await query(
+      `SELECT id FROM clients WHERE phone = $1`,
+      [clientPhone]
+    );
+
+    if (existingClient.rows.length > 0) {
+      clientId = existingClient.rows[0].id;
+      // Update client info with new address fields
+      await query(
+        `UPDATE clients SET
+         name = $1,
+         email = $2,
+         address = $3,
+         street = $4,
+         street_number = $5,
+         colonia = $6,
+         city = $7,
+         state = $8,
+         postal = $9,
+         reference_notes = $10,
+         updated_at = CURRENT_TIMESTAMP
+         WHERE id = $11`,
+        [
+          clientName,
+          clientEmail,
+          clientAddress || `${clientStreet || ''} ${clientStreetNumber || ''}`.trim(), // Keep full address for compatibility
+          clientStreet || clientAddress, // Use street or fallback to full address
+          clientStreetNumber || '',
+          clientColonia || '',
+          clientCity,
+          clientState,
+          clientPostal || '',
+          clientReferences ? clientReferences.substring(0, 35) : '', // Enforce 35 char limit
+          clientId
+        ]
+      );
+    } else {
+      const newClient = await query(
+        `INSERT INTO clients (name, phone, email, address, street, street_number, colonia, city, state, postal, reference_notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         RETURNING id`,
+        [
+          clientName,
+          clientPhone,
+          clientEmail,
+          clientAddress || `${clientStreet || ''} ${clientStreetNumber || ''}`.trim(), // Keep full address for compatibility
+          clientStreet || clientAddress, // Use street or fallback to full address
+          clientStreetNumber || '',
+          clientColonia || '',
+          clientCity,
+          clientState,
+          clientPostal || '',
+          clientReferences ? clientReferences.substring(0, 35) : '' // Enforce 35 char limit
+        ]
+      );
+      clientId = newClient.rows[0].id;
+    }
+
+    // 3. Create order
+    const orderNumber = await generateOrderNumber();
+
+    // Calculate delivery dates based on order quantity
+    const totalQuantity = orderItems.reduce((sum, item) => sum + item.quantity, 0);
+    const deliveryDates = calculateDeliveryDates({
+      orderDate: new Date(),
+      totalQuantity,
+      eventDate: eventDate || null,
+      shippingMethod: 'standard'
+    });
+
+    console.log(`📅 Delivery dates calculated for ${totalQuantity} items:`);
+    console.log(`   Production deadline: ${deliveryDates.productionDeadlineFormatted}`);
+    console.log(`   Estimated delivery: ${deliveryDates.estimatedDeliveryFormatted}`);
+    if (deliveryDates.isRushOrder) {
+      console.log(`   ⚠️ RUSH ORDER - Event date is before estimated delivery!`);
+    }
+
+    const orderResult = await query(
+      `INSERT INTO orders (
+        order_number,
+        client_id,
+        order_date,
+        event_type,
+        event_date,
+        client_notes,
+        subtotal,
+        total_price,
+        total_production_cost,
+        deposit_amount,
+        payment_method,
+        payment_proof_url,
+        approval_status,
+        status,
+        department,
+        deposit_paid,
+        production_deadline,
+        estimated_delivery_date,
+        shipping_days,
+        sales_rep,
+        is_store_pickup,
+        shipping_cost,
+        destination
+      ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending_review', 'new', 'pending', false, $12, $13, $14, $15, $16, $17, $18)
+      RETURNING id`,
+      [
+        orderNumber,
+        clientId,
+        eventType,
+        eventDate,
+        clientNotes,
+        subtotal,
+        subtotal + (parseFloat(shippingCost) || 0), // total_price = subtotal + shipping
+        orderItems.reduce((sum, item) => sum + (item.unitCost * item.quantity), 0),
+        depositAmount,
+        paymentMethod,
+        paymentProofUrl || null,
+        deliveryDates.productionDeadline,
+        deliveryDates.estimatedDeliveryDate,
+        deliveryDates.shippingDays,
+        salesRep || null,
+        isStorePickup || false,
+        parseFloat(shippingCost) || 0,
+        destination || null
+      ]
+    );
+
+    const orderId = orderResult.rows[0].id;
+
+    // 3b. Set shipping_address_id if provided (column may not exist yet)
+    const addressIdNum = parseInt(shippingAddressId);
+    if (addressIdNum && !isNaN(addressIdNum) && addressIdNum > 0) {
+      try {
+        await query('UPDATE orders SET shipping_address_id = $1 WHERE id = $2', [addressIdNum, orderId]);
+      } catch (e) {
+        console.warn('⚠️  Could not set shipping_address_id:', e.message);
+      }
+    }
+
+    // 4. Insert order items
+    for (const item of orderItems) {
+      await query(
+        `INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, unit_cost)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [orderId, item.productId, item.productName, item.quantity, item.unitPrice, item.unitCost]
+      );
+    }
+
+    await query('COMMIT');
+
+    // 4b. Sync to Notion (background - don't block response)
+    // NOTE: Automatic tasks are created when order is APPROVED, not on submission
+    setImmediate(async () => {
+      try {
+        console.log(`🔄 Syncing order ${orderNumber} to Notion...`);
+        await notionSync.syncOrderToNotion(orderId);
+        console.log(`✅ Order ${orderNumber} synced to Notion successfully`);
+      } catch (notionError) {
+        console.error('❌ Failed to sync to Notion:', notionError);
+        // Order is safely in database, Notion can be synced later
+      }
+    });
+
+    // 6. Send notification to admin (background - don't block response)
+    setImmediate(async () => {
+      try {
+        await sendAdminNotification(orderId, orderNumber, clientName, subtotal, depositAmount);
+      } catch (emailError) {
+        console.error('Failed to send admin notification:', emailError);
+      }
+    });
+
+    // 6b. Generate PDF receipt - ONLY if no payment proof (AI will generate PDF if there's a receipt)
+    const willRunAIVerification = paymentProofUrl && paymentMethod === 'bank_transfer';
+
+    if (!willRunAIVerification) {
+      // No AI verification, generate PDF now with default 50% deposit
+      setImmediate(async () => {
+        try {
+          console.log(`📄 Generating PDF receipt for order ${orderNumber} (no AI verification)...`);
+          console.log(`   Subtotal: $${subtotal}, DepositAmount: $${depositAmount}`);
+
+          const remainingBalance = subtotal - depositAmount;
+
+          const totalWithShipping = subtotal + (parseFloat(shippingCost) || 0);
+          const pdfPath = await generateReceipt({
+            orderNumber,
+            clientName,
+            clientPhone,
+            clientEmail,
+            orderDate: new Date(),
+            items: orderItems.map(item => ({
+              productName: item.productName,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              lineTotal: item.lineTotal
+            })),
+            totalPrice: totalWithShipping,
+            actualDepositAmount: depositAmount,
+            remainingBalance: totalWithShipping - depositAmount,
+            eventDate: eventDate || null,
+            eventType: eventType || null,
+            shippingCost: parseFloat(shippingCost) || 0,
+            isStorePickup: isStorePickup || false
+          });
+
+          console.log(`✅ PDF receipt generated: ${pdfPath}`);
+
+          const pdfUrl = getReceiptUrl(pdfPath);
+          await query(
+            `UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2`,
+            [pdfUrl, orderId]
+          );
+          console.log(`💾 PDF URL saved to database: ${pdfUrl}`);
+
+        } catch (pdfError) {
+          console.error('❌ Failed to generate PDF receipt:', pdfError.message);
+        }
+      });
+    }
+
+    // 6c. AUTOMATIC AI VERIFICATION (background - don't block response)
+    // If customer uploaded a payment receipt, verify it automatically with Claude Vision
+    // This will also generate the PDF with the AI-detected deposit amount
+    if (willRunAIVerification) {
+      setImmediate(async () => {
+        try {
+          // Wait a bit for the receipt image to be fully uploaded to Cloudinary
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          if (!isAIConfigured()) {
+            console.log('⚠️ AI verification skipped - Anthropic API not configured');
+            return;
+          }
+
+          console.log(`\n🤖 Starting automatic AI verification for order ${orderNumber}...`);
+          console.log(`   Receipt URL: ${paymentProofUrl}`);
+          console.log(`   Expected amount: $${depositAmount.toFixed(2)}`);
+
+          // Verify receipt with Claude Vision
+          const verificationResult = await verifyPaymentReceipt(
+            paymentProofUrl,
+            depositAmount,
+            orderNumber
+          );
+
+          if (!verificationResult.success) {
+            console.log(`⚠️ AI verification failed for order ${orderNumber}: ${verificationResult.error}`);
+            console.log(`📋 Order ${orderNumber} stays pending - requires manual review`);
+            return; // Don't auto-approve if AI verification failed
+          }
+
+          console.log(`📊 AI Analysis result: ${verificationResult.recommendation}`);
+          console.log(`📊 Is valid receipt: ${verificationResult.analysis?.is_valid_receipt}`);
+          console.log(`📊 Confidence level: ${verificationResult.analysis?.confidence_level}`);
+          console.log(`📊 Suspicious indicators: ${JSON.stringify(verificationResult.analysis?.suspicious_indicators || [])}`);
+
+          // Only auto-approve if AI confirms it's a valid bank receipt
+          if (verificationResult.recommendation !== 'AUTO_APPROVE') {
+            console.log(`⚠️ AI recommends MANUAL_REVIEW for order ${orderNumber}`);
+            console.log(`   Reason: ${verificationResult.recommendation_reason}`);
+            console.log(`📋 Order stays pending - admin must review manually`);
+
+            // Update internal notes with AI analysis for admin review
+            await query(
+              `UPDATE orders SET
+                internal_notes = COALESCE(internal_notes || E'\n\n', '') || $2
+               WHERE id = $1`,
+              [orderId, `🤖 AI Analysis (${new Date().toLocaleString('es-MX')}):\n${verificationResult.recommendation_reason}`]
+            );
+            return; // Don't auto-approve
+          }
+
+          console.log(`✅ AI verified - AUTO-APPROVING order ${orderNumber}`);
+
+          // ============================================
+          // CEP VALIDATION — Verify against Banxico
+          // ============================================
+          let cepResult = null;
+          const claveRastreo = verificationResult.analysis?.clave_rastreo;
+          const sourceBank = verificationResult.analysis?.source_bank;
+          const detectedDate = verificationResult.analysis?.date_detected;
+
+          if (claveRastreo && process.env.AXKAN_CLABE) {
+            try {
+              console.log(`🏦 Starting CEP validation for order ${orderNumber}...`);
+
+              // Resolve bank name to code
+              const emisorCode = resolveBankCode(sourceBank);
+              if (!emisorCode) {
+                console.log(`⚠️ CEP: Could not resolve bank code for "${sourceBank}", skipping CEP`);
+              } else {
+                // Format date for Banxico (DD-MM-YYYY)
+                let fechaBanxico;
+                if (detectedDate) {
+                  const parts = detectedDate.split('-'); // YYYY-MM-DD
+                  fechaBanxico = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                } else {
+                  // Fallback to today
+                  const today = new Date();
+                  fechaBanxico = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+                }
+
+                cepResult = await validateTransfer({
+                  fecha: fechaBanxico,
+                  claveRastreo,
+                  emisor: emisorCode,
+                  monto: verificationResult.analysis?.amount_detected || depositAmount,
+                });
+
+                // Store CEP verification in database
+                const cepStatus = cepResult.found ? 'found' : (cepResult.error ? 'error' : 'pending_retry');
+                const nextRetry = cepStatus === 'pending_retry'
+                  ? new Date(Date.now() + 5 * 60 * 1000).toISOString()
+                  : null;
+
+                await query(
+                  `INSERT INTO cep_verifications
+                    (order_id, clave_rastreo, fecha_operacion, emisor_code, emisor_name,
+                     receptor_code, receptor_name, monto, status, banxico_response, next_retry_at)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                  [
+                    orderId,
+                    claveRastreo,
+                    detectedDate || new Date().toISOString().split('T')[0],
+                    emisorCode,
+                    sourceBank || '',
+                    process.env.AXKAN_BANK_CODE || '40012',
+                    'BBVA',
+                    verificationResult.analysis?.amount_detected || depositAmount,
+                    cepStatus,
+                    JSON.stringify(cepResult.details || { error: cepResult.error }),
+                    nextRetry,
+                  ]
+                );
+
+                // If found, try to download CEP PDF
+                if (cepResult.found && cepResult.cookies) {
+                  try {
+                    const pdfBuffer = await downloadCEP(cepResult.cookies, 'PDF');
+
+                    if (isGoogleDriveConfigured()) {
+                      const uploadResult = await uploadToGoogleDrive({
+                        fileData: pdfBuffer,
+                        fileName: `CEP-${orderNumber}-${Date.now()}.pdf`,
+                        mimeType: 'application/pdf',
+                      });
+                      const cepPdfUrl = uploadResult.webViewLink || uploadResult.url;
+
+                      await query(
+                        `UPDATE cep_verifications SET cep_pdf_url = $1 WHERE order_id = $2 AND clave_rastreo = $3`,
+                        [cepPdfUrl, orderId, claveRastreo]
+                      );
+
+                      console.log(`📄 CEP PDF stored: ${cepPdfUrl}`);
+                    }
+                  } catch (pdfErr) {
+                    console.error(`⚠️ CEP PDF download/upload failed: ${pdfErr.message}`);
+                  }
+                }
+
+                console.log(`🏦 CEP result: ${cepStatus} for order ${orderNumber}`);
+              }
+            } catch (cepError) {
+              console.error(`⚠️ CEP validation failed (non-fatal): ${cepError.message}`);
+              // CEP failure is non-blocking — we still proceed with Vision-only approval
+            }
+          } else {
+            console.log(`ℹ️ CEP: Skipped (no clave_rastreo extracted or AXKAN_CLABE not set)`);
+          }
+          // ============================================
+          // END CEP VALIDATION
+          // ============================================
+
+          // Determine the actual deposit amount from the receipt
+          // Use detected amount if available, otherwise use original deposit amount
+          const rawDetectedAmount = verificationResult.analysis?.amount_detected;
+          // Ensure it's a number (Claude might return string)
+          const detectedAmount = parseFloat(rawDetectedAmount) || 0;
+          const actualDepositAmount = (detectedAmount > 0) ? detectedAmount : depositAmount;
+          const amountChanged = Math.abs(actualDepositAmount - depositAmount) > 0.01;
+
+          console.log(`💰 Deposit calculation: raw=${rawDetectedAmount}, parsed=${detectedAmount}, final=${actualDepositAmount}, expected=${depositAmount}`);
+
+          if (amountChanged) {
+            console.log(`💰 Amount adjustment: Expected $${depositAmount.toFixed(2)} → Detected $${actualDepositAmount.toFixed(2)}`);
+          }
+
+          const cepNote = cepResult
+            ? (cepResult.found
+              ? `\n🏦 CEP: Confirmado por Banxico`
+              : `\n🏦 CEP: Pendiente de confirmación (reintentando)`)
+            : `\n🏦 CEP: No verificado (sin clave de rastreo)`;
+
+          // Update order to approved status with the actual deposit amount from receipt
+          await query(
+            `UPDATE orders SET
+              approval_status = 'approved',
+              status = 'new',
+              department = 'design',
+              deposit_amount = $2,
+              internal_notes = COALESCE(internal_notes || E'\n\n', '') || $3
+             WHERE id = $1`,
+            [orderId, actualDepositAmount, `✅ Auto-aprobado por AI (${new Date().toLocaleString('es-MX')})\nMonto detectado: $${actualDepositAmount.toFixed(2)}${cepNote}`]
+          );
+
+          // Calculate remaining balance with the actual deposit amount
+          const actualRemainingBalance = subtotal - actualDepositAmount;
+
+          // ALWAYS regenerate PDF with the AI-detected amount
+          let pdfUrl = null;
+          try {
+            // Ensure numeric values for PDF generation
+            const pdfDepositAmount = parseFloat(actualDepositAmount) || 0;
+            const pdfRemainingBalance = parseFloat(actualRemainingBalance) || (parseFloat(subtotal) - pdfDepositAmount);
+            const pdfTotalPrice = parseFloat(subtotal) || 0;
+
+            console.log(`📄 Generating PDF receipt with AI-verified amount: $${pdfDepositAmount.toFixed(2)}...`);
+            console.log(`   PDF values: total=${pdfTotalPrice}, deposit=${pdfDepositAmount}, remaining=${pdfRemainingBalance}`);
+
+            const pdfTotalWithShipping = pdfTotalPrice + (parseFloat(shippingCost) || 0);
+            const newPdfPath = await generateReceipt({
+              orderNumber,
+              clientName,
+              clientPhone,
+              clientEmail,
+              orderDate: new Date(),
+              items: orderItems.map(item => ({
+                productName: item.productName,
+                quantity: item.quantity,
+                unitPrice: parseFloat(item.unitPrice) || 0,
+                lineTotal: parseFloat(item.lineTotal) || 0
+              })),
+              totalPrice: pdfTotalWithShipping,
+              actualDepositAmount: pdfDepositAmount,
+              remainingBalance: pdfTotalWithShipping - pdfDepositAmount,
+              eventDate: eventDate || null,
+              eventType: eventType || null,
+              shippingCost: parseFloat(shippingCost) || 0,
+              isStorePickup: isStorePickup || false
+            });
+            pdfUrl = getReceiptUrl(newPdfPath);
+            await query('UPDATE orders SET receipt_pdf_url = $1 WHERE id = $2', [pdfUrl, orderId]);
+            console.log(`✅ PDF receipt generated with deposit: $${pdfDepositAmount.toFixed(2)}`);
+          } catch (pdfError) {
+            console.error('❌ Failed to generate PDF:', pdfError.message, pdfError.stack);
+            // Try to get existing PDF as fallback
+            const pdfResult = await query('SELECT receipt_pdf_url FROM orders WHERE id = $1', [orderId]);
+            pdfUrl = pdfResult.rows[0]?.receipt_pdf_url;
+          }
+
+          // Send confirmation email to client with correct amounts
+          try {
+            if (clientEmail && pdfUrl) {
+              await emailSender.sendClientReceiptEmail(
+                clientEmail,
+                clientName,
+                orderNumber,
+                pdfUrl,
+                {
+                  totalPrice: subtotal,
+                  depositAmount: actualDepositAmount,
+                  remainingBalance: actualRemainingBalance,
+                  items: orderItems.map(item => ({
+                    productName: item.productName,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    lineTotal: item.lineTotal
+                  })),
+                  eventDate,
+                  eventType
+                }
+              );
+              console.log(`📧 Confirmation email sent to ${clientEmail}`);
+            }
+          } catch (emailError) {
+            console.error('❌ Failed to send confirmation email:', emailError.message);
+          }
+
+          console.log(`🎉 Order ${orderNumber} automatically approved!`);
+          console.log(`   Deposit amount: $${actualDepositAmount.toFixed(2)}`);
+          console.log(`   Remaining balance: $${actualRemainingBalance.toFixed(2)}`);
+
+          // Log the AI analysis details
+          if (verificationResult.analysis) {
+            console.log(`   AI detected: $${verificationResult.analysis.amount_detected || 'N/A'}`);
+            console.log(`   Confidence: ${verificationResult.analysis.confidence_level || 'N/A'}`);
+            console.log(`   Bank: ${verificationResult.analysis.source_bank || 'N/A'}`);
+            if (verificationResult.analysis.suspicious_indicators?.length > 0) {
+              console.log(`   ⚠️ Notes: ${verificationResult.analysis.suspicious_indicators.join(', ')}`);
+            }
+          }
+
+        } catch (aiError) {
+          console.error('❌ AI verification error:', aiError.message);
+          // Order remains in pending_review status - admin can review manually
+        }
+      });
+    }
+
+    // 7. Response based on payment method
+    const response = {
+      success: true,
+      orderId,
+      orderNumber,
+      subtotal,
+      depositAmount,
+      depositAmountFormatted: formatCurrency(depositAmount),
+      message: 'Pedido recibido exitosamente'
+    };
+
+    if (paymentMethod === 'stripe') {
+      // Will implement Stripe integration next
+      response.requiresPayment = true;
+      response.nextStep = 'payment';
+    } else if (paymentMethod === 'bank_transfer') {
+      response.requiresProofUpload = true;
+      response.nextStep = 'upload_proof';
+      response.bankDetails = {
+        bank: process.env.BANK_NAME || 'Banco XYZABC',
+        clabe: process.env.BANK_CLABE || '012345678901234567',
+        accountHolder: process.env.BANK_ACCOUNT_HOLDER || 'Tu Empresa S.A.'
+      };
+    }
+
+    res.status(201).json(response);
+
+  } catch (error) {
+    await query('ROLLBACK');
+    console.error('Error creating order:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al procesar el pedido'
+    });
+  }
+});
+
+/**
+ * POST /api/client/upload-file
+ * Upload a file to Google Drive and get the URL
+ * Accepts multipart/form-data with 'file' field
+ */
+router.post('/upload-file', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No se proporcionó ningún archivo'
+      });
+    }
+
+    // Check if Google Drive is configured
+    if (!isGoogleDriveConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: 'Google Drive no está configurado. Contacta al administrador.'
+      });
+    }
+
+    const { orderNumber, fileType } = req.body; // orderNumber for naming, fileType: 'payment_proof' or 'reference'
+    const timestamp = Date.now();
+    const fileExtension = req.file.originalname.split('.').pop();
+    const fileName = `${fileType || 'file'}-${orderNumber || 'unknown'}-${timestamp}.${fileExtension}`;
+
+    console.log(`📤 Uploading file to Google Drive: ${fileName}`);
+
+    // Upload to Google Drive
+    const result = await uploadToGoogleDrive({
+      fileData: req.file.buffer,
+      fileName: fileName,
+      mimeType: req.file.mimetype
+    });
+
+    console.log(`✅ File uploaded successfully: ${result.directImageUrl}`);
+
+    res.json({
+      success: true,
+      message: 'Archivo subido exitosamente',
+      fileUrl: result.directImageUrl,
+      viewUrl: result.viewUrl,
+      downloadUrl: result.downloadUrl,
+      thumbnailUrl: result.thumbnailUrl
+    });
+
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al subir el archivo'
+    });
+  }
+});
+
+/**
+ * POST /api/client/orders/:orderId/upload-proof
+ * Upload payment proof for bank transfer
+ */
+router.post('/orders/:orderId/upload-proof', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { proofUrl } = req.body; // Will come from frontend after file upload
+
+    // Validate the proof URL — only allow trusted image hosting domains
+    if (proofUrl) {
+      try {
+        const parsed = new URL(proofUrl);
+        if (parsed.protocol !== 'https:') {
+          return res.status(400).json({ success: false, error: 'Solo se permiten URLs HTTPS' });
+        }
+        const allowedDomains = ['res.cloudinary.com', 'drive.google.com', 'lh3.googleusercontent.com', 'lh4.googleusercontent.com', 'lh5.googleusercontent.com', 'lh6.googleusercontent.com', 'storage.googleapis.com'];
+        if (!allowedDomains.some(d => parsed.hostname === d || parsed.hostname.endsWith('.' + d))) {
+          return res.status(400).json({ success: false, error: 'Dominio de imagen no permitido' });
+        }
+      } catch {
+        return res.status(400).json({ success: false, error: 'URL de comprobante inválida' });
+      }
+    }
+
+    // Update order with proof URL
+    await query(
+      `UPDATE orders SET payment_proof_url = $1 WHERE id = $2`,
+      [proofUrl, orderId]
+    );
+
+    // Create payment record
+    await query(
+      `INSERT INTO payments (order_id, payment_type, payment_method, status, proof_url)
+       VALUES ($1, 'deposit', 'bank_transfer', 'pending', $2)`,
+      [orderId, proofUrl]
+    );
+
+    // Send notification to admin to verify payment
+    try {
+      await sendPaymentProofNotification(orderId);
+    } catch (emailError) {
+      console.error('Failed to send payment proof notification:', emailError);
+    }
+
+    res.json({
+      success: true,
+      message: 'Comprobante de pago recibido. Verificaremos tu pago pronto.'
+    });
+
+  } catch (error) {
+    console.error('Error uploading payment proof:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al subir comprobante'
+    });
+  }
+});
+
+/**
+ * POST /api/client/orders/:orderId/second-payment
+ * Upload second payment receipt (public — used by /seguimiento page)
+ */
+router.post('/orders/:orderId/second-payment', async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.orderId);
+    const { receiptUrl, publicId } = req.body;
+
+    if (!receiptUrl) {
+      return res.status(400).json({ success: false, error: 'Receipt URL is required' });
+    }
+
+    // Validate URL domain
+    try {
+      const parsed = new URL(receiptUrl);
+      if (parsed.protocol !== 'https:') {
+        return res.status(400).json({ success: false, error: 'Solo se permiten URLs HTTPS' });
+      }
+      const allowedDomains = ['res.cloudinary.com', 'drive.google.com', 'lh3.googleusercontent.com', 'lh4.googleusercontent.com', 'lh5.googleusercontent.com', 'lh6.googleusercontent.com', 'storage.googleapis.com'];
+      if (!allowedDomains.some(d => parsed.hostname === d || parsed.hostname.endsWith('.' + d))) {
+        return res.status(400).json({ success: false, error: 'Dominio de imagen no permitido' });
+      }
+    } catch {
+      return res.status(400).json({ success: false, error: 'URL inválida' });
+    }
+
+    // Verify order exists and has remaining balance
+    const orderCheck = await query(
+      'SELECT id, order_number, total_price, deposit_amount, second_payment_proof_url FROM orders WHERE id = $1',
+      [orderId]
+    );
+
+    if (orderCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
+    }
+
+    const order = orderCheck.rows[0];
+
+    if (order.second_payment_proof_url) {
+      return res.status(400).json({ success: false, error: 'Ya se subió un comprobante para este pedido' });
+    }
+
+    const remainingBalance = parseFloat(order.total_price) - parseFloat(order.deposit_amount);
+    if (remainingBalance <= 0) {
+      return res.status(400).json({ success: false, error: 'Este pedido no tiene saldo pendiente' });
+    }
+
+    // Save receipt URL
+    await query(
+      'UPDATE orders SET second_payment_proof_url = $1 WHERE id = $2',
+      [receiptUrl, orderId]
+    );
+
+    console.log(`✅ Second payment receipt uploaded via client route for order ${orderId}`);
+
+    // AI Verification (if configured)
+    if (isAIConfigured()) {
+      try {
+        const verificationResult = await verifyPaymentReceipt(receiptUrl, remainingBalance, order.order_number);
+        const now = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+        let verificationNote = `\n\n--- PAGO FINAL via seguimiento (${now}) ---\n`;
+        verificationNote += `Verificación AI: ${verificationResult.recommendation}\n`;
+        if (verificationResult.analysis) {
+          const a = verificationResult.analysis;
+          verificationNote += `Monto detectado: $${a.amount_detected?.toFixed(2) || 'N/A'}\n`;
+          verificationNote += `Monto esperado: $${remainingBalance.toFixed(2)}\n`;
+        }
+        await query(
+          `UPDATE orders SET internal_notes = COALESCE(internal_notes, '') || $1 WHERE id = $2`,
+          [verificationNote, orderId]
+        );
+      } catch (aiErr) {
+        console.error('AI verification failed (non-blocking):', aiErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Comprobante recibido. Verificaremos tu pago pronto.'
+    });
+
+  } catch (error) {
+    console.error('Error uploading second payment receipt:', error);
+    res.status(500).json({ success: false, error: 'Error al subir comprobante' });
+  }
+});
+
+/**
+ * POST /api/client/stripe-checkout
+ * Create a Stripe Checkout Session for the deposit amount
+ */
+router.post('/stripe-checkout', async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(500).json({ success: false, error: 'Stripe no configurado' });
+    }
+
+    const { orderId, amount, clientName, clientEmail } = req.body;
+
+    if (!orderId || !amount || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'orderId y amount son requeridos' });
+    }
+
+    const amountCents = Math.round(amount * 100);
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'mxn',
+          product_data: {
+            name: 'Pedido AXKAN #' + orderId,
+            description: 'Anticipo 50% - Souvenirs Personalizados',
+          },
+          unit_amount: amountCents,
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      customer_email: clientEmail || undefined,
+      metadata: {
+        orderId: String(orderId),
+        clientName: clientName || '',
+        type: 'deposit'
+      },
+      success_url: 'https://axkan.art/seguimiento?payment=success&order=' + orderId,
+      cancel_url: 'https://axkan.art/seguimiento?payment=cancelled&order=' + orderId,
+    });
+
+    res.json({ success: true, url: session.url });
+  } catch (error) {
+    console.error('Stripe checkout error:', error);
+    res.status(500).json({ success: false, error: 'Error al crear sesión de pago' });
+  }
+});
+
+/**
+ * GET /api/client/orders/:orderId/status
+ * Check order status (requires token for security)
+ */
+router.get('/orders/:orderId/status', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { token } = req.query;
+
+    // Validate token to prevent order enumeration
+    if (!token) {
+      return res.status(401).json({ success: false, error: 'Token requerido' });
+    }
+
+    // Look up order and client phone to validate token
+    const result = await query(
+      `SELECT
+        o.order_number,
+        o.status,
+        o.approval_status,
+        o.deposit_paid,
+        o.total_price,
+        o.deposit_amount,
+        c.name as client_name,
+        c.phone as client_phone
+       FROM orders o
+       JOIN clients c ON o.client_id = c.id
+       WHERE o.id = $1`,
+      [orderId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Pedido no encontrado'
+      });
+    }
+
+    const order = result.rows[0];
+
+    // Validate token = sha256(orderId + clientPhone)
+    const expectedToken = crypto.createHash('sha256').update(`${orderId}${order.client_phone}`).digest('hex');
+    if (token !== expectedToken) {
+      return res.status(403).json({ success: false, error: 'Token inválido' });
+    }
+
+    res.json({
+      success: true,
+      order: {
+        orderNumber: order.order_number,
+        status: getStatusText(order.status),
+        approvalStatus: getApprovalStatusText(order.approval_status),
+        depositPaid: order.deposit_paid,
+        totalPrice: formatCurrency(order.total_price),
+        depositAmount: formatCurrency(order.deposit_amount)
+      }
+    });
+
+  } catch (error) {
+    console.error('Error checking order status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al consultar estado del pedido'
+    });
+  }
+});
+
+/**
+ * POST /api/client/address/save
+ * Save/update client shipping address (standalone - no order required)
+ * Used by the shipping address form at /envio
+ */
+router.post('/address/save', async (req, res) => {
+  try {
+    const {
+      destinationName,
+      clientName,
+      clientPhone,
+      clientEmail,
+      clientStreet,
+      clientStreetNumber,
+      clientColonia,
+      clientCity,
+      clientState,
+      clientPostal,
+      clientReferences,
+    } = req.body;
+
+    // Validation
+    if (!clientName || !clientPhone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nombre y telefono son requeridos'
+      });
+    }
+
+    if (!/^\d{10}$/.test(clientPhone)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Telefono debe ser de 10 digitos'
+      });
+    }
+
+    if (!clientPostal || !/^\d{5}$/.test(clientPostal)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Codigo postal debe ser de 5 digitos'
+      });
+    }
+
+    if (!clientStreet || !clientCity || !clientState) {
+      return res.status(400).json({
+        success: false,
+        error: 'Calle, ciudad y estado son requeridos'
+      });
+    }
+
+    const fullAddress = [clientStreet, clientStreetNumber].filter(Boolean).join(' ');
+
+    // Check if client exists
+    const existing = await query('SELECT id FROM clients WHERE phone = $1', [clientPhone]);
+
+    if (existing.rows.length > 0) {
+      await query(
+        `UPDATE clients SET
+         name = $1,
+         email = $2,
+         address = $3,
+         street = $4,
+         street_number = $5,
+         colonia = $6,
+         city = $7,
+         state = $8,
+         postal = $9,
+         reference_notes = $10,
+         updated_at = CURRENT_TIMESTAMP
+         WHERE phone = $11`,
+        [
+          clientName,
+          clientEmail || null,
+          fullAddress,
+          clientStreet,
+          clientStreetNumber || '',
+          clientColonia || '',
+          clientCity,
+          clientState,
+          clientPostal,
+          clientReferences ? clientReferences.substring(0, 35) : '',
+          clientPhone
+        ]
+      );
+    } else {
+      await query(
+        `INSERT INTO clients (name, phone, email, address, street, street_number, colonia, city, state, postal, reference_notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [
+          clientName,
+          clientPhone,
+          clientEmail || null,
+          fullAddress,
+          clientStreet,
+          clientStreetNumber || '',
+          clientColonia || '',
+          clientCity,
+          clientState,
+          clientPostal,
+          clientReferences ? clientReferences.substring(0, 35) : ''
+        ]
+      );
+    }
+
+    console.log(`📦 Client address saved via /envio form: ${clientName} (${clientPhone}) - Destino: ${destinationName || 'N/A'}`);
+
+    res.json({
+      success: true,
+      message: 'Direccion guardada correctamente'
+    });
+
+  } catch (error) {
+    console.error('Error saving client address:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al guardar la direccion'
+    });
+  }
+});
+
+/**
+ * POST /api/client/info
+ * Get client info — requires BOTH phone AND email to return full data.
+ * Phone-only returns existence check (no PII) to prevent enumeration attacks.
+ */
+router.post('/info', async (req, res) => {
+  try {
+    const { phone, email } = req.body;
+
+    if (!phone && !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debe proporcionar teléfono o correo electrónico'
+      });
+    }
+
+    // If BOTH phone AND email provided, verify they match the same client → return full data
+    if (phone && email) {
+      const result = await query(`
+        SELECT id, name, phone, email, address, street, street_number,
+               colonia, city, state, postal, reference_notes
+        FROM clients
+        WHERE phone = $1 AND email = $2
+        LIMIT 1
+      `, [phone, email]);
+
+      if (result.rows.length === 0) {
+        return res.json({ success: true, found: false, clientInfo: null, message: 'Cliente no encontrado' });
+      }
+
+      const client = result.rows[0];
+      const clientId = client.id;
+
+      // Fetch saved addresses for this client
+      const addresses = await query(
+        'SELECT * FROM client_addresses WHERE client_id = $1 ORDER BY is_default DESC, last_used_at DESC',
+        [clientId]
+      );
+
+      return res.json({
+        success: true,
+        found: true,
+        clientInfo: {
+          id: client.id,
+          name: client.name,
+          phone: client.phone,
+          email: client.email,
+          address: client.address,
+          street: client.street,
+          streetNumber: client.street_number,
+          colonia: client.colonia,
+          city: client.city,
+          state: client.state,
+          postal: client.postal,
+          references: client.reference_notes
+        },
+        addresses: addresses.rows
+      });
+    }
+
+    // Phone-only or email-only: return existence check only (no PII)
+    const field = phone ? 'phone' : 'email';
+    const value = phone || email;
+    const result = await query(`SELECT id FROM clients WHERE ${field} = $1 LIMIT 1`, [value]);
+
+    res.json({
+      success: true,
+      found: result.rows.length > 0,
+      clientInfo: null,
+      message: result.rows.length > 0 ? 'Cliente encontrado — ingresa teléfono y correo para cargar datos' : 'Cliente no encontrado'
+    });
+
+  } catch (error) {
+    console.error('Error looking up client:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al buscar cliente'
+    });
+  }
+});
+
+/**
+ * POST /api/client/orders/lookup
+ * Lookup orders by client phone AND email, OR by order number alone
+ */
+router.post('/orders/lookup', async (req, res) => {
+  try {
+    const { phone, email, orderNumber } = req.body;
+
+    // Order number lookup (no phone/email required)
+    if (orderNumber && !phone && !email) {
+      const orderResult = await query(`
+        SELECT
+          o.id,
+          o.order_number,
+          o.order_date,
+          o.event_type,
+          o.event_date,
+          o.status,
+          o.approval_status,
+          o.total_price,
+          o.deposit_amount,
+          o.deposit_paid,
+          o.payment_method,
+          o.second_payment_proof_url,
+          o.is_store_pickup,
+          c.name as client_name,
+          c.phone as client_phone,
+          c.email as client_email,
+          (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as shipping_labels_count,
+          (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id AND sl.tracking_number IS NOT NULL) as labels_with_tracking,
+          json_agg(
+            json_build_object(
+              'productName', oi.product_name,
+              'quantity', oi.quantity,
+              'unitPrice', oi.unit_price
+            ) ORDER BY oi.id
+          ) FILTER (WHERE oi.id IS NOT NULL) as items
+        FROM orders o
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN clients c ON o.client_id = c.id
+        WHERE UPPER(o.order_number) = UPPER($1)
+          AND (o.archive_status IS NULL OR o.archive_status = 'active')
+          AND o.approval_status != 'rejected'
+        GROUP BY o.id, c.name, c.phone, c.email
+        ORDER BY o.created_at DESC
+      `, [orderNumber]);
+
+      if (orderResult.rows.length === 0) {
+        return res.json({ success: true, orders: [], clientInfo: null, message: 'No se encontró el pedido' });
+      }
+
+      const row = orderResult.rows[0];
+      const orders = orderResult.rows.map(order => ({
+        id: order.id,
+        orderId: order.id,
+        orderNumber: order.order_number,
+        orderDate: order.order_date,
+        eventType: order.event_type,
+        eventDate: order.event_date,
+        status: getStatusText(order.status),
+        approvalStatus: order.approval_status,
+        totalPrice: order.total_price,
+        depositAmount: order.deposit_amount,
+        depositPaid: order.deposit_paid,
+        remainingBalance: order.total_price - order.deposit_amount,
+        paymentMethod: order.payment_method,
+        totalPriceFormatted: formatCurrency(order.total_price),
+        depositAmountFormatted: formatCurrency(order.deposit_amount),
+        remainingBalanceFormatted: formatCurrency(order.total_price - order.deposit_amount),
+        items: order.items || [],
+        clientName: order.client_name,
+        secondPaymentReceipt: order.second_payment_proof_url,
+        secondPaymentReceived: !!order.second_payment_proof_url,
+        shippingLabelsCount: parseInt(order.shipping_labels_count) || 0,
+        labelsWithTracking: parseInt(order.labels_with_tracking) || 0,
+        allLabelsGenerated: parseInt(order.shipping_labels_count) > 0 && parseInt(order.labels_with_tracking) === parseInt(order.shipping_labels_count),
+        isStorePickup: order.is_store_pickup || false
+      }));
+
+      return res.json({
+        success: true,
+        orders,
+        clientInfo: {
+          name: row.client_name,
+          phone: row.client_phone,
+          email: row.client_email
+        }
+      });
+    }
+
+    // Phone + email lookup (both required)
+    if (!phone || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debe proporcionar tanto teléfono como correo electrónico'
+      });
+    }
+
+    // Both fields must match - no partial coincidences allowed
+    const clientWhereClause = 'phone = $1 AND email = $2';
+    const clientParams = [phone, email];
+
+    // FIRST: Get ALL matching clients (may have multiple with same email/phone)
+    const clientResult = await query(`
+      SELECT
+        id,
+        name,
+        phone,
+        email,
+        address,
+        street,
+        street_number,
+        colonia,
+        city,
+        state,
+        postal,
+        reference_notes
+      FROM clients
+      WHERE ${clientWhereClause}
+      ORDER BY id DESC
+    `, clientParams);
+
+    // If no client found at all
+    if (clientResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        orders: [],
+        clientInfo: null,
+        message: 'No se encontró información del cliente'
+      });
+    }
+
+    // Use the most recent client for clientInfo
+    const clientData = clientResult.rows[0];
+
+    // Get all client IDs to search for orders across all matching clients
+    const clientIds = clientResult.rows.map(c => c.id);
+
+    // SECOND: Get active orders for ALL matching clients (with shipping label info)
+    const ordersResult = await query(`
+      SELECT
+        o.id,
+        o.order_number,
+        o.order_date,
+        o.event_type,
+        o.event_date,
+        o.status,
+        o.approval_status,
+        o.total_price,
+        o.deposit_amount,
+        o.deposit_paid,
+        o.payment_method,
+        o.second_payment_proof_url,
+        o.is_store_pickup,
+        c.name as client_name,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id) as shipping_labels_count,
+        (SELECT COUNT(*) FROM shipping_labels sl WHERE sl.order_id = o.id AND sl.tracking_number IS NOT NULL) as labels_with_tracking,
+        json_agg(
+          json_build_object(
+            'productName', oi.product_name,
+            'quantity', oi.quantity,
+            'unitPrice', oi.unit_price
+          ) ORDER BY oi.id
+        ) FILTER (WHERE oi.id IS NOT NULL) as items
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN clients c ON o.client_id = c.id
+      WHERE o.client_id = ANY($1)
+        AND (o.archive_status IS NULL OR o.archive_status = 'active')
+        AND o.approval_status != 'rejected'
+      GROUP BY o.id, c.name
+      ORDER BY o.created_at DESC
+    `, [clientIds]);
+
+    // Format orders with payment status
+    const orders = ordersResult.rows.map(order => ({
+      id: order.id,
+      orderId: order.id,
+      orderNumber: order.order_number,
+      orderDate: order.order_date,
+      eventType: order.event_type,
+      eventDate: order.event_date,
+      status: getStatusText(order.status),
+      approvalStatus: order.approval_status,
+      totalPrice: order.total_price,
+      depositAmount: order.deposit_amount,
+      depositPaid: order.deposit_paid,
+      remainingBalance: order.total_price - order.deposit_amount,
+      paymentMethod: order.payment_method,
+      totalPriceFormatted: formatCurrency(order.total_price),
+      depositAmountFormatted: formatCurrency(order.deposit_amount),
+      remainingBalanceFormatted: formatCurrency(order.total_price - order.deposit_amount),
+      items: order.items || [],
+      clientName: order.client_name || clientData.name,
+      // Shipping fields
+      secondPaymentReceipt: order.second_payment_proof_url,
+      secondPaymentReceived: !!order.second_payment_proof_url, // Derived from having a receipt URL
+      shippingLabelsCount: parseInt(order.shipping_labels_count) || 0,
+      labelsWithTracking: parseInt(order.labels_with_tracking) || 0,
+      allLabelsGenerated: parseInt(order.shipping_labels_count) > 0 && parseInt(order.labels_with_tracking) === parseInt(order.shipping_labels_count),
+      // Store pickup
+      isStorePickup: order.is_store_pickup || false
+    }));
+
+    // ALWAYS return clientInfo, even if no active orders
+    res.json({
+      success: true,
+      orders,
+      clientInfo: {
+        name: clientData.name,
+        phone: clientData.phone,
+        email: clientData.email,
+        address: clientData.address,
+        street: clientData.street,
+        streetNumber: clientData.street_number,
+        colonia: clientData.colonia,
+        city: clientData.city,
+        state: clientData.state,
+        postal: clientData.postal,
+        references: clientData.reference_notes
+      },
+      message: orders.length === 0 ? 'No hay pedidos activos, pero encontramos tu información guardada' : null
+    });
+
+  } catch (error) {
+    console.error('Error looking up orders:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al buscar pedidos'
+    });
+  }
+});
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+/**
+ * Trigger Make.com webhook for instant phone notifications
+ * Configure MAKE_WEBHOOK_URL in environment variables
+ */
+async function triggerMakeWebhook(data) {
+  const webhookUrl = process.env.MAKE_WEBHOOK_URL;
+
+  if (!webhookUrl) {
+    console.log('ℹ️  Make.com webhook not configured (MAKE_WEBHOOK_URL not set)');
+    return { success: false, reason: 'webhook_not_configured' };
+  }
+
+  try {
+    console.log('📲 Triggering Make.com webhook for instant notification...');
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...data,
+        source: 'axkan_pedidos',
+        environment: process.env.NODE_ENV || 'development'
+      })
+    });
+
+    if (response.ok) {
+      console.log('✅ Make.com webhook triggered successfully');
+      return { success: true };
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Make.com webhook failed:', response.status, errorText);
+      return { success: false, error: errorText };
+    }
+  } catch (error) {
+    console.error('❌ Error triggering Make.com webhook:', error.message);
+    return { success: false, error: 'Error de conexión con webhook' };
+  }
+}
+
+async function sendAdminNotification(orderId, orderNumber, clientName, total, deposit, orderDetails = {}) {
+  try {
+    // Fetch complete order details from database
+    const orderResult = await query(`
+      SELECT
+        o.*,
+        c.name as client_name,
+        c.phone as client_phone,
+        c.email as client_email,
+        c.street as client_street,
+        c.street_number as client_street_number,
+        c.colonia as client_colonia,
+        c.city as client_city,
+        c.state as client_state,
+        c.postal as client_postal,
+        c.reference_notes as client_references,
+        json_agg(
+          json_build_object(
+            'product_name', oi.product_name,
+            'quantity', oi.quantity,
+            'unit_price', oi.unit_price,
+            'line_total', oi.quantity * oi.unit_price
+          )
+        ) FILTER (WHERE oi.id IS NOT NULL) as items
+      FROM orders o
+      LEFT JOIN clients c ON o.client_id = c.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE o.id = $1
+      GROUP BY o.id, c.name, c.phone, c.email, c.street, c.street_number, c.colonia, c.city, c.state, c.postal, c.reference_notes
+    `, [orderId]);
+
+    const order = orderResult.rows[0];
+    const items = order.items || [];
+
+    // Build items table HTML
+    const itemsTableRows = items.map(item => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.product_name}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.unit_price)}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.line_total)}</td>
+      </tr>
+    `).join('');
+
+    // Calculate remaining balance
+    const remainingBalance = total - deposit;
+
+    // Build full address
+    const fullAddress = [
+      order.client_street,
+      order.client_street_number,
+      order.client_colonia,
+      order.client_city,
+      order.client_state,
+      order.client_postal ? `CP ${order.client_postal}` : ''
+    ].filter(Boolean).join(', ');
+
+    const emailBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 650px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+          .header h1 { margin: 0; font-size: 24px; }
+          .badge { display: inline-block; background: #FEF3C7; color: #92400E; padding: 6px 14px; border-radius: 20px; font-weight: bold; margin-top: 10px; }
+          .content { background: white; padding: 25px; border: 1px solid #E5E7EB; }
+          .section { margin: 20px 0; padding: 15px; background: #F9FAFB; border-radius: 8px; }
+          .section-title { font-size: 14px; text-transform: uppercase; color: #6B7280; font-weight: bold; margin-bottom: 10px; letter-spacing: 0.5px; }
+          .info-row { display: flex; margin: 8px 0; }
+          .info-label { font-weight: bold; color: #374151; min-width: 120px; }
+          .info-value { color: #111827; }
+          .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+          .items-table th { background: #F3F4F6; padding: 12px 10px; text-align: left; font-size: 13px; text-transform: uppercase; color: #6B7280; }
+          .totals { background: #ECFDF5; padding: 15px; border-radius: 8px; margin: 20px 0; }
+          .total-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #D1FAE5; }
+          .total-row:last-child { border-bottom: none; font-size: 18px; font-weight: bold; color: #059669; }
+          .payment-info { background: #FEF3C7; padding: 15px; border-radius: 8px; border-left: 4px solid #F59E0B; }
+          .cta-button { display: inline-block; background: #059669; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; margin-top: 20px; }
+          .footer { background: #F3F4F6; padding: 15px; text-align: center; border-radius: 0 0 8px 8px; font-size: 12px; color: #6B7280; }
+          .receipt-image { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 2px solid #E5E7EB; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🛒 Nuevo Pedido Recibido</h1>
+            <div class="badge">Pendiente de Revisión</div>
+          </div>
+
+          <div class="content">
+            <!-- Order Info -->
+            <div class="section">
+              <div class="section-title">📋 Información del Pedido</div>
+              <div class="info-row">
+                <span class="info-label">Número:</span>
+                <span class="info-value"><strong>${orderNumber}</strong></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Fecha:</span>
+                <span class="info-value">${new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              </div>
+              ${order.event_type ? `
+              <div class="info-row">
+                <span class="info-label">Tipo de Evento:</span>
+                <span class="info-value">${order.event_type}</span>
+              </div>
+              ` : ''}
+              ${order.event_date ? `
+              <div class="info-row">
+                <span class="info-label">Fecha del Evento:</span>
+                <span class="info-value" style="color: #7C3AED; font-weight: bold;">${new Date(order.event_date).toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            <!-- Client Info -->
+            <div class="section">
+              <div class="section-title">👤 Datos del Cliente</div>
+              <div class="info-row">
+                <span class="info-label">Nombre:</span>
+                <span class="info-value">${escapeHtml(order.client_name)}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Teléfono:</span>
+                <span class="info-value">${order.client_phone}</span>
+              </div>
+              ${order.client_email ? `
+              <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">${order.client_email}</span>
+              </div>
+              ` : ''}
+              <div class="info-row">
+                <span class="info-label">Dirección:</span>
+                <span class="info-value">${fullAddress || 'No especificada'}</span>
+              </div>
+              ${order.client_references ? `
+              <div class="info-row">
+                <span class="info-label">Referencias:</span>
+                <span class="info-value">${order.client_references}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            <!-- Products -->
+            <div class="section-title" style="margin-top: 25px;">🎁 Productos</div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th style="text-align: center;">Cantidad</th>
+                  <th style="text-align: right;">Precio Unitario</th>
+                  <th style="text-align: right;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsTableRows}
+              </tbody>
+            </table>
+
+            <!-- Totals -->
+            <div class="totals">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>${formatCurrency(total)}</span>
+              </div>
+              <div class="total-row">
+                <span>Anticipo (${order.deposit_amount ? Math.round((deposit / total) * 100) : 50}%):</span>
+                <span>${formatCurrency(deposit)}</span>
+              </div>
+              <div class="total-row">
+                <span>Saldo Restante:</span>
+                <span style="color: #B45309;">${formatCurrency(remainingBalance)}</span>
+              </div>
+              <div class="total-row" style="margin-top: 10px; padding-top: 15px; border-top: 2px solid #059669;">
+                <span>TOTAL:</span>
+                <span>${formatCurrency(total)}</span>
+              </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="payment-info">
+              <div class="section-title" style="color: #92400E;">💳 Método de Pago</div>
+              <p style="margin: 5px 0;">
+                <strong>${order.payment_method === 'stripe' ? '💳 Tarjeta (Stripe)' : '🏦 Transferencia Bancaria'}</strong>
+              </p>
+              ${order.payment_proof_url && order.payment_proof_url.startsWith('https://') ? `
+              <p style="margin: 10px 0 5px;">Comprobante adjunto:</p>
+              <img src="${escapeHtml(order.payment_proof_url)}" alt="Comprobante de pago" class="receipt-image" style="max-height: 300px;">
+              ` : ''}
+            </div>
+
+            ${order.client_notes ? `
+            <div class="section" style="background: #FEF3C7;">
+              <div class="section-title" style="color: #92400E;">📝 Notas del Cliente</div>
+              <p style="margin: 5px 0;">${escapeHtml(order.client_notes)}</p>
+            </div>
+            ` : ''}
+
+            <div style="text-align: center;">
+              <a href="${process.env.ADMIN_DASHBOARD_URL || 'https://vt-souvenir-backend.onrender.com'}/admin/" class="cta-button">
+                Ver en Dashboard →
+              </a>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Este es un correo automático del sistema AXKAN Pedidos.</p>
+            <p>Recibido el ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'short' })}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Prepare attachments (receipt image if available)
+    const attachments = [];
+
+    // If there's a payment proof URL and it's a downloadable image, we could attach it
+    // For now, the image is embedded in the email via URL
+
+    // Send email to admin
+    const adminEmail = 'valenciaperezivan24@gmail.com';
+
+    await emailSender.sendEmail({
+      to: adminEmail,
+      subject: `🛒 Nuevo Pedido: ${orderNumber} - ${clientName}`,
+      html: emailBody,
+      attachments
+    });
+
+    console.log(`✅ Admin notification email sent to ${adminEmail} for order ${orderNumber}`);
+
+    // Also trigger Make.com webhook for instant phone notifications
+    await triggerMakeWebhook({
+      type: 'new_order',
+      orderNumber,
+      clientName,
+      clientPhone: order.client_phone,
+      total,
+      deposit,
+      paymentMethod: order.payment_method,
+      eventDate: order.event_date,
+      eventType: order.event_type,
+      itemCount: items.length,
+      itemsSummary: items.map(i => `${i.quantity}x ${i.product_name}`).join(', '),
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending admin notification:', error);
+    throw error;
+  }
+}
+
+async function sendPaymentProofNotification(orderId) {
+  const result = await query(
+    `SELECT o.order_number, c.name as client_name
+     FROM orders o
+     JOIN clients c ON o.client_id = c.id
+     WHERE o.id = $1`,
+    [orderId]
+  );
+
+  const order = result.rows[0];
+
+  await emailSender.sendEmail({
+    to: process.env.ADMIN_EMAIL || process.env.REPORT_RECIPIENTS,
+    subject: `💰 Comprobante de Pago: ${order.order_number}`,
+    html: `
+      <h2>Comprobante de Pago Recibido</h2>
+      <p>El cliente ${escapeHtml(order.client_name)} subió comprobante de pago para el pedido ${escapeHtml(order.order_number)}</p>
+      <p>Por favor verifica el pago en el dashboard.</p>
+    `
+  });
+}
+
+// ========================================
+// CLIENT ADDRESSES CRUD
+// ========================================
+
+/**
+ * GET /api/client/addresses
+ * List addresses for a client by phone+email query params
+ */
+router.get('/addresses', async (req, res) => {
+  try {
+    const { phone, email } = req.query;
+    if (!phone && !email) return res.status(400).json({ error: 'phone or email required' });
+
+    let client;
+    if (phone) {
+      client = await query('SELECT id FROM clients WHERE phone = $1 LIMIT 1', [phone]);
+    }
+    if ((!client || client.rows.length === 0) && email) {
+      client = await query('SELECT id FROM clients WHERE email = $1 LIMIT 1', [email]);
+    }
+    if (!client || client.rows.length === 0) return res.json({ success: true, addresses: [] });
+
+    const addresses = await query(
+      'SELECT * FROM client_addresses WHERE client_id = $1 ORDER BY is_default DESC, last_used_at DESC',
+      [client.rows[0].id]
+    );
+    res.json({ addresses: addresses.rows });
+  } catch (error) {
+    console.error('Error fetching addresses:', error);
+    res.status(500).json({ error: 'Error al obtener direcciones' });
+  }
+});
+
+/**
+ * POST /api/client/addresses
+ * Create a new address for a client
+ */
+router.post('/addresses', async (req, res) => {
+  try {
+    const b = req.body;
+    const street = b.street || null;
+    const streetNumVal = b.streetNumber || b.street_number || null;
+    const colonia = b.colonia || null;
+    const city = b.city || null;
+    const state = b.state || null;
+    const postalVal = b.postal || b.postal_code || null;
+    const refsVal = b.referenceNotes || b.references || b.reference_notes || null;
+    const isDefault = b.is_default || b.isDefault || false;
+    const phone = b.phone;
+    const email = b.email;
+
+    // Find client by phone (primary) or email (fallback)
+    let clientResult = await query('SELECT id FROM clients WHERE phone = $1 LIMIT 1', [phone]);
+    if (clientResult.rows.length === 0 && email) {
+      clientResult = await query('SELECT id FROM clients WHERE email = $1 LIMIT 1', [email]);
+    }
+
+    // If still not found, create the client
+    let clientId;
+    if (clientResult.rows.length === 0) {
+      const newClient = await query(
+        'INSERT INTO clients (phone, email, street, street_number, colonia, city, state, postal, reference_notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
+        [phone, email, street, streetNumVal, colonia, city, state, postalVal, refsVal]
+      );
+      clientId = newClient.rows[0].id;
+    } else {
+      clientId = clientResult.rows[0].id;
+    }
+
+    const label = [colonia || street, city].filter(Boolean).join(', ');
+
+    const existingCount = await query('SELECT COUNT(*) as c FROM client_addresses WHERE client_id = $1', [clientId]);
+    const shouldBeDefault = isDefault || parseInt(existingCount.rows[0].c) === 0;
+
+    // If marking as default, unmark others first
+    if (shouldBeDefault) {
+      await query('UPDATE client_addresses SET is_default = false WHERE client_id = $1', [clientId]);
+    }
+
+    const result = await query(`
+      INSERT INTO client_addresses (client_id, label, street, street_number, colonia, city, state, postal, reference_notes, is_default)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *
+    `, [clientId, label, street, streetNumVal, colonia, city, state, postalVal, refsVal, shouldBeDefault]);
+
+    res.json({ success: true, address: result.rows[0] });
+  } catch (error) {
+    console.error('Error creating address:', error);
+    res.status(500).json({ error: 'Error al crear dirección' });
+  }
+});
+
+/**
+ * PUT /api/client/addresses/:id
+ * Update an existing address
+ */
+router.put('/addresses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const b = req.body;
+    const street = b.street || null;
+    const streetNumVal = b.streetNumber || b.street_number || null;
+    const colonia = b.colonia || null;
+    const city = b.city || null;
+    const state = b.state || null;
+    const postalVal = b.postal || b.postal_code || null;
+    const refsVal = b.referenceNotes || b.references || b.reference_notes || null;
+    const isDefault = b.is_default || b.isDefault || false;
+    const label = [colonia || street, city].filter(Boolean).join(', ');
+
+    // If marking as default, unmark others first
+    if (isDefault) {
+      const addrRow = await query('SELECT client_id FROM client_addresses WHERE id = $1', [id]);
+      if (addrRow.rows.length > 0) {
+        await query('UPDATE client_addresses SET is_default = false WHERE client_id = $1', [addrRow.rows[0].client_id]);
+      }
+    }
+
+    const result = await query(`
+      UPDATE client_addresses SET street=$1, street_number=$2, colonia=$3, city=$4, state=$5, postal=$6, reference_notes=$7, label=$8, is_default=$9
+      WHERE id = $10 RETURNING *
+    `, [street, streetNumVal, colonia, city, state, postalVal, refsVal, label, isDefault, id]);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Address not found' });
+    res.json({ success: true, address: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating address:', error);
+    res.status(500).json({ error: 'Error al actualizar dirección' });
+  }
+});
+
+/**
+ * DELETE /api/client/addresses/:id
+ * Delete an address
+ */
+router.delete('/addresses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await query('DELETE FROM client_addresses WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting address:', error);
+    res.status(500).json({ error: 'Error al eliminar dirección' });
+  }
+});
+
+/**
+ * POST /api/client/addresses/:id/set-default
+ * Set an address as the default for its client
+ */
+router.post('/addresses/:id/set-default', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const addr = await query('SELECT client_id FROM client_addresses WHERE id = $1', [id]);
+    if (addr.rows.length === 0) return res.status(404).json({ error: 'Address not found' });
+
+    const clientId = addr.rows[0].client_id;
+    await query('UPDATE client_addresses SET is_default = false WHERE client_id = $1', [clientId]);
+    await query('UPDATE client_addresses SET is_default = true, last_used_at = NOW() WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error setting default address:', error);
+    res.status(500).json({ error: 'Error al establecer dirección predeterminada' });
+  }
+});
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+function getStatusText(status) {
+  const statusMap = {
+    'new': 'Nuevo',
+    'pending': 'Pendiente',
+    'design': 'En Diseño',
+    'printing': 'En Impresión',
+    'cutting': 'En Corte',
+    'counting': 'En Conteo',
+    'shipping': 'En Envío',
+    'delivered': 'Entregado',
+    'cancelled': 'Cancelado'
+  };
+  return statusMap[status] || status;
+}
+
+function getApprovalStatusText(approvalStatus) {
+  const statusMap = {
+    'pending_review': 'Pendiente de Revisión',
+    'approved': 'Aprobado',
+    'needs_changes': 'Requiere Cambios',
+    'rejected': 'Rechazado'
+  };
+  return statusMap[approvalStatus] || approvalStatus;
+}
+
+export default router;
