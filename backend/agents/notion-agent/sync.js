@@ -1,6 +1,7 @@
 import * as notionAgent from './index.js';
 import { query } from '../../shared/database.js';
 import { generateOrderNumber } from '../../shared/utils.js';
+import { log, logError } from '../../shared/logger.js';
 
 /**
  * Sync local order to Notion
@@ -77,7 +78,7 @@ export async function syncOrderToNotion(orderId) {
     if (order.notion_page_id) {
       // Update existing Notion page
       response = await notionAgent.updateOrder(order.notion_page_id, notionData);
-      console.log(`✅ Updated order ${order.order_number} in Notion`);
+      log('info', 'notionSync.syncToNotion.updated', { orderNumber: order.order_number });
     } else {
       // Create new Notion page
       response = await notionAgent.createOrder(notionData);
@@ -90,7 +91,7 @@ export async function syncOrderToNotion(orderId) {
         [response.notionPageId, response.notionPageUrl, orderId]
       );
 
-      console.log(`✅ Created order ${order.order_number} in Notion`);
+      log('info', 'notionSync.syncToNotion.created', { orderNumber: order.order_number });
     }
 
     return {
@@ -101,7 +102,7 @@ export async function syncOrderToNotion(orderId) {
     };
 
   } catch (error) {
-    console.error('❌ Error syncing order to Notion:', error);
+    logError('notionSync.syncToNotion.fail', error, { orderId });
     throw error;
   }
 }
@@ -147,7 +148,7 @@ export async function syncOrderFromNotion(notionPageId) {
         ]
       );
 
-      console.log(`✅ Updated local order from Notion: ${notionOrder.orderNumber}`);
+      log('info', 'notionSync.syncFromNotion.updated', { orderNumber: notionOrder.orderNumber });
 
       return {
         success: true,
@@ -155,7 +156,7 @@ export async function syncOrderFromNotion(notionPageId) {
         action: 'updated'
       };
     } else {
-      console.log('⚠️  Order not found locally, consider creating it');
+      log('warn', 'notionSync.syncFromNotion.notFoundLocally', { notionPageId });
       return {
         success: false,
         message: 'Order not found in local database'
@@ -163,7 +164,7 @@ export async function syncOrderFromNotion(notionPageId) {
     }
 
   } catch (error) {
-    console.error('❌ Error syncing order from Notion:', error);
+    logError('notionSync.syncFromNotion.fail', error, { notionPageId });
     throw error;
   }
 }
@@ -174,7 +175,7 @@ export async function syncOrderFromNotion(notionPageId) {
  */
 export async function syncAllOrdersToNotion(limit = 100) {
   try {
-    console.log(`🔄 Starting bulk sync of up to ${limit} orders to Notion...`);
+    log('info', 'notionSync.bulkSync.start', { limit });
 
     const result = await query(
       `SELECT id, order_number
@@ -209,12 +210,12 @@ export async function syncAllOrdersToNotion(limit = 100) {
       }
     }
 
-    console.log(`✅ Bulk sync complete: ${results.synced} synced, ${results.failed} failed`);
+    log('info', 'notionSync.bulkSync.ok', { synced: results.synced, failed: results.failed });
 
     return results;
 
   } catch (error) {
-    console.error('❌ Error in bulk sync:', error);
+    logError('notionSync.bulkSync.fail', error);
     throw error;
   }
 }
@@ -244,7 +245,7 @@ export async function syncStatusToNotion(orderId, newStatus) {
       [newStatus.toLowerCase(), orderId]
     );
 
-    console.log(`✅ Status updated to "${newStatus}" for order ${orderId}`);
+    log('info', 'notionSync.syncStatus.ok', { orderId, newStatus });
 
     return {
       success: true,
@@ -253,7 +254,7 @@ export async function syncStatusToNotion(orderId, newStatus) {
     };
 
   } catch (error) {
-    console.error('❌ Error syncing status:', error);
+    logError('notionSync.syncStatus.fail', error, { orderId });
     throw error;
   }
 }
@@ -387,7 +388,7 @@ export async function createOrderBothSystems(orderData, { skipNotion = false } =
 
     await query('COMMIT');
 
-    console.log(`✅ Order ${orderData.orderNumber} created in both systems`);
+    log('info', 'notionSync.createBoth.ok', { orderNumber: orderData.orderNumber });
 
     return {
       success: true,
@@ -399,7 +400,7 @@ export async function createOrderBothSystems(orderData, { skipNotion = false } =
 
   } catch (error) {
     await query('ROLLBACK');
-    console.error('❌ Error creating order:', error);
+    logError('notionSync.createBoth.fail', error);
     throw error;
   }
 }
