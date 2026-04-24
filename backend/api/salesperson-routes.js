@@ -8,6 +8,7 @@
 
 import { Router } from 'express';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = Router();
 
@@ -52,7 +53,7 @@ router.get('/salespeople', async (req, res) => {
       data: result.rows
     });
   } catch (error) {
-    console.error('Error fetching salespeople:', error);
+    logError('salesperson.error-fetching-salespeople', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -80,7 +81,7 @@ router.post('/salespeople', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Error creating salesperson:', error);
+    logError('salesperson.error-creating-salesperson', error);
     if (error.code === '23505') {
       return res.status(400).json({ success: false, error: 'A salesperson with this name already exists' });
     }
@@ -120,7 +121,7 @@ router.put('/salespeople/:id', async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
-    console.error('Error updating salesperson:', error);
+    logError('salesperson.error-updating-salesperson', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -149,7 +150,7 @@ router.delete('/salespeople/:id', async (req, res) => {
       message: 'Salesperson deactivated'
     });
   } catch (error) {
-    console.error('Error deleting salesperson:', error);
+    logError('salesperson.error-deleting-salesperson', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -221,7 +222,7 @@ router.get('/commissions', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching commissions:', error);
+    logError('salesperson.error-fetching-commissions', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -282,7 +283,7 @@ router.get('/commissions/monthly', async (req, res) => {
       data: result.rows
     });
   } catch (error) {
-    console.error('Error fetching monthly commissions:', error);
+    logError('salesperson.error-fetching-monthly-commissions', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -332,7 +333,7 @@ router.get('/commissions/:salesperson/orders', async (req, res) => {
       data: result.rows
     });
   } catch (error) {
-    console.error('Error fetching salesperson orders:', error);
+    logError('salesperson.error-fetching-salesperson-orders', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -350,7 +351,7 @@ router.get('/test/email-config', (req, res) => {
     ACTIVE_PROVIDER: process.env.RESEND_API_KEY ? 'resend' : (process.env.SENDGRID_API_KEY ? 'sendgrid' : 'smtp'),
   };
 
-  console.log('📋 Email Configuration Check:', config);
+  log('info', 'salesperson.email-configuration-check');
 
   res.json({
     success: true,
