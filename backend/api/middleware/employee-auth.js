@@ -5,10 +5,11 @@
 
 import jwt from 'jsonwebtoken';
 import { query } from '../../shared/database.js';
+import { log, logError } from '../../shared/logger.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-  console.error('CRITICAL: JWT_SECRET environment variable is not set! Employee auth will fail.');
+  log('error', 'employee-auth.critical-jwtsecret-environment-variable-is-not-set');
 }
 
 /**
@@ -72,7 +73,7 @@ export async function employeeAuth(req, res, next) {
     }
 
   } catch (error) {
-    console.error('Employee auth middleware error:', error);
+    logError('employee-auth.employee-auth-middleware-error', error);
     res.status(500).json({
       success: false,
       error: 'Error de autenticación'
@@ -191,7 +192,7 @@ export async function optionalAuth(req, res, next) {
     next();
 
   } catch (error) {
-    console.error('Optional auth error:', error);
+    logError('employee-auth.optional-auth-error', error);
     next();
   }
 }
@@ -231,7 +232,7 @@ export async function logActivity(employeeId, action, entityType = null, entityI
       [employeeId, action, entityType, entityId, details ? JSON.stringify(details) : null]
     );
   } catch (error) {
-    console.error('Failed to log activity:', error);
+    logError('employee-auth.failed-to-log-activity', error);
     // Don't throw - activity logging shouldn't break the main operation
   }
 }
