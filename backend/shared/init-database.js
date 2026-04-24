@@ -1,4 +1,5 @@
 import { query, testConnection, closePool } from './database.js';
+import { log, logError } from './logger.js';
 
 const createTablesSQL = `
 -- =====================================================
@@ -433,44 +434,32 @@ ORDER BY total_spent DESC;
 `;
 
 async function initializeDatabase() {
-  console.log('🚀 Initializing database...\n');
+  log('info', 'initDatabase.start');
 
   // Test connection
   const connected = await testConnection();
   if (!connected) {
-    console.error('❌ Failed to connect to database. Check your .env configuration.');
+    log('error', 'initDatabase.connectionFail');
     process.exit(1);
   }
 
   try {
     // Execute schema creation
-    console.log('📝 Creating tables and views...');
+    log('info', 'initDatabase.creatingTables');
     await query(createTablesSQL);
-    console.log('✅ Database schema created successfully!\n');
+    log('info', 'initDatabase.schemaCreated');
 
     // Insert sample data
-    console.log('📦 Inserting sample data...');
+    log('info', 'initDatabase.insertingSampleData');
     await insertSampleData();
 
-    console.log('\n✨ Database initialization complete!');
-    console.log('\nCreated tables:');
-    console.log('  - clients');
-    console.log('  - products');
-    console.log('  - orders (with client order fields)');
-    console.log('  - order_items');
-    console.log('  - production_tracking');
-    console.log('  - payments');
-    console.log('  - order_files');
-    console.log('  - reports_history');
-    console.log('  - analytics_cache');
-    console.log('\nCreated views:');
-    console.log('  - order_summary');
-    console.log('  - daily_revenue');
-    console.log('  - top_products');
-    console.log('  - top_clients');
+    log('info', 'initDatabase.complete', {
+      tables: ['clients', 'products', 'orders', 'order_items', 'production_tracking', 'payments', 'order_files', 'reports_history', 'analytics_cache'],
+      views: ['order_summary', 'daily_revenue', 'top_products', 'top_clients']
+    });
 
   } catch (error) {
-    console.error('❌ Error initializing database:', error);
+    logError('initDatabase.fail', error);
     throw error;
   } finally {
     await closePool();
@@ -497,7 +486,7 @@ async function insertSampleData() {
     ON CONFLICT DO NOTHING
   `);
 
-  console.log('  ✓ Sample data inserted');
+  log('info', 'initDatabase.sampleDataInserted');
 }
 
 // Run initialization
