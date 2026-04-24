@@ -16,6 +16,7 @@ import {
 } from '../services/quote-generator.js';
 import { query } from '../shared/database.js';
 import { calculateCustomPrice, getAllConfig } from '../services/pricing-engine.js';
+import { log, logError } from '../shared/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,7 +52,7 @@ router.post('/generate', async (req, res) => {
       });
     }
 
-    console.log(`📝 Generating quote for ${clientName || 'anonymous'} with ${items.length} items`);
+    log('info', 'quote.generating-quote-for-with-items');
 
     const result = await generateQuotePDF({
       clientName,
@@ -79,7 +80,7 @@ router.post('/generate', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error generating quote:', error);
+    logError('quote.error-generating-quote', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -107,7 +108,7 @@ router.post('/parse', async (req, res) => {
       });
     }
 
-    console.log(`🔍 Parsing quote request: "${text.substring(0, 50)}..."`);
+    log('info', 'quote.parsing-quote-request');
 
     const items = parseQuoteRequest(text);
 
@@ -138,7 +139,7 @@ router.post('/parse', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error parsing quote:', error);
+    logError('quote.error-parsing-quote', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -171,7 +172,7 @@ router.post('/generate-from-text', async (req, res) => {
       });
     }
 
-    console.log(`📝 Generating quote from text: "${text.substring(0, 50)}..."`);
+    log('info', 'quote.generating-quote-from-text');
 
     // Parse the text to extract items
     const items = parseQuoteRequest(text);
@@ -222,7 +223,7 @@ router.post('/generate-from-text', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error generating quote from text:', error);
+    logError('quote.error-generating-quote-from-text', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -242,7 +243,7 @@ router.get('/pricing', async (req, res) => {
       data: pricing
     });
   } catch (error) {
-    console.error('❌ Error getting pricing:', error);
+    logError('quote.error-getting-pricing', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener precios'
@@ -300,7 +301,7 @@ router.post('/save', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error saving quote:', error);
+    logError('quote.error-saving-quote', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -346,7 +347,7 @@ router.get('/list', async (req, res) => {
         data: []
       });
     }
-    console.error('❌ Error listing quotes:', error);
+    logError('quote.error-listing-quotes', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar cotizaciones'
@@ -377,7 +378,7 @@ router.post('/calculate-price', async (req, res) => {
 
     res.json({ success: true, data: result });
   } catch (error) {
-    console.error('Error calculating price:', error);
+    logError('quote.error-calculating-price', error);
     res.status(500).json({ success: false, error: 'Error al calcular precio' });
   }
 });
@@ -388,7 +389,7 @@ router.get('/pricing-config', async (req, res) => {
     const config = await getAllConfig();
     res.json({ success: true, data: config });
   } catch (error) {
-    console.error('Error fetching pricing config:', error);
+    logError('quote.error-fetching-pricing-config', error);
     res.status(500).json({ success: false, error: 'Error al obtener configuración' });
   }
 });
