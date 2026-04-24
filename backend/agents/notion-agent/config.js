@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
+import { log } from '../../shared/logger.js';
 
 config();
 
@@ -89,12 +90,12 @@ export const priorityOptions = [
 // Validate configuration
 export function validateConfig() {
   if (!notionConfig.auth) {
-    console.warn('⚠️  NOTION_API_TOKEN is not set - Notion integration disabled');
+    log('warn', 'notionConfig.validate.noToken');
     return false;
   }
 
   if (!notionConfig.ordersDatabase) {
-    console.warn('⚠️  NOTION_ORDERS_DATABASE_ID is not set - Notion integration disabled');
+    log('warn', 'notionConfig.validate.noDatabaseId');
     return false;
   }
 
