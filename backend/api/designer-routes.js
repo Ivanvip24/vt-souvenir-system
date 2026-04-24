@@ -6,6 +6,7 @@ import {
   createTask, completeTask, markCorrection
 } from '../services/designer-task-tracker.js';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = Router();
 
@@ -53,7 +54,7 @@ router.get('/designers', anyEmployeeAuth, async (req, res) => {
     const result = await query('SELECT * FROM designers WHERE is_active = true ORDER BY name');
     res.json({ success: true, designers: result.rows });
   } catch (err) {
-    console.error('Error fetching designers:', err.message);
+    logError('designer.error-fetching-designers', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -68,7 +69,7 @@ router.get('/daily-log/:designerId', anyEmployeeAuth, async (req, res) => {
     );
     res.json({ success: true, log: result.rows[0] || null });
   } catch (err) {
-    console.error('Error fetching daily log:', err.message);
+    logError('designer.error-fetching-daily-log', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -96,7 +97,7 @@ router.post('/daily-log', anyEmployeeAuth, async (req, res) => {
 
     res.json({ success: true, log: result.rows[0] });
   } catch (err) {
-    console.error('Error saving daily log:', err.message);
+    logError('designer.error-saving-daily-log', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -112,7 +113,7 @@ router.get('/pending', async (req, res) => {
     const tasks = await getPendingTasks();
     res.json({ success: true, tasks });
   } catch (err) {
-    console.error('Error fetching pending designer tasks:', err.message);
+    logError('designer.error-fetching-pending-designer-tasks', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -162,7 +163,7 @@ router.get('/all', async (req, res) => {
 
     res.json({ success: true, tasks: result.rows, total: parseInt(countResult.rows[0].count) });
   } catch (err) {
-    console.error('Error fetching all designer tasks:', err.message);
+    logError('designer.error-fetching-all-designer-tasks', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -173,7 +174,7 @@ router.get('/daily', async (req, res) => {
     const summary = await getDailySummary();
     res.json({ success: true, summary });
   } catch (err) {
-    console.error('Error fetching daily designer summary:', err.message);
+    logError('designer.error-fetching-daily-designer-summary', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -184,7 +185,7 @@ router.get('/weekly', async (req, res) => {
     const summary = await getWeeklySummary();
     res.json({ success: true, summary });
   } catch (err) {
-    console.error('Error fetching weekly designer summary:', err.message);
+    logError('designer.error-fetching-weekly-designer-summary', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -231,7 +232,7 @@ router.get('/stats', async (req, res) => {
       designers: perDesigner.rows
     });
   } catch (err) {
-    console.error('Error fetching designer stats:', err.message);
+    logError('designer.error-fetching-designer-stats', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -255,7 +256,7 @@ router.post('/create', async (req, res) => {
     });
     res.json({ success: true, task });
   } catch (err) {
-    console.error('Error creating designer task:', err.message);
+    logError('designer.error-creating-designer-task', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -266,7 +267,7 @@ router.post('/:id/complete', async (req, res) => {
     const task = await completeTask(parseInt(req.params.id));
     res.json({ success: true, task });
   } catch (err) {
-    console.error('Error completing designer task:', err.message);
+    logError('designer.error-completing-designer-task', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -278,7 +279,7 @@ router.post('/:id/correction', async (req, res) => {
     const result = await markCorrection(parseInt(req.params.id), pieceId || null, notes || null);
     res.json({ success: true, ...result });
   } catch (err) {
-    console.error('Error marking correction:', err.message);
+    logError('designer.error-marking-correction', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -289,7 +290,7 @@ router.post('/report/daily', async (req, res) => {
     const result = await triggerDailyReport();
     res.json({ success: true, ...result });
   } catch (err) {
-    console.error('Error triggering daily designer report:', err.message);
+    logError('designer.error-triggering-daily-designer-report', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -300,7 +301,7 @@ router.post('/report/weekly', async (req, res) => {
     const result = await triggerWeeklyReport();
     res.json({ success: true, ...result });
   } catch (err) {
-    console.error('Error triggering weekly designer report:', err.message);
+    logError('designer.error-triggering-weekly-designer-report', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -311,7 +312,7 @@ router.post('/follow-up', async (req, res) => {
     await sendDailyFollowUp();
     res.json({ success: true, message: 'Follow-up messages sent' });
   } catch (err) {
-    console.error('Error sending designer follow-ups:', err.message);
+    logError('designer.error-sending-designer-follow-ups', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -347,7 +348,7 @@ router.get('/daily-logs/:designerId', async (req, res) => {
       averages: averages.rows[0]
     });
   } catch (err) {
-    console.error('Error fetching daily logs history:', err.message);
+    logError('designer.error-fetching-daily-logs-history', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
