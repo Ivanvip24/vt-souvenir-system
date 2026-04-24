@@ -743,7 +743,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       ];
 
       const oaiMsgCount = sanitizedMessages.length;
-      const oaiMaxTokens = oaiMsgCount >= 8 ? 800 : 400;
+      const oaiMaxTokens = oaiMsgCount >= 4 ? 1200 : 600;
       const oaiResponse = await oai.chat.completions.create({
         model: currentModel,
         max_tokens: oaiMaxTokens,
@@ -755,7 +755,7 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       const client = getClient();
       // Use higher max_tokens when conversation is advanced (more likely to generate orders/quotes)
       const msgCount = sanitizedMessages.length;
-      const maxTokens = msgCount >= 8 ? 800 : 400;
+      const maxTokens = msgCount >= 4 ? 1200 : 600;
       const response = await client.messages.create({
         model: currentModel,
         max_tokens: maxTokens,
