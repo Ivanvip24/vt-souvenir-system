@@ -2,6 +2,7 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 import path from 'path';
 import fs from 'fs';
+import { log, logError } from '../shared/logger.js';
 
 /**
  * Google Drive Integration Module
@@ -47,10 +48,9 @@ function initializeDrive() {
 
     drive = google.drive({ version: 'v3', auth });
     isConfigured = true;
-    console.log('✅ Google Drive integration configured');
+    log('info', 'googleDrive.init.ok');
   } catch (error) {
-    console.log('⚠️  Google Drive not configured. Files will be stored locally.');
-    console.log('   To enable: Add google-drive-credentials.json and GOOGLE_DRIVE_FOLDER_ID to .env');
+    log('warn', 'googleDrive.init.notConfigured', { msg: 'Files will be stored locally' });
     isConfigured = false;
     drive = null;
   }
@@ -122,8 +122,7 @@ export async function uploadToGoogleDrive({ fileData, fileName, mimeType, folder
       fields: 'id, name, webViewLink, webContentLink, thumbnailLink',
     });
 
-    console.log(`✅ File uploaded to Google Drive: ${fileName}`);
-    console.log(`   File ID: ${file.data.id}`);
+    log('info', 'googleDrive.upload.ok', { fileName, fileId: file.data.id });
 
     return {
       success: true,
@@ -136,7 +135,7 @@ export async function uploadToGoogleDrive({ fileData, fileName, mimeType, folder
       directImageUrl: `https://drive.google.com/uc?export=view&id=${file.data.id}`,
     };
   } catch (error) {
-    console.error('❌ Error uploading to Google Drive:', error.message);
+    logError('googleDrive.upload.fail', error);
     throw error;
   }
 }
@@ -154,10 +153,10 @@ export async function deleteFromGoogleDrive(fileId) {
 
   try {
     await drive.files.delete({ fileId });
-    console.log(`✅ File deleted from Google Drive: ${fileId}`);
+    log('info', 'googleDrive.delete.ok', { fileId });
     return true;
   } catch (error) {
-    console.error('❌ Error deleting from Google Drive:', error.message);
+    logError('googleDrive.delete.fail', error);
     return false;
   }
 }
