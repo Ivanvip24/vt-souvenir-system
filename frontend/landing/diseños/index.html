@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diseños Premium | AXKAN — Galería de Diseños Mexicanos</title>
+  <meta name="description" content="Explora nuestra galería de diseños premium inspirados en México. Compra créditos para descargar archivos originales de alta resolución para tus proyectos.">
+
+  <link rel="preload" href="/fonts/rl-aqva-black.otf" as="font" type="font/otf" crossorigin>
+  <link rel="preload" href="/fonts/objektiv-vf.otf" as="font" type="font/otf" crossorigin>
+
+  <link rel="icon" type="image/png" href="../assets/LOGO-01.png">
+    <!-- @HEAD_COMMON -->
+
+  <meta property="og:title" content="AXKAN Diseños Premium — Galería de Arte Mexicano">
+  <meta property="og:description" content="Diseños premium inspirados en la cultura mexicana. Compra créditos para descargar originales en alta resolución.">
+  <meta property="og:image" content="/assets/LOGO-03.png">
+  <meta property="og:type" content="website">
+
+  <!-- Globe preloads -->
+  <link rel="preload" href="/landing/vendor/three.min.js" as="script" crossorigin>
+  <link rel="preload" href="/landing/vendor/topojson-client.min.js" as="script" crossorigin>
+  <link rel="preload" href="/globe-section.js" as="script">
+  <link rel="prefetch" href="https://unpkg.com/world-atlas@2/countries-110m.json" as="fetch" crossorigin>
+  <link rel="prefetch" href="/mexico-states.json" as="fetch">
+
+  <!-- Backend warm-up: preconnect cuts cold-start TLS handshake, early fetch starts
+       the designs/categories payload during HTML parse so init() doesn't wait. -->
+  <link rel="preconnect" href="https://vt-souvenir-backend.onrender.com" crossorigin>
+  <link rel="dns-prefetch" href="https://vt-souvenir-backend.onrender.com">
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+  <script>
+    (function () {
+      var base = 'https://vt-souvenir-backend.onrender.com/api/public/designs';
+      try {
+        window.__axkanDesignsPromise = fetch(base + '/', { credentials: 'omit' })
+          .then(function (r) { return r.ok ? r.json() : { designs: [] }; })
+          .catch(function () { return { designs: [] }; });
+        window.__axkanCategoriesPromise = fetch(base + '/categories', { credentials: 'omit' })
+          .then(function (r) { return r.ok ? r.json() : { categories: [] }; })
+          .catch(function () { return { categories: [] }; });
+      } catch (e) { /* no-op — init() will fall back to apiGet */ }
+    })();
+  </script>
+
+<style>
+@font-face {
+  font-family: 'RL AQVA';
+  src: url('/fonts/rl-aqva-black.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Objektiv';
+  src: url('/fonts/objektiv-vf.otf') format('opentype');
+  font-display: swap;
+}
+
+:root {
+  --rosa: #e72a88;
+  --rosa-mexicano: #e72a88;
+  --rosa-soft: #fdf0f6;
+  --rosa-glow: rgba(231, 42, 136, 0.12);
+  --ink: #1a1216;
+  --ink-mid: #4a3f44;
+  --ink-light: #8a7e83;
+  --sand: #f8f5f2;
+  --cream: #fffcfa;
+  --gold: #D4A574;
+  --verde: #8ab73b;
+  --cyan: #09adc2;
+  --naranja: #f39223;
+  --rojo: #e52421;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --font-display: 'RL AQVA', serif;
+  --font-body: 'Objektiv', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── PAGE TITLE ─────────────────────────── */
+
+.page-title {
+  padding: 100px 2rem 24px;
+  text-align: center;
+  background: var(--cream);
+}
+
+.page-title h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.page-title h1 span {
+  color: var(--rosa);
+}
+  animation: fadeSlideUp 0.6s ease 0.2s both;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══ 3D GLOBE / DESTINOS SECTION ═══ */
+.globe-section { padding: 8px 0 16px; background: #fafafa; color: #1f1f1f; position: relative; overflow: hidden; }
+.globe-nav { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 8px; padding: 0 5%; position: relative; z-index: 2; }
+.globe-nav-btn { font-family: var(--font-display); font-size: 0.75rem; padding: 0.4rem 1rem; border-radius: 100px; border: 1px solid #ddd; background: white; color: #666; cursor: pointer; transition: all 0.3s ease; }
+.globe-nav-btn:hover { border-color: var(--rosa-mexicano); color: var(--rosa-mexicano); }
+.globe-nav-btn.active { background: var(--rosa-mexicano); border-color: var(--rosa-mexicano); color: white; }
+.globe-nav-btn.hidden { display: none; }
+.globe-nav-separator { color: #ccc; display: flex; align-items: center; }
+.globe-nav-separator.hidden { display: none; }
+.globe-wrapper { position: relative; width: 100%; max-width: 380px; margin: 0 auto; aspect-ratio: 1; overflow: visible; }
+.globe-wrapper.hidden { display: none; }
+.globe-canvas-container { width: 100%; height: 100%; position: relative; overflow: visible; }
+.globe-canvas-container canvas { width: 100% !important; height: 100% !important; cursor: grab; display: block; }
+.globe-canvas-container canvas:active { cursor: grabbing; }
+.globe-cta { position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); z-index: 5; font-family: var(--font-display); font-size: 0.9rem; padding: 0.75rem 1.5rem; border-radius: 100px; border: 1px solid var(--rosa-mexicano); background: rgba(231, 42, 136, 0.2); color: white; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); animation: pulse-glow 2s ease-in-out infinite; }
+.globe-cta:hover { background: var(--rosa-mexicano); transform: translateX(-50%) scale(1.05); }
+@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(231, 42, 136, 0.3); } 50% { box-shadow: 0 0 40px rgba(231, 42, 136, 0.6); } }
+.mexico-map-view { display: none; width: 100%; max-width: 1320px; margin: 0 auto; position: relative; padding: 24px 3%; }
+.mexico-map-view.active { display: flex; align-items: center; gap: 24px; }
+.mexico-map-canvas-wrap { flex: 1 1 66%; min-width: 0; opacity: 0; transform: translateX(40px); animation: mapSlideLeft 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.05s forwards; }
+.mexico-map-canvas { width: 100%; cursor: pointer; border-radius: 16px; display: block; margin: 0 auto; }
+
+.mexico-states-list { flex: 0 1 360px; min-width: 0; max-height: 560px; overflow-y: auto; padding: 6px 6px 6px 2px; opacity: 0; transform: translateX(-40px); animation: listSlideRight 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.22s forwards; scrollbar-width: thin; scrollbar-color: rgba(231, 42, 136, 0.35) transparent; }
+.mexico-states-list::-webkit-scrollbar { width: 6px; }
+.mexico-states-list::-webkit-scrollbar-thumb { background: rgba(231, 42, 136, 0.35); border-radius: 10px; }
+.mexico-states-list .msl-header { display: flex; align-items: baseline; justify-content: space-between; padding: 0 6px 14px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 14px; }
+.mexico-states-list .msl-title { font-family: var(--font-display); font-size: 1.05rem; color: #1f1f1f; letter-spacing: 0.01em; }
+.mexico-states-list .msl-count { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #999; }
+.mexico-states-list .msl-items { display: flex; flex-direction: column; gap: 6px; }
+.mexico-states-list .msl-item { --pin-color: #e72a88; all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 18px 1fr auto auto; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.06); transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease; }
+.mexico-states-list .msl-item:hover, .mexico-states-list .msl-item:focus-visible { background: #fff; border-color: var(--pin-color); transform: translateX(4px); box-shadow: 0 8px 24px -14px var(--pin-color); }
+.mexico-states-list .msl-item:hover .msl-arrow, .mexico-states-list .msl-item:focus-visible .msl-arrow { transform: translateX(3px); opacity: 1; color: var(--pin-color); }
+.mexico-states-list .msl-pin { width: 12px; height: 12px; border-radius: 50%; background: var(--pin-color); box-shadow: 0 0 0 3px rgba(255,255,255,0.9), 0 2px 6px rgba(0,0,0,0.15); justify-self: center; }
+.mexico-states-list .msl-name { font-size: 0.95rem; font-weight: 600; color: #1f1f1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mexico-states-list .msl-badge { font-size: 0.72rem; font-weight: 700; color: #666; background: rgba(0,0,0,0.05); padding: 3px 9px; border-radius: 100px; letter-spacing: 0.02em; }
+.mexico-states-list .msl-arrow { font-size: 1rem; color: #bbb; opacity: 0.7; transition: transform 0.22s ease, color 0.22s ease, opacity 0.22s ease; }
+
+@keyframes mapSlideLeft { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes listSlideRight { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+.mexico-tooltip { position: fixed; background: rgba(255, 255, 255, 0.95); border: 1px solid var(--rosa-mexicano); border-radius: 10px; padding: 0.75rem 1rem; color: #1f1f1f; font-size: 0.85rem; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 100; max-width: 220px; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+.mexico-tooltip.visible { opacity: 1; }
+.mexico-tooltip h4 { font-family: var(--font-display); color: var(--rosa-mexicano); margin-bottom: 0.25rem; font-size: 0.95rem; }
+.mexico-tooltip p { color: #666; font-size: 0.8rem; line-height: 1.4; }
+.state-detail-panel { display: none; max-width: 1000px; margin: 0 auto; padding: 0 5%; }
+.state-detail-panel.active { display: block; animation: fadeInUp 0.6s ease forwards; }
+.state-detail-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 24px; }
+.state-detail-title { font-family: var(--font-display); font-size: 1.5rem; }
+.destinations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+.destination-card { background: white; border: 1px solid #eee; border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); text-decoration: none; color: #1f1f1f; display: block; }
+.destination-card:hover { border-color: var(--rosa-mexicano); transform: translateY(-6px); box-shadow: 0 12px 30px rgba(231, 42, 136, 0.15); }
+.destination-card .dest-img-wrap { position: relative; overflow: hidden; }
+.destination-card .dest-img-wrap::before { content: ''; position: absolute; inset: 0; background: url('/assets/axkan/JAGUAR.png') center/55% no-repeat; opacity: 0.55; z-index: 3; pointer-events: none; }
+.destination-card .dest-img-wrap::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.destination-card-image { width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block; pointer-events: none; -webkit-user-drag: none; user-select: none; filter: blur(0.8px); }
+.destination-card-info { padding: 1rem; }
+.destination-card-name { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 0.25rem; }
+.destination-card-state { font-size: 0.8rem; color: #888; }
+.globe-stats { display: flex; justify-content: center; gap: 32px; margin-top: 8px; padding: 0 5%; position: relative; z-index: 2; }
+.globe-stat { text-align: center; }
+.globe-stat-number { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--rosa-mexicano); display: block; }
+.globe-stat-label { font-size: 0.8rem; color: #888; }
+.globe-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1; }
+.globe-loading-sphere { width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #0a74d6, #0860b0); box-shadow: 0 0 80px rgba(10, 116, 214, 0.2); animation: float 4s ease-in-out infinite; position: relative; }
+.globe-loading-sphere::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), transparent 60%); }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 1024px) {
+  .globe-wrapper { max-width: 320px; }
+}
+
+/* ═══ DESTINATION CARDS SECTION ═══ */
+.dest-section { padding: 60px 2rem; background: var(--sand); }
+.dest-header { text-align: center; margin-bottom: 32px; }
+.dest-header h2 { font-family: var(--font-display); font-size: 2rem; font-weight: 700; }
+.dest-header p { color: var(--ink-light); margin-top: 8px; }
+.dest-search-wrap { max-width: 400px; margin: 0 auto 16px; }
+.dest-search-wrap input { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: var(--radius-md); font-size: 0.95rem; font-family: inherit; }
+.dest-search-wrap input:focus { outline: none; border-color: var(--rosa); }
+.dest-status { text-align: center; color: var(--ink-light); font-size: 0.85rem; margin-bottom: 24px; }
+.dest-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+.dest-card { background: white; border: 1px solid #eee; border-radius: var(--radius-md); overflow: hidden; text-decoration: none; color: var(--ink); transition: all 0.3s ease; display: block; }
+.dest-card:hover { border-color: var(--rosa); transform: translateY(-4px); box-shadow: 0 12px 30px rgba(231, 42, 136, 0.12); }
+.dest-img-wrap { position: relative; overflow: hidden; }
+.dest-img-wrap img { width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block; filter: blur(0.8px); }
+
+/* Watermark: clean jaguar */
+.dest-img-wrap::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 3;
+  background: url('/assets/axkan/JAGUAR.png') center/55% no-repeat;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.dest-img-wrap::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 2;
+  pointer-events: none;
+}
+
+.dest-count { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.6); color: white; font-size: 0.75rem; padding: 3px 8px; border-radius: 100px; z-index: 4; }
+.dest-card-info { padding: 12px 16px; }
+.dest-card-info h3 { font-size: 1rem; font-weight: 600; }
+
+@media (max-width: 768px) {
+  .dest-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .dest-section { padding: 40px 1rem; }
+}
+
+/* ── TOOLBAR ────────────────────────────── */
+
+.gallery-toolbar {
+  position: sticky;
+  top: 70px;
+  z-index: 50;
+  background: rgba(255,252,250,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: 0 2rem;
+  transition: box-shadow 0.3s ease;
+}
+
+.gallery-toolbar.toolbar--shadow {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+
+.toolbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 56px;
+}
+
+.toolbar-cats {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 8px 0;
+  flex: 1;
+}
+
+.toolbar-cats::-webkit-scrollbar { display: none; }
+
+.cat-tab {
+  flex-shrink: 0;
+  padding: 7px 18px;
+  border-radius: 100px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink-mid);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.cat-tab:hover {
+  background: var(--rosa-soft);
+  color: var(--rosa);
+}
+
+.cat-tab.active {
+  background: var(--rosa);
+  color: white;
+  border-color: var(--rosa);
+  box-shadow: 0 2px 10px rgba(231,42,136,0.25);
+}
+
+.toolbar-search {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.toolbar-search input {
+  width: 200px;
+  padding: 8px 14px 8px 36px;
+  border: 1.5px solid rgba(0,0,0,0.1);
+  border-radius: 100px;
+  background: white;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s ease, width 0.3s ease;
+}
+
+.toolbar-search input:focus {
+  border-color: var(--rosa);
+  width: 260px;
+}
+
+.toolbar-search input::placeholder {
+  color: var(--ink-light);
+}
+
+.toolbar-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--ink-light);
+  pointer-events: none;
+}
+
+/* ── USER BAR ───────────────────────────── */
+
+.user-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-login, .btn-subscribe, .btn-user {
+  padding: 7px 18px;
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-login {
+  background: transparent;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  color: var(--ink-mid);
+}
+
+.btn-login:hover {
+  border-color: var(--rosa);
+  color: var(--rosa);
+}
+
+.btn-subscribe {
+  background: var(--rosa);
+  color: white;
+}
+
+.btn-subscribe:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(231,42,136,0.35);
+}
+
+.btn-user {
+  background: var(--rosa-soft);
+  color: var(--rosa);
+  display: none;
+}
+
+.btn-user:hover {
+  background: var(--rosa);
+  color: white;
+}
+
+/* ── MAIN GALLERY ───────────────────────── */
+
+.gallery-main {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+
+.gallery-count {
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  margin-bottom: 1.25rem;
+}
+
+.gallery-count strong {
+  color: var(--ink);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ── DESIGN CARD ────────────────────────── */
+
+.design-card {
+  position: relative;
+  background: white;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.06);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.design-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+}
+
+.card-image-wrap {
+  position: relative;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: var(--sand);
+}
+
+.card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.design-card:hover .card-image-wrap img {
+  transform: scale(1.06);
+}
+
+/* Lock overlay for non-subscribers */
+.card-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26,18,22,0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.design-card:hover .card-lock-overlay {
+  opacity: 1;
+}
+
+.card-lock-overlay svg {
+  width: 28px;
+  height: 28px;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.card-lock-overlay span {
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Download button for subscribers */
+.card-download-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--rosa);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.3s ease, background 0.2s ease;
+  z-index: 2;
+}
+
+.design-card:hover .card-download-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-download-btn:hover {
+  background: #c51f72;
+}
+
+.card-download-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.card-body {
+  padding: 14px 16px 16px;
+}
+
+.card-category {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rosa);
+  margin-bottom: 4px;
+}
+
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.card-tag {
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--sand);
+  color: var(--ink-light);
+}
+
+/* ── EMPTY STATE ────────────────────────── */
+
+.gallery-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  display: none;
+}
+
+.gallery-empty svg {
+  width: 64px;
+  height: 64px;
+  color: var(--ink-light);
+  margin-bottom: 1rem;
+}
+
+.gallery-empty h3 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--ink-mid);
+  margin-bottom: 0.5rem;
+}
+
+.gallery-empty p {
+  color: var(--ink-light);
+  font-size: 0.9rem;
+}
+
+/* ── LOADING ────────────────────────────── */
+
+.gallery-loading {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--sand);
+  border-top-color: var(--rosa);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 0.85rem;
+  color: var(--ink-light);
+}
+
+/* ── CREDITS BANNER ────────────────────── */
+
+.subscribe-banner {
+  max-width: 1320px;
+  margin: 0 auto 3rem;
+  padding: 0 2rem;
+}
+
+.credits-section-inner {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.credits-section-inner h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.credits-section-inner h2 span {
+  color: var(--rosa);
+}
+
+.credits-section-inner p {
+  color: var(--ink-light);
+  font-size: 0.95rem;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.credit-packs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.credit-pack-card {
+  background: white;
+  border: 2px solid rgba(0,0,0,0.06);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  cursor: pointer;
+}
+
+.credit-pack-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+  border-color: var(--rosa);
+}
+
+.credit-pack-card.popular {
+  border-color: var(--rosa);
+  box-shadow: 0 8px 30px rgba(231,42,136,0.15);
+}
+
+.pack-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--rosa);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px 16px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pack-credits {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.pack-label {
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  margin-bottom: 1rem;
+}
+
+.pack-price {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+
+.pack-price small {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--ink-light);
+}
+
+.pack-per-credit {
+  font-size: 0.78rem;
+  color: var(--verde);
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.pack-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border-radius: 100px;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.credit-pack-card .pack-btn {
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.credit-pack-card.popular .pack-btn {
+  background: var(--rosa);
+  color: white;
+}
+
+.pack-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.credit-pack-card.popular .pack-btn:hover {
+  box-shadow: 0 4px 15px rgba(231,42,136,0.35);
+}
+
+/* Credit balance badge in toolbar */
+.credits-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  background: rgba(138,183,59,0.12);
+  color: var(--verde);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.credits-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.btn-subscribe-big {
+  padding: 14px 36px;
+  border-radius: 100px;
+  background: var(--rosa);
+  color: white;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+  display: none;
+}
+
+/* ── AUTH MODAL ─────────────────────────── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(26,18,22,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.modal-box {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  animation: modalIn 0.3s ease both;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--sand);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-mid);
+  transition: background 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #eee;
+}
+
+.modal-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+
+.modal-subtitle {
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  margin-bottom: 1.5rem;
+}
+
+.modal-form label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-mid);
+  margin-bottom: 4px;
+}
+
+.modal-form input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid rgba(0,0,0,0.1);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--ink);
+  outline: none;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.modal-form input:focus {
+  border-color: var(--rosa);
+}
+
+.modal-form .btn-submit {
+  width: 100%;
+  padding: 12px;
+  border-radius: 100px;
+  background: var(--rosa);
+  color: white;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-form .btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(231,42,136,0.35);
+}
+
+.modal-form .btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.modal-switch {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  color: var(--ink-light);
+}
+
+.modal-switch button {
+  background: none;
+  border: none;
+  color: var(--rosa);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+}
+
+.modal-switch button:hover {
+  text-decoration: underline;
+}
+
+.modal-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+
+/* ── RESPONSIVE ─────────────────────────── */
+
+@media (max-width: 768px) {
+  .page-title {
+    padding: 80px 1rem 16px;
+  }
+
+  .gallery-toolbar {
+    padding: 0 1rem;
+    top: 60px;
+  }
+
+  .toolbar-inner {
+    flex-wrap: wrap;
+    padding: 8px 0;
+  }
+
+  .toolbar-cats {
+    order: 2;
+    width: 100%;
+    padding-bottom: 8px;
+  }
+
+  .toolbar-search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toolbar-search input {
+    width: 100%;
+  }
+
+  .toolbar-search input:focus {
+    width: 100%;
+  }
+
+  .user-bar {
+    order: 1;
+  }
+
+  .gallery-main {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .subscribe-banner {
+    padding: 0 1rem;
+  }
+
+  .credit-packs-grid {
+    grid-template-columns: 1fr;
+    max-width: 340px;
+  }
+
+  .credit-pack-card.popular {
+    order: -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .globe-wrapper { max-width: 280px; padding: 0; }
+  .globe-stats { flex-wrap: wrap; gap: 16px; }
+  .globe-stat-number { font-size: 1.5rem; }
+  .destinations-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .globe-cta { display: none; }
+  .mexico-map-view { padding: 12px 3%; max-width: 100%; }
+  .mexico-map-view.active { flex-direction: column; gap: 18px; }
+  .mexico-map-canvas-wrap { flex: none; width: 100%; animation: fadeInUp 0.55s ease forwards; transform: none; }
+  .mexico-map-canvas { border-radius: 14px; }
+  .mexico-states-list { width: 100%; flex: none; max-height: none; overflow: visible; padding: 4px 2px 0; transform: translateY(-8px); animation: listSlideDown 0.55s cubic-bezier(0.22,1,0.36,1) 0.12s forwards; }
+  .mexico-states-list .msl-header { padding: 0 4px 10px; margin-bottom: 10px; }
+  .mexico-states-list .msl-items { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .mexico-states-list .msl-item { padding: 11px 12px; grid-template-columns: 14px 1fr auto; gap: 8px; }
+  .mexico-states-list .msl-item:hover { transform: none; }
+  .mexico-states-list .msl-arrow { display: none; }
+  .mexico-states-list .msl-name { font-size: 0.88rem; }
+  .mexico-states-list .msl-badge { padding: 2px 7px; font-size: 0.68rem; }
+@keyframes listSlideDown { from { opacity: 0; transform: translateY(-8px); max-height: 0; } to { opacity: 1; transform: translateY(0); max-height: 2000px; } }
+  .globe-section { padding: 4px 0 12px; }
+}
+
+@media (max-width: 480px) {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-bar .btn-subscribe {
+    display: none;
+  }
+}
+
+/* ── ANIMATIONS ─────────────────────────── */
+
+.design-card {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: cardIn 0.4s ease both;
+}
+
+.design-card:nth-child(1) { animation-delay: 0s; }
+.design-card:nth-child(2) { animation-delay: 0.05s; }
+.design-card:nth-child(3) { animation-delay: 0.1s; }
+.design-card:nth-child(4) { animation-delay: 0.15s; }
+.design-card:nth-child(5) { animation-delay: 0.2s; }
+.design-card:nth-child(6) { animation-delay: 0.25s; }
+.design-card:nth-child(7) { animation-delay: 0.3s; }
+.design-card:nth-child(8) { animation-delay: 0.35s; }
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+    <!-- @NAV -->
+
+    <!-- @MOBILE_MENU -->
+  <div class="page-title">
+    <h1>Diseños <span>AXKAN</span></h1>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       3D GLOBE SECTION
+       ════════════════════════════════════════ -->
+  <section class="globe-section" id="destinos">
+    <div class="globe-nav">
+        <button class="globe-nav-btn active" data-view="globe" id="nav-globe">Mundo</button>
+        <span class="globe-nav-separator hidden" id="nav-sep1">&rsaquo;</span>
+        <button class="globe-nav-btn hidden" data-view="country" id="nav-country"></button>
+        <span class="globe-nav-separator hidden" id="nav-sep2">&rsaquo;</span>
+        <button class="globe-nav-btn hidden" data-view="state" id="nav-state"></button>
+    </div>
+    <div id="globe-view" class="globe-wrapper">
+        <div id="globe-3d" class="globe-canvas-container">
+            <div class="globe-loading" id="globe-loading">
+                <div class="globe-loading-sphere"></div>
+            </div>
+        </div>
+        <button class="globe-cta" id="globe-explore-btn">Explorar M&eacute;xico &rarr;</button>
+    </div>
+    <div id="mexico-view" class="mexico-map-view">
+        <div class="mexico-map-canvas-wrap">
+            <canvas id="mexico-canvas" class="mexico-map-canvas"></canvas>
+        </div>
+        <aside id="mexico-states-list" class="mexico-states-list" aria-label="Estados con destinos"></aside>
+    </div>
+    <div id="mexico-tooltip" class="mexico-tooltip"></div>
+    <div id="state-view" class="state-detail-panel">
+        <div class="state-detail-header">
+            <h3 class="state-detail-title" id="state-name"></h3>
+        </div>
+        <div class="destinations-grid" id="state-destinations"></div>
+    </div>
+    <div class="globe-stats">
+        <div class="globe-stat">
+            <span class="globe-stat-number">233+</span>
+            <span class="globe-stat-label">Destinos</span>
+        </div>
+        <div class="globe-stat">
+            <span class="globe-stat-number">2</span>
+            <span class="globe-stat-label">Pa&iacute;ses</span>
+        </div>
+        <div class="globe-stat">
+            <span class="globe-stat-number">1000+</span>
+            <span class="globe-stat-label">Dise&ntilde;os</span>
+        </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       DESTINATION CARDS (dynamic from JSON)
+       ════════════════════════════════════════ -->
+  <div class="dest-section">
+    <div class="dest-header">
+        <h2>Diseños por <span style="color: var(--rosa);">Destino</span></h2>
+        <p>233+ destinos turísticos de México con diseños originales</p>
+    </div>
+    <div class="dest-search-wrap">
+        <input type="text" id="destSearch" placeholder="Buscar destino..." autocomplete="off">
+    </div>
+    <div class="dest-status" id="destStatus"></div>
+    <div class="dest-grid" id="destGrid"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TOOLBAR (sticky)
+       ════════════════════════════════════════ -->
+  <div class="gallery-toolbar" id="galleryToolbar">
+    <div class="toolbar-inner">
+      <div class="toolbar-search">
+        <svg class="toolbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Buscar diseños...">
+      </div>
+      <div class="toolbar-cats" id="categoryTabs"></div>
+      <div class="user-bar" id="userBar">
+        <button class="btn-login" id="btnLogin">Iniciar Sesión</button>
+        <button class="btn-subscribe" id="btnSubscribeSmall">Comprar Créditos</button>
+        <button class="btn-user" id="btnUser"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       GALLERY GRID
+       ════════════════════════════════════════ -->
+  <main class="gallery-main">
+    <p class="gallery-count" id="galleryCount"></p>
+    <div class="gallery-grid" id="galleryGrid"></div>
+
+    <div class="gallery-loading" id="galleryLoading">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Cargando diseños...</p>
+    </div>
+
+    <div class="gallery-empty" id="galleryEmpty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <h3>Sin resultados</h3>
+      <p>No encontramos diseños con esos filtros. Prueba otra búsqueda.</p>
+    </div>
+  </main>
+
+  <!-- ════════════════════════════════════════
+       SUBSCRIBE BANNER
+       ════════════════════════════════════════ -->
+  <section class="subscribe-banner" id="subscribeBanner">
+    <div class="credits-section-inner">
+      <h2>Compra <span>créditos</span> para descargar diseños</h2>
+      <p>Cada crédito te permite descargar 1 diseño original en alta resolución, sin marcas de agua.</p>
+    </div>
+    <div class="credit-packs-grid" id="creditPacksGrid">
+      <div class="credit-pack-card" data-pack="pack_10">
+        <div class="pack-credits">10</div>
+        <div class="pack-label">créditos</div>
+        <div class="pack-price">$99 <small>MXN</small></div>
+        <div class="pack-per-credit">$9.90 por diseño</div>
+        <button class="pack-btn" onclick="doPurchase('pack_10')">Comprar</button>
+      </div>
+      <div class="credit-pack-card popular" data-pack="pack_25">
+        <div class="pack-badge">Popular</div>
+        <div class="pack-credits">25</div>
+        <div class="pack-label">créditos</div>
+        <div class="pack-price">$199 <small>MXN</small></div>
+        <div class="pack-per-credit">$7.96 por diseño</div>
+        <button class="pack-btn" onclick="doPurchase('pack_25')">Comprar</button>
+      </div>
+      <div class="credit-pack-card" data-pack="pack_50">
+        <div class="pack-credits">50</div>
+        <div class="pack-label">créditos</div>
+        <div class="pack-price">$349 <small>MXN</small></div>
+        <div class="pack-per-credit">$6.98 por diseño</div>
+        <button class="pack-btn" onclick="doPurchase('pack_50')">Comprar</button>
+      </div>
+    </div>
+    <button class="btn-subscribe-big" id="btnSubscribeBig" style="display:none;"></button>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       AUTH MODAL
+       ════════════════════════════════════════ -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title" id="modalTitle">Iniciar Sesión</h2>
+      <p class="modal-subtitle" id="modalSubtitle">Accede a tu cuenta de AXKAN Diseños</p>
+      <div class="modal-error" id="modalError"></div>
+      <form class="modal-form" id="authForm">
+        <div id="nameField" style="display:none">
+          <label for="authName">Nombre</label>
+          <input type="text" id="authName" placeholder="Tu nombre">
+        </div>
+        <div>
+          <label for="authEmail">Correo Electrónico</label>
+          <input type="email" id="authEmail" placeholder="tu@correo.com" required>
+        </div>
+        <div>
+          <label for="authPassword">Contraseña</label>
+          <input type="password" id="authPassword" placeholder="Tu contraseña" required minlength="6">
+        </div>
+        <button type="submit" class="btn-submit" id="authSubmit">Iniciar Sesión</button>
+      </form>
+      <div class="modal-switch" id="modalSwitch">
+        <span id="switchText">¿No tienes cuenta? </span>
+        <button id="switchBtn">Crear cuenta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SHARED FOOTER
+       ════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="site-footer-content">
+      <div class="site-footer-brand">
+        <img src="/landing/assets/LETTERS.png" alt="AXKAN" style="height:40px;width:auto;">
+        <p>Souvenirs premium que capturan la esencia de México. Diseñado y producido con orgullo en México.</p>
+        <div class="site-footer-social">
+          <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
+          <a href="https://www.tiktok.com/@axkan_oficial" target="_blank" aria-label="TikTok"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.98a8.18 8.18 0 004.76 1.52V7.05a4.84 4.84 0 01-1-.36z"/></svg></a>
+          <a href="https://www.facebook.com/AxkanOficial" target="_blank" aria-label="Facebook"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+          <a href="https://wa.me/525538253251" target="_blank" aria-label="WhatsApp"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          <a href="https://www.youtube.com/@AxkanOficial" target="_blank" aria-label="YouTube"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+        </div>
+      </div>
+
+      <div class="site-footer-mega">
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Productos</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/productos/imanes-mdf">Imanes MDF</a></li>
+            <li><a href="/productos/llaveros-mdf">Llaveros MDF</a></li>
+            <li><a href="/productos/portallaves-mdf">Portallaves</a></li>
+            <li><a href="/productos/destapadores-mdf">Destapadores</a></li>
+            <li><a href="/productos/portarretratos-mdf">Portarretratos</a></li>
+            <li><a href="/productos" class="site-footer-see-all">Ver Todos →</a></li>
+          </ul>
+        </div>
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Diseños</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/diseños">Catálogo de Diseños</a></li>
+            <li><a href="/diseños/huasteca-potosina/historia">Huasteca Potosina</a></li>
+            <li><a href="/diseños/chichen-itza/historia">Chichén Itzá</a></li>
+          </ul>
+        </div>
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Formularios</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/cuestionario">Cuestionario Inicial</a></li>
+            <li><a href="/pedidos">Hacer Pedido</a></li>
+            <li><a href="/envio">Datos de Envío</a></li>
+            <li><a href="/midiseño">Mi Diseño</a></li>
+            <li><a href="/seguimiento">Seguimiento de Pedido</a></li>
+          </ul>
+        </div>
+        <div class="site-footer-mega-section">
+          <button class="site-footer-mega-toggle" onclick="this.parentElement.classList.toggle('open')">
+            <h4>Recursos</h4>
+            <svg class="site-footer-mega-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <ul class="site-footer-mega-list">
+            <li><a href="/faq">Preguntas Frecuentes</a></li>
+            <li><a href="/ubicacion">Ubicación</a></li>
+            <li><a href="/brand">Manual de Marca</a></li>
+            <li><a href="mailto:informacion@axkan.art">informacion@axkan.art</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="site-footer-bottom">
+      <span>© 2026 AXKAN. Souvenirs Premium de México. Todos los derechos reservados.</span>
+      <div class="site-footer-bottom-social">
+        <a href="https://instagram.com/axkanoficial" target="_blank" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg></a>
+        <a href="https://wa.me/525538253251" target="_blank" aria-label="WhatsApp"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ════════════════════════════════════════
+       APPLICATION LOGIC (Safe DOM — no innerHTML)
+       ════════════════════════════════════════ -->
+  <script>
+  (function() {
+    'use strict';
+
+    // ── Config ───────────────────────────────
+    var API_BASE = 'https://vt-souvenir-backend.onrender.com/api/public/designs';
+
+    // ── State ────────────────────────────────
+    var designs = [];
+    var categories = [];
+    var activeCategory = null;
+    var searchQuery = '';
+    var subscriber = null;
+    var token = localStorage.getItem('axkan_design_token') || null;
+    var isLoginMode = true;
+
+    // ── DOM References ───────────────────────
+    var galleryGrid = document.getElementById('galleryGrid');
+    var galleryLoading = document.getElementById('galleryLoading');
+    var galleryEmpty = document.getElementById('galleryEmpty');
+    var galleryCount = document.getElementById('galleryCount');
+    var categoryTabs = document.getElementById('categoryTabs');
+    var searchInput = document.getElementById('searchInput');
+    var authModal = document.getElementById('authModal');
+    var authForm = document.getElementById('authForm');
+    var modalTitle = document.getElementById('modalTitle');
+    var modalSubtitle = document.getElementById('modalSubtitle');
+    var modalError = document.getElementById('modalError');
+    var nameField = document.getElementById('nameField');
+    var switchText = document.getElementById('switchText');
+    var switchBtn = document.getElementById('switchBtn');
+    var authSubmit = document.getElementById('authSubmit');
+    var btnLogin = document.getElementById('btnLogin');
+    var btnSubscribeSmall = document.getElementById('btnSubscribeSmall');
+    var btnUser = document.getElementById('btnUser');
+    var btnSubscribeBig = document.getElementById('btnSubscribeBig');
+
+    // ── API Helpers ──────────────────────────
+
+    function apiGet(path) {
+      var headers = {};
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return fetch(API_BASE + path, { headers: headers })
+        .then(function(r) { return r.json(); });
+    }
+
+    function apiPost(path, body) {
+      var headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return fetch(API_BASE + path, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+      }).then(function(r) { return r.json(); });
+    }
+
+    // ── Category Tabs (safe DOM) ─────────────
+
+    function renderCategories() {
+      while (categoryTabs.firstChild) categoryTabs.removeChild(categoryTabs.firstChild);
+
+      var allTab = document.createElement('button');
+      allTab.className = 'cat-tab' + (activeCategory === null ? ' active' : '');
+      allTab.textContent = 'Todos';
+      allTab.addEventListener('click', function() {
+        activeCategory = null;
+        renderCategories();
+        renderDesigns();
+      });
+      categoryTabs.appendChild(allTab);
+
+      categories.forEach(function(cat) {
+        var tab = document.createElement('button');
+        tab.className = 'cat-tab' + (activeCategory === cat.id ? ' active' : '');
+        tab.textContent = cat.name;
+        tab.addEventListener('click', function() {
+          activeCategory = cat.id;
+          renderCategories();
+          renderDesigns();
+        });
+        categoryTabs.appendChild(tab);
+      });
+    }
+
+    // ── Design Cards (safe DOM) ──────────────
+
+    function createLockSVG() {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '2');
+      svg.setAttribute('stroke-linecap', 'round');
+      var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', '3');
+      rect.setAttribute('y', '11');
+      rect.setAttribute('width', '18');
+      rect.setAttribute('height', '11');
+      rect.setAttribute('rx', '2');
+      svg.appendChild(rect);
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M7 11V7a5 5 0 0110 0v4');
+      svg.appendChild(path);
+      return svg;
+    }
+
+    function createDownloadSVG() {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '2.5');
+      svg.setAttribute('stroke-linecap', 'round');
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4');
+      svg.appendChild(path);
+      var polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      polyline.setAttribute('points', '7 10 12 15 17 10');
+      svg.appendChild(polyline);
+      var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', '12');
+      line.setAttribute('y1', '15');
+      line.setAttribute('x2', '12');
+      line.setAttribute('y2', '3');
+      svg.appendChild(line);
+      return svg;
+    }
+
+    function createDesignCard(design) {
+      var card = document.createElement('div');
+      card.className = 'design-card';
+
+      // Image wrapper
+      var imageWrap = document.createElement('div');
+      imageWrap.className = 'card-image-wrap';
+
+      var img = document.createElement('img');
+      img.src = design.preview_url || '/assets/LOGO-01.png';
+      img.alt = design.name || 'Diseño AXKAN';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.setAttribute('fetchpriority', 'low');
+      imageWrap.appendChild(img);
+
+      var hasCredits = subscriber && subscriber.credits_balance > 0;
+
+      if (hasCredits) {
+        // Download button
+        var dlBtn = document.createElement('button');
+        dlBtn.className = 'card-download-btn';
+        dlBtn.style.display = 'flex';
+        dlBtn.title = 'Descargar original (1 crédito)';
+        dlBtn.appendChild(createDownloadSVG());
+        dlBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          downloadDesign(design.id);
+        });
+        imageWrap.appendChild(dlBtn);
+      } else {
+        // Lock overlay
+        var lockOverlay = document.createElement('div');
+        lockOverlay.className = 'card-lock-overlay';
+        lockOverlay.appendChild(createLockSVG());
+        var lockText = document.createElement('span');
+        lockText.textContent = 'Compra créditos para descargar';
+        lockOverlay.appendChild(lockText);
+        imageWrap.appendChild(lockOverlay);
+      }
+
+      card.appendChild(imageWrap);
+
+      // Card body
+      var body = document.createElement('div');
+      body.className = 'card-body';
+
+      var catLabel = document.createElement('div');
+      catLabel.className = 'card-category';
+      catLabel.textContent = design.category_name || 'Sin categoría';
+      body.appendChild(catLabel);
+
+      var title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = design.name || 'Diseño';
+      body.appendChild(title);
+
+      if (design.tags && design.tags.length > 0) {
+        var tagsWrap = document.createElement('div');
+        tagsWrap.className = 'card-tags';
+        var tagsToShow = design.tags.slice(0, 3);
+        tagsToShow.forEach(function(tagText) {
+          var tag = document.createElement('span');
+          tag.className = 'card-tag';
+          tag.textContent = tagText;
+          tagsWrap.appendChild(tag);
+        });
+        body.appendChild(tagsWrap);
+      }
+
+      card.appendChild(body);
+      return card;
+    }
+
+    // Chunked rendering — prevents main-thread jank when rendering 100s-1000s of cards.
+    // Renders in batches via requestIdleCallback (falls back to setTimeout). A monotonic
+    // token lets a fresh renderDesigns() call abort an in-flight chunked render.
+    var renderToken = 0;
+    var idle = window.requestIdleCallback || function (cb) { return setTimeout(function () { cb({ timeRemaining: function () { return 16; } }); }, 16); };
+
+    function renderDesigns() {
+      var filtered = designs.filter(function(d) {
+        if (activeCategory && d.category_id !== activeCategory) return false;
+        if (searchQuery) {
+          var q = searchQuery.toLowerCase();
+          var nameMatch = (d.name || '').toLowerCase().indexOf(q) !== -1;
+          var catMatch = (d.category_name || '').toLowerCase().indexOf(q) !== -1;
+          var tagMatch = (d.tags || []).some(function(t) {
+            return t.toLowerCase().indexOf(q) !== -1;
+          });
+          if (!nameMatch && !catMatch && !tagMatch) return false;
+        }
+        return true;
+      });
+
+      // Cancel any in-flight chunked render
+      renderToken++;
+      var myToken = renderToken;
+
+      // Clear grid
+      while (galleryGrid.firstChild) galleryGrid.removeChild(galleryGrid.firstChild);
+
+      if (filtered.length === 0) {
+        galleryEmpty.style.display = 'block';
+        galleryCount.textContent = '';
+        return;
+      }
+
+      galleryEmpty.style.display = 'none';
+      var countStrong = document.createElement('strong');
+      countStrong.textContent = filtered.length;
+      galleryCount.textContent = '';
+      galleryCount.appendChild(countStrong);
+      galleryCount.appendChild(document.createTextNode(
+        filtered.length === 1 ? ' diseño disponible' : ' diseños disponibles'
+      ));
+
+      // First batch renders synchronously so users see cards immediately;
+      // remaining cards trickle in via idle callbacks to keep 60fps.
+      var FIRST_BATCH = 48;
+      var CHUNK = 36;
+      var i = 0;
+      var firstEnd = Math.min(FIRST_BATCH, filtered.length);
+      var frag = document.createDocumentFragment();
+      for (; i < firstEnd; i++) frag.appendChild(createDesignCard(filtered[i]));
+      galleryGrid.appendChild(frag);
+
+      function renderChunk() {
+        if (myToken !== renderToken) return; // superseded
+        if (i >= filtered.length) return;
+        var end = Math.min(i + CHUNK, filtered.length);
+        var f = document.createDocumentFragment();
+        for (; i < end; i++) f.appendChild(createDesignCard(filtered[i]));
+        galleryGrid.appendChild(f);
+        if (i < filtered.length) idle(renderChunk);
+      }
+      if (i < filtered.length) idle(renderChunk);
+    }
+
+    // ── Download ─────────────────────────────
+
+    function downloadDesign(designId) {
+      if (!subscriber) {
+        showModal(false);
+        return;
+      }
+      if (subscriber.credits_balance < 1) {
+        var banner = document.getElementById('subscribeBanner');
+        if (banner) banner.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+
+      apiGet('/' + designId + '/download')
+        .then(function(data) {
+          if (data.error) {
+            if (data.credits_balance === 0) {
+              subscriber.credits_balance = 0;
+              updateUI();
+              var banner = document.getElementById('subscribeBanner');
+              if (banner) banner.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              alert(data.error);
+            }
+            return;
+          }
+          if (data.download_url) {
+            // Update local credit balance
+            if (typeof data.credits_remaining === 'number') {
+              subscriber.credits_balance = data.credits_remaining;
+              updateUI();
+            }
+            var a = document.createElement('a');
+            a.href = data.download_url;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        })
+        .catch(function() {
+          alert('Error al descargar. Inténtalo de nuevo.');
+        });
+    }
+
+    // ── Auth UI ──────────────────────────────
+
+    function updateUI() {
+      // Remove any existing credits badge
+      var existingBadge = document.getElementById('creditsBadge');
+      if (existingBadge) existingBadge.parentNode.removeChild(existingBadge);
+
+      if (subscriber) {
+        btnLogin.style.display = 'none';
+        btnUser.style.display = 'inline-flex';
+        btnUser.textContent = subscriber.name || subscriber.email.split('@')[0];
+
+        if (subscriber.credits_balance > 0) {
+          btnSubscribeSmall.style.display = 'none';
+          // Show credits badge
+          var badge = document.createElement('span');
+          badge.className = 'credits-badge';
+          badge.id = 'creditsBadge';
+          badge.textContent = subscriber.credits_balance + ' crédito' + (subscriber.credits_balance !== 1 ? 's' : '');
+          btnUser.parentNode.insertBefore(badge, btnUser);
+        } else {
+          btnSubscribeSmall.style.display = 'inline-flex';
+          btnSubscribeSmall.textContent = 'Comprar Créditos';
+        }
+      } else {
+        btnLogin.style.display = 'inline-flex';
+        btnSubscribeSmall.style.display = 'inline-flex';
+        btnUser.style.display = 'none';
+      }
+
+      // Always show credits banner (it's the pricing section)
+      document.getElementById('subscribeBanner').style.display = 'block';
+
+      // Re-render cards to update lock/download state
+      renderDesigns();
+    }
+
+    function showModal(login) {
+      isLoginMode = login;
+      if (login) {
+        modalTitle.textContent = 'Iniciar Sesión';
+        modalSubtitle.textContent = 'Accede a tu cuenta de AXKAN Diseños';
+        nameField.style.display = 'none';
+        authSubmit.textContent = 'Iniciar Sesión';
+        switchText.textContent = '¿No tienes cuenta? ';
+        switchBtn.textContent = 'Crear cuenta';
+      } else {
+        modalTitle.textContent = 'Crear Cuenta';
+        modalSubtitle.textContent = 'Regístrate para acceder a diseños premium';
+        nameField.style.display = 'block';
+        authSubmit.textContent = 'Crear Cuenta';
+        switchText.textContent = '¿Ya tienes cuenta? ';
+        switchBtn.textContent = 'Iniciar Sesión';
+      }
+      modalError.style.display = 'none';
+      authModal.classList.add('active');
+    }
+
+    function hideModal() {
+      authModal.classList.remove('active');
+      authForm.reset();
+      modalError.style.display = 'none';
+    }
+
+    // ── Auth Actions ─────────────────────────
+
+    function doAuth(e) {
+      e.preventDefault();
+      authSubmit.disabled = true;
+      modalError.style.display = 'none';
+
+      var email = document.getElementById('authEmail').value.trim();
+      var password = document.getElementById('authPassword').value;
+
+      if (isLoginMode) {
+        apiPost('/auth/login', { email: email, password: password })
+          .then(function(data) {
+            authSubmit.disabled = false;
+            if (data.error) {
+              modalError.textContent = data.error;
+              modalError.style.display = 'block';
+              return;
+            }
+            token = data.token;
+            subscriber = data.subscriber;
+            localStorage.setItem('axkan_design_token', token);
+            hideModal();
+            updateUI();
+          })
+          .catch(function() {
+            authSubmit.disabled = false;
+            modalError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+            modalError.style.display = 'block';
+          });
+      } else {
+        var name = document.getElementById('authName').value.trim();
+        apiPost('/auth/register', { email: email, password: password, name: name })
+          .then(function(data) {
+            authSubmit.disabled = false;
+            if (data.error) {
+              modalError.textContent = data.error;
+              modalError.style.display = 'block';
+              return;
+            }
+            token = data.token;
+            subscriber = data.subscriber;
+            localStorage.setItem('axkan_design_token', token);
+            hideModal();
+            updateUI();
+          })
+          .catch(function() {
+            authSubmit.disabled = false;
+            modalError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+            modalError.style.display = 'block';
+          });
+      }
+    }
+
+    // ── Credit Purchase ─────────────────────
+
+    // Expose globally for onclick handlers on pack cards
+    window.doPurchase = function(packKey) {
+      if (!subscriber) {
+        showModal(false);
+        return;
+      }
+      apiPost('/credits/purchase', { pack_key: packKey })
+        .then(function(data) {
+          if (data.checkout_url) {
+            window.location.href = data.checkout_url;
+          } else if (data.error) {
+            alert(data.error);
+          }
+        })
+        .catch(function() {
+          alert('Error al conectar con el servicio de pago.');
+        });
+    };
+
+    // ── Destination Cards (dynamic from JSON) ─
+
+    fetch('/destination-images.json')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var grid = document.getElementById('destGrid');
+        var slugs = Object.keys(data).sort();
+        var status = document.getElementById('destStatus');
+        status.textContent = 'Mostrando ' + slugs.length + ' destinos';
+
+        slugs.forEach(function(slug) {
+          var dest = data[slug];
+          var name = slug.split('-').map(function(w) {
+            return w.charAt(0).toUpperCase() + w.slice(1);
+          }).join(' ');
+
+          var card = document.createElement('a');
+          card.href = '/souvenirs/' + slug;
+          card.className = 'dest-card';
+          card.setAttribute('data-name', name.toLowerCase());
+
+          var imgWrap = document.createElement('div');
+          imgWrap.className = 'dest-img-wrap';
+
+          var img = document.createElement('img');
+          img.src = dest.hero;
+          img.alt = 'Diseños ' + name + ' — AXKAN';
+          img.loading = 'lazy';
+          img.draggable = false;
+          img.style.pointerEvents = 'none';
+          img.style.userSelect = 'none';
+
+          var count = document.createElement('span');
+          count.className = 'dest-count';
+          count.textContent = dest.products.length + ' diseños';
+
+          imgWrap.appendChild(img);
+          imgWrap.appendChild(count);
+
+          var info = document.createElement('div');
+          info.className = 'dest-card-info';
+
+          var h3 = document.createElement('h3');
+          h3.textContent = name;
+          info.appendChild(h3);
+
+          card.appendChild(imgWrap);
+          card.appendChild(info);
+          grid.appendChild(card);
+        });
+
+        // Search filter
+        document.getElementById('destSearch').addEventListener('input', function(e) {
+          var q = e.target.value.toLowerCase();
+          var cards = grid.querySelectorAll('.dest-card');
+          var shown = 0;
+          cards.forEach(function(c) {
+            var match = c.getAttribute('data-name').indexOf(q) !== -1;
+            c.style.display = match ? '' : 'none';
+            if (match) shown++;
+          });
+          status.textContent = 'Mostrando ' + shown + ' de ' + slugs.length + ' destinos';
+        });
+      });
+
+    // ── Right-click prevention on images ─────
+    document.addEventListener('contextmenu', function(e) {
+      if (e.target.tagName === 'IMG') {
+        e.preventDefault();
+      }
+    });
+
+    // ── Initialize ───────────────────────────
+
+    function init() {
+      // Check for credits purchase success/cancel
+      var urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('credits') === 'success') {
+        // Show success toast
+        var toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);background:var(--verde,#8ab73b);color:white;padding:12px 28px;border-radius:100px;font-weight:600;font-size:0.9rem;z-index:999;box-shadow:0 8px 30px rgba(0,0,0,0.15);animation:fadeSlideUp 0.4s ease both;';
+        toast.textContent = '¡Créditos agregados exitosamente!';
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; }, 4000);
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 4500);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
+      // Check existing token
+      if (token) {
+        apiGet('/auth/me')
+          .then(function(data) {
+            if (data.subscriber) {
+              subscriber = data.subscriber;
+            } else {
+              token = null;
+              localStorage.removeItem('axkan_design_token');
+            }
+            updateUI();
+          })
+          .catch(function() {
+            token = null;
+            localStorage.removeItem('axkan_design_token');
+            updateUI();
+          });
+      }
+
+      // Load categories — reuse head-prefetched promise if available
+      var catPromise = window.__axkanCategoriesPromise || apiGet('/categories');
+      catPromise
+        .then(function(data) {
+          categories = (data && data.categories) || [];
+          renderCategories();
+        })
+        .catch(function() {
+          categories = [];
+          renderCategories();
+        });
+
+      // Load designs — reuse head-prefetched promise if available (saves 1-3s)
+      galleryLoading.style.display = 'block';
+      var designsPromise = window.__axkanDesignsPromise || apiGet('/');
+      designsPromise
+        .then(function(data) {
+          galleryLoading.style.display = 'none';
+          designs = (data && data.designs) || [];
+          renderDesigns();
+        })
+        .catch(function() {
+          galleryLoading.style.display = 'none';
+          designs = [];
+          renderDesigns();
+        });
+    }
+
+    // ── Event Bindings ───────────────────────
+
+    btnLogin.addEventListener('click', function() { showModal(true); });
+    btnSubscribeSmall.addEventListener('click', function() {
+      var banner = document.getElementById('subscribeBanner');
+      if (banner) banner.scrollIntoView({ behavior: 'smooth' });
+    });
+    btnUser.addEventListener('click', function() {
+      // Log out
+      if (confirm('¿Cerrar sesión?')) {
+        token = null;
+        subscriber = null;
+        localStorage.removeItem('axkan_design_token');
+        updateUI();
+      }
+    });
+
+    document.getElementById('modalClose').addEventListener('click', hideModal);
+    authModal.addEventListener('click', function(e) {
+      if (e.target === authModal) hideModal();
+    });
+    switchBtn.addEventListener('click', function() {
+      showModal(!isLoginMode);
+    });
+    authForm.addEventListener('submit', doAuth);
+
+    // Search
+    var searchDebounce = null;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(function() {
+        searchQuery = searchInput.value.trim();
+        renderDesigns();
+      }, 300);
+    });
+
+    // Toolbar shadow
+    var toolbar = document.getElementById('galleryToolbar');
+    var heroSection = document.querySelector('.page-title');
+    if (toolbar && heroSection) {
+      var toolbarObserver = new IntersectionObserver(function(entries) {
+        toolbar.classList.toggle('toolbar--shadow', !entries[0].isIntersecting);
+      }, { threshold: 0 });
+      toolbarObserver.observe(heroSection);
+    }
+
+    init();
+  })();
+  </script>
+
+  <!-- Globe scripts -->
+  <script src="/landing/vendor/three.min.js"></script>
+  <script src="/landing/vendor/topojson-client.min.js"></script>
+  <script src="/globe-section.js?v=15"></script>
+
+  <script src="/landing/global-search.js" defer></script>
+<!-- @WHATSAPP -->
+</body>
+</html>
