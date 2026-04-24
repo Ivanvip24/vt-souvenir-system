@@ -15,6 +15,7 @@ import { generateProductImage, buildProductMockupPrompt } from '../services/gemi
 import { estimateHypotheticalCost, listAvailableMaterials } from '../services/pricing-engine.js';
 import { generateWeeklyInsights, getProductOpportunities } from '../services/rd-insights.js';
 import { loadBrandContent } from '../services/knowledge-ai.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -24,7 +25,7 @@ router.use(authMiddleware);
 // Enable pg_trgm extension for fuzzy text search (similarity function)
 // Safe to call repeatedly — only creates if not already present
 query('CREATE EXTENSION IF NOT EXISTS pg_trgm').catch(err => {
-  console.warn('⚠️ Could not enable pg_trgm extension:', err.message);
+  log('warn', 'ai-assistant.could-not-enable-pgtrgm-extension');
 });
 
 // =====================================================
@@ -283,7 +284,7 @@ function parseAIResponseForActions(response) {
     try {
       return JSON.parse(actionMatch[1]);
     } catch (e) {
-      console.error('Failed to parse action JSON:', e);
+      logError('ai-assistant.failed-to-parse-action-json', e);
     }
   }
   return null;
@@ -465,7 +466,7 @@ async function getBusinessContext() {
 
     return context;
   } catch (error) {
-    console.error('Error fetching business context:', error);
+    logError('ai-assistant.error-fetching-business-context', error);
     return {};
   }
 }
@@ -1227,7 +1228,7 @@ router.post('/chat', async (req, res) => {
       });
     }
 
-    console.log(`🤖 AI Assistant query: "${(message || '').substring(0, 50)}..."${images ? ` [${images.length} image(s)]` : ''}`);
+    log('info', 'ai-assistant.ai-assistant-query-images');
 
     // Get or create conversation history
     const conversationKey = sessionId || req.headers['x-session-id'] || 'default';
@@ -1303,10 +1304,10 @@ router.post('/chat', async (req, res) => {
         } catch (apiError) {
           const isOverloaded = apiError.status === 529 || apiError.status === 503;
           if (isOverloaded && attempt < maxRetries) {
-            console.log(`⏳ ${model} overloaded (attempt ${attempt}/${maxRetries}), retrying in ${attempt * 2}s...`);
+            log('info', 'ai-assistant.overloaded-attempt-retrying-in-s');
             await new Promise(r => setTimeout(r, attempt * 2000));
           } else if (isOverloaded && model !== models[models.length - 1]) {
-            console.log(`⏳ ${model} overloaded, falling back to next model...`);
+            log('info', 'ai-assistant.overloaded-falling-back-to-next-model');
             break; // Try next model
           } else {
             throw apiError;
@@ -1323,7 +1324,7 @@ router.post('/chat', async (req, res) => {
     let actionData = null;
 
     if (action) {
-      console.log('🎯 AI Action detected:', action.type);
+      log('info', 'ai-assistant.ai-action-detected');
 
       // Process the action and enrich with database data
       if (action.type === 'create_shipping_labels') {
@@ -1433,12 +1434,12 @@ router.post('/chat', async (req, res) => {
           };
 
           if (result.error) {
-            console.log(`⚠️ Price calculation issue: ${result.error}`);
+            log('info', 'ai-assistant.price-calculation-issue');
           } else {
-            console.log(`🧮 Price calculated: ${result.productName} x${result.quantity} = $${result.finalPrice}/pza (${result.scenario})`);
+            log('info', 'ai-assistant.price-calculated-x-pza');
           }
         } catch (calcError) {
-          console.error('Error calculating price:', calcError);
+          log('error', 'ai-assistant.debug');
           actionData = {
             type: 'calculate_price',
             data: {
@@ -1466,7 +1467,7 @@ router.post('/chat', async (req, res) => {
             ? messageItems : actionTextItems;
         }
 
-        console.log(`📝 Quote parse: action.text=${actionTextItems.length} items, message=${messageItems.length} items, using=${items === messageItems ? 'message' : 'action.text'}`);
+        log('info', 'ai-assistant.quote-parse-actiontext-items-message-items-using');
 
         if (items.length > 0) {
           try {
@@ -1503,9 +1504,9 @@ router.post('/chat', async (req, res) => {
               }
             };
 
-            console.log(`📄 Quote generated: ${result.quoteNumber} - Total: $${result.total}`);
+            log('info', 'ai-assistant.quote-generated-total');
           } catch (quoteError) {
-            console.error('Error generating quote PDF:', quoteError);
+            log('error', 'ai-assistant.debug');
             actionData = {
               type: 'generate_quote',
               data: {
@@ -1562,9 +1563,9 @@ router.post('/chat', async (req, res) => {
                 invalidItems: result.invalidItems
               });
 
-              console.log(`📄 Quote generated: ${result.quoteNumber} - Total: $${result.total}`);
+              log('info', 'ai-assistant.quote-generated-total');
             } catch (quoteError) {
-              console.error('Error generating quote PDF:', quoteError);
+              log('error', 'ai-assistant.debug');
               results.push({
                 success: false,
                 label: quoteSpec.label || `Opción ${results.length + 1}`,
@@ -1602,7 +1603,7 @@ router.post('/chat', async (req, res) => {
             needsClientInfo: true
           }
         };
-        console.log('🛒 Starting order creation wizard with products:', enrichedProducts);
+        log('info', 'ai-assistant.starting-order-creation-wizard-with-products');
       } else if (action.type === 'generate_catalog') {
         try {
           const { generateCatalogPDF, getCatalogUrl } = await import('../services/catalog-generator.js');
@@ -1617,9 +1618,9 @@ router.post('/chat', async (req, res) => {
               generatedAt: result.generatedAt
             }
           };
-          console.log(`📋 Catalog generated: ${result.filename}`);
+          log('info', 'ai-assistant.catalog-generated');
         } catch (catalogError) {
-          console.error('❌ Error generating catalog:', catalogError);
+          log('error', 'ai-assistant.debug');
           actionData = {
             type: 'generate_catalog',
             data: { success: false, error: catalogError.message || 'Error al generar el catálogo' }
@@ -1663,9 +1664,9 @@ router.post('/chat', async (req, res) => {
               includeIVA: result.includeIVA
             }
           };
-          console.log(`🧾 Branded receipt generated: ${result.receiptNumber} for ${receiptInput.clientName}`);
+          log('info', 'ai-assistant.branded-receipt-generated-for');
         } catch (receiptError) {
-          console.error('❌ Error generating branded receipt:', receiptError);
+          log('error', 'ai-assistant.debug');
           actionData = {
             type: 'generate_receipt',
             data: { success: false, error: receiptError.message || 'Error al generar el recibo' }
@@ -1693,12 +1694,12 @@ router.post('/chat', async (req, res) => {
             }
           };
           if (result.success) {
-            console.log(`🎨 Product image generated for: ${action.description}`);
+            log('info', 'ai-assistant.product-image-generated-for');
           } else {
-            console.log(`⚠️ Image generation failed: ${result.error}`);
+            log('info', 'ai-assistant.image-generation-failed');
           }
         } catch (imgErr) {
-          console.error('Error generating product image:', imgErr);
+          log('error', 'ai-assistant.debug');
           actionData = {
             type: 'generate_product_image',
             data: { success: false, error: 'Error al generar imagen: ' + (imgErr.message || 'Error interno') }
@@ -1718,9 +1719,9 @@ router.post('/chat', async (req, res) => {
             type: 'estimate_product_cost',
             data: estimate
           };
-          console.log(`🔬 Cost estimate: ${action.description} = $${estimate.estimatedCostPerUnit}/pza (${estimate.confidence} confidence)`);
+          log('info', 'ai-assistant.cost-estimate-pza-confidence');
         } catch (estErr) {
-          console.error('Error estimating product cost:', estErr);
+          log('error', 'ai-assistant.debug');
           actionData = {
             type: 'estimate_product_cost',
             data: { error: 'Error al estimar costo: ' + (estErr.message || 'Error interno') }
@@ -1738,7 +1739,7 @@ router.post('/chat', async (req, res) => {
                 clientId: clients[0].id
               }
             };
-            console.log(`📋 Opening payment notes for client: ${clients[0].name} (ID: ${clients[0].id})`);
+            log('info', 'ai-assistant.opening-payment-notes-for-client-id');
           } else if (clients.length > 1) {
             actionData = {
               type: 'open_payment_notes',
@@ -1776,7 +1777,7 @@ router.post('/chat', async (req, res) => {
       const isOrderCreation = orderCreationKeywords.some(kw => lowerMsg.includes(kw));
 
       if (isOrderCreation) {
-        console.log('🔧 Fallback: Detecting order creation intent from message');
+        log('info', 'ai-assistant.fallback-detecting-order-creation-intent-from-mess');
 
         // Extract quantity
         const qtyMatch = lowerMsg.match(/(\d+)\s*(imanes?|llaveros?|destapadores?|portallaves?|portarretratos?|portaretratos?|porta\s*retratos?|marcos?)/i);
@@ -1839,7 +1840,7 @@ router.post('/chat', async (req, res) => {
           }
         };
 
-        console.log('🛒 Fallback order creation:', actionData.data.products);
+        log('info', 'ai-assistant.fallback-order-creation');
       }
     }
 
@@ -1860,7 +1861,7 @@ router.post('/chat', async (req, res) => {
       const isCatalogRequest = catalogKeywords.some(kw => msgLower.includes(kw));
 
       if (isCatalogRequest) {
-        console.log('📋 Fallback: Detected catalog request from user message');
+        log('info', 'ai-assistant.fallback-detected-catalog-request-from-user-messag');
         try {
           const { generateCatalogPDF, getCatalogUrl } = await import('../services/catalog-generator.js');
           const result = await generateCatalogPDF();
@@ -1876,9 +1877,9 @@ router.post('/chat', async (req, res) => {
             }
           };
 
-          console.log(`📋 Fallback catalog generated: ${result.filename}`);
+          log('info', 'ai-assistant.fallback-catalog-generated');
         } catch (catalogError) {
-          console.error('❌ Fallback catalog error:', catalogError);
+          log('error', 'ai-assistant.debug');
           actionData = {
             type: 'generate_catalog',
             data: {
@@ -1985,7 +1986,7 @@ router.post('/chat', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ AI Assistant error:', error);
+    logError('ai-assistant.ai-assistant-error', error);
     const isOverloaded = error.status === 529 || error.status === 503;
     res.status(isOverloaded ? 503 : 500).json({
       success: false,
@@ -2308,7 +2309,7 @@ router.post('/mobile-chat', async (req, res) => {
       return res.status(500).json({ success: false, error: 'AI no configurado' });
     }
 
-    console.log(`📱 Mobile AI: "${message.substring(0, 50)}..."`);
+    log('info', 'ai-assistant.mobile-ai');
 
     // Get full business context (same as desktop) + brand knowledge
     const ctx = await getBusinessContext();
@@ -2346,7 +2347,7 @@ router.post('/mobile-chat', async (req, res) => {
       const toolResults = [];
 
       for (const toolBlock of toolBlocks) {
-        console.log(`  🔧 Tool: ${toolBlock.name}(${JSON.stringify(toolBlock.input)})`);
+        log('info', 'ai-assistant.tool');
         let result;
         try {
           result = await executeMobileTool(toolBlock.name, toolBlock.input);
@@ -2387,7 +2388,7 @@ router.post('/mobile-chat', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Mobile AI error:', error);
+    logError('ai-assistant.mobile-ai-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del asistente'
