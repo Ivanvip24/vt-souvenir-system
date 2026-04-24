@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Upload - Diagnóstico</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #059669;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #dc2626;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+        .warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 6px;
+            width: 100%;
+            background: white;
+        }
+        .log-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid transparent;
+        }
+        .log-success { border-color: #10b981; color: #86efac; }
+        .log-error { border-color: #ef4444; color: #fca5a5; }
+        .log-info { border-color: #3b82f6; color: #93bbfc; }
+        .log-warning { border-color: #f59e0b; color: #fcd34d; }
+        img.preview {
+            max-width: 200px;
+            margin: 10px 0;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico de Upload de Recibos</h1>
+
+        <div class="test-section">
+            <h2>1. Información del Sistema</h2>
+            <div id="system-info" class="status info">Cargando...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Test de Conectividad</h2>
+            <button onclick="testConnectivity()">Probar Conexión al Backend</button>
+            <div id="connectivity-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Test de Upload</h2>
+            <input type="file" id="test-file" accept="image/*">
+            <button onclick="testUpload()" id="upload-btn">Probar Upload</button>
+            <div id="upload-preview"></div>
+            <div id="upload-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Registro de Eventos</h2>
+            <button onclick="clearLogs()">Limpiar Logs</button>
+            <div id="log-container" class="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = 'https://vt-souvenir-backend.onrender.com/api/client';
+        const logs = [];
+
+        // Logging functions
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = { timestamp, message, type };
+            logs.push(entry);
+            updateLogDisplay();
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function updateLogDisplay() {
+            const container = document.getElementById('log-container');
+            container.innerHTML = logs.map(entry =>
+                `<div class="log-entry log-${entry.type}">
+                    [${entry.timestamp}] ${entry.message}
+                </div>`
+            ).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearLogs() {
+            logs.length = 0;
+            updateLogDisplay();
+        }
+
+        // System info
+        function displaySystemInfo() {
+            const info = {
+                'URL Actual': window.location.href,
+                'Host': window.location.hostname,
+                'Protocolo': window.location.protocol,
+                'User Agent': navigator.userAgent.substring(0, 100) + '...',
+                'API Backend': API_BASE,
+                'Cookies Habilitadas': navigator.cookieEnabled,
+                'Local Storage': typeof Storage !== 'undefined'
+            };
+
+            const infoHtml = Object.entries(info).map(([key, value]) =>
+                `<strong>${key}:</strong> ${value}`
+            ).join('<br>');
+
+            document.getElementById('system-info').innerHTML = infoHtml;
+            log('Sistema información cargada', 'info');
+        }
+
+        // Test connectivity
+        async function testConnectivity() {
+            const resultDiv = document.getElementById('connectivity-result');
+            resultDiv.innerHTML = '<div class="status info">Probando conexión...</div>';
+
+            log('Iniciando test de conectividad...', 'info');
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE.replace('/api/client', '/health')}`);
+                const responseTime = Date.now() - startTime;
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                resultDiv.innerHTML = `
+                    <div class="status success">
+                        ✅ Conexión exitosa<br>
+                        Tiempo de respuesta: ${responseTime}ms<br>
+                        Estado: ${data.status}<br>
+                        Base de datos: ${data.database}
+                    </div>
+                `;
+                log(`Conectividad OK - ${responseTime}ms`, 'success');
+
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Error de conexión<br>
+                        ${error.message}<br>
+                        <small>Verifica que el backend esté funcionando y accesible</small>
+                    </div>
+                `;
+                log(`Error de conectividad: ${error.message}`, 'error');
+            }
+        }
+
+        // Test upload
+        async function testUpload() {
+            const fileInput = document.getElementById('test-file');
+            const resultDiv = document.getElementById('upload-result');
+            const previewDiv = document.getElementById('upload-preview');
+            const uploadBtn = document.getElementById('upload-btn');
+
+            if (!fileInput.files[0]) {
+                alert('Por favor selecciona un archivo primero');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            log(`Archivo seleccionado: ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)`, 'info');
+
+            // Show preview
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewDiv.innerHTML = `<img src="${e.target.result}" class="preview" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Validate file
+            if (file.size > 10 * 1024 * 1024) {
+                resultDiv.innerHTML = '<div class="status error">❌ Archivo muy grande (máx 10MB)</div>';
+                log('Archivo excede tamaño máximo', 'error');
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            resultDiv.innerHTML = '<div class="status info">⏳ Subiendo archivo...</div>';
+
+            const formData = new FormData();
+            formData.append('receipt', file);
+
+            try {
+                log('Iniciando upload...', 'info');
+                const startTime = Date.now();
+
+                const response = await fetch(`${API_BASE}/upload/payment-receipt`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const uploadTime = Date.now() - startTime;
+                log(`Respuesta recibida en ${uploadTime}ms`, 'info');
+
+                const responseText = await response.text();
+                let data;
+
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    throw new Error(`Respuesta no es JSON válido: ${responseText.substring(0, 200)}`);
+                }
+
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Upload exitoso!<br>
+                            URL: <a href="${data.url}" target="_blank">${data.url}</a><br>
+                            Tiempo: ${uploadTime}ms<br>
+                            Public ID: ${data.publicId || 'N/A'}<br>
+                            Tamaño: ${data.fileSize ? (data.fileSize/1024).toFixed(2) + 'KB' : 'N/A'}
+                        </div>
+                    `;
+                    log(`Upload exitoso: ${data.url}`, 'success');
+                } else {
+                    throw new Error(data.error || 'Upload falló sin mensaje de error');
+                }
+
+            } catch (error) {
+                console.error('Upload error full details:', error);
+
+                let errorDetails = error.message;
+
+                // Check for CORS errors
+                if (error.message.includes('Failed to fetch')) {
+                    errorDetails += '<br><br>Posibles causas:<br>' +
+                        '• CORS bloqueado<br>' +
+                        '• Backend no accesible<br>' +
+                        '• Timeout de red';
+                }
+
+                // Check for Cloudinary errors
+                if (error.message.includes('cloud_name') || error.message.includes('api_key')) {
+                    errorDetails += '<br><br>⚠️ Problema con credenciales de Cloudinary';
+                }
+
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Error en upload<br>
+                        ${errorDetails}<br>
+                        <small>Revisa la consola del navegador para más detalles</small>
+                    </div>
+                `;
+                log(`Error upload: ${error.message}`, 'error');
+
+                // Log to browser console with full details
+                console.error('Full error object:', error);
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            displaySystemInfo();
+            log('Página de diagnóstico cargada', 'success');
+        });
+    </script>
+</body>
+</html>

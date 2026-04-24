@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJG9RMJWZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZJG9RMJWZS');
+  gtag('config', 'AW-17936818900');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>AXKAN - Souvenirs Personalizados</title>
+    <link rel="icon" type="image/png" href="/pedidos/favicon.png">
+    <link rel="preload" href="/fonts/rl-aqva-black.otf" as="font" type="font/otf" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+
+    <meta name="color-scheme" content="light">
+    <style>:root{color-scheme:light;}body{background:#fafafa;margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#1a1a1a;}</style>
+    <link rel="stylesheet" href="/pedidos/styles.css?v=4">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-scene">
+        <div class="bg-gradient"></div>
+        <div class="bg-orb bg-orb--rosa"></div>
+        <div class="bg-orb bg-orb--turquesa"></div>
+        <div class="bg-orb bg-orb--naranja"></div>
+        <div class="bg-orb bg-orb--verde"></div>
+        <div class="bg-mesh"></div>
+    </div>
+
+    <!-- Mobile Hamburger Menu -->
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
+
+    <nav class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-header">
+            <img src="/pedidos/logo.png" alt="AXKAN" class="mobile-menu-logo">
+            <button class="mobile-menu-close" onclick="closeMobileMenu()" aria-label="Cerrar menú">✕</button>
+        </div>
+
+        <div class="mobile-menu-content">
+            <a href="#" class="mobile-menu-item" onclick="closeMobileMenu(); document.getElementById('btn-lookup-orders').click();">
+                <span class="mobile-menu-icon">📦</span>
+                <span>Rastrear mi Pedido</span>
+            </a>
+
+            <a href="https://wa.me/5215538253251" target="_blank" class="mobile-menu-item">
+                <span class="mobile-menu-icon">💬</span>
+                <span>WhatsApp Iván</span>
+            </a>
+
+            <a href="https://wa.me/5215518942408" target="_blank" class="mobile-menu-item">
+                <span class="mobile-menu-icon">💬</span>
+                <span>WhatsApp Daniel</span>
+            </a>
+
+            <a href="https://vtanunciando.com" target="_blank" class="mobile-menu-item">
+                <span class="mobile-menu-icon">🛒</span>
+                <span>Ver Catálogo Completo</span>
+            </a>
+
+            <div class="mobile-menu-divider"></div>
+
+            <a href="#" class="mobile-menu-item" onclick="closeMobileMenu(); showTutorial();">
+                <span class="mobile-menu-icon">🎬</span>
+                <span>Ver Tutorial</span>
+            </a>
+
+            <a href="mailto:contacto@axkan.mx" class="mobile-menu-item">
+                <span class="mobile-menu-icon">✉️</span>
+                <span>Contacto por Email</span>
+            </a>
+        </div>
+
+        <div class="mobile-menu-footer">
+            <p>AXKAN - Souvenirs Personalizados</p>
+            <div class="mobile-menu-social">
+                <a href="https://instagram.com/axkan.mx" target="_blank" aria-label="Instagram">📸</a>
+                <a href="https://facebook.com/axkan.mx" target="_blank" aria-label="Facebook">👍</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-container">
+        <!-- Hamburger Button (mobile only) -->
+        <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Abrir menú">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+
+        <!-- STEP 1: Login/Account -->
+        <section id="step-login" class="step active">
+            <div class="progress-bar">
+                <div class="progress" style="width: 5%"></div>
+            </div>
+            <div class="step-indicator">Paso 1 de 4</div>
+
+            <div class="header">
+                <div class="logo">
+                    <a href="https://axkan.art"><img src="/pedidos/logo.png" alt="AXKAN Logo"></a>
+                </div>
+                <h1>Souvenirs Personalizados</h1>
+                <p class="subtitle">Imanes, Llaveros, Destapadores, Botones y más</p>
+            </div>
+
+            <!-- #2: Deposit explanation upfront -->
+            <div class="deposit-info-banner">
+                <div class="deposit-info-icon">💰</div>
+                <div class="deposit-info-text">
+                    <strong>¿Cómo funciona?</strong>
+                    <p>Pagas 50% de anticipo al hacer tu pedido y el resto cuando esté listo para enviarse</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Bienvenido</h2>
+                <p class="help-text">Ingresa tu teléfono y correo para comenzar</p>
+                <p class="required-legend">* Campo requerido</p>
+
+                <!-- Returning client welcome message (hidden by default, shown via JS) -->
+                <div id="returning-client-banner" class="returning-client-banner" style="display: none;">
+                    <div class="returning-icon">👋</div>
+                    <div class="returning-text">
+                        <strong>¡Bienvenido de nuevo, <span id="returning-client-name"></span>!</strong>
+                        <p>Tu información está guardada</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Número de Teléfono *</label>
+                    <input type="tel"
+                           id="phone"
+                           placeholder="5512345678"
+                           maxlength="10"
+                           pattern="[0-9]{10}"
+                           autocomplete="tel"
+                           aria-describedby="phone-hint phone-error"
+                           required>
+                    <span class="input-hint" id="phone-hint">10 dígitos, sin espacios</span>
+                    <span class="input-error" id="phone-error" role="alert"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-email">Correo Electrónico *</label>
+                    <input type="email"
+                           id="login-email"
+                           placeholder="tucorreo@ejemplo.com"
+                           autocomplete="email"
+                           aria-describedby="email-hint email-error"
+                           required>
+                    <span class="input-hint" id="email-hint">Usaremos este correo para confirmar tu pedido</span>
+                    <span class="input-error" id="email-error" role="alert"></span>
+                </div>
+
+                <button id="continue-phone" class="btn btn-primary btn-large">
+                    Ver Productos →
+                </button>
+
+            </div>
+        </section>
+
+        <!-- STEP 1.5: Confirm Client Data (for returning clients) -->
+        <section id="step-confirm" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 20%"></div>
+            </div>
+
+            <button class="btn-back" onclick="goBack()">← Atrás</button>
+
+            <div class="card">
+                <h2>Confirma tus Datos</h2>
+                <p class="help-text">¿La información que se muestra aquí corresponde con tus datos?</p>
+
+                <div class="info-box info-box-blue">
+                    <div class="icon">📦</div>
+                    <div>
+                        <strong>Esta información será usada para enviar tu pedido</strong>
+                        <p>Asegúrate que todo esté correcto antes de continuar</p>
+                    </div>
+                </div>
+
+                <div id="confirm-data-display" style="background: var(--gray-50); padding: 20px; border-radius: 12px; margin: 20px 0;">
+                    <!-- Data will be populated by JavaScript -->
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button id="edit-data-btn" class="btn btn-secondary" style="flex: 1;" onclick="editClientData()">
+                        ✏️ Modificar Datos
+                    </button>
+                    <button id="confirm-data-btn" class="btn btn-primary" style="flex: 2;">
+                        ✅ Datos Correctos, Continuar
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 2: Client Info (for new clients or edit) -->
+        <section id="step-info" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 25%"></div>
+            </div>
+            <div class="step-indicator">Paso 2 de 4</div>
+
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
+
+            <div class="card">
+                <h2>Tus Datos</h2>
+                <p class="help-text" id="info-help-text">Completa tu información</p>
+                <p class="required-legend">* Campo requerido</p>
+
+                <div class="form-group">
+                    <label for="client-name">Nombre Completo *</label>
+                    <input type="text"
+                           id="client-name"
+                           placeholder="María González"
+                           autocomplete="name"
+                           aria-describedby="client-name-error"
+                           required>
+                    <span class="input-error" id="client-name-error" role="alert"></span>
+                </div>
+
+                <!-- Email removed - already captured in Step 1 -->
+                <input type="hidden" id="client-email">
+
+                <!-- Delivery Address Warning -->
+                <div class="info-box info-box-warning">
+                    <div class="icon">📦</div>
+                    <div>
+                        <strong>Información de Envío</strong>
+                        <p>Esta dirección será usada para enviar tu pedido. <strong>Asegúrate de que todos los datos sean correctos</strong>, de lo contrario tu paquete no llegará a su destino.</p>
+                    </div>
+                </div>
+
+                <!-- Postal Code FIRST - auto-fills state, city, colonia -->
+                <div class="form-group">
+                    <label for="client-postal">Código Postal *</label>
+                    <input type="text"
+                           id="client-postal"
+                           placeholder="Ej: 03100"
+                           maxlength="5"
+                           pattern="[0-9]{5}"
+                           autocomplete="postal-code"
+                           inputmode="numeric"
+                           required>
+                    <span class="input-hint">📍 Ingresa 5 dígitos para llenar automáticamente estado, ciudad y colonia</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="client-state">Estado *</label>
+                        <input type="text"
+                               id="client-state"
+                               placeholder="Se llenará automáticamente"
+                               autocomplete="address-level1"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-city">Ciudad/Municipio *</label>
+                        <input type="text"
+                               id="client-city"
+                               placeholder="Se llenará automáticamente"
+                               autocomplete="address-level2"
+                               required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="client-colonia">Colonia *</label>
+                    <div id="colonia-container">
+                        <input type="text"
+                               id="client-colonia"
+                               placeholder="Se llenará automáticamente"
+                               required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label for="client-street">Calle *</label>
+                        <input type="text"
+                               id="client-street"
+                               placeholder="Ej: Av. Insurgentes Sur"
+                               autocomplete="address-line1"
+                               required>
+                        <span class="input-hint">Nombre de la calle</span>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="client-street-number">Número *</label>
+                        <input type="text"
+                               id="client-street-number"
+                               placeholder="Ej: 1234 int 5"
+                               required>
+                        <span class="input-hint">Exterior e interior</span>
+                    </div>
+                </div>
+                <!-- Keep hidden client-address for backward compatibility -->
+                <input type="hidden" id="client-address">
+
+                <div class="form-group">
+                    <label for="client-references">Referencias de Ubicación (opcional)</label>
+                    <textarea id="client-references"
+                              rows="2"
+                              maxlength="150"
+                              aria-describedby="references-counter"
+                              placeholder="Ej: Entre calle X y Y, edificio azul, portón negro"></textarea>
+                    <span class="input-hint" id="references-counter">0/150 caracteres</span>
+                </div>
+
+                <button id="continue-info" class="btn btn-primary btn-large">
+                    Elegir Productos →
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 3: Product Selection -->
+        <section id="step-products" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 50%"></div>
+            </div>
+            <div class="step-indicator">Paso 3 de 4</div>
+
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
+
+            <div class="sticky-header">
+                <h2>Selecciona tus Productos</h2>
+                <div class="order-total-mini">
+                    Total: <strong id="total-mini">$0.00</strong>
+                </div>
+            </div>
+
+            <!-- Promo Code Section -->
+            <div class="promo-code-section">
+                <div class="promo-code-container" id="promo-code-container">
+                    <div class="promo-code-input-group">
+                        <span class="promo-icon">🏷️</span>
+                        <input type="text"
+                               id="promo-code-input"
+                               placeholder="Código promocional"
+                               maxlength="6"
+                               autocomplete="off"
+                               style="text-transform: uppercase;">
+                        <button type="button" id="apply-promo-btn" class="btn-apply-promo" onclick="applyPromoCode()">
+                            Aplicar
+                        </button>
+                    </div>
+                    <span id="promo-code-message" class="promo-message"></span>
+                </div>
+                <!-- Applied promo banner (hidden by default) -->
+                <div id="promo-applied-banner" class="promo-applied-banner" style="display: none;">
+                    <div class="promo-applied-content">
+                        <span class="promo-check">✓</span>
+                        <div class="promo-applied-text">
+                            <strong>Descuento Aplicado</strong>
+                            <span id="promo-client-name"></span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-remove-promo" onclick="removePromoCode()">✕</button>
+                </div>
+            </div>
+
+            <!-- #10: Product Search/Filter -->
+            <div class="product-search-container">
+                <div class="product-search">
+                    <svg class="product-search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text"
+                           id="product-search-input"
+                           placeholder="Buscar productos..."
+                           autocomplete="off">
+                </div>
+            </div>
+
+            <div id="products-loading" class="loading">
+                <div class="spinner"></div>
+                <p>Cargando productos...</p>
+            </div>
+
+            <div class="category-tabs" id="categoryTabs"></div>
+
+            <div id="products-container" class="products-grid"></div>
+
+            <!-- Shipping indicator - shows free shipping progress -->
+            <div id="shipping-indicator" class="shipping-indicator"></div>
+
+            <!-- Sticky Cart Bar (fixed bottom) -->
+            <div class="cart-bar" id="cartBar" style="display:none">
+                <div class="cart-bar-left">
+                    <span class="cart-bar-icon">🛒</span>
+                    <span id="cartBarCount">0 productos</span>
+                    <span class="cart-bar-dot">&bull;</span>
+                    <span id="cartBarPieces">0 pzas</span>
+                </div>
+                <div class="cart-bar-right">
+                    <span class="cart-bar-total" id="cartBarTotal">$0</span>
+                    <button type="button" class="cart-bar-btn" id="cartBarContinue">Continuar &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Cart drawer removed — bottom bar shows all needed info -->
+
+            <!-- Hidden continue button for step navigation (used by handleProductsSubmit) -->
+            <button id="continue-products" style="display:none" disabled></button>
+        </section>
+
+        <!-- STEP 4A: Review Order & Choose Payment Method -->
+        <section id="step-review" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 80%"></div>
+            </div>
+            <div class="step-indicator">Paso 4 de 4</div>
+
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
+
+            <div class="card">
+                <h2>Confirma tu Pedido</h2>
+
+                <!-- Order Summary -->
+                <div class="order-summary-card">
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--gray-900);">Resumen de tu Pedido</h3>
+
+                    <div id="order-items-summary"></div>
+
+                    <div style="border-top: 2px solid var(--gray-200); margin-top: 16px; padding-top: 16px;">
+                        <div class="summary-row" style="margin-bottom: 8px;">
+                            <span style="font-size: 15px;">Subtotal:</span>
+                            <strong id="summary-subtotal" style="font-size: 15px;">$0.00</strong>
+                        </div>
+                        <div class="summary-row" style="margin-bottom: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 15px;">Envio:</span>
+                                <button type="button" id="pickup-toggle-summary" onclick="toggleStorePickup()"
+                                        style="font-size: 10px; padding: 4px 8px; border-radius: 12px; border: 1px solid #10b981; background: transparent; color: #10b981; cursor: pointer; white-space: nowrap;">
+                                    Recoger en tienda
+                                </button>
+                            </div>
+                            <strong id="summary-shipping" style="font-size: 15px;">$0.00</strong>
+                        </div>
+                        <div class="summary-row" style="margin-bottom: 12px; padding-top: 8px; border-top: 1px dashed var(--gray-300);">
+                            <span style="font-size: 16px; font-weight: 600;">Total:</span>
+                            <strong id="summary-total" style="font-size: 16px;">$0.00</strong>
+                        </div>
+                        <div class="summary-row" style="margin-bottom: 0;">
+                            <span style="font-size: 14px; color: var(--gray-500);">Anticipo (50%):</span>
+                            <strong id="summary-deposit" style="color: var(--primary); font-size: 15px;">$0.00</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden fields to maintain JS compatibility -->
+                <input type="hidden" id="payment-total">
+                <input type="hidden" id="payment-deposit">
+                <input type="hidden" id="summary-total-pay">
+
+                <h3 style="font-size: 15px; margin-top: 24px; margin-bottom: 12px; color: var(--gray-900);">Como deseas pagar?</h3>
+
+                <div class="payment-methods">
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="bank_transfer" checked>
+                        <div class="payment-card">
+                            <div class="payment-icon">🏦</div>
+                            <div class="payment-info">
+                                <strong>Transferencia Bancaria</strong>
+                                <p>SPEI, app bancaria o cajero</p>
+                            </div>
+                        </div>
+                    </label>
+
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="stripe">
+                        <div class="payment-card">
+                            <div class="payment-icon">💳</div>
+                            <div class="payment-info">
+                                <strong>Tarjeta de Credito/Debito</strong>
+                                <p>Pago seguro en linea</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Destination -->
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="order-destination" style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">
+                        📍 ¿Para qué destino es tu pedido?
+                    </label>
+                    <input type="text"
+                           id="order-destination"
+                           list="destination-options"
+                           placeholder="Ej: Cancún, CDMX, Oaxaca..."
+                           autocomplete="off"
+                           style="width: 100%; box-sizing: border-box;">
+                    <datalist id="destination-options">
+                        <option value="Cancún">
+                        <option value="CDMX">
+                        <option value="Oaxaca">
+                        <option value="Guanajuato">
+                        <option value="San Miguel de Allende">
+                        <option value="Guadalajara">
+                        <option value="Puerto Vallarta">
+                        <option value="Mérida">
+                        <option value="Los Cabos">
+                        <option value="Puebla">
+                        <option value="Huasteca Potosina">
+                        <option value="Tulum">
+                        <option value="Playa del Carmen">
+                        <option value="Querétaro">
+                        <option value="Mazatlán">
+                        <option value="Morelia">
+                        <option value="Chiapas">
+                        <option value="Acapulco">
+                        <option value="Monterrey">
+                        <option value="Zacatecas">
+                        <option value="Bacalar">
+                        <option value="Campeche">
+                        <option value="Chignahuapan">
+                        <option value="Cozumel">
+                        <option value="Cuetzalan">
+                        <option value="Puerto Escondido">
+                        <option value="Toluca">
+                        <option value="Zacatlán">
+                    </datalist>
+                </div>
+
+                <!-- Notes collapsible -->
+                <details class="notes-collapsible" style="margin-top: 20px;">
+                    <summary class="notes-summary">
+                        Agregar notas al pedido (opcional)
+                    </summary>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <textarea id="client-notes"
+                                  rows="3"
+                                  placeholder="Ej: Necesito que los llaveros tengan el nombre en color azul..."></textarea>
+                    </div>
+                </details>
+
+                <button id="continue-to-pay" class="btn btn-primary btn-large" style="margin-top: 24px;">
+                    Continuar al Pago →
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 4B: Payment Instructions -->
+        <section id="step-pay" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 88%"></div>
+            </div>
+            <div class="step-indicator">Paso 4 de 4 — Pago</div>
+
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
+
+            <div class="card">
+                <!-- Bank Transfer Instructions -->
+                <div id="bank-pay-section">
+                    <h2>Realiza tu Transferencia</h2>
+
+                    <!-- Amount to pay - prominent -->
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 152, 0, 0.1)); border-radius: 16px; margin-bottom: 24px;">
+                        <div style="font-size: 13px; color: var(--gray-500); margin-bottom: 6px;">Monto a depositar (anticipo 50%)</div>
+                        <strong id="bank-amount-preview" class="highlight-amount" style="font-size: 32px;"></strong>
+                    </div>
+
+                    <!-- SPEI Reference tip -->
+                    <div class="spei-tip" style="margin-bottom: 24px;">
+                        <span class="spei-icon">💡</span>
+                        <div>
+                            <strong>Importante:</strong> En el concepto/referencia de tu transferencia escribe <strong>tu numero de telefono</strong> para identificar tu pago mas rapido.
+                        </div>
+                    </div>
+
+                    <!-- Bank info tabs -->
+                    <div style="margin-bottom: 24px;">
+                        <div id="bank-tabs" style="display: flex; gap: 8px; margin-bottom: 16px;">
+                            <button type="button" class="bank-tab active" onclick="switchBankTab('spei')" id="tab-spei"
+                                    style="flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--primary); background: rgba(231, 42, 136, 0.1); color: var(--primary); font-weight: 600; font-size: 13px; cursor: pointer;">
+                                SPEI / App Bancaria
+                            </button>
+                            <button type="button" class="bank-tab" onclick="switchBankTab('deposit')" id="tab-deposit"
+                                    style="flex: 1; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--gray-300); background: transparent; color: var(--gray-500); font-weight: 600; font-size: 13px; cursor: pointer;">
+                                Cajero / Oxxo
+                            </button>
+                        </div>
+
+                        <!-- SPEI Tab Content -->
+                        <div id="bank-tab-spei" class="bank-info">
+                            <div class="info-row">
+                                <span>Banco:</span>
+                                <strong id="bank-name">BBVA</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Cuenta CLABE:</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <strong id="bank-account">012 180 01571714055 4</strong>
+                                    <button type="button" class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('012180015717140554', this)" aria-label="Copiar numero de cuenta">
+                                        📋 <span class="copy-text">Copiar</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <span>Titular:</span>
+                                <strong id="bank-holder">Ivan Valencia</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Monto:</span>
+                                <strong id="bank-amount" class="highlight-amount"></strong>
+                            </div>
+                        </div>
+
+                        <!-- Deposit Tab Content -->
+                        <div id="bank-tab-deposit" class="bank-info" style="display: none;">
+                            <div class="info-row">
+                                <span>Banco:</span>
+                                <strong>BBVA</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Tarjeta:</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <strong>4152 3138 4049 8567</strong>
+                                    <button type="button" class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('4152313840498567', this)" aria-label="Copiar numero de tarjeta">
+                                        📋 <span class="copy-text">Copiar</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <span>Titular:</span>
+                                <strong>Ivan Valencia</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Monto:</span>
+                                <strong id="card-amount" class="highlight-amount"></strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-ya-pague" class="btn btn-large btn-ya-pague">
+                        Ya pague →
+                    </button>
+                </div>
+
+                <!-- Stripe Payment Section -->
+                <div id="stripe-pay-section" style="display: none;">
+                    <h2>Pago con Tarjeta</h2>
+
+                    <!-- Return banner — appears ABOVE everything after clicking pay -->
+                    <div id="stripe-return-notice" class="stripe-return-banner" style="display: none;">
+                        <div class="stripe-return-icon">⚠️</div>
+                        <p class="stripe-return-title">¡REGRESA AQUÍ DESPUÉS DE PAGAR!</p>
+                        <p class="stripe-return-subtitle">Se abrió la ventana de pago. Cuando termines, vuelve a esta página y presiona el botón de abajo.</p>
+                        <button id="btn-ya-pague-stripe" class="btn btn-large btn-ya-pague">
+                            Ya pagué →
+                        </button>
+                    </div>
+
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(99, 91, 255, 0.1), rgba(79, 70, 229, 0.1)); border-radius: 16px; margin-bottom: 24px;">
+                        <div style="font-size: 13px; color: var(--gray-500); margin-bottom: 6px;">Monto a pagar (anticipo 50%)</div>
+                        <strong id="stripe-amount-preview" class="highlight-amount" style="font-size: 32px;"></strong>
+                    </div>
+
+                    <div id="stripe-payment-link" class="stripe-payment-container">
+                        <button type="button" id="stripe-pay-btn" class="btn btn-primary btn-large" style="background: linear-gradient(135deg, #635bff, #4f46e5);">
+                            💳 Pagar con Tarjeta →
+                        </button>
+                        <p style="text-align: center; font-size: 12px; color: var(--gray-600); margin-top: 10px;">
+                            Pago seguro en linea
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Hidden: keep for JS compatibility -->
+                <div id="bank-details" style="display: none;"></div>
+                <div id="bank-details-content" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- STEP 4C: Upload Proof -->
+        <section id="step-proof" class="step">
+            <div class="progress-bar">
+                <div class="progress" style="width: 95%"></div>
+            </div>
+            <div class="step-indicator">Paso 4 de 4 — Comprobante</div>
+
+            <button class="btn-back" onclick="goBack()" aria-label="Volver al paso anterior">← Atrás</button>
+
+            <div class="card" style="text-align: center;">
+                <h2>Sube tu Comprobante</h2>
+                <p class="help-text" style="margin-bottom: 24px;">
+                    Para confirmar tu pedido, sube la captura de pantalla o foto de tu comprobante de pago.
+                </p>
+
+                <!-- Large upload area -->
+                <div class="form-group">
+                    <div class="file-upload-area file-upload-area--large" id="proof-upload-area">
+                        <input type="file"
+                               id="payment-proof"
+                               accept="image/*,application/pdf"
+                               hidden>
+                        <div class="upload-prompt">
+                            <span class="upload-icon" style="font-size: 48px; display: block; margin-bottom: 12px;">📷</span>
+                            <p style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Toca para subir comprobante</p>
+                            <span class="file-hint">Imagen o PDF de tu comprobante de pago</span>
+                        </div>
+                        <div id="proof-preview" class="file-preview"></div>
+                    </div>
+                </div>
+
+                <p style="font-size: 12px; color: var(--gray-500); margin-top: 16px; margin-bottom: 24px;">
+                    Tu pedido NO se enviara hasta que subas el comprobante
+                </p>
+
+                <button id="submit-order" class="btn btn-primary btn-large" style="display: none;">
+                    <span id="submit-text">Enviar Pedido</span>
+                    <span id="submit-loader" class="hidden">
+                        <span class="spinner-small"></span> Enviando...
+                    </span>
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 5: Success -->
+        <section id="step-success" class="step">
+            <div class="success-container">
+
+                <!-- Animated confetti burst -->
+                <div class="success-confetti" aria-hidden="true">
+                    <span class="confetti-piece" style="--i:0"></span>
+                    <span class="confetti-piece" style="--i:1"></span>
+                    <span class="confetti-piece" style="--i:2"></span>
+                    <span class="confetti-piece" style="--i:3"></span>
+                    <span class="confetti-piece" style="--i:4"></span>
+                    <span class="confetti-piece" style="--i:5"></span>
+                    <span class="confetti-piece" style="--i:6"></span>
+                    <span class="confetti-piece" style="--i:7"></span>
+                    <span class="confetti-piece" style="--i:8"></span>
+                    <span class="confetti-piece" style="--i:9"></span>
+                    <span class="confetti-piece" style="--i:10"></span>
+                    <span class="confetti-piece" style="--i:11"></span>
+                </div>
+
+                <!-- Jaguar mark celebration -->
+                <div class="success-hero">
+                    <div class="success-checkmark">
+                        <svg class="checkmark-svg" viewBox="0 0 52 52">
+                            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                        </svg>
+                    </div>
+                    <h2 class="success-title">¡Pedido Enviado!</h2>
+                    <p class="success-subtitle">Tu pedido está en camino a hacerse realidad</p>
+                </div>
+
+                <!-- Order number card -->
+                <div class="success-order-card">
+                    <div class="success-order-card-label">Número de pedido</div>
+                    <div class="success-order-card-number" id="success-order-number"></div>
+                    <div class="success-order-card-divider"></div>
+                    <p id="email-confirmation-notice" class="success-order-card-email" style="display:none">
+                        Confirmación enviada a <strong id="success-email"></strong>
+                    </p>
+                </div>
+
+                <!-- Timeline: What happens next -->
+                <div class="success-timeline">
+                    <h3 class="success-timeline-title">¿Qué sigue?</h3>
+                    <div class="success-timeline-steps">
+                        <div class="timeline-step" style="--delay: 0.6s">
+                            <div class="timeline-step-icon" style="background: linear-gradient(135deg, #e72a88, #c91e73);">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            </div>
+                            <div class="timeline-step-content">
+                                <strong>Confirmación por correo</strong>
+                                <span>Recibirás un resumen de tu pedido</span>
+                            </div>
+                        </div>
+                        <div class="timeline-step" style="--delay: 0.8s">
+                            <div class="timeline-step-icon" style="background: linear-gradient(135deg, #09adc2, #0891a6);">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </div>
+                            <div class="timeline-step-content">
+                                <strong>Revisión de tu pedido</strong>
+                                <span>Verificamos tu comprobante y datos</span>
+                            </div>
+                        </div>
+                        <div class="timeline-step" style="--delay: 1.0s">
+                            <div class="timeline-step-icon" style="background: linear-gradient(135deg, #8ab73b, #6d9e2a);">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </div>
+                            <div class="timeline-step-content">
+                                <strong>Te contactamos</strong>
+                                <span>Para confirmar diseño y detalles</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="success-actions">
+                    <button onclick="window.location.reload()" class="btn-success-primary">
+                        Hacer Otro Pedido
+                    </button>
+                    <div class="success-whatsapp-group">
+                        <p class="success-whatsapp-label">¿Tienes preguntas? Escríbenos</p>
+                        <div class="success-whatsapp-buttons">
+                            <a href="https://wa.me/5215538253251" target="whatsapp-chat" class="btn-whatsapp">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                Iván
+                            </a>
+                            <a href="https://wa.me/5215518942408" target="whatsapp-chat" class="btn-whatsapp">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                Daniel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AXKAN brand footer -->
+                <div class="success-brand-footer">
+                    <img src="/pedidos/logo.png" alt="AXKAN" class="success-brand-logo">
+                    <p class="success-brand-tagline">Recuerdos Hechos Souvenir</p>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Client Order Lookup Modal -->
+    <div id="client-lookup-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+        <div style="min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px;">
+            <div class="card" style="max-width: 600px; width: 100%; margin: 0; position: relative;">
+                <button onclick="closeClientLookup()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 32px; cursor: pointer; color: #6b7280; line-height: 1;">×</button>
+
+                <h2 style="margin-bottom: 8px;">📞 Buscar Mis Pedidos</h2>
+                <p class="help-text" style="margin-bottom: 24px;">Ingresa tu teléfono y correo para ver tus pedidos activos</p>
+
+                <div class="form-group">
+                    <label for="lookup-phone">Teléfono <span style="color: var(--primary);">*</span></label>
+                    <input type="tel" id="lookup-phone" placeholder="5512345678" maxlength="10" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="lookup-email">Correo Electrónico <span style="color: var(--primary);">*</span></label>
+                    <input type="email" id="lookup-email" placeholder="cliente@ejemplo.com" required>
+                </div>
+
+                <button onclick="lookupClientOrders()" class="btn btn-primary btn-large">
+                    🔍 Buscar Mis Pedidos
+                </button>
+
+                <!-- Loading State -->
+                <div id="lookup-loading" style="display: none; text-align: center; margin-top: 24px;">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p style="margin-top: 12px; color: #6b7280;">Buscando pedidos...</p>
+                </div>
+
+                <!-- Results Container -->
+                <div id="lookup-results" style="display: none; margin-top: 24px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
+                    <h3 style="margin-bottom: 16px; font-size: 18px; color: #111827;">Pedidos Encontrados</h3>
+                    <div id="lookup-orders-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tutorial Video Popup -->
+    <div id="tutorial-popup" class="tutorial-overlay">
+        <div class="tutorial-modal">
+            <button class="tutorial-close" id="tutorial-close-btn" aria-label="Cerrar tutorial">✕</button>
+            <div class="tutorial-header">
+                <span class="tutorial-badge">Tutorial</span>
+                <h3 class="tutorial-title">¿Cómo hacer tu pedido?</h3>
+                <p class="tutorial-subtitle">Mira este video antes de empezar</p>
+            </div>
+            <div class="tutorial-video-wrap">
+                <video id="tutorial-video"
+                       controls
+                       playsinline
+                       autoplay
+                       muted
+                       preload="auto"
+                       poster="./logo.png">
+                    <source src="/pedidos/tutorial.mp4" type="video/mp4">
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .tutorial-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            animation: tutorialFadeIn 0.3s ease;
+        }
+        .tutorial-overlay.hidden {
+            display: none;
+        }
+        @keyframes tutorialFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .tutorial-modal {
+            background: #fff;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 320px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            animation: tutorialSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes tutorialSlideUp {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .tutorial-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.08);
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+        .tutorial-close:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+        .tutorial-header {
+            padding: 14px 14px 8px;
+            text-align: center;
+        }
+        .tutorial-badge {
+            display: inline-block;
+            background: #e72a88;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 100px;
+            margin-bottom: 6px;
+        }
+        .tutorial-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #111;
+            margin: 0 0 2px;
+        }
+        .tutorial-subtitle {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+        }
+        .tutorial-video-wrap {
+            padding: 0 10px 10px;
+        }
+        .tutorial-video-wrap video {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+            background: #000;
+        }
+    </style>
+
+    <script>
+    (function() {
+        var popup = document.getElementById('tutorial-popup');
+        var closeBtn = document.getElementById('tutorial-close-btn');
+        var video = document.getElementById('tutorial-video');
+
+        function closePopup() {
+            if (video) { video.pause(); }
+            popup.classList.add('hidden');
+        }
+
+        closeBtn.addEventListener('click', closePopup);
+
+        popup.addEventListener('click', function(e) {
+            if (e.target === popup) closePopup();
+        });
+    })();
+    </script>
+
+    <script src="/shared/address-cards.js?v=1" defer></script>
+    <script src="/pedidos/order-form.js?v=2"></script>
+
+    <!-- Mobile Menu Script -->
+    <script>
+    function toggleMobileMenu() {
+        const menu = document.getElementById('mobile-menu');
+        const overlay = document.getElementById('mobile-menu-overlay');
+        const hamburger = document.getElementById('hamburger-btn');
+
+        menu.classList.toggle('active');
+        overlay.classList.toggle('active');
+        hamburger.classList.toggle('active');
+
+        // Prevent body scroll when menu is open
+        if (menu.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+
+    function closeMobileMenu() {
+        const menu = document.getElementById('mobile-menu');
+        const overlay = document.getElementById('mobile-menu-overlay');
+        const hamburger = document.getElementById('hamburger-btn');
+
+        menu.classList.remove('active');
+        overlay.classList.remove('active');
+        hamburger.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function showTutorial() {
+        const popup = document.getElementById('tutorial-popup');
+        const video = document.getElementById('tutorial-video');
+        popup.classList.remove('hidden');
+        if (video) {
+            video.currentTime = 0;
+            video.play().catch(() => {}); // Ignore autoplay errors
+        }
+    }
+
+    // Close menu on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeMobileMenu();
+        }
+    });
+
+    // Close menu on window resize if switching to desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            closeMobileMenu();
+        }
+    });
+    </script>
+</body>
+</html>
+<!-- Trigger Vercel redeploy Sun Dec  7 22:38:36 CST 2025 -->
