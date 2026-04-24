@@ -10,6 +10,7 @@ import { uploadImage } from '../shared/cloudinary-config.js';
 import { analyzeReceiptFromBase64, matchItemsToMaterials } from '../services/claude-receipt-analyzer.js';
 import { authMiddleware } from './admin-routes.js';
 import { isHeicFile, convertHeicToJpeg } from '../shared/heic-utils.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -45,7 +46,7 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
   try {
     // Check if Anthropic API key is configured
     if (!process.env.ANTHROPIC_API_KEY) {
-      console.error('❌ ANTHROPIC_API_KEY not configured');
+      log('error', 'receipt.anthropicapikey-not-configured');
       return res.status(500).json({
         success: false,
         error: 'El servicio de análisis de recibos no está configurado. Falta la clave API de Anthropic.'
@@ -59,8 +60,8 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
       });
     }
 
-    console.log(`📤 Processing receipt: ${req.file.originalname} (${req.file.size} bytes)`);
-    console.log(`📄 File type: ${req.file.mimetype}`);
+    log('info', 'receipt.processing-receipt-bytes');
+    log('info', 'receipt.file-type');
 
     // Get existing materials for matching
     const materialsResult = await query(`
@@ -76,7 +77,7 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
 
     // Convert HEIC to JPEG if needed
     if (isHeicFile(req.file)) {
-      console.log('🔄 Converting HEIC to JPEG...');
+      log('info', 'receipt.converting-heic-to-jpeg');
       const converted = await convertHeicToJpeg(fileBuffer);
       fileBuffer = converted.buffer;
       fileMimetype = converted.mimetype;
@@ -87,7 +88,7 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
 
     // Handle PDF files - upload to Cloudinary first and get image version
     if (fileMimetype === 'application/pdf') {
-      console.log('📄 PDF detected - converting to image via Cloudinary...');
+      log('info', 'receipt.pdf-detected-converting-to-image-via-cloudinary');
 
       try {
         // Upload PDF to Cloudinary
@@ -108,14 +109,14 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
           });
         });
 
-        console.log('✅ PDF uploaded to Cloudinary:', uploadResult.secure_url);
+        log('info', 'receipt.pdf-uploaded-to-cloudinary');
 
         // Get the image version of the PDF (first page as JPG)
         const imageUrl = uploadResult.secure_url
           .replace('/upload/', '/upload/f_jpg,pg_1/')
           .replace('.pdf', '.jpg');
 
-        console.log('🖼️ Fetching image version:', imageUrl);
+        log('info', 'receipt.fetching-image-version');
 
         // Fetch the converted image
         const fetch = (await import('node-fetch')).default;
@@ -129,10 +130,10 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
         base64Data = imageBuffer.toString('base64');
         mediaType = 'image/jpeg';
 
-        console.log('✅ PDF converted to image successfully');
+        log('info', 'receipt.pdf-converted-to-image-successfully');
 
       } catch (pdfError) {
-        console.error('❌ PDF conversion failed:', pdfError.message);
+        log('error', 'receipt.debug');
         return res.status(400).json({
           success: false,
           error: 'No se pudo procesar el PDF. Por favor sube una imagen (JPG, PNG) del recibo.'
@@ -174,7 +175,7 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
     try {
       cloudinaryResult = await uploadImage(dataURI, 'supplier-receipts', publicId);
     } catch (uploadError) {
-      console.warn('⚠️ Cloudinary upload failed, continuing without image storage:', uploadError.message);
+      log('warn', 'receipt.cloudinary-upload-failed-continuing-without-image-');
     }
 
     res.json({
@@ -189,7 +190,7 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Receipt analysis error:', error);
+    logError('receipt.receipt-analysis-error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -334,7 +335,7 @@ router.post('/save', async (req, res) => {
 
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('❌ Error saving receipt:', error);
+    logError('receipt.error-saving-receipt', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -395,7 +396,7 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching receipts:', error);
+    logError('receipt.error-fetching-receipts', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -449,7 +450,7 @@ router.get('/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching receipt:', error);
+    logError('receipt.error-fetching-receipt', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -480,7 +481,7 @@ router.get('/suppliers/list', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching suppliers:', error);
+    logError('receipt.error-fetching-suppliers', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -523,7 +524,7 @@ router.delete('/:id', async (req, res) => {
 
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Error deleting receipt:', error);
+    logError('receipt.error-deleting-receipt', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
