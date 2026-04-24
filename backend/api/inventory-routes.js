@@ -10,6 +10,7 @@ import BOMManager from '../agents/inventory/bom-manager.js';
 import ForecastingEngine from '../agents/inventory/forecasting-engine.js';
 import OrderIntegration from '../agents/inventory/order-integration.js';
 import bwipjs from 'bwip-js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ router.get('/materials', async (req, res) => {
     const materials = await MaterialManager.getAllMaterials();
     res.json({ success: true, count: materials.length, materials });
   } catch (error) {
-    console.error('Error fetching materials:', error);
+    logError('inventory.error-fetching-materials', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -35,7 +36,7 @@ router.get('/materials/:id', async (req, res) => {
     }
     res.json({ success: true, material });
   } catch (error) {
-    console.error('Error fetching material:', error);
+    logError('inventory.error-fetching-material', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -45,7 +46,7 @@ router.post('/materials', async (req, res) => {
     const material = await MaterialManager.createMaterial(req.body);
     res.status(201).json({ success: true, material });
   } catch (error) {
-    console.error('Error creating material:', error);
+    logError('inventory.error-creating-material', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -55,7 +56,7 @@ router.patch('/materials/:id', async (req, res) => {
     const material = await MaterialManager.updateMaterial(req.params.id, req.body);
     res.json({ success: true, material });
   } catch (error) {
-    console.error('Error updating material:', error);
+    logError('inventory.error-updating-material', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -65,7 +66,7 @@ router.get('/materials/:id/statistics', async (req, res) => {
     const stats = await MaterialManager.getMaterialStatistics(req.params.id);
     res.json({ success: true, statistics: stats });
   } catch (error) {
-    console.error('Error fetching statistics:', error);
+    logError('inventory.error-fetching-statistics', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -81,7 +82,7 @@ router.get('/materials/:id/transactions', async (req, res) => {
     });
     res.json({ success: true, count: transactions.length, transactions });
   } catch (error) {
-    console.error('Error fetching transactions:', error);
+    logError('inventory.error-fetching-transactions', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -99,7 +100,7 @@ router.post('/materials/:id/purchase', async (req, res) => {
     await ForecastingEngine.generateAlertForMaterial(req.params.id);
     res.json(result);
   } catch (error) {
-    console.error('Error recording purchase:', error);
+    logError('inventory.error-recording-purchase', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -113,7 +114,7 @@ router.post('/materials/:id/consume', async (req, res) => {
     await ForecastingEngine.generateAlertForMaterial(req.params.id);
     res.json(result);
   } catch (error) {
-    console.error('Error recording consumption:', error);
+    logError('inventory.error-recording-consumption', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -127,7 +128,7 @@ router.post('/materials/:id/adjust', async (req, res) => {
     await ForecastingEngine.generateAlertForMaterial(req.params.id);
     res.json(result);
   } catch (error) {
-    console.error('Error adjusting stock:', error);
+    logError('inventory.error-adjusting-stock', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -141,7 +142,7 @@ router.get('/materials/:id/forecast', async (req, res) => {
     const forecast = await ForecastingEngine.calculateMaterialForecast(req.params.id);
     res.json({ success: true, forecast });
   } catch (error) {
-    console.error('Error calculating forecast:', error);
+    logError('inventory.error-calculating-forecast', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -155,7 +156,7 @@ router.get('/alerts', async (req, res) => {
     });
     res.json({ success: true, count: alerts.length, alerts });
   } catch (error) {
-    console.error('Error fetching alerts:', error);
+    logError('inventory.error-fetching-alerts', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -165,7 +166,7 @@ router.get('/alerts/summary', async (req, res) => {
     const summary = await ForecastingEngine.getAlertSummary();
     res.json({ success: true, summary });
   } catch (error) {
-    console.error('Error fetching alert summary:', error);
+    logError('inventory.error-fetching-alert-summary', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -176,7 +177,7 @@ router.post('/alerts/:id/acknowledge', async (req, res) => {
     const alert = await ForecastingEngine.acknowledgeAlert(req.params.id, acknowledgedBy);
     res.json({ success: true, alert });
   } catch (error) {
-    console.error('Error acknowledging alert:', error);
+    logError('inventory.error-acknowledging-alert', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -186,7 +187,7 @@ router.post('/alerts/generate', async (req, res) => {
     const alerts = await ForecastingEngine.generateAllAlerts();
     res.json({ success: true, count: alerts.length, alerts });
   } catch (error) {
-    console.error('Error generating alerts:', error);
+    logError('inventory.error-generating-alerts', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -200,7 +201,7 @@ router.get('/products/:id/bom', async (req, res) => {
     const bom = await BOMManager.getProductBOM(req.params.id);
     res.json({ success: true, count: bom.length, bom });
   } catch (error) {
-    console.error('Error fetching BOM:', error);
+    logError('inventory.error-fetching-bom', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -213,7 +214,7 @@ router.post('/products/:id/bom', async (req, res) => {
     });
     res.status(201).json({ success: true, bomEntry });
   } catch (error) {
-    console.error('Error adding BOM entry:', error);
+    logError('inventory.error-adding-bom-entry', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -223,7 +224,7 @@ router.get('/materials/:id/products', async (req, res) => {
     const products = await BOMManager.getProductsUsingMaterial(req.params.id);
     res.json({ success: true, count: products.length, products });
   } catch (error) {
-    console.error('Error fetching products:', error);
+    logError('inventory.error-fetching-products', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -237,7 +238,7 @@ router.get('/orders/:id/materials', async (req, res) => {
     const requirements = await BOMManager.calculateOrderMaterialRequirements(req.params.id);
     res.json({ success: true, requirements });
   } catch (error) {
-    console.error('Error calculating requirements:', error);
+    logError('inventory.error-calculating-requirements', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -247,7 +248,7 @@ router.get('/orders/:id/fulfillment', async (req, res) => {
     const fulfillment = await BOMManager.checkOrderFulfillment(req.params.id);
     res.json({ success: true, ...fulfillment });
   } catch (error) {
-    console.error('Error checking fulfillment:', error);
+    logError('inventory.error-checking-fulfillment', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -258,7 +259,7 @@ router.post('/orders/:id/reserve', async (req, res) => {
     await ForecastingEngine.generateAllAlerts();
     res.json(result);
   } catch (error) {
-    console.error('Error reserving materials:', error);
+    logError('inventory.error-reserving-materials', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -269,7 +270,7 @@ router.post('/orders/:id/release', async (req, res) => {
     await ForecastingEngine.generateAllAlerts();
     res.json(result);
   } catch (error) {
-    console.error('Error releasing materials:', error);
+    logError('inventory.error-releasing-materials', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -279,7 +280,7 @@ router.get('/orders/:id/reservations', async (req, res) => {
     const reservations = await BOMManager.getOrderReservations(req.params.id);
     res.json({ success: true, count: reservations.length, reservations });
   } catch (error) {
-    console.error('Error fetching reservations:', error);
+    logError('inventory.error-fetching-reservations', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -290,7 +291,7 @@ router.post('/orders/check-impact', async (req, res) => {
     const impact = await ForecastingEngine.checkOrderImpactOnInventory(orderItems);
     res.json({ success: true, impact });
   } catch (error) {
-    console.error('Error checking impact:', error);
+    logError('inventory.error-checking-impact', error);
     res.status(400).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -336,7 +337,7 @@ router.get('/dashboard/overview', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching dashboard overview:', error);
+    logError('inventory.error-fetching-dashboard-overview', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -350,7 +351,7 @@ router.get('/labels/generate', async (req, res) => {
   try {
     const materialIds = req.query.materials ? req.query.materials.split(',').map(id => parseInt(id)) : null;
 
-    console.log('🏷️ Generating labels...');
+    log('info', 'inventory.generating-labels');
 
     // Get materials from database
     let materials;
@@ -369,7 +370,7 @@ router.get('/labels/generate', async (req, res) => {
         // Ensure barcode is a string
         const barcodeText = m.barcode ? String(m.barcode) : `MAT-${String(m.id).padStart(3, '0')}`;
 
-        console.log(`  Generating barcode for ${m.name}: "${barcodeText}" (type: ${typeof barcodeText})`);
+        log('info', 'inventory.generating-barcode-for-type');
 
         const png = await bwipjs.toBuffer({
           bcid: 'code128',       // Barcode type: Code 128
@@ -390,8 +391,8 @@ router.get('/labels/generate', async (req, res) => {
           barcodeDataURL: barcodeDataURL
         };
       } catch (error) {
-        console.error(`  ❌ Error generating barcode for ${m.name}:`, error.message);
-        console.error(`     Material:`, m);
+        logError('inventory.error-generating-barcode-for', error);
+        log('error', 'inventory.debug');
         throw error;
       }
     }));
@@ -475,13 +476,13 @@ router.get('/labels/generate', async (req, res) => {
 </html>
     `;
 
-    console.log(`✅ Generated ${labels.length} labels`);
+    log('info', 'inventory.generated-labels');
 
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
 
   } catch (error) {
-    console.error('Error generating labels:', error);
+    logError('inventory.error-generating-labels', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -492,7 +493,7 @@ router.get('/labels/generate', async (req, res) => {
 
 router.get('/smart-barcodes/sheet', async (req, res) => {
   try {
-    console.log('🏷️📊 Generating smart barcode sheet...');
+    log('info', 'inventory.generating-smart-barcode-sheet');
 
     const quantities = [1, 5, 10, 25, 50, 100, 200, 500, 1000];
     const actions = [
@@ -768,12 +769,12 @@ router.get('/smart-barcodes/sheet', async (req, res) => {
 </html>
     `;
 
-    console.log('✅ Smart barcode sheet generated');
+    log('info', 'inventory.smart-barcode-sheet-generated');
 
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
   } catch (error) {
-    console.error('Error generating smart barcodes:', error);
+    logError('inventory.error-generating-smart-barcodes', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
