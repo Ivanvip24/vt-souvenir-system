@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AXKAN — Recuerdos Hechos Souvenir</title>
+<link rel="icon" type="image/png" href="assets/LOGO-01.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   AXKAN FONTS
+   ═══════════════════════════════════════════ */
+@font-face {
+  font-family: 'RL Aqva';
+  src: url('assets/fonts/RLAQVA.otf') format('opentype');
+  font-weight: 900;
+  font-display: swap;
+}
+
+/* ═══════════════════════════════════════════
+   RESET & TOKENS
+   ═══════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  /* AXKAN Brand */
+  --rosa: #e72a88;
+  --rosa-dark: #c41d6f;
+  --verde: #8ab73b;
+  --naranja: #f39223;
+  --turquesa: #09adc2;
+  --rojo: #e52421;
+  --oro: #D4A574;
+
+  /* Neutrals */
+  --black: #0a0a0a;
+  --white: #ffffff;
+  --off-white: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #e8e8ed;
+  --gray-500: #86868b;
+  --gray-700: #424245;
+  --gray-800: #1f1f1f;
+  --gray-900: #1d1d1f;
+
+  /* Typography */
+  --font-display: 'RL Aqva', 'Georgia', serif;
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 2rem;
+  --space-lg: 4rem;
+  --space-xl: 6rem;
+
+  /* Curves */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-pill: 100px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-btn: 0 4px 20px rgba(231, 42, 136, 0.4);
+  --shadow-btn-hover: 0 8px 32px rgba(231, 42, 136, 0.5);
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--gray-900);
+  background: var(--white);
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════
+   NAVIGATION — Apple-clean, AXKAN soul
+   ═══════════════════════════════════════════ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  transition: background 0.35s ease, backdrop-filter 0.35s ease;
+}
+
+.nav.scrolled {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
+}
+
+.nav-logo {
+  height: 26px;
+  transition: filter 0.3s ease;
+}
+
+.nav:not(.scrolled) .nav-logo { filter: brightness(0) invert(1); }
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.nav-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon-btn svg {
+  width: 18px; height: 18px;
+  stroke: var(--gray-900);
+  transition: stroke 0.3s, opacity 0.2s;
+  opacity: 0.8;
+}
+
+.nav-icon-btn:hover svg { opacity: 1; }
+.nav:not(.scrolled) .nav-icon-btn svg { stroke: var(--white); }
+
+.nav-hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 4.5px;
+  cursor: pointer;
+  padding: 6px 2px;
+  background: none;
+  border: none;
+}
+
+.nav-hamburger span {
+  display: block;
+  width: 17px; height: 1.5px;
+  background: var(--gray-900);
+  border-radius: 1px;
+  transition: background 0.3s;
+}
+
+.nav:not(.scrolled) .nav-hamburger span { background: var(--white); }
+
+/* ═══════════════════════════════════════════
+   MOBILE MENU
+   ═══════════════════════════════════════════ */
+.mobile-menu {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.mobile-menu.open { opacity: 1; pointer-events: all; }
+
+.mm-panel {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 300px; background: var(--white);
+  padding: 68px 24px 40px;
+  transform: translateX(100%);
+  transition: transform 0.4s var(--ease-out-expo);
+  overflow-y: auto;
+}
+.mobile-menu.open .mm-panel { transform: translateX(0); }
+
+.mm-close {
+  position: absolute; top: 12px; right: 14px;
+  width: 36px; height: 36px;
+  background: var(--gray-100); border: none; border-radius: 50%;
+  cursor: pointer; font-size: 18px; color: var(--gray-700);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.mm-links { list-style: none; }
+.mm-links li { border-bottom: 1px solid var(--gray-100); }
+.mm-links a {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 4px;
+  font-size: 17px; font-weight: 600; color: var(--gray-900);
+  text-decoration: none; transition: color 0.2s;
+}
+.mm-links a:hover { color: var(--rosa); }
+.mm-links .mm-arrow { font-size: 14px; color: var(--gray-500); }
+
+.mm-ctas {
+  margin-top: 24px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* ═══════════════════════════════════════════
+   BUTTONS — Pill shape, AXKAN branded
+   ═══════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 15px; font-weight: 600;
+  text-decoration: none;
+  border: none; cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.2s ease;
+}
+.btn:active { transform: scale(0.96); }
+
+.btn-primary {
+  background: var(--rosa);
+  color: var(--white);
+  box-shadow: var(--shadow-btn);
+}
+.btn-primary:hover {
+  background: var(--rosa-dark);
+  box-shadow: var(--shadow-btn-hover);
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--rosa);
+  border: 1.5px solid var(--rosa);
+}
+.btn-outline:hover {
+  background: rgba(231, 42, 136, 0.06);
+  transform: translateY(-2px);
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--white);
+}
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-sm {
+  padding: 11px 22px;
+  font-size: 14px;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION 0 — HERO
+   ═══════════════════════════════════════════ */
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 72px 24px 48px;
+  overflow: hidden;
+  background: var(--black);
+}
+
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+}
+/* Collage grid background */
+.hero-collage {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  width: 100%; height: 100%;
+  animation: collageZoom 30s ease-in-out infinite alternate;
+}
+@keyframes collageZoom {
+  0%   { transform: scale(1.05); }
+  100% { transform: scale(1.18) translate(-1%, -1%); }
+}
+.hero-collage img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Dark overlay */
+.hero-bg::after {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 10, 0.55) 0%,
+    rgba(10, 10, 10, 0.4) 40%,
+    rgba(10, 10, 10, 0.75) 100%
+  );
+}
+
+.hero-content {
+  position: relative; z-index: 1;
+  max-width: 440px; width: 100%;
+}
+
+.hero-badge {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--rosa);
+  margin-bottom: 16px;
+  opacity: 0;
+  animation: fadeUp 0.7s var(--ease-out-expo) 0.2s forwards;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 10vw, 56px);
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--white);
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  animation: fadeUp 0.7s var(--ease-out-expo) 0.35s forwards;
+}
+
+.hero-title .accent { color: var(--rosa); }
+
+.hero-sub {
+  font-size: 15px; line-height: 1.55;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: fadeUp 0.7s var(--ease-out-expo) 0.5s forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero CTA Cards — Apple-clean with AXKAN color */
+.hero-ctas {
+  display: flex; flex-direction: column;
+  gap: 10px; width: 100%;
+  opacity: 0;
+  animation: fadeUp 0.7s var(--ease-out-expo) 0.65s forwards;
+}
+
+.hero-cta-card {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 15px 22px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 15px; font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.25s, background 0.2s;
+}
+.hero-cta-card:active { transform: scale(0.97); }
+
+.hero-cta-card.primary {
+  background: var(--rosa);
+  color: var(--white);
+  box-shadow: 0 4px 20px rgba(231, 42, 136, 0.35);
+}
+.hero-cta-card.primary:hover {
+  box-shadow: 0 6px 28px rgba(231, 42, 136, 0.5);
+  transform: translateY(-1px);
+}
+
+.hero-cta-card.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--white);
+}
+.hero-cta-card.secondary:hover {
+  background: rgba(255, 255, 255, 0.17);
+  transform: translateY(-1px);
+}
+
+.cta-arrow {
+  font-size: 18px; opacity: 0.6;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.hero-cta-card:hover .cta-arrow {
+  transform: translateX(3px); opacity: 1;
+}
+
+/* Scroll indicator */
+.hero-scroll {
+  position: absolute; bottom: 24px; left: 50%;
+  transform: translateX(-50%); z-index: 1;
+  opacity: 0;
+  animation: fadeUp 0.7s var(--ease-out-expo) 1s forwards;
+}
+.hero-scroll span {
+  display: block; width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  animation: bounce 2.2s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50%      { transform: translateY(8px); opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════
+   FEATURES STRIP
+   ═══════════════════════════════════════════ */
+.features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--gray-200);
+}
+
+.feature {
+  background: var(--white);
+  padding: 22px 14px;
+  text-align: center;
+}
+
+.feature-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+/* Colored icon backgrounds at 12% opacity */
+.feature:nth-child(1) .feature-icon { background: rgba(231, 42, 136, 0.12); }
+.feature:nth-child(2) .feature-icon { background: rgba(9, 173, 194, 0.12); }
+.feature:nth-child(3) .feature-icon { background: rgba(138, 183, 59, 0.12); }
+.feature:nth-child(4) .feature-icon { background: rgba(243, 146, 35, 0.12); }
+
+.feature-name {
+  font-size: 13px; font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 2px;
+}
+
+.feature-desc {
+  font-size: 11px; color: var(--gray-500);
+}
+
+/* ═══════════════════════════════════════════
+   PRODUCT SECTIONS — Apple card style
+   ═══════════════════════════════════════════ */
+/* ── Products Grid — Apple-style card layout ── */
+.products-grid {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.product-section {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 52px 24px 44px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+/* Full-width card = spans both columns */
+.product-section.card-full {
+  grid-column: 1 / -1;
+}
+
+/* Half-width card = single column */
+.product-section.card-half {
+  grid-column: span 1;
+}
+
+/* Mobile: everything stacks single column */
+@media (max-width: 767px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    gap: 10px;
+  }
+  .product-section.card-half {
+    grid-column: span 1;
+  }
+}
+
+/* Card backgrounds */
+.product-section.bg-white  { background: var(--white); }
+.product-section.bg-light  { background: var(--gray-100); }
+
+/* Colored accent line — slides in on scroll */
+.product-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  width: 0; height: 3px;
+  border-radius: 2px;
+}
+.product-section.visible::before {
+  animation: lineSlide 0.7s var(--ease-out-expo) forwards;
+}
+@keyframes lineSlide {
+  to { width: 48px; left: calc(50% - 24px); }
+}
+
+.product-section[data-color="rosa"]::before    { background: var(--rosa); }
+.product-section[data-color="turquesa"]::before { background: var(--turquesa); }
+.product-section[data-color="verde"]::before    { background: var(--verde); }
+.product-section[data-color="naranja"]::before  { background: var(--naranja); }
+.product-section[data-color="rojo"]::before     { background: var(--rojo); }
+
+/* Content block */
+.ps-content {
+  max-width: 420px; width: 100%;
+  opacity: 0; transform: translateY(28px);
+  transition: opacity 0.65s var(--ease-out-expo),
+              transform 0.65s var(--ease-out-expo);
+}
+.product-section.visible .ps-content {
+  opacity: 1; transform: translateY(0);
+}
+
+.ps-label {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  margin-bottom: 6px;
+}
+
+.ps-title {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 8vw, 48px);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+.ps-subtitle {
+  font-size: 15px; line-height: 1.55;
+  color: var(--gray-500);
+  margin-bottom: 24px;
+  max-width: 320px;
+  margin-left: auto; margin-right: auto;
+}
+
+.ps-buttons {
+  display: flex; align-items: center;
+  justify-content: center; gap: 12px;
+  margin-bottom: 36px;
+}
+
+/* Product image */
+.ps-image {
+  width: 100%; max-width: 480px;
+  margin: 0 auto;
+  opacity: 0; transform: translateY(36px) scale(0.96);
+  transition: opacity 0.75s var(--ease-out-expo) 0.12s,
+              transform 0.75s var(--ease-out-expo) 0.12s;
+}
+.product-section.visible .ps-image {
+  opacity: 1; transform: translateY(0) scale(1);
+}
+
+.ps-image img {
+  width: 100%; height: auto; display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.12));
+}
+
+/* ═══════════════════════════════════════════
+   AXKAN COLOR BAND
+   ═══════════════════════════════════════════ */
+.color-band {
+  display: flex; height: 4px;
+}
+.color-band span { flex: 1; }
+
+/* ═══════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════ */
+.footer {
+  background: var(--gray-900);
+  color: rgba(255, 255, 255, 0.6);
+  padding: 44px 24px 28px;
+  text-align: center;
+}
+
+.footer-logo {
+  height: 32px;
+  filter: brightness(0) invert(1);
+  opacity: 0.6;
+  margin-bottom: 20px;
+}
+
+.footer-nav {
+  display: flex; flex-wrap: wrap;
+  justify-content: center; gap: 16px;
+  margin-bottom: 24px;
+}
+.footer-nav a {
+  font-size: 13px; color: rgba(255, 255, 255, 0.45);
+  text-decoration: none; transition: color 0.2s;
+}
+.footer-nav a:hover { color: var(--white); }
+
+.footer-social {
+  display: flex; justify-content: center;
+  gap: 14px; margin-bottom: 24px;
+}
+.footer-social a {
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none; font-size: 16px;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.footer-social a:hover {
+  background: var(--rosa); color: var(--white);
+  transform: translateY(-2px);
+}
+
+.footer-wa {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 24px;
+  border-radius: var(--radius-pill);
+  background: #25D366;
+  color: var(--white);
+  text-decoration: none;
+  font-size: 14px; font-weight: 600;
+  margin-bottom: 24px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.footer-wa:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 18px rgba(37, 211, 102, 0.4);
+}
+
+.footer-line {
+  width: 48px; height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 auto 16px;
+}
+
+.footer-copy {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  line-height: 1.7;
+}
+
+/* ═══════════════════════════════════════════
+   DESKTOP
+   ═══════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .nav { height: 52px; padding: 0 32px; }
+  .hero { padding: 100px 40px 80px; }
+
+  .hero-ctas {
+    flex-direction: row;
+    max-width: 400px; margin: 0 auto;
+  }
+  .hero-cta-card { flex: 1; justify-content: center; gap: 8px; }
+
+  .features { grid-template-columns: repeat(4, 1fr); }
+  .feature { padding: 28px 18px; }
+
+  .product-section {
+    padding: 64px 40px 56px;
+  }
+  .product-section.card-full .ps-image { max-width: 520px; }
+  .product-section.card-half .ps-image { max-width: 320px; }
+  .product-section.card-half .ps-title { font-size: 32px; }
+  .product-section.card-half .ps-subtitle { font-size: 14px; }
+  .product-section.card-half .ps-buttons .btn { padding: 10px 20px; font-size: 13px; }
+
+  .footer { padding: 56px 40px 36px; }
+}
+
+@media (min-width: 1024px) {
+  .product-section.card-full .ps-title { font-size: 48px; }
+  .product-section.card-full .ps-image { max-width: 560px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="main-nav">
+  <a href="/"><img src="assets/LOGO-01.png" alt="AXKAN" class="nav-logo"></a>
+  <div class="nav-right">
+    <button class="nav-icon-btn" aria-label="Buscar">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+    <button class="nav-hamburger" id="menu-open" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mm-panel">
+    <button class="mm-close" id="menu-close" aria-label="Cerrar">&times;</button>
+    <ul class="mm-links">
+      <li><a href="#imanes">Imanes <span class="mm-arrow">&rsaquo;</span></a></li>
+      <li><a href="#llaveros">Llaveros <span class="mm-arrow">&rsaquo;</span></a></li>
+      <li><a href="#portallaves">Portallaves <span class="mm-arrow">&rsaquo;</span></a></li>
+      <li><a href="#destapadores">Destapadores <span class="mm-arrow">&rsaquo;</span></a></li>
+      <li><a href="https://vtanunciando.com">Catalogo <span class="mm-arrow">&rsaquo;</span></a></li>
+    </ul>
+    <div class="mm-ctas">
+      <a href="/pedidos" class="btn btn-primary" style="width:100%">Hacer Pedido</a>
+      <a href="/order-tracking/" class="btn btn-outline" style="width:100%;color:var(--rosa)">Rastrear Pedido</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-collage">
+      <img src="assets/mexico-1.jpg" alt="">
+      <img src="assets/mexico-2.jpg" alt="">
+      <img src="assets/mexico-3.jpg" alt="">
+      <img src="assets/mexico-4.jpg" alt="">
+      <img src="assets/mexico-5.jpg" alt="">
+      <img src="assets/mexico-6.jpg" alt="">
+    </div>
+  </div>
+  <div class="hero-content">
+    <span class="hero-badge">Recuerdos Hechos Souvenir</span>
+    <h1 class="hero-title">Llevate <span class="accent">Mexico</span> Contigo</h1>
+    <p class="hero-sub">Souvenirs artesanales con corte laser y diseno unico por destino.</p>
+    <div class="hero-ctas">
+      <a href="/pedidos" class="hero-cta-card primary">
+        <span>Hacer Pedido</span>
+        <span class="cta-arrow">&rarr;</span>
+      </a>
+      <a href="/order-tracking/" class="hero-cta-card secondary">
+        <span>Rastrear Pedido</span>
+        <span class="cta-arrow">&rarr;</span>
+      </a>
+    </div>
+  </div>
+  <div class="hero-scroll"><span></span></div>
+</section>
+
+<!-- FEATURES -->
+<div class="features">
+  <div class="feature">
+    <div class="feature-icon">&#127919;</div>
+    <div class="feature-name">Corte Laser</div>
+    <div class="feature-desc">Precision artesanal</div>
+  </div>
+  <div class="feature">
+    <div class="feature-icon">&#128666;</div>
+    <div class="feature-name">Envio Nacional</div>
+    <div class="feature-desc">8-14 dias</div>
+  </div>
+  <div class="feature">
+    <div class="feature-icon">&#127912;</div>
+    <div class="feature-name">Disenos Unicos</div>
+    <div class="feature-desc">Por destino</div>
+  </div>
+  <div class="feature">
+    <div class="feature-icon">&#128230;</div>
+    <div class="feature-name">Desde 100 pzas</div>
+    <div class="feature-desc">Mayoreo</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PRODUCT SECTIONS
+     ═══════════════════════════════════════════ -->
+
+<div class="products-grid">
+
+<!-- IMANES — full width hero card -->
+<section class="product-section card-full bg-white" id="imanes" data-color="rosa">
+  <div class="ps-content">
+    <div class="ps-label">Producto Estrella</div>
+    <h2 class="ps-title">Imanes MDF</h2>
+    <p class="ps-subtitle">Relieve 3D, colores vibrantes y el destino grabado con orgullo mexicano.</p>
+    <div class="ps-buttons">
+      <a href="/productos/imanes-mdf.html" class="btn btn-primary btn-sm">Ver mas</a>
+      <a href="/pedidos" class="btn btn-outline btn-sm">Comprar</a>
+    </div>
+  </div>
+  <div class="ps-image">
+    <img src="assets/hero-magnet.jpg" alt="Iman MDF Yucatan" loading="lazy">
+  </div>
+</section>
+
+<!-- LLAVEROS — full width -->
+<section class="product-section card-full bg-light" id="llaveros" data-color="turquesa">
+  <div class="ps-content">
+    <div class="ps-label">Para Cada Viajero</div>
+    <h2 class="ps-title">Llaveros</h2>
+    <p class="ps-subtitle">Tu destino favorito siempre contigo. Corte laser sobre MDF con acabado premium.</p>
+    <div class="ps-buttons">
+      <a href="/productos/llaveros-mdf.html" class="btn btn-primary btn-sm">Ver mas</a>
+      <a href="/pedidos" class="btn btn-outline btn-sm">Comprar</a>
+    </div>
+  </div>
+  <div class="ps-image">
+    <img src="souvenirs/assets/product-keychain.png" alt="Llavero Cozumel" loading="lazy">
+  </div>
+</section>
+
+<!-- PORTALLAVES — half width (side by side with destapadores) -->
+<section class="product-section card-half bg-white" id="portallaves" data-color="verde">
+  <div class="ps-content">
+    <div class="ps-label">Para el Hogar</div>
+    <h2 class="ps-title">Portallaves</h2>
+    <p class="ps-subtitle">Funcional y decorativo. Cada portallaves cuenta la historia de un destino.</p>
+    <div class="ps-buttons">
+      <a href="/productos/portallaves-mdf.html" class="btn btn-primary btn-sm">Ver mas</a>
+      <a href="/pedidos" class="btn btn-outline btn-sm">Comprar</a>
+    </div>
+  </div>
+  <div class="ps-image">
+    <img src="souvenirs/assets/product-keyholder.png" alt="Portallaves" loading="lazy">
+  </div>
+</section>
+
+<!-- DESTAPADORES — half width (side by side with portallaves) -->
+<section class="product-section card-half bg-light" id="destapadores" data-color="naranja">
+  <div class="ps-content">
+    <div class="ps-label">El Favorito</div>
+    <h2 class="ps-title">Destapadores</h2>
+    <p class="ps-subtitle">Utiles, divertidos y 100% coleccionables. El souvenir que todos quieren.</p>
+    <div class="ps-buttons">
+      <a href="/productos/destapadores-mdf.html" class="btn btn-primary btn-sm">Ver mas</a>
+      <a href="/pedidos" class="btn btn-outline btn-sm">Comprar</a>
+    </div>
+  </div>
+  <div class="ps-image">
+    <img src="souvenirs/assets/product-magnet.png" alt="Destapador MDF" loading="lazy">
+  </div>
+</section>
+
+</div><!-- /products-grid -->
+
+<!-- COLOR BAND -->
+<div class="color-band">
+  <span style="background:var(--rosa)"></span>
+  <span style="background:var(--verde)"></span>
+  <span style="background:var(--naranja)"></span>
+  <span style="background:var(--turquesa)"></span>
+  <span style="background:var(--rojo)"></span>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <img src="assets/LOGO-01.png" alt="AXKAN" class="footer-logo">
+  <nav class="footer-nav">
+    <a href="#imanes">Imanes</a>
+    <a href="#llaveros">Llaveros</a>
+    <a href="#portallaves">Portallaves</a>
+    <a href="#destapadores">Destapadores</a>
+    <a href="https://vtanunciando.com">Catalogo</a>
+  </nav>
+  <div class="footer-social">
+    <a href="https://instagram.com/axkan.mx" target="_blank" rel="noopener" aria-label="Instagram">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+    </a>
+    <a href="https://facebook.com/axkan.mx" target="_blank" rel="noopener" aria-label="Facebook">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+    </a>
+    <a href="https://tiktok.com/@axkan.mx" target="_blank" rel="noopener" aria-label="TikTok">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1 0-5.78c.31 0 .6.05.88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.57 6.33 6.33 0 0 0 9.37 22a6.33 6.33 0 0 0 6.38-6.22V9.4a8.16 8.16 0 0 0 4.84 1.58V7.53a4.85 4.85 0 0 1-1-.84z"/></svg>
+    </a>
+  </div>
+  <a href="https://wa.me/5215544000000" class="footer-wa" target="_blank" rel="noopener">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.12.553 4.11 1.519 5.838L0 24l6.335-1.652A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75c-1.97 0-3.867-.58-5.494-1.673l-.394-.236-3.757.98.999-3.648-.258-.41A9.72 9.72 0 0 1 2.25 12 9.75 9.75 0 1 1 12 21.75z"/></svg>
+    WhatsApp
+  </a>
+  <div class="footer-line"></div>
+  <p class="footer-copy">AXKAN &mdash; Recuerdos Hechos Souvenir<br>&copy; 2026 Todos los derechos reservados</p>
+</footer>
+
+<!-- JS -->
+<script>
+// Nav scroll
+const nav = document.getElementById('main-nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 50);
+}, { passive: true });
+
+// Mobile menu
+const mm = document.getElementById('mobile-menu');
+document.getElementById('menu-open').addEventListener('click', () => mm.classList.add('open'));
+document.getElementById('menu-close').addEventListener('click', () => mm.classList.remove('open'));
+mm.addEventListener('click', e => { if (e.target === mm) mm.classList.remove('open'); });
+mm.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mm.classList.remove('open')));
+
+// Section reveals
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('.product-section').forEach(s => io.observe(s));
+</script>
+</body>
+</html>

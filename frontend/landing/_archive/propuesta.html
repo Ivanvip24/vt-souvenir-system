@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXKAN — Propuesta Comercial | Souvenirs Premium de México</title>
+    <meta name="description" content="Propuesta comercial AXKAN: souvenirs premium con corte láser para tu destino turístico. Imanes, llaveros, destapadores y más.">
+    <link rel="icon" type="image/png" href="/assets/LOGO-01.png">
+    <style>
+        @font-face {
+            font-family: 'RL AQVA';
+            src: url('/fonts/RLAQVA.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Objektiv';
+            src: url('/fonts/FONT-OBJEKTIV-VF-BODY.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            --rosa: #e72a88;
+            --verde: #8ab73b;
+            --naranja: #f39223;
+            --turquesa: #09adc2;
+            --rojo: #e52421;
+            --oro: #D4A574;
+            --negro: #1a1a1a;
+            --blanco: #fafaf8;
+            --gris: #666;
+            --gris-claro: #e8e6e1;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Objektiv', 'DM Sans', system-ui, sans-serif;
+            background: var(--blanco);
+            color: var(--negro);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ========================================
+           BRAND BAND — the 5-color strip
+        ======================================== */
+        .brand-band {
+            display: flex;
+            height: 5px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .brand-band span { flex: 1; }
+        .brand-band span:nth-child(1) { background: var(--rosa); }
+        .brand-band span:nth-child(2) { background: var(--verde); }
+        .brand-band span:nth-child(3) { background: var(--naranja); }
+        .brand-band span:nth-child(4) { background: var(--turquesa); }
+        .brand-band span:nth-child(5) { background: var(--rojo); }
+
+        /* ========================================
+           NAVIGATION
+        ======================================== */
+        nav {
+            position: fixed;
+            top: 5px;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            padding: 16px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(250, 250, 248, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+        }
+        nav.scrolled {
+            padding: 10px 48px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+        }
+        nav img {
+            height: 36px;
+            transition: height 0.3s ease;
+        }
+        nav.scrolled img { height: 28px; }
+        .nav-cta {
+            background: var(--rosa);
+            color: white;
+            padding: 10px 28px;
+            border-radius: 100px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.03em;
+            transition: all 0.3s ease;
+            border: 2px solid var(--rosa);
+        }
+        .nav-cta:hover {
+            background: transparent;
+            color: var(--rosa);
+            transform: translateY(-1px);
+        }
+
+        /* ========================================
+           HERO
+        ======================================== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 120px 48px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(231, 42, 136, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 20s ease-in-out infinite;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            left: -150px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(9, 173, 194, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: rgba(231, 42, 136, 0.08);
+            border: 1px solid rgba(231, 42, 136, 0.15);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--rosa);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.2s;
+        }
+        .hero-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--rosa);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+
+        .hero h1 {
+            font-family: 'RL AQVA', Georgia, serif;
+            font-size: clamp(3rem, 7vw, 6.5rem);
+            line-height: 1.0;
+            letter-spacing: -0.02em;
+            color: var(--negro);
+            margin-bottom: 24px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.4s;
+        }
+        .hero h1 span {
+            display: block;
+            background: linear-gradient(135deg, var(--rosa), var(--naranja));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: clamp(1.1rem, 2vw, 1.35rem);
+            color: var(--gris);
+            max-width: 600px;
+            line-height: 1.6;
+            margin-bottom: 48px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.6s;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 48px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.8s;
+        }
+        .hero-stat {
+            text-align: center;
+        }
+        .hero-stat-number {
+            font-family: 'RL AQVA', Georgia, serif;
+            font-size: 2.5rem;
+            color: var(--negro);
+            line-height: 1;
+        }
+        .hero-stat-label {
+            font-size: 0.8rem;
+            color: var(--gris);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 6px;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 1s;
+        }
+        .scroll-indicator span {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--gris);
+        }
+        .scroll-line {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--rosa), transparent);
+            animation: scrollPulse 2s ease-in-out infinite;
+        }
+        @keyframes scrollPulse {
+            0%, 100% { opacity: 0.3; transform: scaleY(0.5); }
+            50% { opacity: 1; transform: scaleY(1); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========================================
+           SECTIONS — shared
+        ======================================== */
+        section {
+            padding: 120px 48px;
+        }
+        .section-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--rosa);
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-family: 'RL AQVA', Georgia, serif;
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            line-height: 1.1;
+            margin-bottom: 20px;
+            color: var(--negro);
+        }
+        .section-desc {
+            font-size: 1.1rem;
+            color: var(--gris);
+            max-width: 560px;
+            line-height: 1.7;
+        }
+
+        /* ========================================
+           ABOUT — split layout
+        ======================================== */
+        .about {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .about-visual {
+            position: relative;
+            height: 500px;
+            border-radius: 24px;
+            overflow: hidden;
+            background: linear-gradient(145deg, #f5f0eb, #ece5dd);
+        }
+        .about-visual img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .about-visual::after {
+            content: 'Corte Láser de Precisión';
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .about-features {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            margin-top: 40px;
+        }
+        .about-feature {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        .about-feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .about-feature-icon.rosa { background: rgba(231, 42, 136, 0.1); }
+        .about-feature-icon.verde { background: rgba(138, 183, 59, 0.1); }
+        .about-feature-icon.turquesa { background: rgba(9, 173, 194, 0.1); }
+        .about-feature h4 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+        .about-feature p {
+            font-size: 0.9rem;
+            color: var(--gris);
+            line-height: 1.5;
+        }
+
+        /* ========================================
+           PRODUCTS — horizontal scroll cards
+        ======================================== */
+        .products-section {
+            background: var(--negro);
+            color: white;
+            overflow: hidden;
+        }
+        .products-section .section-label { color: var(--naranja); }
+        .products-section .section-title { color: white; }
+        .products-section .section-desc { color: rgba(255,255,255,0.6); }
+
+        .products-header {
+            max-width: 1200px;
+            margin: 0 auto 60px;
+        }
+
+        .products-scroll {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            padding: 0 48px 40px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .products-scroll::-webkit-scrollbar { display: none; }
+
+        .product-card {
+            flex: 0 0 320px;
+            scroll-snap-align: start;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+        .product-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255,255,255,0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .product-card-img {
+            height: 220px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .product-card-img img {
+            height: 85%;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));
+            transition: transform 0.4s ease;
+        }
+        .product-card:hover .product-card-img img {
+            transform: scale(1.08);
+        }
+        .product-card-body {
+            padding: 24px;
+        }
+        .product-card-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+        .tag-popular { background: rgba(231, 42, 136, 0.2); color: var(--rosa); }
+        .tag-premium { background: rgba(212, 165, 116, 0.2); color: var(--oro); }
+        .tag-new { background: rgba(9, 173, 194, 0.2); color: var(--turquesa); }
+
+        .product-card h3 {
+            font-family: 'RL AQVA', Georgia, serif;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        .product-card p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        .product-price {
+            font-family: 'RL AQVA', Georgia, serif;
+            font-size: 1.5rem;
+            color: var(--naranja);
+        }
+        .product-price small {
+            font-family: 'Objektiv', system-ui, sans-serif;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* ========================================
+           WHY AXKAN — grid of reasons
+        ======================================== */
+        .why-section {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-top: 60px;
+        }
+        .why-card {
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid var(--gris-claro);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .why-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 0;
+            transition: height 0.4s ease;
+        }
+        .why-card:hover::before { height: 100%; }
+        .why-card:nth-child(1)::before { background: var(--rosa); }
+        .why-card:nth-child(2)::before { background: var(--verde); }
+        .why-card:nth-child(3)::before { background: var(--turquesa); }
+        .why-card:nth-child(4)::before { background: var(--naranja); }
+
+        .why-card:hover {
+            border-color: transparent;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+            transform: translateY(-4px);
+        }
+        .why-card-icon {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        .why-card h3 {
+            font-family: 'RL AQVA', Georgia, serif;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+        }
+        .why-card p {
+            font-size: 0.95rem;
+            color: var(--gris);
+            line-height: 1.6;
+        }
+
+        /* ========================================
+           PRICING TABLE
+        ======================================== */
+        .pricing-section {
+            background: linear-gradient(180deg, #f8f6f2 0%, var(--blanco) 100%);
+        }
+        .pricing-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .pricing-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 48px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+        .pricing-table thead {
+            background: var(--negro);
+            color: white;
+        }
+        .pricing-table th {
+            padding: 20px 24px;
+            text-align: left;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+        .pricing-table th:last-child { text-align: right; }
+        .pricing-table td {
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            background: white;
+            font-size: 0.95rem;
+        }
+        .pricing-table td:last-child {
+            text-align: right;
+            font-weight: 700;
+            color: var(--rosa);
+        }
+        .pricing-table tr:hover td {
+            background: rgba(231, 42, 136, 0.03);
+        }
+        .pricing-table .volume-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: rgba(138, 183, 59, 0.12);
+            color: var(--verde);
+            margin-left: 8px;
+        }
+
+        .pricing-note {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+            padding: 16px 24px;
+            background: rgba(9, 173, 194, 0.06);
+            border-radius: 12px;
+            border-left: 3px solid var(--turquesa);
+            font-size: 0.9rem;
+            color: var(--gris);
+        }
+
+        /* ========================================
+           PROCESS — horizontal steps
+        ======================================== */
+        .process-section {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .process-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            margin-top: 60px;
+            position: relative;
+        }
+        .process-steps::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 60px;
+            right: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--rosa), var(--naranja), var(--turquesa), var(--verde));
+            opacity: 0.3;
+        }
+        .process-step {
+            text-align: center;
+            position: relative;
+        }
+        .process-step-num {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-family: 'RL AQVA', Georgia, serif;
+            font-size: 1.8rem;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+        .process-step:nth-child(1) .process-step-num { background: var(--rosa); }
+        .process-step:nth-child(2) .process-step-num { background: var(--naranja); }
+        .process-step:nth-child(3) .process-step-num { background: var(--turquesa); }
+        .process-step:nth-child(4) .process-step-num { background: var(--verde); }
+
+        .process-step h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .process-step p {
+            font-size: 0.85rem;
+            color: var(--gris);
+            line-height: 1.5;
+        }
+
+        /* ========================================
+           GALLERY — masonry-ish
+        ======================================== */
+        .gallery-section {
+            background: var(--negro);
+            color: white;
+            overflow: hidden;
+        }
+        .gallery-section .section-label { color: var(--turquesa); }
+        .gallery-section .section-title { color: white; }
+
+        .gallery-header {
+            max-width: 1200px;
+            margin: 0 auto 48px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            padding: 0 48px;
+        }
+        .gallery-item {
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .gallery-item:hover {
+            transform: scale(1.05);
+            z-index: 2;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .gallery-item:nth-child(1) { grid-column: span 2; grid-row: span 2; }
+
+        /* ========================================
+           CTA — final section
+        ======================================== */
+        .cta-section {
+            text-align: center;
+            padding: 140px 48px;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(231, 42, 136, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(9, 173, 194, 0.06) 0%, transparent 50%);
+        }
+        .cta-content {
+            position: relative;
+            z-index: 1;
+        }
+        .cta-content .section-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            margin-bottom: 20px;
+        }
+        .cta-content .section-desc {
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            background: var(--rosa);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 100px;
+            transition: all 0.3s ease;
+            border: 2px solid var(--rosa);
+        }
+        .btn-primary:hover {
+            background: transparent;
+            color: var(--rosa);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(231, 42, 136, 0.2);
+        }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            background: transparent;
+            color: var(--negro);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 100px;
+            border: 2px solid var(--gris-claro);
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            border-color: var(--negro);
+            transform: translateY(-2px);
+        }
+
+        /* ========================================
+           FOOTER
+        ======================================== */
+        footer {
+            background: var(--negro);
+            color: rgba(255,255,255,0.4);
+            padding: 40px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+        footer a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        footer a:hover { color: white; }
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        /* ========================================
+           SCROLL ANIMATIONS
+        ======================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+
+        /* ========================================
+           RESPONSIVE
+        ======================================== */
+        @media (max-width: 768px) {
+            section { padding: 80px 24px; }
+            nav { padding: 12px 24px; }
+            nav.scrolled { padding: 8px 24px; }
+            .about { grid-template-columns: 1fr; gap: 40px; }
+            .about-visual { height: 300px; }
+            .why-grid { grid-template-columns: 1fr; }
+            .process-steps { grid-template-columns: repeat(2, 1fr); }
+            .process-steps::before { display: none; }
+            .hero-stats { gap: 24px; flex-wrap: wrap; justify-content: center; }
+            .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+            .gallery-item:nth-child(1) { grid-column: span 2; grid-row: span 1; }
+            .pricing-table { font-size: 0.85rem; }
+            .pricing-table th, .pricing-table td { padding: 12px 14px; }
+            footer { flex-direction: column; gap: 16px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Brand Band -->
+    <div class="brand-band">
+        <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="nav">
+        <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/AXKAN_LOGO_COMPLETO.png?v=1738809379" alt="AXKAN">
+        <a href="https://axkan.art" class="nav-cta" target="_blank">Hacer Pedido</a>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">Propuesta Comercial 2026</div>
+        <h1>
+            Souvenirs Premium
+            <span>de México</span>
+        </h1>
+        <p class="hero-sub">
+            Corte láser de precisión, acabado brillante y borde Oro Maya.
+            Diseños únicos para cada destino turístico del país.
+        </p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-number">233+</div>
+                <div class="hero-stat-label">Destinos</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">7</div>
+                <div class="hero-stat-label">Productos</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">$8</div>
+                <div class="hero-stat-label">Desde / pieza</div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span>Descubre</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- About -->
+    <section>
+        <div class="about">
+            <div class="about-visual reveal">
+                <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IGLESIAPANYARCOHORIZONTAL.png?v=1740781599" alt="Souvenir AXKAN corte láser" loading="lazy">
+            </div>
+            <div>
+                <div class="section-label reveal">Quiénes Somos</div>
+                <h2 class="section-title reveal reveal-delay-1">Cada pieza cuenta la historia de un lugar</h2>
+                <p class="section-desc reveal reveal-delay-2">
+                    AXKAN crea souvenirs que capturan la esencia de cada destino turístico de México.
+                    Con corte láser de precisión en MDF y acabado premium, cada pieza es una obra de arte
+                    que tus clientes querrán llevarse a casa.
+                </p>
+                <div class="about-features">
+                    <div class="about-feature reveal reveal-delay-2">
+                        <div class="about-feature-icon rosa">🎯</div>
+                        <div>
+                            <h4>Corte Láser de Precisión</h4>
+                            <p>Cada pieza cortada con exactitud milimétrica en MDF de alta calidad.</p>
+                        </div>
+                    </div>
+                    <div class="about-feature reveal reveal-delay-3">
+                        <div class="about-feature-icon verde">✨</div>
+                        <div>
+                            <h4>Acabado Oro Maya</h4>
+                            <p>Borde dorado exclusivo que revela la calidad artesanal de cada producto.</p>
+                        </div>
+                    </div>
+                    <div class="about-feature reveal reveal-delay-4">
+                        <div class="about-feature-icon turquesa">🎨</div>
+                        <div>
+                            <h4>Diseños por Destino</h4>
+                            <p>Creamos diseños únicos y personalizados para cada ciudad y atractivo turístico.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products -->
+    <section class="products-section">
+        <div class="products-header">
+            <div class="section-label reveal">Nuestra Línea</div>
+            <h2 class="section-title reveal reveal-delay-1">Productos que se venden solos</h2>
+            <p class="section-desc reveal reveal-delay-2">Cada producto diseñado para capturar la atención del turista y convertirse en el recuerdo perfecto.</p>
+        </div>
+        <div class="products-scroll">
+            <div class="product-card">
+                <div class="product-card-img">
+                    <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANCOZUMELTUCAN.png?v=1744389106" alt="Imán MDF AXKAN" loading="lazy">
+                </div>
+                <div class="product-card-body">
+                    <span class="product-card-tag tag-popular">Más Vendido</span>
+                    <h3>Imanes MDF</h3>
+                    <p>Acabado brillante, borde Oro Maya. Diseños que cuentan historias.</p>
+                    <div class="product-price">$8 <small>/ pieza</small></div>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-card-img">
+                    <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/LLAVEROALFAJAYUCANLETRAS.png?v=1744388851" alt="Llavero MDF AXKAN" loading="lazy">
+                </div>
+                <div class="product-card-body">
+                    <span class="product-card-tag tag-popular">Popular</span>
+                    <h3>Llaveros MDF</h3>
+                    <p>Compañeros diarios con argolla reforzada. Siempre visibles.</p>
+                    <div class="product-price">$7 <small>/ pieza</small></div>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-card-img">
+                    <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANCOZUMELTORTUGA.png?v=1744389106" alt="Imán 3D AXKAN" loading="lazy">
+                </div>
+                <div class="product-card-body">
+                    <span class="product-card-tag tag-premium">Premium</span>
+                    <h3>Imanes 3D</h3>
+                    <p>Efecto tridimensional que hace que cada destino cobre vida.</p>
+                    <div class="product-price">$15 <small>/ pieza</small></div>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-card-img">
+                    <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANCOZUMELGUACAMAYA.png?v=1744388950" alt="Imán Foil AXKAN" loading="lazy">
+                </div>
+                <div class="product-card-body">
+                    <span class="product-card-tag tag-premium">Premium</span>
+                    <h3>Foil Metálico</h3>
+                    <p>Acabado dorado que añade un toque de lujo a cada recuerdo.</p>
+                    <div class="product-price">$13 <small>/ pieza</small></div>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-card-img">
+                    <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IGELSIAYCERROCONFORTIN.png?v=1740782327" alt="Destapador MDF AXKAN" loading="lazy">
+                </div>
+                <div class="product-card-body">
+                    <span class="product-card-tag tag-new">Funcional</span>
+                    <h3>Destapadores</h3>
+                    <p>Abren botellas, abren conversaciones, abren recuerdos.</p>
+                    <div class="product-price">$17 <small>/ pieza</small></div>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-card-img">
+                    <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/AHUATLANDEDIA.png?v=1744391193" alt="Portallaves AXKAN" loading="lazy">
+                </div>
+                <div class="product-card-body">
+                    <span class="product-card-tag tag-premium">Decoración</span>
+                    <h3>Portallaves</h3>
+                    <p>Pieza decorativa funcional para el hogar. 4 ganchos incluidos.</p>
+                    <div class="product-price">$40 <small>/ pieza</small></div>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-card-img">
+                    <img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/AHUATLANDENOCHE.png?v=1744391231" alt="Portarretratos AXKAN" loading="lazy">
+                </div>
+                <div class="product-card-body">
+                    <span class="product-card-tag tag-premium">Decoración</span>
+                    <h3>Portarretratos</h3>
+                    <p>Marco decorativo con diseño del destino. Un recuerdo que perdura.</p>
+                    <div class="product-price">$40 <small>/ pieza</small></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why AXKAN -->
+    <section>
+        <div class="why-section">
+            <div class="section-label reveal">Ventajas</div>
+            <h2 class="section-title reveal reveal-delay-1">¿Por qué AXKAN?</h2>
+            <p class="section-desc reveal reveal-delay-2">Todo lo que necesitas para ofrecer souvenirs premium en tu punto de venta.</p>
+
+            <div class="why-grid">
+                <div class="why-card reveal">
+                    <div class="why-card-icon">🎨</div>
+                    <h3>Diseños Personalizados</h3>
+                    <p>Creamos diseños exclusivos para tu destino. Cada pieza refleja la identidad cultural, arquitectura y naturaleza de tu ciudad. 2 rondas de revisión incluidas sin costo.</p>
+                </div>
+                <div class="why-card reveal reveal-delay-1">
+                    <div class="why-card-icon">🚚</div>
+                    <h3>Envío Nacional</h3>
+                    <p>Entregamos en todo México en 8–14 días hábiles. Empaque seguro especializado para piezas de MDF. Rastreo incluido en cada envío.</p>
+                </div>
+                <div class="why-card reveal reveal-delay-2">
+                    <div class="why-card-icon">📦</div>
+                    <h3>Pedido Mínimo Accesible</h3>
+                    <p>Solo 100 piezas mínimo por diseño. Ideal para probar el mercado sin riesgo. Puedes mezclar productos y diseños en tu pedido.</p>
+                </div>
+                <div class="why-card reveal reveal-delay-3">
+                    <div class="why-card-icon">💰</div>
+                    <h3>Márgenes Atractivos</h3>
+                    <p>Precio mayoreo desde $8/pieza. Los souvenirs se venden al público entre $30–$80, dejando un margen de 3x–5x sobre tu inversión.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing-section">
+        <div class="pricing-content">
+            <div class="section-label reveal">Precios Mayoreo</div>
+            <h2 class="section-title reveal reveal-delay-1">Precios por Volumen</h2>
+            <p class="section-desc reveal reveal-delay-2">Mientras más pidas, mejor precio. Todos los precios en MXN por pieza.</p>
+
+            <table class="pricing-table reveal reveal-delay-3">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>100–999 pzas</th>
+                        <th>1,000+ pzas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Imanes MDF Chico</td>
+                        <td>$8.00</td>
+                        <td>$6.00 <span class="volume-badge">-25%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Imanes MDF Mediano</td>
+                        <td>$11.00</td>
+                        <td>$8.00 <span class="volume-badge">-27%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Imanes MDF Grande</td>
+                        <td>$15.00</td>
+                        <td>$12.00 <span class="volume-badge">-20%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Imanes 3D</td>
+                        <td>$15.00</td>
+                        <td>$12.00 <span class="volume-badge">-20%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Imanes Foil Metálico</td>
+                        <td>$13.00</td>
+                        <td>$10.00 <span class="volume-badge">-23%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Llaveros MDF</td>
+                        <td>$10.00</td>
+                        <td>$7.00 <span class="volume-badge">-30%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Destapadores MDF</td>
+                        <td>$20.00</td>
+                        <td>$15.00 <span class="volume-badge">-25%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Botones Metálicos</td>
+                        <td>$8.00</td>
+                        <td>$6.00 <span class="volume-badge">-25%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Portallaves MDF</td>
+                        <td colspan="2" style="text-align:right">$40.00 <small style="color:var(--gris)">(mín. 20 pzas)</small></td>
+                    </tr>
+                    <tr>
+                        <td>Portarretratos MDF</td>
+                        <td colspan="2" style="text-align:right">$40.00 <small style="color:var(--gris)">(mín. 20 pzas)</small></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="pricing-note reveal">
+                <span style="font-size:1.3rem">💡</span>
+                <span>El diseño de tus souvenirs está incluido. Incluimos 2 rondas de revisión sin costo adicional para que queden perfectos.</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process -->
+    <section>
+        <div class="process-section">
+            <div class="section-label reveal">Proceso</div>
+            <h2 class="section-title reveal reveal-delay-1">¿Cómo Funciona?</h2>
+            <p class="section-desc reveal reveal-delay-2">De la idea al producto en 4 pasos simples.</p>
+
+            <div class="process-steps">
+                <div class="process-step reveal">
+                    <div class="process-step-num">1</div>
+                    <h4>Contáctanos</h4>
+                    <p>Cuéntanos tu destino, productos y cantidad. Te asesoramos sin compromiso.</p>
+                </div>
+                <div class="process-step reveal reveal-delay-1">
+                    <div class="process-step-num">2</div>
+                    <h4>Diseño</h4>
+                    <p>Creamos diseños únicos para tu destino. 2 rondas de revisión incluidas.</p>
+                </div>
+                <div class="process-step reveal reveal-delay-2">
+                    <div class="process-step-num">3</div>
+                    <h4>Producción</h4>
+                    <p>Corte láser, impresión y acabado premium. Control de calidad pieza por pieza.</p>
+                </div>
+                <div class="process-step reveal reveal-delay-3">
+                    <div class="process-step-num">4</div>
+                    <h4>Entrega</h4>
+                    <p>Envío nacional con rastreo. 8–14 días hábiles a cualquier punto de México.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery -->
+    <section class="gallery-section">
+        <div class="gallery-header">
+            <div class="section-label reveal">Portafolio</div>
+            <h2 class="section-title reveal reveal-delay-1">Diseños que ya recorren México</h2>
+        </div>
+        <div class="gallery-grid">
+            <div class="gallery-item reveal"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANCOZUMELTUCAN.png?v=1744389106" alt="Diseño Cozumel" loading="lazy"></div>
+            <div class="gallery-item reveal reveal-delay-1"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANCOZUMELPLACAVECTOR.png?v=1744389106" alt="Diseño Cozumel 2" loading="lazy"></div>
+            <div class="gallery-item reveal reveal-delay-2"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANCOZUMELTORTUGA.png?v=1744389106" alt="Diseño Cozumel 3" loading="lazy"></div>
+            <div class="gallery-item reveal reveal-delay-1"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/LLAVEROALFAJAYUCANLETRAS.png?v=1744388851" alt="Diseño Alfajayucan" loading="lazy"></div>
+            <div class="gallery-item reveal reveal-delay-2"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANCOZUMELCANGREJO.png?v=1744389106" alt="Diseño Cozumel 4" loading="lazy"></div>
+            <div class="gallery-item reveal reveal-delay-3"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANCOZUMELTORTUGAYPALMERAS.png?v=1744389106" alt="Diseño Cozumel 5" loading="lazy"></div>
+            <div class="gallery-item reveal"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/AHUATLANDEDIA.png?v=1744391193" alt="Diseño Ahuatlán" loading="lazy"></div>
+            <div class="gallery-item reveal reveal-delay-1"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANCOZUMELPEZMARLIN.png?v=1744389106" alt="Diseño Cozumel 6" loading="lazy"></div>
+            <div class="gallery-item reveal reveal-delay-2"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/AHUATLANDENOCHE.png?v=1744391231" alt="Diseño Ahuatlán noche" loading="lazy"></div>
+            <div class="gallery-item reveal reveal-delay-3"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANIGLESIAPIEDRAANCHA.png?v=1740781818" alt="Diseño iglesia" loading="lazy"></div>
+            <div class="gallery-item reveal"><img src="https://cdn.shopify.com/s/files/1/0568/7813/7421/files/IMANARCELIAPLAZAKIOSKO.png?v=1744388878" alt="Diseño Arcelia" loading="lazy"></div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <div class="section-label reveal">Empecemos</div>
+            <h2 class="section-title reveal reveal-delay-1">¿Listo para ofrecer souvenirs premium?</h2>
+            <p class="section-desc reveal reveal-delay-2">Contáctanos hoy y te enviamos una muestra de nuestros productos. Sin compromiso.</p>
+            <div class="cta-buttons reveal reveal-delay-3">
+                <a href="https://axkan.art" class="btn-primary" target="_blank">
+                    Hacer Pedido →
+                </a>
+                <a href="https://wa.me/5215512345678?text=Hola%2C%20me%20interesa%20una%20cotización%20de%20souvenirs%20AXKAN" class="btn-secondary" target="_blank">
+                    💬 WhatsApp
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <span>© 2026 AXKAN — Souvenirs Premium de México</span>
+        <div class="footer-links">
+            <a href="https://axkan.art" target="_blank">axkan.art</a>
+            <a href="https://instagram.com/axkan.mx" target="_blank">@axkan.mx</a>
+            <a href="mailto:informacion@axkan.art">informacion@axkan.art</a>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll reveal
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // Nav scroll effect
+        const nav = document.getElementById('nav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 50);
+        });
+    </script>
+</body>
+</html>
