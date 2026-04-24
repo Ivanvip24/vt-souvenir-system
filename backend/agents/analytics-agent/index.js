@@ -5,12 +5,13 @@ import * as revenueCalculator from './revenue-calculator.js';
 import * as reportGenerator from './report-generator.js';
 import * as emailSender from './email-sender.js';
 import * as scheduler from './scheduler.js';
+import { log } from '../../shared/logger.js';
 
 /**
  * Initialize the Analytics Agent
  */
 export async function initialize() {
-  console.log('🚀 Initializing Analytics Agent...\n');
+  log('info', 'analyticsAgent.init.start');
 
   // Initialize email sender
   emailSender.initializeEmailSender();
@@ -18,7 +19,7 @@ export async function initialize() {
   // Initialize scheduler for automated reports
   scheduler.initializeScheduler();
 
-  console.log('✅ Analytics Agent initialized successfully\n');
+  log('info', 'analyticsAgent.init.ok');
 }
 
 /**
