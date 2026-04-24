@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TUKO — Investor Pitch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@200;300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,200..700;1,9..40,200..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'RL AQVA';
+      src: url('RLAQVA.otf') format('opentype');
+      font-display: swap;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    :root {
+      --bg: #08080F;
+      --bg-elevated: #111119;
+      --bg-card: #16161F;
+      --bg-card-hover: #1C1C28;
+      --surface: #1E1E2A;
+
+      --text: #E8E8F0;
+      --text-dim: rgba(232, 232, 240, 0.55);
+      --text-muted: rgba(232, 232, 240, 0.35);
+
+      --rosa: #FF2D78;
+      --rosa-glow: rgba(255, 45, 120, 0.25);
+      --turquesa: #00C9DB;
+      --turquesa-glow: rgba(0, 201, 219, 0.2);
+      --naranja: #FF8C42;
+      --naranja-glow: rgba(255, 140, 66, 0.2);
+      --verde: #34D399;
+      --verde-glow: rgba(52, 211, 153, 0.2);
+      --amarillo: #FFBE0B;
+      --violeta: #8B5CF6;
+      --azul: #3B5BF5;
+
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: var(--rosa); color: white; }
+
+    /* ═══════ GRAIN OVERLAY ═══════ */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ═══════ SLIDE CONTAINER ═══════ */
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 5vh 8vw;
+      opacity: 0;
+      transform: translateX(60px);
+      pointer-events: none;
+      transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .slide::-webkit-scrollbar { display: none; }
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: all;
+    }
+    .slide.exit-left {
+      opacity: 0;
+      transform: translateX(-60px);
+    }
+
+    /* ═══════ NAVIGATION ═══════ */
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 3rem;
+      background: linear-gradient(0deg, rgba(8,8,15,0.95) 0%, transparent 100%);
+    }
+    .nav-bar .logo {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, var(--rosa), var(--naranja));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .progress-track {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .progress-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: all 0.4s var(--ease-out-expo);
+      cursor: pointer;
+    }
+    .progress-dot.active {
+      width: 28px;
+      border-radius: 4px;
+      background: var(--rosa);
+      box-shadow: 0 0 12px var(--rosa-glow);
+    }
+    .progress-dot:hover:not(.active) { background: var(--text-dim); }
+    .slide-counter {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      min-width: 50px;
+      text-align: right;
+    }
+
+    /* ═══════ TYPOGRAPHY ═══════ */
+    .slide-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--rosa);
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+    h2 {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 600;
+      font-size: 2.8rem;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+    h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      line-height: 1.2;
+      margin-bottom: 0.6rem;
+    }
+    p { line-height: 1.65; color: var(--text-dim); }
+    .big-text {
+      font-size: 1.15rem;
+      line-height: 1.7;
+      max-width: 640px;
+    }
+
+    /* ═══════ ACCENT UTILS ═══════ */
+    .gradient-text {
+      background: linear-gradient(135deg, var(--rosa), var(--naranja), var(--amarillo));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .gradient-text-cool {
+      background: linear-gradient(135deg, var(--turquesa), var(--azul), var(--violeta));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .highlight { color: var(--rosa); }
+    .highlight-cyan { color: var(--turquesa); }
+    .highlight-green { color: var(--verde); }
+    .highlight-orange { color: var(--naranja); }
+
+    /* ═══════ CARDS / GRID ═══════ */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: transform 0.3s var(--ease-spring), border-color 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.08);
+    }
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    /* ═══════ STAT BLOCKS ═══════ */
+    .stat { text-align: center; }
+    .stat-value {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 700;
+      font-size: 3.2rem;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ═══════ PRICING TABLE ═══════ */
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 2.2rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .pricing-card.featured {
+      border-color: var(--rosa);
+      box-shadow: 0 0 40px rgba(255, 45, 120, 0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .pricing-card.featured::before {
+      content: 'MAS POPULAR';
+      position: absolute;
+      top: 16px;
+      right: -30px;
+      background: var(--rosa);
+      color: white;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      padding: 4px 36px;
+      transform: rotate(45deg);
+    }
+    .pricing-tier {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+    .pricing-name {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 600;
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .pricing-price {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 700;
+      font-size: 2.6rem;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .pricing-period {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+    .pricing-features {
+      list-style: none;
+      flex: 1;
+      margin-bottom: 1.5rem;
+    }
+    .pricing-features li {
+      padding: 0.5rem 0;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .pricing-features li::before {
+      content: '✓';
+      color: var(--verde);
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+    .pricing-btn {
+      display: block;
+      text-align: center;
+      padding: 0.85rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s var(--ease-spring);
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .pricing-btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.12); }
+    .pricing-btn.primary {
+      background: linear-gradient(135deg, var(--rosa), var(--naranja));
+      color: white;
+      border: none;
+    }
+    .pricing-btn.primary:hover { box-shadow: 0 8px 30px var(--rosa-glow); }
+
+    /* ═══════ STEP FLOW ═══════ */
+    .steps {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      margin-top: 2rem;
+    }
+    .step {
+      flex: 1;
+      padding: 2rem;
+      position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
+      color: var(--text-muted);
+    }
+    .step-num {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 700;
+      font-size: 3rem;
+      line-height: 1;
+      opacity: 0.12;
+      margin-bottom: 0.8rem;
+    }
+
+    /* ═══════ TABLE ═══════ */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+    .data-table th {
+      text-align: left;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .data-table td {
+      padding: 0.9rem 1rem;
+      font-size: 0.92rem;
+      color: var(--text-dim);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .data-table tr:hover td { color: var(--text); }
+
+    /* ═══════ LISTS ═══════ */
+    .check-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+    .check-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      font-size: 1rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .check-list li::before {
+      content: '→';
+      color: var(--rosa);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ═══════ DIVIDERS ═══════ */
+    .divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--rosa), transparent);
+      border-radius: 2px;
+      margin: 1.5rem 0;
+    }
+
+    /* ═══════ TWO-COL LAYOUT ═══════ */
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    .split-wide {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    /* ═══════ GLOW DECORATIONS ═══════ */
+    .glow-rosa {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--rosa-glow) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(60px);
+    }
+    .glow-cyan {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, var(--turquesa-glow) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(50px);
+    }
+
+    /* ═══════ HERO SPECIAL ═══════ */
+    .hero-title {
+      font-size: clamp(4rem, 10vw, 9rem);
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+    }
+    .hero-sub {
+      font-size: 1.4rem;
+      color: var(--text-dim);
+      margin-top: 1.5rem;
+      max-width: 500px;
+      line-height: 1.6;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 100px;
+      padding: 0.4rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--verde);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ═══════ IMPACT BARS ═══════ */
+    .impact-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surface);
+      overflow: hidden;
+      margin-top: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+    .impact-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1.2s var(--ease-out-expo);
+      width: 0;
+    }
+    .slide.active .impact-bar-fill { width: var(--w); }
+
+    /* ═══════ TUKI CHARACTER ═══════ */
+    .tuki-float {
+      font-size: 4rem;
+      animation: float 4s ease-in-out infinite;
+      display: inline-block;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    /* ═══════ REVENUE MODEL VISUAL ═══════ */
+    .revenue-flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 2rem 0;
+    }
+    .revenue-node {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 1.4rem 1.6rem;
+      text-align: center;
+      flex: 1;
+    }
+    .revenue-arrow {
+      font-size: 1.4rem;
+      color: var(--text-muted);
+      padding: 0 0.6rem;
+      flex-shrink: 0;
+    }
+    .revenue-node-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .revenue-node-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .revenue-node-value {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-top: 0.3rem;
+    }
+
+    /* ═══════ RESPONSIVE ═══════ */
+
+    /* Tablet */
+    @media (max-width: 1024px) {
+      .slide { padding: 3vh 5vw; justify-content: flex-start; padding-top: 6vh; }
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .split, .split-wide { gap: 2rem; }
+      h2 { font-size: 2.2rem; }
+      .stat-value { font-size: 2.6rem; }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      body { overflow: hidden; height: 100vh; height: 100dvh; }
+
+      .slide {
+        padding: 1.5rem 1.2rem 4.5rem;
+        justify-content: flex-start !important;
+        align-items: stretch;
+        padding-top: 2.5rem;
+        -webkit-overflow-scrolling: touch;
+        overflow-y: scroll !important;
+        overflow-x: hidden;
+      }
+
+      /* Force all inline flex containers to wrap on mobile */
+      .slide div[style*="display: flex"][style*="gap"] {
+        flex-wrap: wrap !important;
+      }
+
+      .grid-2, .grid-3, .grid-4, .split, .split-wide {
+        grid-template-columns: 1fr !important;
+        gap: 0.8rem;
+      }
+
+      .steps { flex-direction: column; gap: 0; }
+      .step { padding: 1rem 0; }
+      .step:not(:last-child)::after { display: none; }
+      .step:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,0.04); }
+      .step-num { font-size: 1.8rem; margin-bottom: 0.3rem; }
+
+      h2 { font-size: 1.45rem; margin-bottom: 0.8rem; }
+      h3 { font-size: 1.05rem; }
+      .hero-title { font-size: clamp(2.6rem, 13vw, 4rem); }
+      .hero-sub { font-size: 1rem; margin-top: 0.8rem !important; }
+      .big-text { font-size: 0.92rem; line-height: 1.6; }
+      .slide-label { font-size: 0.6rem; margin-bottom: 0.8rem; }
+      p { font-size: 0.88rem; line-height: 1.55; }
+
+      .stat-value { font-size: 1.6rem; }
+      .stat-label { font-size: 0.65rem; }
+      .stat { padding: 0.4rem 0; }
+
+      .card { padding: 1rem; border-radius: 10px; }
+      .card p { font-size: 0.82rem; }
+      .card-icon { width: 32px; height: 32px; font-size: 1.1rem; margin-bottom: 0.6rem; }
+
+      .pricing-card { padding: 1.2rem; border-radius: 12px; }
+      .pricing-price { font-size: 1.8rem; }
+      .pricing-name { font-size: 1.2rem; }
+      .pricing-features { margin-bottom: 1rem; }
+      .pricing-features li { font-size: 0.78rem; padding: 0.35rem 0; }
+      .pricing-btn { padding: 0.7rem; font-size: 0.82rem; }
+
+      .revenue-flow { flex-direction: column; gap: 0; margin: 1rem 0; }
+      .revenue-arrow { transform: rotate(90deg); padding: 0.2rem 0; font-size: 0.9rem; }
+      .revenue-node { padding: 0.8rem; }
+      .revenue-node-icon { font-size: 1.3rem; margin-bottom: 0.3rem; }
+      .revenue-node-value { font-size: 0.88rem; }
+      .revenue-node-label { font-size: 0.65rem; }
+
+      .data-table { font-size: 0.72rem; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 0.8rem; }
+      .data-table th { padding: 0.4rem 0.5rem; font-size: 0.5rem; white-space: nowrap; }
+      .data-table td { padding: 0.5rem; font-size: 0.72rem; white-space: nowrap; }
+
+      .check-list li { font-size: 0.82rem; gap: 0.5rem; line-height: 1.4; }
+      .check-list { gap: 0.5rem; }
+
+      .divider { margin: 0.8rem 0; }
+
+      .nav-bar { padding: 0.6rem 1rem; background: rgba(8,8,15,0.97); }
+      .nav-bar .logo { font-size: 0.85rem; }
+      .progress-dot { width: 5px; height: 5px; }
+      .progress-dot.active { width: 16px; }
+      .progress-track { gap: 3px; }
+      .slide-counter { font-size: 0.6rem; min-width: 40px; }
+
+      .key-hint { display: none; }
+      .watermark { font-size: 0.45rem; left: 0.8rem; top: 0.8rem; }
+
+      .glow-rosa, .glow-cyan { display: none; }
+
+      .tuki-float { font-size: 2rem; }
+
+      .impact-bar { margin-top: 0.3rem; margin-bottom: 0.8rem; }
+
+      /* Phone mockup on slide 2 — hide on mobile to save space */
+      .split > div:last-child:has([style*="border-radius: 36px"]) {
+        display: none;
+      }
+
+      /* All inline style overrides for mobile */
+      .slide [style*="margin-top: 2.5rem"] { margin-top: 1.2rem !important; }
+      .slide [style*="margin-top: 3rem"] { margin-top: 1.5rem !important; }
+      .slide [style*="margin-top: 2rem"] { margin-top: 1rem !important; }
+      .slide [style*="padding: 1.5rem 2rem"] { padding: 1rem !important; }
+      .slide [style*="padding: 1.2rem 1.5rem"] { padding: 0.8rem !important; }
+      .slide [style*="padding: 2rem"] { padding: 1rem !important; }
+      .slide [style*="gap: 4rem"] { gap: 1.5rem !important; }
+      .slide [style*="gap: 3rem"] { gap: 1rem !important; }
+      .slide [style*="gap: 2rem"] { gap: 0.8rem !important; }
+      .slide [style*="font-size: 1.8rem"] { font-size: 1.3rem !important; }
+      .slide [style*="font-size: 2rem"] { font-size: 1.4rem !important; }
+      .slide [style*="font-size: 1.6rem"] { font-size: 1.2rem !important; }
+      .slide [style*="font-size: 2.2rem"] { font-size: 1.4rem !important; }
+      .slide [style*="font-size: 2.6rem"] { font-size: 1.5rem !important; }
+
+      /* Pricing bottom stats row */
+      .slide > div[style*="justify-content: center"] {
+        flex-direction: column !important;
+        gap: 0.6rem !important;
+        align-items: stretch !important;
+      }
+
+      /* Roadmap timeline items */
+      .slide div[style*="display: flex; gap: 1rem; padding: 1rem 0"] {
+        padding: 0.6rem 0 !important;
+      }
+
+      /* Government plan header layout */
+      .card > div[style*="display: flex; justify-content: space-between"] {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+      }
+    }
+
+    /* Small phones */
+    @media (max-width: 380px) {
+      .slide { padding: 1.2rem 1rem 4.5rem; padding-top: 2rem; }
+      h2 { font-size: 1.25rem; }
+      .hero-title { font-size: 2.3rem; }
+      .pricing-price { font-size: 1.5rem; }
+      .stat-value { font-size: 1.3rem; }
+      .card { padding: 0.8rem; }
+      p, .card p { font-size: 0.78rem; }
+    }
+
+    /* ═══════ KEYBOARD HINT ═══════ */
+    .key-hint {
+      position: fixed;
+      top: 1.5rem;
+      right: 2rem;
+      z-index: 100;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      opacity: 0.5;
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+    }
+    .key-hint kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px;
+      font-size: 0.6rem;
+    }
+
+    /* ═══════ CONFIDENTIAL WATERMARK ═══════ */
+    .watermark {
+      position: fixed;
+      top: 1.5rem;
+      left: 2rem;
+      z-index: 100;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body>
+
+<div class="watermark">CONFIDENCIAL — TUKO 2026</div>
+<div class="key-hint"><kbd>←</kbd><kbd>→</kbd> navegar</div>
+
+<div class="deck" id="deck">
+
+  <!-- ══════════════════════════════════════════ SLIDE 0: COVER ══════════════════════════════════════════ -->
+  <div class="slide active" data-slide="0">
+    <div class="glow-rosa" style="top: -100px; right: -100px; opacity: 0.4;"></div>
+    <div class="glow-cyan" style="bottom: 0; left: 10%; opacity: 0.3;"></div>
+
+    <div style="margin-bottom: 2rem;">
+      <span class="badge"><span class="badge-dot"></span> Pitch para Inversionistas — Marzo 2026</span>
+    </div>
+    <h1 class="hero-title gradient-text">TUKO</h1>
+    <p class="hero-sub" style="margin-top: 1rem; font-size: 1.6rem; color: var(--text-dim);">
+      Turismo Conectado
+    </p>
+    <div class="divider" style="margin: 2rem 0;"></div>
+    <p class="big-text" style="max-width: 580px;">
+      La plataforma de <strong style="color: var(--text)">realidad aumentada</strong> que transforma monumentos en experiencias digitales y conecta turistas con negocios locales.
+    </p>
+    <p style="margin-top: 3rem; font-size: 0.85rem; color: var(--text-muted);">
+      Escanea. Aprende. Descubre.
+    </p>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 1: EL PROBLEMA ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="1">
+    <span class="slide-label">01 — El Problema</span>
+    <h2>El turismo en pueblos mexicanos<br>está <span class="highlight">desconectado</span></h2>
+    <div class="divider"></div>
+
+    <div class="grid-3" style="margin-top: 1.5rem;">
+      <div class="card">
+        <div class="card-icon" style="background: var(--rosa-glow);">🏛️</div>
+        <h3>Monumentos sin voz</h3>
+        <p>Miles de monumentos históricos no tienen señalización, guías, ni información digital accesible para visitantes.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background: var(--turquesa-glow);">🏪</div>
+        <h3>Negocios invisibles</h3>
+        <p>Los comercios locales no tienen forma de llegar al turista en el momento exacto que está explorando su zona.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background: var(--naranja-glow);">📱</div>
+        <h3>Experiencia genérica</h3>
+        <p>Google Maps muestra el mismo tipo de info en Cancún que en Chignahuapan. No hay contexto cultural ni narrativa local.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 2.5rem; padding: 1.5rem 2rem; background: var(--bg-card); border-radius: 12px; border-left: 3px solid var(--rosa);">
+      <p style="font-size: 1rem; color: var(--text); font-weight: 500;">
+        <strong>Resultado:</strong> El turista se va sin conocer la historia real, sin descubrir negocios locales, y el pueblo pierde derrama económica.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 2: LA SOLUCIÓN ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="2">
+    <span class="slide-label">02 — La Solución</span>
+    <div class="split">
+      <div>
+        <h2>Un guía digital en<br>cada monumento <span class="tuki-float">🪸</span></h2>
+        <div class="divider"></div>
+        <p class="big-text">
+          TUKO coloca <strong style="color: var(--text)">códigos QR en puntos de interés</strong>. Al escanear, aparece <strong style="color: var(--turquesa)">Tuki</strong> — un ajolote digital que cuenta la historia del lugar y recomienda negocios locales cercanos.
+        </p>
+        <ul class="check-list" style="margin-top: 2rem;">
+          <li>Sin app — funciona directo desde el navegador</li>
+          <li>Contenido cultural narrado por un personaje memorable</li>
+          <li>Recomendaciones de negocios locales geolocalizadas</li>
+          <li>Analíticas en tiempo real para negocios patrocinadores</li>
+        </ul>
+      </div>
+      <div style="text-align: center;">
+        <!-- Phone mockup -->
+        <div style="display: inline-block; background: var(--bg-card); border: 2px solid rgba(255,255,255,0.08); border-radius: 36px; padding: 12px; max-width: 280px; width: 100%;">
+          <div style="background: linear-gradient(180deg, #111 0%, #1a1a28 100%); border-radius: 26px; padding: 2rem 1.5rem; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem;">
+            <div style="font-size: 4rem; animation: float 3s ease-in-out infinite;">🦎</div>
+            <div style="background: rgba(255,255,255,0.06); border-radius: 16px; padding: 1rem 1.2rem; text-align: left; width: 100%;">
+              <p style="font-size: 0.75rem; color: var(--turquesa); font-weight: 600; margin-bottom: 0.3rem;">Tuki dice:</p>
+              <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.5;">"¡Hola! Esta laguna se fundó en 1531. Debajo de este reloj hay una leyenda que pocos conocen..."</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 0.8rem 1rem; width: 100%; display: flex; align-items: center; gap: 0.8rem;">
+              <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--naranja-glow); display: flex; align-items: center; justify-content: center;">🍞</div>
+              <div>
+                <p style="font-size: 0.75rem; font-weight: 600; color: var(--text);">Pan de Queso Doña María</p>
+                <p style="font-size: 0.65rem; color: var(--verde);">⭐ Recomendado por Tuki · 50m</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 3: CÓMO FUNCIONA ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="3">
+    <span class="slide-label">03 — Cómo Funciona</span>
+    <h2>4 pasos, <span class="gradient-text">cero fricción</span></h2>
+    <div class="divider"></div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num gradient-text">01</div>
+        <h3>Escanea</h3>
+        <p>El turista ve un QR en un monumento, plaza o punto de interés. Lo escanea con su cámara — sin descargar nada.</p>
+      </div>
+      <div class="step">
+        <div class="step-num gradient-text">02</div>
+        <h3>Conoce a Tuki</h3>
+        <p>Aparece Tuki, el ajolote-guía digital, con una bienvenida personalizada al lugar que está visitando.</p>
+      </div>
+      <div class="step">
+        <div class="step-num gradient-text">03</div>
+        <h3>Aprende</h3>
+        <p>Tuki narra la historia, datos curiosos y leyendas del lugar con audio y texto. Contenido cultural auténtico.</p>
+      </div>
+      <div class="step">
+        <div class="step-num gradient-text">04</div>
+        <h3>Descubre</h3>
+        <p>Recomendaciones de negocios locales cercanos: restaurantes, cafés, tiendas artesanales — patrocinados.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 2.5rem; text-align: center; padding: 1.2rem; background: var(--bg-card); border-radius: 12px;">
+      <p style="font-size: 0.9rem; color: var(--text-dim);">
+        <strong style="color: var(--verde);">Sin app.</strong> &nbsp;Funciona 100% en navegador web. &nbsp;<strong style="color: var(--turquesa);">Sin registro.</strong> &nbsp;El turista escanea y listo. &nbsp;<strong style="color: var(--naranja);">Sin costo</strong> para el turista.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 4: OPORTUNIDAD DE MERCADO ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="4">
+    <span class="slide-label">04 — Oportunidad de Mercado</span>
+    <h2>México: el turismo que <span class="gradient-text-cool">nadie conecta</span></h2>
+    <div class="divider"></div>
+
+    <div class="grid-4" style="margin-top: 1.5rem;">
+      <div class="stat">
+        <div class="stat-value gradient-text">42.3M</div>
+        <div class="stat-label">Turistas internacionales<br>al año (2025)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value highlight-cyan">132</div>
+        <div class="stat-label">Pueblos Mágicos<br>designados</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value highlight-green">$29B</div>
+        <div class="stat-label">USD ingreso por<br>turismo internacional</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value highlight-orange">~0%</div>
+        <div class="stat-label">Con infraestructura<br>digital turística</div>
+      </div>
+    </div>
+
+    <div class="split" style="margin-top: 3rem; gap: 3rem;">
+      <div>
+        <h3 style="color: var(--text); margin-bottom: 1rem;">TAM → SAM → SOM</h3>
+        <div style="margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85rem; color: var(--text-dim);">TAM — Turismo digital México</span>
+            <span style="font-family: 'Clash Display'; font-weight: 600; color: var(--text);">$2.4B USD</span>
+          </div>
+          <div class="impact-bar"><div class="impact-bar-fill" style="--w: 100%; background: linear-gradient(90deg, var(--rosa), var(--naranja));"></div></div>
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85rem; color: var(--text-dim);">SAM — Pueblos Mágicos + destinos</span>
+            <span style="font-family: 'Clash Display'; font-weight: 600; color: var(--text);">$380M USD</span>
+          </div>
+          <div class="impact-bar"><div class="impact-bar-fill" style="--w: 45%; background: linear-gradient(90deg, var(--turquesa), var(--azul));"></div></div>
+        </div>
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85rem; color: var(--text-dim);">SOM — Año 1-3 (5 destinos)</span>
+            <span style="font-family: 'Clash Display'; font-weight: 600; color: var(--verde);">$4.2M USD</span>
+          </div>
+          <div class="impact-bar"><div class="impact-bar-fill" style="--w: 12%; background: linear-gradient(90deg, var(--verde), var(--amarillo));"></div></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="color: var(--text); margin-bottom: 1rem;">¿Por qué ahora?</h3>
+        <ul class="check-list">
+          <li>México es el 6° país más visitado del mundo</li>
+          <li>Post-COVID: turistas buscan experiencias, no solo destinos</li>
+          <li>Gobierno impulsa Pueblos Mágicos con presupuesto récord</li>
+          <li>QR adoption masiva post-pandemia</li>
+          <li>Zero competencia en turismo AR en LATAM</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 5: MODELO DE NEGOCIO ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="5">
+    <span class="slide-label">05 — Modelo de Negocio</span>
+    <h2>Tres fuentes de ingreso, <span class="gradient-text">un ecosistema</span></h2>
+    <div class="divider"></div>
+
+    <div class="revenue-flow">
+      <div class="revenue-node">
+        <div class="revenue-node-icon">📍</div>
+        <div class="revenue-node-label">QR en Monumento</div>
+        <div class="revenue-node-value">Turista escanea</div>
+      </div>
+      <div class="revenue-arrow">→</div>
+      <div class="revenue-node" style="border-color: var(--turquesa);">
+        <div class="revenue-node-icon">🦎</div>
+        <div class="revenue-node-label">Tuki Guía</div>
+        <div class="revenue-node-value">Historia + recomendaciones</div>
+      </div>
+      <div class="revenue-arrow">→</div>
+      <div class="revenue-node" style="border-color: var(--verde);">
+        <div class="revenue-node-icon">🏪</div>
+        <div class="revenue-node-label">Negocio Local</div>
+        <div class="revenue-node-value highlight-green">$$$ Patrocinio</div>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top: 2rem;">
+      <div class="card" style="border-top: 3px solid var(--rosa);">
+        <h3><span class="highlight">01</span> Suscripciones B2B</h3>
+        <p style="margin-top: 0.5rem;">Negocios pagan mensualidad para aparecer como recomendación cuando turistas escanean QRs cercanos. <strong style="color: var(--text);">Ingreso recurrente principal.</strong></p>
+        <div style="margin-top: 1rem; font-family: 'Clash Display'; font-size: 1.8rem; font-weight: 700; color: var(--rosa);">~70%</div>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">del ingreso proyectado</span>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--turquesa);">
+        <h3><span class="highlight-cyan">02</span> Municipios & Gobierno</h3>
+        <p style="margin-top: 0.5rem;">Convenios con ayuntamientos y Secretaría de Turismo para digitalizar Pueblos Mágicos. Pago por destino implementado.</p>
+        <div style="margin-top: 1rem; font-family: 'Clash Display'; font-size: 1.8rem; font-weight: 700; color: var(--turquesa);">~20%</div>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">del ingreso proyectado</span>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--naranja);">
+        <h3><span class="highlight-orange">03</span> Datos & Analytics</h3>
+        <p style="margin-top: 0.5rem;">Reportes de flujo turístico, heatmaps de visitas, y comportamiento de visitantes. Valioso para planeación municipal y marcas.</p>
+        <div style="margin-top: 1rem; font-family: 'Clash Display'; font-size: 1.8rem; font-weight: 700; color: var(--naranja);">~10%</div>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">del ingreso proyectado</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 2rem; padding: 1rem 1.5rem; background: var(--bg-card); border-radius: 12px; text-align: center;">
+      <p style="font-size: 0.9rem; color: var(--text-dim);">
+        <strong style="color: var(--verde);">Unit economics:</strong> &nbsp;CAC promedio ~$200 MXN &nbsp;|&nbsp; LTV promedio ~$8,400 MXN &nbsp;|&nbsp; <strong style="color: var(--amarillo);">LTV:CAC = 42x</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 6: PLANES Y PRECIOS ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="6">
+    <span class="slide-label">06 — Planes & Precios</span>
+    <h2>Planes para negocios locales</h2>
+    <p style="margin-bottom: 2rem; color: var(--text-dim);">Precios mensuales en MXN. Todos incluyen presencia cuando turistas escanean QRs cercanos.</p>
+
+    <div class="grid-3">
+      <!-- PLAN BÁSICO -->
+      <div class="pricing-card">
+        <div class="pricing-tier">Nivel 1</div>
+        <div class="pricing-name">Descubre</div>
+        <div class="pricing-price" style="color: var(--turquesa);">$499</div>
+        <div class="pricing-period">MXN / mes</div>
+        <ul class="pricing-features">
+          <li>Tarjeta de negocio en recomendaciones de Tuki</li>
+          <li>Nombre, dirección y distancia al turista</li>
+          <li>Hasta 3 fotos de tu negocio</li>
+          <li>Apareces en 1 punto de escaneo cercano</li>
+          <li>Reporte mensual de impresiones</li>
+        </ul>
+        <a href="#" class="pricing-btn">Para empezar</a>
+      </div>
+
+      <!-- PLAN PRO -->
+      <div class="pricing-card featured">
+        <div class="pricing-tier">Nivel 2</div>
+        <div class="pricing-name">Conecta</div>
+        <div class="pricing-price" style="color: var(--rosa);">$1,299</div>
+        <div class="pricing-period">MXN / mes</div>
+        <ul class="pricing-features">
+          <li>Todo de Descubre +</li>
+          <li>Recomendación destacada (posición #1)</li>
+          <li>Apareces en hasta 5 puntos de escaneo</li>
+          <li>Botón directo de WhatsApp / llamada</li>
+          <li>Promociones y ofertas especiales para turistas</li>
+          <li>Dashboard de analíticas en tiempo real</li>
+          <li>Badge "Recomendado por Tuki" ⭐</li>
+        </ul>
+        <a href="#" class="pricing-btn primary">El más popular</a>
+      </div>
+
+      <!-- PLAN ENTERPRISE -->
+      <div class="pricing-card">
+        <div class="pricing-tier">Nivel 3</div>
+        <div class="pricing-name">Destino</div>
+        <div class="pricing-price" style="color: var(--naranja);">$3,499</div>
+        <div class="pricing-period">MXN / mes</div>
+        <ul class="pricing-features">
+          <li>Todo de Conecta +</li>
+          <li>Presencia en TODOS los puntos del destino</li>
+          <li>Experiencia AR personalizada con tu marca</li>
+          <li>Cupón digital exclusivo para turistas</li>
+          <li>Integración con Google Reviews / TripAdvisor</li>
+          <li>Atención prioritaria y account manager</li>
+          <li>Co-branding en materiales de Tuko</li>
+        </ul>
+        <a href="#" class="pricing-btn">Para líderes</a>
+      </div>
+    </div>
+
+    <div style="margin-top: 1.5rem; display: flex; gap: 2rem; justify-content: center;">
+      <div style="text-align: center;">
+        <p style="font-size: 0.78rem; color: var(--text-muted);">ARPU promedio proyectado</p>
+        <p style="font-family: 'Clash Display'; font-weight: 700; font-size: 1.3rem; color: var(--verde);">$1,100 MXN/mes</p>
+      </div>
+      <div style="text-align: center;">
+        <p style="font-size: 0.78rem; color: var(--text-muted);">Meta negocios Año 1</p>
+        <p style="font-family: 'Clash Display'; font-weight: 700; font-size: 1.3rem; color: var(--turquesa);">150 suscriptores</p>
+      </div>
+      <div style="text-align: center;">
+        <p style="font-size: 0.78rem; color: var(--text-muted);">MRR meta Año 1</p>
+        <p style="font-family: 'Clash Display'; font-weight: 700; font-size: 1.3rem; color: var(--rosa);">$165,000 MXN</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 7: PLANES GOBIERNO ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="7">
+    <span class="slide-label">07 — Planes Municipales & Gobierno</span>
+    <h2>Digitaliza tu <span class="gradient-text-cool">Pueblo Mágico</span></h2>
+    <p style="margin-bottom: 2rem; color: var(--text-dim);">Paquetes por destino completo. Incluyen instalación de QRs, creación de contenido cultural y plataforma.</p>
+
+    <div class="grid-2" style="gap: 1.5rem;">
+      <div class="card" style="border-top: 3px solid var(--azul);">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div>
+            <div class="pricing-tier">Implementación</div>
+            <h3 style="font-size: 1.6rem;">Pueblo Piloto</h3>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-family: 'Clash Display'; font-weight: 700; font-size: 2rem; color: var(--azul);">$85K</div>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">MXN único</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <ul class="check-list" style="margin-top: 1rem;">
+          <li>Hasta 15 puntos de interés con QR</li>
+          <li>Investigación histórica y redacción de contenido</li>
+          <li>Narración de audio profesional (voz de Tuki)</li>
+          <li>Instalación física de placas QR resistentes</li>
+          <li>Dashboard municipal de analíticas</li>
+          <li>Soporte por 6 meses incluido</li>
+        </ul>
+        <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">+ $8,500 MXN/mes mantenimiento después de 6 meses</p>
+      </div>
+
+      <div class="card" style="border-top: 3px solid var(--violeta);">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div>
+            <div class="pricing-tier">Implementación</div>
+            <h3 style="font-size: 1.6rem;">Destino Completo</h3>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-family: 'Clash Display'; font-weight: 700; font-size: 2rem; color: var(--violeta);">$220K</div>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">MXN único</span>
+          </div>
+        </div>
+        <div class="divider" style="background: linear-gradient(90deg, var(--violeta), transparent);"></div>
+        <ul class="check-list" style="margin-top: 1rem;">
+          <li>Hasta 50 puntos de interés con QR</li>
+          <li>Todo de Pueblo Piloto +</li>
+          <li>Mapa interactivo del destino</li>
+          <li>Rutas turísticas temáticas guiadas por Tuki</li>
+          <li>Portal web del destino personalizado</li>
+          <li>Integración con sistema de reservas municipal</li>
+          <li>Campaña de lanzamiento en redes sociales</li>
+          <li>Soporte por 12 meses incluido</li>
+        </ul>
+        <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">+ $15,000 MXN/mes mantenimiento después de 12 meses</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-card); border-radius: 12px;">
+      <p style="font-size: 0.85rem; color: var(--text-dim); text-align: center;">
+        💡 <strong style="color: var(--amarillo);">Subsidio disponible:</strong> Programas de SECTUR y FONATUR cubren hasta 60% del costo de implementación digital en Pueblos Mágicos.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 8: TRACCIÓN / PILOTO ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="8">
+    <span class="slide-label">08 — Tracción</span>
+    <h2>Chignahuapan: <span class="gradient-text">el piloto</span></h2>
+    <div class="divider"></div>
+
+    <div class="split" style="gap: 3rem;">
+      <div>
+        <p class="big-text">
+          Lanzamos el piloto en <strong style="color: var(--text)">Chignahuapan, Puebla</strong> — uno de los Pueblos Mágicos más visitados de México, famoso por sus esferas navideñas y su laguna icónica.
+        </p>
+
+        <div style="margin-top: 2rem;">
+          <div style="display: flex; gap: 2rem; margin-bottom: 1.5rem;">
+            <div class="stat">
+              <div class="stat-value" style="font-size: 2.2rem; color: var(--rosa);">1531</div>
+              <div class="stat-label">Año de fundación</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" style="font-size: 2.2rem; color: var(--amarillo);">70M+</div>
+              <div class="stat-label">Esferas navideñas / año</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value" style="font-size: 2.2rem; color: var(--verde);">150+</div>
+              <div class="stat-label">Negocios locales</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding: 1.2rem 1.5rem; background: var(--bg-card); border-radius: 12px; border-left: 3px solid var(--verde); margin-top: 1rem;">
+          <p style="font-size: 0.9rem; color: var(--text-dim);">
+            <strong style="color: var(--verde);">¿Por qué Chignahuapan?</strong><br>
+            Alto flujo turístico, comunidad de negocios activa, monumentos con historia rica, y conexión directa con producción de souvenirs AXKAN — nuestro primer mercado validado.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="margin-bottom: 1.2rem;">Roadmap del piloto</h3>
+        <div style="display: flex; flex-direction: column; gap: 0;">
+          <div style="display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+            <div style="font-family: 'Space Mono'; font-size: 0.7rem; color: var(--verde); min-width: 50px; padding-top: 2px;">Q2 '26</div>
+            <div>
+              <p style="font-size: 0.9rem; color: var(--text); font-weight: 500;">Investigación & contenido</p>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">15 puntos de interés documentados, audio grabado</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+            <div style="font-family: 'Space Mono'; font-size: 0.7rem; color: var(--turquesa); min-width: 50px; padding-top: 2px;">Q3 '26</div>
+            <div>
+              <p style="font-size: 0.9rem; color: var(--text); font-weight: 500;">Instalación & beta</p>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">QRs instalados, 20 negocios beta gratuitos</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+            <div style="font-family: 'Space Mono'; font-size: 0.7rem; color: var(--naranja); min-width: 50px; padding-top: 2px;">Q4 '26</div>
+            <div>
+              <p style="font-size: 0.9rem; color: var(--text); font-weight: 500;">Lanzamiento público</p>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">Temporada navideña — pico de turismo en Chignahuapan</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 1rem; padding: 1rem 0;">
+            <div style="font-family: 'Space Mono'; font-size: 0.7rem; color: var(--rosa); min-width: 50px; padding-top: 2px;">Q1 '27</div>
+            <div>
+              <p style="font-size: 0.9rem; color: var(--text); font-weight: 500;">Monetización completa</p>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">Planes pagados activos, expansión a 2° destino</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 9: IMPACTO TURÍSTICO ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="9">
+    <span class="slide-label">09 — Impacto en el Turismo</span>
+    <h2>Cómo TUKO <span class="gradient-text">impulsa la zona</span></h2>
+    <div class="divider"></div>
+
+    <div class="grid-2" style="margin-top: 1.5rem; gap: 2rem;">
+      <div>
+        <div class="card" style="margin-bottom: 1.2rem; border-left: 3px solid var(--verde);">
+          <h3>📈 Mayor tiempo de estadía</h3>
+          <p style="margin-top: 0.5rem;">Turistas con guías digitales pasan <strong style="color: var(--verde);">2.3x más tiempo</strong> explorando un destino vs. turistas sin guía. Más tiempo = más consumo local.</p>
+        </div>
+        <div class="card" style="margin-bottom: 1.2rem; border-left: 3px solid var(--turquesa);">
+          <h3>🏪 Derrama a micro-negocios</h3>
+          <p style="margin-top: 0.5rem;">El 74% de la derrama turística en Pueblos Mágicos se queda en cadenas. TUKO <strong style="color: var(--turquesa);">redirige visitantes a negocios locales</strong> que normalmente son invisibles.</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--naranja);">
+          <h3>🗺️ Distribución del flujo</h3>
+          <p style="margin-top: 0.5rem;">En vez de concentrar turistas en 2-3 puntos, TUKO crea rutas que <strong style="color: var(--naranja);">distribuyen visitantes</strong> por toda la zona — beneficiando barrios periféricos.</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom: 1.2rem; border-left: 3px solid var(--rosa);">
+          <h3>🎓 Preservación cultural</h3>
+          <p style="margin-top: 0.5rem;">Cada punto de escaneo es un <strong style="color: var(--rosa);">acto de preservación histórica</strong>. Documentamos leyendas, datos y tradiciones que se están perdiendo por falta de difusión.</p>
+        </div>
+        <div class="card" style="margin-bottom: 1.2rem; border-left: 3px solid var(--amarillo);">
+          <h3>⭐ Turismo de calidad</h3>
+          <p style="margin-top: 0.5rem;">Turistas informados <strong style="color: var(--amarillo);">valoran más el destino</strong>, dejan mejores reseñas, regresan y recomiendan. TUKO eleva la percepción del pueblo.</p>
+        </div>
+        <div class="card" style="border-left: 3px solid var(--violeta);">
+          <h3>💼 Empleo digital local</h3>
+          <p style="margin-top: 0.5rem;">Cada destino necesita <strong style="color: var(--violeta);">investigadores, narradores y embajadores locales</strong>. TUKO genera empleos dignos conectados al patrimonio cultural.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 10: PROYECCIONES ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="10">
+    <span class="slide-label">10 — Proyecciones Financieras</span>
+    <h2>Camino a <span class="gradient-text">rentabilidad</span></h2>
+    <div class="divider"></div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Métrica</th>
+          <th>Año 1 (2027)</th>
+          <th>Año 2 (2028)</th>
+          <th>Año 3 (2029)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color: var(--text); font-weight: 500;">Destinos activos</td>
+          <td>1 (Chignahuapan)</td>
+          <td>5 destinos</td>
+          <td>15 destinos</td>
+        </tr>
+        <tr>
+          <td style="color: var(--text); font-weight: 500;">Negocios suscritos</td>
+          <td>80</td>
+          <td>450</td>
+          <td>1,800</td>
+        </tr>
+        <tr>
+          <td style="color: var(--text); font-weight: 500;">Escaneos mensuales</td>
+          <td>5,000</td>
+          <td>45,000</td>
+          <td>200,000+</td>
+        </tr>
+        <tr>
+          <td style="color: var(--text); font-weight: 500;">MRR (suscripciones)</td>
+          <td style="color: var(--turquesa);">$88K MXN</td>
+          <td style="color: var(--turquesa);">$585K MXN</td>
+          <td style="color: var(--turquesa);">$2.3M MXN</td>
+        </tr>
+        <tr>
+          <td style="color: var(--text); font-weight: 500;">Ingreso gobierno / año</td>
+          <td style="color: var(--azul);">$85K MXN</td>
+          <td style="color: var(--azul);">$680K MXN</td>
+          <td style="color: var(--azul);">$3.3M MXN</td>
+        </tr>
+        <tr>
+          <td style="color: var(--text); font-weight: 500;">ARR total</td>
+          <td style="font-family: 'Clash Display'; font-weight: 700; color: var(--verde);">$1.14M MXN</td>
+          <td style="font-family: 'Clash Display'; font-weight: 700; color: var(--verde);">$7.7M MXN</td>
+          <td style="font-family: 'Clash Display'; font-weight: 700; color: var(--verde);">$30.9M MXN</td>
+        </tr>
+        <tr>
+          <td style="color: var(--text); font-weight: 500;">Margen operativo</td>
+          <td style="color: var(--naranja);">-15%</td>
+          <td style="color: var(--amarillo);">32%</td>
+          <td style="color: var(--verde);">58%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 2rem; padding: 1.2rem 1.5rem; background: var(--bg-card); border-radius: 12px;">
+      <p style="font-size: 0.85rem; color: var(--text-dim); text-align: center;">
+        <strong style="color: var(--verde);">Break-even:</strong> Mes 14 &nbsp;|&nbsp;
+        <strong style="color: var(--amarillo);">Payback period:</strong> 18 meses &nbsp;|&nbsp;
+        <strong style="color: var(--rosa);">Gross margin at scale:</strong> 78%
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 11: VENTAJA COMPETITIVA ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="11">
+    <span class="slide-label">11 — Ventaja Competitiva</span>
+    <h2>¿Por qué TUKO <span class="gradient-text-cool">gana?</span></h2>
+    <div class="divider"></div>
+
+    <div class="split-wide" style="margin-top: 1rem;">
+      <div>
+        <div class="grid-2" style="gap: 1.2rem;">
+          <div class="card">
+            <h3 style="color: var(--rosa);">🎭 Personaje memorable</h3>
+            <p style="font-size: 0.88rem;">Tuki no es un chatbot genérico. Es un <em>personaje</em> con personalidad que los turistas recuerdan y comparten. IP con potencial de merchandising.</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--turquesa);">📱 Zero-friction</h3>
+            <p style="font-size: 0.88rem;">Sin app, sin registro, sin descarga. QR → navegador → experiencia. La tasa de uso es 10x mayor que cualquier app turística.</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--verde);">🏭 AXKAN como puente</h3>
+            <p style="font-size: 0.88rem;">Ya vendemos souvenirs a 150+ negocios turísticos. Cada cliente AXKAN es un lead calificado para TUKO. Canal de distribución validado.</p>
+          </div>
+          <div class="card">
+            <h3 style="color: var(--naranja);">🔒 Network effects</h3>
+            <p style="font-size: 0.88rem;">Más negocios = mejor experiencia turista. Más turistas = más valor para negocios. Efecto de red que se auto-refuerza por destino.</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="margin-bottom: 1rem;">Landscape competitivo</h3>
+        <table class="data-table" style="margin-top: 0;">
+          <thead>
+            <tr>
+              <th></th>
+              <th>TUKO</th>
+              <th>Google</th>
+              <th>Apps guía</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color: var(--text-dim); font-size: 0.82rem;">Contenido local</td>
+              <td style="color: var(--verde);">✓ Profundo</td>
+              <td>Genérico</td>
+              <td>Variable</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-dim); font-size: 0.82rem;">Sin descarga</td>
+              <td style="color: var(--verde);">✓</td>
+              <td>✓</td>
+              <td>✗</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-dim); font-size: 0.82rem;">AR / personaje</td>
+              <td style="color: var(--verde);">✓ Tuki</td>
+              <td>✗</td>
+              <td>✗</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-dim); font-size: 0.82rem;">Monetiza locales</td>
+              <td style="color: var(--verde);">✓ Directo</td>
+              <td>Ads global</td>
+              <td>✗</td>
+            </tr>
+            <tr>
+              <td style="color: var(--text-dim); font-size: 0.82rem;">Pueblos Mágicos</td>
+              <td style="color: var(--verde);">✓ Foco</td>
+              <td>✗</td>
+              <td>✗</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-card); border-radius: 10px;">
+          <p style="font-size: 0.82rem; color: var(--text-dim);">
+            <strong style="color: var(--rosa);">Moat:</strong> Contenido cultural hiperlocal + relaciones con municipios + personaje de marca. Difícil de replicar a escala.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SLIDE 12: THE ASK ══════════════════════════════════════════ -->
+  <div class="slide" data-slide="12">
+    <div class="glow-rosa" style="top: 20%; right: -150px; opacity: 0.3;"></div>
+    <div class="glow-cyan" style="bottom: 10%; left: -100px; opacity: 0.25;"></div>
+
+    <span class="slide-label">12 — La Inversión</span>
+    <h2>Buscamos <span class="gradient-text">$1.5M MXN</span> pre-seed</h2>
+    <div class="divider"></div>
+
+    <div class="split" style="margin-top: 1.5rem; gap: 3rem;">
+      <div>
+        <h3 style="margin-bottom: 1.5rem;">Uso de fondos</h3>
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+            <span style="font-size: 0.9rem; color: var(--text-dim);">Desarrollo de producto (tech + AR)</span>
+            <span style="font-family: 'Clash Display'; font-weight: 600; font-size: 0.9rem;">40%</span>
+          </div>
+          <div class="impact-bar"><div class="impact-bar-fill" style="--w: 40%; background: var(--rosa);"></div></div>
+        </div>
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+            <span style="font-size: 0.9rem; color: var(--text-dim);">Piloto Chignahuapan (contenido + QRs)</span>
+            <span style="font-family: 'Clash Display'; font-weight: 600; font-size: 0.9rem;">25%</span>
+          </div>
+          <div class="impact-bar"><div class="impact-bar-fill" style="--w: 25%; background: var(--turquesa);"></div></div>
+        </div>
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+            <span style="font-size: 0.9rem; color: var(--text-dim);">Ventas B2B & marketing</span>
+            <span style="font-family: 'Clash Display'; font-weight: 600; font-size: 0.9rem;">20%</span>
+          </div>
+          <div class="impact-bar"><div class="impact-bar-fill" style="--w: 20%; background: var(--naranja);"></div></div>
+        </div>
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+            <span style="font-size: 0.9rem; color: var(--text-dim);">Operaciones & legal</span>
+            <span style="font-family: 'Clash Display'; font-weight: 600; font-size: 0.9rem;">15%</span>
+          </div>
+          <div class="impact-bar"><div class="impact-bar-fill" style="--w: 15%; background: var(--violeta);"></div></div>
+        </div>
+
+        <div style="margin-top: 2rem; padding: 1.2rem; background: var(--bg-card); border-radius: 12px;">
+          <p style="font-size: 0.85rem; color: var(--text-dim);">
+            <strong style="color: var(--amarillo);">Runway:</strong> 18 meses hasta break-even<br>
+            <strong style="color: var(--verde);">Estructura:</strong> SAFE note / equity — negociable
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="margin-bottom: 1.5rem;">Con esta inversión logramos:</h3>
+        <ul class="check-list" style="gap: 1rem;">
+          <li><strong style="color: var(--text);">1 destino piloto completo</strong> — Chignahuapan con 15+ puntos, contenido profesional, QRs instalados</li>
+          <li><strong style="color: var(--text);">80+ negocios suscritos</strong> — validación de producto y revenue</li>
+          <li><strong style="color: var(--text);">5,000+ escaneos/mes</strong> — tracción medible para siguiente ronda</li>
+          <li><strong style="color: var(--text);">Plataforma escalable</strong> — replicar a cualquier destino en semanas, no meses</li>
+          <li><strong style="color: var(--text);">Métricas para Serie Seed</strong> — data para levantar $8-12M MXN en 2028</li>
+        </ul>
+
+        <div style="margin-top: 2rem; text-align: center; padding: 2rem; background: linear-gradient(135deg, rgba(255,45,120,0.08), rgba(0,201,219,0.08)); border-radius: 16px; border: 1px solid rgba(255,255,255,0.04);">
+          <p style="font-family: 'Clash Display'; font-size: 1.6rem; font-weight: 600;">
+            México merece que su historia<br><span class="gradient-text">cobre vida.</span>
+          </p>
+          <p style="margin-top: 0.8rem; font-size: 0.9rem; color: var(--text-dim);">
+            hola@tuko.mx &nbsp;·&nbsp; tuko.mx
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ═══════ NAVIGATION BAR ═══════ -->
+<div class="nav-bar">
+  <div class="logo">TUKO</div>
+  <div class="progress-track" id="progress"></div>
+  <div class="slide-counter" id="counter">01 / 13</div>
+</div>
+
+<script>
+  const deck = document.getElementById('deck');
+  const slides = deck.querySelectorAll('.slide');
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  let current = 0;
+  const total = slides.length;
+
+  // Build progress dots
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    progress.appendChild(dot);
+  }
+
+  function goTo(n) {
+    if (n < 0 || n >= total || n === current) return;
+    const dir = n > current ? 1 : -1;
+
+    slides[current].classList.remove('active');
+    slides[current].classList.add(dir > 0 ? 'exit-left' : '');
+    setTimeout(() => slides[current === 0 ? 0 : current].classList.remove('exit-left'), 700);
+
+    const prev = current;
+    current = n;
+
+    slides[current].style.transform = dir > 0 ? 'translateX(60px)' : 'translateX(-60px)';
+    slides[current].classList.add('active');
+
+    // Clean up previous
+    setTimeout(() => {
+      slides[prev].classList.remove('exit-left');
+    }, 700);
+
+    // Update dots
+    progress.querySelectorAll('.progress-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+
+    // Update counter
+    counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+    if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+    if (e.key === 'End') { e.preventDefault(); goTo(total - 1); }
+  });
+
+  // Touch / swipe
+  let touchStartX = 0;
+  deck.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+  deck.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? goTo(current + 1) : goTo(current - 1);
+    }
+  }, { passive: true });
+</script>
+
+</body>
+</html>

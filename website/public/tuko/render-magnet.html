@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AXKAN 3D Magnet Renderer</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0c0c0c;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --muted: #777;
+      --accent: #e72a88;
+      --green: #8ab73b;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, 'SF Pro Display', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      height: 100vh;
+    }
+
+    .viewport {
+      position: relative;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    .viewport canvas { display: block; }
+
+    .viewport-badge {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(12, 12, 12, 0.85);
+      backdrop-filter: blur(10px);
+      padding: 0.4rem 0.7rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .viewport-badge span { color: var(--accent); }
+
+    .sidebar {
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .sidebar h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
+    .sidebar h1 span { color: var(--accent); }
+
+    .section-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .control-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .control-row { display: flex; align-items: center; justify-content: space-between; }
+    .control-row label { font-size: 0.8rem; color: var(--muted); }
+    .control-row .value { font-size: 0.8rem; font-family: 'SF Mono', monospace; color: var(--text); min-width: 40px; text-align: right; }
+
+    input[type="range"] {
+      width: 100%; height: 3px; -webkit-appearance: none; appearance: none;
+      background: var(--border); border-radius: 2px; outline: none; margin-top: 0.25rem;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 14px; height: 14px;
+      background: var(--text); border-radius: 50%; cursor: pointer; transition: background 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover { background: var(--accent); }
+
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.75rem 1rem; border: none; border-radius: 8px;
+      font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.15); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: #333; }
+
+    .progress-wrap { display: none; flex-direction: column; gap: 0.5rem; }
+    .progress-wrap.active { display: flex; }
+    .progress-bar-bg { width: 100%; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); width: 0%; transition: width 0.1s; border-radius: 2px; }
+    .progress-text { font-size: 0.75rem; color: var(--muted); text-align: center; }
+
+    .log {
+      flex: 1; min-height: 100px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 0.75rem; font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.7rem; color: var(--muted); overflow-y: auto; line-height: 1.6;
+    }
+
+    .log .ok { color: var(--green); }
+    .log .accent { color: var(--accent); }
+    .log .info { color: #2997ff; }
+    hr { border: none; border-top: 1px solid var(--border); }
+
+    .color-row { display: flex; gap: 0.5rem; align-items: center; }
+    .color-swatch {
+      width: 28px; height: 28px; border-radius: 6px;
+      border: 2px solid var(--border); cursor: pointer; transition: border-color 0.2s;
+    }
+    .color-swatch:hover { border-color: var(--text); }
+    .color-swatch.active { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="viewport" id="viewport">
+    <div class="viewport-badge">
+      SILHOUETTE EXTRUDE &mdash; <span id="currentAngle">0</span>&deg;
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <h1>AXKAN <span>3D</span> Renderer</h1>
+    <p style="font-size:0.8rem;color:var(--muted);line-height:1.5">Traces the alpha silhouette of your magnet and extrudes it as real 3D geometry with MDF edges.</p>
+
+    <hr>
+
+    <div class="section-label">Object Settings</div>
+    <div class="control-group">
+      <div class="control-row">
+        <label>Thickness</label>
+        <span class="value" id="thicknessVal">0.12</span>
+      </div>
+      <input type="range" id="thickness" min="0.03" max="0.5" step="0.01" value="0.12">
+    </div>
+
+    <div class="control-group">
+      <div class="control-row">
+        <label>Bevel Size</label>
+        <span class="value" id="bevelVal">0.015</span>
+      </div>
+      <input type="range" id="bevel" min="0" max="0.06" step="0.005" value="0.015">
+    </div>
+
+    <div class="control-group">
+      <div class="control-row">
+        <label>Tilt (&deg;)</label>
+        <span class="value" id="tiltVal">12</span>
+      </div>
+      <input type="range" id="tilt" min="0" max="45" step="1" value="12">
+    </div>
+
+    <div class="control-group">
+      <div class="control-row">
+        <label>Contour Rays</label>
+        <span class="value" id="simplifyVal">3</span>
+      </div>
+      <input type="range" id="simplify" min="1" max="6" step="0.5" value="3">
+    </div>
+
+    <hr>
+
+    <div class="section-label">Background</div>
+    <div class="color-row">
+      <div class="color-swatch active" style="background:#0c0c0c" data-bg="#0c0c0c"></div>
+      <div class="color-swatch" style="background:#ffffff" data-bg="#ffffff"></div>
+      <div class="color-swatch" style="background:#1a1a2e" data-bg="#1a1a2e"></div>
+      <div class="color-swatch" style="background:transparent;background-image:repeating-conic-gradient(#444 0% 25%, #222 0% 50%);background-size:12px 12px" data-bg="transparent"></div>
+    </div>
+
+    <hr>
+
+    <div class="section-label">Export Sequence</div>
+    <div class="control-group">
+      <div class="control-row">
+        <label>Total Frames</label>
+        <span class="value" id="framesVal">90</span>
+      </div>
+      <input type="range" id="frames" min="30" max="180" step="10" value="90">
+    </div>
+
+    <div class="control-group">
+      <div class="control-row">
+        <label>Resolution</label>
+        <span class="value" id="resVal">800px</span>
+      </div>
+      <input type="range" id="resolution" min="400" max="1600" step="100" value="800">
+    </div>
+
+    <button class="btn btn-primary" id="captureBtn" onclick="startCapture()">
+      Export Frame Sequence
+    </button>
+
+    <button class="btn btn-secondary" onclick="previewSpin()">
+      Preview Full Spin
+    </button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">Rendering...</div>
+    </div>
+
+    <hr>
+
+    <div class="section-label">Log</div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+  /* =============================================
+     GLOBALS
+     ============================================= */
+  const viewport = document.getElementById('viewport');
+  const logEl = document.getElementById('log');
+  let scene, camera, renderer, magnetGroup;
+  let autoRotate = true;
+  let contourPoints = [];
+  let loadedImage = null;
+  let loadedTexture = null;
+
+  function log(msg, cls = '') {
+    logEl.innerHTML += `<div class="${cls}">${msg}</div>`;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  log('Initializing Three.js...', 'info');
+
+  /* =============================================
+     SCENE SETUP
+     ============================================= */
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color('#0c0c0c');
+
+  camera = new THREE.PerspectiveCamera(35, viewport.clientWidth / viewport.clientHeight, 0.1, 100);
+  camera.position.set(0, 0.15, 3.8);
+  camera.lookAt(0, 0, 0);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  viewport.appendChild(renderer.domElement);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.95);
+  keyLight.position.set(4, 5, 6);
+  keyLight.castShadow = true;
+  scene.add(keyLight);
+
+  const fillLight = new THREE.DirectionalLight(0xddeeff, 0.35);
+  fillLight.position.set(-4, 3, -3);
+  scene.add(fillLight);
+
+  const rimLight = new THREE.DirectionalLight(0xffe8d6, 0.45);
+  rimLight.position.set(0, -2, -5);
+  scene.add(rimLight);
+
+  const topLight = new THREE.DirectionalLight(0xffffff, 0.3);
+  topLight.position.set(0, 6, 0);
+  scene.add(topLight);
+
+  magnetGroup = new THREE.Group();
+  scene.add(magnetGroup);
+
+  log('<span class="ok">Scene ready</span>', '');
+
+  /* =============================================
+     RADIAL CONTOUR EXTRACTION
+     Casts rays from center-of-mass outward at
+     regular angles. Finds outermost opaque pixel
+     per ray. Much more robust than Moore tracing.
+     ============================================= */
+  function extractContour(image, numRays) {
+    log('Extracting silhouette via radial scan...', 'info');
+
+    const w = image.width;
+    const h = image.height;
+
+    // Draw to offscreen canvas
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = w;
+    offCanvas.height = h;
+    const ctx = offCanvas.getContext('2d');
+    ctx.drawImage(image, 0, 0);
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const data = imageData.data;
+
+    // Find alpha threshold — check if image uses alpha at all
+    let hasAlpha = false;
+    let minAlpha = 255, maxAlpha = 0;
+    for (let i = 0; i < w * h; i++) {
+      const a = data[i * 4 + 3];
+      if (a < 250) hasAlpha = true;
+      minAlpha = Math.min(minAlpha, a);
+      maxAlpha = Math.max(maxAlpha, a);
+    }
+
+    log(`Alpha range: ${minAlpha}–${maxAlpha}, hasAlpha: ${hasAlpha}`, 'info');
+
+    // If no alpha transparency, try using white background as mask
+    const threshold = hasAlpha ? 30 : -1;
+
+    function isOpaque(x, y) {
+      if (x < 0 || x >= w || y < 0 || y >= h) return false;
+      const idx = (y * w + x) * 4;
+      if (hasAlpha) {
+        return data[idx + 3] > threshold;
+      } else {
+        // Use brightness — non-white = opaque
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+        return (r + g + b) < 740; // not near-white
+      }
+    }
+
+    // Find center of mass of all opaque pixels
+    let sumX = 0, sumY = 0, count = 0;
+    const step = 4; // sample every 4th pixel for speed
+    for (let y = 0; y < h; y += step) {
+      for (let x = 0; x < w; x += step) {
+        if (isOpaque(x, y)) {
+          sumX += x;
+          sumY += y;
+          count++;
+        }
+      }
+    }
+
+    if (count === 0) {
+      log('<span class="accent">No opaque pixels found!</span>', '');
+      return [];
+    }
+
+    const centerX = sumX / count;
+    const centerY = sumY / count;
+    log(`Center of mass: (${Math.round(centerX)}, ${Math.round(centerY)}), opaque samples: ${count}`, 'info');
+
+    // Maximum possible radius
+    const maxRadius = Math.sqrt(w * w + h * h);
+
+    // Cast rays outward from center at regular angles
+    const rayCount = Math.round(numRays);
+    const points = [];
+
+    for (let i = 0; i < rayCount; i++) {
+      const angle = (i / rayCount) * Math.PI * 2;
+      const dx = Math.cos(angle);
+      const dy = Math.sin(angle);
+
+      // Walk outward from center, find the LAST opaque pixel
+      let lastOpaqueX = centerX;
+      let lastOpaqueY = centerY;
+      let foundAny = false;
+
+      for (let r = 0; r < maxRadius; r += 0.5) {
+        const px = Math.round(centerX + dx * r);
+        const py = Math.round(centerY + dy * r);
+
+        // Out of bounds = stop
+        if (px < 0 || px >= w || py < 0 || py >= h) break;
+
+        if (isOpaque(px, py)) {
+          lastOpaqueX = px;
+          lastOpaqueY = py;
+          foundAny = true;
+        }
+      }
+
+      if (foundAny) {
+        points.push({ x: lastOpaqueX, y: lastOpaqueY });
+      }
+    }
+
+    log(`<span class="ok">Radial scan: ${points.length} contour points from ${rayCount} rays</span>`, '');
+    return points;
+  }
+
+  /* =============================================
+     BUILD 3D MAGNET FROM CONTOUR
+     ============================================= */
+  function buildMagnet() {
+    while (magnetGroup.children.length) {
+      const child = magnetGroup.children[0];
+      magnetGroup.remove(child);
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+        else child.material.dispose();
+      }
+    }
+
+    if (!contourPoints.length || !loadedTexture) return;
+
+    const thickness = parseFloat(document.getElementById('thickness').value);
+    const bevelSize = parseFloat(document.getElementById('bevel').value);
+    const tilt = parseFloat(document.getElementById('tilt').value);
+
+    const imgW = loadedImage.width;
+    const imgH = loadedImage.height;
+
+    // Scale so the magnet is about 2.2 units wide
+    const targetWidth = 2.2;
+    const scale = targetWidth / imgW;
+
+    const centerX = imgW / 2;
+    const centerY = imgH / 2;
+
+    // Build THREE.Shape from contour points
+    const shape = new THREE.Shape();
+    shape.moveTo(
+      (contourPoints[0].x - centerX) * scale,
+      -(contourPoints[0].y - centerY) * scale
+    );
+
+    // Use smooth curves through points (catmull-rom style via spline)
+    // First collect all the 2D vectors
+    const pts2d = contourPoints.map(p => new THREE.Vector2(
+      (p.x - centerX) * scale,
+      -(p.y - centerY) * scale
+    ));
+
+    // Create a smooth spline through the points
+    const splineCurve = new THREE.SplineCurve(pts2d);
+    const smoothPoints = splineCurve.getPoints(400); // 400 smooth segments for cleaner edges
+
+    const smoothShape = new THREE.Shape();
+    smoothShape.moveTo(smoothPoints[0].x, smoothPoints[0].y);
+    for (let i = 1; i < smoothPoints.length; i++) {
+      smoothShape.lineTo(smoothPoints[i].x, smoothPoints[i].y);
+    }
+    smoothShape.closePath();
+
+    // Extrude
+    const extrudeSettings = {
+      depth: thickness,
+      bevelEnabled: bevelSize > 0,
+      bevelThickness: bevelSize * 0.5,
+      bevelSize: bevelSize,
+      bevelSegments: 3,
+      curveSegments: 1,
+    };
+
+    const geometry = new THREE.ExtrudeGeometry(smoothShape, extrudeSettings);
+
+    // Center depth
+    geometry.translate(0, 0, -thickness / 2);
+
+    // Fix UVs for front and back faces (material indices 0 and 1)
+    const pos = geometry.attributes.position;
+    const uv = geometry.attributes.uv;
+    const groups = geometry.groups;
+
+    const halfW = (imgW / 2) * scale;
+    const halfH = (imgH / 2) * scale;
+
+    for (const group of groups) {
+      if (group.materialIndex === 0 || group.materialIndex === 1) {
+        for (let i = group.start; i < group.start + group.count; i++) {
+          const x = pos.getX(i);
+          const y = pos.getY(i);
+          const u = (x + halfW) / (2 * halfW);
+          const v = (y + halfH) / (2 * halfH);
+          uv.setXY(i, u, v);
+        }
+      }
+    }
+    uv.needsUpdate = true;
+
+    // Materials
+    const frontMat = new THREE.MeshStandardMaterial({
+      map: loadedTexture,
+      roughness: 0.35,
+      metalness: 0.0,
+    });
+
+    const backMat = new THREE.MeshStandardMaterial({
+      color: 0xC4956A,
+      roughness: 0.9,
+      metalness: 0.0,
+    });
+
+    const edgeMat = new THREE.MeshStandardMaterial({
+      color: 0xD4A574,
+      roughness: 0.75,
+      metalness: 0.0,
+      side: THREE.DoubleSide,
+    });
+
+    const mesh = new THREE.Mesh(geometry, [frontMat, backMat, edgeMat]);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    magnetGroup.add(mesh);
+    magnetGroup.rotation.x = THREE.MathUtils.degToRad(tilt);
+
+    log(`<span class="ok">3D silhouette built</span> — ${contourPoints.length} contour pts, smoothed to 200, depth ${thickness}`, '');
+  }
+
+  /* =============================================
+     LOAD IMAGE & INIT
+     ============================================= */
+  log('Loading magnet image...', 'info');
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    loadedImage = img;
+    log(`<span class="ok">Image loaded</span> (${img.width}&times;${img.height})`, '');
+
+    loadedTexture = new THREE.Texture(img);
+    loadedTexture.encoding = THREE.sRGBEncoding;
+    loadedTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    loadedTexture.needsUpdate = true;
+
+    // Contour Detail slider maps to number of rays (100–600)
+    const detail = parseFloat(document.getElementById('simplify').value);
+    const numRays = Math.round(detail * 150);
+    contourPoints = extractContour(img, numRays);
+    buildMagnet();
+
+    log('Drag viewport to rotate. Adjust controls on the right.', 'info');
+  };
+  img.onerror = () => log('<span class="accent">ERROR loading magnet-yucatan.png!</span>', '');
+  img.src = 'magnet-yucatan.png';
+
+  /* =============================================
+     ANIMATION LOOP
+     ============================================= */
+  let mouseDown = false;
+  let prevMouse = { x: 0, y: 0 };
+  let rotationY = 0, rotationX = 0;
+  let targetRotY = 0, targetRotX = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    if (autoRotate && magnetGroup) targetRotY += 0.005;
+
+    rotationY += (targetRotY - rotationY) * 0.08;
+    rotationX += (targetRotX - rotationX) * 0.08;
+
+    if (magnetGroup) {
+      magnetGroup.rotation.y = rotationY;
+      const tilt = parseFloat(document.getElementById('tilt').value);
+      magnetGroup.rotation.x = THREE.MathUtils.degToRad(tilt) + rotationX;
+    }
+
+    renderer.render(scene, camera);
+    document.getElementById('currentAngle').textContent =
+      Math.round(((THREE.MathUtils.radToDeg(rotationY) % 360) + 360) % 360);
+  }
+
+  animate();
+
+  /* =============================================
+     MOUSE INTERACTION
+     ============================================= */
+  renderer.domElement.addEventListener('mousedown', (e) => {
+    mouseDown = true;
+    autoRotate = false;
+    prevMouse = { x: e.clientX, y: e.clientY };
+  });
+  window.addEventListener('mouseup', () => { mouseDown = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (!mouseDown) return;
+    const dx = e.clientX - prevMouse.x;
+    const dy = e.clientY - prevMouse.y;
+    targetRotY += dx * 0.008;
+    targetRotX += dy * 0.004;
+    prevMouse = { x: e.clientX, y: e.clientY };
+  });
+
+  /* =============================================
+     SLIDER CONTROLS
+     ============================================= */
+  function bindSlider(id, valId, onChange) {
+    const el = document.getElementById(id);
+    const valEl = document.getElementById(valId);
+    el.addEventListener('input', () => {
+      valEl.textContent = el.value;
+      if (onChange) onChange(el.value);
+    });
+  }
+
+  bindSlider('thickness', 'thicknessVal', () => buildMagnet());
+  bindSlider('bevel', 'bevelVal', () => buildMagnet());
+  bindSlider('tilt', 'tiltVal');
+  bindSlider('frames', 'framesVal');
+  bindSlider('resolution', 'resVal', (v) => {
+    document.getElementById('resVal').textContent = v + 'px';
+  });
+  bindSlider('simplify', 'simplifyVal', (v) => {
+    if (!loadedImage) return;
+    const numRays = Math.round(parseFloat(v) * 150);
+    contourPoints = extractContour(loadedImage, numRays);
+    buildMagnet();
+  });
+
+  // Background swatches
+  document.querySelectorAll('.color-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+      swatch.classList.add('active');
+      const bg = swatch.dataset.bg;
+      if (bg === 'transparent') {
+        scene.background = null;
+        renderer.setClearColor(0x000000, 0);
+      } else {
+        scene.background = new THREE.Color(bg);
+      }
+    });
+  });
+
+  /* =============================================
+     FRAME CAPTURE ENGINE
+     ============================================= */
+  async function startCapture() {
+    const totalFrames = parseInt(document.getElementById('frames').value);
+    const resolution = parseInt(document.getElementById('resolution').value);
+    const btn = document.getElementById('captureBtn');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+
+    btn.disabled = true;
+    progressWrap.classList.add('active');
+    autoRotate = false;
+
+    log(`<span class="accent">Starting capture: ${totalFrames} frames @ ${resolution}px</span>`, '');
+
+    const originalWidth = viewport.clientWidth;
+    const originalHeight = viewport.clientHeight;
+    const captureAspect = 16 / 9;
+    const captureWidth = resolution;
+    const captureHeight = Math.round(resolution / captureAspect);
+
+    renderer.setSize(captureWidth, captureHeight);
+    renderer.setPixelRatio(1);
+    camera.aspect = captureAspect;
+    camera.updateProjectionMatrix();
+
+    const tilt = parseFloat(document.getElementById('tilt').value);
+
+    const frames = [];
+    for (let i = 0; i < totalFrames; i++) {
+      const angle = (i / totalFrames) * Math.PI * 2;
+      magnetGroup.rotation.y = angle;
+      magnetGroup.rotation.x = THREE.MathUtils.degToRad(tilt);
+
+      renderer.render(scene, camera);
+
+      const dataUrl = renderer.domElement.toDataURL('image/png');
+      frames.push({ index: i, data: dataUrl });
+
+      const pct = Math.round(((i + 1) / totalFrames) * 100);
+      progressFill.style.width = pct + '%';
+      progressText.textContent = `Rendering frame ${i + 1} / ${totalFrames}`;
+
+      await new Promise(r => setTimeout(r, 10));
+    }
+
+    log(`<span class="ok">All ${totalFrames} frames rendered!</span>`, '');
+    progressText.textContent = 'Downloading frames...';
+
+    for (let i = 0; i < frames.length; i++) {
+      const link = document.createElement('a');
+      link.download = `frame-${String(i).padStart(4, '0')}.png`;
+      link.href = frames[i].data;
+      link.click();
+
+      if (i % 5 === 0) {
+        await new Promise(r => setTimeout(r, 50));
+        progressFill.style.width = Math.round(((i + 1) / frames.length) * 100) + '%';
+        progressText.textContent = `Downloading ${i + 1} / ${frames.length}`;
+      }
+    }
+
+    log(`<span class="ok">Download complete! Check your Downloads folder.</span>`, '');
+    progressText.textContent = `Done! ${totalFrames} PNG files saved.`;
+
+    renderer.setSize(originalWidth, originalHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    camera.aspect = originalWidth / originalHeight;
+    camera.updateProjectionMatrix();
+
+    btn.disabled = false;
+    autoRotate = true;
+  }
+
+  /* =============================================
+     PREVIEW SPIN
+     ============================================= */
+  function previewSpin() {
+    autoRotate = false;
+    const duration = 2000;
+    const start = performance.now();
+    const startAngle = magnetGroup.rotation.y;
+
+    function spinFrame(time) {
+      const elapsed = time - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      magnetGroup.rotation.y = startAngle + ease * Math.PI * 2;
+      targetRotY = magnetGroup.rotation.y;
+      rotationY = magnetGroup.rotation.y;
+
+      if (progress < 1) requestAnimationFrame(spinFrame);
+      else autoRotate = true;
+    }
+
+    requestAnimationFrame(spinFrame);
+    log('Previewing full 360&deg; spin...', 'info');
+  }
+
+  /* =============================================
+     RESIZE
+     ============================================= */
+  window.addEventListener('resize', () => {
+    camera.aspect = viewport.clientWidth / viewport.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+  });
+
+  log('<span class="ok">Ready.</span>', '');
+</script>
+
+</body>
+</html>

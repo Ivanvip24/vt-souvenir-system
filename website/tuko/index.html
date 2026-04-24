@@ -1,0 +1,2336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tuko — Turismo Conectado</title>
+  <meta name="description" content="Conecta tu negocio con miles de turistas. Escanean un QR, descubren tu negocio. Plataforma de turismo digital en México.">
+
+  <meta property="og:title" content="Tuko — Turismo Conectado">
+  <meta property="og:description" content="Miles de turistas ya escanean. Tu negocio debería estar ahí.">
+  <meta property="og:type" content="website">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Tuko",
+    "description": "Plataforma de turismo conectado con guías digitales en los destinos más mágicos de México."
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@200;300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,200..700;1,9..40,200..700&display=swap" rel="stylesheet">
+
+  <style>
+    @font-face {
+      font-family: 'Clash Display';
+      src: url('https://fonts.googleapis.com/css2?family=Clash+Display:wght@200;300;400;500;600;700&display=swap');
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+    :root {
+      --bg: #FAFBFE;
+      --bg-elevated: #F0F2F8;
+      --bg-card: #FFFFFF;
+      --bg-card-hover: #F8F9FC;
+
+      --ink: #1A1A2E;
+      --white: #1A1A2E;
+      --white-90: rgba(26,26,46,0.9);
+      --white-70: rgba(26,26,46,0.7);
+      --white-50: rgba(26,26,46,0.5);
+      --white-30: rgba(26,26,46,0.3);
+      --white-15: rgba(26,26,46,0.1);
+      --white-08: rgba(26,26,46,0.06);
+      --white-04: rgba(26,26,46,0.03);
+
+      --rosa: #FF2D78;
+      --rosa-bright: #FF4D8E;
+      --rosa-glow: rgba(255, 45, 120, 0.15);
+      --turquesa: #00A8B8;
+      --turquesa-glow: rgba(0, 168, 184, 0.12);
+      --naranja: #FF8C42;
+      --naranja-glow: rgba(255, 140, 66, 0.12);
+      --verde: #22B67E;
+      --verde-glow: rgba(34, 182, 126, 0.12);
+      --amarillo: #F5A623;
+      --violeta: #8B5CF6;
+
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+      --radius: 20px;
+      --radius-sm: 12px;
+      --radius-pill: 100px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: var(--rosa); color: white; }
+
+    img, video { display: block; max-width: 100%; }
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; cursor: pointer; font: inherit; color: inherit; }
+
+    /* ═══════════ GRAIN ═══════════ */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.015;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ═══════════ REVEAL SYSTEM ═══════════ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: opacity 1s var(--ease-out-expo) var(--d, 0ms),
+                  transform 1s var(--ease-out-expo) var(--d, 0ms);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-scale {
+      opacity: 0;
+      transform: scale(0.9);
+      transition: opacity 1.2s var(--ease-out-expo) var(--d, 0ms),
+                  transform 1.2s var(--ease-out-expo) var(--d, 0ms);
+    }
+    .reveal-scale.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ═══════════ NAV ═══════════ */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 1.2rem 2rem;
+      transition: all 0.5s var(--ease-smooth);
+    }
+    .nav.scrolled {
+      background: rgba(250, 251, 254, 0.85);
+      backdrop-filter: saturate(1.8) blur(24px);
+      -webkit-backdrop-filter: saturate(1.8) blur(24px);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 700;
+      font-size: 1.8rem;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--rosa), var(--naranja));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2.5rem;
+    }
+    .nav-links a {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--white-50);
+      transition: color 0.3s;
+      letter-spacing: 0.01em;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--rosa), var(--rosa-bright));
+      color: #FFFFFF;
+      padding: 0.6rem 1.4rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: transform 0.2s var(--ease-spring), box-shadow 0.3s;
+    }
+    .nav-cta:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 30px var(--rosa-glow);
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav { padding: 1rem 1.2rem; }
+    }
+
+    /* ═══════════ HERO ═══════════ */
+    .hero {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 7rem 1.5rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Gradient mesh background */
+    .hero-mesh {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .hero-mesh__orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.35;
+      animation: orb-drift 12s ease-in-out infinite alternate;
+    }
+    .hero-mesh__orb--rosa {
+      width: 600px; height: 600px;
+      background: var(--rosa);
+      top: -15%; left: -10%;
+      opacity: 0.08;
+    }
+    .hero-mesh__orb--turquesa {
+      width: 500px; height: 500px;
+      background: var(--turquesa);
+      bottom: -20%; right: -15%;
+      opacity: 0.07;
+      animation-delay: -4s;
+    }
+    .hero-mesh__orb--naranja {
+      width: 400px; height: 400px;
+      background: var(--naranja);
+      top: 40%; left: 60%;
+      opacity: 0.06;
+      animation-delay: -8s;
+    }
+    .hero-mesh__orb--verde {
+      width: 350px; height: 350px;
+      background: var(--verde);
+      bottom: 10%; left: 20%;
+      opacity: 0.05;
+      animation-delay: -6s;
+    }
+    @keyframes orb-drift {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(30px, -20px) scale(1.1); }
+    }
+
+    /* Top color strip — Mexican flag-inspired accent */
+    .hero-strip {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--verde), var(--turquesa), var(--rosa), var(--naranja), var(--amarillo));
+      z-index: 2;
+    }
+
+    .hero-badge {
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius-pill);
+      padding: 0.5rem 1.4rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--white-50);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+    .hero-badge .dot {
+      width: 7px;
+      height: 7px;
+      background: var(--verde);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease infinite;
+      box-shadow: 0 0 8px var(--verde-glow);
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.5); }
+    }
+
+    /* Ajolote — THE STAR */
+    .hero-visual {
+      position: relative;
+      z-index: 2;
+      width: 720px;
+      height: 720px;
+      margin-bottom: 0;
+      flex-shrink: 0;
+    }
+    .hero-visual__glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,45,120,0.08) 0%, rgba(0,168,184,0.05) 50%, transparent 70%);
+      animation: glow-pulse 4s ease-in-out infinite;
+    }
+    @keyframes glow-pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      50% { transform: translate(-50%, -50%) scale(1.08); opacity: 0.7; }
+    }
+
+    .axolotl-hero {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 720px;
+      height: 720px;
+      object-fit: contain;
+      filter: drop-shadow(0 20px 60px rgba(255, 45, 120, 0.15))
+              drop-shadow(0 0 80px rgba(0, 168, 184, 0.08));
+      animation: float-hero 6s ease-in-out infinite;
+      background: transparent;
+    }
+    @keyframes float-hero {
+      0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+      50% { transform: translate(-50%, -50%) translateY(-18px); }
+    }
+
+    /* Sound toggle */
+    .sound-toggle {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(140px);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 1px solid rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--rosa);
+      z-index: 10;
+      transition: all 0.3s var(--ease-spring);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      animation: sound-pulse 2.5s ease-in-out infinite;
+    }
+    .sound-toggle:hover {
+      transform: translateX(140px) scale(1.1);
+      border-color: var(--rosa);
+    }
+    .sound-toggle.active {
+      background: var(--rosa);
+      color: var(--white);
+      border-color: var(--rosa);
+      animation: none;
+    }
+    @keyframes sound-pulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+      50% { box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 20px var(--rosa-glow); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      margin-top: -3rem;
+    }
+
+    .hero-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(4rem, 12vw, 9rem);
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      line-height: 0.9;
+      margin-bottom: 1rem;
+      color: var(--ink);
+    }
+
+    .hero-tagline {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+      font-weight: 400;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--white-30);
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .hero-value-word {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .hero-value-word:nth-child(1) { color: var(--rosa); }
+    .hero-value-word:nth-child(3) { color: var(--turquesa); }
+    .hero-value-word:nth-child(5) { color: var(--naranja); }
+    .hero-value-sep {
+      width: 6px; height: 6px;
+      background: var(--white-15);
+      border-radius: 50%;
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 2;
+    }
+    .hero-scroll span {
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--white-30);
+    }
+    .hero-scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--rosa), transparent);
+      animation: scroll-pulse 2s ease-in-out infinite;
+    }
+    @keyframes scroll-pulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(0.5); transform-origin: top; }
+      50% { opacity: 1; transform: scaleY(1); transform-origin: top; }
+    }
+
+    /* ═══════════ VENDOR HOOK SECTION ═══════════ */
+    .vendor-hook {
+      padding: 8rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .vendor-hook::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+    }
+
+    .vendor-hook-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .section-eyebrow {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .section-eyebrow--rosa { color: var(--rosa); }
+    .section-eyebrow--turquesa { color: var(--turquesa); }
+    .section-eyebrow--verde { color: var(--verde); }
+    .section-eyebrow--naranja { color: var(--naranja); }
+
+    .section-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+    }
+    .section-title span { color: var(--rosa); }
+    .section-title .t-turquesa { color: var(--turquesa); }
+    .section-title .t-verde { color: var(--verde); }
+    .section-title .t-naranja { color: var(--naranja); }
+
+    .section-sub {
+      font-size: 1.1rem;
+      color: var(--white-50);
+      line-height: 1.7;
+      max-width: 600px;
+      margin: 0 auto 4rem;
+      font-weight: 300;
+    }
+
+    /* Revenue cards */
+    .revenue-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .revenue-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius);
+      padding: 2.5rem 2rem;
+      text-align: left;
+      transition: all 0.4s var(--ease-smooth);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .revenue-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .revenue-card:hover {
+      border-color: rgba(0,0,0,0.1);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+    .revenue-card:hover::before { opacity: 1; }
+    .revenue-card:nth-child(1)::before { background: linear-gradient(90deg, var(--rosa), var(--naranja)); }
+    .revenue-card:nth-child(2)::before { background: linear-gradient(90deg, var(--turquesa), var(--verde)); }
+    .revenue-card:nth-child(3)::before { background: linear-gradient(90deg, var(--naranja), var(--amarillo)); }
+
+    .revenue-card__icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+    }
+    .revenue-card:nth-child(1) .revenue-card__icon { background: rgba(255,45,120,0.1); }
+    .revenue-card:nth-child(2) .revenue-card__icon { background: rgba(0,212,232,0.1); }
+    .revenue-card:nth-child(3) .revenue-card__icon { background: rgba(255,140,66,0.1); }
+
+    .revenue-card__number {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.3rem;
+    }
+    .revenue-card:nth-child(1) .revenue-card__number { color: var(--rosa); }
+    .revenue-card:nth-child(2) .revenue-card__number { color: var(--turquesa); }
+    .revenue-card:nth-child(3) .revenue-card__number { color: var(--naranja); }
+
+    .revenue-card__label {
+      font-size: 0.85rem;
+      color: var(--white-50);
+      font-weight: 400;
+    }
+
+    @media (max-width: 768px) {
+      .revenue-grid { grid-template-columns: 1fr; max-width: 400px; }
+    }
+
+    /* ═══════════ HOW IT WORKS ═══════════ */
+    .how {
+      padding: 8rem 2rem;
+      position: relative;
+    }
+    .how::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+    }
+
+    .how-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .how-header {
+      text-align: center;
+      margin-bottom: 5rem;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+    }
+    .step-card {
+      position: relative;
+      padding: 2rem 1.5rem;
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      transition: all 0.4s var(--ease-smooth);
+    }
+    .step-card:hover {
+      border-color: rgba(0,0,0,0.1);
+      transform: translateY(-6px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+    .step-card__num {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 4rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 1rem;
+      opacity: 0.15;
+    }
+    .step-card:nth-child(1) .step-card__num { color: var(--rosa); opacity: 0.3; }
+    .step-card:nth-child(2) .step-card__num { color: var(--turquesa); opacity: 0.3; }
+    .step-card:nth-child(3) .step-card__num { color: var(--naranja); opacity: 0.3; }
+    .step-card:nth-child(4) .step-card__num { color: var(--verde); opacity: 0.3; }
+
+    .step-card__title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+      letter-spacing: -0.01em;
+    }
+    .step-card__desc {
+      font-size: 0.88rem;
+      color: var(--white-50);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    /* Connector lines between steps */
+    .step-card::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -1rem;
+      width: 2rem;
+      height: 1px;
+      background: linear-gradient(90deg, var(--white-15), transparent);
+    }
+    .step-card:last-child::after { display: none; }
+
+    @media (max-width: 900px) {
+      .steps-grid { grid-template-columns: repeat(2, 1fr); }
+      .step-card::after { display: none; }
+    }
+    @media (max-width: 550px) {
+      .steps-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ═══════════ PHONE DEMO ═══════════ */
+    .demo {
+      position: relative;
+      padding: 0;
+    }
+    .demo::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+    }
+    .demo-outer {
+      height: 400vh;
+      position: relative;
+    }
+    .demo-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: var(--bg-elevated);
+    }
+    .demo-title {
+      position: absolute;
+      top: 3.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--white-30);
+      white-space: nowrap;
+    }
+
+    .demo-layout {
+      display: flex;
+      align-items: center;
+      gap: 6rem;
+      max-width: 1000px;
+      padding: 0 2rem;
+    }
+
+    /* Phone frame */
+    .phone {
+      flex-shrink: 0;
+      width: 280px;
+      height: 560px;
+      background: #000;
+      border-radius: 44px;
+      border: 2px solid #2a2a2a;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 25px 80px rgba(0,0,0,0.15),
+        0 0 0 1px rgba(0,0,0,0.08);
+    }
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 20px 20px;
+      z-index: 10;
+    }
+    .phone-screen {
+      position: absolute;
+      inset: 3px;
+      border-radius: 41px;
+      overflow: hidden;
+      background: #0a0a1a;
+    }
+
+    .phone-state {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: scale(0.96);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .phone-state.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Shared phone UI */
+    .ph-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1.2rem 0.3rem;
+      padding-top: 2rem;
+      font-size: 0.55rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+    }
+    .ph-status-icons { display: flex; gap: 0.3rem; align-items: center; }
+    .ph-bar-wifi { width: 12px; height: 8px; border: 1.5px solid rgba(255,255,255,0.4); border-radius: 2px; position: relative; }
+    .ph-bar-wifi::after { content: ''; position: absolute; right: 1px; bottom: 1px; width: 5px; height: 3px; background: rgba(255,255,255,0.5); border-radius: 1px; }
+    .ph-bar-bat { width: 18px; height: 8px; border: 1.5px solid rgba(255,255,255,0.4); border-radius: 2px; position: relative; }
+    .ph-bar-bat::before { content: ''; position: absolute; right: -3px; top: 1.5px; width: 2px; height: 3px; background: rgba(255,255,255,0.3); border-radius: 0 1px 1px 0; }
+    .ph-bar-bat::after { content: ''; position: absolute; left: 1.5px; top: 1.5px; width: 10px; height: 3px; background: var(--verde); border-radius: 1px; }
+
+    .ph-topbar {
+      display: flex;
+      align-items: center;
+      padding: 0.4rem 1rem;
+      gap: 0.5rem;
+    }
+    .ph-topbar-back { color: rgba(255,255,255,0.4); font-size: 0.9rem; }
+    .ph-topbar-title { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.8); flex: 1; }
+    .ph-topbar-icon { width: 22px; height: 22px; background: rgba(255,255,255,0.06); border-radius: 50%; }
+
+    .ph-content { flex: 1; padding: 0 0.8rem; overflow: hidden; display: flex; flex-direction: column; gap: 0.5rem; }
+    .ph-bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      padding: 0.6rem 0.5rem 1.2rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .ph-nav-item { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+    .ph-nav-dot { width: 16px; height: 16px; background: rgba(255,255,255,0.08); border-radius: 4px; }
+    .ph-nav-dot.active { background: var(--rosa); }
+    .ph-nav-label { font-size: 0.45rem; color: rgba(255,255,255,0.3); font-weight: 500; }
+    .ph-nav-label.active { color: var(--rosa); }
+
+    /* State 1: Scan */
+    .state-scan { background: #0a0a0a; }
+    .scan-viewfinder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: radial-gradient(circle at 50% 45%, rgba(255,45,120,0.04) 0%, transparent 50%);
+    }
+    .scan-corners {
+      width: 150px; height: 150px;
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .scan-corner {
+      position: absolute;
+      width: 24px; height: 24px;
+      border-color: var(--rosa);
+      border-style: solid;
+    }
+    .scan-corner--tl { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 8px 0 0 0; }
+    .scan-corner--tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 8px 0 0; }
+    .scan-corner--bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 8px; }
+    .scan-corner--br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 8px 0; }
+    .scan-line {
+      position: absolute;
+      top: 20%; left: 10%; right: 10%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--rosa), transparent);
+      animation: scan-sweep 2s ease-in-out infinite;
+      box-shadow: 0 0 12px var(--rosa-glow);
+    }
+    @keyframes scan-sweep {
+      0% { top: 10%; opacity: 0.3; }
+      50% { top: 85%; opacity: 1; }
+      100% { top: 10%; opacity: 0.3; }
+    }
+    .scan-qr-ghost {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px; height: 60px;
+      opacity: 0.15;
+    }
+    .scan-hint {
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .scan-detected {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(255,45,120,0.12);
+      border: 1px solid rgba(255,45,120,0.2);
+      padding: 0.3rem 0.8rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: var(--rosa);
+      animation: scan-pulse 1.5s ease infinite;
+    }
+    @keyframes scan-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+    /* State 2: Meet */
+    .state-meet { background: linear-gradient(180deg, #0f0f2a 0%, #0a0a1a 100%); }
+    .meet-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0.5rem;
+      gap: 0.6rem;
+    }
+    .meet-location-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(59,91,245,0.1);
+      border: 1px solid rgba(59,91,245,0.15);
+      padding: 0.25rem 0.7rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.5rem;
+      font-weight: 600;
+      color: var(--turquesa);
+    }
+    .meet-tuki-img {
+      width: 100px; height: 100px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 20px rgba(242,160,181,0.4));
+      animation: meet-bounce 2s ease-in-out infinite;
+    }
+    @keyframes meet-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .meet-bubble {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px 16px 16px 4px;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.5;
+      max-width: 190px;
+    }
+    .meet-features { display: flex; gap: 0.4rem; margin-top: 0.3rem; }
+    .meet-feat {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.45rem;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      flex: 1;
+    }
+    .meet-feat strong { display: block; font-size: 0.55rem; color: rgba(255,255,255,0.7); margin-bottom: 0.1rem; }
+
+    /* State 3: Learn */
+    .state-learn { background: #0a0a1a; }
+    .learn-hero-img {
+      width: 100%; height: 130px;
+      background: linear-gradient(135deg, #1a3a4a 0%, #0a2a3a 50%, #1a2a4a 100%);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .learn-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(10,10,26,0.9) 100%); }
+    .learn-hero-label {
+      position: absolute; top: 0.6rem; left: 0.8rem;
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      background: rgba(0,0,0,0.4); backdrop-filter: blur(6px);
+      padding: 0.2rem 0.5rem; border-radius: 6px;
+      font-size: 0.45rem; font-weight: 600; color: var(--turquesa);
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .learn-hero-title {
+      position: absolute; bottom: 0.6rem; left: 0.8rem; right: 0.8rem;
+      font-size: 0.85rem; font-weight: 700; color: white; line-height: 1.2;
+    }
+    .learn-body {
+      padding: 0.8rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
+      flex: 1; overflow: hidden;
+    }
+    .learn-tuki-row { display: flex; align-items: flex-start; gap: 0.5rem; }
+    .learn-tuki-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      object-fit: contain;
+      background: rgba(242,160,181,0.1);
+      flex-shrink: 0;
+    }
+    .learn-tuki-text {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px 12px 12px 4px;
+      padding: 0.6rem 0.7rem;
+      font-size: 0.6rem;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.55;
+      flex: 1;
+    }
+    .learn-tuki-text strong { color: rgba(255,255,255,0.9); }
+    .learn-fact-card {
+      background: linear-gradient(135deg, rgba(0,168,184,0.08) 0%, rgba(59,91,245,0.06) 100%);
+      border: 1px solid rgba(0,168,184,0.12);
+      border-radius: 12px;
+      padding: 0.6rem 0.7rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .learn-fact-icon {
+      width: 28px; height: 28px;
+      background: rgba(0,168,184,0.12); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; flex-shrink: 0;
+    }
+    .learn-fact-text { font-size: 0.55rem; color: rgba(255,255,255,0.55); line-height: 1.4; }
+    .learn-fact-text strong { color: var(--turquesa); font-weight: 700; }
+    .learn-date-pill {
+      display: inline-flex; align-items: center; gap: 0.2rem;
+      background: rgba(0,168,184,0.1); color: var(--turquesa);
+      font-size: 0.5rem; font-weight: 700;
+      padding: 0.2rem 0.5rem; border-radius: 6px; align-self: flex-start;
+    }
+
+    /* State 4: Discover */
+    .state-discover { background: #0a0a1a; }
+    .discover-header {
+      padding: 0.5rem 0.8rem 0.3rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .discover-header-title { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.85); }
+    .discover-header-badge {
+      font-size: 0.45rem; font-weight: 600; color: var(--verde);
+      background: rgba(0,232,123,0.1); padding: 0.15rem 0.5rem; border-radius: 6px;
+    }
+    .discover-body { flex: 1; padding: 0 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; overflow: hidden; }
+    .sponsor-card {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      overflow: hidden;
+      text-align: left;
+    }
+    .sponsor-card-img {
+      width: 100%; height: 85px;
+      background: linear-gradient(135deg, #4a3020 0%, #6a4a30 50%, #3a2518 100%);
+      position: relative;
+    }
+    .sponsor-card-img::after {
+      content: '📍 A 200m';
+      position: absolute; top: 0.4rem; right: 0.4rem;
+      font-size: 0.5rem; font-weight: 600; color: white;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      padding: 0.15rem 0.4rem; border-radius: 6px;
+    }
+    .sponsor-img-tag {
+      position: absolute; bottom: 0.4rem; left: 0.4rem;
+      font-size: 0.45rem; font-weight: 600; color: white;
+      background: var(--verde); padding: 0.15rem 0.4rem; border-radius: 4px;
+    }
+    .sponsor-card-body { padding: 0.6rem 0.7rem; }
+    .sponsor-card-body h4 { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.9); margin-bottom: 0.15rem; }
+    .sponsor-card-rating { font-size: 0.5rem; color: var(--amarillo); margin-bottom: 0.3rem; }
+    .sponsor-card-desc { font-size: 0.5rem; color: rgba(255,255,255,0.4); line-height: 1.4; margin-bottom: 0.4rem; }
+    .sponsor-card-actions { display: flex; gap: 0.3rem; }
+    .sponsor-btn {
+      background: var(--verde); color: #0a0a0a;
+      font-size: 0.55rem; font-weight: 700;
+      padding: 0.35rem 0.8rem; border-radius: var(--radius-pill);
+      flex: 1; text-align: center;
+    }
+    .sponsor-btn-outline {
+      background: transparent; border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5); font-size: 0.55rem; font-weight: 600;
+      padding: 0.35rem 0.8rem; border-radius: var(--radius-pill); text-align: center;
+    }
+    .discover-more {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 0.5rem 0.7rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .discover-more-thumb {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #2a3a1a, #4a5a2a);
+      border-radius: 8px; flex-shrink: 0;
+    }
+    .discover-more-info { flex: 1; }
+    .discover-more-info h5 { font-size: 0.55rem; font-weight: 700; color: rgba(255,255,255,0.7); margin-bottom: 0.1rem; }
+    .discover-more-info span { font-size: 0.45rem; color: rgba(255,255,255,0.3); }
+
+    /* Demo text */
+    .demo-text { max-width: 360px; }
+    .demo-step {
+      position: absolute;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .demo-step.active {
+      position: relative;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .demo-step-num {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.75rem;
+    }
+    .demo-step-num.c-rosa { color: var(--rosa); }
+    .demo-step-num.c-turquesa { color: var(--turquesa); }
+    .demo-step-num.c-naranja { color: var(--naranja); }
+    .demo-step-num.c-verde { color: var(--verde); }
+
+    .demo-step h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 0.8rem;
+    }
+    .demo-step p {
+      font-size: 1rem;
+      color: var(--white-50);
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    .demo-dots {
+      position: absolute;
+      right: 3rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .demo-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--white-08);
+      background: transparent;
+      transition: all 0.4s var(--ease-spring);
+    }
+    .demo-dot.active {
+      background: var(--rosa);
+      border-color: var(--rosa);
+      transform: scale(1.3);
+      box-shadow: 0 0 12px var(--rosa-glow);
+    }
+
+    @media (max-width: 768px) {
+      .demo-layout { flex-direction: column; gap: 2rem; padding-top: 4.5rem; }
+      .phone { width: 220px; height: 440px; border-radius: 32px; }
+      .phone-notch { width: 90px; height: 22px; border-radius: 0 0 16px 16px; }
+      .phone-screen { border-radius: 29px; }
+      .demo-text { text-align: center; max-width: 300px; }
+      .demo-dots { display: none; }
+    }
+
+    /* ═══════════ CHARACTER SPOTLIGHT ═══════════ */
+    .character {
+      padding: 8rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .character::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+    }
+    .character-visual {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 0 auto 2.5rem;
+    }
+    .axolotl-main {
+      width: 220px; height: 220px;
+      object-fit: contain;
+      position: relative;
+      z-index: 2;
+      margin: 30px auto 0;
+      filter: drop-shadow(0 10px 40px rgba(242, 160, 181, 0.3));
+      animation: float-main 5s ease-in-out infinite;
+    }
+    @keyframes float-main { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+    .character-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,45,120,0.2);
+      animation: ring-spin 20s linear infinite;
+    }
+    .character-ring::before {
+      content: '';
+      position: absolute;
+      top: -4px; left: 50%;
+      width: 8px; height: 8px;
+      background: var(--rosa);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--rosa-glow);
+    }
+    @keyframes ring-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    .character-name {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+    .character-name span { color: var(--rosa); }
+
+    .tuki-talking .bubble-text {
+      display: inline;
+      border-right: 2px solid var(--rosa);
+      animation: typing-cursor 0.8s step-end infinite;
+    }
+    @keyframes typing-cursor { 0%, 100% { border-color: var(--rosa); } 50% { border-color: transparent; } }
+
+    .character-bubble {
+      display: inline-block;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 20px;
+      padding: 1rem 1.8rem;
+      font-size: 1rem;
+      color: var(--white-50);
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+      max-width: 500px;
+      position: relative;
+    }
+    .character-bubble::after {
+      content: '';
+      position: absolute;
+      top: -8px; left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 16px; height: 16px;
+      background: var(--bg-elevated);
+      border-left: 1px solid rgba(0,0,0,0.06);
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .character-traits {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .trait {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius-pill);
+      padding: 0.5rem 1.2rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--white-50);
+    }
+    .trait-icon { font-size: 1rem; }
+
+    /* ═══════════ BUSINESS CTA ═══════════ */
+    .business {
+      padding: 8rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .business::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+    }
+    /* Ambient glow behind section */
+    .business::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,45,120,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .business-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .business-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    .business-sub {
+      font-size: 1.05rem;
+      color: var(--white-50);
+      line-height: 1.7;
+      margin-bottom: 2rem;
+      font-weight: 300;
+    }
+
+    .business-benefits {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .benefit {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+    }
+    .benefit-icon {
+      flex-shrink: 0;
+      width: 36px; height: 36px;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+    }
+    .benefit-text {
+      font-size: 0.9rem;
+      color: var(--white-50);
+      line-height: 1.5;
+    }
+    .benefit-text strong {
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    .business-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: linear-gradient(135deg, var(--rosa), var(--rosa-bright));
+      color: #FFFFFF;
+      padding: 1rem 2.2rem;
+      border-radius: var(--radius-pill);
+      font-size: 1rem;
+      font-weight: 700;
+      transition: transform 0.2s var(--ease-spring), box-shadow 0.3s;
+    }
+    .business-cta:hover {
+      transform: scale(1.04);
+      box-shadow: 0 8px 40px var(--rosa-glow);
+    }
+    .business-cta svg { width: 18px; height: 18px; }
+
+    /* Business mockup */
+    .business-mockup { position: relative; }
+    .mockup-listing {
+      background: var(--bg-card);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transform: rotate(2deg);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.08);
+    }
+    .mockup-listing-header {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+    }
+    .mockup-listing-avatar {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #5a3a28, #8B6043);
+    }
+    .mockup-listing-name { font-size: 1rem; font-weight: 700; color: var(--ink); }
+    .mockup-listing-type { font-size: 0.7rem; color: var(--white-30); }
+    .mockup-listing-tuki {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: rgba(34,182,126,0.08);
+      border: 1px solid rgba(34,182,126,0.15);
+      border-radius: var(--radius-pill);
+      padding: 0.3rem 0.8rem;
+      font-size: 0.65rem; font-weight: 600; color: var(--verde);
+      margin-bottom: 1rem;
+    }
+    .mockup-listing-stats {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;
+    }
+    .mockup-stat {
+      background: var(--bg-elevated);
+      border-radius: 12px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    .mockup-stat-val {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 1.1rem; font-weight: 700; color: var(--ink);
+    }
+    .mockup-stat-label {
+      font-size: 0.6rem; color: var(--white-30);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    .mockup-badge-float {
+      position: absolute;
+      top: -1rem; right: -1rem;
+      background: var(--verde);
+      color: #FFFFFF;
+      font-size: 0.65rem; font-weight: 700;
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--radius-pill);
+      box-shadow: 0 4px 16px var(--verde-glow);
+      animation: float-badge 3s ease-in-out infinite;
+    }
+    @keyframes float-badge {
+      0%, 100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-6px) rotate(0deg); }
+    }
+
+    @media (max-width: 768px) {
+      .business-inner { grid-template-columns: 1fr; gap: 3rem; }
+      .mockup-listing { transform: none; }
+    }
+
+    /* ═══════════ STATS ═══════════ */
+    .stats {
+      padding: 6rem 2rem;
+      background: var(--bg-elevated);
+      position: relative;
+    }
+    .stats::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+    }
+    .stats-header { text-align: center; margin-bottom: 4rem; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .stat-card {
+      text-align: center;
+      padding: 2rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      transition: all 0.4s var(--ease-smooth);
+    }
+    .stat-card:hover {
+      border-color: rgba(0,0,0,0.1);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+    .stat-number {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .stat-card:nth-child(1) .stat-number { color: var(--rosa); }
+    .stat-card:nth-child(2) .stat-number { color: var(--naranja); }
+    .stat-card:nth-child(3) .stat-number { color: var(--turquesa); }
+    .stat-card:nth-child(4) .stat-number { color: var(--verde); }
+    .stat-label {
+      font-size: 0.75rem; font-weight: 500;
+      color: var(--white-50); letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ═══════════ FOOTER ═══════════ */
+    .footer {
+      padding: 4rem 2rem 2rem;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 2rem;
+    }
+    .footer-brand { display: flex; flex-direction: column; gap: 0.3rem; }
+    .footer-logo {
+      font-family: 'Clash Display', sans-serif;
+      font-weight: 700;
+      font-size: 1.3rem;
+      background: linear-gradient(135deg, var(--rosa), var(--naranja));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .footer-tagline { font-size: 0.75rem; color: var(--white-30); }
+    .footer-links { display: flex; gap: 2rem; }
+    .footer-links a { font-size: 0.8rem; color: var(--white-30); transition: color 0.3s; }
+    .footer-links a:hover { color: var(--white); }
+    .footer-bottom {
+      max-width: 1100px;
+      margin: 2rem auto 0;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--white-30);
+    }
+    .footer-color-strip {
+      height: 2px;
+      background: linear-gradient(90deg, var(--verde), var(--turquesa), var(--rosa), var(--naranja), var(--amarillo));
+      margin-top: 2rem;
+      border-radius: 2px;
+    }
+
+    /* ═══════════ THEME TOGGLE ═══════════ */
+    .theme-toggle {
+      position: fixed;
+      bottom: 6.5rem;
+      right: 1.5rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      transition: all 0.3s var(--ease-spring);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+    }
+
+    /* ═══════════ WHATSAPP BUTTON ═══════════ */
+    .whatsapp-btn {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #25D366;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      box-shadow: 0 4px 20px rgba(37, 211, 102, 0.35);
+      transition: all 0.3s var(--ease-spring);
+    }
+    .whatsapp-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 30px rgba(37, 211, 102, 0.45);
+    }
+    .whatsapp-btn svg {
+      width: 28px;
+      height: 28px;
+      fill: #FFFFFF;
+    }
+
+    /* ═══════════ DARK MODE ═══════════ */
+    [data-theme="dark"] {
+      --bg: #0A0A0F;
+      --bg-elevated: #111118;
+      --bg-card: #16161F;
+      --bg-card-hover: #1C1C28;
+
+      --ink: #FFFFFF;
+      --white: #FFFFFF;
+      --white-90: rgba(255,255,255,0.9);
+      --white-70: rgba(255,255,255,0.7);
+      --white-50: rgba(255,255,255,0.5);
+      --white-30: rgba(255,255,255,0.3);
+      --white-15: rgba(255,255,255,0.15);
+      --white-08: rgba(255,255,255,0.08);
+      --white-04: rgba(255,255,255,0.04);
+
+      --rosa: #FF2D78;
+      --rosa-bright: #FF4D8E;
+      --rosa-glow: rgba(255, 45, 120, 0.25);
+      --turquesa: #00D4E8;
+      --turquesa-glow: rgba(0, 212, 232, 0.2);
+      --naranja: #FF8C42;
+      --naranja-glow: rgba(255, 140, 66, 0.2);
+      --verde: #00E87B;
+      --verde-glow: rgba(0, 232, 123, 0.2);
+      --amarillo: #FFD23F;
+    }
+
+    [data-theme="dark"] body::after {
+      opacity: 0.03;
+      mix-blend-mode: overlay;
+    }
+
+    [data-theme="dark"] .nav.scrolled {
+      background: rgba(10, 10, 15, 0.85);
+      box-shadow: none;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    [data-theme="dark"] .hero-badge {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    [data-theme="dark"] .hero-mesh__orb--rosa { opacity: 0.2; }
+    [data-theme="dark"] .hero-mesh__orb--turquesa { opacity: 0.15; }
+    [data-theme="dark"] .hero-mesh__orb--naranja { opacity: 0.1; }
+    [data-theme="dark"] .hero-mesh__orb--verde { opacity: 0.08; }
+
+    [data-theme="dark"] .hero-visual__glow {
+      background: radial-gradient(circle, rgba(255,45,120,0.15) 0%, rgba(0,212,232,0.08) 50%, transparent 70%);
+    }
+
+    [data-theme="dark"] .axolotl-hero {
+      filter: drop-shadow(0 20px 60px rgba(255, 45, 120, 0.2))
+              drop-shadow(0 0 100px rgba(0, 212, 232, 0.1));
+    }
+
+    [data-theme="dark"] .sound-toggle {
+      background: #16161F;
+      border-color: rgba(255,255,255,0.15);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    [data-theme="dark"] .revenue-card,
+    [data-theme="dark"] .step-card,
+    [data-theme="dark"] .stat-card {
+      border-color: rgba(255,255,255,0.08);
+      box-shadow: none;
+    }
+    [data-theme="dark"] .revenue-card:hover,
+    [data-theme="dark"] .step-card:hover,
+    [data-theme="dark"] .stat-card:hover {
+      border-color: rgba(255,255,255,0.15);
+      box-shadow: none;
+    }
+
+    [data-theme="dark"] .mockup-listing {
+      border-color: rgba(255,255,255,0.08);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+    }
+
+    [data-theme="dark"] .phone {
+      box-shadow: 0 25px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    [data-theme="dark"] .character-bubble,
+    [data-theme="dark"] .trait {
+      background: #16161F;
+      border-color: rgba(255,255,255,0.08);
+    }
+    [data-theme="dark"] .character-bubble::after {
+      background: #16161F;
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    [data-theme="dark"] .benefit-icon {
+      background: #16161F;
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    [data-theme="dark"] .mockup-stat { background: rgba(255,255,255,0.04); }
+
+    [data-theme="dark"] .theme-toggle {
+      background: #16161F;
+      border-color: rgba(255,255,255,0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    [data-theme="dark"] .footer {
+      border-top-color: rgba(255,255,255,0.08);
+    }
+    [data-theme="dark"] .footer-bottom {
+      border-top-color: rgba(255,255,255,0.08);
+    }
+
+    /* ═══════════ MOBILE HERO ═══════════ */
+    @media (max-width: 768px) {
+      .hero {
+        padding: 5rem 1.2rem 2rem;
+        min-height: 100dvh;
+      }
+      .hero-visual {
+        width: 100vw;
+        height: 60vh;
+        max-height: 520px;
+      }
+      .axolotl-hero {
+        width: 100%;
+        height: 100%;
+      }
+      .hero-visual__glow {
+        width: 300px;
+        height: 300px;
+      }
+      .hero-content {
+        margin-top: -1rem;
+      }
+      .hero-title {
+        font-size: clamp(3.5rem, 15vw, 5rem);
+      }
+      .hero-mesh__orb { filter: blur(80px); }
+      .hero-mesh__orb--rosa { width: 300px; height: 300px; }
+      .hero-mesh__orb--turquesa { width: 250px; height: 250px; }
+      .hero-mesh__orb--naranja { width: 200px; height: 200px; }
+      .hero-mesh__orb--verde { width: 180px; height: 180px; }
+
+      .sound-toggle {
+        bottom: 20px;
+        transform: translateX(80px);
+      }
+      .sound-toggle:hover { transform: translateX(80px) scale(1.1); }
+
+      .vendor-hook { padding: 5rem 1.2rem; }
+      .how { padding: 5rem 1.2rem; }
+      .character { padding: 5rem 1.2rem; }
+      .business { padding: 5rem 1.2rem; }
+      .stats { padding: 4rem 1.2rem; }
+      .section-sub { font-size: 0.95rem; }
+    }
+
+    @media (max-width: 400px) {
+      .hero-visual { height: 50vh; }
+      .hero-value { gap: 0.8rem; }
+      .hero-value-word { font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ NAV ═══════════ -->
+  <nav class="nav" id="mainNav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">TUKO</a>
+      <div class="nav-links">
+        <a href="#como">Como Funciona</a>
+        <a href="#tuki">Tu Guia</a>
+        <a href="#negocios">Para Negocios</a>
+      </div>
+      <a href="#negocios" class="nav-cta">Registra tu negocio</a>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero" id="inicio">
+    <div class="hero-strip"></div>
+
+    <div class="hero-mesh">
+      <div class="hero-mesh__orb hero-mesh__orb--rosa"></div>
+      <div class="hero-mesh__orb hero-mesh__orb--turquesa"></div>
+      <div class="hero-mesh__orb hero-mesh__orb--naranja"></div>
+      <div class="hero-mesh__orb hero-mesh__orb--verde"></div>
+    </div>
+
+    <div class="hero-badge reveal" style="--d: 0ms">
+      <div class="dot"></div>
+      Plataforma de turismo digital
+    </div>
+
+    <div class="hero-visual reveal-scale" style="--d: 100ms">
+      <div class="hero-visual__glow"></div>
+      <video id="heroVideo" class="axolotl-hero" autoplay loop muted playsinline>
+        <source src="ajolote-hevc.mov" type='video/mp4; codecs="hvc1"'>
+        <source src="ajolote.webm" type="video/webm">
+      </video>
+
+      <button id="soundBtn" class="sound-toggle" aria-label="Activar sonido">
+        <svg class="sound-off" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <line x1="23" y1="9" x2="17" y2="15"/>
+          <line x1="17" y1="9" x2="23" y2="15"/>
+        </svg>
+        <svg class="sound-on" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hero-content">
+      <h1 class="hero-title reveal" style="--d: 300ms">TUKO</h1>
+      <p class="hero-tagline reveal" style="--d: 400ms">Turismo Conectado</p>
+
+      <div class="hero-value reveal" style="--d: 550ms">
+        <span class="hero-value-word">Escanea</span>
+        <span class="hero-value-sep"></span>
+        <span class="hero-value-word">Aprende</span>
+        <span class="hero-value-sep"></span>
+        <span class="hero-value-word">Descubre</span>
+      </div>
+    </div>
+
+    <div class="hero-scroll">
+      <span>Descubre mas</span>
+      <div class="hero-scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ VENDOR HOOK — THE SELL ═══════════ -->
+  <section class="vendor-hook" id="vendedores">
+    <div class="vendor-hook-inner">
+      <div class="section-eyebrow section-eyebrow--rosa reveal" style="--d: 0ms">Para negocios locales</div>
+      <h2 class="section-title reveal" style="--d: 100ms">
+        Miles de turistas <span>ya escanean.</span><br>
+        Tu negocio deberia estar ahi.
+      </h2>
+      <p class="section-sub reveal" style="--d: 200ms">
+        Cada vez que un turista escanea un QR en un monumento, Tuki le recomienda negocios cercanos. Sin intermediarios. Sin comisiones ocultas.
+      </p>
+
+      <div class="revenue-grid">
+        <div class="revenue-card reveal" style="--d: 300ms">
+          <div class="revenue-card__icon">📍</div>
+          <div class="revenue-card__number" data-target="847" data-counter>0</div>
+          <div class="revenue-card__label">Turistas ven tu negocio al mes</div>
+        </div>
+        <div class="revenue-card reveal" style="--d: 400ms">
+          <div class="revenue-card__icon">🚶</div>
+          <div class="revenue-card__number" data-target="234" data-counter>0</div>
+          <div class="revenue-card__label">Visitan tu negocio fisicamente</div>
+        </div>
+        <div class="revenue-card reveal" style="--d: 500ms">
+          <div class="revenue-card__icon">💰</div>
+          <div class="revenue-card__number" data-target="28" data-suffix="%" data-counter>0</div>
+          <div class="revenue-card__label">Tasa de conversion promedio</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ HOW IT WORKS ═══════════ -->
+  <section class="how" id="como">
+    <div class="how-inner">
+      <div class="how-header">
+        <div class="section-eyebrow section-eyebrow--turquesa reveal" style="--d: 0ms">Como funciona</div>
+        <h2 class="section-title reveal" style="--d: 100ms">
+          Del <span class="t-turquesa">monumento</span> a tu <span class="t-verde">negocio</span><br>en 4 pasos
+        </h2>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card reveal" style="--d: 0ms">
+          <div class="step-card__num">01</div>
+          <div class="step-card__title">Escanea</div>
+          <div class="step-card__desc">El turista encuentra un codigo QR en un monumento o punto de interes.</div>
+        </div>
+        <div class="step-card reveal" style="--d: 100ms">
+          <div class="step-card__num">02</div>
+          <div class="step-card__title">Conoce</div>
+          <div class="step-card__desc">Tuki, el guia digital, aparece y cuenta la historia del lugar.</div>
+        </div>
+        <div class="step-card reveal" style="--d: 200ms">
+          <div class="step-card__num">03</div>
+          <div class="step-card__title">Recomienda</div>
+          <div class="step-card__desc">Tuki sugiere negocios locales cercanos — el tuyo entre ellos.</div>
+        </div>
+        <div class="step-card reveal" style="--d: 300ms">
+          <div class="step-card__num">04</div>
+          <div class="step-card__title">Visita</div>
+          <div class="step-card__desc">El turista llega a tu puerta. Sin intermediarios, sin comisiones.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ PHONE DEMO ═══════════ -->
+  <section class="demo" id="demo">
+    <div class="demo-outer">
+      <div class="demo-sticky">
+        <span class="demo-title">ASI SE VE EN ACCION</span>
+
+        <div class="demo-layout">
+          <div class="phone">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <!-- State 1: Scan -->
+              <div class="phone-state state-scan active" data-step="0">
+                <div class="ph-status">
+                  <span>9:41</span>
+                  <div class="ph-status-icons"><div class="ph-bar-wifi"></div><div class="ph-bar-bat"></div></div>
+                </div>
+                <div class="ph-topbar">
+                  <span class="ph-topbar-title">Tuko Scanner</span>
+                  <div class="ph-topbar-icon"></div>
+                </div>
+                <div class="scan-viewfinder">
+                  <div class="scan-corners">
+                    <div class="scan-corner scan-corner--tl"></div>
+                    <div class="scan-corner scan-corner--tr"></div>
+                    <div class="scan-corner scan-corner--bl"></div>
+                    <div class="scan-corner scan-corner--br"></div>
+                    <div class="scan-line"></div>
+                    <svg class="scan-qr-ghost" viewBox="0 0 48 48" fill="none">
+                      <rect x="4" y="4" width="14" height="14" rx="2" stroke="white" stroke-width="1.5" fill="none"/>
+                      <rect x="7" y="7" width="8" height="8" rx="1" fill="white"/>
+                      <rect x="30" y="4" width="14" height="14" rx="2" stroke="white" stroke-width="1.5" fill="none"/>
+                      <rect x="33" y="7" width="8" height="8" rx="1" fill="white"/>
+                      <rect x="4" y="30" width="14" height="14" rx="2" stroke="white" stroke-width="1.5" fill="none"/>
+                      <rect x="7" y="33" width="8" height="8" rx="1" fill="white"/>
+                      <rect x="22" y="22" width="4" height="4" fill="white"/>
+                    </svg>
+                  </div>
+                  <div class="scan-hint">Apunta al codigo QR del monumento</div>
+                  <div class="scan-detected"><span>●</span> QR detectado — Reloj de la Laguna</div>
+                </div>
+                <div class="ph-bottom-nav">
+                  <div class="ph-nav-item"><div class="ph-nav-dot active"></div><span class="ph-nav-label active">Scan</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Mapa</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Guardado</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Perfil</span></div>
+                </div>
+              </div>
+
+              <!-- State 2: Meet -->
+              <div class="phone-state state-meet" data-step="1">
+                <div class="ph-status"><span>9:41</span><div class="ph-status-icons"><div class="ph-bar-wifi"></div><div class="ph-bar-bat"></div></div></div>
+                <div class="ph-topbar"><span class="ph-topbar-back">‹</span><span class="ph-topbar-title">Chignahuapan</span><div class="ph-topbar-icon"></div></div>
+                <div class="meet-content">
+                  <div class="meet-location-chip">📍 Reloj de la Laguna</div>
+                  <img class="meet-tuki-img" src="tuki-2.png" alt="Tuki">
+                  <div class="meet-bubble">
+                    ¡Hola! Soy <strong>Tuki</strong> 🌊<br>
+                    Tu guia en Chignahuapan.<br>
+                    ¿Listo para explorar?
+                  </div>
+                  <div class="meet-features">
+                    <div class="meet-feat"><strong>📚</strong>Historia</div>
+                    <div class="meet-feat"><strong>🍞</strong>Negocios</div>
+                    <div class="meet-feat"><strong>📍</strong>Mapa</div>
+                  </div>
+                </div>
+                <div class="ph-bottom-nav">
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Scan</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot active"></div><span class="ph-nav-label active">Guia</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Guardado</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Perfil</span></div>
+                </div>
+              </div>
+
+              <!-- State 3: Learn -->
+              <div class="phone-state state-learn" data-step="2">
+                <div class="ph-status"><span>9:42</span><div class="ph-status-icons"><div class="ph-bar-wifi"></div><div class="ph-bar-bat"></div></div></div>
+                <div class="ph-topbar"><span class="ph-topbar-back">‹</span><span class="ph-topbar-title">Reloj de la Laguna</span><div class="ph-topbar-icon"></div></div>
+                <div class="learn-hero-img">
+                  <div class="learn-hero-overlay"></div>
+                  <div class="learn-hero-label">📍 Pueblo Magico</div>
+                  <div class="learn-hero-title">El Reloj de<br>la Laguna</div>
+                </div>
+                <div class="learn-body">
+                  <div class="learn-date-pill">🕰️ Fundado en 1741</div>
+                  <div class="learn-tuki-row">
+                    <img class="learn-tuki-avatar" src="tuki-2.png" alt="Tuki">
+                    <div class="learn-tuki-text">
+                      <strong>Tuki dice:</strong> Este reloj monumental fue construido como punto de encuentro para visitantes y locales en el corazon de Chignahuapan.
+                    </div>
+                  </div>
+                  <div class="learn-fact-card">
+                    <div class="learn-fact-icon">💧</div>
+                    <div class="learn-fact-text"><strong>Dato curioso:</strong> La laguna es alimentada por manantiales de aguas termales naturales.</div>
+                  </div>
+                </div>
+                <div class="ph-bottom-nav">
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Scan</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot active"></div><span class="ph-nav-label active">Guia</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Guardado</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Perfil</span></div>
+                </div>
+              </div>
+
+              <!-- State 4: Discover -->
+              <div class="phone-state state-discover" data-step="3">
+                <div class="ph-status"><span>9:42</span><div class="ph-status-icons"><div class="ph-bar-wifi"></div><div class="ph-bar-bat"></div></div></div>
+                <div class="ph-topbar"><span class="ph-topbar-back">‹</span><span class="ph-topbar-title">Cerca de ti</span><div class="ph-topbar-icon"></div></div>
+                <div class="discover-header">
+                  <span class="discover-header-title">Recomendados por Tuki</span>
+                  <span class="discover-header-badge">3 cerca</span>
+                </div>
+                <div class="discover-body">
+                  <div class="sponsor-card">
+                    <div class="sponsor-card-img"><span class="sponsor-img-tag">✓ Recomendado</span></div>
+                    <div class="sponsor-card-body">
+                      <h4>Panaderia La Chignahuapense</h4>
+                      <div class="sponsor-card-rating">★★★★★ 4.9</div>
+                      <div class="sponsor-card-desc">Pan artesanal tradicional desde 1965. Prueba las conchas y el pan de muerto.</div>
+                      <div class="sponsor-card-actions">
+                        <span class="sponsor-btn">Como llegar</span>
+                        <span class="sponsor-btn-outline">Guardar</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="discover-more">
+                    <div class="discover-more-thumb"></div>
+                    <div class="discover-more-info">
+                      <h5>Cafe La Laguna</h5>
+                      <span>★★★★☆ 4.7 · A 350m</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="ph-bottom-nav">
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Scan</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Guia</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot active"></div><span class="ph-nav-label active">Descubre</span></div>
+                  <div class="ph-nav-item"><div class="ph-nav-dot"></div><span class="ph-nav-label">Perfil</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Text -->
+          <div class="demo-text">
+            <div class="demo-step active" data-step="0">
+              <div class="demo-step-num c-rosa">01 — ESCANEA</div>
+              <h3>Encuentra codigos QR en monumentos y puntos de interes</h3>
+              <p>Cada lugar emblematico tiene un codigo QR. Solo apunta tu camara y la magia comienza.</p>
+            </div>
+            <div class="demo-step" data-step="1">
+              <div class="demo-step-num c-turquesa">02 — CONOCE</div>
+              <h3>Tu guia digital cobra vida y te da la bienvenida</h3>
+              <p>Tuki, tu ajolote guia, aparece para acompañarte. Sabe todo sobre el lugar que estas visitando.</p>
+            </div>
+            <div class="demo-step" data-step="2">
+              <div class="demo-step-num c-naranja">03 — APRENDE</div>
+              <h3>Conoce la historia y datos curiosos del lugar</h3>
+              <p>Historia, leyendas, datos curiosos — Tuki te lo cuenta todo de forma divertida y memorable.</p>
+            </div>
+            <div class="demo-step" data-step="3">
+              <div class="demo-step-num c-verde">04 — DESCUBRE</div>
+              <h3>Descubre negocios locales recomendados por tu guia</h3>
+              <p>Tuki te conecta con panaderias, restaurantes y experiencias autenticas a tu alrededor.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-dots">
+          <div class="demo-dot active" data-step="0"></div>
+          <div class="demo-dot" data-step="1"></div>
+          <div class="demo-dot" data-step="2"></div>
+          <div class="demo-dot" data-step="3"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ CHARACTER SPOTLIGHT ═══════════ -->
+  <section class="character" id="tuki">
+    <div class="section-eyebrow section-eyebrow--rosa reveal" style="--d: 0ms">CONOCE A TU GUIA</div>
+
+    <div class="character-visual reveal-scale" style="--d: 100ms">
+      <div class="character-ring"></div>
+      <img class="axolotl-main" src="tuki-2.png" alt="Tuki — Tu guia digital">
+    </div>
+
+    <h2 class="character-name reveal" style="--d: 200ms">Soy <span>Tuki</span></h2>
+
+    <div class="character-bubble reveal tuki-talking" style="--d: 300ms">
+      <span class="bubble-text" id="tukiSpeech"></span>
+    </div>
+
+    <div class="character-traits reveal" style="--d: 400ms">
+      <div class="trait"><span class="trait-icon">📚</span> Historiador</div>
+      <div class="trait"><span class="trait-icon">🔍</span> Curioso</div>
+      <div class="trait"><span class="trait-icon">📍</span> Local</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ STATS ═══════════ -->
+  <section class="stats" id="stats">
+    <div class="stats-header">
+      <div class="section-eyebrow section-eyebrow--naranja reveal" style="--d: 0ms">EN NUMEROS</div>
+      <h2 class="section-title reveal" style="--d: 100ms">Un <span class="t-naranja">pueblo</span> con historia</h2>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card reveal" style="--d: 0ms">
+        <span class="stat-number" data-target="1531">0</span>
+        <span class="stat-label">Año de fundacion</span>
+      </div>
+      <div class="stat-card reveal" style="--d: 100ms">
+        <span class="stat-number" data-target="70" data-suffix="M+">0</span>
+        <span class="stat-label">Esferas navideñas al año</span>
+      </div>
+      <div class="stat-card reveal" style="--d: 200ms">
+        <span class="stat-number" data-target="150" data-suffix="+">0</span>
+        <span class="stat-label">Negocios locales</span>
+      </div>
+      <div class="stat-card reveal" style="--d: 300ms">
+        <span class="stat-number" data-target="1">0</span>
+        <span class="stat-label">Guia que lo sabe todo 🌊</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ BUSINESS CTA ═══════════ -->
+  <section class="business" id="negocios">
+    <div class="business-inner">
+      <div class="business-text">
+        <div class="section-eyebrow section-eyebrow--verde reveal" style="--d: 0ms">PARA NEGOCIOS</div>
+        <h2 class="business-title reveal" style="--d: 100ms">Miles de turistas escanean.<br><span style="color:var(--verde)">Tu negocio aparece.</span></h2>
+        <p class="business-sub reveal" style="--d: 200ms">Conecta con visitantes en el momento exacto en que estan explorando tu zona. Sin intermediarios.</p>
+
+        <div class="business-benefits reveal" style="--d: 300ms">
+          <div class="benefit">
+            <div class="benefit-icon">📍</div>
+            <div class="benefit-text"><strong>Aparece cuando escanean cerca de ti.</strong> Tu negocio se muestra a turistas que estan fisicamente en tu zona.</div>
+          </div>
+          <div class="benefit">
+            <div class="benefit-icon">📊</div>
+            <div class="benefit-text"><strong>Analiticas de visitas en tiempo real.</strong> Sabe cuantos turistas ven tu negocio y cuantos te visitan.</div>
+          </div>
+        </div>
+
+        <a href="#" class="business-cta reveal" style="--d: 400ms">
+          Registra tu negocio
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="business-mockup reveal-scale" style="--d: 200ms">
+        <div class="mockup-badge-float">En vivo</div>
+        <div class="mockup-listing">
+          <div class="mockup-listing-header">
+            <div class="mockup-listing-avatar"></div>
+            <div>
+              <div class="mockup-listing-name">Panaderia La Chignahuapense</div>
+              <div class="mockup-listing-type">Panaderia artesanal</div>
+            </div>
+          </div>
+          <div class="mockup-listing-tuki"><span>&#10003;</span> Recomendado por Tuki</div>
+          <div class="mockup-listing-stats">
+            <div class="mockup-stat">
+              <div class="mockup-stat-val">847</div>
+              <div class="mockup-stat-label">Vistas</div>
+            </div>
+            <div class="mockup-stat">
+              <div class="mockup-stat-val">234</div>
+              <div class="mockup-stat-label">Visitas</div>
+            </div>
+            <div class="mockup-stat">
+              <div class="mockup-stat-val">28%</div>
+              <div class="mockup-stat-label">Conversion</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">TUKO</div>
+        <div class="footer-tagline">Turismo Conectado</div>
+      </div>
+      <div class="footer-links">
+        <a href="#como">Como Funciona</a>
+        <a href="#tuki">Tu Guia</a>
+        <a href="#negocios">Para Negocios</a>
+        <a href="#">Contacto</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      Hecho con orgullo en Mexico 🇲🇽 — &copy; 2026 Tuko
+    </div>
+    <div class="footer-color-strip"></div>
+  </footer>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema">🌙</button>
+
+  <!-- WhatsApp Button -->
+  <a href="https://wa.me/5215518942408?text=Hola%2C%20me%20interesa%20registrar%20mi%20negocio%20en%20Tuko" target="_blank" rel="noopener" class="whatsapp-btn" aria-label="Contactar por WhatsApp">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+
+  <script>
+    /* ═══════════ REVEAL OBSERVER ═══════════ */
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal, .reveal-scale').forEach(el => revealObserver.observe(el));
+
+    /* ═══════════ NAV SCROLL ═══════════ */
+    const nav = document.getElementById('mainNav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 60);
+    }, { passive: true });
+
+    /* ═══════════ PHONE DEMO ═══════════ */
+    const demoOuter = document.querySelector('.demo-outer');
+    const phoneStates = document.querySelectorAll('.phone-state');
+    const demoSteps = document.querySelectorAll('.demo-step');
+    const demoDots = document.querySelectorAll('.demo-dot');
+
+    function updateDemo() {
+      if (!demoOuter) return;
+      const rect = demoOuter.getBoundingClientRect();
+      const sectionHeight = demoOuter.offsetHeight;
+      const viewportHeight = window.innerHeight;
+      const scrolled = -rect.top;
+      const scrollableDistance = sectionHeight - viewportHeight;
+      const progress = Math.max(0, Math.min(1, scrolled / scrollableDistance));
+      const index = Math.min(3, Math.floor(progress * 4));
+
+      phoneStates.forEach((s, i) => s.classList.toggle('active', i === index));
+      demoSteps.forEach((s, i) => s.classList.toggle('active', i === index));
+      demoDots.forEach((d, i) => d.classList.toggle('active', i === index));
+    }
+    window.addEventListener('scroll', updateDemo, { passive: true });
+
+    /* ═══════════ COUNTER ANIMATION ═══════════ */
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseFloat(el.dataset.target);
+          const suffix = el.dataset.suffix || '';
+          const duration = 2000;
+          const start = performance.now();
+
+          function update(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.floor(eased * target).toLocaleString() + suffix;
+            if (progress < 1) requestAnimationFrame(update);
+          }
+          requestAnimationFrame(update);
+          counterObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('.stat-number, [data-counter]').forEach(el => {
+      if (el.dataset.target) counterObserver.observe(el);
+    });
+
+    /* ═══════════ TUKI TYPING ═══════════ */
+    const tukiPhrases = [
+      '¡Hola! Soy Tuki 🌊 Te cuento la historia de cada lugar que visitas.',
+      '¿Sabias que el Reloj de la Laguna fue construido en 1741? 🕰️',
+      'Hay una panaderia increible a 200 metros... ¿vamos? 🍞',
+      'Chignahuapan produce 70 millones de esferas navideñas al año 🎄',
+    ];
+    let phraseIndex = 0, charIndex = 0, isDeleting = false;
+    const speechEl = document.getElementById('tukiSpeech');
+
+    const tukiObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && speechEl) {
+          typeNextChar();
+          tukiObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+
+    if (speechEl) tukiObserver.observe(speechEl.closest('.character'));
+
+    function typeNextChar() {
+      const phrase = tukiPhrases[phraseIndex];
+      if (!isDeleting) {
+        speechEl.textContent = phrase.slice(0, charIndex + 1);
+        charIndex++;
+        if (charIndex >= phrase.length) { isDeleting = true; setTimeout(typeNextChar, 2500); return; }
+        setTimeout(typeNextChar, 45);
+      } else {
+        speechEl.textContent = phrase.slice(0, charIndex - 1);
+        charIndex--;
+        if (charIndex <= 0) { isDeleting = false; phraseIndex = (phraseIndex + 1) % tukiPhrases.length; setTimeout(typeNextChar, 400); return; }
+        setTimeout(typeNextChar, 25);
+      }
+    }
+
+    /* ═══════════ SMOOTH SCROLL ═══════════ */
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    /* ═══════════ SOUND TOGGLE ═══════════ */
+    const video = document.getElementById('heroVideo');
+    const btn = document.getElementById('soundBtn');
+    const iconOff = btn.querySelector('.sound-off');
+    const iconOn = btn.querySelector('.sound-on');
+
+    btn.addEventListener('click', () => {
+      video.muted = !video.muted;
+      btn.classList.toggle('active', !video.muted);
+      iconOff.style.display = video.muted ? 'block' : 'none';
+      iconOn.style.display = video.muted ? 'none' : 'block';
+    });
+
+    /* ═══════════ THEME TOGGLE ═══════════ */
+    const themeBtn = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('tuko-theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+      themeBtn.textContent = saved === 'dark' ? '☀️' : '🌙';
+    }
+
+    themeBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('tuko-theme', next);
+      themeBtn.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+  </script>
+</body>
+</html>

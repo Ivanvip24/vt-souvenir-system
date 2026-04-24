@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Sequence — Frame Engine Test</title>
+  <meta name="description" content="Apple-style scroll-driven image sequence animation prototype">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================
+       RESET & VARIABLES
+       ============================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-elevated: #111111;
+      --text: #f5f5f7;
+      --text-muted: #86868b;
+      --text-dim: #48484a;
+      --accent: #2997ff;
+      --accent-glow: rgba(41, 151, 255, 0.15);
+      --serif: 'Instrument Serif', Georgia, serif;
+      --sans: 'DM Sans', -apple-system, sans-serif;
+      --grain-opacity: 0.03;
+    }
+
+    html {
+      scroll-behavior: auto; /* GSAP handles scroll */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow-x: hidden;
+    }
+
+    /* ============================================
+       FILM GRAIN OVERLAY
+       ============================================ */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: var(--grain-opacity);
+      mix-blend-mode: overlay;
+    }
+
+    /* ============================================
+       LOADING SCREEN
+       ============================================ */
+    .loader {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  visibility 0.8s;
+    }
+
+    .loader.done {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-ring {
+      width: 48px;
+      height: 48px;
+      border: 2px solid var(--text-dim);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader-text {
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .loader-progress {
+      width: 200px;
+      height: 2px;
+      background: var(--text-dim);
+      border-radius: 1px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .loader-progress-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 1px;
+      width: 0%;
+      transition: width 0.15s ease;
+    }
+
+    /* ============================================
+       HERO / INTRO
+       ============================================ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .hero-label {
+      font-family: var(--sans);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .hero-title {
+      font-family: var(--serif);
+      font-size: clamp(3rem, 8vw, 7rem);
+      font-weight: 400;
+      line-height: 1.05;
+      color: var(--text);
+      max-width: 900px;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-subtitle {
+      font-family: var(--sans);
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      font-weight: 300;
+      color: var(--text-muted);
+      max-width: 500px;
+      margin-top: 1.5rem;
+      line-height: 1.6;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      opacity: 0;
+    }
+
+    .scroll-hint-text {
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .scroll-hint-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(0.5); transform-origin: top; }
+      50% { opacity: 1; transform: scaleY(1); transform-origin: top; }
+    }
+
+    /* ============================================
+       CANVAS SEQUENCE SECTION
+       ============================================ */
+    .sequence-section {
+      height: 500vh; /* scroll runway */
+      position: relative;
+    }
+
+    .sequence-canvas-wrap {
+      position: sticky;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+    }
+
+    .sequence-canvas-wrap canvas {
+      max-width: 100%;
+      max-height: 100vh;
+      object-fit: contain;
+    }
+
+    /* Frame counter overlay */
+    .frame-counter {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 100;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      background: rgba(10, 10, 10, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 0.5rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .frame-counter.visible { opacity: 1; }
+
+    .frame-counter span { color: var(--accent); font-weight: 500; }
+
+    /* Progress bar (bottom) */
+    .scroll-progress {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      background: var(--accent);
+      z-index: 100;
+      width: 0%;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      box-shadow: 0 0 12px var(--accent), 0 0 4px var(--accent);
+    }
+
+    .scroll-progress.visible { opacity: 1; }
+
+    /* ============================================
+       TEXT PANELS (overlaid on sequence)
+       ============================================ */
+    .sequence-text-panels {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .seq-panel {
+      position: absolute;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 0 6vw;
+    }
+
+    .seq-panel:nth-child(1) { top: 0; }
+    .seq-panel:nth-child(2) { top: 120vh; }
+    .seq-panel:nth-child(3) { top: 250vh; }
+    .seq-panel:nth-child(4) { top: 380vh; }
+
+    .seq-panel-content {
+      max-width: 360px;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .seq-panel:nth-child(even) .seq-panel-content {
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .seq-panel-tag {
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .seq-panel-heading {
+      font-family: var(--serif);
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 400;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+
+    .seq-panel-body {
+      font-size: 0.95rem;
+      font-weight: 300;
+      line-height: 1.7;
+      color: var(--text-muted);
+    }
+
+    /* ============================================
+       OUTRO / TECH DETAILS
+       ============================================ */
+    .outro {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      position: relative;
+    }
+
+    .outro::before {
+      content: '';
+      position: absolute;
+      bottom: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(41, 151, 255, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .outro-title {
+      font-family: var(--serif);
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 400;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .outro-body {
+      font-size: 1rem;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin-bottom: 3rem;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      overflow: hidden;
+      max-width: 700px;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .tech-cell {
+      background: var(--bg-elevated);
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+
+    .tech-cell-value {
+      font-family: var(--serif);
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+
+    .tech-cell-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* ============================================
+       FOOTER
+       ============================================ */
+    footer {
+      padding: 3rem 2rem;
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    footer p {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    footer a:hover { color: var(--accent); }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+      .seq-panel { padding: 0 2rem; }
+      .seq-panel-content { max-width: 280px; }
+      .seq-panel:nth-child(even) .seq-panel-content {
+        margin-left: auto;
+        margin-right: 0;
+      }
+      .tech-grid { grid-template-columns: 1fr; }
+      .frame-counter { top: auto; bottom: 1.5rem; right: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div class="loader" id="loader">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Loading 148 frames</div>
+    <div class="loader-progress">
+      <div class="loader-progress-bar" id="loaderBar"></div>
+    </div>
+  </div>
+
+  <!-- FRAME COUNTER -->
+  <div class="frame-counter" id="frameCounter">
+    FRAME <span id="frameNum">001</span> / 148
+  </div>
+
+  <!-- SCROLL PROGRESS -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <p class="hero-label">Scroll-Driven Animation Prototype</p>
+    <h1 class="hero-title">Every pixel, <em>frame by frame</em></h1>
+    <p class="hero-subtitle">148 images. One canvas. Controlled entirely by your scroll position. The same technique Apple uses on every product page.</p>
+    <div class="scroll-hint">
+      <span class="scroll-hint-text">Scroll to begin</span>
+      <div class="scroll-hint-line"></div>
+    </div>
+  </section>
+
+  <!-- CANVAS SEQUENCE -->
+  <section class="sequence-section" id="sequenceSection">
+    <div class="sequence-canvas-wrap">
+      <canvas id="sequenceCanvas" width="1158" height="770"></canvas>
+    </div>
+
+    <!-- Text panels that appear alongside the animation -->
+    <div class="sequence-text-panels">
+      <div class="seq-panel">
+        <div class="seq-panel-content" id="panel1">
+          <p class="seq-panel-tag">The Technique</p>
+          <h2 class="seq-panel-heading">Pre-rendered image sequence</h2>
+          <p class="seq-panel-body">Each frame is a pre-rendered JPG from a 3D application. The scroll position determines which frame gets painted to the canvas.</p>
+        </div>
+      </div>
+      <div class="seq-panel">
+        <div class="seq-panel-content" id="panel2">
+          <p class="seq-panel-tag">The Engine</p>
+          <h2 class="seq-panel-heading">GSAP ScrollTrigger</h2>
+          <p class="seq-panel-body">GSAP maps scroll progress to a frame index. The canvas redraws at 60fps, creating the illusion of a 3D object responding to your scroll.</p>
+        </div>
+      </div>
+      <div class="seq-panel">
+        <div class="seq-panel-content" id="panel3">
+          <p class="seq-panel-tag">Performance</p>
+          <h2 class="seq-panel-heading">Why not video or WebGL?</h2>
+          <p class="seq-panel-body">Pre-rendered frames deliver photorealistic quality — ray-traced lighting, perfect reflections — without GPU-heavy real-time rendering. Works everywhere.</p>
+        </div>
+      </div>
+      <div class="seq-panel">
+        <div class="seq-panel-content" id="panel4">
+          <p class="seq-panel-tag">Production</p>
+          <h2 class="seq-panel-heading">Ready for your product</h2>
+          <p class="seq-panel-body">Replace these frames with your own 3D renders — Blender, Cinema 4D, KeyShot. Export 60–120 WebP frames and you're live.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUTRO -->
+  <section class="outro">
+    <h2 class="outro-title" id="outroTitle">Built to ship.</h2>
+    <p class="outro-body" id="outroBody">This isn't a concept. Fork this file, swap the frames, and deploy. The scroll engine, canvas renderer, and loading system are all production-ready.</p>
+    <div class="tech-grid" id="techGrid">
+      <div class="tech-cell">
+        <div class="tech-cell-value">148</div>
+        <div class="tech-cell-label">Frames</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-value">60fps</div>
+        <div class="tech-cell-label">Render Rate</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-value">0</div>
+        <div class="tech-cell-label">Dependencies*</div>
+      </div>
+    </div>
+    <p style="margin-top:1rem;font-size:0.65rem;color:var(--text-dim);opacity:0.5">* besides GSAP, of course</p>
+  </section>
+
+  <footer>
+    <p>Scroll Sequence Engine &mdash; <a href="https://css-tricks.com/lets-make-one-of-those-fancy-scrolling-animations-used-on-apple-product-pages/" target="_blank">Based on CSS-Tricks tutorial</a> &mdash; Frames courtesy of Apple</p>
+  </footer>
+
+  <!-- GSAP + ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* ============================================
+       IMAGE SEQUENCE ENGINE
+       ============================================ */
+    const FRAME_COUNT = 148;
+    const CDN = 'https://www.apple.com/105/media/us/airpods-pro/2019/1299e2f5_9206_4470_b28e_08307a42f19b/anim/sequence/large/01-hero-lightpass/';
+
+    const canvas = document.getElementById('sequenceCanvas');
+    const ctx = canvas.getContext('2d');
+    const images = [];
+    let loadedCount = 0;
+    let currentFrame = { value: 0 };
+
+    const loaderBar = document.getElementById('loaderBar');
+    const loader = document.getElementById('loader');
+    const frameCounter = document.getElementById('frameCounter');
+    const frameNum = document.getElementById('frameNum');
+    const scrollProgress = document.getElementById('scrollProgress');
+
+    // Build frame URL
+    function frameUrl(index) {
+      return CDN + String(index + 1).padStart(4, '0') + '.jpg';
+    }
+
+    // Draw a frame to canvas
+    function drawFrame(index) {
+      const img = images[index];
+      if (!img || !img.complete) return;
+
+      // Size canvas to image on first draw
+      if (canvas.width !== img.width || canvas.height !== img.height) {
+        canvas.width = img.width;
+        canvas.height = img.height;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+
+      // Update counter
+      frameNum.textContent = String(index + 1).padStart(3, '0');
+    }
+
+    // Preload all images
+    function preloadImages() {
+      return new Promise((resolve) => {
+        for (let i = 0; i < FRAME_COUNT; i++) {
+          const img = new Image();
+          img.onload = img.onerror = () => {
+            loadedCount++;
+            const pct = Math.round((loadedCount / FRAME_COUNT) * 100);
+            loaderBar.style.width = pct + '%';
+
+            if (loadedCount === FRAME_COUNT) resolve();
+          };
+          img.src = frameUrl(i);
+          images.push(img);
+        }
+      });
+    }
+
+    /* ============================================
+       INIT ANIMATIONS AFTER LOAD
+       ============================================ */
+    async function init() {
+      await preloadImages();
+
+      // Hide loader
+      loader.classList.add('done');
+
+      // Draw first frame
+      drawFrame(0);
+
+      // ---- Hero entrance ----
+      const heroTL = gsap.timeline({ delay: 0.3 });
+      heroTL
+        .to('.hero-label',    { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' })
+        .to('.hero-title',    { opacity: 1, y: 0, duration: 1,   ease: 'power3.out' }, '-=0.5')
+        .to('.hero-subtitle', { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }, '-=0.6')
+        .to('.scroll-hint',   { opacity: 1, duration: 0.6, ease: 'power2.out' }, '-=0.3');
+
+      // ---- Scroll-driven frame sequence ----
+      gsap.to(currentFrame, {
+        value: FRAME_COUNT - 1,
+        snap: 'value',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '#sequenceSection',
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 0.5,
+          onUpdate: (self) => {
+            drawFrame(Math.round(currentFrame.value));
+
+            // Show/hide frame counter & progress
+            if (self.isActive) {
+              frameCounter.classList.add('visible');
+              scrollProgress.classList.add('visible');
+            } else {
+              frameCounter.classList.remove('visible');
+              scrollProgress.classList.remove('visible');
+            }
+
+            // Update progress bar
+            scrollProgress.style.width = (self.progress * 100) + '%';
+          }
+        }
+      });
+
+      // ---- Text panel reveals ----
+      ['#panel1', '#panel2', '#panel3', '#panel4'].forEach((id, i) => {
+        gsap.to(id, {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: id,
+            start: 'top 75%',
+            end: 'top 25%',
+            toggleActions: 'play none none reverse',
+          }
+        });
+      });
+
+      // ---- Fade hero on scroll ----
+      gsap.to('.hero', {
+        opacity: 0,
+        y: -60,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '#sequenceSection',
+          start: 'top bottom',
+          end: 'top top',
+          scrub: true,
+        }
+      });
+
+      // ---- Outro reveals ----
+      const outroTL = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.outro',
+          start: 'top 70%',
+        }
+      });
+      outroTL
+        .to('#outroTitle', { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' })
+        .to('#outroBody',  { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, '-=0.4')
+        .to('#techGrid',   { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, '-=0.3');
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+/* Import custom theme */
+@config "../../tailwind.config.ts";
+
+/* AXKAN Custom Properties */
+:root {
+  /* Primary Colors */
+  --axkan-magenta: #e72a88;
+  --axkan-verde: #8ab73b;
+  --axkan-naranja: #f39223;
+  --axkan-turquesa: #09adc2;
+  --axkan-rojo: #e52421;
+
+  /* Neutrals */
+  --crema: #FAF7F0;
+  --obsidiana: #2C2C28;
+
+  /* Gradients */
+  --gradient-axkan: linear-gradient(135deg, #e72a88 0%, #f39223 50%, #09adc2 100%);
+}
+
+/* Base Styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body), 'Inter', system-ui, sans-serif;
+  background-color: var(--crema);
+  color: var(--obsidiana);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Selection Colors - AXKAN Brand */
+::selection {
+  background-color: var(--axkan-magenta);
+  color: white;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--crema);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--axkan-turquesa);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--axkan-magenta);
+}
+
+/* Custom Utilities */
+@layer utilities {
+  .text-gradient-axkan {
+    background: var(--gradient-axkan);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-pattern-flowers {
+    background-image: url('/images/pattern-flowers.svg');
+    background-repeat: repeat;
+    background-size: 200px;
+  }
+}
+
+/* AXKAN Letter Colors for Logo */
+.axkan-letter-a1 { color: var(--axkan-magenta); }
+.axkan-letter-x { color: var(--axkan-verde); }
+.axkan-letter-k { color: var(--axkan-naranja); }
+.axkan-letter-a2 { color: var(--axkan-turquesa); }
+.axkan-letter-n { color: var(--axkan-rojo); }
+
+/* Animation Delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-marquee {
+    animation: none !important;
+  }
+
+  .animate-pulse,
+  .animate-float,
+  .animate-bounce {
+    animation: none !important;
+  }
+}
+
+/* Focus Visible Styles for Accessibility */
+:focus-visible {
+  outline: 2px solid var(--axkan-turquesa);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--axkan-turquesa);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--axkan-magenta);
+  color: white;
+  padding: 8px 16px;
+  z-index: 100;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

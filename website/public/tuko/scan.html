@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="es" data-lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tuko — Inmaculada Concepcion, Chignahuapan</title>
+  <meta name="theme-color" content="#0C1A24">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@200;300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    :root {
+      /* Matching landing page palette */
+      --hero-deep: #0A0A0F;
+      --hero-mid: #111118;
+      --lagoon: #00A8B8;
+      --lagoon-light: #00D4E8;
+      --lagoon-glow: rgba(0,168,184,0.2);
+      --terracotta: #FF8C42;
+      --terracotta-light: #FFA866;
+      --terracotta-glow: rgba(255,140,66,0.15);
+      --gold: #FFD23F;
+
+      /* UI */
+      --white: #FFFFFF;
+      --snow: #F7F8FC;
+      --cream: #FAFBFE;
+      --ink: #1A1A2E;
+      --ink-80: rgba(26,26,46,0.8);
+      --ink-60: rgba(26,26,46,0.6);
+      --ink-40: rgba(26,26,46,0.4);
+      --ink-20: rgba(26,26,46,0.2);
+      --ink-10: rgba(26,26,46,0.08);
+      --ink-05: rgba(26,26,46,0.04);
+
+      --rosa: #FF2D78;
+      --verde: #22B67E;
+      --verde-soft: #E5F8F0;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+      --shadow-glow: 0 8px 32px rgba(46,139,139,0.15);
+
+      --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      --r: 20px;
+      --r-sm: 14px;
+      --r-xs: 8px;
+      --pill: 100px;
+
+      --head: 'Clash Display', sans-serif;
+      --body: 'DM Sans', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--body);
+      background: var(--cream);
+      color: var(--ink);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { border: none; background: none; cursor: pointer; font-family: var(--body); color: inherit; }
+    img, video { display: block; max-width: 100%; }
+
+    /* ═══════════ REVEAL ═══════════ */
+    .rv {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.9s var(--ease-out) var(--d, 0ms),
+                  transform 0.9s var(--ease-out) var(--d, 0ms);
+    }
+    .rv.vis { opacity: 1; transform: none; }
+    .rv-left {
+      opacity: 0;
+      transform: translateX(-40px);
+      transition: opacity 0.9s var(--ease-out) var(--d, 0ms),
+                  transform 0.9s var(--ease-out) var(--d, 0ms);
+    }
+    .rv-left.vis { opacity: 1; transform: none; }
+
+    /* ═══════════════════════════════════════════
+       HERO — FULL BLEED IMMERSIVE
+       ═══════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding-top: 4rem;
+      padding-bottom: 4rem;
+    }
+    .hero__bg {
+      position: absolute;
+      inset: 0;
+      /* Rich atmospheric gradient simulating a twilight lagoon scene */
+      background:
+        radial-gradient(ellipse at 50% 70%, rgba(255,45,120,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 30%, rgba(0,168,184,0.06) 0%, transparent 40%),
+        url('https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1200&h=900&fit=crop') center/cover;
+      filter: brightness(0.3) saturate(1.2);
+      transform: scale(1.05);
+      transition: transform 8s ease-out;
+    }
+    .hero.loaded .hero__bg { transform: scale(1); filter: brightness(0.3) saturate(1.2); }
+
+    /* Floating particles — like fireflies over the lagoon */
+    .hero__particles {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: var(--rosa);
+      border-radius: 50%;
+      opacity: 0;
+      animation: drift 8s ease-in-out infinite;
+    }
+    @keyframes drift {
+      0% { opacity: 0; transform: translateY(0) translateX(0); }
+      20% { opacity: 0.7; }
+      80% { opacity: 0.5; }
+      100% { opacity: 0; transform: translateY(-120px) translateX(30px); }
+    }
+
+    /* Gradient scrim at bottom */
+    .hero__scrim {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 70%;
+      background: linear-gradient(0deg, #0A0A0F 0%, rgba(10,10,15,0.7) 35%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Nav overlay */
+    .hero-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem 1.2rem;
+      transition: background 0.4s, backdrop-filter 0.4s;
+    }
+    .hero-nav.scrolled {
+      background: rgba(250,247,242,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 1px 0 var(--ink-10);
+    }
+    .hero-nav.scrolled .nav-loc { color: var(--lagoon); }
+    .hero-nav.scrolled .nav-lang-btn { color: var(--ink-40); }
+    .hero-nav.scrolled .nav-lang-btn.active { color: var(--ink); background: var(--white); }
+
+    .nav-logo {
+      font-family: var(--head);
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--rosa), var(--terracotta));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      transition: opacity 0.4s;
+    }
+    .nav-right { display: flex; align-items: center; gap: 0.5rem; }
+    .nav-lang {
+      display: flex;
+      background: rgba(255,255,255,0.1);
+      border-radius: var(--pill);
+      padding: 2px;
+      backdrop-filter: blur(8px);
+    }
+    .hero-nav.scrolled .nav-lang { background: var(--snow); }
+    .nav-lang-btn {
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--pill);
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.5);
+      transition: all 0.25s;
+    }
+    .nav-lang-btn.active {
+      background: rgba(255,255,255,0.2);
+      color: var(--white);
+    }
+    .nav-loc {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--lagoon-light);
+      transition: color 0.4s;
+    }
+
+    /* Tuki in hero */
+    .hero__tuki {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      animation: fade-in 0.8s var(--ease-out) 0.1s both;
+    }
+    .hero__tuki-video {
+      width: 640px;
+      height: 640px;
+      object-fit: contain;
+      background: transparent;
+      filter: drop-shadow(0 16px 50px rgba(0,0,0,0.4))
+              drop-shadow(0 0 100px var(--lagoon-glow));
+      animation: float 5s ease-in-out infinite;
+      margin-bottom: 0.4rem;
+    }
+    @media (max-width: 768px) {
+      .hero__tuki-video { width: 80vw; height: 80vw; max-width: 640px; max-height: 640px; }
+    }
+
+    /* Sound toggle */
+    .hero__sound-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--pill);
+      padding: 0.5rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      cursor: pointer;
+      transition: all 0.3s var(--ease-spring);
+      margin-bottom: 0.8rem;
+      animation: fade-in 0.8s var(--ease-out) 0.6s both, sound-glow 2.5s ease-in-out infinite;
+    }
+    .hero__sound-btn:active { transform: scale(0.94); }
+    .hero__sound-btn.playing {
+      background: var(--rosa);
+      border-color: var(--rosa);
+      animation: none;
+    }
+    @keyframes sound-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,45,120,0); }
+      50% { box-shadow: 0 0 0 8px rgba(255,45,120,0.15); }
+    }
+    .hero__sound-icon {
+      width: 18px;
+      height: 18px;
+    }
+    .hero__tuki-bubble {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px 20px 20px 6px;
+      padding: 0.7rem 1.1rem;
+      max-width: 280px;
+      text-align: center;
+      animation: fade-in 0.8s var(--ease-out) 0.4s both;
+    }
+    .hero__tuki-name {
+      font-family: var(--head);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--lagoon-light);
+      margin-bottom: 0.2rem;
+    }
+    .hero__tuki-text {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.45;
+    }
+
+    /* Hero content */
+    .hero__content {
+      position: relative;
+      z-index: 2;
+      padding: 0 1.5rem 0;
+      max-width: 600px;
+      text-align: center;
+    }
+    .hero__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 0.35rem 0.8rem;
+      border-radius: var(--pill);
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--terracotta-light);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      animation: fade-in 1s var(--ease-out) 0.3s both;
+    }
+    .hero__eyebrow {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--lagoon-light);
+      margin-bottom: 0.6rem;
+      animation: fade-in 1s var(--ease-out) 0.5s both;
+    }
+    .hero__title {
+      font-family: var(--head);
+      font-size: clamp(2.8rem, 10vw, 4.2rem);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      color: var(--white);
+      margin-bottom: 0.8rem;
+      animation: fade-in 1s var(--ease-out) 0.7s both;
+    }
+    .hero__title em {
+      font-style: italic;
+      color: var(--lagoon-light);
+      font-weight: 500;
+    }
+    .hero__sub {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.6;
+      max-width: 360px;
+      margin: 0 auto 1.5rem;
+      animation: fade-in 1s var(--ease-out) 0.9s both;
+    }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* CTA buttons */
+    .hero__ctas {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fade-in 1s var(--ease-out) 1.1s both;
+    }
+    .hero-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.7rem 1.3rem;
+      border-radius: var(--pill);
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: all 0.3s var(--ease-spring);
+      white-space: nowrap;
+    }
+    .hero-btn:active { transform: scale(0.95); }
+    .hero-btn--primary {
+      background: var(--lagoon);
+      color: var(--white);
+      box-shadow: 0 4px 20px var(--lagoon-glow);
+    }
+    .hero-btn--primary:hover { box-shadow: 0 8px 32px var(--lagoon-glow); }
+    .hero-btn--ghost {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Scroll indicator */
+    .hero__scroll {
+      position: absolute;
+      bottom: 1.2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      z-index: 2;
+      animation: fade-in 1s var(--ease-out) 2s both;
+    }
+    .hero__scroll-text {
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+    }
+    .hero__scroll-line {
+      width: 1px;
+      height: 32px;
+      background: linear-gradient(to bottom, var(--lagoon-light), transparent);
+      animation: scroll-bob 2.5s ease-in-out infinite;
+    }
+    @keyframes scroll-bob {
+      0%, 100% { opacity: 0.3; transform: scaleY(0.4); transform-origin: top; }
+      50% { opacity: 1; transform: scaleY(1); }
+    }
+
+    /* ═══════════════════════════════════════════
+       LIGHT CONTENT AREA
+       ═══════════════════════════════════════════ */
+    .page {
+      position: relative;
+      z-index: 3;
+      background: linear-gradient(180deg, #0A0A0F 0%, var(--cream) 180px);
+    }
+
+    .wrap {
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    /* ═══════════ TUKI GUIDE ENCOUNTER ═══════════ */
+    .tuki {
+      padding: 2.5rem 0 1.5rem;
+    }
+    .tuki__card {
+      background: var(--white);
+      border-radius: var(--r);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      border: 1px solid var(--ink-10);
+    }
+    /* Color accent top */
+    .tuki__accent {
+      height: 4px;
+      background: linear-gradient(90deg, var(--lagoon), var(--terracotta), var(--gold));
+    }
+    .tuki__inner {
+      padding: 1.3rem;
+    }
+    .tuki__header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .tuki__avatar-wrap {
+      position: relative;
+    }
+    .tuki__avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--terracotta-glow);
+    }
+    .tuki__avatar-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--lagoon);
+      opacity: 0.3;
+      animation: ring-pulse 3s ease infinite;
+    }
+    @keyframes ring-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.08); opacity: 0.1; }
+    }
+    .tuki__name {
+      font-family: var(--head);
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--ink);
+    }
+    .tuki__role {
+      font-size: 0.7rem;
+      color: var(--ink-40);
+      font-weight: 500;
+    }
+    .tuki__text {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--ink-60);
+    }
+    .tuki__text strong { color: var(--ink); }
+    .tuki__text .hl { color: var(--lagoon); font-weight: 600; }
+
+    /* Audio bar */
+    .tuki__audio {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-top: 1.2rem;
+      padding: 0.7rem;
+      background: var(--snow);
+      border-radius: var(--r-sm);
+      border: 1px solid var(--ink-10);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tuki__audio:active { transform: scale(0.98); }
+    .tuki__play {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--lagoon);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 12px var(--lagoon-glow);
+    }
+    .tuki__play svg { fill: white; width: 14px; height: 14px; margin-left: 2px; }
+    .tuki__audio-meta { flex: 1; }
+    .tuki__audio-label { font-weight: 700; font-size: 0.8rem; }
+    .tuki__audio-dur { font-size: 0.68rem; color: var(--ink-40); }
+    .tuki__wave {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 28px;
+      padding: 0 0.3rem;
+    }
+    .tuki__bar {
+      width: 3px;
+      border-radius: 3px;
+      background: var(--lagoon);
+    }
+
+    /* ═══════════ STAT COUNTER — Big dramatic numbers ═══════════ */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem;
+      padding: 1rem 0 1.5rem;
+    }
+    .stat {
+      background: var(--white);
+      border: 1px solid var(--ink-10);
+      border-radius: var(--r);
+      padding: 1.3rem 1rem;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s var(--ease-spring);
+    }
+    .stat:active { transform: scale(0.97); }
+    .stat__number {
+      font-family: var(--head);
+      font-weight: 900;
+      font-size: 2rem;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+      letter-spacing: -0.03em;
+    }
+    .stat:nth-child(1) .stat__number { color: var(--lagoon); }
+    .stat:nth-child(2) .stat__number { color: var(--terracotta); }
+    .stat__label {
+      font-size: 0.72rem;
+      color: var(--ink-40);
+      font-weight: 500;
+    }
+
+    /* ═══════════ STORY CARDS — Horizontal immersive scroll ═══════════ */
+    .stories {
+      padding: 0.5rem 0 1.5rem;
+    }
+    .stories__head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: var(--head);
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .section-link {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--lagoon);
+    }
+    .stories__scroll {
+      display: flex;
+      gap: 0.8rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -1.25rem;
+      padding: 0 1.25rem 0.75rem;
+      scrollbar-width: none;
+    }
+    .stories__scroll::-webkit-scrollbar { display: none; }
+
+    .scard {
+      flex: 0 0 75vw;
+      max-width: 300px;
+      scroll-snap-align: start;
+      border-radius: var(--r);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.35s var(--ease);
+      box-shadow: var(--shadow-md);
+    }
+    .scard:active { transform: scale(0.97); }
+    .scard__img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+    }
+    .scard__overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 55%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.2rem;
+    }
+    .scard__chip {
+      align-self: flex-start;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--white);
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--pill);
+      margin-bottom: 0.6rem;
+    }
+    .scard__title {
+      font-family: var(--head);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 0.25rem;
+    }
+    .scard__sub {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.55);
+    }
+
+    /* ═══════════ FUN FACT — Full width dramatic ═══════════ */
+    .fact-section {
+      padding: 1.5rem 0;
+    }
+    .fact-card {
+      border-radius: var(--r);
+      padding: 2rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s var(--ease-spring);
+    }
+    .fact-card:active { transform: scale(0.98); }
+    .fact-card--lagoon {
+      background: linear-gradient(135deg, #0A2A2E 0%, #0C1A20 100%);
+      color: var(--white);
+    }
+    .fact-card--warm {
+      background: linear-gradient(135deg, #2A1520 0%, #1A0A10 100%);
+      color: var(--white);
+    }
+    .fact-card__emoji {
+      font-size: 3rem;
+      margin-bottom: 0.8rem;
+      display: block;
+      animation: float 5s ease-in-out infinite;
+    }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    .fact-card__eyebrow {
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.5;
+      margin-bottom: 0.5rem;
+    }
+    .fact-card__text {
+      font-family: var(--head);
+      font-size: 1.5rem;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .fact-card__big {
+      font-weight: 900;
+      font-size: 2.2rem;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .fact-card--lagoon .fact-card__big { color: var(--lagoon-light); }
+    .fact-card--warm .fact-card__big { color: var(--terracotta-light); }
+    .fact-card__source {
+      font-family: var(--body);
+      font-size: 0.65rem;
+      opacity: 0.35;
+      margin-top: 0.8rem;
+    }
+
+    /* ═══════════ EXPLORE ACTIONS ═══════════ */
+    .explore {
+      padding: 1.5rem 0;
+    }
+    .explore__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem;
+    }
+    .explore__card {
+      background: var(--white);
+      border: 1px solid var(--ink-10);
+      border-radius: var(--r);
+      padding: 1.2rem 1rem;
+      text-align: center;
+      transition: all 0.3s var(--ease-spring);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+    .explore__card:active { transform: scale(0.95); }
+    .explore__card:hover { box-shadow: var(--shadow-lg); }
+    .explore__icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin: 0 auto 0.6rem;
+    }
+    .explore__card:nth-child(1) .explore__icon { background: rgba(46,139,139,0.1); }
+    .explore__card:nth-child(2) .explore__icon { background: rgba(27,158,107,0.08); }
+    .explore__card:nth-child(3) .explore__icon { background: rgba(194,112,62,0.08); }
+    .explore__card:nth-child(4) .explore__icon { background: rgba(232,38,109,0.06); }
+    .explore__label {
+      font-weight: 700;
+      font-size: 0.88rem;
+      margin-bottom: 0.1rem;
+    }
+    .explore__sub {
+      font-size: 0.7rem;
+      color: var(--ink-40);
+    }
+
+    /* ═══════════ BUSINESSES ═══════════ */
+    .biz-section {
+      padding: 1rem 0 2rem;
+    }
+    .biz-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .biz-count {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--verde);
+      background: var(--verde-soft);
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--pill);
+    }
+
+    .biz {
+      background: var(--white);
+      border: 1px solid var(--ink-10);
+      border-radius: var(--r);
+      overflow: hidden;
+      margin-bottom: 0.7rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.25s;
+      cursor: pointer;
+    }
+    .biz:active { transform: scale(0.98); }
+    .biz:hover { box-shadow: var(--shadow-md); }
+    .biz__top {
+      display: flex;
+      gap: 0.8rem;
+      padding: 0.9rem 1rem;
+    }
+    .biz__thumb {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--r-sm);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .biz__info { flex: 1; min-width: 0; }
+    .biz__name {
+      font-family: var(--head);
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 0.15rem;
+    }
+    .biz__type {
+      font-size: 0.72rem;
+      color: var(--ink-40);
+      margin-bottom: 0.35rem;
+    }
+    .biz__pills {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+    .biz__pill {
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--pill);
+    }
+    .biz__pill--star { background: #FFF8E1; color: #B8860B; }
+    .biz__pill--dist { background: rgba(46,139,139,0.08); color: var(--lagoon); }
+    .biz__pill--tuki { background: var(--verde-soft); color: var(--verde); }
+    .biz__actions {
+      display: flex;
+      border-top: 1px solid var(--ink-10);
+    }
+    .biz__btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--ink-40);
+      transition: background 0.2s;
+    }
+    .biz__btn:active { background: var(--snow); }
+    .biz__btn:first-child { border-right: 1px solid var(--ink-10); }
+    .biz__btn--go { color: var(--verde); }
+
+    /* ═══════════ FOOTER ═══════════ */
+    .foot {
+      text-align: center;
+      padding: 2rem 1.25rem 3.5rem;
+      background: var(--cream);
+    }
+    .foot__logo {
+      font-family: var(--head);
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--rosa);
+      margin-bottom: 0.15rem;
+    }
+    .foot__sub {
+      font-size: 0.68rem;
+      color: var(--ink-20);
+      margin-bottom: 1rem;
+    }
+    .foot__strip {
+      height: 3px;
+      background: linear-gradient(90deg, var(--verde), var(--lagoon), var(--rosa), var(--terracotta), var(--gold));
+      border-radius: 3px;
+      max-width: 120px;
+      margin: 0 auto;
+    }
+
+    /* ═══════════ WHATSAPP ═══════════ */
+    .wa {
+      position: fixed;
+      bottom: 1.2rem;
+      right: 1.2rem;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #25D366;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      box-shadow: 0 4px 16px rgba(37,211,102,0.3);
+      transition: transform 0.3s var(--ease-spring);
+    }
+    .wa:active { transform: scale(0.88); }
+    .wa svg { width: 24px; height: 24px; fill: #fff; }
+
+    /* ═══════════ i18n ═══════════ */
+    [data-lang="en"] [data-es], [data-lang="es"] [data-en] { display: none !important; }
+
+    /* ═══════════ PLACEHOLDERS ═══════════ */
+    .ph-lagoon { background: url('https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=600&h=800&fit=crop') center/cover, #1a4a4a; }
+    .ph-warm { background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=800&fit=crop') center/cover, #7a5a3a; }
+    .ph-night { background: url('https://images.unsplash.com/photo-1518638150340-f706e86654de?w=600&h=800&fit=crop') center/cover, #1a2a3a; }
+    .ph-green { background: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&h=800&fit=crop') center/cover, #2a5a3a; }
+    .ph-cafe { background: url('https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=400&h=400&fit=crop') center/cover, #5a4030; }
+    .ph-bakery { background: url('https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=400&h=400&fit=crop') center/cover, #7a5a3a; }
+    .ph-crafts { background: url('https://images.unsplash.com/photo-1528698827591-e19cef51a699?w=400&h=400&fit=crop') center/cover, #5a3a6a; }
+
+    /* ═══════════ MOBILE ADJUSTMENTS ═══════════ */
+    @media (max-width: 380px) {
+      .hero__title { font-size: 2.4rem; }
+      .scard { flex: 0 0 82vw; }
+      .fact-card__text { font-size: 1.3rem; }
+      .fact-card__big { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ NAV ═══════════ -->
+  <nav class="hero-nav" id="nav">
+    <div class="nav-logo">Tuko</div>
+    <div class="nav-right">
+      <div class="nav-lang">
+        <button class="nav-lang-btn active" data-sw="es">ES</button>
+        <button class="nav-lang-btn" data-sw="en">EN</button>
+      </div>
+      <div class="nav-loc">📍 Chignahuapan</div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero" id="hero">
+    <div class="hero__bg"></div>
+    <div class="hero__particles" id="particles"></div>
+    <div class="hero__scrim"></div>
+
+    <!-- TUKI — First thing you see -->
+    <div class="hero__tuki">
+      <video id="tukiVid" class="hero__tuki-video" autoplay loop muted playsinline poster="tuki-2.png">
+        <source src="ajolote-hevc.mov" type='video/mp4; codecs="hvc1"'>
+        <source src="ajolote.webm" type="video/webm">
+      </video>
+      <button id="soundBtn" class="hero__sound-btn" aria-label="Activar sonido">
+        <svg class="hero__sound-icon" id="iconOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+        </svg>
+        <svg class="hero__sound-icon" id="iconOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+        <span id="soundLabel"><span data-es>Activar sonido</span><span data-en>Turn on sound</span></span>
+      </button>
+      <div class="hero__tuki-bubble">
+        <div class="hero__tuki-name">Tuki</div>
+        <div class="hero__tuki-text">
+          <span data-es>¡Hola! 🌊 Soy tu guia. Dejame contarte la historia de este lugar.</span>
+          <span data-en>Hello! 🌊 I'm your guide. Let me tell you the story of this place.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero__content">
+      <div class="hero__badge">
+        <span data-es>⛪ Parroquia historica</span>
+        <span data-en>⛪ Historic parish</span>
+      </div>
+      <div class="hero__eyebrow">Chignahuapan, Puebla</div>
+      <h1 class="hero__title">
+        <span data-es>Inmaculada <em>Concepcion</em></span>
+        <span data-en>Immaculate <em>Conception</em></span>
+      </h1>
+      <p class="hero__sub">
+        <span data-es>Dentro de esta parroquia se encuentra una de las esculturas religiosas mas grandes de Latinoamerica: una Virgen de 14 metros tallada en madera.</span>
+        <span data-en>Inside this parish stands one of Latin America's largest religious sculptures: a 14-meter Virgin carved from wood.</span>
+      </p>
+    </div>
+
+    <div class="hero__scroll">
+      <span class="hero__scroll-text">Scroll</span>
+      <div class="hero__scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ LIGHT PAGE ═══════════ -->
+  <div class="page">
+    <div class="wrap">
+
+      <!-- ═══ TUKI ═══ -->
+      <div class="tuki rv" style="--d:0ms">
+        <div class="tuki__card">
+          <div class="tuki__accent"></div>
+          <div class="tuki__inner">
+            <div class="tuki__header">
+              <div class="tuki__avatar-wrap">
+                <img class="tuki__avatar" src="tuki-2.png" alt="Tuki">
+                <div class="tuki__avatar-ring"></div>
+              </div>
+              <div>
+                <div class="tuki__name">Tuki</div>
+                <div class="tuki__role"><span data-es>Tu guia digital</span><span data-en>Your digital guide</span></div>
+              </div>
+            </div>
+            <div class="tuki__text">
+              <span data-es>¡Hola! ⛪ Esta es la <strong>Parroquia de la Inmaculada Concepcion</strong>, el corazon espiritual de Chignahuapan. Adentro te espera una sorpresa: una <span class="hl">Virgen de 14 metros tallada en madera</span>, tan grande que fue construida dentro de la iglesia porque no cabia por la puerta.</span>
+              <span data-en>Hello! ⛪ This is the <strong>Parish of the Immaculate Conception</strong>, the spiritual heart of Chignahuapan. Inside awaits a surprise: a <span class="hl">14-meter Virgin carved from wood</span>, so large it was built inside the church because it wouldn't fit through the door.</span>
+            </div>
+            <audio id="tukiAudio" src="tuki-guide.mp3" preload="metadata"></audio>
+            <div class="tuki__audio" id="tukiAudioBtn">
+              <div class="tuki__play" id="tukiPlayIcon"><svg viewBox="0 0 24 24"><polygon points="8,5 19,12 8,19"/></svg></div>
+              <div class="tuki__audio-meta">
+                <div class="tuki__audio-label" id="tukiAudioLabel"><span data-es>Escuchar a Tuki</span><span data-en>Listen to Tuki</span></div>
+                <div class="tuki__audio-dur" id="tukiAudioTime">4:45</div>
+              </div>
+              <div class="tuki__wave" id="wave"></div>
+            </div>
+            <!-- Progress bar -->
+            <div style="margin-top:0.5rem;height:4px;background:rgba(0,0,0,0.06);border-radius:4px;overflow:hidden">
+              <div id="tukiProgress" style="height:100%;width:0%;background:var(--lagoon);border-radius:4px;transition:width 0.3s"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STATS ═══ -->
+      <div class="stats-row rv" style="--d:100ms">
+        <div class="stat">
+          <div class="stat__number" data-count="14" data-suffix="m" data-raw>0</div>
+          <div class="stat__label"><span data-es>Altura de la Virgen</span><span data-en>Height of the Virgin</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat__number" data-count="500" data-suffix="+" data-raw>0</div>
+          <div class="stat__label"><span data-es>Años de historia</span><span data-en>Years of history</span></div>
+        </div>
+      </div>
+
+      <!-- ═══ FUN FACT ═══ -->
+      <div class="fact-section rv" style="--d:150ms">
+        <div class="fact-card fact-card--lagoon">
+          <span class="fact-card__emoji">⛪</span>
+          <div class="fact-card__eyebrow"><span data-es>Dato curioso</span><span data-en>Fun fact</span></div>
+          <div class="fact-card__text">
+            <span data-es>La Virgen mide <span class="fact-card__big">14 metros</span>y fue tallada en madera de cedro por Jose Luis Silva. Es tan grande que fue ensamblada dentro de la iglesia.</span>
+            <span data-en>The Virgin stands <span class="fact-card__big">14 meters</span>tall and was carved from cedar wood by Jose Luis Silva. It's so large it was assembled inside the church.</span>
+          </div>
+          <div class="fact-card__source"><span data-es>Fuente: INAH · Patrimonio historico</span><span data-en>Source: INAH · Historical heritage</span></div>
+        </div>
+      </div>
+
+      <!-- ═══ STORIES ═══ -->
+      <div class="stories rv" style="--d:200ms">
+        <div class="stories__head">
+          <div class="section-title"><span data-es>Historias</span><span data-en>Stories</span></div>
+          <a href="#" class="section-link"><span data-es>Ver todas →</span><span data-en>See all →</span></a>
+        </div>
+        <div class="stories__scroll">
+          <div class="scard">
+            <div class="scard__img ph-night" style="aspect-ratio:3/4"></div>
+            <div class="scard__overlay">
+              <span class="scard__chip"><span data-es>3 min</span><span data-en>3 min</span></span>
+              <div class="scard__title"><span data-es>La Virgen que no cabe por la puerta</span><span data-en>The Virgin that won't fit through the door</span></div>
+              <div class="scard__sub"><span data-es>Historia · Arquitectura</span><span data-en>History · Architecture</span></div>
+            </div>
+          </div>
+          <div class="scard">
+            <div class="scard__img ph-warm" style="aspect-ratio:3/4"></div>
+            <div class="scard__overlay">
+              <span class="scard__chip"><span data-es>5 min</span><span data-en>5 min</span></span>
+              <div class="scard__title"><span data-es>Los franciscanos que evangelizaron la sierra</span><span data-en>The Franciscans who evangelized the sierra</span></div>
+              <div class="scard__sub"><span data-es>Colonizacion · Fe</span><span data-en>Colonization · Faith</span></div>
+            </div>
+          </div>
+          <div class="scard">
+            <div class="scard__img ph-lagoon" style="aspect-ratio:3/4"></div>
+            <div class="scard__overlay">
+              <span class="scard__chip"><span data-es>2 min</span><span data-en>2 min</span></span>
+              <div class="scard__title"><span data-es>La fiesta del 8 de diciembre y miles de peregrinos</span><span data-en>The December 8th feast and thousands of pilgrims</span></div>
+              <div class="scard__sub"><span data-es>Tradicion · Devocion</span><span data-en>Tradition · Devotion</span></div>
+            </div>
+          </div>
+          <div class="scard">
+            <div class="scard__img ph-green" style="aspect-ratio:3/4"></div>
+            <div class="scard__overlay">
+              <span class="scard__chip"><span data-es>4 min</span><span data-en>4 min</span></span>
+              <div class="scard__title"><span data-es>Jose Luis Silva: el escultor detras de la obra</span><span data-en>Jose Luis Silva: the sculptor behind the masterpiece</span></div>
+              <div class="scard__sub"><span data-es>Arte · Artesania</span><span data-en>Art · Craftsmanship</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ FACT 2 ═══ -->
+      <div class="fact-section rv" style="--d:250ms">
+        <div class="fact-card fact-card--warm">
+          <span class="fact-card__emoji">🕯️</span>
+          <div class="fact-card__eyebrow"><span data-es>¿Sabias que?</span><span data-en>Did you know?</span></div>
+          <div class="fact-card__text">
+            <span data-es>Cada <span class="fact-card__big">8 de diciembre</span>miles de peregrinos llegan a venerar a la Virgen en la Fiesta de la Inmaculada Concepcion.</span>
+            <span data-en>Every <span class="fact-card__big">December 8th</span>thousands of pilgrims arrive to venerate the Virgin during the Feast of the Immaculate Conception.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ EXPLORE ═══ -->
+      <div class="explore rv" style="--d:300ms">
+        <div class="stories__head">
+          <div class="section-title"><span data-es>Explora</span><span data-en>Explore</span></div>
+        </div>
+        <div class="explore__grid">
+          <a href="#" class="explore__card"><div class="explore__icon">📖</div><div class="explore__label"><span data-es>Historia</span><span data-en>History</span></div><div class="explore__sub"><span data-es>Linea del tiempo</span><span data-en>Timeline</span></div></a>
+          <a href="#biz" class="explore__card"><div class="explore__icon">🏪</div><div class="explore__label"><span data-es>Negocios</span><span data-en>Shops</span></div><div class="explore__sub"><span data-es>3 cerca</span><span data-en>3 nearby</span></div></a>
+          <a href="#" class="explore__card"><div class="explore__icon">🗺️</div><div class="explore__label"><span data-es>Mapa</span><span data-en>Map</span></div><div class="explore__sub"><span data-es>Puntos de interes</span><span data-en>POIs</span></div></a>
+          <a href="#" class="explore__card"><div class="explore__icon">📸</div><div class="explore__label"><span data-es>Galeria</span><span data-en>Gallery</span></div><div class="explore__sub"><span data-es>Fotos</span><span data-en>Photos</span></div></a>
+        </div>
+      </div>
+
+      <!-- ═══ BUSINESSES ═══ -->
+      <div class="biz-section rv" style="--d:350ms" id="biz">
+        <div class="biz-head">
+          <div class="section-title"><span data-es>Cerca de ti</span><span data-en>Near you</span></div>
+          <span class="biz-count"><span data-es>3 recomendados</span><span data-en>3 recommended</span></span>
+        </div>
+
+        <div class="biz">
+          <div class="biz__top">
+            <div class="biz__thumb ph-bakery"></div>
+            <div class="biz__info">
+              <h3 class="biz__name">Panaderia La Chignahuapense</h3>
+              <div class="biz__type"><span data-es>Panaderia · Desde 1965</span><span data-en>Bakery · Since 1965</span></div>
+              <div class="biz__pills">
+                <span class="biz__pill biz__pill--star">★ 4.9</span>
+                <span class="biz__pill biz__pill--dist">200m</span>
+                <span class="biz__pill biz__pill--tuki">✓ Tuki</span>
+              </div>
+            </div>
+          </div>
+          <div class="biz__actions">
+            <button class="biz__btn biz__btn--go"><span data-es>🧭 Como llegar</span><span data-en>🧭 Directions</span></button>
+            <button class="biz__btn"><span data-es>💾 Guardar</span><span data-en>💾 Save</span></button>
+          </div>
+        </div>
+
+        <div class="biz">
+          <div class="biz__top">
+            <div class="biz__thumb ph-cafe"></div>
+            <div class="biz__info">
+              <h3 class="biz__name">Cafe La Laguna</h3>
+              <div class="biz__type"><span data-es>Cafeteria · Desayunos</span><span data-en>Cafe · Breakfast</span></div>
+              <div class="biz__pills">
+                <span class="biz__pill biz__pill--star">★ 4.7</span>
+                <span class="biz__pill biz__pill--dist">350m</span>
+              </div>
+            </div>
+          </div>
+          <div class="biz__actions">
+            <button class="biz__btn biz__btn--go"><span data-es>🧭 Como llegar</span><span data-en>🧭 Directions</span></button>
+            <button class="biz__btn"><span data-es>💾 Guardar</span><span data-en>💾 Save</span></button>
+          </div>
+        </div>
+
+        <div class="biz">
+          <div class="biz__top">
+            <div class="biz__thumb ph-crafts"></div>
+            <div class="biz__info">
+              <h3 class="biz__name">Taller de Esferas Don Pedro</h3>
+              <div class="biz__type"><span data-es>Artesanias · Esferas</span><span data-en>Crafts · Ornaments</span></div>
+              <div class="biz__pills">
+                <span class="biz__pill biz__pill--star">★ 4.8</span>
+                <span class="biz__pill biz__pill--dist">500m</span>
+              </div>
+            </div>
+          </div>
+          <div class="biz__actions">
+            <button class="biz__btn biz__btn--go"><span data-es>🧭 Como llegar</span><span data-en>🧭 Directions</span></button>
+            <button class="biz__btn"><span data-es>💾 Guardar</span><span data-en>💾 Save</span></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="foot">
+    <div class="foot__logo">Tuko</div>
+    <div class="foot__sub"><span data-es>Turismo Conectado · Mexico 🇲🇽</span><span data-en>Connected Tourism · Mexico 🇲🇽</span></div>
+    <div class="foot__strip"></div>
+  </footer>
+
+  <a href="https://wa.me/5215518942408?text=Hola%2C%20escanee%20un%20QR%20de%20Tuko" target="_blank" rel="noopener" class="wa">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+
+  <script>
+    /* ═══ Reveal ═══ */
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }), { threshold: 0.05 });
+    document.querySelectorAll('.rv, .rv-left').forEach(el => io.observe(el));
+
+    /* ═══ Nav scroll ═══ */
+    const nav = document.getElementById('nav');
+    const hero = document.getElementById('hero');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > hero.offsetHeight - 80);
+    }, { passive: true });
+
+    /* ═══ Hero loaded animation ═══ */
+    requestAnimationFrame(() => hero.classList.add('loaded'));
+
+    /* ═══ Particles ═══ */
+    const pc = document.getElementById('particles');
+    for (let i = 0; i < 15; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = 40 + Math.random() * 50 + '%';
+      p.style.animationDelay = Math.random() * 8 + 's';
+      p.style.animationDuration = 6 + Math.random() * 6 + 's';
+      p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+      pc.appendChild(p);
+    }
+
+    /* ═══ Counter animation ═══ */
+    const cio = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      const target = +el.dataset.count;
+      const raw = el.hasAttribute('data-raw');
+      const dur = 2000;
+      const start = performance.now();
+      (function tick(now) {
+        const t = Math.min((now - start) / dur, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        const val = Math.floor(ease * target);
+        const suffix = el.dataset.suffix || '';
+        el.textContent = val + suffix;
+        if (t < 1) requestAnimationFrame(tick);
+      })(start);
+      cio.unobserve(el);
+    }), { threshold: 0.5 });
+    document.querySelectorAll('[data-count]').forEach(el => cio.observe(el));
+
+    /* ═══ Audio wave ═══ */
+    const w = document.getElementById('wave');
+    for (let i = 0; i < 24; i++) {
+      const b = document.createElement('div');
+      b.className = 'tuki__bar';
+      b.style.height = (3 + Math.random() * 20) + 'px';
+      b.style.opacity = i < 8 ? '0.5' : '0.2';
+      w.appendChild(b);
+    }
+
+    /* ═══ Language ═══ */
+    document.querySelectorAll('[data-sw]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const l = btn.dataset.sw;
+        document.documentElement.setAttribute('data-lang', l);
+        document.querySelectorAll('.nav-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.sw === l));
+        localStorage.setItem('tuko-lang', l);
+      });
+    });
+    const sl = localStorage.getItem('tuko-lang');
+    if (sl) {
+      document.documentElement.setAttribute('data-lang', sl);
+      document.querySelectorAll('.nav-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.sw === sl));
+    }
+
+    /* ═══ Sound Toggle ═══ */
+    const vid = document.getElementById('tukiVid');
+    const sBtn = document.getElementById('soundBtn');
+    const sOff = document.getElementById('iconOff');
+    const sOn = document.getElementById('iconOn');
+    const sLabelEs = document.createElement('span');
+    const sLabelEn = document.createElement('span');
+    sLabelEs.setAttribute('data-es', '');
+    sLabelEn.setAttribute('data-en', '');
+
+    sBtn.addEventListener('click', () => {
+      vid.muted = !vid.muted;
+      const playing = !vid.muted;
+      sBtn.classList.toggle('playing', playing);
+      sOff.style.display = playing ? 'none' : 'block';
+      sOn.style.display = playing ? 'block' : 'none';
+      const label = document.getElementById('soundLabel');
+      while (label.firstChild) label.removeChild(label.firstChild);
+      const es = document.createElement('span');
+      es.setAttribute('data-es', '');
+      es.textContent = playing ? 'Sonido activado' : 'Activar sonido';
+      const en = document.createElement('span');
+      en.setAttribute('data-en', '');
+      en.textContent = playing ? 'Sound on' : 'Turn on sound';
+      label.appendChild(es);
+      label.appendChild(en);
+    });
+
+    /* ═══ Tuki Audio Player ═══ */
+    const tAudio = document.getElementById('tukiAudio');
+    const tBtn = document.getElementById('tukiAudioBtn');
+    const tPlayIcon = document.getElementById('tukiPlayIcon');
+    const tProgress = document.getElementById('tukiProgress');
+    const tTime = document.getElementById('tukiAudioTime');
+    let tPlaying = false;
+
+    tBtn.addEventListener('click', () => {
+      if (tPlaying) {
+        tAudio.pause();
+        tPlaying = false;
+        tPlayIcon.style.background = 'var(--lagoon)';
+      } else {
+        tAudio.play();
+        tPlaying = true;
+        tPlayIcon.style.background = 'var(--rosa)';
+      }
+    });
+
+    tAudio.addEventListener('timeupdate', () => {
+      if (tAudio.duration) {
+        const pct = (tAudio.currentTime / tAudio.duration) * 100;
+        tProgress.style.width = pct + '%';
+        const rem = tAudio.duration - tAudio.currentTime;
+        const m = Math.floor(rem / 60);
+        const s = Math.floor(rem % 60);
+        tTime.textContent = m + ':' + String(s).padStart(2, '0');
+      }
+    });
+
+    tAudio.addEventListener('ended', () => {
+      tPlaying = false;
+      tPlayIcon.style.background = 'var(--lagoon)';
+      tProgress.style.width = '0%';
+      tTime.textContent = '4:45';
+    });
+  </script>
+
+</body>
+</html>

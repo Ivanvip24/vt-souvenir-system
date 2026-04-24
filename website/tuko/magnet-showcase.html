@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AXKAN — Imanes Artesanales de México</title>
+  <meta name="description" content="Imanes souvenir hechos a mano en México. Sublimación HD sobre MDF con imán de neodimio.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    @font-face {
+      font-family: 'RL AQVA';
+      src: url('RLAQVA.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --rosa: #e72a88;
+      --verde: #8ab73b;
+      --naranja: #f39223;
+      --turquesa: #09adc2;
+      --rojo: #e52421;
+
+      --white: #ffffff;
+      --light: #f8f8f8;
+      --gray-100: #f0f0f0;
+      --gray-300: #d0d0d0;
+      --gray-500: #888888;
+      --gray-700: #444444;
+      --black: #1a1a1a;
+
+      --dark-bg: #080808;
+
+      --display: 'RL AQVA', 'Arial Black', sans-serif;
+      --body: 'Inter', -apple-system, sans-serif;
+    }
+
+    html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: var(--body);
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--rosa); color: #fff; }
+
+    /* ============================================
+       LOADER
+       ============================================ */
+    .loader {
+      position: fixed; inset: 0; z-index: 10000;
+      background: var(--white);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;
+      transition: opacity 0.8s ease, visibility 0.8s;
+    }
+    .loader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .loader-brand {
+      font-family: var(--display);
+      font-size: 2.2rem;
+      letter-spacing: 0.06em;
+    }
+
+    .loader-bar-wrap {
+      width: 140px; height: 3px; background: var(--gray-100); border-radius: 2px; overflow: hidden;
+    }
+    .loader-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--rosa), var(--naranja), var(--turquesa));
+      border-radius: 2px; transition: width 0.2s ease;
+    }
+
+    .loader-status {
+      font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-500);
+    }
+
+    /* ============================================
+       NAV
+       ============================================ */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      transform: translateY(-100%); opacity: 0;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .nav.nav-dark {
+      background: rgba(8,8,8,0.9);
+      border-bottom-color: rgba(255,255,255,0.06);
+    }
+    .nav.nav-dark .nav-brand { color: #fff; }
+
+    .nav-brand {
+      font-family: var(--display);
+      font-size: 1.1rem; letter-spacing: 0.06em;
+      color: var(--black); text-decoration: none;
+    }
+
+    .nav-cta {
+      font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em;
+      padding: 0.55rem 1.4rem; border-radius: 100px;
+      background: var(--rosa); color: #fff;
+      text-decoration: none; transition: all 0.3s ease;
+    }
+    .nav-cta:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+    /* ============================================
+       HERO (LIGHT)
+       ============================================ */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 6rem 2rem 4rem;
+      position: relative; background: var(--white);
+    }
+
+    .hero-eyebrow {
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--rosa); margin-bottom: 1.5rem;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .hero-title {
+      font-family: var(--display);
+      font-size: clamp(2.8rem, 8vw, 6rem);
+      font-weight: 400; line-height: 1.1;
+      color: var(--black); max-width: 800px;
+      opacity: 0; transform: translateY(30px);
+    }
+
+    .hero-title .highlight {
+      color: var(--rosa);
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      font-weight: 400; color: var(--gray-500);
+      max-width: 480px; margin-top: 1.5rem; line-height: 1.7;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .hero-sub strong { font-weight: 600; color: var(--black); }
+
+    .scroll-cue {
+      position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      color: var(--gray-300); opacity: 0;
+    }
+    .scroll-cue-text { font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; }
+    .scroll-cue svg { width: 18px; height: 18px; animation: bounce-arr 1.8s ease-in-out infinite; }
+    @keyframes bounce-arr {
+      0%,100% { transform: translateY(0); opacity: 0.4; }
+      50% { transform: translateY(6px); opacity: 1; }
+    }
+
+    /* ============================================
+       3D SECTION (DARK)
+       ============================================ */
+    .sequence { position: relative; background: var(--dark-bg); }
+
+    .sequence-runway { height: 500vh; position: relative; }
+
+    .sequence-sticky {
+      position: sticky; top: 0; width: 100%; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; background: var(--dark-bg);
+    }
+    .sequence-sticky canvas { max-width: 100%; max-height: 100vh; }
+
+    .sequence-vignette {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 40%, var(--dark-bg) 100%);
+      opacity: 0.5;
+    }
+
+    /* ============================================
+       TEXT PANELS — glass cards on dark
+       ============================================ */
+    .panels-layer {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 10;
+    }
+
+    .panel {
+      position: absolute; width: 100%; height: 100vh;
+      display: flex; align-items: center;
+      padding: 0 clamp(2rem, 6vw, 6rem);
+    }
+    .panel:nth-child(1) { top: 10vh; }
+    .panel:nth-child(2) { top: 130vh; }
+    .panel:nth-child(3) { top: 260vh; }
+    .panel:nth-child(4) { top: 380vh; }
+
+    .panel-inner {
+      max-width: 360px; opacity: 0; transform: translateY(50px);
+      background: rgba(8,8,8,0.7);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 2rem;
+    }
+
+    .panel:nth-child(even) .panel-inner { margin-left: auto; text-align: right; }
+
+    .panel-tag {
+      font-family: var(--display);
+      font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .panel:nth-child(1) .panel-tag { color: var(--rosa); }
+    .panel:nth-child(2) .panel-tag { color: var(--naranja); }
+    .panel:nth-child(3) .panel-tag { color: var(--turquesa); }
+    .panel:nth-child(4) .panel-tag { color: var(--verde); }
+
+    .panel-heading {
+      font-family: var(--display);
+      font-size: clamp(1.4rem, 2.8vw, 1.9rem);
+      font-weight: 400; line-height: 1.2; margin-bottom: 0.7rem;
+      color: #fff;
+    }
+
+    .panel-body {
+      font-size: 0.88rem; font-weight: 400; line-height: 1.7;
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* ============================================
+       SCROLL PROGRESS
+       ============================================ */
+    .progress-track {
+      position: fixed; right: 1.5rem; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 80px; background: rgba(255,255,255,0.1);
+      border-radius: 2px; z-index: 100;
+      opacity: 0; transition: opacity 0.4s ease;
+    }
+    .progress-track.visible { opacity: 1; }
+    .progress-thumb {
+      width: 100%; height: 0%;
+      background: linear-gradient(to bottom, var(--rosa), var(--turquesa));
+      border-radius: 2px; transition: height 0.05s linear;
+    }
+
+    /* ============================================
+       SPECS (LIGHT)
+       ============================================ */
+    .specs {
+      padding: clamp(5rem, 12vw, 10rem) clamp(1.5rem, 5vw, 4rem);
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--white);
+    }
+
+    .specs-eyebrow {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--rosa); margin-bottom: 0.75rem;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .specs-title {
+      font-family: var(--display);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      text-align: center; color: var(--black); margin-bottom: 3rem;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .specs-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; max-width: 750px; width: 100%;
+      background: var(--gray-100); border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--gray-100);
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .spec-card {
+      background: var(--white);
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      text-align: center;
+    }
+
+    .spec-value {
+      font-family: var(--display);
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      margin-bottom: 0.3rem;
+    }
+    .spec-card:nth-child(1) .spec-value { color: var(--rosa); }
+    .spec-card:nth-child(2) .spec-value { color: var(--turquesa); }
+    .spec-card:nth-child(3) .spec-value { color: var(--verde); }
+
+    .spec-label {
+      font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray-500);
+    }
+
+    /* ============================================
+       CTA (LIGHT)
+       ============================================ */
+    .cta-section {
+      padding: clamp(3rem, 8vw, 6rem) 2rem clamp(5rem, 12vw, 10rem);
+      text-align: center; background: var(--white);
+    }
+
+    .cta-title {
+      font-family: var(--display);
+      font-size: clamp(2rem, 5.5vw, 4rem);
+      line-height: 1.15; color: var(--black); margin-bottom: 1rem;
+      opacity: 0; transform: translateY(30px);
+    }
+    .cta-title .highlight { color: var(--rosa); }
+
+    .cta-body {
+      font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+      color: var(--gray-500); max-width: 440px;
+      margin: 0 auto 2.5rem; line-height: 1.7;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .cta-buttons {
+      display: flex; align-items: center; justify-content: center;
+      gap: 1rem; flex-wrap: wrap;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.9rem 2rem; border-radius: 100px;
+      background: var(--rosa); color: #fff;
+      font-family: var(--body); font-size: 0.9rem; font-weight: 600;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(231,42,136,0.25); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.9rem 2rem; border-radius: 100px;
+      background: transparent; color: var(--black);
+      font-family: var(--body); font-size: 0.9rem; font-weight: 600;
+      text-decoration: none; border: 1px solid var(--gray-300);
+      cursor: pointer; transition: all 0.3s ease;
+    }
+    .btn-secondary:hover { border-color: var(--rosa); color: var(--rosa); transform: translateY(-2px); }
+
+    .cta-note { margin-top: 1rem; font-size: 0.8rem; color: var(--gray-500); }
+
+    /* ============================================
+       FOOTER
+       ============================================ */
+    footer {
+      padding: 2.5rem 2rem; text-align: center;
+      border-top: 1px solid var(--gray-100); background: var(--white);
+    }
+    footer p { font-size: 0.75rem; color: var(--gray-500); }
+    footer a { color: var(--gray-700); text-decoration: none; transition: color 0.3s; }
+    footer a:hover { color: var(--rosa); }
+
+    /* ============================================
+       MOBILE
+       ============================================ */
+    @media (max-width: 768px) {
+      .sequence-runway { height: 320vh; }
+      .panel { padding: 0 1.25rem; }
+      .panel-inner { max-width: 300px; padding: 1.5rem; }
+      .panel:nth-child(1) { top: 5vh; }
+      .panel:nth-child(2) { top: 85vh; }
+      .panel:nth-child(3) { top: 170vh; }
+      .panel:nth-child(4) { top: 250vh; }
+      .panel:nth-child(even) .panel-inner { margin-left: auto; margin-right: 0; }
+      .specs-grid { grid-template-columns: 1fr; max-width: 300px; }
+      .progress-track { display: none; }
+      .nav { padding: 0.85rem 1.25rem; }
+    }
+
+    @media (max-width: 480px) {
+      .hero { min-height: 90vh; padding-top: 5rem; }
+      .panel-inner { max-width: 240px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div class="loader" id="loader">
+    <div class="loader-brand">AXKAN</div>
+    <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
+    <div class="loader-status" id="loaderStatus">Preparando experiencia</div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <a href="#" class="nav-brand">AXKAN</a>
+    <a href="https://wa.me/5215512345678?text=Hola%2C%20quiero%20cotizar%20imanes%20personalizados" class="nav-cta" target="_blank">Cotizar ahora</a>
+  </nav>
+
+  <!-- SCROLL PROGRESS -->
+  <div class="progress-track" id="progressTrack">
+    <div class="progress-thumb" id="progressThumb"></div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <p class="hero-eyebrow" id="heroEyebrow">Souvenirs que si importan</p>
+    <h1 class="hero-title" id="heroTitle">Recuerdos hechos <span class="highlight">souvenir</span></h1>
+    <p class="hero-sub" id="heroSub">Cada iman AXKAN captura un momento. Sublimacion HD sobre MDF, cortado con laser y respaldado por un iman de neodimio. <strong>Llevate Mexico contigo.</strong></p>
+    <div class="scroll-cue" id="scrollCue">
+      <span class="scroll-cue-text">Descubre</span>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+    </div>
+  </section>
+
+  <!-- 3D SEQUENCE (DARK) -->
+  <section class="sequence" id="sequence">
+    <div class="sequence-runway">
+      <div class="sequence-sticky" id="sequenceSticky">
+        <canvas id="magnetCanvas"></canvas>
+        <div class="sequence-vignette"></div>
+      </div>
+
+      <div class="panels-layer">
+        <div class="panel">
+          <div class="panel-inner" id="p1">
+            <p class="panel-tag">Sublimacion HD</p>
+            <h2 class="panel-heading">Colores que no se apagan</h2>
+            <p class="panel-body">Impresion por sublimacion a 300dpi. Los colores penetran la superficie — no se rayan, no se desvanecen. Vibrantes hoy, vibrantes en 10 anos.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-inner" id="p2">
+            <p class="panel-tag">MDF de precision</p>
+            <h2 class="panel-heading">El borde que nos define</h2>
+            <p class="panel-body">Cortado con laser en MDF de 3mm. Ese borde de madera es nuestra firma — lo que distingue a AXKAN de cualquier souvenir generico.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-inner" id="p3">
+            <p class="panel-tag">Diseno cultural</p>
+            <h2 class="panel-heading">Cada pieza, una investigacion</h2>
+            <p class="panel-body">Nuestros disenadores investigan la historia, fauna y tradiciones de cada destino. No copiamos — creamos arte original que honra a Mexico.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-inner" id="p4">
+            <p class="panel-tag">Iman de neodimio</p>
+            <h2 class="panel-heading">Se queda donde lo pones</h2>
+            <p class="panel-body">Iman industrial de neodimio en la parte trasera. No es decorativo — sostiene notas, fotos, lo que necesites. Fuerza real en un souvenir real.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPECS -->
+  <section class="specs" id="specs">
+    <p class="specs-eyebrow" id="specsEyebrow">Especificaciones</p>
+    <h2 class="specs-title" id="specsTitle">Los numeros hablan</h2>
+    <div class="specs-grid" id="specsGrid">
+      <div class="spec-card">
+        <div class="spec-value">3mm</div>
+        <div class="spec-label">MDF Premium</div>
+      </div>
+      <div class="spec-card">
+        <div class="spec-value">300dpi</div>
+        <div class="spec-label">Sublimacion HD</div>
+      </div>
+      <div class="spec-card">
+        <div class="spec-value">N35</div>
+        <div class="spec-label">Neodimio</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section" id="ctaSection">
+    <h2 class="cta-title" id="ctaTitle">Listo para algo <span class="highlight">autentico</span>?</h2>
+    <p class="cta-body" id="ctaBody">Cotiza imanes personalizados para tu hotel, agencia de viajes o tienda de souvenirs. Pedidos desde 100 piezas.</p>
+    <div class="cta-buttons" id="ctaButtons">
+      <a href="https://wa.me/5215512345678?text=Hola%2C%20quiero%20cotizar%20imanes%20personalizados" class="btn-primary" target="_blank">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75c-2.33 0-4.49-.766-6.234-2.063l-.357-.282-3.296 1.105 1.105-3.296-.282-.357A9.712 9.712 0 012.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75z"/></svg>
+        Cotizar por WhatsApp
+      </a>
+      <a href="https://vtanunciando.com" class="btn-secondary" target="_blank">Ver catalogo</a>
+    </div>
+    <p class="cta-note">Mas de 500 disenos disponibles · Envio a todo Mexico</p>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 AXKAN &mdash; Detonadores de Orgullo Mexicano &mdash; <a href="https://instagram.com/axkan.mx" target="_blank">@axkan.mx</a></p>
+  </footer>
+
+  <!-- THREE.JS + GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const canvas = document.getElementById('magnetCanvas');
+    const container = document.getElementById('sequenceSticky');
+    let scene, camera, renderer, magnetGroup;
+    let contourPoints = [];
+    let loadedImage = null;
+    let loadedTexture = null;
+    let scrollRotation = { y: 0 };
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color('#080808');
+
+    camera = new THREE.PerspectiveCamera(35, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 0.15, 3.8);
+    camera.lookAt(0, 0, 0);
+
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const kl = new THREE.DirectionalLight(0xffffff, 0.95); kl.position.set(4,5,6); kl.castShadow=true; scene.add(kl);
+    const fl = new THREE.DirectionalLight(0xddeeff, 0.35); fl.position.set(-4,3,-3); scene.add(fl);
+    const rl = new THREE.DirectionalLight(0xffe8d6, 0.45); rl.position.set(0,-2,-5); scene.add(rl);
+    const tl = new THREE.DirectionalLight(0xffffff, 0.3); tl.position.set(0,6,0); scene.add(tl);
+
+    magnetGroup = new THREE.Group();
+    scene.add(magnetGroup);
+
+    function extractContour(image, numRays) {
+      const w = image.width, h = image.height;
+      const off = document.createElement('canvas'); off.width=w; off.height=h;
+      const ctx = off.getContext('2d'); ctx.drawImage(image,0,0);
+      const data = ctx.getImageData(0,0,w,h).data;
+      let hasAlpha = false;
+      for (let i=0;i<w*h;i++) { if(data[i*4+3]<250){hasAlpha=true;break;} }
+      const threshold = hasAlpha ? 30 : -1;
+      function isOpaque(x,y) {
+        if(x<0||x>=w||y<0||y>=h) return false;
+        const idx=(y*w+x)*4;
+        return hasAlpha ? data[idx+3]>threshold : (data[idx]+data[idx+1]+data[idx+2])<740;
+      }
+      let sumX=0,sumY=0,count=0;
+      for(let y=0;y<h;y+=4) for(let x=0;x<w;x+=4) if(isOpaque(x,y)){sumX+=x;sumY+=y;count++;}
+      if(!count) return [];
+      const cx=sumX/count, cy=sumY/count, maxR=Math.sqrt(w*w+h*h), pts=[];
+      for(let i=0;i<numRays;i++){
+        const angle=(i/numRays)*Math.PI*2, dx=Math.cos(angle), dy=Math.sin(angle);
+        let lx=cx,ly=cy,found=false;
+        for(let r=0;r<maxR;r+=0.5){
+          const px=Math.round(cx+dx*r), py=Math.round(cy+dy*r);
+          if(px<0||px>=w||py<0||py>=h) break;
+          if(isOpaque(px,py)){lx=px;ly=py;found=true;}
+        }
+        if(found) pts.push({x:lx,y:ly});
+      }
+      return pts;
+    }
+
+    function buildMagnet() {
+      while(magnetGroup.children.length){
+        const c=magnetGroup.children[0]; magnetGroup.remove(c);
+        if(c.geometry)c.geometry.dispose();
+        if(c.material)(Array.isArray(c.material)?c.material:[c.material]).forEach(m=>m.dispose());
+      }
+      if(!contourPoints.length||!loadedTexture) return;
+
+      const thickness = 0.12;
+      const bevelSize = 0.015;
+      const imgW = loadedImage.width;
+      const imgH = loadedImage.height;
+      const targetWidth = 2.2;
+      const scale = targetWidth / imgW;
+      const centerX = imgW / 2;
+      const centerY = imgH / 2;
+
+      // Build shape — exact same as render-magnet.html
+      const pts2d = contourPoints.map(p => new THREE.Vector2(
+        (p.x - centerX) * scale,
+        -(p.y - centerY) * scale
+      ));
+      const splineCurve = new THREE.SplineCurve(pts2d);
+      const smoothPoints = splineCurve.getPoints(400);
+
+      const smoothShape = new THREE.Shape();
+      smoothShape.moveTo(smoothPoints[0].x, smoothPoints[0].y);
+      for (let i = 1; i < smoothPoints.length; i++) {
+        smoothShape.lineTo(smoothPoints[i].x, smoothPoints[i].y);
+      }
+      smoothShape.closePath();
+
+      const geometry = new THREE.ExtrudeGeometry(smoothShape, {
+        depth: thickness,
+        bevelEnabled: bevelSize > 0,
+        bevelThickness: bevelSize * 0.5,
+        bevelSize: bevelSize,
+        bevelSegments: 3,
+        curveSegments: 1,
+      });
+      geometry.translate(0, 0, -thickness / 2);
+
+      // Fix UVs for front face only (materialIndex 0)
+      const pos = geometry.attributes.position;
+      const uv = geometry.attributes.uv;
+      const halfW = (imgW / 2) * scale;
+      const halfH = (imgH / 2) * scale;
+
+      for (const group of geometry.groups) {
+        if (group.materialIndex === 0) {
+          for (let i = group.start; i < group.start + group.count; i++) {
+            const x = pos.getX(i);
+            const y = pos.getY(i);
+            const u = (x + halfW) / (2 * halfW);
+            const v = (y + halfH) / (2 * halfH);
+            uv.setXY(i, u, v);
+          }
+        }
+      }
+      uv.needsUpdate = true;
+
+      // Generate MDF wood texture procedurally
+      const mdfCanvas = document.createElement('canvas');
+      mdfCanvas.width = 512; mdfCanvas.height = 512;
+      const mdfCtx = mdfCanvas.getContext('2d');
+      // Base MDF tan color
+      mdfCtx.fillStyle = '#C4976B';
+      mdfCtx.fillRect(0, 0, 512, 512);
+      // Add grain noise
+      for (let i = 0; i < 80000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const brightness = Math.random() * 30 - 15;
+        const r = 196 + brightness;
+        const g = 151 + brightness;
+        const b = 107 + brightness;
+        mdfCtx.fillStyle = `rgb(${r},${g},${b})`;
+        mdfCtx.fillRect(x, y, Math.random() * 2 + 0.5, Math.random() * 1.5 + 0.5);
+      }
+      // Add subtle fiber lines
+      mdfCtx.globalAlpha = 0.08;
+      for (let i = 0; i < 200; i++) {
+        const y = Math.random() * 512;
+        mdfCtx.strokeStyle = Math.random() > 0.5 ? '#b08050' : '#d4a878';
+        mdfCtx.lineWidth = Math.random() * 0.8 + 0.2;
+        mdfCtx.beginPath();
+        mdfCtx.moveTo(0, y);
+        mdfCtx.lineTo(512, y + (Math.random() - 0.5) * 20);
+        mdfCtx.stroke();
+      }
+      mdfCtx.globalAlpha = 1.0;
+
+      const mdfTexture = new THREE.Texture(mdfCanvas);
+      mdfTexture.needsUpdate = true;
+      mdfTexture.wrapS = THREE.RepeatWrapping;
+      mdfTexture.wrapT = THREE.RepeatWrapping;
+
+      // Materials: front=print, back=MDF texture, edge=MDF color
+      const frontMat = new THREE.MeshStandardMaterial({
+        map: loadedTexture, roughness: 0.35, metalness: 0.0,
+      });
+      const backMat = new THREE.MeshStandardMaterial({
+        map: mdfTexture, roughness: 0.92, metalness: 0.0,
+      });
+      const edgeMat = new THREE.MeshStandardMaterial({
+        map: mdfTexture, roughness: 0.8, metalness: 0.0, side: THREE.DoubleSide,
+      });
+
+      const mesh = new THREE.Mesh(geometry, [frontMat, backMat, edgeMat]);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      magnetGroup.add(mesh);
+
+      // Add ferrite magnet disc on the back
+      const ferriteRadius = 0.22;
+      const ferriteThickness = 0.03;
+      const ferriteGeo = new THREE.CylinderGeometry(ferriteRadius, ferriteRadius, ferriteThickness, 32);
+      ferriteGeo.rotateX(Math.PI / 2); // align with Z axis
+      const ferriteMat = new THREE.MeshStandardMaterial({
+        color: 0x3a3a3f, roughness: 0.95, metalness: 0.05,
+      });
+      const ferriteMesh = new THREE.Mesh(ferriteGeo, ferriteMat);
+      // Position on back face center
+      ferriteMesh.position.set(0, 0, -(thickness / 2 + ferriteThickness / 2 + 0.002));
+      ferriteMesh.castShadow = true;
+      magnetGroup.add(ferriteMesh);
+
+      magnetGroup.rotation.x = THREE.MathUtils.degToRad(12);
+    }
+
+    let currentRotY = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      currentRotY += (scrollRotation.y - currentRotY) * 0.1;
+      if(magnetGroup) magnetGroup.rotation.y = currentRotY;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const loaderBar=document.getElementById('loaderBar');
+    const loaderStatus=document.getElementById('loaderStatus');
+    const loader=document.getElementById('loader');
+    loaderBar.style.width='20%'; loaderStatus.textContent='Cargando imagen';
+
+    const img = new Image(); img.crossOrigin='anonymous';
+    img.onload = () => {
+      loaderBar.style.width='50%'; loaderStatus.textContent='Extrayendo silueta';
+      loadedImage=img;
+      loadedTexture=new THREE.Texture(img);
+      loadedTexture.encoding=THREE.sRGBEncoding;
+      loadedTexture.anisotropy=renderer.capabilities.getMaxAnisotropy();
+      loadedTexture.needsUpdate=true;
+      requestAnimationFrame(()=>{
+        contourPoints=extractContour(img,400);
+        loaderBar.style.width='80%'; loaderStatus.textContent='Construyendo 3D';
+        requestAnimationFrame(()=>{
+          buildMagnet();
+          loaderBar.style.width='100%'; loaderStatus.textContent='Listo';
+          setTimeout(()=>{loader.classList.add('done');initAnimations();},400);
+        });
+      });
+    };
+    img.onerror = () => {
+      loaderStatus.textContent='Error cargando imagen';
+      setTimeout(()=>{loader.classList.add('done');initAnimations();},800);
+    };
+    img.src = 'magnet-yucatan.png';
+
+    function initAnimations() {
+      gsap.to('#nav',{y:0,opacity:1,duration:0.6,ease:'power3.out',delay:0.1});
+
+      const heroTL = gsap.timeline({delay:0.15});
+      heroTL
+        .to('#heroEyebrow',{opacity:1,y:0,duration:0.6,ease:'power3.out'})
+        .to('#heroTitle',{opacity:1,y:0,duration:0.8,ease:'power3.out'},'-=0.35')
+        .to('#heroSub',{opacity:1,y:0,duration:0.6,ease:'power3.out'},'-=0.4')
+        .to('#scrollCue',{opacity:1,duration:0.5,ease:'power2.out'},'-=0.2');
+
+      gsap.to('.hero',{
+        opacity:0,y:-40,ease:'none',
+        scrollTrigger:{trigger:'#sequence',start:'top bottom',end:'top top',scrub:true}
+      });
+
+      gsap.to(scrollRotation,{
+        y:Math.PI*2, ease:'none',
+        scrollTrigger:{
+          trigger:'.sequence-runway', start:'top top', end:'bottom bottom', scrub:0.8,
+          onUpdate:(self)=>{
+            document.getElementById('progressTrack').classList.toggle('visible',self.isActive);
+            document.getElementById('progressThumb').style.height=(self.progress*100)+'%';
+          }
+        }
+      });
+
+      ['#p1','#p2','#p3','#p4'].forEach(id=>{
+        gsap.to(id,{
+          opacity:1,y:0,duration:0.8,ease:'power3.out',
+          scrollTrigger:{trigger:id,start:'top 80%',end:'top 30%',toggleActions:'play none none reverse'}
+        });
+      });
+
+      const specsTL = gsap.timeline({scrollTrigger:{trigger:'#specs',start:'top 75%'}});
+      specsTL
+        .to('#specsEyebrow',{opacity:1,y:0,duration:0.5,ease:'power3.out'})
+        .to('#specsTitle',{opacity:1,y:0,duration:0.6,ease:'power3.out'},'-=0.25')
+        .to('#specsGrid',{opacity:1,y:0,duration:0.6,ease:'power3.out'},'-=0.25');
+
+      const ctaTL = gsap.timeline({scrollTrigger:{trigger:'#ctaSection',start:'top 75%'}});
+      ctaTL
+        .to('#ctaTitle',{opacity:1,y:0,duration:0.7,ease:'power3.out'})
+        .to('#ctaBody',{opacity:1,y:0,duration:0.5,ease:'power3.out'},'-=0.3')
+        .to('#ctaButtons',{opacity:1,y:0,duration:0.5,ease:'power3.out'},'-=0.25');
+
+      ScrollTrigger.create({
+        trigger:'#sequence', start:'top top', end:'bottom top',
+        onEnter:()=>document.getElementById('nav').classList.add('nav-dark'),
+        onLeave:()=>document.getElementById('nav').classList.remove('nav-dark'),
+        onEnterBack:()=>document.getElementById('nav').classList.add('nav-dark'),
+        onLeaveBack:()=>document.getElementById('nav').classList.remove('nav-dark'),
+      });
+    }
+
+    window.addEventListener('resize',()=>{
+      camera.aspect=container.clientWidth/container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth,container.clientHeight);
+    });
+  </script>
+</body>
+</html>
