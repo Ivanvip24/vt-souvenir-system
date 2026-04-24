@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <div class="header">
+      <img src="icons/icon-48.png" alt="AXKAN" class="logo">
+      <h1>AXKAN CRM</h1>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="login-form">
+      <input type="text" id="username" placeholder="Usuario" required autocomplete="username">
+      <input type="password" id="password" placeholder="Contrasena" required autocomplete="current-password">
+      <button type="submit" id="loginBtn">Iniciar sesion</button>
+      <p id="loginError" class="error" hidden></p>
+    </form>
+
+    <!-- Logged In State -->
+    <div id="loggedIn" class="logged-in" hidden>
+      <p class="status">Conectado como <strong id="userName"></strong></p>
+      <p class="hint">Abre WhatsApp Web para usar el sidebar CRM</p>
+      <button id="logoutBtn" class="logout-btn">Cerrar sesion</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

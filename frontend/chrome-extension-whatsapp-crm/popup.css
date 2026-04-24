@@ -1,0 +1,66 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  width: 280px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+}
+
+.popup { padding: 20px; }
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.header .logo { width: 32px; height: 32px; }
+.header h1 { font-size: 16px; color: #e72a88; }
+
+.login-form { display: flex; flex-direction: column; gap: 10px; }
+
+.login-form input {
+  padding: 10px 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #16213e;
+  color: #e0e0e0;
+  font-size: 13px;
+  outline: none;
+}
+
+.login-form input:focus { border-color: #e72a88; }
+
+.login-form button {
+  padding: 10px;
+  background: #e72a88;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-form button:hover { background: #c91f73; }
+.login-form button:disabled { background: #555; cursor: not-allowed; }
+
+.error { color: #ef4444; font-size: 12px; margin-top: 4px; }
+
+.logged-in { text-align: center; }
+.status { font-size: 13px; margin-bottom: 8px; }
+.hint { font-size: 11px; color: #888; margin-bottom: 16px; }
+
+.logout-btn {
+  padding: 8px 16px;
+  background: transparent;
+  color: #888;
+  border: 1px solid #444;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.logout-btn:hover { color: #ef4444; border-color: #ef4444; }
