@@ -1,0 +1,197 @@
+/* ═══════════════════════════════════════════════════════════
+   MOBILE MENU MEGA COMPONENT
+   Full-screen overlay menu shown when hamburger is tapped.
+   Used by: homepage, souvenirs destination template, anywhere
+            that injects <!-- @MOBILE_MENU:mega -->.
+   Depends on: _variables.css, nav-mega.css (for .nav-hamburger)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── BASE (mobile-first) ── */
+
+.mobile-menu {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f5f5f7;
+  z-index: 99;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  padding: 80px 1rem 2rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-menu.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* CTA — always visible at top */
+.mobile-menu-cta {
+  display: block;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 1rem 2rem;
+  margin-bottom: 1.25rem;
+  background: var(--rosa-mexicano);
+  color: white;
+  border-radius: 16px;
+  text-decoration: none;
+  box-shadow: 0 4px 20px rgba(231, 42, 136, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.mobile-menu-cta:active {
+  transform: scale(0.97);
+}
+
+.mobile-menu-section {
+  margin-bottom: 1rem;
+}
+
+.mobile-menu-title {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #999;
+  padding: 0 4px;
+  margin-bottom: 0.5rem;
+}
+
+/* Products grid — 2 columns */
+.mobile-products-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.mobile-menu a.mobile-product-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 14px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.mobile-menu a.mobile-product-link:active {
+  transform: scale(0.97);
+  background: #eee;
+}
+
+.mobile-product-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.mobile-menu a.mobile-view-all {
+  grid-column: 1 / -1;
+  display: block;
+  text-align: center;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 14px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--rosa-mexicano);
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: background 0.15s ease;
+}
+
+.mobile-menu a.mobile-view-all:active {
+  background: #eee;
+}
+
+/* Design action cards */
+.mobile-designs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mobile-menu a.mobile-design-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem;
+  background: white;
+  border-radius: 14px;
+  text-decoration: none;
+  color: #1a1a2e;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.mobile-menu a.mobile-design-card:active {
+  transform: scale(0.97);
+  background: #eee;
+}
+
+.mobile-design-emoji {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.mobile-design-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-design-text strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.mobile-design-text span {
+  font-size: 0.75rem;
+  color: #888;
+  line-height: 1.3;
+}
+
+.mobile-design-arrow {
+  color: #ccc;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+/* ── TABLET (≥600px) ── */
+
+@media (min-width: 600px) {
+  .mobile-menu {
+    display: none !important;
+  }
+}

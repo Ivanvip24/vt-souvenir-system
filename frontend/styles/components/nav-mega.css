@@ -1,0 +1,379 @@
+/* ═══════════════════════════════════════════════════════════
+   NAV-MEGA COMPONENT
+   Shared styles for the mega-menu nav (Productos/Diseños dropdowns).
+   Used by: homepage, souvenirs destination template, anywhere else
+            that injects <!-- @NAV:mega -->.
+   Depends on: _variables.css
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── BASE (mobile-first) ── */
+
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem var(--space-md, 1.5rem);
+  background: white;
+  border-bottom: 1px solid #eee;
+  transition: box-shadow 0.3s ease;
+}
+
+.nav.nav--scrolled {
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+}
+
+.nav-logo {
+  height: 42px;
+  width: auto;
+}
+
+.nav-links {
+  display: none; /* hidden on mobile, shown on tablet+ */
+  gap: 0.25rem;
+  list-style: none;
+  align-items: center;
+}
+
+.nav-links > li {
+  position: relative;
+}
+
+.nav-links > li > a,
+.nav-links > li > button.mega-trigger {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  text-decoration: none;
+  transition: color 0.2s ease, background 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+}
+
+.mega-trigger svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.3s ease;
+  opacity: 0.5;
+}
+
+.nav-links > li:hover > .mega-trigger svg,
+.nav-links > li.mega-open > .mega-trigger svg {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+.nav-links > li:hover > a,
+.nav-links > li:hover > .mega-trigger,
+.nav-links > li.mega-open > .mega-trigger {
+  color: var(--rosa-mexicano);
+  background: rgba(231, 42, 136, 0.06);
+}
+
+.nav-cta {
+  background: var(--rosa-mexicano) !important;
+  color: white !important;
+  padding: 0.5rem 1.4rem !important;
+  border-radius: 100px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+}
+
+.nav-cta:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px rgba(231, 42, 136, 0.4) !important;
+  background: var(--rosa-mexicano) !important;
+}
+
+/* ── Mega Menu Panels ── */
+
+.mega-panel {
+  display: none; /* hidden on mobile by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.35s;
+  z-index: 99;
+  padding: 90px 0 2.5rem;
+  pointer-events: none;
+}
+
+.mega-panel.mega-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.mega-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.mega-heading {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 1.25rem;
+  padding-left: 4px;
+}
+
+.mega-products-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.mega-product-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  padding: 1rem 0.75rem;
+  border-radius: 16px;
+  transition: background 0.2s ease, transform 0.2s ease;
+  text-align: center;
+}
+
+.mega-product-card:hover {
+  background: #f5f5f7;
+  transform: translateY(-2px);
+}
+
+.mega-product-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  transition: transform 0.3s ease;
+}
+
+.mega-product-card:hover .mega-product-img {
+  transform: scale(1.08);
+}
+
+.mega-product-name {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  line-height: 1.3;
+}
+
+.mega-product-price {
+  font-size: 0.75rem;
+  color: #999;
+  margin-top: 2px;
+}
+
+.mega-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--rosa-mexicano);
+  text-decoration: none;
+  transition: gap 0.2s ease;
+}
+
+.mega-footer-link:hover {
+  gap: 10px;
+}
+
+/* Diseños mega layout */
+.mega-designs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.mega-design-section {
+  padding: 1.5rem;
+  border-radius: 16px;
+  background: #f9f9fb;
+  transition: background 0.2s ease;
+}
+
+.mega-design-section:hover {
+  background: #f0f0f3;
+}
+
+.mega-design-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.mega-design-section h4 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 0.4rem;
+}
+
+.mega-design-section p {
+  font-size: 0.8rem;
+  color: #777;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.mega-design-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: gap 0.2s ease;
+}
+
+.mega-design-link:hover {
+  gap: 8px;
+}
+
+.mega-design-link.rosa { color: var(--rosa-mexicano); }
+.mega-design-link.verde { color: #8ab73b; }
+.mega-design-link.turquesa { color: #09adc2; }
+
+/* Mega menu backdrop */
+.mega-backdrop {
+  display: none; /* hidden on mobile */
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 98;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  backdrop-filter: blur(2px);
+}
+
+.mega-backdrop.mega-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Search button in nav */
+.nav-search-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  color: var(--gray-800);
+  transition: color 0.2s ease, transform 0.2s;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+.nav-search-btn:hover {
+  color: var(--rosa-mexicano);
+  transform: scale(1.1);
+}
+
+/* Hamburger (visible on mobile, hidden on tablet+) */
+.nav-hamburger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  z-index: 110;
+}
+
+.nav-hamburger span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background: var(--gray-800);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.nav-hamburger.active span:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.nav-hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-hamburger.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* ── TABLET (≥600px) ── */
+
+@media (min-width: 600px) {
+  .nav-links {
+    display: flex;
+  }
+  .nav-hamburger {
+    display: none;
+  }
+  .mega-panel {
+    display: block;
+  }
+  .mega-backdrop {
+    display: block;
+  }
+  .mega-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .mega-designs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── DESKTOP (≥900px) ── */
+
+@media (min-width: 900px) {
+  .mega-products-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .mega-designs-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

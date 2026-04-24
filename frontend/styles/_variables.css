@@ -1,0 +1,63 @@
+/* ═══════════════════════════════════════════════════════════
+   AXKAN — Design Tokens (single source of truth)
+   ═══════════════════════════════════════════════════════════
+
+   BREAKPOINTS (CSS vars can't be used in @media queries,
+                so these are listed here as documentation only):
+
+     Base   — mobile-first, no media query
+     Tablet — @media (min-width: 600px)
+     Desktop — @media (min-width: 900px)
+
+   Never introduce new breakpoints. If a layout needs something
+   in between, reconsider whether it can live in base or desktop.
+   ═══════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'RL Aqva';
+  src: url('/fonts/rl-aqva-black.otf') format('opentype');
+  font-weight: 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Objektiv';
+  src: url('/fonts/objektiv-vf.otf') format('opentype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  /* ── Brand colors ── */
+  --rosa-mexicano: #e72a88;
+  --rosa: #e72a88;
+  --rosa-soft: rgba(231, 42, 136, 0.08);
+  --verde-selva: #8ab73b;
+  --verde: #8ab73b;
+  --naranja-calido: #f39223;
+  --naranja: #f39223;
+  --turquesa-caribe: #09adc2;
+  --turquesa: #09adc2;
+  --rojo-mexicano: #e52421;
+  --rojo: #e52421;
+  --oro-maya: #D4A574;
+
+  /* ── Neutrals ── */
+  --ink: #1a1a1a;
+  --ink-50: #999;
+  --ink-20: #ccc;
+  --gray-800: #1f1f1f;
+  --gray-100: #f5f5f5;
+  --surface: #ffffff;
+  --card: #fff;
+
+  /* ── Typography ── */
+  --font-display: 'RL Aqva', 'Objektiv', 'Fredoka', sans-serif;
+  --font-body: 'Objektiv', 'Inter', -apple-system, sans-serif;
+
+  /* ── Spacing scale ── */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 3rem;
+  --space-xl: 5rem;
+}
