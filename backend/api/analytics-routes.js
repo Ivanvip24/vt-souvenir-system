@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 import { query } from '../shared/database.js';
+import { log, logError } from '../shared/logger.js';
 import * as analyticsAgent from '../agents/analytics-agent/index.js';
 import * as orderAlerts from '../agents/alerts/order-alerts.js';
 import { getDateRange } from '../shared/utils.js';
@@ -28,7 +29,7 @@ router.get('/alerts', async (req, res) => {
       data: alerts
     });
   } catch (error) {
-    console.error('Error getting order alerts:', error);
+    logError('analytics.alerts.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -49,7 +50,7 @@ router.get('/alerts/summary', async (req, res) => {
       data: summary
     });
   } catch (error) {
-    console.error('Error getting alerts summary:', error);
+    logError('analytics.alerts.summary.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -82,7 +83,7 @@ router.post('/alerts/send-digest', async (req, res) => {
       html: digest.html
     });
 
-    console.log(`✅ Daily digest sent to ${targetEmail}`);
+    log('info', 'analytics.alerts.digest-sent', { to: targetEmail });
 
     res.json({
       success: true,
@@ -90,7 +91,7 @@ router.post('/alerts/send-digest', async (req, res) => {
       summary: digest.summary
     });
   } catch (error) {
-    console.error('Error sending daily digest:', error);
+    logError('analytics.alerts.digest.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -113,7 +114,7 @@ router.get('/analytics', async (req, res) => {
       data: summary
     });
   } catch (error) {
-    console.error('Error getting analytics:', error);
+    logError('analytics.summary.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -143,7 +144,7 @@ router.get('/analytics/revenue', async (req, res) => {
       data: revenue
     });
   } catch (error) {
-    console.error('Error getting revenue:', error);
+    logError('analytics.revenue.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -169,7 +170,7 @@ router.get('/analytics/products/top', async (req, res) => {
       data: products
     });
   } catch (error) {
-    console.error('Error getting top products:', error);
+    logError('analytics.products.top.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -195,7 +196,7 @@ router.get('/analytics/clients/top', async (req, res) => {
       data: clients
     });
   } catch (error) {
-    console.error('Error getting top clients:', error);
+    logError('analytics.clients.top.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -432,7 +433,7 @@ router.get('/analytics/dashboard', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting dashboard analytics:', error);
+    logError('analytics.dashboard.error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -502,7 +503,7 @@ router.get('/analytics/products/:productName', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting product analytics:', error);
+    logError('analytics.products.detail.error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -519,7 +520,7 @@ router.post('/reports/daily/send', async (req, res) => {
       data: result
     });
   } catch (error) {
-    console.error('Error sending daily report:', error);
+    logError('analytics.reports.daily.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -547,7 +548,7 @@ router.post('/reports/monthly/send', async (req, res) => {
       data: result
     });
   } catch (error) {
-    console.error('Error sending monthly report:', error);
+    logError('analytics.reports.monthly.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -565,7 +566,7 @@ router.get('/reports/schedule', (req, res) => {
       data: jobs
     });
   } catch (error) {
-    console.error('Error getting scheduled jobs:', error);
+    logError('analytics.reports.schedule.error', error);
     res.status(500).json({
       success: false,
       error: 'Error interno del servidor'
@@ -584,7 +585,7 @@ router.post('/test/email', async (req, res) => {
     });
     res.json({ success: true, to, ...result });
   } catch (error) {
-    console.error('Error testing email:', error);
+    logError('analytics.test.email.error', error);
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 });
@@ -627,7 +628,7 @@ router.post('/test/receipt-email', async (req, res) => {
     );
     res.json({ success: true, to, ...result });
   } catch (error) {
-    console.error('Error testing receipt email:', error);
+    logError('analytics.test.receipt-email.error', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
