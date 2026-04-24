@@ -65,3 +65,4 @@ credentials.json
 token.json
 *.pem
 *.key
+RENDER_ENV_VARS.txt
