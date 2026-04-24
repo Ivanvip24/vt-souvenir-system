@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Render 1 — Photorealistic Sea Turtle | AXKAN</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   FONT FACE — RL AQVA
+   ============================================ */
+@font-face {
+  font-family: 'RL AQVA';
+  src: url('../../fonts/rl-aqva-black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'DM Sans', sans-serif;
+}
+
+body {
+  background: linear-gradient(180deg, #f0fffe 0%, #e0f7fa 30%, #b2ebf2 60%, #80deea 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* ============================================
+   UNDERWATER CAUSTIC OVERLAY
+   ============================================ */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse 80px 60px at 20% 30%, rgba(255,255,255,0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 100px 80px at 60% 20%, rgba(255,255,255,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 70px 50px at 80% 50%, rgba(255,255,255,0.1) 0%, transparent 70%),
+    radial-gradient(ellipse 90px 70px at 40% 70%, rgba(255,255,255,0.13) 0%, transparent 70%),
+    radial-gradient(ellipse 60px 40px at 10% 80%, rgba(255,255,255,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 110px 90px at 70% 80%, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: causticShift 8s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse 60px 45px at 30% 15%, rgba(255,255,255,0.1) 0%, transparent 70%),
+    radial-gradient(ellipse 85px 65px at 75% 35%, rgba(255,255,255,0.09) 0%, transparent 70%),
+    radial-gradient(ellipse 50px 35px at 50% 60%, rgba(255,255,255,0.11) 0%, transparent 70%),
+    radial-gradient(ellipse 75px 55px at 15% 55%, rgba(255,255,255,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 95px 75px at 85% 70%, rgba(255,255,255,0.08) 0%, transparent 70%);
+  animation: causticShift2 10s ease-in-out infinite alternate-reverse;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes causticShift {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  50% { transform: translate(15px, -10px) scale(1.05); opacity: 0.8; }
+  100% { transform: translate(-10px, 15px) scale(0.95); opacity: 0.5; }
+}
+
+@keyframes causticShift2 {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  50% { transform: translate(-20px, 10px) scale(1.08); opacity: 0.7; }
+  100% { transform: translate(10px, -15px) scale(0.92); opacity: 0.4; }
+}
+
+/* ============================================
+   HEADER / TITLE
+   ============================================ */
+.header {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.header h1 {
+  font-family: 'RL AQVA', 'Syne', sans-serif;
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  letter-spacing: 0.15em;
+  color: #1a6b4a;
+  text-shadow:
+    0 2px 4px rgba(26,107,74,0.15),
+    0 0 40px rgba(69,184,122,0.15);
+  line-height: 1;
+  margin-bottom: 4px;
+  background: linear-gradient(180deg, #1a6b4a 0%, #2d9d6a 50%, #45b87a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header p {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+  font-weight: 600;
+  color: #3aaa7a;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* ============================================
+   SCENE CONTAINER
+   ============================================ */
+.scene {
+  position: relative;
+  z-index: 5;
+  width: 420px;
+  height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================
+   TURTLE WRAPPER — FLOATING ANIMATION
+   ============================================ */
+.turtle-wrapper {
+  position: relative;
+  animation: floatBob 4s ease-in-out infinite;
+  cursor: pointer;
+  transform-origin: center center;
+  transition: filter 0.3s ease;
+  will-change: transform;
+}
+
+.turtle-wrapper:hover {
+  filter: brightness(1.05);
+}
+
+.turtle-wrapper.spin {
+  animation: excitedSpin 0.8s ease-in-out;
+}
+
+@keyframes floatBob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  25% { transform: translateY(-12px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+  75% { transform: translateY(-14px) rotate(0deg); }
+}
+
+@keyframes excitedSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(15deg) scale(1.1); }
+  50% { transform: rotate(-10deg) scale(1.05); }
+  75% { transform: rotate(5deg) scale(1.08); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+/* ============================================
+   SVG TURTLE — MAIN ELEMENT
+   ============================================ */
+.turtle-svg {
+  width: 340px;
+  height: 300px;
+  filter:
+    drop-shadow(0 15px 30px rgba(26,107,74,0.25))
+    drop-shadow(0 5px 10px rgba(0,0,0,0.15));
+}
+
+/* ============================================
+   SPEECH BUBBLE
+   ============================================ */
+.speech-bubble {
+  position: absolute;
+  top: -70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 12px 20px;
+  min-width: 260px;
+  max-width: 320px;
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1a4a3a;
+  line-height: 1.4;
+  box-shadow:
+    0 4px 20px rgba(26,107,74,0.15),
+    0 1px 3px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  border: 1px solid rgba(26,107,74,0.1);
+  opacity: 0;
+  transform: translateX(-50%) translateY(10px) scale(0.9);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.speech-bubble.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 12px solid rgba(255,255,255,0.95);
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.05));
+}
+
+.speech-text {
+  display: inline;
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: #1a6b4a;
+  margin-left: 2px;
+  animation: cursorBlink 0.6s steps(1) infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes cursorBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ============================================
+   BUBBLES CONTAINER
+   ============================================ */
+.bubbles-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.bubble {
+  position: absolute;
+  bottom: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%,
+    rgba(255,255,255,0.6) 0%,
+    rgba(255,255,255,0.2) 40%,
+    rgba(255,255,255,0.05) 70%,
+    transparent 100%
+  );
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow:
+    inset 0 -2px 4px rgba(255,255,255,0.1),
+    inset 2px 2px 4px rgba(255,255,255,0.2),
+    0 0 6px rgba(255,255,255,0.1);
+  animation: bubbleRise linear infinite;
+  will-change: transform;
+}
+
+@keyframes bubbleRise {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  5% { opacity: 0.7; }
+  50% {
+    transform: translateY(-50vh) translateX(20px) scale(1.1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-110vh) translateX(-15px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   AMBIENT LIGHT RAYS
+   ============================================ */
+.light-rays {
+  position: fixed;
+  top: -50%;
+  left: -10%;
+  width: 120%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.08;
+  background:
+    linear-gradient(170deg, rgba(255,255,255,0.8) 0%, transparent 40%),
+    linear-gradient(160deg, rgba(255,255,255,0.5) 0%, transparent 35%),
+    linear-gradient(175deg, rgba(255,255,255,0.6) 0%, transparent 30%);
+  animation: lightSway 12s ease-in-out infinite alternate;
+}
+
+@keyframes lightSway {
+  0% { transform: rotate(-2deg) translateX(0); }
+  100% { transform: rotate(2deg) translateX(30px); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 480px) {
+  .scene {
+    width: 320px;
+    height: 320px;
+  }
+  .turtle-svg {
+    width: 280px;
+    height: 240px;
+  }
+  .speech-bubble {
+    min-width: 220px;
+    max-width: 280px;
+    font-size: 0.85rem;
+    top: -65px;
+  }
+}
+
+/* ============================================
+   FLIPPER ANIMATIONS
+   ============================================ */
+@keyframes paddleLeft {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-12deg) translateY(-3px); }
+  50% { transform: rotate(-8deg); }
+  75% { transform: rotate(-15deg) translateY(-5px); }
+}
+
+@keyframes paddleRight {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(10deg) translateY(-4px); }
+  50% { transform: rotate(6deg); }
+  75% { transform: rotate(12deg) translateY(-3px); }
+}
+
+@keyframes paddleRearLeft {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-6deg); }
+  70% { transform: rotate(4deg); }
+}
+
+@keyframes paddleRearRight {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(5deg); }
+  70% { transform: rotate(-5deg); }
+}
+
+.front-left-flipper {
+  animation: paddleLeft 3.5s ease-in-out infinite;
+  transform-origin: 85% 30%;
+}
+
+.front-right-flipper {
+  animation: paddleRight 3.8s ease-in-out infinite;
+  transform-origin: 15% 30%;
+}
+
+.rear-left-flipper {
+  animation: paddleRearLeft 4s ease-in-out infinite;
+  transform-origin: 80% 20%;
+}
+
+.rear-right-flipper {
+  animation: paddleRearRight 4.2s ease-in-out infinite;
+  transform-origin: 20% 20%;
+}
+
+/* ============================================
+   MOUTH ANIMATION
+   ============================================ */
+.turtle-mouth {
+  transition: d 0.15s ease;
+}
+
+.turtle-mouth.talking {
+  animation: mouthTalk 0.3s steps(2) infinite;
+}
+
+@keyframes mouthTalk {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.8); }
+}
+
+/* ============================================
+   EYE BLINK
+   ============================================ */
+.eyelid {
+  transition: transform 0.15s ease;
+  transform-origin: center;
+}
+
+.eyelid.blink {
+  transform: scaleY(5);
+}
+
+/* ============================================
+   CAUSTIC LIGHT ON SHELL
+   ============================================ */
+@keyframes shellCaustic {
+  0%, 100% { opacity: 0.08; transform: translate(0, 0); }
+  33% { opacity: 0.15; transform: translate(5px, -3px); }
+  66% { opacity: 0.05; transform: translate(-3px, 5px); }
+}
+
+/* ============================================
+   SEAGRASS / DECORATION
+   ============================================ */
+.seagrass {
+  position: fixed;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Light rays -->
+<div class="light-rays"></div>
+
+<!-- Bubbles container -->
+<div class="bubbles-container" id="bubblesContainer"></div>
+
+<!-- Header -->
+<div class="header">
+  <h1>KAAN</h1>
+  <p>Tu guia del Caribe</p>
+</div>
+
+<!-- Scene -->
+<div class="scene">
+  <div class="turtle-wrapper" id="turtleWrapper">
+
+    <!-- Speech Bubble -->
+    <div class="speech-bubble" id="speechBubble">
+      <span class="speech-text" id="speechText"></span>
+      <span class="typing-cursor" id="typingCursor"></span>
+    </div>
+
+    <!-- SVG Turtle -->
+    <svg class="turtle-svg" viewBox="0 0 500 420" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Shell gradient — main dome -->
+        <radialGradient id="shellMain" cx="50%" cy="40%" r="55%" fx="45%" fy="35%">
+          <stop offset="0%" stop-color="#5ec49a"/>
+          <stop offset="25%" stop-color="#45b87a"/>
+          <stop offset="50%" stop-color="#2d9d6a"/>
+          <stop offset="75%" stop-color="#1a6b4a"/>
+          <stop offset="100%" stop-color="#0f4a32"/>
+        </radialGradient>
+
+        <!-- Shell highlight -->
+        <radialGradient id="shellHighlight" cx="40%" cy="25%" r="40%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+
+        <!-- Shell rim gradient -->
+        <linearGradient id="shellRim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#e8d9a8"/>
+          <stop offset="50%" stop-color="#c4a44a"/>
+          <stop offset="100%" stop-color="#8a7030"/>
+        </linearGradient>
+
+        <!-- Skin gradient -->
+        <radialGradient id="skinGrad" cx="50%" cy="50%" r="60%">
+          <stop offset="0%" stop-color="#6dd4a8"/>
+          <stop offset="40%" stop-color="#5ec49a"/>
+          <stop offset="100%" stop-color="#3aaa7a"/>
+        </radialGradient>
+
+        <!-- Head gradient -->
+        <radialGradient id="headGrad" cx="45%" cy="35%" r="55%">
+          <stop offset="0%" stop-color="#6dd4a8"/>
+          <stop offset="30%" stop-color="#5ec49a"/>
+          <stop offset="70%" stop-color="#3aaa7a"/>
+          <stop offset="100%" stop-color="#2a8a5a"/>
+        </radialGradient>
+
+        <!-- Belly gradient -->
+        <linearGradient id="bellyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f0e6c0"/>
+          <stop offset="100%" stop-color="#e8d9a8"/>
+        </linearGradient>
+
+        <!-- Flipper gradient -->
+        <linearGradient id="flipperGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#5ec49a"/>
+          <stop offset="50%" stop-color="#3aaa7a"/>
+          <stop offset="100%" stop-color="#2a8a5a"/>
+        </linearGradient>
+
+        <!-- Flipper gradient right -->
+        <linearGradient id="flipperGradR" x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5ec49a"/>
+          <stop offset="50%" stop-color="#3aaa7a"/>
+          <stop offset="100%" stop-color="#2a8a5a"/>
+        </linearGradient>
+
+        <!-- Eye iris gradient -->
+        <radialGradient id="irisGrad" cx="45%" cy="40%" r="50%">
+          <stop offset="0%" stop-color="#8B6914"/>
+          <stop offset="40%" stop-color="#654321"/>
+          <stop offset="100%" stop-color="#3a2510"/>
+        </radialGradient>
+
+        <!-- Scute pattern fill -->
+        <pattern id="scutePattern" x="0" y="0" width="60" height="52" patternUnits="userSpaceOnUse" patternTransform="rotate(5)">
+          <polygon points="30,0 60,15 60,37 30,52 0,37 0,15" fill="none" stroke="rgba(15,74,50,0.35)" stroke-width="1.5"/>
+          <polygon points="30,4 56,17 56,35 30,48 4,35 4,17" fill="none" stroke="rgba(15,74,50,0.15)" stroke-width="0.8"/>
+          <!-- Center dot for depth -->
+          <circle cx="30" cy="26" r="2" fill="rgba(15,74,50,0.08)"/>
+          <!-- Sub-detail lines -->
+          <line x1="30" y1="4" x2="30" y2="0" stroke="rgba(15,74,50,0.1)" stroke-width="0.5"/>
+          <line x1="56" y1="17" x2="60" y2="15" stroke="rgba(15,74,50,0.1)" stroke-width="0.5"/>
+          <line x1="4" y1="17" x2="0" y2="15" stroke="rgba(15,74,50,0.1)" stroke-width="0.5"/>
+        </pattern>
+
+        <!-- Scale texture for skin -->
+        <pattern id="scaleTexture" x="0" y="0" width="12" height="10" patternUnits="userSpaceOnUse">
+          <ellipse cx="6" cy="5" rx="5.5" ry="4.5" fill="none" stroke="rgba(26,80,55,0.12)" stroke-width="0.6"/>
+          <ellipse cx="0" cy="0" rx="5.5" ry="4.5" fill="none" stroke="rgba(26,80,55,0.08)" stroke-width="0.4"/>
+          <ellipse cx="12" cy="10" rx="5.5" ry="4.5" fill="none" stroke="rgba(26,80,55,0.08)" stroke-width="0.4"/>
+        </pattern>
+
+        <!-- Flipper scale texture -->
+        <pattern id="flipperScale" x="0" y="0" width="8" height="7" patternUnits="userSpaceOnUse">
+          <ellipse cx="4" cy="3.5" rx="3.5" ry="3" fill="none" stroke="rgba(26,80,55,0.18)" stroke-width="0.7"/>
+        </pattern>
+
+        <!-- Shell caustic overlay -->
+        <radialGradient id="causticOverlay1" cx="35%" cy="30%" r="25%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.2)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+        <radialGradient id="causticOverlay2" cx="65%" cy="45%" r="20%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+        <radialGradient id="causticOverlay3" cx="50%" cy="55%" r="15%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+
+        <!-- Drop shadow for depth -->
+        <filter id="depthShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/>
+          <feOffset dx="2" dy="4" result="offset"/>
+          <feFlood flood-color="rgba(15,50,30,0.3)" result="color"/>
+          <feComposite in="color" in2="offset" operator="in" result="shadow"/>
+          <feMerge>
+            <feMergeNode in="shadow"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+
+        <!-- Soft glow for specular -->
+        <filter id="softGlow">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+        </filter>
+
+        <!-- Head scales pattern -->
+        <pattern id="headScales" x="0" y="0" width="9" height="8" patternUnits="userSpaceOnUse">
+          <path d="M4.5,0 Q9,4 4.5,8 Q0,4 4.5,0 Z" fill="none" stroke="rgba(26,80,55,0.15)" stroke-width="0.5"/>
+        </pattern>
+
+        <!-- Shell edge detail gradient -->
+        <linearGradient id="shellEdge" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#c4a44a"/>
+          <stop offset="50%" stop-color="#e8d9a8"/>
+          <stop offset="100%" stop-color="#c4a44a"/>
+        </linearGradient>
+
+        <!-- Ambient occlusion for under shell -->
+        <linearGradient id="underShellAO" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(0,0,0,0.2)"/>
+          <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+        </linearGradient>
+
+        <!-- Clippath for shell scutes -->
+        <clipPath id="shellClip">
+          <ellipse cx="250" cy="195" rx="135" ry="100"/>
+        </clipPath>
+      </defs>
+
+      <!-- ============================================
+           REAR LEFT FLIPPER (behind body)
+           ============================================ -->
+      <g class="rear-left-flipper" filter="url(#depthShadow)">
+        <path d="M165,260 Q140,285 125,310 Q120,320 130,318 Q145,315 160,300 Q170,285 172,265 Z"
+              fill="url(#flipperGrad)" opacity="0.85"/>
+        <path d="M165,260 Q140,285 125,310 Q120,320 130,318 Q145,315 160,300 Q170,285 172,265 Z"
+              fill="url(#flipperScale)" opacity="0.6"/>
+        <!-- Flipper edge highlight -->
+        <path d="M165,260 Q140,285 125,310" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+        <!-- Claw tips -->
+        <circle cx="127" cy="315" r="1.5" fill="#8a7030"/>
+        <circle cx="131" cy="318" r="1.2" fill="#8a7030"/>
+      </g>
+
+      <!-- ============================================
+           REAR RIGHT FLIPPER (behind body)
+           ============================================ -->
+      <g class="rear-right-flipper" filter="url(#depthShadow)">
+        <path d="M335,260 Q360,285 375,310 Q380,320 370,318 Q355,315 340,300 Q330,285 328,265 Z"
+              fill="url(#flipperGradR)" opacity="0.85"/>
+        <path d="M335,260 Q360,285 375,310 Q380,320 370,318 Q355,315 340,300 Q330,285 328,265 Z"
+              fill="url(#flipperScale)" opacity="0.6"/>
+        <path d="M335,260 Q360,285 375,310" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+        <circle cx="373" cy="315" r="1.5" fill="#8a7030"/>
+        <circle cx="369" cy="318" r="1.2" fill="#8a7030"/>
+      </g>
+
+      <!-- ============================================
+           BELLY / PLASTRON (visible under shell)
+           ============================================ -->
+      <ellipse cx="250" cy="215" rx="120" ry="80" fill="url(#bellyGrad)" opacity="0.6"/>
+      <!-- Plastron line details -->
+      <line x1="250" y1="155" x2="250" y2="275" stroke="rgba(180,150,80,0.2)" stroke-width="0.8"/>
+      <path d="M200,185 Q250,175 300,185" fill="none" stroke="rgba(180,150,80,0.15)" stroke-width="0.6"/>
+      <path d="M195,215 Q250,205 305,215" fill="none" stroke="rgba(180,150,80,0.15)" stroke-width="0.6"/>
+      <path d="M200,245 Q250,235 300,245" fill="none" stroke="rgba(180,150,80,0.15)" stroke-width="0.6"/>
+
+      <!-- ============================================
+           FRONT LEFT FLIPPER
+           ============================================ -->
+      <g class="front-left-flipper" filter="url(#depthShadow)">
+        <!-- Main flipper shape -->
+        <path d="M160,190 Q120,195 80,215 Q55,230 45,250 Q40,260 50,258 Q65,250 85,240 Q110,225 140,215 Q155,210 162,200 Z"
+              fill="url(#flipperGrad)"/>
+        <!-- Scale texture overlay -->
+        <path d="M160,190 Q120,195 80,215 Q55,230 45,250 Q40,260 50,258 Q65,250 85,240 Q110,225 140,215 Q155,210 162,200 Z"
+              fill="url(#flipperScale)" opacity="0.7"/>
+        <!-- Individual scale details -->
+        <ellipse cx="130" cy="210" rx="6" ry="5" fill="none" stroke="rgba(26,80,55,0.2)" stroke-width="0.7"/>
+        <ellipse cx="115" cy="218" rx="6" ry="5" fill="none" stroke="rgba(26,80,55,0.2)" stroke-width="0.7"/>
+        <ellipse cx="100" cy="226" rx="5.5" ry="4.5" fill="none" stroke="rgba(26,80,55,0.18)" stroke-width="0.6"/>
+        <ellipse cx="85" cy="234" rx="5" ry="4" fill="none" stroke="rgba(26,80,55,0.15)" stroke-width="0.6"/>
+        <ellipse cx="70" cy="242" rx="4.5" ry="3.5" fill="none" stroke="rgba(26,80,55,0.12)" stroke-width="0.5"/>
+        <ellipse cx="140" cy="203" rx="5" ry="4" fill="none" stroke="rgba(26,80,55,0.15)" stroke-width="0.6"/>
+        <!-- Flipper edge highlight -->
+        <path d="M160,190 Q120,195 80,215 Q55,230 45,250"
+              fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
+        <!-- Dark edge (bottom) -->
+        <path d="M50,258 Q65,250 85,240 Q110,225 140,215 Q155,210 162,200"
+              fill="none" stroke="rgba(15,50,30,0.15)" stroke-width="0.8"/>
+        <!-- Claw/nail tips -->
+        <circle cx="47" cy="255" r="2" fill="#8a7030" opacity="0.8"/>
+        <circle cx="51" cy="258" r="1.5" fill="#8a7030" opacity="0.7"/>
+        <!-- Webbing hint -->
+        <path d="M55,248 L48,253 L53,257" fill="none" stroke="rgba(26,80,55,0.1)" stroke-width="0.5"/>
+      </g>
+
+      <!-- ============================================
+           FRONT RIGHT FLIPPER
+           ============================================ -->
+      <g class="front-right-flipper" filter="url(#depthShadow)">
+        <path d="M340,190 Q380,195 420,215 Q445,230 455,250 Q460,260 450,258 Q435,250 415,240 Q390,225 360,215 Q345,210 338,200 Z"
+              fill="url(#flipperGradR)"/>
+        <path d="M340,190 Q380,195 420,215 Q445,230 455,250 Q460,260 450,258 Q435,250 415,240 Q390,225 360,215 Q345,210 338,200 Z"
+              fill="url(#flipperScale)" opacity="0.7"/>
+        <ellipse cx="370" cy="210" rx="6" ry="5" fill="none" stroke="rgba(26,80,55,0.2)" stroke-width="0.7"/>
+        <ellipse cx="385" cy="218" rx="6" ry="5" fill="none" stroke="rgba(26,80,55,0.2)" stroke-width="0.7"/>
+        <ellipse cx="400" cy="226" rx="5.5" ry="4.5" fill="none" stroke="rgba(26,80,55,0.18)" stroke-width="0.6"/>
+        <ellipse cx="415" cy="234" rx="5" ry="4" fill="none" stroke="rgba(26,80,55,0.15)" stroke-width="0.6"/>
+        <ellipse cx="430" cy="242" rx="4.5" ry="3.5" fill="none" stroke="rgba(26,80,55,0.12)" stroke-width="0.5"/>
+        <ellipse cx="360" cy="203" rx="5" ry="4" fill="none" stroke="rgba(26,80,55,0.15)" stroke-width="0.6"/>
+        <path d="M340,190 Q380,195 420,215 Q445,230 455,250"
+              fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
+        <path d="M450,258 Q435,250 415,240 Q390,225 360,215 Q345,210 338,200"
+              fill="none" stroke="rgba(15,50,30,0.15)" stroke-width="0.8"/>
+        <circle cx="453" cy="255" r="2" fill="#8a7030" opacity="0.8"/>
+        <circle cx="449" cy="258" r="1.5" fill="#8a7030" opacity="0.7"/>
+        <path d="M445,248 L452,253 L447,257" fill="none" stroke="rgba(26,80,55,0.1)" stroke-width="0.5"/>
+      </g>
+
+      <!-- ============================================
+           TAIL
+           ============================================ -->
+      <g>
+        <path d="M245,285 Q250,310 248,330 Q247,340 250,335 Q253,340 252,330 Q250,310 255,285"
+              fill="url(#skinGrad)" opacity="0.9"/>
+        <path d="M245,285 Q250,310 248,330" fill="none" stroke="rgba(26,80,55,0.15)" stroke-width="0.5"/>
+      </g>
+
+      <!-- ============================================
+           SHELL — MAIN DOME
+           ============================================ -->
+      <g>
+        <!-- Shadow under shell -->
+        <ellipse cx="250" cy="210" rx="140" ry="105" fill="url(#underShellAO)" opacity="0.3"/>
+
+        <!-- Main shell shape -->
+        <ellipse cx="250" cy="195" rx="135" ry="100" fill="url(#shellMain)"/>
+
+        <!-- Shell rim / marginal scutes -->
+        <ellipse cx="250" cy="195" rx="135" ry="100" fill="none"
+                 stroke="url(#shellEdge)" stroke-width="4" opacity="0.6"/>
+
+        <!-- Hexagonal scute pattern -->
+        <ellipse cx="250" cy="195" rx="135" ry="100" fill="url(#scutePattern)" clip-path="url(#shellClip)"/>
+
+        <!-- Individual vertebral scutes (center line) -->
+        <path d="M250,105 L265,115 L265,140 L250,150 L235,140 L235,115 Z"
+              fill="none" stroke="rgba(15,74,50,0.3)" stroke-width="1.2"/>
+        <path d="M250,150 L268,162 L268,192 L250,204 L232,192 L232,162 Z"
+              fill="none" stroke="rgba(15,74,50,0.3)" stroke-width="1.2"/>
+        <path d="M250,204 L270,218 L270,250 L250,264 L230,250 L230,218 Z"
+              fill="none" stroke="rgba(15,74,50,0.3)" stroke-width="1.2"/>
+
+        <!-- Costal scutes — left side -->
+        <path d="M235,115 L205,108 L190,130 L210,148 L235,140 Z"
+              fill="none" stroke="rgba(15,74,50,0.25)" stroke-width="1"/>
+        <path d="M232,162 L195,155 L175,180 L200,200 L232,192 Z"
+              fill="none" stroke="rgba(15,74,50,0.25)" stroke-width="1"/>
+        <path d="M230,218 L192,215 L175,240 L200,258 L230,250 Z"
+              fill="none" stroke="rgba(15,74,50,0.25)" stroke-width="1"/>
+
+        <!-- Costal scutes — right side -->
+        <path d="M265,115 L295,108 L310,130 L290,148 L265,140 Z"
+              fill="none" stroke="rgba(15,74,50,0.25)" stroke-width="1"/>
+        <path d="M268,162 L305,155 L325,180 L300,200 L268,192 Z"
+              fill="none" stroke="rgba(15,74,50,0.25)" stroke-width="1"/>
+        <path d="M270,218 L308,215 L325,240 L300,258 L270,250 Z"
+              fill="none" stroke="rgba(15,74,50,0.25)" stroke-width="1"/>
+
+        <!-- Marginal scutes — outer ring detail -->
+        <path d="M160,130 L145,140 L148,155 L165,150 Z" fill="none" stroke="rgba(15,74,50,0.18)" stroke-width="0.8"/>
+        <path d="M148,155 L130,170 L135,185 L155,178 Z" fill="none" stroke="rgba(15,74,50,0.18)" stroke-width="0.8"/>
+        <path d="M135,185 L120,200 L125,218 L145,210 Z" fill="none" stroke="rgba(15,74,50,0.18)" stroke-width="0.8"/>
+        <path d="M125,218 L118,238 L130,252 L148,242 Z" fill="none" stroke="rgba(15,74,50,0.18)" stroke-width="0.8"/>
+        <path d="M340,130 L355,140 L352,155 L335,150 Z" fill="none" stroke="rgba(15,74,50,0.18)" stroke-width="0.8"/>
+        <path d="M352,155 L370,170 L365,185 L345,178 Z" fill="none" stroke="rgba(15,74,50,0.18)" stroke-width="0.8"/>
+        <path d="M365,185 L380,200 L375,218 L355,210 Z" fill="none" stroke="rgba(15,74,50,0.18)" stroke-width="0.8"/>
+        <path d="M375,218 L382,238 L370,252 L352,242 Z" fill="none" stroke="rgba(15,74,50,0.18)" stroke-width="0.8"/>
+
+        <!-- Growth ring details within scutes -->
+        <ellipse cx="215" cy="130" rx="12" ry="10" fill="none" stroke="rgba(15,74,50,0.08)" stroke-width="0.5"/>
+        <ellipse cx="215" cy="130" rx="8" ry="6" fill="none" stroke="rgba(15,74,50,0.06)" stroke-width="0.4"/>
+        <ellipse cx="285" cy="130" rx="12" ry="10" fill="none" stroke="rgba(15,74,50,0.08)" stroke-width="0.5"/>
+        <ellipse cx="285" cy="130" rx="8" ry="6" fill="none" stroke="rgba(15,74,50,0.06)" stroke-width="0.4"/>
+        <ellipse cx="210" cy="180" rx="14" ry="11" fill="none" stroke="rgba(15,74,50,0.08)" stroke-width="0.5"/>
+        <ellipse cx="290" cy="180" rx="14" ry="11" fill="none" stroke="rgba(15,74,50,0.08)" stroke-width="0.5"/>
+        <ellipse cx="250" cy="130" rx="8" ry="7" fill="none" stroke="rgba(15,74,50,0.06)" stroke-width="0.4"/>
+        <ellipse cx="250" cy="175" rx="10" ry="8" fill="none" stroke="rgba(15,74,50,0.06)" stroke-width="0.4"/>
+        <ellipse cx="250" cy="235" rx="10" ry="9" fill="none" stroke="rgba(15,74,50,0.06)" stroke-width="0.4"/>
+
+        <!-- Shell specular highlight -->
+        <ellipse cx="250" cy="195" rx="135" ry="100" fill="url(#shellHighlight)"/>
+
+        <!-- Caustic light patches on shell -->
+        <g style="animation: shellCaustic 6s ease-in-out infinite;">
+          <ellipse cx="220" cy="165" rx="30" ry="20" fill="url(#causticOverlay1)"/>
+        </g>
+        <g style="animation: shellCaustic 7s ease-in-out infinite 2s;">
+          <ellipse cx="290" cy="200" rx="25" ry="18" fill="url(#causticOverlay2)"/>
+        </g>
+        <g style="animation: shellCaustic 5s ease-in-out infinite 1s;">
+          <ellipse cx="250" cy="230" rx="20" ry="15" fill="url(#causticOverlay3)"/>
+        </g>
+
+        <!-- 3D dome effect — top rim light -->
+        <path d="M140,160 Q200,95 360,160"
+              fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" opacity="0.6"/>
+      </g>
+
+      <!-- ============================================
+           NECK
+           ============================================ -->
+      <g>
+        <path d="M210,145 Q220,120 230,110 Q240,105 255,105 Q265,107 268,115 Q275,125 280,145"
+              fill="url(#skinGrad)"/>
+        <path d="M210,145 Q220,120 230,110 Q240,105 255,105 Q265,107 268,115 Q275,125 280,145"
+              fill="url(#scaleTexture)" opacity="0.5"/>
+        <!-- Neck wrinkle lines -->
+        <path d="M218,135 Q245,130 272,135" fill="none" stroke="rgba(26,80,55,0.12)" stroke-width="0.6"/>
+        <path d="M215,140 Q245,134 275,140" fill="none" stroke="rgba(26,80,55,0.1)" stroke-width="0.5"/>
+      </g>
+
+      <!-- ============================================
+           HEAD
+           ============================================ -->
+      <g id="headGroup">
+        <!-- Main head shape -->
+        <ellipse cx="248" cy="90" rx="42" ry="32" fill="url(#headGrad)"/>
+
+        <!-- Head scale texture -->
+        <ellipse cx="248" cy="90" rx="42" ry="32" fill="url(#headScales)" opacity="0.6"/>
+
+        <!-- Head plate details — brow scales -->
+        <path d="M225,75 Q235,70 248,72 Q260,70 270,75"
+              fill="none" stroke="rgba(26,80,55,0.2)" stroke-width="0.8"/>
+        <path d="M222,80 Q235,76 248,77 Q260,76 273,80"
+              fill="none" stroke="rgba(26,80,55,0.15)" stroke-width="0.6"/>
+        <!-- Center head plate -->
+        <path d="M240,65 Q248,62 256,65 Q258,72 248,75 Q238,72 240,65 Z"
+              fill="none" stroke="rgba(26,80,55,0.18)" stroke-width="0.7"/>
+        <!-- Side plates -->
+        <path d="M225,68 Q232,65 240,68 Q238,75 230,76 Q224,73 225,68 Z"
+              fill="none" stroke="rgba(26,80,55,0.15)" stroke-width="0.5"/>
+        <path d="M256,68 Q263,65 270,68 Q270,73 265,76 Q258,75 256,68 Z"
+              fill="none" stroke="rgba(26,80,55,0.15)" stroke-width="0.5"/>
+
+        <!-- Head specular -->
+        <ellipse cx="244" cy="78" rx="18" ry="10" fill="rgba(255,255,255,0.1)"/>
+
+        <!-- BEAK / MOUTH AREA -->
+        <g>
+          <!-- Upper beak -->
+          <path d="M230,98 Q240,105 248,107 Q256,105 266,98 Q260,100 248,102 Q236,100 230,98 Z"
+                fill="#2a6a4a" opacity="0.7"/>
+          <!-- Mouth line -->
+          <path class="turtle-mouth" id="mouthPath"
+                d="M234,100 Q241,103 248,104 Q255,103 262,100"
+                fill="none" stroke="#1a4a3a" stroke-width="1.2" stroke-linecap="round"/>
+          <!-- Nostril dots -->
+          <circle cx="240" cy="95" r="1.5" fill="#1a4a3a" opacity="0.5"/>
+          <circle cx="256" cy="95" r="1.5" fill="#1a4a3a" opacity="0.5"/>
+          <!-- Beak edge highlight -->
+          <path d="M232,98 Q240,94 248,93 Q256,94 264,98"
+                fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+        </g>
+
+        <!-- ============================================
+             LEFT EYE
+             ============================================ -->
+        <g class="eye-group" id="leftEyeGroup">
+          <!-- Eye socket shadow -->
+          <ellipse cx="230" cy="84" rx="12" ry="10" fill="rgba(15,50,30,0.15)"/>
+          <!-- Eye white (sclera) -->
+          <ellipse cx="230" cy="84" rx="10" ry="8.5" fill="#f5f5ee"/>
+          <!-- Iris -->
+          <ellipse class="iris" id="leftIris" cx="230" cy="84" rx="6.5" ry="6.5" fill="url(#irisGrad)"/>
+          <!-- Iris detail ring -->
+          <ellipse cx="230" cy="84" rx="6.5" ry="6.5" fill="none" stroke="rgba(60,40,10,0.3)" stroke-width="0.4"/>
+          <!-- Iris radial lines -->
+          <line x1="230" y1="78" x2="230" y2="80" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <line x1="225" y1="80" x2="227" y2="81" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <line x1="235" y1="80" x2="233" y2="81" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <line x1="224" y1="84" x2="226" y2="84" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <line x1="236" y1="84" x2="234" y2="84" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <!-- Pupil -->
+          <ellipse class="pupil" cx="230" cy="84" rx="3.5" ry="3.8" fill="#1a1a1a"/>
+          <!-- Specular highlights -->
+          <ellipse cx="228" cy="81" rx="2" ry="1.5" fill="white" opacity="0.9"/>
+          <ellipse cx="233" cy="86" rx="1" ry="0.8" fill="white" opacity="0.5"/>
+          <!-- Upper eyelid -->
+          <ellipse class="eyelid" id="leftEyelid" cx="230" cy="78" rx="11" ry="3"
+                   fill="url(#headGrad)" opacity="0.95"/>
+          <!-- Lower eyelid hint -->
+          <path d="M220,88 Q230,91 240,88" fill="none" stroke="rgba(26,80,55,0.2)" stroke-width="0.5"/>
+          <!-- Wrinkles around eye -->
+          <path d="M218,82 Q216,84 218,87" fill="none" stroke="rgba(26,80,55,0.1)" stroke-width="0.4"/>
+          <path d="M242,82 Q244,84 242,87" fill="none" stroke="rgba(26,80,55,0.1)" stroke-width="0.4"/>
+        </g>
+
+        <!-- ============================================
+             RIGHT EYE
+             ============================================ -->
+        <g class="eye-group" id="rightEyeGroup">
+          <ellipse cx="266" cy="84" rx="12" ry="10" fill="rgba(15,50,30,0.15)"/>
+          <ellipse cx="266" cy="84" rx="10" ry="8.5" fill="#f5f5ee"/>
+          <ellipse class="iris" id="rightIris" cx="266" cy="84" rx="6.5" ry="6.5" fill="url(#irisGrad)"/>
+          <ellipse cx="266" cy="84" rx="6.5" ry="6.5" fill="none" stroke="rgba(60,40,10,0.3)" stroke-width="0.4"/>
+          <line x1="266" y1="78" x2="266" y2="80" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <line x1="261" y1="80" x2="263" y2="81" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <line x1="271" y1="80" x2="269" y2="81" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <line x1="260" y1="84" x2="262" y2="84" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <line x1="272" y1="84" x2="270" y2="84" stroke="rgba(100,67,33,0.3)" stroke-width="0.3"/>
+          <ellipse class="pupil" cx="266" cy="84" rx="3.5" ry="3.8" fill="#1a1a1a"/>
+          <ellipse cx="264" cy="81" rx="2" ry="1.5" fill="white" opacity="0.9"/>
+          <ellipse cx="269" cy="86" rx="1" ry="0.8" fill="white" opacity="0.5"/>
+          <ellipse class="eyelid" id="rightEyelid" cx="266" cy="78" rx="11" ry="3"
+                   fill="url(#headGrad)" opacity="0.95"/>
+          <path d="M256,88 Q266,91 276,88" fill="none" stroke="rgba(26,80,55,0.2)" stroke-width="0.5"/>
+          <path d="M254,82 Q252,84 254,87" fill="none" stroke="rgba(26,80,55,0.1)" stroke-width="0.4"/>
+          <path d="M278,82 Q280,84 278,87" fill="none" stroke="rgba(26,80,55,0.1)" stroke-width="0.4"/>
+        </g>
+
+        <!-- Cheek blush (subtle) -->
+        <ellipse cx="222" cy="92" rx="8" ry="4" fill="rgba(230,160,120,0.08)"/>
+        <ellipse cx="274" cy="92" rx="8" ry="4" fill="rgba(230,160,120,0.08)"/>
+
+        <!-- Chin highlight -->
+        <path d="M235,105 Q248,110 261,105" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.6"/>
+      </g>
+
+    </svg>
+  </div>
+</div>
+
+<!-- ============================================
+     JAVASCRIPT — INTERACTIONS
+     ============================================ -->
+<script>
+(function() {
+  'use strict';
+
+  // ---- Elements ----
+  const wrapper = document.getElementById('turtleWrapper');
+  const speechBubble = document.getElementById('speechBubble');
+  const speechText = document.getElementById('speechText');
+  const typingCursor = document.getElementById('typingCursor');
+  const leftIris = document.getElementById('leftIris');
+  const rightIris = document.getElementById('rightIris');
+  const leftEyelid = document.getElementById('leftEyelid');
+  const rightEyelid = document.getElementById('rightEyelid');
+  const mouthPath = document.getElementById('mouthPath');
+  const bubblesContainer = document.getElementById('bubblesContainer');
+
+  // ---- Cancun Facts ----
+  const cancunFacts = [
+    "Cancun tiene el segundo arrecife mas grande del mundo! Se llama el Gran Arrecife Mesoamericano 🐠",
+    "Aqui en el Caribe mexicano vivimos mas de 500 especies de peces. Somos muchos vecinos! 🌊",
+    "Sabias que Cancun significa \"nido de serpientes\" en maya? Pero no te preocupes, yo soy una tortuga 😄",
+    "Las ruinas de Tulum estan a solo 130 km de aqui... con vista al mar! Vale cada metro nadado 🏛️",
+    "El Museo Subacuatico de Arte tiene mas de 500 esculturas bajo el agua. Arte para peces y buzos! 🎨",
+    "Isla Mujeres recibe su nombre porque los conquistadores encontraron figuras de diosas mayas ahi 🏝️",
+    "La arena blanca de Cancun esta hecha de coral triturado. Por eso no quema los pies! 👣",
+    "Cada año, miles de tortugas como yo llegan a desovar en estas playas. Es nuestro hogar ancestral 🥚",
+    "El cenote mas profundo de Mexico tiene 335 metros. Yo prefiero quedarme en aguas menos profundas 😅",
+    "La Zona Hotelera de Cancun tiene forma del numero 7. Curioso, no? 🔢",
+    "Aqui el agua es tan cristalina que puedes ver hasta 30 metros de profundidad. Nada que esconder! 💎",
+    "Los mayas usaban Cancun como punto de observacion astronomica. Buena vista, tienen razon ⭐",
+  ];
+
+  const introText = "Hola! Soy Kaan, tu guia del Caribe 🐢";
+  let isTyping = false;
+  let isSpeaking = false;
+  let typingTimeout = null;
+
+  // ---- Typing Effect ----
+  function typeText(text, callback) {
+    if (isTyping) return;
+    isTyping = true;
+    isSpeaking = true;
+    speechText.textContent = '';
+    speechBubble.classList.add('visible');
+    typingCursor.style.display = 'inline-block';
+    mouthPath.classList.add('talking');
+
+    let i = 0;
+    function typeChar() {
+      if (i < text.length) {
+        speechText.textContent += text[i];
+        i++;
+        const delay = text[i - 1] === '!' || text[i - 1] === '?' || text[i - 1] === '.' ? 120 :
+                      text[i - 1] === ',' ? 80 : 30 + Math.random() * 20;
+        typingTimeout = setTimeout(typeChar, delay);
+      } else {
+        isTyping = false;
+        isSpeaking = false;
+        mouthPath.classList.remove('talking');
+        typingCursor.style.display = 'none';
+        if (callback) callback();
+      }
+    }
+    typeChar();
+  }
+
+  // ---- Initial greeting ----
+  setTimeout(() => {
+    typeText(introText);
+  }, 1200);
+
+  // ---- Click / Tap Interaction ----
+  let lastFactIndex = -1;
+
+  wrapper.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (isTyping) {
+      // Skip to end
+      clearTimeout(typingTimeout);
+      isTyping = false;
+      isSpeaking = false;
+      mouthPath.classList.remove('talking');
+      typingCursor.style.display = 'none';
+      return;
+    }
+
+    // Spin animation
+    wrapper.classList.remove('spin');
+    void wrapper.offsetWidth; // reflow
+    wrapper.classList.add('spin');
+    setTimeout(() => wrapper.classList.remove('spin'), 800);
+
+    // Pick random fact (avoid repeats)
+    let idx;
+    do {
+      idx = Math.floor(Math.random() * cancunFacts.length);
+    } while (idx === lastFactIndex && cancunFacts.length > 1);
+    lastFactIndex = idx;
+
+    speechBubble.classList.remove('visible');
+    setTimeout(() => {
+      typeText(cancunFacts[idx]);
+    }, 200);
+  });
+
+  // ---- Eye Tracking ----
+  const svgEl = document.querySelector('.turtle-svg');
+  const leftEyeCenter = { x: 230, y: 84 };
+  const rightEyeCenter = { x: 266, y: 84 };
+  const maxOffset = 3;
+
+  function updateEyes(clientX, clientY) {
+    const rect = svgEl.getBoundingClientRect();
+    const svgW = rect.width;
+    const svgH = rect.height;
+
+    // Normalize mouse position relative to SVG center
+    const relX = (clientX - rect.left - svgW / 2) / (svgW / 2);
+    const relY = (clientY - rect.top - svgH / 2) / (svgH / 2);
+
+    // Clamp
+    const clampedX = Math.max(-1, Math.min(1, relX));
+    const clampedY = Math.max(-1, Math.min(1, relY));
+
+    const dx = clampedX * maxOffset;
+    const dy = clampedY * maxOffset;
+
+    leftIris.setAttribute('cx', leftEyeCenter.x + dx);
+    leftIris.setAttribute('cy', leftEyeCenter.y + dy);
+    rightIris.setAttribute('cx', rightEyeCenter.x + dx);
+    rightIris.setAttribute('cy', rightEyeCenter.y + dy);
+
+    // Move pupils too
+    const pupils = svgEl.querySelectorAll('.pupil');
+    pupils[0].setAttribute('cx', leftEyeCenter.x + dx);
+    pupils[0].setAttribute('cy', leftEyeCenter.y + dy);
+    pupils[1].setAttribute('cx', rightEyeCenter.x + dx);
+    pupils[1].setAttribute('cy', rightEyeCenter.y + dy);
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    requestAnimationFrame(() => updateEyes(e.clientX, e.clientY));
+  });
+
+  document.addEventListener('touchmove', (e) => {
+    const touch = e.touches[0];
+    requestAnimationFrame(() => updateEyes(touch.clientX, touch.clientY));
+  }, { passive: true });
+
+  // ---- Blinking ----
+  function blink() {
+    leftEyelid.classList.add('blink');
+    rightEyelid.classList.add('blink');
+    setTimeout(() => {
+      leftEyelid.classList.remove('blink');
+      rightEyelid.classList.remove('blink');
+    }, 150);
+
+    // Random next blink: 3-5 seconds
+    const next = 3000 + Math.random() * 2000;
+    setTimeout(blink, next);
+  }
+
+  // Start blinking after a delay
+  setTimeout(blink, 2500);
+
+  // ---- Mouth Animation for Speaking ----
+  const mouthOpen = "M234,100 Q241,106 248,108 Q255,106 262,100";
+  const mouthClosed = "M234,100 Q241,103 248,104 Q255,103 262,100";
+
+  let mouthInterval = null;
+  function startMouthAnim() {
+    let open = false;
+    mouthInterval = setInterval(() => {
+      if (!isSpeaking) {
+        mouthPath.setAttribute('d', mouthClosed);
+        clearInterval(mouthInterval);
+        return;
+      }
+      open = !open;
+      mouthPath.setAttribute('d', open ? mouthOpen : mouthClosed);
+    }, 120);
+  }
+
+  // Watch for speaking state
+  const origTypeText = typeText;
+  // Patch mouth anim into typeText
+  const _origTypeText = typeText;
+
+  // Override to hook mouth animation
+  (function patchMouth() {
+    const observer = new MutationObserver(() => {
+      if (mouthPath.classList.contains('talking') && !mouthInterval) {
+        startMouthAnim();
+      }
+    });
+    observer.observe(mouthPath, { attributes: true, attributeFilter: ['class'] });
+  })();
+
+  // ---- Bubbles ----
+  function createBubble() {
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    const size = 4 + Math.random() * 14;
+    bubble.style.width = size + 'px';
+    bubble.style.height = size + 'px';
+    bubble.style.left = (5 + Math.random() * 90) + '%';
+    bubble.style.animationDuration = (6 + Math.random() * 8) + 's';
+    bubble.style.animationDelay = (Math.random() * 2) + 's';
+    bubblesContainer.appendChild(bubble);
+
+    // Remove after animation
+    setTimeout(() => {
+      if (bubble.parentNode) bubble.parentNode.removeChild(bubble);
+    }, 16000);
+  }
+
+  // Initial burst
+  for (let i = 0; i < 8; i++) {
+    setTimeout(createBubble, i * 300);
+  }
+
+  // Continuous bubbles
+  setInterval(createBubble, 1200);
+
+  // ---- Extra: subtle bubble from turtle mouth when speaking ----
+  function createTurtleBubble() {
+    if (!isSpeaking) return;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    const size = 3 + Math.random() * 5;
+    bubble.style.width = size + 'px';
+    bubble.style.height = size + 'px';
+
+    const rect = wrapper.getBoundingClientRect();
+    bubble.style.left = (rect.left + rect.width * 0.49) + 'px';
+    bubble.style.bottom = (window.innerHeight - rect.top - rect.height * 0.25) + 'px';
+    bubble.style.animationDuration = '3s';
+    bubble.style.position = 'fixed';
+    bubblesContainer.appendChild(bubble);
+
+    setTimeout(() => {
+      if (bubble.parentNode) bubble.parentNode.removeChild(bubble);
+    }, 3500);
+  }
+
+  setInterval(createTurtleBubble, 400);
+
+})();
+</script>
+
+</body>
+</html>

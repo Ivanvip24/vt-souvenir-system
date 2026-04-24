@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BALAM — Jaguar Sagrado | AXKAN</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'RL AQVA';src:url('../../fonts/rl-aqva-black.otf') format('opentype');font-weight:900;font-display:swap}
+
+:root{
+  --rosa:#e72a88;--verde:#8ab73b;--naranja:#f39223;--turquesa:#09adc2;--rojo:#e52421;
+  --gold:#d4a024;--jade:#1a6b4a;--obsidian:#0a0a0a;--bone:#f5e6c8;
+  --fur-light:#f5a623;--fur-mid:#d4891a;--fur-dark:#a86914;--fur-shadow:#7a4e10;
+  --spot:#1a0e08;--nose:#2a1a1a;--gum:#c44b6c;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--obsidian);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+  position:relative;
+  cursor:crosshair;
+}
+
+/* ═══════════════════════════════════
+   ATMOSPHERIC BACKGROUND
+   ═══════════════════════════════════ */
+.atmosphere{position:fixed;inset:0;z-index:0;overflow:hidden}
+
+/* Radial jungle glow */
+.atm-glow{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 60%, rgba(26,107,74,.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 30% 40%, rgba(212,160,36,.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 70% 30%, rgba(231,42,136,.04) 0%, transparent 60%);
+}
+
+/* Animated fog layers */
+.fog{position:absolute;width:200%;height:100%;opacity:.04;animation:fogDrift 25s ease-in-out infinite alternate}
+.fog-1{top:20%;left:-50%;background:radial-gradient(ellipse at 30% 50%,rgba(255,255,255,.3),transparent 50%);animation-duration:30s}
+.fog-2{top:50%;left:-30%;background:radial-gradient(ellipse at 60% 50%,rgba(26,107,74,.3),transparent 50%);animation-duration:20s;animation-direction:alternate-reverse}
+.fog-3{top:70%;left:-40%;background:radial-gradient(ellipse at 40% 50%,rgba(212,160,36,.2),transparent 50%);animation-duration:35s}
+@keyframes fogDrift{0%{transform:translateX(0)}100%{transform:translateX(25%)}}
+
+/* Firefly particles */
+.firefly{
+  position:absolute;width:3px;height:3px;border-radius:50%;
+  background:var(--gold);
+  box-shadow:0 0 6px var(--gold),0 0 12px rgba(212,160,36,.4);
+  animation:fireflyFloat 8s ease-in-out infinite;
+  opacity:0;
+}
+@keyframes fireflyFloat{
+  0%{opacity:0;transform:translate(0,0)}
+  15%{opacity:.8}
+  50%{opacity:.4;transform:translate(var(--fx,30px),var(--fy,-40px))}
+  85%{opacity:.7}
+  100%{opacity:0;transform:translate(var(--fx2,-20px),var(--fy2,30px))}
+}
+
+/* Mayan glyphs floating */
+.glyph{
+  position:absolute;font-size:2rem;opacity:.03;
+  animation:glyphFloat 20s ease-in-out infinite;
+  color:var(--gold);
+  user-select:none;
+}
+@keyframes glyphFloat{
+  0%,100%{transform:translateY(0) rotate(0deg);opacity:.03}
+  50%{transform:translateY(-20px) rotate(5deg);opacity:.06}
+}
+
+/* ═══════════════════════════════════
+   MAIN STAGE
+   ═══════════════════════════════════ */
+.stage{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1.5rem}
+
+/* Title */
+.title{text-align:center}
+.title h1{
+  font-family:'RL AQVA',sans-serif;font-size:clamp(2.5rem,8vw,4rem);
+  font-weight:900;letter-spacing:4px;
+  background:linear-gradient(135deg,var(--gold) 0%,var(--bone) 30%,var(--gold) 50%,var(--fur-light) 70%,var(--gold) 100%);
+  background-size:200% 100%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:goldShimmer 4s ease-in-out infinite;
+  filter:drop-shadow(0 2px 8px rgba(212,160,36,.3));
+}
+@keyframes goldShimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.title p{
+  font-family:'Syne',sans-serif;font-size:.7rem;font-weight:600;
+  letter-spacing:6px;text-transform:uppercase;color:rgba(212,160,36,.4);margin-top:.25rem;
+}
+
+/* ═══════════════════════════════════
+   THE JAGUAR — Maximum complexity
+   ═══════════════════════════════════ */
+.jaguar{
+  position:relative;width:280px;height:320px;
+  animation:jaguarBreathe 4s ease-in-out infinite;
+  cursor:pointer;
+  transition:filter .3s;
+}
+.jaguar:hover{filter:brightness(1.08)}
+@keyframes jaguarBreathe{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.012) translateY(-3px)}}
+
+/* ── HEAD ── */
+.j-head{
+  position:absolute;width:180px;height:160px;
+  top:0;left:50%;transform:translateX(-50%);
+  z-index:10;
+}
+
+/* Head shape — main fur */
+.j-head-shape{
+  position:absolute;width:160px;height:140px;
+  top:10px;left:10px;
+  background:
+    radial-gradient(ellipse at 50% 35%, var(--fur-light) 0%, var(--fur-mid) 40%, var(--fur-dark) 75%, var(--fur-shadow) 100%);
+  border-radius:50% 50% 42% 42%;
+  box-shadow:
+    inset 0 -15px 30px rgba(0,0,0,.25),
+    inset 0 8px 20px rgba(255,255,255,.08),
+    0 8px 32px rgba(0,0,0,.5),
+    0 2px 8px rgba(0,0,0,.3);
+  overflow:hidden;
+}
+
+/* Fur texture overlay */
+.j-head-shape::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:
+    repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(168,105,16,.08) 2deg, transparent 4deg);
+  mix-blend-mode:overlay;
+}
+
+/* Subsurface light from below */
+.j-head-shape::after{
+  content:'';position:absolute;bottom:0;left:10%;right:10%;height:40%;
+  background:radial-gradient(ellipse at 50% 100%, rgba(244,178,102,.12) 0%, transparent 70%);
+  border-radius:0 0 50% 50%;
+}
+
+/* Rosette spots on head */
+.spot{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle, var(--spot) 35%, rgba(26,14,8,.6) 50%, transparent 65%);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.3);
+}
+.spot-h1{width:14px;height:12px;top:25px;left:18px;transform:rotate(-10deg)}
+.spot-h2{width:12px;height:10px;top:20px;right:22px;transform:rotate(15deg)}
+.spot-h3{width:10px;height:9px;top:45px;left:12px}
+.spot-h4{width:11px;height:10px;top:50px;right:15px;transform:rotate(-8deg)}
+.spot-h5{width:8px;height:7px;top:15px;left:45px}
+.spot-h6{width:9px;height:8px;top:18px;right:48px}
+.spot-h7{width:13px;height:11px;top:60px;left:25px;transform:rotate(5deg)}
+.spot-h8{width:12px;height:10px;top:65px;right:28px;transform:rotate(-12deg)}
+
+/* Forehead marking — V stripe */
+.j-forehead{
+  position:absolute;top:15px;left:50%;transform:translateX(-50%);
+  width:30px;height:25px;
+  background:linear-gradient(to bottom, var(--spot) 0%, transparent 100%);
+  clip-path:polygon(50% 0%, 35% 100%, 40% 100%, 50% 30%, 60% 100%, 65% 100%);
+}
+
+/* ── EARS ── */
+.j-ear{
+  position:absolute;width:36px;height:40px;z-index:9;
+  background:
+    radial-gradient(ellipse at 50% 60%, var(--fur-mid) 0%, var(--fur-dark) 60%, var(--fur-shadow) 100%);
+  box-shadow:inset 0 -4px 8px rgba(0,0,0,.2),0 2px 6px rgba(0,0,0,.3);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.j-ear-l{left:12px;top:-2px;border-radius:40% 50% 0 0;transform:rotate(-15deg)}
+.j-ear-r{right:12px;top:-2px;border-radius:50% 40% 0 0;transform:rotate(15deg)}
+.j-ear::after{
+  content:'';position:absolute;inset:6px 8px 12px;
+  background:radial-gradient(ellipse at 50% 40%, var(--gum) 0%, #8a3050 70%);
+  border-radius:50% 50% 0 0;opacity:.7;
+}
+.jaguar:hover .j-ear-l{transform:rotate(-20deg) translateY(-2px)}
+.jaguar:hover .j-ear-r{transform:rotate(20deg) translateY(-2px)}
+
+/* Ear twitching */
+.j-ear-l{animation:earTwitchL 6s ease-in-out infinite}
+.j-ear-r{animation:earTwitchR 7s ease-in-out infinite 1s}
+@keyframes earTwitchL{0%,85%,100%{transform:rotate(-15deg)}90%{transform:rotate(-25deg) scaleY(.92)}}
+@keyframes earTwitchR{0%,88%,100%{transform:rotate(15deg)}93%{transform:rotate(25deg) scaleY(.92)}}
+
+/* ── EYES — The soul ── */
+.j-eye{
+  position:absolute;width:38px;height:30px;top:55px;
+  z-index:12;
+}
+.j-eye-l{left:25px}
+.j-eye-r{right:25px}
+
+/* Eye socket */
+.j-eye-socket{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 50%, #1a1208 0%, var(--fur-shadow) 60%, transparent 80%);
+  border-radius:50%;
+}
+
+/* Eyeball */
+.j-eyeball{
+  position:absolute;width:28px;height:24px;
+  top:3px;left:5px;
+  background:radial-gradient(ellipse at 50% 45%, #fff 0%, #f0ead6 50%, #d4c9a8 100%);
+  border-radius:50%;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.15),0 1px 2px rgba(0,0,0,.1);
+  overflow:hidden;
+}
+
+/* Iris */
+.j-iris{
+  position:absolute;width:18px;height:18px;
+  top:3px;left:5px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%, #1a4a1a 0%, #2d7a2d 25%, #4a9a2d 40%, #6aaa3a 55%, #3a8a1a 70%, #1a5a10 100%);
+  box-shadow:inset 0 0 4px rgba(0,0,0,.4),0 0 8px rgba(106,170,58,.3);
+  transition:transform .15s ease-out;
+  overflow:hidden;
+}
+/* Iris detail — radial lines */
+.j-iris::before{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(0,0,0,.1) 5deg, transparent 10deg);
+}
+/* Jade glow */
+.j-iris::after{
+  content:'';position:absolute;inset:-2px;border-radius:50%;
+  box-shadow:0 0 12px rgba(106,170,58,.4),0 0 24px rgba(106,170,58,.15);
+  animation:eyeGlow 3s ease-in-out infinite alternate;
+}
+@keyframes eyeGlow{0%{opacity:.5}100%{opacity:1}}
+
+/* Pupil — vertical slit */
+.j-pupil{
+  position:absolute;width:6px;height:16px;
+  top:1px;left:6px;
+  background:radial-gradient(ellipse at 50% 50%, #000 0%, #0a0a05 70%, #1a1a0a 100%);
+  border-radius:40%;
+  box-shadow:0 0 4px rgba(0,0,0,.8);
+  transition:all .2s ease-out;
+}
+/* Pupil dilates on hover */
+.jaguar:hover .j-pupil{width:8px;border-radius:45%;left:5px}
+
+/* Specular highlights */
+.j-eye-spec1{
+  position:absolute;width:6px;height:5px;
+  top:3px;left:4px;
+  background:radial-gradient(circle,rgba(255,255,255,.95),transparent);
+  border-radius:50%;z-index:2;
+}
+.j-eye-spec2{
+  position:absolute;width:3px;height:3px;
+  top:10px;right:5px;
+  background:radial-gradient(circle,rgba(255,255,255,.5),transparent);
+  border-radius:50%;z-index:2;
+}
+
+/* Eyelid */
+.j-eyelid{
+  position:absolute;inset:-1px;
+  background:var(--fur-dark);
+  border-radius:50%;
+  transform-origin:top center;
+  transform:scaleY(0);
+  transition:transform .08s ease-in;
+  z-index:3;
+}
+.jaguar.blink .j-eyelid{transform:scaleY(1)}
+
+/* Under-eye fur detail */
+.j-eye-fur{
+  position:absolute;bottom:-6px;left:0;right:0;height:8px;
+  background:linear-gradient(to bottom, transparent, var(--fur-mid));
+  border-radius:0 0 50% 50%;
+}
+
+/* ── NOSE ── */
+.j-nose{
+  position:absolute;width:28px;height:18px;
+  top:92px;left:50%;transform:translateX(-50%);
+  z-index:13;
+}
+.j-nose-pad{
+  width:28px;height:16px;
+  background:
+    radial-gradient(ellipse at 50% 40%, #3a2828 0%, var(--nose) 50%, #1a0e0e 100%);
+  border-radius:35% 35% 50% 50%;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.4),inset 0 -1px 2px rgba(255,255,255,.05),0 2px 4px rgba(0,0,0,.2);
+  position:relative;
+}
+/* Nostrils */
+.j-nose-pad::before,.j-nose-pad::after{
+  content:'';position:absolute;width:6px;height:5px;
+  top:5px;background:#0a0505;border-radius:50%;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.5);
+}
+.j-nose-pad::before{left:5px}
+.j-nose-pad::after{right:5px}
+/* Nose bridge highlight */
+.j-nose-bridge{
+  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  width:8px;height:10px;
+  background:linear-gradient(to bottom, var(--fur-light), var(--fur-mid));
+  border-radius:50%;opacity:.6;
+}
+
+/* ── MOUTH ── */
+.j-mouth{
+  position:absolute;top:108px;left:50%;transform:translateX(-50%);
+  z-index:13;width:40px;height:12px;
+}
+/* Upper lip line */
+.j-mouth-line{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:2px;height:8px;background:var(--nose);border-radius:1px;
+}
+/* Lip curves */
+.j-lip-l,.j-lip-r{
+  position:absolute;top:6px;width:16px;height:8px;
+  border-bottom:2px solid var(--nose);
+}
+.j-lip-l{left:2px;border-radius:0 0 0 50%}
+.j-lip-r{right:2px;border-radius:0 0 50% 0}
+
+/* Fangs — visible when mouth closed */
+.j-fang{
+  position:absolute;top:12px;width:5px;height:10px;z-index:14;
+  background:linear-gradient(to bottom, #fff 0%, #f0e8d8 60%, #d8ceb8 100%);
+  border-radius:30% 30% 50% 50%;
+  box-shadow:0 2px 4px rgba(0,0,0,.3),inset 0 1px 1px rgba(255,255,255,.5);
+}
+.j-fang-l{left:8px;transform:rotate(5deg)}
+.j-fang-r{right:8px;transform:rotate(-5deg)}
+
+/* Open mouth — for roaring/talking */
+.j-mouth-open{
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  width:30px;height:0px;
+  background:radial-gradient(ellipse at 50% 30%, #4a1020, #2a0810);
+  border-radius:20% 20% 50% 50%;
+  overflow:hidden;
+  transition:height .15s ease-out;
+  box-shadow:inset 0 4px 8px rgba(0,0,0,.5);
+}
+.jaguar.talking .j-mouth-open{height:14px;animation:jawMove .25s ease-in-out infinite alternate}
+.jaguar.roar .j-mouth-open{height:22px}
+@keyframes jawMove{0%{height:10px}100%{height:16px}}
+
+/* Tongue inside mouth */
+.j-tongue{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:14px;height:6px;
+  background:radial-gradient(ellipse at 50% 80%, #e85680, var(--gum));
+  border-radius:50% 50% 40% 40%;
+}
+
+/* Upper fangs inside mouth */
+.j-inner-fang{
+  position:absolute;top:0;width:4px;height:8px;
+  background:linear-gradient(to bottom, #fff, #e8dcc8);
+  border-radius:30% 30% 50% 50%;
+}
+.j-inner-fang-l{left:4px}
+.j-inner-fang-r{right:4px}
+
+/* ── WHISKERS ── */
+.j-whisker{
+  position:absolute;top:98px;height:1px;width:40px;z-index:12;
+  background:linear-gradient(to right, transparent, rgba(255,255,255,.15), transparent);
+}
+.j-wh1{left:-12px;transform:rotate(-5deg)}
+.j-wh2{left:-15px;top:103px;transform:rotate(3deg)}
+.j-wh3{left:-10px;top:108px;transform:rotate(10deg)}
+.j-wh4{right:-12px;transform:rotate(5deg)}
+.j-wh5{right:-15px;top:103px;transform:rotate(-3deg)}
+.j-wh6{right:-10px;top:108px;transform:rotate(-10deg)}
+
+/* Whisker dots */
+.j-wh-dot{
+  position:absolute;width:3px;height:3px;border-radius:50%;
+  background:rgba(0,0,0,.2);z-index:12;
+}
+.j-whd1{top:96px;left:32px}
+.j-whd2{top:100px;left:28px}
+.j-whd3{top:104px;left:32px}
+.j-whd4{top:96px;right:32px}
+.j-whd5{top:100px;right:28px}
+.j-whd6{top:104px;right:32px}
+
+/* ── MUZZLE — lighter fur area ── */
+.j-muzzle{
+  position:absolute;top:80px;left:50%;transform:translateX(-50%);
+  width:70px;height:50px;
+  background:radial-gradient(ellipse at 50% 30%, var(--bone) 0%, rgba(245,230,200,.6) 40%, transparent 70%);
+  border-radius:50%;
+  z-index:11;
+}
+
+/* ── BODY ── */
+.j-body{
+  position:absolute;width:200px;height:180px;
+  top:130px;left:50%;transform:translateX(-50%);
+  z-index:5;
+}
+
+/* Torso */
+.j-torso{
+  position:absolute;width:160px;height:140px;
+  top:0;left:20px;
+  background:
+    radial-gradient(ellipse at 50% 30%, var(--fur-light) 0%, var(--fur-mid) 35%, var(--fur-dark) 65%, var(--fur-shadow) 100%);
+  border-radius:45% 45% 40% 40%;
+  box-shadow:
+    inset 0 -20px 40px rgba(0,0,0,.3),
+    inset 0 10px 20px rgba(255,255,255,.05),
+    0 8px 24px rgba(0,0,0,.4);
+  overflow:hidden;
+}
+
+/* Chest lighter area */
+.j-chest{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  width:80px;height:70px;
+  background:radial-gradient(ellipse at 50% 80%, rgba(245,230,200,.25) 0%, transparent 70%);
+  border-radius:50%;
+}
+
+/* Body spots */
+.spot-b1{width:16px;height:14px;top:20px;left:15px}
+.spot-b2{width:14px;height:12px;top:15px;right:20px}
+.spot-b3{width:18px;height:15px;top:50px;left:10px;transform:rotate(8deg)}
+.spot-b4{width:15px;height:13px;top:45px;right:12px;transform:rotate(-5deg)}
+.spot-b5{width:12px;height:10px;top:75px;left:22px}
+.spot-b6{width:13px;height:11px;top:80px;right:25px}
+.spot-b7{width:10px;height:9px;top:35px;left:40px}
+.spot-b8{width:11px;height:10px;top:30px;right:42px}
+.spot-b9{width:16px;height:14px;top:65px;left:40px;transform:rotate(-10deg)}
+.spot-b10{width:14px;height:12px;top:60px;right:38px;transform:rotate(6deg)}
+.spot-b11{width:9px;height:8px;top:95px;left:30px}
+.spot-b12{width:10px;height:9px;top:100px;right:35px}
+
+/* ── FRONT LEGS ── */
+.j-leg-f{
+  position:absolute;bottom:-30px;width:28px;height:60px;z-index:6;
+  background:linear-gradient(to bottom, var(--fur-mid), var(--fur-dark));
+  border-radius:30% 30% 35% 35%;
+  box-shadow:inset -4px 0 8px rgba(0,0,0,.15),0 4px 8px rgba(0,0,0,.3);
+}
+.j-leg-fl{left:25px}
+.j-leg-fr{right:25px}
+/* Paw */
+.j-paw{
+  position:absolute;bottom:-6px;left:-3px;width:34px;height:14px;
+  background:radial-gradient(ellipse at 50% 60%, var(--fur-dark), var(--fur-shadow));
+  border-radius:50% 50% 40% 40%;
+  box-shadow:0 3px 6px rgba(0,0,0,.3);
+}
+/* Toes */
+.j-toe{
+  position:absolute;bottom:-2px;width:8px;height:6px;
+  background:var(--fur-shadow);border-radius:50%;
+}
+.j-toe:nth-child(1){left:2px}
+.j-toe:nth-child(2){left:9px}
+.j-toe:nth-child(3){left:16px}
+.j-toe:nth-child(4){left:23px}
+/* Claws */
+.j-claw{
+  position:absolute;bottom:-4px;width:3px;height:5px;
+  background:linear-gradient(to bottom,#e8dcc8,#c8b8a0);
+  border-radius:30% 30% 50% 50%;
+  box-shadow:0 1px 2px rgba(0,0,0,.3);
+}
+.j-claw:nth-child(5){left:4px;transform:rotate(-10deg)}
+.j-claw:nth-child(6){left:11px;transform:rotate(-3deg)}
+.j-claw:nth-child(7){left:18px;transform:rotate(3deg)}
+.j-claw:nth-child(8){left:25px;transform:rotate(10deg)}
+
+/* Leg spots */
+.j-leg-f .spot{width:8px;height:7px}
+.j-leg-fl .spot:nth-of-type(1){top:10px;left:5px}
+.j-leg-fl .spot:nth-of-type(2){top:25px;left:8px}
+.j-leg-fr .spot:nth-of-type(1){top:12px;right:5px}
+.j-leg-fr .spot:nth-of-type(2){top:28px;right:7px}
+
+/* ── TAIL ── */
+.j-tail{
+  position:absolute;bottom:30px;left:-20px;
+  width:60px;height:16px;z-index:4;
+  background:linear-gradient(to left, var(--fur-mid), var(--fur-dark), var(--spot));
+  border-radius:50% 20% 20% 50%;
+  transform-origin:right center;
+  animation:tailSwish 4s ease-in-out infinite;
+  box-shadow:0 3px 6px rgba(0,0,0,.2);
+}
+@keyframes tailSwish{0%,100%{transform:rotate(-5deg)}30%{transform:rotate(8deg)}60%{transform:rotate(-8deg)}}
+/* Tail spots */
+.j-tail .spot{width:6px;height:5px}
+.j-tail .spot:nth-child(1){top:4px;left:10px}
+.j-tail .spot:nth-child(2){top:5px;left:25px}
+.j-tail .spot:nth-child(3){top:3px;left:40px}
+
+/* ── MAYAN MARKINGS — sacred geometry on body ── */
+.j-marking{
+  position:absolute;z-index:7;opacity:.12;
+  border:1.5px solid var(--gold);
+}
+.j-mark-1{
+  top:25px;left:50%;transform:translateX(-50%);
+  width:20px;height:20px;
+  border-radius:2px;
+  transform:translateX(-50%) rotate(45deg);
+}
+.j-mark-2{
+  top:60px;left:50%;transform:translateX(-50%);
+  width:14px;height:14px;
+  border-radius:50%;
+  box-shadow:0 0 0 3px rgba(212,160,36,.06);
+}
+
+/* ── DYNAMIC LIGHTING ── */
+.j-light{
+  position:absolute;inset:0;z-index:15;
+  border-radius:50%;
+  background:radial-gradient(circle at var(--lx,50%) var(--ly,30%), rgba(255,255,255,.06) 0%, transparent 50%);
+  pointer-events:none;
+  transition:background .3s;
+}
+
+/* ═══════════════════════════════════
+   SPEECH BUBBLE
+   ═══════════════════════════════════ */
+.speech{
+  position:relative;
+  background:rgba(15,15,15,.85);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(212,160,36,.15);
+  border-radius:16px 16px 4px 16px;
+  padding:14px 18px;max-width:280px;min-height:0;
+  font-size:.82rem;color:rgba(255,255,255,.8);line-height:1.55;
+  opacity:0;transform:translateY(10px) scale(.95);
+  transition:all .5s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 8px 32px rgba(0,0,0,.4),0 0 0 1px rgba(212,160,36,.05);
+}
+.speech.show{opacity:1;transform:translateY(0) scale(1)}
+.speech strong{color:var(--gold);font-weight:600}
+.speech-cursor{display:inline-block;width:2px;height:13px;background:var(--rosa);margin-left:1px;vertical-align:text-bottom;animation:blink .5s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ═══════════════════════════════════
+   AXKAN BADGE
+   ═══════════════════════════════════ */
+.badge{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 16px;border-radius:100px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(212,160,36,.12);
+  margin-top:.5rem;
+}
+.badge img{height:20px;filter:brightness(.8) sepia(.3) hue-rotate(-10deg);opacity:.5}
+.badge span{font-family:'Syne',sans-serif;font-size:.55rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:rgba(212,160,36,.35)}
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════ */
+@media(max-width:400px){
+  .jaguar{transform:scale(.8)}
+  .speech{max-width:220px;font-size:.78rem}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ATMOSPHERE -->
+<div class="atmosphere">
+  <div class="atm-glow"></div>
+  <div class="fog fog-1"></div>
+  <div class="fog fog-2"></div>
+  <div class="fog fog-3"></div>
+</div>
+
+<!-- STAGE -->
+<div class="stage">
+  <div class="title">
+    <h1>BALAM</h1>
+    <p>Jaguar Sagrado</p>
+  </div>
+
+  <div class="speech" id="speech">
+    <span id="speechText"></span><span class="speech-cursor" id="cursor"></span>
+  </div>
+
+  <div class="jaguar" id="jaguar">
+    <!-- Dynamic light follows mouse -->
+    <div class="j-light" id="jLight"></div>
+
+    <!-- HEAD -->
+    <div class="j-head">
+      <div class="j-ear j-ear-l"></div>
+      <div class="j-ear j-ear-r"></div>
+
+      <div class="j-head-shape">
+        <div class="spot spot-h1"></div><div class="spot spot-h2"></div>
+        <div class="spot spot-h3"></div><div class="spot spot-h4"></div>
+        <div class="spot spot-h5"></div><div class="spot spot-h6"></div>
+        <div class="spot spot-h7"></div><div class="spot spot-h8"></div>
+        <div class="j-forehead"></div>
+      </div>
+
+      <div class="j-muzzle"></div>
+
+      <!-- LEFT EYE -->
+      <div class="j-eye j-eye-l">
+        <div class="j-eye-socket"></div>
+        <div class="j-eyeball">
+          <div class="j-iris" id="irisL">
+            <div class="j-pupil"></div>
+          </div>
+          <div class="j-eye-spec1"></div>
+          <div class="j-eye-spec2"></div>
+          <div class="j-eyelid"></div>
+        </div>
+        <div class="j-eye-fur"></div>
+      </div>
+
+      <!-- RIGHT EYE -->
+      <div class="j-eye j-eye-r">
+        <div class="j-eye-socket"></div>
+        <div class="j-eyeball">
+          <div class="j-iris" id="irisR">
+            <div class="j-pupil"></div>
+          </div>
+          <div class="j-eye-spec1"></div>
+          <div class="j-eye-spec2"></div>
+          <div class="j-eyelid"></div>
+        </div>
+        <div class="j-eye-fur"></div>
+      </div>
+
+      <!-- NOSE -->
+      <div class="j-nose">
+        <div class="j-nose-bridge"></div>
+        <div class="j-nose-pad"></div>
+      </div>
+
+      <!-- MOUTH -->
+      <div class="j-mouth">
+        <div class="j-mouth-line"></div>
+        <div class="j-lip-l"></div>
+        <div class="j-lip-r"></div>
+        <div class="j-fang j-fang-l"></div>
+        <div class="j-fang j-fang-r"></div>
+        <div class="j-mouth-open">
+          <div class="j-tongue"></div>
+          <div class="j-inner-fang j-inner-fang-l"></div>
+          <div class="j-inner-fang j-inner-fang-r"></div>
+        </div>
+      </div>
+
+      <!-- WHISKERS -->
+      <div class="j-whisker j-wh1"></div><div class="j-whisker j-wh2"></div><div class="j-whisker j-wh3"></div>
+      <div class="j-whisker j-wh4"></div><div class="j-whisker j-wh5"></div><div class="j-whisker j-wh6"></div>
+      <div class="j-wh-dot j-whd1"></div><div class="j-wh-dot j-whd2"></div><div class="j-wh-dot j-whd3"></div>
+      <div class="j-wh-dot j-whd4"></div><div class="j-wh-dot j-whd5"></div><div class="j-wh-dot j-whd6"></div>
+    </div>
+
+    <!-- BODY -->
+    <div class="j-body">
+      <div class="j-torso">
+        <div class="j-chest"></div>
+        <div class="spot spot-b1"></div><div class="spot spot-b2"></div>
+        <div class="spot spot-b3"></div><div class="spot spot-b4"></div>
+        <div class="spot spot-b5"></div><div class="spot spot-b6"></div>
+        <div class="spot spot-b7"></div><div class="spot spot-b8"></div>
+        <div class="spot spot-b9"></div><div class="spot spot-b10"></div>
+        <div class="spot spot-b11"></div><div class="spot spot-b12"></div>
+        <div class="j-marking j-mark-1"></div>
+        <div class="j-marking j-mark-2"></div>
+      </div>
+
+      <!-- FRONT LEGS -->
+      <div class="j-leg-f j-leg-fl">
+        <div class="spot"></div><div class="spot"></div>
+        <div class="j-paw">
+          <div class="j-toe"></div><div class="j-toe"></div><div class="j-toe"></div><div class="j-toe"></div>
+          <div class="j-claw"></div><div class="j-claw"></div><div class="j-claw"></div><div class="j-claw"></div>
+        </div>
+      </div>
+      <div class="j-leg-f j-leg-fr">
+        <div class="spot"></div><div class="spot"></div>
+        <div class="j-paw">
+          <div class="j-toe"></div><div class="j-toe"></div><div class="j-toe"></div><div class="j-toe"></div>
+          <div class="j-claw"></div><div class="j-claw"></div><div class="j-claw"></div><div class="j-claw"></div>
+        </div>
+      </div>
+
+      <!-- TAIL -->
+      <div class="j-tail">
+        <div class="spot"></div><div class="spot"></div><div class="spot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="badge">
+    <img src="../../assets/LOGO-03.png" alt="AXKAN">
+    <span>AXKAN Souvenirs</span>
+  </div>
+</div>
+
+<script>
+(()=>{
+  const jag=document.getElementById('jaguar');
+  const irisL=document.getElementById('irisL');
+  const irisR=document.getElementById('irisR');
+  const jLight=document.getElementById('jLight');
+  const speech=document.getElementById('speech');
+  const speechText=document.getElementById('speechText');
+  const cursor=document.getElementById('cursor');
+
+  // ── BLINK ──
+  function blink(){jag.classList.add('blink');setTimeout(()=>jag.classList.remove('blink'),100)}
+  setInterval(()=>{blink();if(Math.random()>.7)setTimeout(blink,150)},3000+Math.random()*2500);
+
+  // ── EYE + LIGHT TRACKING ──
+  function trackEyes(x,y){
+    const rect=jag.getBoundingClientRect();
+    const cx=rect.left+rect.width/2;
+    const cy=rect.top+rect.height*.3;
+    const dx=Math.max(-3,Math.min(3,(x-cx)/60));
+    const dy=Math.max(-2,Math.min(2,(y-cy)/80));
+    irisL.style.transform=`translate(${dx}px,${dy}px)`;
+    irisR.style.transform=`translate(${dx}px,${dy}px)`;
+
+    const lx=50+(x-cx)/rect.width*30;
+    const ly=30+(y-cy)/rect.height*20;
+    jLight.style.setProperty('--lx',lx+'%');
+    jLight.style.setProperty('--ly',ly+'%');
+  }
+  document.addEventListener('mousemove',e=>trackEyes(e.clientX,e.clientY),{passive:true});
+  document.addEventListener('touchmove',e=>trackEyes(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+
+  // ── SPEECH ──
+  let busy=false;
+  function say(text,dur){
+    return new Promise(res=>{
+      if(busy)return res();
+      busy=true;
+      speechText.textContent='';
+      speech.classList.add('show');
+      cursor.style.display='inline-block';
+      jag.classList.add('talking');
+      let i=0;
+      function type(){
+        if(i<text.length){
+          speechText.textContent+=text[i];
+          const d=text[i]==='.'||text[i]==='!'||text[i]==='?'?200:text[i]===','?100:28;
+          i++;setTimeout(type,d);
+        }else{
+          jag.classList.remove('talking');
+          cursor.style.display='none';
+          setTimeout(()=>{speech.classList.remove('show');busy=false;res()},dur||3500);
+        }
+      }
+      type();
+    });
+  }
+
+  // ── CLICK ──
+  const facts=[
+    'Los mayas creían que el jaguar podía cruzar entre el mundo de los vivos y el inframundo.',
+    'Balam significa "jaguar" en maya. Los reyes mayas llevaban pieles de jaguar como símbolo de poder divino.',
+    'En la mitología maya, el jaguar era el señor de la noche y guardián del sol nocturno.',
+    'Los guerreros jaguar aztecas eran la élite militar — solo los más valientes podían serlo.',
+    'El jaguar es el felino más grande de América y el tercero del mundo.',
+    'Los mayas tallaban jaguares en los tronos de sus reyes. El trono de Chichén Itzá es un jaguar rojo.',
+    'El Templo de los Jaguares en Chichén Itzá tiene murales de jaguares con 1,200 años de antigüedad.',
+    'En Quintana Roo viven jaguares salvajes en la Reserva de Sian Ka\'an.',
+  ];
+  let fi=0;
+  jag.addEventListener('click',()=>{
+    jag.classList.add('roar');
+    setTimeout(()=>jag.classList.remove('roar'),400);
+    say(facts[fi],5000);
+    fi=(fi+1)%facts.length;
+  });
+
+  // ── FIREFLIES ──
+  const atm=document.querySelector('.atmosphere');
+  for(let i=0;i<15;i++){
+    const f=document.createElement('div');
+    f.classList.add('firefly');
+    f.style.left=Math.random()*100+'%';
+    f.style.top=Math.random()*100+'%';
+    f.style.setProperty('--fx',(Math.random()*80-40)+'px');
+    f.style.setProperty('--fy',(Math.random()*-80)+'px');
+    f.style.setProperty('--fx2',(Math.random()*60-30)+'px');
+    f.style.setProperty('--fy2',(Math.random()*60-30)+'px');
+    f.style.animationDuration=(6+Math.random()*8)+'s';
+    f.style.animationDelay=(Math.random()*8)+'s';
+    f.style.width=(2+Math.random()*3)+'px';
+    f.style.height=f.style.width;
+    atm.appendChild(f);
+  }
+
+  // ── GLYPHS ──
+  const glyphs=['𝌆','𝌇','𝌈','𝌉','𝌊','𝌋','𝌌','☼','◈','◇'];
+  for(let i=0;i<6;i++){
+    const g=document.createElement('div');
+    g.classList.add('glyph');
+    g.textContent=glyphs[Math.floor(Math.random()*glyphs.length)];
+    g.style.left=Math.random()*100+'%';
+    g.style.top=Math.random()*100+'%';
+    g.style.fontSize=(1.5+Math.random()*2)+'rem';
+    g.style.animationDuration=(15+Math.random()*15)+'s';
+    g.style.animationDelay=(Math.random()*10)+'s';
+    atm.appendChild(g);
+  }
+
+  // ── INTRO ──
+  setTimeout(()=>say('Soy Balam, el jaguar sagrado. Guardián de la selva maya y protector de Cancún.',5000),1200);
+})();
+</script>
+</body>
+</html>

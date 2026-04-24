@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Tuki Turtle — AXKAN Character Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'RL AQVA';src:url('../../fonts/rl-aqva-black.otf') format('opentype');font-weight:900;font-display:swap}
+:root{--rosa:#e72a88;--turquesa:#09adc2;--verde:#8ab73b;--naranja:#f39223;--bg:#FFFDF8}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);overflow-x:hidden;min-height:300vh}
+
+/* ═══ TURTLE CONTAINER ═══ */
+.turtle-stage{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:1000;
+  display:flex;flex-direction:column;align-items:flex-end;gap:8px;
+  cursor:pointer;
+}
+
+/* ═══ SPEECH BUBBLE ═══ */
+.speech{
+  background:#fff;border-radius:18px 18px 4px 18px;
+  padding:12px 16px;max-width:240px;
+  box-shadow:0 4px 24px rgba(0,0,0,.08);
+  border:1px solid rgba(0,0,0,.04);
+  font-size:.8rem;color:#333;line-height:1.5;
+  opacity:0;transform:translateY(8px) scale(.95);
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
+  position:relative;
+}
+.speech.show{opacity:1;transform:translateY(0) scale(1)}
+.speech strong{color:var(--turquesa);font-weight:600}
+.speech-typing{display:inline}
+.speech-cursor{display:inline-block;width:2px;height:14px;background:var(--rosa);margin-left:2px;animation:blink .6s step-end infinite;vertical-align:text-bottom}
+@keyframes blink{50%{opacity:0}}
+
+/* ═══ THE TURTLE — Pure CSS ═══ */
+.turtle{
+  width:100px;height:100px;position:relative;
+  animation:float 4s ease-in-out infinite;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.turtle:active{transform:scale(.9) rotate(-8deg)}
+.turtle.excited{animation:excited .4s ease-in-out 3}
+
+@keyframes float{
+  0%,100%{transform:translateY(0) rotate(-2deg)}
+  50%{transform:translateY(-8px) rotate(2deg)}
+}
+@keyframes excited{
+  0%,100%{transform:scale(1) rotate(0)}
+  25%{transform:scale(1.1) rotate(-8deg)}
+  75%{transform:scale(1.1) rotate(8deg)}
+}
+
+/* Shell */
+.shell{
+  position:absolute;width:72px;height:58px;
+  top:18px;left:14px;
+  background:radial-gradient(ellipse at 45% 40%,#2db87a,#1a8a5c);
+  border-radius:50% 50% 45% 45%;
+  box-shadow:inset 0 -8px 16px rgba(0,0,0,.15),0 4px 12px rgba(0,0,0,.1);
+  overflow:hidden;
+}
+/* Shell pattern — hexagonal scutes */
+.shell::before{
+  content:'';position:absolute;inset:6px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.12) 0%, transparent 40%),
+    radial-gradient(circle at 70% 35%, rgba(255,255,255,.08) 0%, transparent 35%),
+    radial-gradient(circle at 50% 65%, rgba(255,255,255,.1) 0%, transparent 30%),
+    radial-gradient(circle at 25% 60%, rgba(255,255,255,.06) 0%, transparent 25%),
+    radial-gradient(circle at 75% 65%, rgba(255,255,255,.06) 0%, transparent 25%);
+  border-radius:inherit;
+}
+.shell::after{
+  content:'';position:absolute;top:4px;left:12px;right:12px;height:12px;
+  background:linear-gradient(to bottom,rgba(255,255,255,.2),transparent);
+  border-radius:50%;
+}
+/* Shell edge ridge */
+.shell-edge{
+  position:absolute;width:78px;height:62px;
+  top:16px;left:11px;
+  border:2.5px solid #158a52;
+  border-radius:50% 50% 45% 45%;
+  opacity:.3;
+}
+
+/* Head */
+.head{
+  position:absolute;width:28px;height:24px;
+  top:24px;right:2px;
+  background:radial-gradient(ellipse at 55% 40%,#5ec49a,#3aaa7a);
+  border-radius:50% 60% 45% 40%;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+  transition:transform .3s ease;
+}
+.turtle:hover .head{transform:translateX(4px)}
+
+/* Eyes */
+.eye{
+  position:absolute;width:8px;height:9px;
+  background:#fff;border-radius:50%;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.05);
+  overflow:hidden;
+}
+.eye-r{top:6px;right:3px}
+.eye-l{top:4px;right:10px}
+.pupil{
+  position:absolute;width:4px;height:4.5px;
+  background:#1a1a1a;border-radius:50%;
+  top:2.5px;right:1.5px;
+  transition:all .3s ease;
+}
+.pupil::after{
+  content:'';position:absolute;width:1.5px;height:1.5px;
+  background:#fff;border-radius:50%;top:0.5px;right:0.5px;
+}
+/* Blink */
+.eyelid{
+  position:absolute;inset:0;
+  background:#3aaa7a;border-radius:50%;
+  transform:scaleY(0);transform-origin:top;
+  transition:transform .1s;
+}
+.turtle.blink .eyelid{transform:scaleY(1)}
+
+/* Mouth */
+.mouth{
+  position:absolute;width:5px;height:2.5px;
+  bottom:5px;right:6px;
+  background:transparent;
+  border-bottom:2px solid #2d8a65;
+  border-radius:0 0 50% 50%;
+  transition:all .3s;
+}
+.turtle.talking .mouth{
+  height:4px;width:6px;
+  background:#c0392b;
+  border-bottom:none;
+  border-radius:50%;
+  animation:talk .3s ease-in-out infinite alternate;
+}
+@keyframes talk{
+  0%{transform:scaleY(.6)}
+  100%{transform:scaleY(1.2)}
+}
+
+/* Cheek blush */
+.cheek{
+  position:absolute;width:6px;height:4px;
+  background:rgba(231,42,136,.2);
+  border-radius:50%;bottom:6px;right:2px;
+}
+
+/* Flippers */
+.flipper{
+  position:absolute;width:20px;height:10px;
+  background:#3aaa7a;
+  border-radius:60% 40% 50% 50%;
+  box-shadow:0 2px 4px rgba(0,0,0,.08);
+}
+.fl-fr{top:36px;right:0;transform:rotate(-25deg);animation:paddle-r 2s ease-in-out infinite}
+.fl-fl{top:30px;left:4px;transform:rotate(25deg);animation:paddle-l 2s ease-in-out infinite .5s}
+.fl-br{top:58px;right:10px;width:14px;height:8px;transform:rotate(-15deg);animation:paddle-r 3s ease-in-out infinite .3s}
+.fl-bl{top:56px;left:16px;width:14px;height:8px;transform:rotate(15deg);animation:paddle-l 3s ease-in-out infinite .8s}
+
+@keyframes paddle-r{
+  0%,100%{transform:rotate(-25deg)}
+  50%{transform:rotate(-40deg)}
+}
+@keyframes paddle-l{
+  0%,100%{transform:rotate(25deg)}
+  50%{transform:rotate(40deg)}
+}
+
+/* Tail */
+.tail{
+  position:absolute;width:10px;height:6px;
+  bottom:26px;left:8px;
+  background:#3aaa7a;
+  border-radius:50% 20% 20% 50%;
+  animation:wag 2s ease-in-out infinite;
+}
+@keyframes wag{
+  0%,100%{transform:rotate(0)}
+  50%{transform:rotate(-12deg)}
+}
+
+/* ═══ DEMO PAGE CONTENT ═══ */
+.demo-hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:2rem;
+}
+.demo-hero h1{
+  font-family:'RL AQVA',sans-serif;font-size:clamp(3rem,12vw,6rem);
+  font-weight:900;color:#1a1a1a;line-height:.85;margin-bottom:1rem;
+}
+.demo-hero h1 span{color:var(--turquesa)}
+.demo-hero p{color:#666;font-size:1rem;max-width:320px;margin:0 auto}
+
+.demo-section{
+  min-height:80vh;display:flex;align-items:center;justify-content:center;
+  padding:3rem 2rem;text-align:center;
+}
+.demo-section:nth-child(odd){background:#f5f5f5}
+.demo-section h2{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#1a1a1a;margin-bottom:.5rem}
+.demo-section p{color:#666;font-size:.9rem;max-width:300px;margin:0 auto}
+
+/* ═══ BUBBLES — ambient ═══ */
+.ambient-bubbles{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden}
+.amb-b{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,rgba(9,173,194,.15),rgba(9,173,194,.03));
+  animation:amb-rise linear infinite;
+  opacity:0;
+}
+@keyframes amb-rise{
+  0%{transform:translateY(0) scale(.5);opacity:0}
+  10%{opacity:.6}
+  90%{opacity:.6}
+  100%{transform:translateY(-100vh) scale(1.2);opacity:0}
+}
+</style>
+</head>
+<body>
+
+<!-- AMBIENT BUBBLES -->
+<div class="ambient-bubbles" id="ambBubbles"></div>
+
+<!-- DEMO CONTENT -->
+<div class="demo-hero">
+  <div>
+    <h1>CAN<span>CÚN</span></h1>
+    <p>Scroll down — the turtle will guide you through the story</p>
+  </div>
+</div>
+
+<div class="demo-section" id="sec-playas">
+  <div><h2>Las Playas</h2><p>22 km de arena blanca y 7 tonos de azul caribeño</p></div>
+</div>
+
+<div class="demo-section" id="sec-cenotes">
+  <div><h2>Los Cenotes</h2><p>Puertas al inframundo maya, formados hace 66 millones de años</p></div>
+</div>
+
+<div class="demo-section" id="sec-ruinas">
+  <div><h2>Las Ruinas</h2><p>1,200 años de civilización maya mirando al mar</p></div>
+</div>
+
+<div class="demo-section" id="sec-vida">
+  <div><h2>La Vida Marina</h2><p>Tiburones ballena, tortugas y el arrecife más grande de América</p></div>
+</div>
+
+<!-- ═══ TURTLE CHARACTER ═══ -->
+<div class="turtle-stage" id="turtleStage">
+  <div class="speech" id="speech">
+    <span class="speech-typing" id="speechText"></span><span class="speech-cursor" id="cursor"></span>
+  </div>
+
+  <div class="turtle" id="turtle">
+    <!-- Shell -->
+    <div class="shell-edge"></div>
+    <div class="shell"></div>
+    <!-- Tail -->
+    <div class="tail"></div>
+    <!-- Flippers -->
+    <div class="flipper fl-fr"></div>
+    <div class="flipper fl-fl"></div>
+    <div class="flipper fl-br"></div>
+    <div class="flipper fl-bl"></div>
+    <!-- Head -->
+    <div class="head">
+      <div class="eye eye-r"><div class="pupil"></div><div class="eyelid"></div></div>
+      <div class="eye eye-l"><div class="pupil"></div><div class="eyelid"></div></div>
+      <div class="mouth"></div>
+      <div class="cheek"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+  const turtle = document.getElementById('turtle');
+  const speech = document.getElementById('speech');
+  const speechText = document.getElementById('speechText');
+  const cursor = document.getElementById('cursor');
+
+  // ── BLINK RANDOMLY ──
+  function blink(){
+    turtle.classList.add('blink');
+    setTimeout(()=>turtle.classList.remove('blink'),120);
+  }
+  setInterval(()=>{
+    blink();
+    if(Math.random()>.6) setTimeout(blink,200); // double blink
+  },2500+Math.random()*2000);
+
+  // ── EYE TRACKING — follows scroll position ──
+  const pupils = document.querySelectorAll('.pupil');
+  window.addEventListener('scroll',()=>{
+    const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+    const y = -1 + pct * 4; // look up as you scroll down
+    pupils.forEach(p=>{
+      p.style.transform = `translate(0, ${Math.max(-2,Math.min(2,y))}px)`;
+    });
+  },{passive:true});
+
+  // Touch/mouse — eyes follow pointer
+  document.addEventListener('touchmove',e=>{
+    const t=e.touches[0];
+    const rect=turtle.getBoundingClientRect();
+    const dx=(t.clientX-rect.left-50)/100;
+    const dy=(t.clientY-rect.top-50)/100;
+    pupils.forEach(p=>{
+      p.style.transform=`translate(${Math.max(-2,Math.min(2,dx*3))}px,${Math.max(-2,Math.min(2,dy*3))}px)`;
+    });
+  },{passive:true});
+
+  document.addEventListener('mousemove',e=>{
+    const rect=turtle.getBoundingClientRect();
+    const dx=(e.clientX-rect.left-50)/100;
+    const dy=(e.clientY-rect.top-50)/100;
+    pupils.forEach(p=>{
+      p.style.transform=`translate(${Math.max(-2,Math.min(2,dx*3))}px,${Math.max(-2,Math.min(2,dy*3))}px)`;
+    });
+  },{passive:true});
+
+  // ── TYPING SPEECH BUBBLE ──
+  let isTyping=false;
+  function say(text,duration){
+    return new Promise(resolve=>{
+      if(isTyping)return resolve();
+      isTyping=true;
+      speechText.textContent='';
+      speech.classList.add('show');
+      cursor.style.display='inline-block';
+      turtle.classList.add('talking');
+
+      let i=0;
+      const speed=35;
+      function type(){
+        if(i<text.length){
+          speechText.textContent+=text[i];
+          i++;
+          setTimeout(type,speed);
+        } else {
+          turtle.classList.remove('talking');
+          cursor.style.display='none';
+          setTimeout(()=>{
+            speech.classList.remove('show');
+            isTyping=false;
+            resolve();
+          },duration||3000);
+        }
+      }
+      type();
+    });
+  }
+
+  // ── TAP TO GET RANDOM FACT ──
+  const facts=[
+    '¿Sabías que "Cancún" significa "nido de serpientes" en maya? 🐍',
+    'El Caribe mexicano tiene 7 tonos diferentes de azul 💎',
+    'Cada verano llegan más de 800 tiburones ballena 🦈',
+    'Los cenotes se formaron hace 66 millones de años ⏳',
+    'Isla Holbox tiene bioluminiscencia natural 🌟',
+    'El MUSA tiene 500 esculturas bajo el mar 🤿',
+    'Hay cocodrilos viviendo en la Laguna Nichupté 🐊',
+    'La zona hotelera mide exactamente 22.5 km 📏',
+  ];
+  let factIdx=0;
+
+  turtle.addEventListener('click',()=>{
+    turtle.classList.add('excited');
+    setTimeout(()=>turtle.classList.remove('excited'),1200);
+    say(facts[factIdx],4000);
+    factIdx=(factIdx+1)%facts.length;
+  });
+
+  // ── SCROLL-TRIGGERED DIALOGUE ──
+  const dialogues={
+    'sec-playas':'¡Aquí están las playas más bonitas del Caribe! Arena blanca y agua turquesa 🏖️',
+    'sec-cenotes':'Los cenotes son mágicos — los mayas creían que eran puertas al inframundo 💎',
+    'sec-ruinas':'¿Sabías que El Rey tiene ruinas mayas justo en la zona hotelera? 🏛️',
+    'sec-vida':'¡Aquí vivo yo! El arrecife de Cancún es mi hogar 🐢'
+  };
+
+  const triggered={};
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting&&!triggered[e.target.id]){
+        triggered[e.target.id]=true;
+        say(dialogues[e.target.id],4500);
+      }
+    });
+  },{threshold:.5});
+
+  Object.keys(dialogues).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)observer.observe(el);
+  });
+
+  // ── INTRO ──
+  setTimeout(()=>say('¡Hola! Soy Kaan, tu guía tortuga 🐢 ¡Tócame para datos curiosos!',5000),1500);
+
+  // ── AMBIENT BUBBLES ──
+  const bubbles=document.getElementById('ambBubbles');
+  for(let i=0;i<8;i++){
+    const b=document.createElement('div');
+    b.classList.add('amb-b');
+    const size=6+Math.random()*12;
+    b.style.width=size+'px';
+    b.style.height=size+'px';
+    b.style.left=Math.random()*100+'%';
+    b.style.bottom='-20px';
+    b.style.animationDuration=(8+Math.random()*10)+'s';
+    b.style.animationDelay=(Math.random()*8)+'s';
+    bubbles.appendChild(b);
+  }
+
+})();
+</script>
+</body>
+</html>

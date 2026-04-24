@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BALAM — Jaguar Sagrado 3D | AXKAN</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'RL AQVA';src:url('../../fonts/rl-aqva-black.otf') format('opentype');font-weight:900;font-display:swap}
+
+:root{
+  --rosa:#e72a88;--verde:#8ab73b;--naranja:#f39223;--turquesa:#09adc2;
+  --gold:#d4a024;--obsidian:#080808;--bone:#f5e6c8;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'DM Sans',sans-serif;background:var(--obsidian);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;position:relative;cursor:crosshair;
+}
+
+/* ═══ ATMOSPHERE ═══ */
+.atm{position:fixed;inset:0;z-index:0;overflow:hidden}
+.atm-glow{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 50% 40% at 50% 55%,rgba(212,160,36,.08),transparent 70%),
+    radial-gradient(ellipse 40% 30% at 30% 40%,rgba(231,42,136,.03),transparent),
+    radial-gradient(ellipse 30% 25% at 70% 60%,rgba(9,173,194,.03),transparent);
+}
+.fog{position:absolute;width:200%;height:100%;opacity:.03}
+.fog-1{top:30%;left:-50%;background:radial-gradient(ellipse at 40% 50%,rgba(255,255,255,.2),transparent 50%);animation:fd 28s ease-in-out infinite alternate}
+.fog-2{top:60%;left:-30%;background:radial-gradient(ellipse at 60% 50%,rgba(212,160,36,.15),transparent 50%);animation:fd 22s ease-in-out infinite alternate-reverse}
+@keyframes fd{0%{transform:translateX(0)}100%{transform:translateX(20%)}}
+
+.firefly{
+  position:absolute;border-radius:50%;background:var(--gold);
+  box-shadow:0 0 6px var(--gold),0 0 14px rgba(212,160,36,.3);
+  animation:ff 10s ease-in-out infinite;opacity:0;
+}
+@keyframes ff{
+  0%{opacity:0;transform:translate(0,0)}
+  20%{opacity:.7}50%{opacity:.3;transform:translate(var(--fx),var(--fy))}
+  80%{opacity:.6}100%{opacity:0;transform:translate(var(--fx2),var(--fy2))}
+}
+
+/* ═══ STAGE ═══ */
+.stage{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1rem}
+
+.title{text-align:center}
+.title h1{
+  font-family:'RL AQVA',sans-serif;font-size:clamp(2.5rem,9vw,4.5rem);
+  font-weight:900;letter-spacing:4px;
+  background:linear-gradient(135deg,var(--gold),var(--bone),var(--gold),#f5c542,var(--gold));
+  background-size:200% 100%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shimmer 4s ease-in-out infinite;
+  filter:drop-shadow(0 2px 12px rgba(212,160,36,.25));
+}
+@keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.title p{font-family:'Syne',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:6px;text-transform:uppercase;color:rgba(212,160,36,.35);margin-top:.25rem}
+
+/* ═══ SPEECH BUBBLE ═══ */
+.speech{
+  background:rgba(15,15,15,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(212,160,36,.12);border-radius:16px 16px 4px 16px;
+  padding:14px 18px;max-width:280px;
+  font-size:.82rem;color:rgba(255,255,255,.8);line-height:1.55;
+  opacity:0;transform:translateY(10px) scale(.95);
+  transition:all .5s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px rgba(212,160,36,.04);
+  min-height:20px;
+}
+.speech.show{opacity:1;transform:translateY(0) scale(1)}
+.speech strong{color:var(--gold);font-weight:600}
+.speech-cursor{display:inline-block;width:2px;height:13px;background:var(--rosa);margin-left:1px;vertical-align:text-bottom;animation:blink .5s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ═══ 3D JAGUAR CHARACTER ═══ */
+.char{
+  position:relative;width:260px;height:260px;
+  animation:breathe 4s ease-in-out infinite;
+  cursor:pointer;
+}
+@keyframes breathe{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.015) translateY(-4px)}}
+.char:active{animation:none;transform:scale(.95)}
+
+/* Main jaguar image */
+.char-img{
+  width:100%;height:100%;object-fit:contain;
+  filter:drop-shadow(0 12px 32px rgba(0,0,0,.6)) drop-shadow(0 4px 8px rgba(0,0,0,.4));
+  transition:filter .3s;
+  position:relative;z-index:1;
+}
+.char:hover .char-img{filter:drop-shadow(0 12px 32px rgba(212,160,36,.15)) drop-shadow(0 4px 8px rgba(0,0,0,.4)) brightness(1.05)}
+
+/* Eye glow overlay — positioned over the jaguar's eyes */
+.eye-glow{
+  position:absolute;z-index:2;width:16px;height:10px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,255,120,.25),transparent 70%);
+  pointer-events:none;mix-blend-mode:screen;
+  transition:transform .12s ease-out;
+  animation:eyePulse 3s ease-in-out infinite alternate;
+}
+.eye-l{top:38%;left:33%}
+.eye-r{top:38%;left:54%}
+@keyframes eyePulse{0%{opacity:.4;transform:scale(1)}100%{opacity:.8;transform:scale(1.2)}}
+
+/* Blink overlay */
+.blink-overlay{
+  position:absolute;z-index:3;pointer-events:none;
+  width:20px;height:6px;border-radius:50%;
+  background:var(--obsidian);
+  transform:scaleY(0);transition:transform .08s;
+}
+.bl-l{top:38.5%;left:32%}
+.bl-r{top:38.5%;left:53%}
+.char.blink .blink-overlay{transform:scaleY(1)}
+
+/* Dynamic lighting overlay */
+.light-overlay{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(circle at var(--lx,50%) var(--ly,40%),rgba(255,255,255,.04),transparent 50%);
+  transition:background .2s;
+  border-radius:50%;
+}
+
+/* Ground reflection */
+.ground-reflect{
+  width:180px;height:30px;margin-top:-10px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(212,160,36,.08),transparent 70%);
+  border-radius:50%;
+  animation:reflectPulse 4s ease-in-out infinite;
+}
+@keyframes reflectPulse{0%,100%{opacity:.6;transform:scaleX(1)}50%{opacity:.8;transform:scaleX(1.05)}}
+
+/* ═══ BADGE ═══ */
+.badge{
+  display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:100px;
+  background:rgba(255,255,255,.02);border:1px solid rgba(212,160,36,.1);
+  margin-top:.5rem;
+}
+.badge img{height:20px;opacity:.4}
+.badge span{font-family:'Syne',sans-serif;font-size:.5rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:rgba(212,160,36,.3)}
+
+/* ═══ TAP HINT ═══ */
+.tap-hint{
+  font-family:'Syne',sans-serif;font-size:.55rem;font-weight:600;
+  letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.15);
+  margin-top:1rem;animation:hintPulse 2.5s ease-in-out infinite;
+}
+@keyframes hintPulse{0%,100%{opacity:.15}50%{opacity:.3}}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:400px){
+  .char{width:200px;height:200px}
+  .speech{max-width:220px;font-size:.78rem}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="atm">
+  <div class="atm-glow"></div>
+  <div class="fog fog-1"></div>
+  <div class="fog fog-2"></div>
+</div>
+
+<div class="stage">
+  <div class="title">
+    <h1>BALAM</h1>
+    <p>Jaguar Sagrado</p>
+  </div>
+
+  <div class="speech" id="speech">
+    <span id="speechText"></span><span class="speech-cursor" id="cursor"></span>
+  </div>
+
+  <div class="char" id="char">
+    <img src="balam-jaguar.png" alt="Balam — Jaguar Sagrado AXKAN" class="char-img">
+    <div class="eye-glow eye-l" id="eyeL"></div>
+    <div class="eye-glow eye-r" id="eyeR"></div>
+    <div class="blink-overlay bl-l"></div>
+    <div class="blink-overlay bl-r"></div>
+    <div class="light-overlay" id="lightOv"></div>
+  </div>
+
+  <div class="ground-reflect"></div>
+
+  <div class="badge">
+    <img src="../../assets/LOGO-03.png" alt="AXKAN">
+    <span>AXKAN Souvenirs</span>
+  </div>
+
+  <div class="tap-hint">Toca al jaguar</div>
+</div>
+
+<script>
+(()=>{
+  const char=document.getElementById('char');
+  const eyeL=document.getElementById('eyeL');
+  const eyeR=document.getElementById('eyeR');
+  const lightOv=document.getElementById('lightOv');
+  const speech=document.getElementById('speech');
+  const speechText=document.getElementById('speechText');
+  const cursor=document.getElementById('cursor');
+
+  // ── BLINK ──
+  function doBlink(){char.classList.add('blink');setTimeout(()=>char.classList.remove('blink'),100)}
+  setInterval(()=>{doBlink();if(Math.random()>.65)setTimeout(doBlink,160)},3000+Math.random()*2500);
+
+  // ── EYE TRACKING + DYNAMIC LIGHT ──
+  function track(x,y){
+    const r=char.getBoundingClientRect();
+    const cx=r.left+r.width/2, cy=r.top+r.height*.38;
+    const dx=Math.max(-4,Math.min(4,(x-cx)/50));
+    const dy=Math.max(-3,Math.min(3,(y-cy)/60));
+    eyeL.style.transform=`translate(${dx}px,${dy}px)`;
+    eyeR.style.transform=`translate(${dx}px,${dy}px)`;
+    const lx=50+(x-cx)/r.width*25;
+    const ly=40+(y-cy)/r.height*15;
+    lightOv.style.setProperty('--lx',lx+'%');
+    lightOv.style.setProperty('--ly',ly+'%');
+  }
+  document.addEventListener('mousemove',e=>track(e.clientX,e.clientY),{passive:true});
+  document.addEventListener('touchmove',e=>track(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+
+  // ── SPEECH ──
+  let busy=false;
+  function say(text,dur){
+    return new Promise(res=>{
+      if(busy)return res();
+      busy=true;speechText.textContent='';
+      speech.classList.add('show');cursor.style.display='inline-block';
+      let i=0;
+      function type(){
+        if(i<text.length){
+          speechText.textContent+=text[i];
+          const d='.!?'.includes(text[i])?180:text[i]===','?90:25;
+          i++;setTimeout(type,d);
+        }else{
+          cursor.style.display='none';
+          setTimeout(()=>{speech.classList.remove('show');busy=false;res()},dur||4000);
+        }
+      }
+      type();
+    });
+  }
+
+  // ── CLICK FACTS ──
+  const facts=[
+    'Los mayas creían que el jaguar cruzaba entre el mundo de los vivos y el inframundo. Soy el guardián de ambos.',
+    'Balam significa "jaguar" en maya. Los reyes llevaban mi piel como símbolo de poder divino.',
+    'En la mitología maya, soy el señor de la noche. Protejo el sol mientras viaja por el Xibalbá.',
+    'El trono del rey en Chichén Itzá tiene forma de jaguar rojo. Así de sagrado soy.',
+    'En Quintana Roo aún vivimos libres. La Reserva de Sian Ka\'an es mi territorio.',
+    'Los guerreros jaguar aztecas eran la élite. Solo los más valientes podían portar mi símbolo.',
+    'Cada souvenir AXKAN lleva un pedazo de esta tierra. Yo me aseguro de que sea auténtico.',
+    'Cancún significa "nido de serpientes" en maya. Pero aquí, el jaguar es el verdadero rey.',
+  ];
+  let fi=0;
+  char.addEventListener('click',()=>{
+    say(facts[fi],5000);
+    fi=(fi+1)%facts.length;
+  });
+
+  // ── FIREFLIES ──
+  const atm=document.querySelector('.atm');
+  for(let i=0;i<18;i++){
+    const f=document.createElement('div');
+    f.classList.add('firefly');
+    f.style.left=Math.random()*100+'%';
+    f.style.top=Math.random()*100+'%';
+    f.style.setProperty('--fx',(Math.random()*80-40)+'px');
+    f.style.setProperty('--fy',(Math.random()*-60-20)+'px');
+    f.style.setProperty('--fx2',(Math.random()*60-30)+'px');
+    f.style.setProperty('--fy2',(Math.random()*60-30)+'px');
+    f.style.animationDuration=(7+Math.random()*8)+'s';
+    f.style.animationDelay=(Math.random()*10)+'s';
+    f.style.width=(2+Math.random()*3)+'px';
+    f.style.height=f.style.width;
+    atm.appendChild(f);
+  }
+
+  // ── INTRO ──
+  setTimeout(()=>say('Soy Balam, el jaguar sagrado. Guardián de la selva maya y protector de estas tierras. Tócame.',5500),1200);
+})();
+</script>
+</body>
+</html>

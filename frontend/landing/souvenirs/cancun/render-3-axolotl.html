@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Render 3 — Kawaii Axolotl | AXKAN</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   FONT FACES
+   ============================================ */
+@font-face {
+  font-family: 'RL AQVA';
+  src: url('../../fonts/rl-aqva-black.otf') format('opentype');
+  font-weight: 900;
+  font-display: swap;
+}
+
+/* ============================================
+   CSS CUSTOM PROPERTIES
+   ============================================ */
+:root {
+  /* Body colors */
+  --axo-body-main: #ff8fab;
+  --axo-body-shadow: #ff6b8a;
+  --axo-body-highlight: #ffb3c6;
+  --axo-body-deep: #e8637a;
+  --axo-belly: #ffe0e6;
+  --axo-belly-light: #fff0f3;
+
+  /* Gill colors */
+  --axo-gill-base: #ff4d6d;
+  --axo-gill-tip: #ff1744;
+  --axo-gill-soft: #ff8fab;
+  --axo-gill-bright: #ff6090;
+
+  /* Eye colors */
+  --axo-iris: #2d1b69;
+  --axo-iris-light: #4a2d8f;
+  --axo-pupil: #0d0820;
+  --axo-eye-white: #ffffff;
+  --axo-eye-sparkle: #ffffff;
+
+  /* Blush */
+  --axo-blush: #ff6b8a;
+
+  /* Aztec pattern */
+  --axo-pattern: rgba(200, 80, 120, 0.12);
+  --axo-pattern-strong: rgba(180, 60, 100, 0.18);
+
+  /* Background */
+  --bg-top: #f0e6ff;
+  --bg-bottom: #e8f4fd;
+  --bg-mid: #edeaff;
+  --caustic-1: rgba(173, 216, 255, 0.15);
+  --caustic-2: rgba(200, 180, 255, 0.12);
+
+  /* AXKAN brand */
+  --rosa-mexicano: #e72a88;
+  --verde-selva: #8ab73b;
+  --naranja-calido: #f39223;
+  --turquesa-caribe: #09adc2;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: 'DM Sans', sans-serif;
+}
+
+body {
+  background: linear-gradient(175deg, var(--bg-top) 0%, var(--bg-mid) 40%, var(--bg-bottom) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* ============================================
+   CAUSTIC LIGHT OVERLAY
+   ============================================ */
+.caustic-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.caustic-overlay::before,
+.caustic-overlay::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background:
+    radial-gradient(ellipse 120px 80px at 20% 30%, var(--caustic-1) 0%, transparent 70%),
+    radial-gradient(ellipse 90px 140px at 60% 20%, var(--caustic-2) 0%, transparent 70%),
+    radial-gradient(ellipse 150px 60px at 80% 60%, var(--caustic-1) 0%, transparent 70%),
+    radial-gradient(ellipse 70px 100px at 30% 70%, var(--caustic-2) 0%, transparent 70%),
+    radial-gradient(ellipse 110px 90px at 50% 50%, var(--caustic-1) 0%, transparent 70%),
+    radial-gradient(ellipse 80px 120px at 10% 80%, var(--caustic-2) 0%, transparent 70%),
+    radial-gradient(ellipse 130px 70px at 70% 40%, var(--caustic-1) 0%, transparent 70%),
+    radial-gradient(ellipse 60px 110px at 90% 10%, var(--caustic-2) 0%, transparent 70%);
+  animation: caustic-drift 18s ease-in-out infinite alternate;
+}
+
+.caustic-overlay::after {
+  background:
+    radial-gradient(ellipse 100px 60px at 40% 40%, var(--caustic-2) 0%, transparent 70%),
+    radial-gradient(ellipse 80px 130px at 70% 70%, var(--caustic-1) 0%, transparent 70%),
+    radial-gradient(ellipse 140px 80px at 15% 50%, var(--caustic-2) 0%, transparent 70%),
+    radial-gradient(ellipse 60px 90px at 85% 30%, var(--caustic-1) 0%, transparent 70%),
+    radial-gradient(ellipse 110px 100px at 55% 80%, var(--caustic-2) 0%, transparent 70%),
+    radial-gradient(ellipse 90px 70px at 25% 15%, var(--caustic-1) 0%, transparent 70%);
+  animation: caustic-drift-2 22s ease-in-out infinite alternate;
+}
+
+@keyframes caustic-drift {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  33% { transform: translate(30px, -20px) rotate(3deg) scale(1.05); }
+  66% { transform: translate(-20px, 15px) rotate(-2deg) scale(0.97); }
+  100% { transform: translate(10px, -10px) rotate(1deg) scale(1.02); }
+}
+
+@keyframes caustic-drift-2 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1.02); }
+  50% { transform: translate(-25px, 20px) rotate(-3deg) scale(0.98); }
+  100% { transform: translate(15px, -15px) rotate(2deg) scale(1.04); }
+}
+
+/* ============================================
+   HEADER TYPOGRAPHY
+   ============================================ */
+.page-header {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 3rem 1rem 1rem;
+}
+
+.page-header h1 {
+  font-family: 'RL AQVA', 'Syne', sans-serif;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  background: linear-gradient(135deg, var(--rosa-mexicano) 0%, var(--axo-gill-tip) 40%, var(--axo-body-main) 70%, var(--turquesa-caribe) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(231, 42, 136, 0.2));
+  line-height: 1.1;
+}
+
+.page-header .subtitle {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--axo-iris);
+  opacity: 0.6;
+  margin-top: 0.3rem;
+}
+
+/* ============================================
+   SCENE CONTAINER
+   ============================================ */
+.scene-container {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 700px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.scene-container svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ============================================
+   AXOLOTL FLOATING BOB
+   ============================================ */
+.axolotl-group {
+  animation: float-bob 4s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes float-bob {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ============================================
+   BREATHING ANIMATION
+   ============================================ */
+.axolotl-body-group {
+  animation: breathe 3.5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scaleX(1) scaleY(1); }
+  50% { transform: scaleX(1.015) scaleY(1.01); }
+}
+
+/* ============================================
+   GILL ANIMATIONS — 6 branches, each unique
+   ============================================ */
+.gill-branch-l1 { animation: gill-wave-1 3.2s ease-in-out infinite; transform-origin: right center; }
+.gill-branch-l2 { animation: gill-wave-2 2.8s ease-in-out infinite 0.3s; transform-origin: right center; }
+.gill-branch-l3 { animation: gill-wave-3 3.6s ease-in-out infinite 0.6s; transform-origin: right center; }
+.gill-branch-r1 { animation: gill-wave-1r 3.0s ease-in-out infinite 0.15s; transform-origin: left center; }
+.gill-branch-r2 { animation: gill-wave-2r 3.4s ease-in-out infinite 0.45s; transform-origin: left center; }
+.gill-branch-r3 { animation: gill-wave-3r 2.9s ease-in-out infinite 0.75s; transform-origin: left center; }
+
+@keyframes gill-wave-1 {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  30% { transform: rotate(-4deg) translateX(-1px); }
+  70% { transform: rotate(3deg) translateX(1px); }
+}
+@keyframes gill-wave-2 {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  40% { transform: rotate(-5deg) translateY(-1.5px); }
+  80% { transform: rotate(2deg) translateY(1px); }
+}
+@keyframes gill-wave-3 {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(4deg); }
+  75% { transform: rotate(-3deg); }
+}
+@keyframes gill-wave-1r {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  35% { transform: rotate(4deg) translateX(1px); }
+  65% { transform: rotate(-3deg) translateX(-1px); }
+}
+@keyframes gill-wave-2r {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  45% { transform: rotate(5deg) translateY(-1px); }
+  85% { transform: rotate(-2deg) translateY(1.5px); }
+}
+@keyframes gill-wave-3r {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-4deg); }
+  70% { transform: rotate(3deg); }
+}
+
+/* Feathery sub-branches */
+.gill-feather {
+  animation: feather-sway 2.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+.gill-feather:nth-child(2) { animation-delay: 0.2s; animation-duration: 2.8s; }
+.gill-feather:nth-child(3) { animation-delay: 0.5s; animation-duration: 2.3s; }
+.gill-feather:nth-child(4) { animation-delay: 0.7s; animation-duration: 3.0s; }
+
+@keyframes feather-sway {
+  0%, 100% { transform: rotate(0deg) scaleY(1); }
+  50% { transform: rotate(3deg) scaleY(1.03); }
+}
+
+/* ============================================
+   TAIL UNDULATION
+   ============================================ */
+.axolotl-tail {
+  animation: tail-undulate 2.8s ease-in-out infinite;
+  transform-origin: left center;
+}
+
+@keyframes tail-undulate {
+  0%, 100% { transform: rotate(0deg) scaleX(1); }
+  25% { transform: rotate(2deg) scaleX(1.01); }
+  50% { transform: rotate(0deg) scaleX(0.99); }
+  75% { transform: rotate(-2deg) scaleX(1.01); }
+}
+
+/* Tail fin ripple */
+.tail-fin-edge {
+  animation: fin-ripple 1.8s ease-in-out infinite;
+  transform-origin: left center;
+}
+
+@keyframes fin-ripple {
+  0%, 100% { transform: scaleY(1) translateY(0); }
+  33% { transform: scaleY(1.06) translateY(-0.5px); }
+  66% { transform: scaleY(0.95) translateY(0.5px); }
+}
+
+/* ============================================
+   EYE BLINK
+   ============================================ */
+.eye-group {
+  animation: eye-blink 5s ease-in-out infinite;
+}
+
+@keyframes eye-blink {
+  0%, 42%, 46%, 100% { transform: scaleY(1); }
+  44% { transform: scaleY(0.08); }
+}
+
+/* Eye follow — controlled by JS */
+.eye-iris-group {
+  transition: transform 0.15s ease-out;
+}
+
+/* ============================================
+   SPARKLE CATCHLIGHTS
+   ============================================ */
+.eye-sparkle-star {
+  animation: sparkle-rotate 4s linear infinite;
+  transform-origin: center center;
+}
+
+.eye-sparkle-pulse {
+  animation: sparkle-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sparkle-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sparkle-pulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* ============================================
+   BLUSH
+   ============================================ */
+.blush-circle {
+  animation: blush-pulse 3s ease-in-out infinite;
+}
+
+@keyframes blush-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.5; }
+}
+
+/* ============================================
+   HAPPY WIGGLE (triggered by click)
+   ============================================ */
+.axolotl-group.wiggle {
+  animation: happy-wiggle 0.6s ease-in-out;
+}
+
+@keyframes happy-wiggle {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  15% { transform: translateY(-5px) rotate(-3deg); }
+  30% { transform: translateY(2px) rotate(3deg); }
+  45% { transform: translateY(-3px) rotate(-2deg); }
+  60% { transform: translateY(1px) rotate(2deg); }
+  80% { transform: translateY(-1px) rotate(-1deg); }
+}
+
+/* ============================================
+   SPEECH BUBBLE
+   ============================================ */
+.speech-bubble {
+  position: absolute;
+  bottom: calc(100% - 40px);
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  background: white;
+  border-radius: 18px;
+  padding: 14px 20px;
+  max-width: 280px;
+  box-shadow: 0 4px 20px rgba(45, 27, 105, 0.12), 0 1px 4px rgba(0,0,0,0.06);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--axo-iris);
+  line-height: 1.5;
+  z-index: 100;
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.speech-bubble.visible {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid white;
+}
+
+.speech-bubble .fact-label {
+  font-weight: 700;
+  color: var(--rosa-mexicano);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* ============================================
+   AMBIENT PARTICLES — BUBBLES
+   ============================================ */
+.bubble-particle {
+  position: fixed;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.7), rgba(173, 216, 255, 0.2));
+  border: 1px solid rgba(255,255,255,0.3);
+  pointer-events: none;
+  z-index: 2;
+  animation: bubble-rise linear infinite;
+}
+
+@keyframes bubble-rise {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.5; }
+  100% {
+    transform: translateY(-100vh) translateX(var(--drift)) scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   AMBIENT PARTICLES — HEARTS
+   ============================================ */
+.heart-particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  animation: heart-float linear infinite;
+  color: var(--axo-body-main);
+  font-size: 14px;
+}
+
+@keyframes heart-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(0.5) rotate(0deg);
+    opacity: 0;
+  }
+  10% { opacity: 0.6; }
+  50% { transform: translateY(-50vh) translateX(var(--drift)) scale(1) rotate(15deg); opacity: 0.4; }
+  100% {
+    transform: translateY(-100vh) translateX(calc(var(--drift) * 1.5)) scale(0.3) rotate(-10deg);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   AZTEC PATTERN OVERLAY (on body)
+   ============================================ */
+.aztec-pattern {
+  opacity: 0.1;
+  mix-blend-mode: multiply;
+}
+
+/* ============================================
+   WATER PLANT DECORATIONS
+   ============================================ */
+.water-plant {
+  animation: plant-sway 5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.water-plant:nth-child(2) { animation-duration: 6s; animation-delay: 1s; }
+.water-plant:nth-child(3) { animation-duration: 4.5s; animation-delay: 0.5s; }
+
+@keyframes plant-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* ============================================
+   FOOTER / BRAND
+   ============================================ */
+.brand-footer {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 1rem 1rem 2rem;
+}
+
+.brand-footer .brand-tag {
+  font-family: 'RL AQVA', 'Syne', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  color: var(--rosa-mexicano);
+  opacity: 0.5;
+}
+
+.brand-footer .render-info {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  color: var(--axo-iris);
+  opacity: 0.3;
+  margin-top: 0.3rem;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 600px) {
+  .scene-container {
+    max-width: 95vw;
+  }
+  .speech-bubble {
+    max-width: 220px;
+    font-size: 0.78rem;
+    padding: 10px 14px;
+  }
+}
+
+/* ============================================
+   LIMB DETAIL — tiny fingers
+   ============================================ */
+.limb-finger {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ============================================
+   ADDITIONAL GRADIENT SHADING
+   ============================================ */
+.body-3d-shadow {
+  mix-blend-mode: multiply;
+  opacity: 0.15;
+}
+
+.body-3d-highlight {
+  mix-blend-mode: screen;
+  opacity: 0.25;
+}
+
+/* ============================================
+   SMILE ANIMATION
+   ============================================ */
+.mouth-smile {
+  animation: smile-subtle 4s ease-in-out infinite;
+}
+
+@keyframes smile-subtle {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.05); }
+}
+
+/* ============================================
+   HOVER GLOW
+   ============================================ */
+.scene-container:hover .axolotl-glow {
+  opacity: 0.3;
+  transition: opacity 0.5s ease;
+}
+
+.axolotl-glow {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+</style>
+</head>
+<body>
+
+<div class="caustic-overlay"></div>
+
+<!-- HEADER -->
+<header class="page-header">
+  <h1>XOLOTL</h1>
+  <p class="subtitle">Guardian del Agua</p>
+</header>
+
+<!-- SCENE -->
+<div class="scene-container" id="sceneContainer">
+  <div class="speech-bubble" id="speechBubble">
+    <span class="fact-label">Dato Axolotl</span>
+    <span id="factText"></span>
+  </div>
+
+  <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Body gradient -->
+      <radialGradient id="bodyGrad" cx="45%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="var(--axo-body-highlight)" />
+        <stop offset="40%" stop-color="var(--axo-body-main)" />
+        <stop offset="85%" stop-color="var(--axo-body-shadow)" />
+        <stop offset="100%" stop-color="var(--axo-body-deep)" />
+      </radialGradient>
+
+      <!-- Belly gradient -->
+      <radialGradient id="bellyGrad" cx="50%" cy="45%" r="50%">
+        <stop offset="0%" stop-color="var(--axo-belly-light)" />
+        <stop offset="100%" stop-color="var(--axo-belly)" />
+      </radialGradient>
+
+      <!-- Gill gradient left -->
+      <linearGradient id="gillGradL" x1="100%" y1="0%" x2="0%" y2="50%">
+        <stop offset="0%" stop-color="var(--axo-gill-soft)" />
+        <stop offset="40%" stop-color="var(--axo-gill-base)" />
+        <stop offset="100%" stop-color="var(--axo-gill-tip)" />
+      </linearGradient>
+
+      <!-- Gill gradient right -->
+      <linearGradient id="gillGradR" x1="0%" y1="0%" x2="100%" y2="50%">
+        <stop offset="0%" stop-color="var(--axo-gill-soft)" />
+        <stop offset="40%" stop-color="var(--axo-gill-base)" />
+        <stop offset="100%" stop-color="var(--axo-gill-tip)" />
+      </linearGradient>
+
+      <!-- Gill feather gradient -->
+      <linearGradient id="gillFeatherGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="var(--axo-gill-base)" stop-opacity="0.8" />
+        <stop offset="100%" stop-color="var(--axo-gill-tip)" stop-opacity="0.4" />
+      </linearGradient>
+
+      <!-- Eye iris gradient -->
+      <radialGradient id="irisGrad" cx="40%" cy="35%" r="55%">
+        <stop offset="0%" stop-color="var(--axo-iris-light)" />
+        <stop offset="60%" stop-color="var(--axo-iris)" />
+        <stop offset="100%" stop-color="var(--axo-pupil)" />
+      </radialGradient>
+
+      <!-- Tail fin gradient -->
+      <linearGradient id="tailFinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="var(--axo-body-main)" stop-opacity="0.6" />
+        <stop offset="100%" stop-color="var(--axo-body-shadow)" stop-opacity="0.3" />
+      </linearGradient>
+
+      <!-- Glow filter -->
+      <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="8" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+
+      <!-- Shadow filter -->
+      <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="130%">
+        <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(45,27,105,0.1)" />
+      </filter>
+
+      <!-- Blush filter -->
+      <filter id="blushFilter">
+        <feGaussianBlur stdDeviation="4" />
+      </filter>
+
+      <!-- Body highlight -->
+      <radialGradient id="bodyHighlight" cx="35%" cy="30%" r="40%">
+        <stop offset="0%" stop-color="white" stop-opacity="0.3" />
+        <stop offset="100%" stop-color="white" stop-opacity="0" />
+      </radialGradient>
+
+      <!-- Water caustic pattern for background -->
+      <pattern id="causticPattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+        <ellipse cx="30" cy="40" rx="25" ry="15" fill="rgba(173,216,255,0.08)" />
+        <ellipse cx="90" cy="20" rx="20" ry="30" fill="rgba(200,180,255,0.06)" />
+        <ellipse cx="60" cy="90" rx="30" ry="18" fill="rgba(173,216,255,0.07)" />
+        <ellipse cx="100" cy="80" rx="15" ry="22" fill="rgba(200,180,255,0.05)" />
+      </pattern>
+
+      <!-- Aztec step pattern -->
+      <pattern id="aztecSteps" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+        <rect x="0" y="0" width="8" height="8" fill="var(--axo-pattern)" />
+        <rect x="8" y="8" width="8" height="8" fill="var(--axo-pattern)" />
+        <rect x="16" y="16" width="8" height="8" fill="var(--axo-pattern)" />
+        <rect x="4" y="12" width="4" height="4" fill="var(--axo-pattern-strong)" />
+        <rect x="16" y="4" width="4" height="4" fill="var(--axo-pattern-strong)" />
+      </pattern>
+
+      <clipPath id="bodyClip">
+        <ellipse cx="250" cy="270" rx="75" ry="55" />
+      </clipPath>
+    </defs>
+
+    <!-- Background caustic rect -->
+    <rect width="500" height="500" fill="url(#causticPattern)" opacity="0.5">
+      <animateTransform attributeName="transform" type="translate" values="0,0;10,-8;-5,5;0,0" dur="15s" repeatCount="indefinite" />
+    </rect>
+
+    <!-- Water plants -->
+    <g class="water-plant" opacity="0.15">
+      <path d="M80 500 Q75 430 90 380 Q95 350 85 310" stroke="#8ab73b" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M85 400 Q100 380 95 350" stroke="#8ab73b" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <ellipse cx="88" cy="308" rx="8" ry="15" fill="#8ab73b" opacity="0.4" transform="rotate(-10 88 308)"/>
+    </g>
+    <g class="water-plant" opacity="0.12">
+      <path d="M420 500 Q425 440 410 390 Q405 360 415 320" stroke="#09adc2" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M415 420 Q400 400 408 370" stroke="#09adc2" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    </g>
+    <g class="water-plant" opacity="0.1">
+      <path d="M350 500 Q355 460 345 420 Q340 395 350 370" stroke="#8ab73b" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- ======================== -->
+    <!-- AXOLOTL CHARACTER        -->
+    <!-- ======================== -->
+    <g class="axolotl-group" id="axolotlGroup" filter="url(#dropShadow)">
+
+      <!-- Underwater glow -->
+      <ellipse class="axolotl-glow" cx="250" cy="290" rx="110" ry="70" fill="var(--axo-body-main)" opacity="0" filter="url(#softGlow)" />
+
+      <!-- ======== TAIL ======== -->
+      <g class="axolotl-tail">
+        <!-- Main tail shape -->
+        <path d="M325 270 Q360 265 390 275 Q410 282 420 270 Q415 295 395 300 Q370 305 340 290 Z"
+              fill="url(#bodyGrad)" stroke="var(--axo-body-deep)" stroke-width="0.5" />
+        <!-- Tail fin edge (translucent) -->
+        <g class="tail-fin-edge">
+          <path d="M370 263 Q385 258 400 262 Q415 258 425 265 Q418 268 405 272 Q390 275 375 270 Z"
+                fill="url(#tailFinGrad)" />
+          <path d="M395 295 Q410 300 420 295 Q418 305 405 308 Q395 305 390 298 Z"
+                fill="url(#tailFinGrad)" />
+        </g>
+        <!-- Tail spots -->
+        <circle cx="365" cy="278" r="2" fill="var(--axo-pattern-strong)" opacity="0.3" />
+        <circle cx="385" cy="283" r="1.5" fill="var(--axo-pattern-strong)" opacity="0.25" />
+        <circle cx="400" cy="276" r="1.8" fill="var(--axo-pattern-strong)" opacity="0.2" />
+      </g>
+
+      <!-- ======== BODY ======== -->
+      <g class="axolotl-body-group">
+
+        <!-- Body shadow on ground -->
+        <ellipse cx="250" cy="310" rx="65" ry="12" fill="var(--axo-iris)" opacity="0.05" />
+
+        <!-- Main body -->
+        <ellipse cx="250" cy="270" rx="75" ry="55" fill="url(#bodyGrad)" />
+
+        <!-- Belly -->
+        <ellipse cx="250" cy="278" rx="50" ry="35" fill="url(#bellyGrad)" opacity="0.6" />
+
+        <!-- 3D highlight -->
+        <ellipse cx="235" cy="252" rx="40" ry="25" fill="url(#bodyHighlight)" />
+
+        <!-- Aztec pattern overlay -->
+        <g clip-path="url(#bodyClip)" class="aztec-pattern">
+          <rect x="175" y="215" width="150" height="110" fill="url(#aztecSteps)" />
+          <!-- Xolotl spiral motifs -->
+          <path d="M230 260 Q235 255 240 258 Q243 262 238 265 Q233 263 230 260Z" fill="var(--axo-pattern-strong)" opacity="0.5"/>
+          <path d="M260 275 Q265 270 270 273 Q273 277 268 280 Q263 278 260 275Z" fill="var(--axo-pattern-strong)" opacity="0.4"/>
+          <!-- Small diamond motifs -->
+          <polygon points="245,240 248,243 245,246 242,243" fill="var(--axo-pattern-strong)" opacity="0.3"/>
+          <polygon points="265,250 268,253 265,256 262,253" fill="var(--axo-pattern-strong)" opacity="0.25"/>
+          <polygon points="235,285 238,288 235,291 232,288" fill="var(--axo-pattern-strong)" opacity="0.3"/>
+        </g>
+
+        <!-- Body speckles (natural axolotl markings) -->
+        <circle cx="220" cy="255" r="1.2" fill="var(--axo-body-deep)" opacity="0.15" />
+        <circle cx="275" cy="260" r="1" fill="var(--axo-body-deep)" opacity="0.12" />
+        <circle cx="240" cy="290" r="0.9" fill="var(--axo-body-deep)" opacity="0.1" />
+        <circle cx="260" cy="245" r="1.1" fill="var(--axo-body-deep)" opacity="0.13" />
+        <circle cx="230" cy="275" r="0.8" fill="var(--axo-body-deep)" opacity="0.1" />
+
+        <!-- ======== FRONT LEFT LEG (4 fingers) ======== -->
+        <g transform="translate(190, 295)">
+          <path d="M0 0 Q-15 10 -20 25 Q-22 32 -18 35" fill="url(#bodyGrad)" stroke="var(--axo-body-deep)" stroke-width="0.5" />
+          <!-- 4 tiny fingers -->
+          <g class="limb-finger">
+            <line x1="-18" y1="35" x2="-25" y2="38" stroke="var(--axo-body-shadow)" stroke-width="2" stroke-linecap="round" />
+            <line x1="-18" y1="35" x2="-22" y2="42" stroke="var(--axo-body-shadow)" stroke-width="2" stroke-linecap="round" />
+            <line x1="-18" y1="35" x2="-16" y2="43" stroke="var(--axo-body-shadow)" stroke-width="2" stroke-linecap="round" />
+            <line x1="-18" y1="35" x2="-12" y2="40" stroke="var(--axo-body-shadow)" stroke-width="2" stroke-linecap="round" />
+            <!-- Finger tips -->
+            <circle cx="-25" cy="38" r="1.2" fill="var(--axo-body-highlight)" />
+            <circle cx="-22" cy="42" r="1.2" fill="var(--axo-body-highlight)" />
+            <circle cx="-16" cy="43" r="1.2" fill="var(--axo-body-highlight)" />
+            <circle cx="-12" cy="40" r="1.2" fill="var(--axo-body-highlight)" />
+          </g>
+        </g>
+
+        <!-- ======== FRONT RIGHT LEG (4 fingers) ======== -->
+        <g transform="translate(310, 295)">
+          <path d="M0 0 Q15 10 20 25 Q22 32 18 35" fill="url(#bodyGrad)" stroke="var(--axo-body-deep)" stroke-width="0.5" />
+          <g class="limb-finger">
+            <line x1="18" y1="35" x2="25" y2="38" stroke="var(--axo-body-shadow)" stroke-width="2" stroke-linecap="round" />
+            <line x1="18" y1="35" x2="22" y2="42" stroke="var(--axo-body-shadow)" stroke-width="2" stroke-linecap="round" />
+            <line x1="18" y1="35" x2="16" y2="43" stroke="var(--axo-body-shadow)" stroke-width="2" stroke-linecap="round" />
+            <line x1="18" y1="35" x2="12" y2="40" stroke="var(--axo-body-shadow)" stroke-width="2" stroke-linecap="round" />
+            <circle cx="25" cy="38" r="1.2" fill="var(--axo-body-highlight)" />
+            <circle cx="22" cy="42" r="1.2" fill="var(--axo-body-highlight)" />
+            <circle cx="16" cy="43" r="1.2" fill="var(--axo-body-highlight)" />
+            <circle cx="12" cy="40" r="1.2" fill="var(--axo-body-highlight)" />
+          </g>
+        </g>
+
+        <!-- ======== BACK LEFT LEG (5 fingers) ======== -->
+        <g transform="translate(195, 305)">
+          <path d="M0 0 Q-18 15 -22 30 Q-24 38 -20 42" fill="url(#bodyGrad)" stroke="var(--axo-body-deep)" stroke-width="0.5" />
+          <g class="limb-finger">
+            <line x1="-20" y1="42" x2="-30" y2="44" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="-20" y1="42" x2="-27" y2="49" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="-20" y1="42" x2="-22" y2="52" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="-20" y1="42" x2="-16" y2="51" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="-20" y1="42" x2="-12" y2="47" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <circle cx="-30" cy="44" r="1" fill="var(--axo-body-highlight)" />
+            <circle cx="-27" cy="49" r="1" fill="var(--axo-body-highlight)" />
+            <circle cx="-22" cy="52" r="1" fill="var(--axo-body-highlight)" />
+            <circle cx="-16" cy="51" r="1" fill="var(--axo-body-highlight)" />
+            <circle cx="-12" cy="47" r="1" fill="var(--axo-body-highlight)" />
+          </g>
+        </g>
+
+        <!-- ======== BACK RIGHT LEG (5 fingers) ======== -->
+        <g transform="translate(305, 305)">
+          <path d="M0 0 Q18 15 22 30 Q24 38 20 42" fill="url(#bodyGrad)" stroke="var(--axo-body-deep)" stroke-width="0.5" />
+          <g class="limb-finger">
+            <line x1="20" y1="42" x2="30" y2="44" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="20" y1="42" x2="27" y2="49" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="20" y1="42" x2="22" y2="52" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="20" y1="42" x2="16" y2="51" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="20" y1="42" x2="12" y2="47" stroke="var(--axo-body-shadow)" stroke-width="1.8" stroke-linecap="round" />
+            <circle cx="30" cy="44" r="1" fill="var(--axo-body-highlight)" />
+            <circle cx="27" cy="49" r="1" fill="var(--axo-body-highlight)" />
+            <circle cx="22" cy="52" r="1" fill="var(--axo-body-highlight)" />
+            <circle cx="16" cy="51" r="1" fill="var(--axo-body-highlight)" />
+            <circle cx="12" cy="47" r="1" fill="var(--axo-body-highlight)" />
+          </g>
+        </g>
+
+      </g> <!-- end body group -->
+
+      <!-- ======== HEAD ======== -->
+      <g>
+        <!-- Head shape (wide, flat — characteristic axolotl) -->
+        <ellipse cx="250" cy="235" rx="60" ry="42" fill="url(#bodyGrad)" />
+        <!-- Head highlight -->
+        <ellipse cx="240" cy="222" rx="30" ry="18" fill="url(#bodyHighlight)" />
+        <!-- Head belly-tone underside -->
+        <ellipse cx="250" cy="248" rx="35" ry="15" fill="url(#bellyGrad)" opacity="0.4" />
+
+        <!-- Nostrils -->
+        <circle cx="237" cy="222" r="1.2" fill="var(--axo-body-deep)" opacity="0.2" />
+        <circle cx="263" cy="222" r="1.2" fill="var(--axo-body-deep)" opacity="0.2" />
+
+        <!-- ======== SMILE ======== -->
+        <g class="mouth-smile" transform="translate(250, 248)">
+          <path d="M-12 0 Q-6 8 0 8 Q6 8 12 0" fill="none" stroke="var(--axo-body-deep)" stroke-width="1.5" stroke-linecap="round" opacity="0.4" />
+          <!-- Tiny tongue hint -->
+          <ellipse cx="0" cy="6" rx="3" ry="1.5" fill="#ff8fab" opacity="0.3" />
+        </g>
+
+        <!-- ======== BLUSH CHEEKS ======== -->
+        <circle class="blush-circle" cx="215" cy="240" r="10" fill="var(--axo-blush)" filter="url(#blushFilter)" opacity="0.35" />
+        <circle class="blush-circle" cx="285" cy="240" r="10" fill="var(--axo-blush)" filter="url(#blushFilter)" opacity="0.35" />
+
+        <!-- ======== LEFT EYE ======== -->
+        <g class="eye-group" transform="translate(232, 230)" style="transform-origin: 232px 230px;">
+          <!-- Eye white -->
+          <ellipse cx="0" cy="0" rx="14" ry="15" fill="var(--axo-eye-white)" />
+          <ellipse cx="0" cy="0" rx="14" ry="15" fill="none" stroke="var(--axo-body-deep)" stroke-width="0.3" opacity="0.3" />
+
+          <!-- Iris group (follows cursor) -->
+          <g class="eye-iris-group" id="leftIris">
+            <!-- Iris -->
+            <circle cx="0" cy="1" r="10" fill="url(#irisGrad)" />
+            <!-- Pupil -->
+            <circle cx="0" cy="1" r="5.5" fill="var(--axo-pupil)" />
+
+            <!-- Specular highlights -->
+            <circle cx="-3" cy="-3" r="3.5" fill="white" opacity="0.9" />
+            <circle cx="3" cy="3" r="1.8" fill="white" opacity="0.6" />
+
+            <!-- Star-shaped catchlight -->
+            <g class="eye-sparkle-star" transform="translate(-3, -3)" style="transform-origin: -3px -3px;">
+              <line x1="0" y1="-2" x2="0" y2="2" stroke="white" stroke-width="0.8" opacity="0.7" />
+              <line x1="-2" y1="0" x2="2" y2="0" stroke="white" stroke-width="0.8" opacity="0.7" />
+              <line x1="-1.4" y1="-1.4" x2="1.4" y2="1.4" stroke="white" stroke-width="0.5" opacity="0.5" />
+              <line x1="-1.4" y1="1.4" x2="1.4" y2="-1.4" stroke="white" stroke-width="0.5" opacity="0.5" />
+            </g>
+
+            <!-- Extra sparkle dot -->
+            <circle class="eye-sparkle-pulse" cx="4" cy="-4" r="1" fill="white" opacity="0.8" />
+          </g>
+        </g>
+
+        <!-- ======== RIGHT EYE ======== -->
+        <g class="eye-group" transform="translate(268, 230)" style="transform-origin: 268px 230px;">
+          <ellipse cx="0" cy="0" rx="14" ry="15" fill="var(--axo-eye-white)" />
+          <ellipse cx="0" cy="0" rx="14" ry="15" fill="none" stroke="var(--axo-body-deep)" stroke-width="0.3" opacity="0.3" />
+
+          <g class="eye-iris-group" id="rightIris">
+            <circle cx="0" cy="1" r="10" fill="url(#irisGrad)" />
+            <circle cx="0" cy="1" r="5.5" fill="var(--axo-pupil)" />
+            <circle cx="-3" cy="-3" r="3.5" fill="white" opacity="0.9" />
+            <circle cx="3" cy="3" r="1.8" fill="white" opacity="0.6" />
+            <g class="eye-sparkle-star" transform="translate(-3, -3)" style="transform-origin: -3px -3px;">
+              <line x1="0" y1="-2" x2="0" y2="2" stroke="white" stroke-width="0.8" opacity="0.7" />
+              <line x1="-2" y1="0" x2="2" y2="0" stroke="white" stroke-width="0.8" opacity="0.7" />
+              <line x1="-1.4" y1="-1.4" x2="1.4" y2="1.4" stroke="white" stroke-width="0.5" opacity="0.5" />
+              <line x1="-1.4" y1="1.4" x2="1.4" y2="-1.4" stroke="white" stroke-width="0.5" opacity="0.5" />
+            </g>
+            <circle class="eye-sparkle-pulse" cx="4" cy="-4" r="1" fill="white" opacity="0.8" />
+          </g>
+        </g>
+
+        <!-- ======== LEFT GILLS (3 branches) ======== -->
+        <g transform="translate(195, 210)">
+          <!-- Branch 1 — top, pointing up-left -->
+          <g class="gill-branch-l1">
+            <path d="M0 0 Q-20 -25 -35 -45" stroke="url(#gillGradL)" stroke-width="4.5" fill="none" stroke-linecap="round" />
+            <path d="M0 0 Q-22 -22 -35 -45" stroke="var(--axo-gill-base)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.5" />
+            <!-- Feathery sub-branches -->
+            <g class="gill-feather">
+              <path d="M-10 -12 Q-18 -18 -22 -14" stroke="url(#gillFeatherGrad)" stroke-width="2" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M-18 -22 Q-28 -26 -32 -22" stroke="url(#gillFeatherGrad)" stroke-width="1.8" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M-25 -32 Q-34 -38 -38 -34" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M-15 -18 Q-12 -28 -18 -30" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <!-- Gill tip glow -->
+            <circle cx="-35" cy="-45" r="3" fill="var(--axo-gill-tip)" opacity="0.4" filter="url(#blushFilter)" />
+          </g>
+
+          <!-- Branch 2 — middle, pointing left -->
+          <g class="gill-branch-l2">
+            <path d="M-2 8 Q-30 -5 -50 -8" stroke="url(#gillGradL)" stroke-width="4" fill="none" stroke-linecap="round" />
+            <path d="M-2 8 Q-28 -3 -50 -8" stroke="var(--axo-gill-base)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4" />
+            <g class="gill-feather">
+              <path d="M-15 2 Q-22 -5 -26 0" stroke="url(#gillFeatherGrad)" stroke-width="2" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M-28 -2 Q-35 -10 -40 -4" stroke="url(#gillFeatherGrad)" stroke-width="1.8" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M-38 -5 Q-44 -14 -48 -8" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M-20 0 Q-25 8 -30 5" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <circle cx="-50" cy="-8" r="2.5" fill="var(--axo-gill-tip)" opacity="0.35" filter="url(#blushFilter)" />
+          </g>
+
+          <!-- Branch 3 — bottom, pointing down-left -->
+          <g class="gill-branch-l3">
+            <path d="M-3 15 Q-25 20 -40 30" stroke="url(#gillGradL)" stroke-width="3.5" fill="none" stroke-linecap="round" />
+            <path d="M-3 15 Q-23 22 -40 30" stroke="var(--axo-gill-base)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.4" />
+            <g class="gill-feather">
+              <path d="M-12 18 Q-18 12 -22 16" stroke="url(#gillFeatherGrad)" stroke-width="1.8" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M-22 22 Q-30 18 -34 22" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M-30 26 Q-36 20 -40 24" stroke="url(#gillFeatherGrad)" stroke-width="1.3" fill="none" stroke-linecap="round" />
+            </g>
+            <circle cx="-40" cy="30" r="2" fill="var(--axo-gill-tip)" opacity="0.3" filter="url(#blushFilter)" />
+          </g>
+        </g>
+
+        <!-- ======== RIGHT GILLS (3 branches) ======== -->
+        <g transform="translate(305, 210)">
+          <!-- Branch 1 — top -->
+          <g class="gill-branch-r1">
+            <path d="M0 0 Q20 -25 35 -45" stroke="url(#gillGradR)" stroke-width="4.5" fill="none" stroke-linecap="round" />
+            <path d="M0 0 Q22 -22 35 -45" stroke="var(--axo-gill-base)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.5" />
+            <g class="gill-feather">
+              <path d="M10 -12 Q18 -18 22 -14" stroke="url(#gillFeatherGrad)" stroke-width="2" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M18 -22 Q28 -26 32 -22" stroke="url(#gillFeatherGrad)" stroke-width="1.8" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M25 -32 Q34 -38 38 -34" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M15 -18 Q12 -28 18 -30" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <circle cx="35" cy="-45" r="3" fill="var(--axo-gill-tip)" opacity="0.4" filter="url(#blushFilter)" />
+          </g>
+
+          <!-- Branch 2 — middle -->
+          <g class="gill-branch-r2">
+            <path d="M2 8 Q30 -5 50 -8" stroke="url(#gillGradR)" stroke-width="4" fill="none" stroke-linecap="round" />
+            <path d="M2 8 Q28 -3 50 -8" stroke="var(--axo-gill-base)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4" />
+            <g class="gill-feather">
+              <path d="M15 2 Q22 -5 26 0" stroke="url(#gillFeatherGrad)" stroke-width="2" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M28 -2 Q35 -10 40 -4" stroke="url(#gillFeatherGrad)" stroke-width="1.8" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M38 -5 Q44 -14 48 -8" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M20 0 Q25 8 30 5" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <circle cx="50" cy="-8" r="2.5" fill="var(--axo-gill-tip)" opacity="0.35" filter="url(#blushFilter)" />
+          </g>
+
+          <!-- Branch 3 — bottom -->
+          <g class="gill-branch-r3">
+            <path d="M3 15 Q25 20 40 30" stroke="url(#gillGradR)" stroke-width="3.5" fill="none" stroke-linecap="round" />
+            <path d="M3 15 Q23 22 40 30" stroke="var(--axo-gill-base)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.4" />
+            <g class="gill-feather">
+              <path d="M12 18 Q18 12 22 16" stroke="url(#gillFeatherGrad)" stroke-width="1.8" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M22 22 Q30 18 34 22" stroke="url(#gillFeatherGrad)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+            </g>
+            <g class="gill-feather">
+              <path d="M30 26 Q36 20 40 24" stroke="url(#gillFeatherGrad)" stroke-width="1.3" fill="none" stroke-linecap="round" />
+            </g>
+            <circle cx="40" cy="30" r="2" fill="var(--axo-gill-tip)" opacity="0.3" filter="url(#blushFilter)" />
+          </g>
+        </g>
+
+      </g> <!-- end head -->
+
+    </g> <!-- end axolotl group -->
+
+    <!-- ======== AMBIENT SVG BUBBLES ======== -->
+    <g id="svgBubbles">
+      <circle cx="120" cy="380" r="4" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="0.5">
+        <animate attributeName="cy" values="380;80" dur="8s" repeatCount="indefinite" />
+        <animate attributeName="cx" values="120;130;115;125" dur="8s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0.6;0.5;0" dur="8s" repeatCount="indefinite" />
+        <animate attributeName="r" values="4;3;2" dur="8s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="380" cy="420" r="3" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.5">
+        <animate attributeName="cy" values="420;100" dur="10s" repeatCount="indefinite" begin="2s" />
+        <animate attributeName="cx" values="380;370;385" dur="10s" repeatCount="indefinite" begin="2s" />
+        <animate attributeName="opacity" values="0;0.5;0.4;0" dur="10s" repeatCount="indefinite" begin="2s" />
+      </circle>
+      <circle cx="200" cy="450" r="2.5" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.4">
+        <animate attributeName="cy" values="450;120" dur="9s" repeatCount="indefinite" begin="4s" />
+        <animate attributeName="cx" values="200;210;195;205" dur="9s" repeatCount="indefinite" begin="4s" />
+        <animate attributeName="opacity" values="0;0.5;0.3;0" dur="9s" repeatCount="indefinite" begin="4s" />
+      </circle>
+      <circle cx="310" cy="400" r="2" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.4">
+        <animate attributeName="cy" values="400;90" dur="11s" repeatCount="indefinite" begin="1s" />
+        <animate attributeName="cx" values="310;300;315" dur="11s" repeatCount="indefinite" begin="1s" />
+        <animate attributeName="opacity" values="0;0.4;0.3;0" dur="11s" repeatCount="indefinite" begin="1s" />
+      </circle>
+      <circle cx="160" cy="460" r="3.5" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="0.5">
+        <animate attributeName="cy" values="460;60" dur="12s" repeatCount="indefinite" begin="3s" />
+        <animate attributeName="opacity" values="0;0.5;0.2;0" dur="12s" repeatCount="indefinite" begin="3s" />
+      </circle>
+      <circle cx="340" cy="480" r="1.8" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.3">
+        <animate attributeName="cy" values="480;130" dur="7s" repeatCount="indefinite" begin="5s" />
+        <animate attributeName="cx" values="340;350;335" dur="7s" repeatCount="indefinite" begin="5s" />
+        <animate attributeName="opacity" values="0;0.5;0.3;0" dur="7s" repeatCount="indefinite" begin="5s" />
+      </circle>
+    </g>
+
+  </svg>
+</div>
+
+<!-- FOOTER -->
+<footer class="brand-footer">
+  <div class="brand-tag">AXKAN</div>
+  <div class="render-info">Render 3 / Pure CSS+SVG / Kawaii Axolotl</div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  // =============================================
+  // AXOLOTL FACTS
+  // =============================================
+  var facts = [
+    'Los axolotes pueden regenerar extremidades, corazon, ojos e incluso partes del cerebro.',
+    'Su nombre viene de Xolotl, el dios azteca gemelo de Quetzalcoatl, guardian del inframundo.',
+    'Son neotenicas: conservan caracteristicas larvales toda su vida, como las branquias externas.',
+    'Solo existen en estado silvestre en los canales de Xochimilco, Ciudad de Mexico.',
+    'Un axolote adulto puede medir hasta 30 cm y vivir mas de 15 anos en cautiverio.',
+    'Pueden regenerar la misma extremidad hasta 5 veces sin perder funcionalidad.',
+    'Los aztecas los consideraban una delicadeza culinaria y tambien los usaban en medicina.',
+    'Existen axolotes albinos, melanicos, dorados y hasta con patron mosaico.',
+    'Su genoma es 10 veces mas grande que el humano: 32 mil millones de pares de bases.',
+    'La palabra axolotl significa monstruo de agua en nahuatl.',
+    'Estan en peligro critico de extincion desde 2006 segun la UICN.',
+    'Respiran por branquias, pulmones y piel simultaneamente.'
+  ];
+  var factIndex = 0;
+
+  // =============================================
+  // DOM REFS
+  // =============================================
+  var scene = document.getElementById('sceneContainer');
+  var axolotl = document.getElementById('axolotlGroup');
+  var bubble = document.getElementById('speechBubble');
+  var factText = document.getElementById('factText');
+  var leftIris = document.getElementById('leftIris');
+  var rightIris = document.getElementById('rightIris');
+
+  // =============================================
+  // CLICK -> WIGGLE + FACT
+  // =============================================
+  var bubbleTimeout = null;
+
+  scene.addEventListener('click', function() {
+    // Trigger wiggle
+    axolotl.classList.remove('wiggle');
+    void axolotl.offsetWidth; // force reflow
+    axolotl.classList.add('wiggle');
+
+    // Show fact
+    factText.textContent = facts[factIndex];
+    factIndex = (factIndex + 1) % facts.length;
+
+    bubble.classList.add('visible');
+
+    clearTimeout(bubbleTimeout);
+    bubbleTimeout = setTimeout(function() {
+      bubble.classList.remove('visible');
+    }, 4500);
+  });
+
+  axolotl.addEventListener('animationend', function(e) {
+    if (e.animationName === 'happy-wiggle') {
+      axolotl.classList.remove('wiggle');
+    }
+  });
+
+  // =============================================
+  // EYES FOLLOW CURSOR / TOUCH
+  // =============================================
+  var eyeMaxOffset = 3.5;
+
+  function getEyeOffset(eyeCenterX, eyeCenterY, pointerX, pointerY) {
+    var svg = scene.querySelector('svg');
+    var rect = svg.getBoundingClientRect();
+    var svgX = (pointerX - rect.left) / rect.width * 500;
+    var svgY = (pointerY - rect.top) / rect.height * 500;
+
+    var dx = svgX - eyeCenterX;
+    var dy = svgY - eyeCenterY;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var maxDist = 200;
+    var ratio = Math.min(dist / maxDist, 1);
+
+    return {
+      x: (dx / (dist || 1)) * eyeMaxOffset * ratio,
+      y: (dy / (dist || 1)) * eyeMaxOffset * ratio
+    };
+  }
+
+  function updateEyes(pointerX, pointerY) {
+    var leftOffset = getEyeOffset(232, 230, pointerX, pointerY);
+    var rightOffset = getEyeOffset(268, 230, pointerX, pointerY);
+
+    leftIris.style.transform = 'translate(' + leftOffset.x + 'px, ' + leftOffset.y + 'px)';
+    rightIris.style.transform = 'translate(' + rightOffset.x + 'px, ' + rightOffset.y + 'px)';
+  }
+
+  document.addEventListener('mousemove', function(e) {
+    requestAnimationFrame(function() {
+      updateEyes(e.clientX, e.clientY);
+    });
+  });
+
+  document.addEventListener('touchmove', function(e) {
+    var touch = e.touches[0];
+    requestAnimationFrame(function() {
+      updateEyes(touch.clientX, touch.clientY);
+    });
+  }, { passive: true });
+
+  // =============================================
+  // AMBIENT PARTICLES — BUBBLES + HEARTS (DOM)
+  // =============================================
+  function createBubble() {
+    var el = document.createElement('div');
+    el.className = 'bubble-particle';
+    var size = 4 + Math.random() * 10;
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.left = (10 + Math.random() * 80) + 'vw';
+    el.style.bottom = '-20px';
+    el.style.setProperty('--drift', (Math.random() * 40 - 20) + 'px');
+    el.style.animationDuration = (8 + Math.random() * 10) + 's';
+    document.body.appendChild(el);
+    setTimeout(function() { el.remove(); }, 18000);
+  }
+
+  function createHeart() {
+    var el = document.createElement('div');
+    el.className = 'heart-particle';
+    el.textContent = '\u2665';
+    el.style.left = (15 + Math.random() * 70) + 'vw';
+    el.style.bottom = '-20px';
+    el.style.fontSize = (10 + Math.random() * 8) + 'px';
+    el.style.setProperty('--drift', (Math.random() * 60 - 30) + 'px');
+    el.style.animationDuration = (10 + Math.random() * 8) + 's';
+    document.body.appendChild(el);
+    setTimeout(function() { el.remove(); }, 18000);
+  }
+
+  // Stagger initial particles
+  for (var i = 0; i < 5; i++) {
+    setTimeout(createBubble, i * 600);
+  }
+  setTimeout(createHeart, 2000);
+
+  setInterval(createBubble, 3000);
+  setInterval(createHeart, 6000);
+
+})();
+</script>
+
+</body>
+</html>
