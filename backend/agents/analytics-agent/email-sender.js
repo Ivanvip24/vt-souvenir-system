@@ -3,6 +3,7 @@ import sgMail from '@sendgrid/mail';
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import { config } from 'dotenv';
+import { log, logError } from '../../shared/logger.js';
 
 config();
 
@@ -15,12 +16,12 @@ let activeProvider = 'none';
 if (process.env.RESEND_API_KEY) {
   resendClient = new Resend(process.env.RESEND_API_KEY);
   activeProvider = 'resend';
-  console.log('✅ Using Resend HTTP API for email');
+  log('info', 'emailSender.init', { provider: 'resend' });
 } else if (process.env.EMAIL_SERVICE === 'sendgrid' && process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   usingSendGridAPI = true;
   activeProvider = 'sendgrid';
-  console.log('✅ Using SendGrid HTTP API (bypasses SMTP port blocking)');
+  log('info', 'emailSender.init', { provider: 'sendgrid' });
 } else if (process.env.EMAIL_SERVICE && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
   transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
@@ -32,9 +33,9 @@ if (process.env.RESEND_API_KEY) {
     }
   });
   activeProvider = 'smtp';
-  console.log(`✅ Using SMTP (${process.env.EMAIL_SERVICE}) for email`);
+  log('info', 'emailSender.init', { provider: 'smtp', service: process.env.EMAIL_SERVICE });
 } else {
-  console.warn('⚠️  No email service configured. Set RESEND_API_KEY or EMAIL_SERVICE + credentials.');
+  log('warn', 'emailSender.init.noProvider', { msg: 'No email service configured' });
 }
 
 /**
@@ -46,9 +47,7 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
     const fromName = process.env.COMPANY_NAME || 'AXKAN - Recuerdos Hechos Souvenir';
     const resendFrom = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
-    console.log(`📧 Sending email to: ${to}`);
-    console.log(`   Subject: ${subject}`);
-    console.log(`   Method: ${activeProvider}`);
+    log('info', 'emailSender.send.start', { to, subject, provider: activeProvider });
 
     if (resendClient) {
       const resendAttachments = attachments.map(att => {
@@ -77,8 +76,7 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
         throw new Error(error.message);
       }
 
-      console.log('✅ Email sent successfully via Resend');
-      console.log(`   Message ID: ${data.id}`);
+      log('info', 'emailSender.send.ok', { provider: 'resend', messageId: data.id });
 
       return { success: true, messageId: data.id, recipients: to };
 
@@ -103,8 +101,7 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
 
       const response = await sgMail.send(msg);
 
-      console.log('✅ Email sent successfully via SendGrid API');
-      console.log(`   Message ID: ${response[0].headers['x-message-id']}`);
+      log('info', 'emailSender.send.ok', { provider: 'sendgrid', messageId: response[0].headers['x-message-id'] });
 
       return {
         success: true,
@@ -126,8 +123,7 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
 
       const info = await transporter.sendMail(mailOptions);
 
-      console.log('✅ Email sent successfully via SMTP');
-      console.log(`   Message ID: ${info.messageId}`);
+      log('info', 'emailSender.send.ok', { provider: 'smtp', messageId: info.messageId });
 
       return {
         success: true,
@@ -136,11 +132,7 @@ export async function sendEmail({ to, subject, html, attachments = [] }) {
       };
     }
   } catch (error) {
-    console.error('❌ Error sending email:', error);
-
-    if (error.response) {
-      console.error('   Error Response:', error.response.body);
-    }
+    logError('emailSender.send.fail', error, { responseBody: error.response?.body });
 
     throw new Error(`Failed to send email: ${error.message}`);
   }
@@ -248,7 +240,7 @@ function buildEmailHTML(bodyContent, preheader = '') {
 export async function sendReceiptEmail(order, client, pdfPath) {
   try {
     if (!client.email) {
-      console.log('⚠️  Client email not provided, skipping receipt email');
+      log('warn', 'emailSender.receipt.noEmail', { orderNumber: order.orderNumber });
       return { success: false, reason: 'No email address' };
     }
 
@@ -422,7 +414,7 @@ export async function sendReceiptEmail(order, client, pdfPath) {
     return await sendEmail(emailOptions);
 
   } catch (error) {
-    console.error('❌ Error sending receipt email:', error);
+    logError('emailSender.receipt.fail', error);
     throw error;
   }
 }
@@ -433,7 +425,7 @@ export async function sendReceiptEmail(order, client, pdfPath) {
 export async function sendClientReceiptEmail(email, name, orderNumber, pdfUrl, orderData) {
   try {
     if (!email) {
-      console.log('⚠️  Client email not provided, skipping receipt email');
+      log('warn', 'emailSender.clientReceipt.noEmail', { orderNumber });
       return { success: false, reason: 'No email address' };
     }
 
@@ -597,7 +589,7 @@ export async function sendClientReceiptEmail(email, name, orderNumber, pdfUrl, o
     });
 
   } catch (error) {
-    console.error('❌ Error sending client receipt email:', error);
+    logError('emailSender.clientReceipt.fail', error);
     throw error;
   }
 }
@@ -608,7 +600,7 @@ export async function sendClientReceiptEmail(email, name, orderNumber, pdfUrl, o
 export async function sendShippingNotificationEmail({ email, clientName, orderNumber, trackingNumber, carrier, trackingUrl, deliveryDays, shippedAt }) {
   try {
     if (!email) {
-      console.log('⚠️  Client email not provided, skipping shipping notification');
+      log('warn', 'emailSender.shipping.noEmail', { orderNumber });
       return { success: false, reason: 'No email address' };
     }
 
@@ -719,7 +711,7 @@ export async function sendShippingNotificationEmail({ email, clientName, orderNu
     });
 
   } catch (error) {
-    console.error('❌ Error sending shipping notification email:', error);
+    logError('emailSender.shipping.fail', error);
     throw error;
   }
 }
@@ -734,11 +726,12 @@ function formatCurrency(amount) {
 }
 
 export function initializeEmailSender() {
-  console.log('📋 Email Configuration:');
-  console.log(`   Active provider: ${activeProvider}`);
-  console.log(`   Resend: ${resendClient ? 'configured' : 'not set'}`);
-  console.log(`   SendGrid: ${usingSendGridAPI ? 'configured' : 'not set'}`);
-  console.log(`   SMTP: ${transporter ? 'configured' : 'not set'}`);
+  log('info', 'emailSender.config', {
+    activeProvider,
+    resend: !!resendClient,
+    sendgrid: usingSendGridAPI,
+    smtp: !!transporter,
+  });
   return true;
 }
 
