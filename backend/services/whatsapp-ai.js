@@ -22,6 +22,81 @@ const CONFIG_DIR = join(__dirname, '..', 'chatbot_whatsapp');
 let currentModel = process.env.WHATSAPP_AI_MODEL || 'gpt-4.1-mini';
 let globalAiEnabled = true;
 
+// ─── COST CONTROLS (Playbook S4 — blast radius containment) ────────────────
+// Three layers of protection to prevent API credit burnout:
+//   1. Daily call limit — hard cap on total API calls per day
+//   2. Per-user throttle — max messages per user per hour
+//   3. Kill switch — globalAiEnabled can be toggled via API
+
+const DAILY_API_LIMIT = parseInt(process.env.WHATSAPP_AI_DAILY_LIMIT) || 500;
+const PER_USER_HOURLY_LIMIT = parseInt(process.env.WHATSAPP_AI_USER_HOURLY_LIMIT) || 20;
+
+// In-memory counters (reset on deploy — that's fine, it's a safety net)
+let dailyApiCalls = 0;
+let dailyResetDate = new Date().toISOString().slice(0, 10); // "2026-04-24"
+const userHourlyCounts = new Map(); // waId → { count, resetAt }
+
+function checkCostLimits(waId) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Reset daily counter at midnight
+  if (today !== dailyResetDate) {
+    dailyApiCalls = 0;
+    dailyResetDate = today;
+    log('info', 'whatsapp.ai.daily_reset', { date: today });
+  }
+
+  // Check daily limit
+  if (dailyApiCalls >= DAILY_API_LIMIT) {
+    log('warn', 'whatsapp.ai.daily_limit_hit', { calls: dailyApiCalls, limit: DAILY_API_LIMIT });
+    return { allowed: false, reason: 'daily_limit', calls: dailyApiCalls };
+  }
+
+  // Check per-user hourly limit
+  const now = Date.now();
+  const userState = userHourlyCounts.get(waId);
+  if (userState) {
+    if (now < userState.resetAt) {
+      if (userState.count >= PER_USER_HOURLY_LIMIT) {
+        log('warn', 'whatsapp.ai.user_throttled', { waId, count: userState.count, limit: PER_USER_HOURLY_LIMIT });
+        return { allowed: false, reason: 'user_throttled', count: userState.count };
+      }
+    } else {
+      // Hour expired, reset
+      userHourlyCounts.set(waId, { count: 0, resetAt: now + 3600000 });
+    }
+  } else {
+    userHourlyCounts.set(waId, { count: 0, resetAt: now + 3600000 });
+  }
+
+  return { allowed: true };
+}
+
+function recordApiCall(waId) {
+  dailyApiCalls++;
+  const userState = userHourlyCounts.get(waId);
+  if (userState) userState.count++;
+
+  // Log every 50 calls so you can see the pace
+  if (dailyApiCalls % 50 === 0) {
+    log('info', 'whatsapp.ai.usage_checkpoint', { dailyCalls: dailyApiCalls, limit: DAILY_API_LIMIT });
+  }
+}
+
+// Export for monitoring via API
+export function getApiUsageStats() {
+  return {
+    dailyCalls: dailyApiCalls,
+    dailyLimit: DAILY_API_LIMIT,
+    dailyRemaining: Math.max(0, DAILY_API_LIMIT - dailyApiCalls),
+    resetDate: dailyResetDate,
+    activeUsers: userHourlyCounts.size,
+    perUserHourlyLimit: PER_USER_HOURLY_LIMIT,
+    model: currentModel,
+    aiEnabled: globalAiEnabled,
+  };
+}
+
 export function getGlobalAiEnabled() { return globalAiEnabled; }
 export async function setGlobalAiEnabled(enabled) {
   globalAiEnabled = !!enabled;
@@ -549,6 +624,13 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       return { reply: null, intent: null, skipped: true, reason: 'global_ai_disabled' };
     }
 
+    // Check cost limits (daily cap + per-user throttle)
+    const costCheck = checkCostLimits(waId);
+    if (!costCheck.allowed) {
+      log('warn', 'whatsapp.ai.blocked_by_cost', { waId, reason: costCheck.reason });
+      return { reply: null, intent: null, skipped: true, reason: costCheck.reason };
+    }
+
     // ---- Design Portal: route client messages to design_messages ----
     // If client has active design assignments, copy message to portal (but AI still replies)
     try {
@@ -682,6 +764,9 @@ export async function processIncomingMessage(conversationId, waId, messageText, 
       });
       rawReply = response.content[0].text;
     }
+
+    // Record successful API call for cost tracking
+    recordApiCall(waId);
 
     // Parse the response for intent and order blocks
     const { cleanReply, intent, orderJson, imagesToSend, listsToSend, buttonsToSend, documentsToSend, generateQuoteData, reactionEmoji, locationRequest, carouselRequest, flowRequest, paymentReceiptDetected, shippingCheckResult } = await parseAIResponse(rawReply);

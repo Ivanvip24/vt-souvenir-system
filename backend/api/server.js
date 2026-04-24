@@ -334,6 +334,18 @@ app.get('/health', async (req, res) => {
 });
 
 // ========================================
+// AI USAGE MONITORING (auth required)
+// ========================================
+app.get('/api/ai/usage', authMiddleware, async (req, res) => {
+  try {
+    const { getApiUsageStats } = await import('../services/whatsapp-ai.js');
+    res.json(getApiUsageStats());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ========================================
 // PUBLIC: PRODUCT CATALOG (no auth required)
 // ========================================
 app.get('/api/catalog', async (req, res) => {
