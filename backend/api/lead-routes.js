@@ -6,6 +6,7 @@
 import express from 'express';
 import { query } from '../shared/database.js';
 import { authMiddleware } from './admin-routes.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -28,9 +29,9 @@ const router = express.Router();
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    console.log('Leads table ready');
+    log('info', 'lead.leads-table-ready');
   } catch (err) {
-    console.error('Error creating leads table:', err.message);
+    logError('lead.error-creating-leads-table', err);
   }
 })();
 
@@ -50,7 +51,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error('Error creating lead:', err.message);
+    logError('lead.error-creating-lead', err);
     res.status(500).json({ success: false, error: 'Error saving lead' });
   }
 });
@@ -63,7 +64,7 @@ router.get('/', authMiddleware, async (req, res) => {
     const result = await query('SELECT * FROM leads ORDER BY created_at DESC');
     res.json({ success: true, data: result.rows });
   } catch (err) {
-    console.error('Error fetching leads:', err.message);
+    logError('lead.error-fetching-leads', err);
     res.status(500).json({ success: false, error: 'Error fetching leads' });
   }
 });
@@ -77,7 +78,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     await query('DELETE FROM leads WHERE id = $1', [id]);
     res.json({ success: true });
   } catch (err) {
-    console.error('Error deleting lead:', err.message);
+    logError('lead.error-deleting-lead', err);
     res.status(500).json({ success: false, error: 'Error deleting lead' });
   }
 });
