@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { config } from 'dotenv';
+import { log } from './logger.js';
 
 const { Pool } = pg;
 
@@ -27,18 +28,18 @@ if (process.env.DB_TYPE === 'postgres') {
   }
 } else {
   // SQLite support can be added here if needed
-  console.warn('Only PostgreSQL is currently supported');
+  log('warn', 'database.init.unsupportedType', { dbType: process.env.DB_TYPE });
 }
 
 // Test database connection
 export async function testConnection() {
   try {
     const client = await pool.connect();
-    console.log('✓ Database connected successfully');
+    log('info', 'database.testConnection.ok');
     client.release();
     return true;
   } catch (error) {
-    console.error('✗ Database connection failed:', error.message);
+    log('error', 'database.testConnection.fail', { error: error.message });
     return false;
   }
 }
@@ -49,7 +50,7 @@ export async function query(text, params) {
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    if (!process.env.QUIET_DB) console.log('Executed query', { text, duration, rows: res.rowCount });
+    if (!process.env.QUIET_DB) log('info', 'database.query', { text, duration, rows: res.rowCount });
     return res;
   } catch (error) {
     console.error('Query error:', error);
