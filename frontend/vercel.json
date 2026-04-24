@@ -1,0 +1,96 @@
+{
+  "buildCommand": "node build.js",
+  "outputDirectory": "public",
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "brand.axkan.art" }],
+      "destination": "/brand-manual-web/index.html"
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "brand.axkan.art" }],
+      "destination": "/brand-manual-web/:path*"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
+      "destination": "/pedidos/index.html"
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "pedidos.axkan.art" }],
+      "destination": "/pedidos/:path*"
+    },
+    { "source": "/styles.css", "destination": "/pedidos/styles.css" },
+    { "source": "/order-form.js", "destination": "/pedidos/order-form.js" },
+    { "source": "/logo.png", "destination": "/pedidos/logo.png" },
+    { "source": "/favicon.png", "destination": "/pedidos/favicon.png" },
+    { "source": "/tutorial.mp4", "destination": "/pedidos/tutorial.mp4" },
+    { "source": "/brand", "destination": "/brand-manual-web/index.html" },
+    { "source": "/marca", "destination": "/brand-manual-web/index.html" },
+    { "source": "/", "destination": "/landing/index.html" },
+    { "source": "/landing", "destination": "/landing/index.html" },
+    { "source": "/v2", "destination": "/landing/_archive/index-v2.html" },
+    { "source": "/index-v2", "destination": "/landing/_archive/index-v2.html" },
+    { "source": "/souvenirs", "destination": "/landing/souvenirs/index.html" },
+    { "source": "/diseños", "destination": "/landing/dise%C3%B1os/index.html" },
+    { "source": "/dise%C3%B1os", "destination": "/landing/dise%C3%B1os/index.html" },
+    { "source": "/disenos", "destination": "/landing/dise%C3%B1os/index.html" },
+    { "source": "/catalogo", "destination": "/landing/souvenirs/index.html" },
+    { "source": "/catalogo/:destination/historia", "destination": "/landing/souvenirs/:destination/historia.html" },
+    { "source": "/catalogo/assets/:path*", "destination": "/landing/souvenirs/assets/:path*" },
+    { "source": "/catalogo/historia/:path*", "destination": "/landing/souvenirs/historia/:path*" },
+    { "source": "/souvenirs/:destination/historia", "destination": "/landing/souvenirs/:destination/historia.html" },
+    { "source": "/souvenirs/assets/:path*", "destination": "/landing/souvenirs/assets/:path*" },
+    { "source": "/souvenirs/historia/:path*", "destination": "/landing/souvenirs/historia/:path*" },
+    { "source": "/souvenirs/:slug", "destination": "/landing/souvenirs/template.html" },
+    { "source": "/mayoreo", "destination": "/landing/mayoreo/index.html" },
+    { "source": "/productos/:slug", "destination": "/landing/productos/:slug.html" },
+    { "source": "/productos", "destination": "/landing/productos/index.html" },
+    { "source": "/ubicacion", "destination": "/landing/ubicacion.html" },
+    { "source": "/sitemap.xml", "destination": "/landing/sitemap.xml" },
+    { "source": "/robots.txt", "destination": "/landing/robots.txt" },
+    { "source": "/assets/:path*", "destination": "/landing/assets/:path*" },
+    { "source": "/fonts/:path*", "destination": "/landing/fonts/:path*" },
+    { "source": "/shared-nav-footer.css", "destination": "/landing/shared-nav-footer.css" },
+    { "source": "/shared/:path*", "destination": "/shared/:path*" },
+    { "source": "/globe-section.js", "destination": "/landing/globe-section.js" },
+    { "source": "/destination-images.json", "destination": "/landing/destination-images.json" },
+    { "source": "/mexico-states.json", "destination": "/landing/mexico-states.json" },
+    { "source": "/ecuador-provinces.json", "destination": "/landing/ecuador-provinces.json" },
+    { "source": "/pedidos", "destination": "/pedidos/index.html" },
+    { "source": "/pedidos/:path*", "destination": "/pedidos/:path*" },
+    { "source": "/order-form", "destination": "/pedidos/index.html" },
+    { "source": "/order-form/:path*", "destination": "/pedidos/:path*" },
+    { "source": "/cuestionario", "destination": "/lead-form/index.html" },
+    { "source": "/cuestionario/:path*", "destination": "/lead-form/:path*" },
+    { "source": "/midiseño", "destination": "/configurador/index.html" },
+    { "source": "/midiseño/:path*", "destination": "/configurador/:path*" },
+    { "source": "/midise%C3%B1o", "destination": "/configurador/index.html" },
+    { "source": "/midise%C3%B1o/:path*", "destination": "/configurador/:path*" },
+    { "source": "/midiseno", "destination": "/configurador/index.html" },
+    { "source": "/midiseno/:path*", "destination": "/configurador/:path*" },
+    { "source": "/envio", "destination": "/shipping-form/index.html" },
+    { "source": "/envio/:path*", "destination": "/shipping-form/:path*" },
+    { "source": "/seguimiento", "destination": "/order-tracking/index.html" },
+    { "source": "/seguimiento/:path*", "destination": "/order-tracking/:path*" },
+    { "source": "/faq", "destination": "/faq/index.html" },
+    { "source": "/faq/:path*", "destination": "/faq/:path*" },
+    { "source": "/admin/login", "destination": "/admin-dashboard/login.html" },
+    { "source": "/admin", "destination": "/admin-dashboard/index.html" },
+    { "source": "/admin/", "destination": "/admin-dashboard/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://ajax.googleapis.com https://maps.googleapis.com https://www.google.com https://googleads.g.doubleclick.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://vt-souvenir-backend.onrender.com https://www.google-analytics.com https://api.zippopotam.us https://maps.googleapis.com https://*.google.com https://sxvnlq4t.apicdn.sanity.io; frame-src 'self' https://www.youtube.com https://www.google.com https://maps.google.com; media-src 'self' blob:;" }
+      ]
+    }
+  ]
+}
