@@ -12,6 +12,7 @@ import {
   generateEmployeeToken,
   logActivity
 } from './middleware/employee-auth.js';
+import { log, logError } from '../shared/logger.js';
 
 const router = express.Router();
 
@@ -95,7 +96,7 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    logError('employee.login-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al iniciar sesión'
@@ -118,7 +119,7 @@ router.post('/logout', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Logout error:', error);
+    logError('employee.logout-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al cerrar sesión'
@@ -174,7 +175,7 @@ router.get('/me', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get profile error:', error);
+    logError('employee.get-profile-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener perfil'
@@ -229,7 +230,7 @@ router.put('/me', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update profile error:', error);
+    logError('employee.update-profile-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar perfil'
@@ -291,7 +292,7 @@ router.put('/me/password', employeeAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Change password error:', error);
+    logError('employee.change-password-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al cambiar contraseña'
@@ -344,7 +345,7 @@ router.get('/', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('List employees error:', error);
+    logError('employee.list-employees-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al listar empleados'
@@ -380,7 +381,7 @@ router.get('/:id', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get employee error:', error);
+    logError('employee.get-employee-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener empleado'
@@ -457,7 +458,7 @@ router.post('/', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create employee error:', error);
+    logError('employee.create-employee-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al crear empleado'
@@ -553,7 +554,7 @@ router.put('/:id', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update employee error:', error);
+    logError('employee.update-employee-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al actualizar empleado'
@@ -607,7 +608,7 @@ router.put('/:id/password', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Reset password error:', error);
+    logError('employee.reset-password-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al restablecer contraseña'
@@ -653,7 +654,7 @@ router.delete('/:id', employeeAuth, requireManager, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete employee error:', error);
+    logError('employee.delete-employee-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al desactivar empleado'
@@ -679,7 +680,7 @@ router.get('/stats/productivity', employeeAuth, requireManager, async (req, res)
     });
 
   } catch (error) {
-    console.error('Get productivity stats error:', error);
+    logError('employee.get-productivity-stats-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener estadísticas'
@@ -710,7 +711,7 @@ router.get('/activity/recent', employeeAuth, requireManager, async (req, res) =>
     });
 
   } catch (error) {
-    console.error('Get activity log error:', error);
+    logError('employee.get-activity-log-error', error);
     res.status(500).json({
       success: false,
       error: 'Error al obtener actividad'
