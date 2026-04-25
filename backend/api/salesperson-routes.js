@@ -54,7 +54,7 @@ router.get('/salespeople', async (req, res) => {
     });
   } catch (error) {
     logError('salesperson.error-fetching-salespeople', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -85,7 +85,7 @@ router.post('/salespeople', async (req, res) => {
     if (error.code === '23505') {
       return res.status(400).json({ success: false, error: 'A salesperson with this name already exists' });
     }
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -122,7 +122,7 @@ router.put('/salespeople/:id', async (req, res) => {
     });
   } catch (error) {
     logError('salesperson.error-updating-salesperson', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -151,7 +151,7 @@ router.delete('/salespeople/:id', async (req, res) => {
     });
   } catch (error) {
     logError('salesperson.error-deleting-salesperson', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -223,7 +223,7 @@ router.get('/commissions', async (req, res) => {
     });
   } catch (error) {
     logError('salesperson.error-fetching-commissions', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -284,7 +284,7 @@ router.get('/commissions/monthly', async (req, res) => {
     });
   } catch (error) {
     logError('salesperson.error-fetching-monthly-commissions', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -334,7 +334,7 @@ router.get('/commissions/:salesperson/orders', async (req, res) => {
     });
   } catch (error) {
     logError('salesperson.error-fetching-salesperson-orders', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 

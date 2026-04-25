@@ -66,7 +66,7 @@ router.get('/materials', async (req, res) => {
     logError('bom.materials.list.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -99,7 +99,7 @@ router.get('/materials/:id', async (req, res) => {
     logError('bom.materials.get.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -175,7 +175,7 @@ router.post('/materials', async (req, res) => {
     logError('bom.materials.create.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -265,7 +265,7 @@ router.put('/materials/:id', async (req, res) => {
     logError('bom.materials.update.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -303,7 +303,7 @@ router.delete('/materials/:id', async (req, res) => {
     logError('bom.materials.delete.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -352,7 +352,7 @@ router.get('/products/:productId/components', async (req, res) => {
     logError('bom.components.list.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -407,7 +407,7 @@ router.post('/products/:productId/components', async (req, res) => {
     logError('bom.components.add.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -464,7 +464,7 @@ router.put('/products/:productId/components/:componentId', async (req, res) => {
     logError('bom.components.update.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -488,7 +488,7 @@ router.delete('/products/:productId/components/:componentId', async (req, res) =
     logError('bom.components.remove.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -569,7 +569,7 @@ router.get('/products/:productId/cost-breakdown', async (req, res) => {
     logError('bom.cost-breakdown.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -594,7 +594,7 @@ router.get('/cost-summary', async (req, res) => {
     logError('bom.cost-summary.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -619,7 +619,7 @@ router.get('/material-usage', async (req, res) => {
     logError('bom.material-usage.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -656,7 +656,7 @@ router.post('/calculate-area-cost', async (req, res) => {
     logError('bom.calculate-area-cost.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });

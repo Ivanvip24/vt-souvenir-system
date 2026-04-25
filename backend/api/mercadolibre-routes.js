@@ -33,7 +33,7 @@ router.get('/auth/status', async (req, res) => {
     }
   } catch (error) {
     logError('mercadolibre.error-checking-ml-connection', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -47,7 +47,7 @@ router.get('/auth/connect', (req, res) => {
     res.json({ authUrl });
   } catch (error) {
     logError('mercadolibre.error-generating-auth-url', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -88,7 +88,7 @@ router.post('/auth/disconnect', async (req, res) => {
     res.json({ success: true, message: 'Mercado Libre account disconnected' });
   } catch (error) {
     logError('mercadolibre.error-disconnecting-ml', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -106,7 +106,7 @@ router.get('/products', async (req, res) => {
     res.json({ products });
   } catch (error) {
     logError('mercadolibre.error-getting-products', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -121,7 +121,7 @@ router.get('/products/:productId/listings', async (req, res) => {
     res.json({ listings });
   } catch (error) {
     logError('mercadolibre.error-getting-listings', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -167,7 +167,7 @@ router.post('/products/:productId/publish', async (req, res) => {
     });
   } catch (error) {
     logError('mercadolibre.error-publishing-product', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -215,7 +215,7 @@ router.post('/products/bulk-publish', async (req, res) => {
     });
   } catch (error) {
     logError('mercadolibre.error-bulk-publishing', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -251,7 +251,7 @@ router.get('/listings', async (req, res) => {
     res.json({ listings: result.rows });
   } catch (error) {
     logError('mercadolibre.error-getting-listings', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -285,7 +285,7 @@ router.patch('/listings/:listingId', async (req, res) => {
     res.json({ success: true, result });
   } catch (error) {
     logError('mercadolibre.error-updating-listing', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -310,7 +310,7 @@ router.post('/listings/:listingId/pause', async (req, res) => {
     res.json({ success: true, result });
   } catch (error) {
     logError('mercadolibre.error-pausing-listing', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -335,7 +335,7 @@ router.post('/listings/:listingId/activate', async (req, res) => {
     res.json({ success: true, result });
   } catch (error) {
     logError('mercadolibre.error-activating-listing', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -360,7 +360,7 @@ router.delete('/listings/:listingId', async (req, res) => {
     res.json({ success: true, result });
   } catch (error) {
     logError('mercadolibre.error-closing-listing', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -384,7 +384,7 @@ router.post('/inventory/sync', async (req, res) => {
     });
   } catch (error) {
     logError('mercadolibre.error-syncing-inventory', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -412,7 +412,7 @@ router.get('/inventory/status', async (req, res) => {
     res.json({ listings: result.rows });
   } catch (error) {
     logError('mercadolibre.error-getting-inventory-status', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -431,7 +431,7 @@ router.get('/categories/:siteId', async (req, res) => {
     res.json({ categories });
   } catch (error) {
     logError('mercadolibre.error-getting-categories', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -446,7 +446,7 @@ router.get('/categories/:siteId/:categoryId/attributes', async (req, res) => {
     res.json({ attributes });
   } catch (error) {
     logError('mercadolibre.error-getting-category-attributes', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -466,7 +466,7 @@ router.post('/categories/predict', async (req, res) => {
     res.json({ prediction });
   } catch (error) {
     logError('mercadolibre.error-predicting-category', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -486,7 +486,7 @@ router.post('/category-mappings', async (req, res) => {
     res.json({ success: true, message: 'Category mapping saved' });
   } catch (error) {
     logError('mercadolibre.error-saving-category-mapping', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -503,7 +503,7 @@ router.get('/category-mappings', async (req, res) => {
     res.json({ mappings: result.rows });
   } catch (error) {
     logError('mercadolibre.error-getting-category-mappings', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -526,7 +526,7 @@ router.get('/me', async (req, res) => {
     res.json({ user });
   } catch (error) {
     logError('mercadolibre.error-getting-ml-user', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -552,7 +552,7 @@ router.post('/test-publish', async (req, res) => {
     });
   } catch (error) {
     logError('mercadolibre.error-in-test-publish', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -583,7 +583,7 @@ router.get('/stats', async (req, res) => {
     });
   } catch (error) {
     logError('mercadolibre.error-getting-stats', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -606,7 +606,7 @@ router.get('/sync-history', async (req, res) => {
     res.json({ history: result.rows });
   } catch (error) {
     logError('mercadolibre.error-getting-sync-history', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 

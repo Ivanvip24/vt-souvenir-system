@@ -83,7 +83,7 @@ router.post('/generate', async (req, res) => {
     logError('quote.error-generating-quote', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -142,7 +142,7 @@ router.post('/parse', async (req, res) => {
     logError('quote.error-parsing-quote', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -226,7 +226,7 @@ router.post('/generate-from-text', async (req, res) => {
     logError('quote.error-generating-quote-from-text', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -304,7 +304,7 @@ router.post('/save', async (req, res) => {
     logError('quote.error-saving-quote', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });

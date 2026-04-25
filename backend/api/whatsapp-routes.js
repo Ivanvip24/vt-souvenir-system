@@ -1134,7 +1134,7 @@ router.post('/flow-endpoint', async (req, res) => {
     res.json({ data: {} });
   } catch (err) {
     logError('whatsapp.whatsapp-flow-endpoint-error', err);
-    res.status(500).json({ data: { error: 'Error interno del servidor' } });
+    res.status(500).json({ data: { error: (error.message || 'Error desconocido') } });
   }
 });
 

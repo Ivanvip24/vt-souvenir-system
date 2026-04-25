@@ -203,7 +203,7 @@ router.post('/multiple', upload.array('files', 5), async (req, res) => {
     logError('upload.multi-upload-error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -239,7 +239,7 @@ router.delete('/image/:publicId', async (req, res) => {
     logError('upload.delete-error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -257,14 +257,14 @@ router.use((error, req, res, next) => {
     }
     return res.status(400).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 
   if (error) {
     return res.status(400).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 

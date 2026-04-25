@@ -538,7 +538,7 @@ app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
     res.json({ success: true, message: 'Subscribed' });
   } catch (error) {
     logError('server.push-subscribe-error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -549,7 +549,7 @@ app.post('/api/push/unsubscribe', authMiddleware, async (req, res) => {
     await pushService.removeSubscription(endpoint);
     res.json({ success: true, message: 'Unsubscribed' });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -568,7 +568,7 @@ app.post('/api/push/test', authMiddleware, async (req, res) => {
     }
     res.json({ success: true, type, ...result });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -592,7 +592,7 @@ app.get('/api/clients/search', authMiddleware, async (req, res) => {
     res.json({ success: true, clients: result.rows });
   } catch (error) {
     logError('server.error-searching-clients', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 // ========================================

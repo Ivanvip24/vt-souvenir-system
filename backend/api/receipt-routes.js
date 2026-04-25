@@ -193,7 +193,7 @@ router.post('/analyze', upload.single('receipt'), async (req, res) => {
     logError('receipt.receipt-analysis-error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -338,7 +338,7 @@ router.post('/save', async (req, res) => {
     logError('receipt.error-saving-receipt', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   } finally {
     client.release();
@@ -399,7 +399,7 @@ router.get('/', async (req, res) => {
     logError('receipt.error-fetching-receipts', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -453,7 +453,7 @@ router.get('/:id', async (req, res) => {
     logError('receipt.error-fetching-receipt', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -484,7 +484,7 @@ router.get('/suppliers/list', async (req, res) => {
     logError('receipt.error-fetching-suppliers', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -527,7 +527,7 @@ router.delete('/:id', async (req, res) => {
     logError('receipt.error-deleting-receipt', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   } finally {
     client.release();
@@ -545,14 +545,14 @@ router.use((error, req, res, next) => {
     }
     return res.status(400).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 
   if (error) {
     return res.status(400).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 

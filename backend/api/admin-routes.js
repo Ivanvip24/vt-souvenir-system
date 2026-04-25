@@ -383,7 +383,7 @@ router.post('/run-migration', authMiddleware, async (req, res) => {
     logError('admin.migration.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -448,7 +448,7 @@ router.post('/create-manager', authMiddleware, async (req, res) => {
     logError('admin.create-manager.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -505,7 +505,7 @@ router.post('/run-gallery-archive-migration', authMiddleware, async (req, res) =
     logError('admin.migration.gallery-archive.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1460,7 +1460,7 @@ router.post('/import-clients', authMiddleware, async (req, res) => {
 
         imported++;
       } catch (error) {
-        errors.push({ name: record.name, error: 'Error interno del servidor' });
+        errors.push({ name: record.name, error: (error.message || 'Error desconocido') });
       }
     }
 
@@ -1476,7 +1476,7 @@ router.post('/import-clients', authMiddleware, async (req, res) => {
 
   } catch (error) {
     logError('admin.import-clients.error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 

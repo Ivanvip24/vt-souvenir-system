@@ -217,7 +217,7 @@ router.get('/clients', async (req, res) => {
     });
   } catch (error) {
     logError('client-admin.error-fetching-clients', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -297,7 +297,7 @@ router.post('/clients/autocomplete-addresses', async (req, res) => {
     });
   } catch (error) {
     logError('client-admin.error-auto-completing-addresses', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -505,7 +505,7 @@ router.post('/clients/from-google-maps', async (req, res) => {
     res.json({ success: true, data: result, sources, confidence });
   } catch (error) {
     logError('client-admin.error-extracting-google-maps-data', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -646,7 +646,7 @@ router.post('/shipping/labels/bulk', async (req, res) => {
 
   } catch (error) {
     logError('client-admin.error-generating-bulk-labels', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -693,7 +693,7 @@ router.get('/clients/:id', async (req, res) => {
     res.json({ success: true, data: clientData });
   } catch (error) {
     logError('client-admin.error-fetching-client', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -715,7 +715,7 @@ router.get('/payment-notes/client/:clientId', async (req, res) => {
     res.json({ success: true, data: result.rows });
   } catch (error) {
     logError('client-admin.error-fetching-payment-notes', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -733,7 +733,7 @@ router.get('/payment-notes/cuenta/:cuentaId', async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     logError('client-admin.error-fetching-cuenta', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -755,7 +755,7 @@ router.post('/payment-notes', async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     logError('client-admin.error-creating-cuenta', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -795,7 +795,7 @@ router.put('/payment-notes/cuenta/:cuentaId', async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     logError('client-admin.error-updating-cuenta', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -810,7 +810,7 @@ router.delete('/payment-notes/cuenta/:cuentaId', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     logError('client-admin.error-deleting-cuenta', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -835,7 +835,7 @@ router.post('/clients', async (req, res) => {
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
     logError('client-admin.error-creating-client', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -872,7 +872,7 @@ router.put('/clients/:id', async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     logError('client-admin.error-updating-client', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -906,7 +906,7 @@ router.delete('/clients/:id', async (req, res) => {
     res.json({ success: true, message: 'Client deleted successfully' });
   } catch (error) {
     logError('client-admin.error-deleting-client', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 

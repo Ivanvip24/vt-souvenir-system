@@ -32,7 +32,7 @@ router.get('/alerts', async (req, res) => {
     logError('analytics.alerts.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -53,7 +53,7 @@ router.get('/alerts/summary', async (req, res) => {
     logError('analytics.alerts.summary.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -94,7 +94,7 @@ router.post('/alerts/send-digest', async (req, res) => {
     logError('analytics.alerts.digest.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -117,7 +117,7 @@ router.get('/analytics', async (req, res) => {
     logError('analytics.summary.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -147,7 +147,7 @@ router.get('/analytics/revenue', async (req, res) => {
     logError('analytics.revenue.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -173,7 +173,7 @@ router.get('/analytics/products/top', async (req, res) => {
     logError('analytics.products.top.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -199,7 +199,7 @@ router.get('/analytics/clients/top', async (req, res) => {
     logError('analytics.clients.top.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -434,7 +434,7 @@ router.get('/analytics/dashboard', async (req, res) => {
     });
   } catch (error) {
     logError('analytics.dashboard.error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -504,7 +504,7 @@ router.get('/analytics/products/:productName', async (req, res) => {
     });
   } catch (error) {
     logError('analytics.products.detail.error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -523,7 +523,7 @@ router.post('/reports/daily/send', async (req, res) => {
     logError('analytics.reports.daily.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -551,7 +551,7 @@ router.post('/reports/monthly/send', async (req, res) => {
     logError('analytics.reports.monthly.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -569,7 +569,7 @@ router.get('/reports/schedule', (req, res) => {
     logError('analytics.reports.schedule.error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -586,7 +586,7 @@ router.post('/test/email', async (req, res) => {
     res.json({ success: true, to, ...result });
   } catch (error) {
     logError('analytics.test.email.error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 

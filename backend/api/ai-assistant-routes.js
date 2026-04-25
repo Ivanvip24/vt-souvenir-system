@@ -1992,7 +1992,7 @@ router.post('/chat', async (req, res) => {
       success: false,
       error: isOverloaded
         ? 'El asistente está temporalmente ocupado. Intenta de nuevo en unos segundos.'
-        : 'Error interno del servidor'
+        : (error.message || 'Error desconocido')
     });
   }
 });

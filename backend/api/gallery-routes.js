@@ -867,7 +867,7 @@ router.post('/upload', employeeAuth, upload.single('design'), async (req, res) =
     logError('gallery.upload-design-error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1152,7 +1152,7 @@ router.post('/upload-multiple', employeeAuth, uploadMultiple.array('designs', 10
     logError('gallery.batch-upload-error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1195,7 +1195,7 @@ router.post('/analyze', employeeAuth, upload.single('design'), async (req, res) 
     logError('gallery.analysis-error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });

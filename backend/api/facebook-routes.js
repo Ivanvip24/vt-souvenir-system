@@ -23,7 +23,7 @@ router.get('/stats', async (req, res) => {
       scheduler: schedulerStatus
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -33,7 +33,7 @@ router.get('/pending', async (req, res) => {
     const pending = await facebookMarketplace.getPendingUploads();
     res.json({ success: true, count: pending.length, data: pending });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -55,7 +55,7 @@ router.post('/queue', async (req, res) => {
 
     res.json({ success: true, data: result });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -74,7 +74,7 @@ router.get('/status', async (req, res) => {
     const status = await facebookMarketplace.isImageUploaded(imageUrl);
     res.json({ success: true, ...status });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -85,7 +85,7 @@ router.get('/order/:orderId', async (req, res) => {
     const status = await facebookMarketplace.getOrderFacebookStatus(orderId);
     res.json({ success: true, data: status });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -110,7 +110,7 @@ router.get('/export', async (req, res) => {
       }))
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -126,7 +126,7 @@ router.post('/mark-uploaded', async (req, res) => {
     await facebookMarketplace.markAsUploaded(listingIds);
     res.json({ success: true, marked: listingIds.length });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 

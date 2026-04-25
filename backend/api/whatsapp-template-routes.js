@@ -68,7 +68,7 @@ router.get('/templates', async (req, res) => {
     res.json({ templates });
   } catch (err) {
     logError('whatsapp-template.template-list-error', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -79,7 +79,7 @@ router.post('/templates', async (req, res) => {
     res.json({ template });
   } catch (err) {
     logError('whatsapp-template.template-create-error', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -92,7 +92,7 @@ router.post('/templates/:name/send', async (req, res) => {
     res.json({ result });
   } catch (err) {
     logError('whatsapp-template.template-send-error', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -112,7 +112,7 @@ router.post('/templates/:name/broadcast', async (req, res) => {
     });
   } catch (err) {
     logError('whatsapp-template.template-broadcast-error', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -123,7 +123,7 @@ router.get('/broadcasts', async (req, res) => {
     res.json({ broadcasts });
   } catch (err) {
     logError('whatsapp-template.broadcast-list-error', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -148,7 +148,7 @@ router.put('/templates/:name', async (req, res) => {
     res.json({ template: updated.rows[0] });
   } catch (err) {
     logError('whatsapp-template.template-update-error', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -177,7 +177,7 @@ router.delete('/templates/:name', async (req, res) => {
     res.json({ message: `Template "${req.params.name}" deleted from Meta and local DB` });
   } catch (err) {
     logError('whatsapp-template.template-delete-error', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -189,7 +189,7 @@ router.post('/templates/seed', async (req, res) => {
     res.json({ message: 'Default templates seeded', templates });
   } catch (err) {
     logError('whatsapp-template.template-seed-error', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 

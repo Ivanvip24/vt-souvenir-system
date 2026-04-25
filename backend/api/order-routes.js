@@ -53,7 +53,7 @@ router.post('/', async (req, res) => {
     logError('order.error-creating-order', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -101,7 +101,7 @@ router.post('/quick', async (req, res) => {
     });
   } catch (error) {
     logError('order.error-creating-quick-order', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -306,7 +306,7 @@ router.get('/', async (req, res) => {
     logError('order.error-querying-orders', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -379,7 +379,7 @@ router.get('/calendar', async (req, res) => {
     logError('order.calendar-data-error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -509,7 +509,7 @@ reminderRouter.get('/', async (req, res) => {
     res.json({ success: true, data: reminders });
   } catch (error) {
     logError('order.reminders-fetch-error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -531,7 +531,7 @@ reminderRouter.post('/', async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     logError('order.reminder-create-error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -551,7 +551,7 @@ reminderRouter.post('/:id/complete', async (req, res) => {
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     logError('order.reminder-complete-error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -568,7 +568,7 @@ reminderRouter.delete('/:id/complete', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     logError('order.reminder-uncomplete-error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -580,7 +580,7 @@ reminderRouter.delete('/:id', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     logError('order.reminder-delete-error', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -634,7 +634,7 @@ router.get('/capacity', async (req, res) => {
     logError('order.capacity-calculation-error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -702,7 +702,7 @@ router.get('/next-available-date', async (req, res) => {
     logError('order.next-available-date-error', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -881,7 +881,7 @@ router.get('/:orderId', async (req, res) => {
     logError('order.error-getting-order', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -958,7 +958,7 @@ router.patch('/:orderId/status', async (req, res) => {
     logError('order.error-updating-status', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -977,7 +977,7 @@ router.post('/:orderId/sync', async (req, res) => {
     logError('order.error-syncing-order', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -997,7 +997,7 @@ router.post('/sync/bulk', async (req, res) => {
     logError('order.error-in-bulk-sync', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1251,7 +1251,7 @@ router.post('/:orderId/approve', async (req, res) => {
     logError('order.error-approving-order', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1291,7 +1291,7 @@ router.post('/:orderId/reject', async (req, res) => {
     logError('order.error-rejecting-order', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1335,7 +1335,7 @@ router.post('/:orderId/payment-proof', async (req, res) => {
     logError('order.error-uploading-payment-proof', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1588,7 +1588,7 @@ router.post('/:orderId/second-payment', async (req, res) => {
     logError('order.error-uploading-second-payment-receipt', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1695,7 +1695,7 @@ router.post('/:orderId/confirm-second-payment', async (req, res) => {
     logError('order.error-confirming-second-payment', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1730,7 +1730,7 @@ router.post('/:orderId/archive', async (req, res) => {
     logError('order.error-archiving-order', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1783,7 +1783,7 @@ router.put('/:orderId/items/:itemId', async (req, res) => {
     logError('order.error-updating-order-item', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1857,7 +1857,7 @@ router.post('/:orderId/items/:itemId/attachment', async (req, res) => {
     logError('order.error-adding-attachment', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -1926,7 +1926,7 @@ router.delete('/:orderId/items/:itemId/attachment', async (req, res) => {
     logError('order.error-removing-attachment', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2114,7 +2114,7 @@ router.put('/:orderId/items/:itemId/modify', async (req, res) => {
     logError('order.error-modifying-order-item', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2258,7 +2258,7 @@ router.post('/:orderId/items/add', async (req, res) => {
     logError('order.error-adding-order-item', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2330,7 +2330,7 @@ router.delete('/:orderId/items/:itemId', async (req, res) => {
 
   } catch (error) {
     logError('order.error-removing-order-item', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -2374,7 +2374,7 @@ router.put('/:orderId/notes', async (req, res) => {
     logError('order.error-updating-order-notes', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2447,7 +2447,7 @@ router.post('/:orderId/attachment', async (req, res) => {
     logError('order.error-adding-attachment', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2515,7 +2515,7 @@ router.delete('/:orderId/attachment', async (req, res) => {
     logError('order.error-removing-attachment', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2566,7 +2566,7 @@ router.post('/:orderId/production-sheet', async (req, res) => {
     logError('order.error-saving-production-sheet', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2603,7 +2603,7 @@ router.delete('/:orderId/production-sheet', async (req, res) => {
     logError('order.error-removing-production-sheet', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2672,7 +2672,7 @@ router.post('/reference-sheet/generate', async (req, res) => {
     logError('order.error-generating-custom-reference-sheet', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2769,7 +2769,7 @@ router.post('/:orderId/reference-sheet', async (req, res) => {
     logError('order.error-generating-reference-sheet', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2874,7 +2874,7 @@ router.post('/:orderId/reference-sheet/save', async (req, res) => {
     logError('order.error-generatingsaving-reference-sheet', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2983,7 +2983,7 @@ router.get('/:orderId/receipt/download', async (req, res) => {
     logError('order.error-regenerating-receipt', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -3091,7 +3091,7 @@ router.post('/:orderId/process-receipt', async (req, res) => {
     logError('order.error-processing-receipt', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -3336,7 +3336,7 @@ router.post('/:orderId/verify-payment', async (req, res) => {
     logError('order.error-in-claude-ai-verification', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });

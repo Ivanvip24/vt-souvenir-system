@@ -104,7 +104,7 @@ router.get('/origin-address', async (req, res) => {
     });
   } catch (error) {
     logError('shipping.error-fetching-origin-address', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -157,7 +157,7 @@ router.put('/origin-address', async (req, res) => {
     });
   } catch (error) {
     logError('shipping.error-updating-origin-address', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -348,7 +348,7 @@ router.post('/orders/:orderId/generate', async (req, res) => {
 
   } catch (error) {
     logError('shipping.error-generating-shipping-label', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -402,7 +402,7 @@ router.get('/orders/:orderId/calculate-boxes', async (req, res) => {
 
   } catch (error) {
     logError('shipping.error-calculating-boxes', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -986,7 +986,7 @@ router.get('/orders/:orderId/quotes', async (req, res) => {
 
   } catch (error) {
     logError('shipping.error-getting-shipping-quotes', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -1316,7 +1316,7 @@ router.post('/orders/:orderId/generate-selected', async (req, res) => {
 
   } catch (error) {
     logError('shipping.error-generating-label-with-selected-rate', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -1432,7 +1432,7 @@ router.post('/labels/:labelId/refresh-tracking', async (req, res) => {
 
   } catch (error) {
     logError('shipping.error-refreshing-tracking', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -1652,7 +1652,7 @@ router.post('/pickups/request', async (req, res) => {
           results.push({
             carrier: carrier,
             success: false,
-            error: 'Error interno del servidor',
+            error: (error.message || 'Error desconocido'),
             shipment_count: labels.length
           });
         }
@@ -1691,7 +1691,7 @@ router.post('/pickups/request', async (req, res) => {
 
   } catch (error) {
     logError('shipping.error-requesting-pickup', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -1863,7 +1863,7 @@ router.post('/pickups/request/carrier', async (req, res) => {
     logError('shipping.error-requesting-carrier-pickup', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2024,7 +2024,7 @@ router.get('/pickups/skydropx-test', async (req, res) => {
       usage: 'Add ?shipment_id=UUID to test creating a pickup. Add &date=YYYY-MM-DD for specific date.'
     });
   } catch (error) {
-    res.json({ success: false, error: 'Error interno del servidor' });
+    res.json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -2150,7 +2150,7 @@ router.patch('/pickups/:pickupId', async (req, res) => {
 
   } catch (error) {
     logError('shipping.error-updating-pickup', error);
-    res.status(500).json({ success: false, error: 'Error interno del servidor' });
+    res.status(500).json({ success: false, error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -2200,7 +2200,7 @@ router.delete('/pickups/:pickupId', async (req, res) => {
 
   } catch (error) {
     logError('shipping.error-cancelling-pickup', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
@@ -2425,7 +2425,7 @@ router.post('/clients/:clientId/generate', async (req, res) => {
     logError('shipping.error-generating-shipping-label-for-client', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno del servidor'
+      error: (error.message || 'Error desconocido')
     });
   }
 });
@@ -2677,7 +2677,7 @@ router.get('/clients/:clientId/quotes', async (req, res) => {
 
   } catch (error) {
     logError('shipping.error-getting-shipping-quotes-for-client', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: (error.message || 'Error desconocido') });
   }
 });
 
