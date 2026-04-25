@@ -467,29 +467,11 @@ app.use('/api/orders', authMiddleware, orderRoutes);
 app.use('/api/reminders', authMiddleware, reminderRoutes);
 
 // ========================================
-// CLIENT ADMIN ROUTES (clients DB, payment notes, bulk labels)
-// ========================================
-app.use('/api', authMiddleware, clientAdminRoutes);
-
-// ========================================
-// ANALYTICS, ALERTS, REPORTS, TEST EMAIL
-// ========================================
-app.use('/api', authMiddleware, analyticsRoutes);
-
-// ========================================
-// SALESPEOPLE & COMMISSIONS
-// ========================================
-app.use('/api', authMiddleware, salespersonRoutes);
-
-// ========================================
-// FACEBOOK MARKETPLACE ROUTES
-// ========================================
-app.use('/api/facebook', authMiddleware, facebookRoutes);
-
-// ========================================
 // EMPLOYEE DASHBOARD ROUTES
 // ========================================
-// Employee login/verify must be public; other employee routes use their own employeeAuth middleware
+// MUST come BEFORE the catch-all /api mounts below — otherwise
+// authMiddleware on clientAdminRoutes/analyticsRoutes (mounted at /api)
+// intercepts /api/employees/* before the bypass logic runs.
 app.use('/api/employees', (req, res, next) => {
   if (req.path === '/login' || req.path === '/verify') return next();
   return authMiddleware(req, res, next);
@@ -513,10 +495,24 @@ app.use('/api/whatsapp', authMiddleware, whatsappTemplateRoutes);
 // T1 routes — sync endpoint accepts sync key, all others require JWT
 app.use('/api/t1', (req, res, next) => {
   if ((req.path === '/sync' || req.path === '/backfill-labels') && req.method === 'POST' && req.headers['x-sync-key'] === 'axkan-t1-sync-2026') {
-    return next(); // Skip JWT auth for sync/backfill with valid key
+    return next();
   }
   authMiddleware(req, res, next);
 }, t1Routes);
+
+// ========================================
+// FACEBOOK MARKETPLACE ROUTES
+// ========================================
+app.use('/api/facebook', authMiddleware, facebookRoutes);
+
+// ========================================
+// CATCH-ALL /api ROUTES — these MUST come LAST because they
+// mount at /api with authMiddleware, which would block any
+// /api/* route registered after them.
+// ========================================
+app.use('/api', authMiddleware, clientAdminRoutes);
+app.use('/api', authMiddleware, analyticsRoutes);
+app.use('/api', authMiddleware, salespersonRoutes);
 
 // ========================================
 // PUSH NOTIFICATION ENDPOINTS
