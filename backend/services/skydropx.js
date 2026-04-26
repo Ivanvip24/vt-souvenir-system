@@ -381,12 +381,13 @@ export async function createShipment(quotationId, rateId, rate, destAddress, pac
   });
 
   const responseText = await response.text();
-  log('info', 'skydropx.shipment.response', { status: response.status });
+  log('info', 'skydropx.shipment.response', { status: response.status, body: responseText.substring(0, 500) });
 
   if (!response.ok) {
     let errorMessage = 'Error creating shipment in Skydropx';
     try {
       const errorData = JSON.parse(responseText);
+      log('error', 'skydropx.shipment.rejected', { status: response.status, errors: errorData.errors, full: responseText.substring(0, 1000) });
       if (errorData.errors) {
         if (typeof errorData.errors === 'string') {
           errorMessage = errorData.errors;
@@ -400,7 +401,9 @@ export async function createShipment(quotationId, rateId, rate, destAddress, pac
           errorMessage = messages.join('; ') || errorMessage;
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      log('error', 'skydropx.shipment.unparseable', { status: response.status, body: responseText.substring(0, 500) });
+    }
     throw new Error(errorMessage);
   }
 
