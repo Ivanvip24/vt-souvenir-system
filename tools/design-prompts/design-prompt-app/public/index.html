@@ -1,0 +1,2336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXKAN - Design Prompt Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'RL Aqva';
+            src: url('/fonts/rl-aqva-black.otf') format('opentype');
+            font-weight: 900;
+            font-display: swap;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --rosa: #e72a88;
+            --rosa-light: #fce4ef;
+            --rosa-dark: #c91e73;
+            --verde: #8ab73b;
+            --verde-light: #eef6e0;
+            --naranja: #f39223;
+            --turquesa: #09adc2;
+            --rojo: #ef4444;
+            --bg: #fafafa;
+            --text: #212121;
+            --text-dim: #888;
+            --text-muted: #aaa;
+            --border: #e8e8e8;
+            --border-light: #eee;
+            --card-bg: #fff;
+            --font-display: 'RL Aqva', 'Fredoka', sans-serif;
+            --font-body: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ═══ BACKGROUND ═══ */
+        .bg-deco { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .bg-deco .c { position: absolute; border-radius: 50%; opacity: 0.05; }
+        .bg-deco .c1 { width: 600px; height: 600px; background: var(--rosa); top: -200px; right: -150px; }
+        .bg-deco .c2 { width: 400px; height: 400px; background: var(--turquesa); bottom: 5%; left: -100px; }
+        .bg-deco .c3 { width: 300px; height: 300px; background: var(--naranja); bottom: -80px; right: 20%; }
+
+        /* ═══ HEADER ═══ */
+        .header {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .logo {
+            font-family: var(--font-display);
+            font-size: 22px;
+            color: var(--rosa);
+            letter-spacing: 2px;
+        }
+        .mode-badge {
+            background: linear-gradient(135deg, var(--rosa), var(--naranja));
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 100px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .back-link {
+            font-size: 13px;
+            color: var(--text-dim);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--rosa); }
+        .history-fab {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: var(--card-bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .history-fab:hover { border-color: var(--rosa); color: var(--rosa); }
+        .history-fab svg { width: 18px; height: 18px; color: var(--text-dim); }
+        .history-fab:hover svg { color: var(--rosa); }
+        .history-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 16px;
+            height: 16px;
+            background: var(--rosa);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            border-radius: 100px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        /* ═══ MAIN ═══ */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 32px 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hero-text {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .hero-text h1 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .hero-text h1 span { color: var(--rosa); }
+        .hero-text p {
+            color: var(--text-dim);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* ═══ INPUT CARD ═══ */
+        .input-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 0;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            overflow: hidden;
+        }
+        .input-card:focus-within {
+            border-color: var(--rosa);
+            box-shadow: 0 0 0 4px rgba(231, 42, 136, 0.08), 0 8px 32px rgba(0,0,0,0.08);
+        }
+
+        .prompt-input {
+            width: 100%;
+            min-height: 100px;
+            max-height: 200px;
+            padding: 20px 24px 12px;
+            border: none;
+            outline: none;
+            font-family: var(--font-body);
+            font-size: 15px;
+            line-height: 1.6;
+            resize: none;
+            color: var(--text);
+            background: transparent;
+        }
+        .prompt-input::placeholder { color: #bbb; }
+
+        /* Image thumbs zone */
+        .drop-zone {
+            display: none;
+            padding: 0 20px 12px;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .drop-zone.has-images { display: flex; }
+        .drop-zone .thumb {
+            width: 56px;
+            height: 56px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 2px solid var(--border);
+        }
+        .drop-zone .thumb-remove {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            background: var(--rosa);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .thumb-wrap { position: relative; display: inline-block; }
+        .thumb-wrap.is-style-ref .thumb {
+            border: 3px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+        }
+        .thumb-wrap.is-style-ref {
+            position: relative;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--rosa), var(--naranja), #FFD700, var(--verde), var(--turquesa), #8B5CF6, var(--rosa));
+            background-size: 300% 300%;
+            animation: rainbowFlow 3s ease infinite;
+            padding: 3px;
+        }
+        .thumb-wrap.is-style-ref .thumb {
+            border: none;
+            border-radius: 9px;
+        }
+        @keyframes rainbowFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .style-ref-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #fff;
+            font-weight: 700;
+            text-align: center;
+            margin-top: -18px;
+            position: relative;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        .clear-images-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-dim);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .clear-images-btn:hover { border-color: var(--rojo); color: var(--rojo); }
+
+        /* Bottom toolbar */
+        .input-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-top: 1px solid rgba(0,0,0,0.04);
+            background: rgba(0,0,0,0.01);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .toolbar-btn {
+            background: none;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-family: var(--font-body);
+        }
+        .toolbar-btn:hover {
+            background: rgba(0,0,0,0.04);
+            color: var(--text);
+        }
+        .toolbar-btn.turbo-active {
+            background: #FFF8E1;
+            color: #F57C00;
+            border: 1.5px solid #FFD54F;
+        }
+        .toolbar-btn.turbo-active:hover { background: #FFF3E0; }
+        .toolbar-btn svg { width: 18px; height: 18px; }
+
+        .count-chip {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: var(--rosa-light);
+            border: 1px solid transparent;
+            border-radius: 100px;
+            padding: 4px 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--rosa);
+        }
+        .count-chip button {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--rosa);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .count-chip button:hover { background: rgba(231,42,136,0.12); }
+        .count-chip span {
+            min-width: 20px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .send-btn {
+            padding: 9px 20px;
+            border: none;
+            border-radius: 100px;
+            font-family: var(--font-body);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+        .send-btn:disabled { opacity: 0.6; pointer-events: none; }
+        .send-envato {
+            background: linear-gradient(135deg, var(--rosa), #c91e73);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(231,42,136,0.25);
+        }
+        .send-envato:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(231,42,136,0.35);
+        }
+        .send-gemini {
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1.5px solid var(--border);
+        }
+        .send-gemini:hover {
+            border-color: var(--turquesa);
+            color: var(--turquesa);
+        }
+        .send-btn svg { width: 16px; height: 16px; }
+
+        /* ═══ ADVANCED PANEL ═══ */
+        .advanced-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text-dim);
+            padding: 6px 0;
+            transition: color 0.2s;
+            user-select: none;
+        }
+        .advanced-toggle:hover { color: var(--rosa); }
+        .advanced-toggle svg {
+            width: 14px; height: 14px;
+            transition: transform 0.3s;
+        }
+        .advanced-toggle.open svg { transform: rotate(180deg); }
+
+        .advanced-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s;
+            opacity: 0;
+        }
+        .advanced-panel.open {
+            max-height: 800px;
+            opacity: 1;
+        }
+        .advanced-inner {
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Row helpers */
+        .adv-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .adv-col { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .adv-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+        }
+        .adv-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid var(--border-light);
+            border-radius: 10px;
+            font-family: var(--font-body);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .adv-input:focus { border-color: var(--rosa); }
+
+        /* Pills */
+        .pill-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .pill {
+            padding: 6px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 100px;
+            background: var(--card-bg);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-body);
+            color: var(--text-dim);
+            user-select: none;
+        }
+        .pill:hover { border-color: var(--rosa); color: var(--rosa); }
+        .pill.active {
+            background: var(--text);
+            color: #fff;
+            border-color: var(--text);
+        }
+        .pill.style-pill.active {
+            background: var(--rosa);
+            border-color: var(--rosa);
+            color: #fff;
+        }
+
+        /* Sliders */
+        .sliders-row {
+            display: flex;
+            gap: 16px;
+        }
+        .slider-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .slider-val {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--rosa);
+            min-width: 20px;
+            text-align: right;
+        }
+        .slider-group input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+        }
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--rosa);
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        /* Project type pills */
+        .project-pills { margin-top: 4px; }
+        .project-pill {
+            padding: 7px 16px;
+            border: 2px solid var(--rosa);
+            border-radius: 100px;
+            background: white;
+            color: var(--text);
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .project-pill:hover { background: var(--rosa-light); }
+        .project-pill.active {
+            background: var(--text);
+            color: white;
+            border-color: var(--text);
+        }
+
+        /* Style ref drop zone */
+        .style-ref-zone {
+            border: 1.5px dashed var(--border);
+            border-radius: 10px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .style-ref-zone:hover { border-color: var(--turquesa); color: var(--turquesa); }
+        .style-ref-zone.has-file { border-color: var(--turquesa); border-style: solid; }
+        .style-ref-zone svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .style-ref-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .style-ref-remove {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--rojo);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 2px 6px;
+        }
+
+        /* ═══ EXAMPLE CHIPS ═══ */
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .example-chip {
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 100px;
+            padding: 8px 16px;
+            font-size: 13px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-body);
+        }
+        .example-chip:hover {
+            border-color: var(--rosa);
+            color: var(--rosa);
+            background: var(--rosa-light);
+        }
+
+        /* ═══ RESULTS ═══ */
+        .results {
+            width: 100%;
+            max-width: 720px;
+            margin-top: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .results.visible { display: flex; }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 4px 0;
+        }
+        .results-header-left {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+        .results-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .results-action-btn {
+            padding: 6px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 100px;
+            background: var(--card-bg);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            font-family: var(--font-body);
+            color: var(--text-dim);
+        }
+        .results-action-btn:hover {
+            border-color: var(--rosa);
+            color: var(--rosa);
+        }
+        .results-action-btn svg { width: 14px; height: 14px; }
+
+        .result-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            animation: slideUp 0.3s ease-out both;
+        }
+        .result-card:nth-child(2) { animation-delay: 0.05s; }
+        .result-card:nth-child(3) { animation-delay: 0.1s; }
+        .result-card:nth-child(4) { animation-delay: 0.15s; }
+        .result-card:nth-child(5) { animation-delay: 0.2s; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            cursor: pointer;
+            gap: 8px;
+        }
+        .result-header:hover { background: rgba(0,0,0,0.01); }
+        .result-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+        .result-num {
+            width: 26px;
+            height: 26px;
+            min-width: 26px;
+            border-radius: 50%;
+            background: var(--rosa-light);
+            color: var(--rosa);
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .result-summary {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .result-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .result-action {
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card-bg);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+            font-family: var(--font-body);
+            color: var(--text-dim);
+        }
+        .result-action:hover { border-color: var(--rosa); color: var(--rosa); }
+        .result-action.sent { border-color: var(--verde); color: var(--verde); }
+        .result-action svg { width: 12px; height: 12px; }
+
+        .result-prompt {
+            padding: 0 16px 14px 52px;
+            font-size: 13px;
+            line-height: 1.55;
+            color: #555;
+            display: none;
+        }
+        .result-card.expanded .result-prompt { display: block; }
+
+        .result-preview {
+            padding: 0 16px 14px 52px;
+        }
+        .result-preview img {
+            max-width: 200px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .result-preview img.fullscreen-preview {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: 100vh;
+            object-fit: contain;
+            z-index: 9999;
+            background: rgba(0,0,0,0.9);
+            border-radius: 0;
+        }
+
+        /* ═══ LOADING ═══ */
+        .loading-bar {
+            height: 3px;
+            background: linear-gradient(90deg, var(--rosa), var(--naranja), var(--turquesa), var(--rosa));
+            background-size: 300% 100%;
+            border-radius: 100px;
+            animation: shimmer 1.5s ease-in-out infinite;
+            display: none;
+        }
+        .loading-bar.active { display: block; }
+        @keyframes shimmer {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .spin-icon { animation: spin 1s linear infinite; }
+
+        /* ═══ DRAG OVERLAY ═══ */
+        .drag-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(231, 42, 136, 0.06);
+            border: 3px dashed var(--rosa);
+            border-radius: 20px;
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .drag-overlay.visible { display: flex; }
+        .drag-overlay span {
+            font-family: var(--font-display);
+            font-size: 24px;
+            color: var(--rosa);
+            background: rgba(255,255,255,0.9);
+            padding: 16px 32px;
+            border-radius: 100px;
+        }
+
+        /* ═══ HISTORY SIDEBAR ═══ */
+        .history-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .history-overlay.visible { opacity: 1; pointer-events: auto; }
+
+        .history-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            max-width: 90vw;
+            height: 100vh;
+            background: var(--card-bg);
+            z-index: 201;
+            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -8px 0 40px rgba(0,0,0,0.12);
+        }
+        .history-sidebar.visible { right: 0; }
+
+        .history-header {
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .history-title {
+            font-family: var(--font-display);
+            font-size: 18px;
+            color: var(--rosa);
+        }
+        .history-header-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .history-header-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: none;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: all 0.15s;
+        }
+        .history-header-btn:hover { border-color: var(--rojo); color: var(--rojo); }
+        .history-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--text-dim);
+            padding: 4px;
+        }
+
+        .history-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+        .history-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .history-item {
+            background: var(--bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            transition: border-color 0.15s;
+        }
+        .history-item:hover { border-color: var(--rosa); }
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .history-item-project {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: var(--rosa);
+        }
+        .history-item-date {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .history-item-summary {
+            font-size: 13px;
+            color: var(--text);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        .dest-tag {
+            display: inline-block;
+            background: var(--rosa-light);
+            color: var(--rosa);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 1px 8px;
+            border-radius: 100px;
+            margin-right: 4px;
+        }
+        .history-item-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .history-chip {
+            font-size: 10px;
+            padding: 2px 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 100px;
+            color: var(--text-dim);
+        }
+        .history-item-actions {
+            display: flex;
+            gap: 4px;
+        }
+        .history-action-btn {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--card-bg);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font-body);
+            color: var(--text-dim);
+        }
+        .history-action-btn:hover { border-color: var(--rosa); color: var(--rosa); }
+        .history-action-btn.delete { color: var(--rojo); }
+        .history-action-btn.delete:hover { border-color: var(--rojo); }
+
+        /* ═══ CANCEL BUTTON ═══ */
+        .cancel-btn {
+            padding: 8px 20px;
+            border: 1.5px solid var(--rojo);
+            border-radius: 100px;
+            background: var(--card-bg);
+            color: var(--rojo);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-body);
+            transition: all 0.2s;
+        }
+        .cancel-btn:hover { background: var(--rojo); color: #fff; }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 600px) {
+            .header { padding: 12px 16px; }
+            .logo { font-size: 18px; }
+            .mode-badge { font-size: 9px; padding: 3px 8px; }
+            .main { padding: 24px 16px 60px; }
+            .hero-text h1 { font-size: 22px; }
+            .prompt-input { padding: 16px; font-size: 14px; }
+            .input-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .toolbar-left { justify-content: center; }
+            .toolbar-right { justify-content: center; }
+            .send-btn { flex: 1; justify-content: center; }
+            .examples { gap: 6px; }
+            .example-chip { font-size: 12px; padding: 6px 12px; }
+            .adv-row { flex-direction: column; }
+            .sliders-row { flex-direction: column; }
+            .history-sidebar { width: 100%; max-width: 100vw; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-deco">
+    <div class="c c1"></div>
+    <div class="c c2"></div>
+    <div class="c c3"></div>
+</div>
+
+<header class="header">
+    <div class="header-left">
+        <div class="logo">AXKAN</div>
+        <div class="mode-badge">DESIGN PROMPTS</div>
+    </div>
+    <div class="header-right">
+        <a href="/full-editor.html" class="back-link">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+            Full Editor
+        </a>
+        <button class="history-fab" id="historyFab" onclick="toggleHistory()" title="History">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span class="history-badge" id="historyBadge"></span>
+        </button>
+    </div>
+</header>
+
+<div class="loading-bar" id="loadingBar"></div>
+
+<main class="main">
+    <div class="chat-container">
+        <div class="hero-text">
+            <h1>Describe it. <span>Generate.</span> Send.</h1>
+            <p>Just say what you want &mdash; drop a reference image if you have one</p>
+        </div>
+
+        <div class="input-card" id="inputCard">
+            <textarea
+                class="prompt-input"
+                id="promptInput"
+                placeholder="5 signpost magnets for Bustamante with cave illustrations..."
+                rows="3"
+            ></textarea>
+
+            <div class="drop-zone" id="dropZone"></div>
+
+            <div class="input-toolbar">
+                <div class="toolbar-left">
+                    <!-- Image upload -->
+                    <button class="toolbar-btn" id="addImageBtn" title="Add reference image">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        Image
+                    </button>
+                    <!-- Style ref upload -->
+                    <button class="toolbar-btn" id="addStyleRefBtn" title="Add style reference">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        Style
+                    </button>
+                    <!-- Product type dropdown -->
+                    <div class="toolbar-btn" style="padding:0;position:relative;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;margin-left:12px;pointer-events:none;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                        <select id="productDropdown" style="appearance:none;-webkit-appearance:none;border:none;background:transparent;font-family:var(--font-body);font-size:13px;color:var(--text-dim);cursor:pointer;padding:8px 24px 8px 6px;outline:none;">
+                            <option value="magnet">Magnet</option>
+                            <option value="bottle-opener">Bottle Opener</option>
+                            <option value="keychain">Keychain</option>
+                            <option value="keyholder">Keyholder</option>
+                            <option value="portrait">Portrait</option>
+                        </select>
+                        <svg viewBox="0 0 12 12" fill="currentColor" style="width:10px;height:10px;position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-dim);"><path d="M2 4l4 4 4-4"/></svg>
+                    </div>
+                    <!-- Turbo toggle -->
+                    <button class="toolbar-btn" id="turboBtn" title="Turbo: fast (Haiku) / Normal: deeper (Sonnet)">
+                        <span id="turboIcon">&#9881;</span>
+                        <span id="turboLabel">Normal</span>
+                    </button>
+                    <!-- Count -->
+                    <div class="count-chip">
+                        <button id="countDown">-</button>
+                        <span id="countDisplay" title="Click to edit">5</span>
+                        <button id="countUp">+</button>
+                    </div>
+                </div>
+
+                <div class="toolbar-right">
+                    <button class="cancel-btn" id="cancelBtn" onclick="cancelGeneration()">Cancel</button>
+                    <button class="send-btn send-envato" id="sendEnvato">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                        Generate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced panel toggle -->
+        <div class="advanced-toggle" id="advancedToggle" onclick="toggleAdvanced()">
+            <span>Advanced options</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+
+        <!-- Advanced options -->
+        <div class="advanced-panel" id="advancedPanel">
+            <div class="advanced-inner">
+                <!-- Destination + Theme -->
+                <div class="adv-row">
+                    <div class="adv-col">
+                        <label class="adv-label">Destination</label>
+                        <input class="adv-input" id="destination" placeholder="e.g., Cancun, CDMX, Hermosillo">
+                    </div>
+                    <div class="adv-col">
+                        <label class="adv-label">Theme</label>
+                        <input class="adv-input" id="theme" placeholder="e.g., Day of the Dead, tropical">
+                    </div>
+                </div>
+
+                <!-- Project Type -->
+                <div>
+                    <label class="adv-label">Project type</label>
+                    <div class="pill-group project-pills" style="margin-top:6px;">
+                        <button class="project-pill active" data-key="variations" onclick="selectProject('variations', this)">Design Variation</button>
+                        <button class="project-pill" data-key="from-scratch" onclick="selectProject('from-scratch', this)">New Design</button>
+                        <button class="project-pill" data-key="previous-element" onclick="selectProject('previous-element', this)">Previous Element</button>
+                        <button class="project-pill" data-key="transform" onclick="selectProject('transform', this)">Transform</button>
+                    </div>
+                </div>
+
+                <!-- Styles -->
+                <div>
+                    <label class="adv-label">Style</label>
+                    <div class="pill-group" id="stylePills" style="margin-top:6px;">
+                        <button class="pill style-pill" data-style="cartoon" onclick="toggleStyle(this)">Cartoon</button>
+                        <button class="pill style-pill" data-style="realistic" onclick="toggleStyle(this)">Realistic</button>
+                        <button class="pill style-pill" data-style="collage" onclick="toggleStyle(this)">Collage</button>
+                        <button class="pill style-pill" data-style="photography" onclick="toggleStyle(this)">Photo</button>
+                        <button class="pill style-pill" data-style="hybrid" onclick="toggleStyle(this)">Hybrid</button>
+                        <button class="pill style-pill" data-style="secret" onclick="toggleStyle(this)">Secret</button>
+                    </div>
+                </div>
+
+                <!-- Ratio -->
+                <div>
+                    <label class="adv-label">Ratio</label>
+                    <div class="pill-group" id="ratioPills" style="margin-top:6px;">
+                        <button class="pill active" data-ratio="1:1" onclick="selectRatio(this)">1:1</button>
+                        <button class="pill" data-ratio="2:1" onclick="selectRatio(this)">2:1</button>
+                        <button class="pill" data-ratio="1:2" onclick="selectRatio(this)">1:2</button>
+                    </div>
+                </div>
+
+                <!-- Sliders -->
+                <div class="sliders-row" id="slidersRow">
+                    <div class="slider-group" id="sliderTransform">
+                        <div class="slider-header">
+                            <span class="adv-label">Transformation</span>
+                            <span class="slider-val" id="levelValue">5</span>
+                        </div>
+                        <input type="range" id="level" min="1" max="10" value="5" oninput="document.getElementById('levelValue').textContent=this.value">
+                    </div>
+                    <div class="slider-group" id="sliderDecoration">
+                        <div class="slider-header">
+                            <span class="adv-label">Decoration</span>
+                            <span class="slider-val" id="decorationValue">8</span>
+                        </div>
+                        <input type="range" id="decoration" min="1" max="10" value="8" oninput="document.getElementById('decorationValue').textContent=this.value">
+                    </div>
+                    <div class="slider-group" id="sliderCrazymeter">
+                        <div class="slider-header">
+                            <span class="adv-label">Crazymeter</span>
+                            <span class="slider-val" id="crazymeterValue">5</span>
+                        </div>
+                        <input type="range" id="crazymeter" min="1" max="10" value="5" oninput="document.getElementById('crazymeterValue').textContent=this.value">
+                    </div>
+                </div>
+
+                <!-- Style Reference drop zone -->
+                <div>
+                    <label class="adv-label">Style reference image</label>
+                    <div class="style-ref-zone" id="styleRefZone" onclick="document.getElementById('styleRefInput').click()" style="margin-top:6px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        <span id="styleRefText">Drop or click to add style reference</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example prompts -->
+        <div class="examples" id="examplesRow">
+            <button class="example-chip">3 toucan magnets for Cancun</button>
+            <button class="example-chip">5 axolotl keychains, bold text</button>
+            <button class="example-chip">signpost magnet with cave scenes</button>
+            <button class="example-chip">10 sea turtle bottle openers</button>
+        </div>
+
+        <!-- Results -->
+        <div class="results" id="results"></div>
+    </div>
+</main>
+
+<!-- Drag overlay -->
+<div class="drag-overlay" id="dragOverlay">
+    <span>Drop reference image</span>
+</div>
+
+<!-- History sidebar -->
+<div class="history-overlay" id="historyOverlay" onclick="toggleHistory()"></div>
+<div class="history-sidebar" id="historySidebar">
+    <div class="history-header">
+        <div class="history-title">History</div>
+        <div class="history-header-actions">
+            <button class="history-header-btn" onclick="clearHistory()">Clear All</button>
+            <button class="history-close" onclick="toggleHistory()">&times;</button>
+        </div>
+    </div>
+    <div class="history-content" id="historyContent">
+        <div class="history-empty" id="historyEmpty">No history yet. Generated prompts will appear here.</div>
+    </div>
+</div>
+
+<!-- Hidden file inputs -->
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+<input type="file" id="styleRefInput" accept="image/*" hidden>
+
+<script>
+    // ═══════════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════════
+    let count = 5;
+    let selectedImages = [];      // File objects
+    let imageDataUrls = [];       // Pasted images as data URLs
+    let styleReferenceFile = null;
+    let styleReferenceDataUrl = null;
+    let selectedStyles = [];
+    let selectedRatio = '1:1';
+    let selectedProduct = 'magnet';
+    let currentProject = 'variations';
+    let turboMode = false;
+    let _abortController = null;
+    let generatedVariations = []; // Store generated variation data
+
+    const products = ['Magnet', 'Keychain', 'Bottle Opener', 'Keyholder', 'Portrait'];
+    const productMap = { 'Magnet': 'magnet', 'Keychain': 'keychain', 'Bottle Opener': 'bottle-opener', 'Keyholder': 'keyholder', 'Portrait': 'portrait' };
+    let productIdx = 0;
+
+    const secretStyles = [
+        'destination badge style with flat illustration, layered elements, dimensional typography, and decorative framing',
+        'photo collage with mixed media - combining real photography of landmarks/objects with illustrated cartoon characters, decorative pattern backgrounds, and vibrant dimensional typography'
+    ];
+
+    const HISTORY_KEY = 'designPromptHistory';
+    const MAX_HISTORY_ITEMS = 50;
+    const IMG_MAX_DIMENSION = 4096;
+    const IMG_MAX_BYTES = 10 * 1024 * 1024;
+    const IMG_JPEG_QUALITY = 0.85;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ELEMENTS
+    // ═══════════════════════════════════════════════════════════════
+    const input = document.getElementById('promptInput');
+    const countDisplay = document.getElementById('countDisplay');
+    const dropZone = document.getElementById('dropZone');
+    const results = document.getElementById('results');
+    const loadingBar = document.getElementById('loadingBar');
+
+    // ═══════════════════════════════════════════════════════════════
+    // UTILITY FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function dataURLtoBlob(dataUrl) {
+        const arr = dataUrl.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while(n--) u8arr[n] = bstr.charCodeAt(n);
+        return new Blob([u8arr], {type: mime});
+    }
+
+    function getExtFromDataUrl(dataUrl) {
+        const match = dataUrl.match(/^data:image\/(\w+)/);
+        if (!match) return 'png';
+        const type = match[1].toLowerCase();
+        return type === 'jpeg' ? 'jpg' : type;
+    }
+
+    function fileToDataUrl(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // IMAGE OPTIMIZATION
+    // ═══════════════════════════════════════════════════════════════
+    function optimizeImage(dataUrl) {
+        return new Promise((resolve) => {
+            const blob = dataURLtoBlob(dataUrl);
+            if (blob.size <= IMG_MAX_BYTES) { resolve(dataUrl); return; }
+            const img = new Image();
+            img.onload = () => {
+                let { width, height } = img;
+                if (width > IMG_MAX_DIMENSION || height > IMG_MAX_DIMENSION) {
+                    const scale = Math.min(IMG_MAX_DIMENSION / width, IMG_MAX_DIMENSION / height);
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width; canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', IMG_JPEG_QUALITY));
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    }
+
+    function optimizeBlob(blob, filename) {
+        return new Promise((resolve) => {
+            if (blob.size <= IMG_MAX_BYTES) { resolve(blob); return; }
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                let { width, height } = img;
+                if (width > IMG_MAX_DIMENSION || height > IMG_MAX_DIMENSION) {
+                    const scale = Math.min(IMG_MAX_DIMENSION / width, IMG_MAX_DIMENSION / height);
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width; canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                canvas.toBlob((optimizedBlob) => {
+                    resolve(optimizedBlob || blob);
+                }, 'image/jpeg', IMG_JPEG_QUALITY);
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); resolve(blob); };
+            img.src = url;
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COUNT
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('countDown').onclick = () => {
+        count = Math.max(1, count - (count > 20 ? 5 : 1));
+        countDisplay.textContent = count;
+    };
+    document.getElementById('countUp').onclick = () => {
+        count = Math.min(1000, count + (count >= 20 ? 5 : 1));
+        countDisplay.textContent = count;
+    };
+    countDisplay.onclick = () => {
+        const val = prompt('Enter number of variations (1-1000):', count);
+        if (val !== null) {
+            let num = parseInt(val);
+            if (!isNaN(num) && num >= 1 && num <= 1000) {
+                count = num;
+                countDisplay.textContent = count;
+            }
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // TURBO TOGGLE
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('turboBtn').onclick = () => {
+        turboMode = !turboMode;
+        const btn = document.getElementById('turboBtn');
+        const label = document.getElementById('turboLabel');
+        const icon = document.getElementById('turboIcon');
+        btn.classList.toggle('turbo-active', turboMode);
+        label.textContent = turboMode ? 'Turbo' : 'Normal';
+        icon.innerHTML = turboMode ? '&#9889;' : '&#9881;';
+        btn.title = turboMode ? 'Turbo: fast (Haiku) -- click for Normal' : 'Normal: deeper (Sonnet) -- click for Turbo';
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // PRODUCT CYCLE
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('productDropdown').onchange = (e) => {
+        selectedProduct = e.target.value;
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADVANCED PANEL
+    // ═══════════════════════════════════════════════════════════════
+    function toggleAdvanced() {
+        const panel = document.getElementById('advancedPanel');
+        const toggle = document.getElementById('advancedToggle');
+        const isOpen = panel.classList.toggle('open');
+        toggle.classList.toggle('open', isOpen);
+        localStorage.setItem('advancedOpen', isOpen ? '1' : '0');
+    }
+
+    // Restore advanced panel state
+    if (localStorage.getItem('advancedOpen') === '1') {
+        document.getElementById('advancedPanel').classList.add('open');
+        document.getElementById('advancedToggle').classList.add('open');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PROJECT TYPE
+    // ═══════════════════════════════════════════════════════════════
+    function selectProject(key, el) {
+        currentProject = key;
+        document.querySelectorAll('.project-pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+
+        const isVariations = key === 'variations';
+        const isFromScratch = key === 'from-scratch';
+        const isPreviousElement = key === 'previous-element';
+        const isTransform = key === 'transform';
+
+        // Show/hide sliders based on project type
+        document.getElementById('sliderTransform').style.display = isVariations ? '' : 'none';
+        document.getElementById('sliderDecoration').style.display = isVariations ? '' : 'none';
+        document.getElementById('sliderCrazymeter').style.display = (isFromScratch || isPreviousElement) ? '' : 'none';
+        document.getElementById('slidersRow').style.display = (isVariations || isFromScratch || isPreviousElement) ? '' : 'none';
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // STYLE PILLS (multi-select)
+    // ═══════════════════════════════════════════════════════════════
+    function toggleStyle(el) {
+        const style = el.dataset.style;
+        el.classList.toggle('active');
+        if (el.classList.contains('active')) {
+            if (!selectedStyles.includes(style)) selectedStyles.push(style);
+        } else {
+            selectedStyles = selectedStyles.filter(s => s !== style);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // RATIO PILLS
+    // ═══════════════════════════════════════════════════════════════
+    function selectRatio(el) {
+        selectedRatio = el.dataset.ratio;
+        document.querySelectorAll('#ratioPills .pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // IMAGE HANDLING
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('addImageBtn').onclick = () => document.getElementById('fileInput').click();
+    document.getElementById('fileInput').onchange = (e) => {
+        for (const file of e.target.files) {
+            selectedImages.push(file);
+        }
+        renderThumbs();
+        e.target.value = '';
+    };
+
+    function removeImage(idx, isPasted) {
+        if (isPasted) {
+            imageDataUrls.splice(idx, 1);
+        } else {
+            selectedImages.splice(idx, 1);
+        }
+        renderThumbs();
+    }
+
+    function removeStyleRef() {
+        styleReferenceFile = null;
+        styleReferenceDataUrl = null;
+        renderThumbs();
+        updateStyleRefZone();
+    }
+
+    function clearAllImages() {
+        selectedImages = [];
+        imageDataUrls = [];
+        styleReferenceFile = null;
+        styleReferenceDataUrl = null;
+        renderThumbs();
+        updateStyleRefZone();
+    }
+
+    function renderThumbs() {
+        dropZone.innerHTML = '';
+        const totalImages = selectedImages.length + imageDataUrls.length;
+        const hasStyleRef = !!(styleReferenceFile || styleReferenceDataUrl);
+        dropZone.classList.toggle('has-images', totalImages > 0 || hasStyleRef);
+
+        // Regular images
+        selectedImages.forEach((file, i) => {
+            const url = URL.createObjectURL(file);
+            const wrap = document.createElement('div');
+            wrap.className = 'thumb-wrap';
+            wrap.innerHTML = `<img src="${url}" class="thumb"><button class="thumb-remove" onclick="removeImage(${i}, false)">x</button>`;
+            dropZone.appendChild(wrap);
+        });
+
+        // Pasted images
+        imageDataUrls.forEach((dataUrl, i) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'thumb-wrap';
+            wrap.innerHTML = `<img src="${dataUrl}" class="thumb"><button class="thumb-remove" onclick="removeImage(${i}, true)">x</button>`;
+            dropZone.appendChild(wrap);
+        });
+
+        // Style ref in thumbs
+        if (hasStyleRef) {
+            const src = styleReferenceDataUrl || (styleReferenceFile ? URL.createObjectURL(styleReferenceFile) : '');
+            if (src) {
+                const wrap = document.createElement('div');
+                wrap.className = 'thumb-wrap is-style-ref';
+                wrap.innerHTML = `<img src="${src}" class="thumb"><button class="thumb-remove" onclick="removeStyleRef()">x</button><div class="style-ref-label">Style</div>`;
+                dropZone.appendChild(wrap);
+            }
+        }
+
+        // Clear all button
+        if (totalImages > 0 || hasStyleRef) {
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'clear-images-btn';
+            clearBtn.innerHTML = '&times;';
+            clearBtn.title = 'Clear all images';
+            clearBtn.onclick = clearAllImages;
+            dropZone.appendChild(clearBtn);
+        }
+    }
+
+    // Style ref zone
+    document.getElementById('addStyleRefBtn').onclick = () => document.getElementById('styleRefInput').click();
+    document.getElementById('styleRefInput').onchange = (e) => {
+        if (e.target.files[0]) {
+            styleReferenceFile = e.target.files[0];
+            styleReferenceDataUrl = null;
+            renderThumbs();
+            updateStyleRefZone();
+        }
+        e.target.value = '';
+    };
+
+    function updateStyleRefZone() {
+        const zone = document.getElementById('styleRefZone');
+        const text = document.getElementById('styleRefText');
+        const hasRef = !!(styleReferenceFile || styleReferenceDataUrl);
+        zone.classList.toggle('has-file', hasRef);
+        if (hasRef) {
+            const src = styleReferenceDataUrl || (styleReferenceFile ? URL.createObjectURL(styleReferenceFile) : '');
+            zone.innerHTML = `<img src="${src}" class="style-ref-thumb"><span>Style reference loaded</span><button class="style-ref-remove" onclick="event.stopPropagation(); removeStyleRef(); updateStyleRefZone();">&times;</button>`;
+        } else {
+            zone.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span id="styleRefText">Drop or click to add style reference</span>`;
+        }
+    }
+
+    // Style ref drop on zone
+    document.getElementById('styleRefZone').addEventListener('dragover', (e) => e.preventDefault());
+    document.getElementById('styleRefZone').addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
+        if (file) {
+            styleReferenceFile = file;
+            styleReferenceDataUrl = null;
+            renderThumbs();
+            updateStyleRefZone();
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // DRAG & DROP
+    // ═══════════════════════════════════════════════════════════════
+    const overlay = document.getElementById('dragOverlay');
+    let dragCounter = 0;
+    document.addEventListener('dragenter', (e) => { e.preventDefault(); dragCounter++; overlay.classList.add('visible'); });
+    document.addEventListener('dragleave', (e) => { e.preventDefault(); dragCounter--; if (dragCounter <= 0) { overlay.classList.remove('visible'); dragCounter = 0; } });
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        overlay.classList.remove('visible');
+        dragCounter = 0;
+        for (const file of e.dataTransfer.files) {
+            if (file.type.startsWith('image/')) selectedImages.push(file);
+        }
+        renderThumbs();
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // PASTE IMAGE
+    // ═══════════════════════════════════════════════════════════════
+    document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        let imageFound = false;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                imageFound = true;
+                const blob = item.getAsFile();
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imageDataUrls.push(event.target.result);
+                    renderThumbs();
+                };
+                reader.readAsDataURL(blob);
+            }
+        }
+        if (imageFound) e.preventDefault();
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // EXAMPLE CHIPS
+    // ═══════════════════════════════════════════════════════════════
+    document.querySelectorAll('.example-chip').forEach(chip => {
+        chip.onclick = () => {
+            input.value = chip.textContent;
+            input.focus();
+        };
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // COLLECT IMAGE DATA (for Gemini/Envato sends)
+    // ═══════════════════════════════════════════════════════════════
+    async function collectAllImageData() {
+        const images = [];
+        for (const file of selectedImages) {
+            const dataUrl = await fileToDataUrl(file);
+            images.push({ dataUrl, name: file.name || `upload-${images.length}.${getExtFromDataUrl(dataUrl)}` });
+        }
+        imageDataUrls.forEach((dataUrl, i) => images.push({ dataUrl, name: `pasted-${i}.${getExtFromDataUrl(dataUrl)}` }));
+        return images;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GENERATE PROMPTS (SSE streaming via /api/generate-prompt-stream)
+    // ═══════════════════════════════════════════════════════════════
+    function cancelGeneration() {
+        if (_abortController) {
+            _abortController.abort();
+            _abortController = null;
+        }
+        loadingBar.classList.remove('active');
+        document.getElementById('cancelBtn').style.display = 'none';
+        document.getElementById('sendEnvato').disabled = false;
+    }
+
+    async function generate(target) {
+        const text = input.value.trim();
+        if (!text && currentProject !== 'transform') { input.focus(); return; }
+        if (currentProject === 'transform' && selectedImages.length === 0 && imageDataUrls.length === 0) {
+            alert('Upload the design you want to transform');
+            return;
+        }
+
+        // Disable buttons
+        const sendBtn = document.getElementById('sendEnvato');
+        const origHTML = sendBtn.innerHTML;
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<span class="spin-icon" style="display:inline-block;">&#9881;</span> Generating...';
+        loadingBar.classList.add('active');
+        document.getElementById('cancelBtn').style.display = 'inline-flex';
+
+        // Clear results
+        results.innerHTML = '';
+        results.classList.add('visible');
+        generatedVariations = [];
+
+        // Hide examples
+        document.getElementById('examplesRow').style.display = 'none';
+
+        // Build FormData
+        const formData = new FormData();
+        formData.append('projectType', currentProject);
+        formData.append('instructions', text || 'Transform this design to the target product format');
+        formData.append('variationCount', count);
+        formData.append('productType', selectedProduct);
+        formData.append('ratio', selectedRatio);
+
+        // Styles
+        if (selectedStyles.length > 0) {
+            const resolvedStyles = selectedStyles.map(s => {
+                if (s === 'secret') return secretStyles[Math.floor(Math.random() * secretStyles.length)];
+                return s;
+            });
+            formData.append('styles', JSON.stringify(resolvedStyles));
+            formData.append('style', resolvedStyles[0]);
+        }
+
+        // Shape constraints for bottle openers
+        if (selectedProduct === 'bottle-opener') formData.append('includeShapeConstraints', 'true');
+
+        // Turbo mode
+        if (turboMode || currentProject === 'transform') formData.append('turboMode', 'true');
+
+        // Destination and theme
+        const dest = document.getElementById('destination')?.value?.trim();
+        if (dest) formData.append('destination', dest);
+        const theme = document.getElementById('theme')?.value?.trim();
+        if (theme) formData.append('theme', theme);
+
+        // Sliders
+        const level = document.getElementById('level');
+        if (level) formData.append('level', level.value);
+        const decoration = document.getElementById('decoration');
+        if (decoration) formData.append('decorationLevel', decoration.value);
+        const crazymeter = document.getElementById('crazymeter');
+        if (crazymeter) formData.append('crazymeter', crazymeter.value);
+
+        // Images
+        for (const file of selectedImages) {
+            const optimized = await optimizeBlob(file, file.name);
+            formData.append('images', optimized, file.name);
+        }
+        for (let i = 0; i < imageDataUrls.length; i++) {
+            const optimizedDataUrl = await optimizeImage(imageDataUrls[i]);
+            formData.append('images', dataURLtoBlob(optimizedDataUrl), `pasted-image-${i}.${getExtFromDataUrl(optimizedDataUrl)}`);
+        }
+
+        // Style reference
+        if (styleReferenceFile) {
+            const optimized = await optimizeBlob(styleReferenceFile, styleReferenceFile.name);
+            formData.append('styleReference', optimized, styleReferenceFile.name);
+        } else if (styleReferenceDataUrl) {
+            const optimizedDataUrl = await optimizeImage(styleReferenceDataUrl);
+            formData.append('styleReference', dataURLtoBlob(optimizedDataUrl), 'style-reference.png');
+        }
+
+        // History data to save after completion
+        const historyData = {
+            projectType: currentProject,
+            instructions: text,
+            variationCount: count,
+            productType: selectedProduct,
+            style: selectedStyles.join(', ') || '',
+            ratio: selectedRatio,
+            turboMode,
+            destination: dest || '',
+            theme: theme || '',
+            level: level?.value || '',
+            decorationLevel: decoration?.value || '',
+            crazymeter: crazymeter?.value || '',
+            prompts: []
+        };
+
+        // Show status
+        const statusDiv = document.createElement('div');
+        statusDiv.id = 'streamingStatus';
+        statusDiv.style.cssText = 'text-align:center; padding:20px; color:var(--text-dim); font-size:13px;';
+        statusDiv.innerHTML = `<div style="margin-bottom:6px;">Generating ${count} variation${count > 1 ? 's' : ''}...</div><div style="font-size:11px; color:var(--text-muted);">Prompts will appear as they complete</div>`;
+        results.appendChild(statusDiv);
+
+        // Results header (hidden until first result)
+        const resultsHeader = document.createElement('div');
+        resultsHeader.className = 'results-header';
+        resultsHeader.id = 'resultsHeader';
+        resultsHeader.style.display = 'none';
+        resultsHeader.innerHTML = `
+            <div class="results-header-left" id="resultsCount">0 / ${count} prompts</div>
+            <div class="results-actions">
+                <button class="results-action-btn" onclick="sendAllToGemini()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                    All to Gemini
+                </button>
+                <button class="results-action-btn" onclick="sendAllToEnvato()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                    All to Envato
+                </button>
+            </div>
+        `;
+        results.insertBefore(resultsHeader, statusDiv);
+
+        _abortController = new AbortController();
+
+        try {
+            const response = await fetch('/api/generate-prompt-stream', {
+                method: 'POST',
+                body: formData,
+                signal: _abortController.signal
+            });
+
+            if (!response.ok) {
+                let errMsg = `HTTP error! status: ${response.status}`;
+                try { const errBody = await response.json(); if (errBody.error) errMsg = errBody.error; } catch (_) {}
+                throw new Error(errMsg);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let receivedCount = 0;
+            let totalCount = count;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        let data;
+                        try { data = JSON.parse(line.slice(6)); } catch (e) { continue; }
+
+                        if (data.type === 'start') {
+                            totalCount = data.total;
+                        } else if (data.type === 'variation') {
+                            receivedCount++;
+                            generatedVariations.push(data.variation);
+                            if (data.variation?.prompt) historyData.prompts.push(data.variation.prompt);
+
+                            // Show results header
+                            resultsHeader.style.display = '';
+                            document.getElementById('resultsCount').textContent = `${receivedCount} / ${totalCount} prompts`;
+
+                            // Update status
+                            statusDiv.innerHTML = `<div style="font-size:12px; color:var(--text-muted);">Generating... (${receivedCount}/${totalCount} complete)</div>`;
+
+                            // Display the variation card
+                            displayVariation(data.variation, data.index, target);
+
+                        } else if (data.type === 'complete') {
+                            statusDiv.remove();
+                            document.getElementById('resultsCount').textContent = `${receivedCount} prompts generated`;
+                            if (historyData.prompts.length > 0) saveToHistory(historyData);
+
+                            // Auto-send if target specified
+                            if (target === 'gemini' && receivedCount > 0) {
+                                // Send all to gemini
+                                await sendAllToGeminiSilent();
+                            }
+                        } else if (data.type === 'error') {
+                            statusDiv.innerHTML = `<div style="color:var(--rojo); font-weight:600;">Error: ${escapeHtml(data.error)}</div>`;
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                const statusEl = document.getElementById('streamingStatus');
+                if (statusEl) statusEl.innerHTML = `<div style="color:var(--rojo); font-weight:600;">Error: ${escapeHtml(error.message)}</div>`;
+            }
+        } finally {
+            loadingBar.classList.remove('active');
+            sendBtn.disabled = false;
+            otherBtn.disabled = false;
+            sendBtn.innerHTML = origHTML;
+            document.getElementById('cancelBtn').style.display = 'none';
+            _abortController = null;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DISPLAY VARIATION
+    // ═══════════════════════════════════════════════════════════════
+    function displayVariation(variation, index, target) {
+        const desc = variation.summary || 'Design prompt';
+        const titleMatch = variation.title?.match(/-\s*(.+)/);
+        const style = titleMatch ? titleMatch[1].trim() : '';
+        const displayDesc = style ? `${desc} -- ${style}` : desc;
+
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.id = `variation-card-${index}`;
+        card.style.animationDelay = `${(index % 10) * 0.05}s`;
+        card.innerHTML = `
+            <div class="result-header" onclick="this.parentElement.classList.toggle('expanded')">
+                <div class="result-header-left">
+                    <div class="result-num">${index + 1}</div>
+                    <div class="result-summary">${escapeHtml(displayDesc)}</div>
+                </div>
+                <div class="result-actions">
+                    <button class="result-action" onclick="event.stopPropagation(); copyPrompt(${index})" title="Copy">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                        Copy
+                    </button>
+                    <button class="result-action" id="gemini-btn-${index}" onclick="event.stopPropagation(); sendToGemini(${index})" title="Send to Gemini">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                        Gemini
+                    </button>
+                    <button class="result-action" id="envato-btn-${index}" onclick="event.stopPropagation(); sendToEnvato(${index})" title="Send to Envato">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+                        Envato
+                    </button>
+                </div>
+            </div>
+            <div class="result-prompt" id="prompt-${index}">${escapeHtml(variation.prompt)}</div>
+            <div class="result-preview" id="preview-${index}"></div>
+        `;
+        results.appendChild(card);
+
+        // Auto-generate preview
+        generatePreview(index, variation.prompt);
+
+        // Scroll into view
+        setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    }
+
+    function generatePreview(index, promptText) {
+        const container = document.getElementById(`preview-${index}`);
+        if (!container) return;
+
+        let cleanPrompt = promptText.split(/\[!\] CRITICAL/)[0].trim();
+        cleanPrompt = cleanPrompt.replace(/[^\x20-\x7E]/g, ' ').replace(/["*]/g, '').replace(/\s+/g, ' ').trim();
+        if (cleanPrompt.length > 400) cleanPrompt = cleanPrompt.substring(0, 397).replace(/\s+\S*$/, '');
+
+        const encoded = encodeURIComponent(cleanPrompt);
+        const seed = Math.floor(Math.random() * 100000);
+        const url = `/api/preview?prompt=${encoded}&seed=${seed}`;
+
+        const img = new Image();
+        img.style.cssText = 'max-width:200px; border-radius:10px; cursor:pointer;';
+        img.onload = () => {
+            container.innerHTML = '';
+            img.title = 'Click to enlarge';
+            img.onclick = () => img.classList.toggle('fullscreen-preview');
+            container.appendChild(img);
+        };
+        img.onerror = () => { container.innerHTML = ''; };
+        img.src = url;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COPY / SEND ACTIONS
+    // ═══════════════════════════════════════════════════════════════
+    async function copyPrompt(index) {
+        const text = document.getElementById(`prompt-${index}`)?.textContent;
+        if (!text) return;
+        await navigator.clipboard.writeText(text);
+        const btn = document.querySelector(`#variation-card-${index} .result-action`);
+        if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = 'Copied!';
+            btn.classList.add('sent');
+            setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('sent'); }, 2000);
+        }
+    }
+
+    async function postToGemini(prompt, images = []) {
+        try {
+            const response = await fetch('/api/send-to-gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, images })
+            });
+            return await response.json();
+        } catch (err) {
+            console.error('Send to Gemini failed:', err);
+            await navigator.clipboard.writeText(prompt);
+            window.open('https://gemini.google.com/app', '_blank');
+            return { success: false, fallback: true };
+        }
+    }
+
+    async function sendToGemini(index) {
+        const btn = document.getElementById(`gemini-btn-${index}`);
+        if (!btn || btn.disabled) return;
+        btn.disabled = true;
+        setTimeout(() => { btn.disabled = false; }, 3000);
+        const text = document.getElementById(`prompt-${index}`)?.textContent;
+        if (!text) return;
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<span class="spin-icon" style="display:inline-block;">&#9681;</span> Sending...';
+        btn.classList.add('sent');
+        const images = await collectAllImageData();
+        const result = await postToGemini(text, images);
+        btn.innerHTML = result.success ? 'Sent!' : (result.fallback ? 'Copied!' : 'Error');
+        setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('sent'); }, 4000);
+    }
+
+    async function sendAllToGemini() {
+        const promptEls = document.querySelectorAll('.result-prompt');
+        if (promptEls.length === 0) return;
+        const allPrompts = Array.from(promptEls).map(el => el.textContent);
+        const images = await collectAllImageData();
+        try {
+            const response = await fetch('/api/send-all-to-gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompts: allPrompts, images })
+            });
+            const result = await response.json();
+            if (result.success) {
+                for (let i = 0; i < promptEls.length; i++) {
+                    const gb = document.getElementById(`gemini-btn-${i}`);
+                    if (gb) { gb.innerHTML = 'Sent!'; gb.classList.add('sent'); }
+                }
+                setTimeout(() => {
+                    document.querySelectorAll('[id^="gemini-btn-"]').forEach(b => { b.classList.remove('sent'); b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg> Gemini'; });
+                }, 5000);
+            }
+        } catch (err) {
+            console.error('Bulk Gemini send error:', err);
+        }
+    }
+
+    async function sendAllToGeminiSilent() {
+        const promptEls = document.querySelectorAll('.result-prompt');
+        if (promptEls.length === 0) return;
+        const allPrompts = Array.from(promptEls).map(el => el.textContent);
+        const images = await collectAllImageData();
+        try {
+            await fetch('/api/send-all-to-gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompts: allPrompts, images })
+            });
+            for (let i = 0; i < promptEls.length; i++) {
+                const gb = document.getElementById(`gemini-btn-${i}`);
+                if (gb) { gb.innerHTML = 'Sent!'; gb.classList.add('sent'); }
+            }
+        } catch (err) { console.error('Silent Gemini send error:', err); }
+    }
+
+    async function postToEnvato(prompt) {
+        try {
+            const allImages = await collectAllImageData();
+            const referenceImages = allImages.slice(0, 3).map(img => img.dataUrl);
+            const response = await fetch('/api/send-to-envato', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, aspectRatio: selectedRatio, referenceImages })
+            });
+            return await response.json();
+        } catch (err) {
+            console.error('Send to Envato failed:', err);
+            await navigator.clipboard.writeText(prompt);
+            window.open('https://app.envato.com/image-gen', '_blank');
+            return { success: false, fallback: true };
+        }
+    }
+
+    async function sendToEnvato(index) {
+        const text = document.getElementById(`prompt-${index}`)?.textContent;
+        if (!text) return;
+        const btn = document.getElementById(`envato-btn-${index}`);
+        if (!btn) return;
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<span class="spin-icon" style="display:inline-block;">&#9681;</span> Sending...';
+        btn.classList.add('sent');
+        const result = await postToEnvato(text);
+        btn.innerHTML = result.success ? 'Sent!' : (result.fallback ? 'Copied!' : 'Error');
+        setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('sent'); }, 4000);
+    }
+
+    async function sendAllToEnvato() {
+        const promptEls = document.querySelectorAll('.result-prompt');
+        if (promptEls.length === 0) return;
+        const allPrompts = Array.from(promptEls).map(el => el.textContent);
+
+        const ratios = ['1:1', '2:1', '1:2'];
+        const aspectRatios = allPrompts.map((_, idx) => ratios[idx % 3]);
+        // Shuffle
+        for (let i = aspectRatios.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [aspectRatios[i], aspectRatios[j]] = [aspectRatios[j], aspectRatios[i]];
+        }
+
+        const allImages = await collectAllImageData();
+        const referenceImages = allImages.slice(0, 3).map(img => img.dataUrl);
+
+        try {
+            const response = await fetch('/api/send-all-to-envato', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompts: allPrompts, aspectRatios, referenceImages })
+            });
+            const result = await response.json();
+            if (result.success) {
+                for (let i = 0; i < promptEls.length; i++) {
+                    const eb = document.getElementById(`envato-btn-${i}`);
+                    if (eb) { eb.innerHTML = 'Sent!'; eb.classList.add('sent'); }
+                }
+                setTimeout(() => {
+                    document.querySelectorAll('[id^="envato-btn-"]').forEach(b => { b.classList.remove('sent'); b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg> Envato'; });
+                }, 5000);
+            }
+        } catch (err) {
+            console.error('Bulk Envato send error:', err);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SEND BUTTONS
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('sendEnvato').onclick = () => generate('envato');
+
+    // ═══════════════════════════════════════════════════════════════
+    // HISTORY
+    // ═══════════════════════════════════════════════════════════════
+    function getHistory() {
+        try { const h = localStorage.getItem(HISTORY_KEY); return h ? JSON.parse(h) : []; }
+        catch(e) { return []; }
+    }
+
+    function saveToHistory(item) {
+        try {
+            let history = getHistory();
+            history.unshift({ id: Date.now(), timestamp: new Date().toISOString(), ...item });
+            if (history.length > MAX_HISTORY_ITEMS) history = history.slice(0, MAX_HISTORY_ITEMS);
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            updateHistoryBadge();
+        } catch(e) { console.error('History save error:', e); }
+    }
+
+    function deleteFromHistory(id) {
+        if (!confirm('Delete this entry?')) return;
+        let history = getHistory().filter(item => item.id !== id);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        updateHistoryBadge();
+        renderHistory();
+    }
+
+    function clearHistory() {
+        if (!confirm('Clear all history?')) return;
+        localStorage.removeItem(HISTORY_KEY);
+        updateHistoryBadge();
+        renderHistory();
+    }
+
+    function updateHistoryBadge() {
+        const history = getHistory();
+        const badge = document.getElementById('historyBadge');
+        if (history.length > 0) {
+            badge.textContent = history.length > 99 ? '99+' : history.length;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function toggleHistory() {
+        const sidebar = document.getElementById('historySidebar');
+        const overlay = document.getElementById('historyOverlay');
+        const isVisible = sidebar.classList.contains('visible');
+        sidebar.classList.toggle('visible', !isVisible);
+        overlay.classList.toggle('visible', !isVisible);
+        if (!isVisible) renderHistory();
+    }
+
+    function renderHistory() {
+        const history = getHistory();
+        const content = document.getElementById('historyContent');
+        const emptyState = document.getElementById('historyEmpty');
+
+        if (history.length === 0) {
+            content.innerHTML = '';
+            content.appendChild(emptyState);
+            emptyState.style.display = 'block';
+            return;
+        }
+
+        const projectStyles = {
+            'variations': { icon: 'Var', name: 'Variations' },
+            'from-scratch': { icon: 'New', name: 'Scratch' },
+            'previous-element': { icon: 'Prev', name: 'Previous' },
+            'transform': { icon: 'Xfm', name: 'Transform' }
+        };
+
+        content.innerHTML = history.map(item => {
+            const project = projectStyles[item.projectType] || { icon: '?', name: item.projectType };
+            const date = new Date(item.timestamp);
+            const diffMs = Date.now() - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            let timeAgo;
+            if (diffMins < 1) timeAgo = 'Just now';
+            else if (diffMins < 60) timeAgo = `${diffMins}m ago`;
+            else if (diffHours < 24) timeAgo = `${diffHours}h ago`;
+            else if (diffDays < 7) timeAgo = `${diffDays}d ago`;
+            else timeAgo = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+            let summary = item.instructions || '';
+            if (summary.length > 60) summary = summary.substring(0, 60) + '...';
+            if (!summary && item.prompts?.[0]) summary = 'Generated prompt';
+
+            const chips = [];
+            if (item.ratio) chips.push(item.ratio);
+            if (item.productType) chips.push(item.productType);
+            if (item.style) chips.push(item.style.length > 20 ? item.style.substring(0, 20) + '...' : item.style);
+            if (item.variationCount > 1) chips.push(`${item.variationCount}x`);
+
+            return `
+                <div class="history-item" data-id="${item.id}">
+                    <div class="history-item-header">
+                        <div class="history-item-project"><span>${project.icon}</span> <span>${project.name}</span></div>
+                        <div class="history-item-date">${timeAgo}</div>
+                    </div>
+                    <div class="history-item-summary">
+                        ${item.destination ? `<span class="dest-tag">${escapeHtml(item.destination)}</span>` : ''}
+                        <span>${escapeHtml(summary) || 'Design prompt'}</span>
+                    </div>
+                    ${chips.length > 0 ? `<div class="history-item-chips">${chips.map(c => `<span class="history-chip">${escapeHtml(c)}</span>`).join('')}</div>` : ''}
+                    <div class="history-item-actions">
+                        <button class="history-action-btn" onclick="copyFromHistory(${item.id})">Copy</button>
+                        <button class="history-action-btn" onclick="geminiFromHistory(${item.id})">Gemini</button>
+                        <button class="history-action-btn" onclick="reuseFromHistory(${item.id})">Reuse</button>
+                        <button class="history-action-btn delete" onclick="deleteFromHistory(${item.id})">&#10005;</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function copyFromHistory(id) {
+        const item = getHistory().find(h => h.id === id);
+        if (!item?.prompts?.[0]) return;
+        await navigator.clipboard.writeText(item.prompts.join('\n\n---\n\n'));
+        const btn = document.querySelector(`[data-id="${id}"] .history-action-btn`);
+        if (btn) { const orig = btn.innerHTML; btn.innerHTML = 'Copied!'; setTimeout(() => btn.innerHTML = orig, 1500); }
+    }
+
+    async function geminiFromHistory(id) {
+        const item = getHistory().find(h => h.id === id);
+        if (!item?.prompts?.[0]) return;
+        const btn = document.querySelector(`[data-id="${id}"] .history-action-btn:nth-child(2)`);
+        const orig = btn?.innerHTML || '';
+        if (btn) btn.innerHTML = '...';
+        const result = await postToGemini(item.prompts[0], []);
+        if (btn) { btn.innerHTML = result.success ? 'Sent!' : 'Copied!'; setTimeout(() => btn.innerHTML = orig, 3000); }
+    }
+
+    function reuseFromHistory(id) {
+        const item = getHistory().find(h => h.id === id);
+        if (!item) return;
+        toggleHistory();
+
+        // Set instructions
+        if (item.instructions) input.value = item.instructions;
+
+        // Set destination
+        if (item.destination) {
+            const destEl = document.getElementById('destination');
+            if (destEl) destEl.value = item.destination;
+        }
+
+        // Set theme
+        if (item.theme) {
+            const themeEl = document.getElementById('theme');
+            if (themeEl) themeEl.value = item.theme;
+        }
+
+        // Set count
+        if (item.variationCount) {
+            count = item.variationCount;
+            countDisplay.textContent = count;
+        }
+
+        // Set project type
+        if (item.projectType) {
+            const pill = document.querySelector(`.project-pill[data-key="${item.projectType}"]`);
+            if (pill) selectProject(item.projectType, pill);
+        }
+
+        // Set product type
+        if (item.productType) {
+            selectedProduct = item.productType;
+            document.getElementById('productDropdown').value = item.productType;
+        }
+
+        // Set ratio
+        if (item.ratio) {
+            selectedRatio = item.ratio;
+            document.querySelectorAll('#ratioPills .pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.ratio === item.ratio);
+            });
+        }
+
+        // Set sliders
+        if (item.level) { const s = document.getElementById('level'); if (s) { s.value = item.level; document.getElementById('levelValue').textContent = item.level; } }
+        if (item.decorationLevel) { const s = document.getElementById('decoration'); if (s) { s.value = item.decorationLevel; document.getElementById('decorationValue').textContent = item.decorationLevel; } }
+        if (item.crazymeter) { const s = document.getElementById('crazymeter'); if (s) { s.value = item.crazymeter; document.getElementById('crazymeterValue').textContent = item.crazymeter; } }
+
+        // Set turbo
+        if (item.turboMode && !turboMode) {
+            document.getElementById('turboBtn').click();
+        }
+
+        // Open advanced if there are advanced settings
+        if (item.destination || item.theme || item.style || item.level || item.decorationLevel || item.crazymeter) {
+            if (!document.getElementById('advancedPanel').classList.contains('open')) {
+                toggleAdvanced();
+            }
+        }
+
+        input.focus();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // TEXTAREA AUTO-RESIZE
+    // ═══════════════════════════════════════════════════════════════
+    input.addEventListener('input', () => {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // KEYBOARD SHORTCUTS
+    // ═══════════════════════════════════════════════════════════════
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            generate('envato');
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════════
+    updateHistoryBadge();
+    // Set initial project
+    selectProject('variations', document.querySelector('.project-pill[data-key="variations"]'));
+</script>
+
+</body>
+</html>

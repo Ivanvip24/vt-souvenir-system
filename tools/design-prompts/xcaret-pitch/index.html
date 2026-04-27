@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grupo Xcaret — Custom Souvenir Collection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --gold:#c9a84c;--gold-light:#e8d48b;--gold-dim:rgba(201,168,76,.12);
+  --jungle-deep:rgba(6,38,19,.88);--jungle:rgba(10,60,30,.85);
+  --turq:rgba(8,80,100,.82);--turq-accent:#22d3ee;
+  --fire:rgba(40,10,10,.87);--warm:rgba(60,30,15,.85);
+  --cream:#faf6ef;--cream-dim:rgba(250,246,239,.08);
+  --text-primary:rgba(255,255,255,.95);--text-secondary:rgba(255,255,255,.55);
+  --text-dim:rgba(255,255,255,.3);
+  --glass:rgba(255,255,255,.06);--glass-border:rgba(255,255,255,.1);
+  --glass-hover:rgba(255,255,255,.1);
+}
+
+html{scroll-snap-type:y mandatory;scroll-behavior:smooth;overflow-x:hidden}
+body{font-family:'DM Sans',system-ui,sans-serif;color:var(--text-primary);background:#040a06;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+/* GRAIN OVERLAY */
+body::after{content:'';position:fixed;inset:0;z-index:99999;pointer-events:none;opacity:.03;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* PROGRESS BAR */
+.progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--turq-accent),var(--gold-light));z-index:100001;transition:width .6s cubic-bezier(.16,1,.3,1);box-shadow:0 0 12px rgba(201,168,76,.4)}
+
+/* NAV DOTS */
+.nav{position:fixed;right:24px;top:50%;transform:translateY(-50%);z-index:100000;display:flex;flex-direction:column;gap:14px}
+.dot{width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(201,168,76,.35);background:transparent;cursor:pointer;transition:all .5s cubic-bezier(.16,1,.3,1);position:relative}
+.dot::after{content:attr(data-label);position:absolute;right:22px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;font-family:'DM Sans',sans-serif}
+.dot:hover::after{opacity:1}
+.dot.active{background:var(--gold);border-color:var(--gold);box-shadow:0 0 16px rgba(201,168,76,.5);transform:scale(1.5)}
+
+/* SLIDE BASE */
+.slide{min-height:100vh;width:100%;scroll-snap-align:start;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.slide-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform 8s ease-out}
+.slide:hover .slide-bg{transform:scale(1.03)}
+.slide-overlay{position:absolute;inset:0}
+
+/* REVEAL ANIMATIONS */
+.rv{opacity:0;transform:translateY(40px);transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1)}
+.rv.vis{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.12s}.d2{transition-delay:.24s}.d3{transition-delay:.36s}.d4{transition-delay:.48s}
+.d5{transition-delay:.6s}.d6{transition-delay:.72s}.d7{transition-delay:.84s}.d8{transition-delay:.96s}
+
+/* HEADINGS */
+.section-tag{font-family:'DM Sans',sans-serif;font-weight:500;font-size:10px;letter-spacing:.4em;text-transform:uppercase;color:var(--gold);display:inline-flex;align-items:center;gap:14px;margin-bottom:16px}
+.section-tag::before{content:'';width:32px;height:1px;background:var(--gold)}
+.mega-title{font-family:'Cormorant Garamond',serif;font-weight:300;line-height:.88;letter-spacing:-.02em;color:var(--text-primary)}
+.mega-title em{font-style:italic;font-weight:300}
+.mega-title strong{font-weight:700}
+
+/* GLASS CARD */
+.glass{background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);transition:all .5s cubic-bezier(.16,1,.3,1)}
+.glass:hover{background:var(--glass-hover);border-color:rgba(255,255,255,.16);transform:translateY(-4px)}
+
+/* GOLD SEPARATOR */
+.gold-line{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+
+/* ============================================
+   SLIDE 1 — HERO COVER
+   ============================================ */
+.s1 .slide-bg{
+  background-image:url('https://images.unsplash.com/photo-1535262412227-85541e910204?w=1920&q=80&auto=format');
+  background-position:center 60%;
+}
+.s1 .slide-overlay{
+  background:linear-gradient(180deg,rgba(2,12,6,.3) 0%,rgba(2,12,6,.15) 30%,rgba(2,12,6,.4) 60%,rgba(2,12,6,.92) 100%);
+}
+.s1-content{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center;padding:0 20px}
+.s1-gold-bar{width:40px;height:2px;background:var(--gold);opacity:0;animation:fadeIn 1s .3s forwards}
+.s1-sub{font-family:'DM Sans',sans-serif;font-weight:400;font-size:11px;letter-spacing:.6em;text-transform:uppercase;color:var(--gold-light);margin-top:28px;opacity:0;animation:fadeUp 1s .6s forwards}
+.s1-title{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(64px,14vw,180px);line-height:.82;letter-spacing:-.03em;color:#fff;margin-top:20px;opacity:0;animation:fadeUp 1s .9s forwards}
+.s1-title strong{font-weight:700;display:block;font-size:.55em;letter-spacing:.08em;margin-top:8px}
+.s1-divider{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin-top:32px;opacity:0;animation:fadeIn 1s 1.3s forwards}
+.s1-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:clamp(16px,2.2vw,24px);color:rgba(255,255,255,.7);margin-top:20px;letter-spacing:.04em;opacity:0;animation:fadeUp 1s 1.5s forwards}
+.s1-tagline b{color:var(--gold-light);font-weight:400;font-style:normal}
+
+/* Scroll indicator */
+.scroll-hint{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;animation:fadeIn 1s 2.2s forwards}
+.scroll-hint span{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--text-dim)}
+.scroll-arrow{width:1px;height:32px;position:relative;overflow:hidden}
+.scroll-arrow::after{content:'';position:absolute;top:-100%;left:0;width:1px;height:100%;background:linear-gradient(180deg,transparent,var(--gold));animation:scrollDown 2s ease-in-out infinite}
+@keyframes scrollDown{0%{top:-100%}100%{top:100%}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+/* ============================================
+   SLIDE 2 — WE KNOW YOUR WORLD
+   ============================================ */
+.s2 .slide-bg{
+  background-image:url('https://images.unsplash.com/photo-1465742635216-bf22c6728f8d?w=1920&q=80&auto=format');
+}
+.s2 .slide-overlay{background:var(--jungle-deep)}
+.s2-wrap{position:relative;z-index:2;max-width:1200px;width:90%;display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.s2-text .section-tag::before{background:var(--gold)}
+.s2-title{font-size:clamp(40px,5.5vw,72px);margin-bottom:24px}
+.s2-title em{color:var(--gold-light)}
+.s2-body{font-size:15px;line-height:1.9;color:var(--text-secondary);max-width:460px;margin-bottom:32px}
+.s2-body strong{color:var(--text-primary);font-weight:500}
+.s2-accent-line{width:40px;height:1px;background:var(--gold)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-card{padding:24px 20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card:nth-child(1)::before{background:#1a6b3c}
+.stat-card:nth-child(2)::before{background:#0891b2}
+.stat-card:nth-child(3)::before{background:var(--gold)}
+.stat-card:nth-child(4)::before{background:#ec4899}
+.stat-card:nth-child(5)::before{background:#f97066}
+.stat-card:nth-child(6)::before{background:#22d3ee}
+.stat-num{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:34px;line-height:1;color:#fff;margin-bottom:6px}
+.stat-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);line-height:1.4}
+.stat-full{grid-column:1/-1;display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(26,107,60,.2),rgba(8,145,178,.15))!important;border:1px solid rgba(34,211,238,.15)!important}
+.stat-full .stat-num{font-size:20px;background:linear-gradient(90deg,var(--turq-accent),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap}
+
+/* ============================================
+   SLIDE 3 — THE OPPORTUNITY
+   ============================================ */
+.s3{display:grid;grid-template-columns:1fr 1fr}
+.s3-half{position:relative;display:flex;align-items:center;justify-content:center;padding:60px 40px;min-height:100vh}
+.s3-old .slide-bg{
+  background-image:url('https://images.unsplash.com/photo-1765111311000-9815d2e0da28?w=960&q=75&auto=format');
+  filter:grayscale(.7) brightness(.4);
+}
+.s3-old .slide-overlay{background:rgba(0,0,0,.7)}
+.s3-new .slide-bg{
+  background-image:url('https://images.unsplash.com/photo-1659431246325-52dad0c83dd1?w=960&q=80&auto=format');
+}
+.s3-new .slide-overlay{background:rgba(6,38,19,.72)}
+.s3-content{position:relative;z-index:2;max-width:380px}
+.s3-badge{display:inline-flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.25em;text-transform:uppercase;padding:6px 16px;border-radius:30px;margin-bottom:20px;font-weight:500}
+.s3-old .s3-badge{background:rgba(220,38,38,.15);color:#f87171;border:1px solid rgba(220,38,38,.2)}
+.s3-old .s3-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:#ef4444}
+.s3-new .s3-badge{background:rgba(34,211,238,.1);color:var(--turq-accent);border:1px solid rgba(34,211,238,.2)}
+.s3-new .s3-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--turq-accent);box-shadow:0 0 10px rgba(34,211,238,.6)}
+.s3-col-title{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:clamp(28px,3.5vw,42px);margin-bottom:24px;line-height:1}
+.s3-old .s3-col-title{color:rgba(255,255,255,.3)}
+.s3-new .s3-col-title{color:#fff}
+.s3-list{list-style:none;display:flex;flex-direction:column;gap:14px}
+.s3-list li{font-size:14px;line-height:1.7;padding-left:24px;position:relative}
+.s3-old .s3-list li{color:rgba(255,255,255,.25)}
+.s3-old .s3-list li::before{content:'\2715';position:absolute;left:0;color:#ef4444;font-size:10px;top:4px;opacity:.5}
+.s3-new .s3-list li{color:rgba(255,255,255,.8)}
+.s3-new .s3-list li::before{content:'\2713';position:absolute;left:0;color:var(--turq-accent);font-size:12px;top:2px}
+.s3-divider{position:absolute;top:0;bottom:0;right:0;width:1px;background:linear-gradient(180deg,transparent 10%,rgba(201,168,76,.3) 50%,transparent 90%);z-index:5}
+.s3-center-tag{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);writing-mode:vertical-rl;text-orientation:mixed;padding:20px 8px;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);border:1px solid rgba(201,168,76,.2);display:none}
+
+/* ============================================
+   SLIDE 4 — EIGHT WORLDS
+   ============================================ */
+.s4 .slide-bg{
+  background-image:url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80&auto=format');
+}
+.s4 .slide-overlay{background:rgba(4,20,10,.9)}
+.s4-wrap{position:relative;z-index:2;max-width:1100px;width:90%}
+.s4-head{text-align:center;margin-bottom:48px}
+.s4-title{font-size:clamp(38px,5.5vw,64px);margin-top:4px}
+.s4-title em{color:var(--gold-light)}
+.parks-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.park{padding:28px 16px;text-align:center;position:relative;overflow:hidden;cursor:default;transition:all .5s cubic-bezier(.16,1,.3,1)}
+.park:hover{transform:translateY(-6px) scale(1.03);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.park::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .5s}
+.park:hover::before{opacity:.1}
+.park-emoji{font-size:28px;margin-bottom:10px;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3))}
+.park-name{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;color:#fff;margin-bottom:4px;letter-spacing:.02em}
+.park-sub{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+.park:nth-child(1){background:linear-gradient(160deg,#0b3d1e,#1a6b3c)}
+.park:nth-child(2){background:linear-gradient(160deg,#0c4a5e,#0891b2)}
+.park:nth-child(3){background:linear-gradient(160deg,#6b3a09,#b45309)}
+.park:nth-child(4){background:linear-gradient(160deg,#6b1010,#dc2626)}
+.park:nth-child(5){background:linear-gradient(160deg,#4c1d95,#7c3aed)}
+.park:nth-child(6){background:linear-gradient(160deg,#701a75,#c026d3)}
+.park:nth-child(7){background:linear-gradient(160deg,#365314,#4d7c0f)}
+.park:nth-child(8){background:linear-gradient(160deg,#064e3b,#047857)}
+
+/* ============================================
+   SLIDE 5 — PRODUCT SHOWCASE
+   ============================================ */
+.s5 .slide-bg{
+  background-image:url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=75&auto=format');
+  filter:brightness(.3);
+}
+.s5 .slide-overlay{background:rgba(30,18,10,.82)}
+.s5{padding:80px 0}
+.s5-wrap{position:relative;z-index:2;max-width:1200px;width:92%}
+.s5-head{text-align:center;margin-bottom:40px}
+.s5-title{font-size:clamp(36px,5vw,60px);margin-top:4px}
+.s5-title em{color:var(--gold-light)}
+.gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.gal-item{position:relative;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);overflow:hidden;cursor:pointer;transition:all .5s cubic-bezier(.16,1,.3,1)}
+.gal-item:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.3);border-color:rgba(201,168,76,.25)}
+.gal-img{aspect-ratio:1;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:12px;background:linear-gradient(135deg,rgba(255,255,255,.03),rgba(255,255,255,.01))}
+.gal-img img{width:100%;height:100%;object-fit:contain;transition:transform .7s cubic-bezier(.16,1,.3,1)}
+.gal-item:hover .gal-img img{transform:scale(1.08)}
+.gal-label{padding:10px 12px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.gal-name{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);font-weight:500}
+.gal-type{font-size:8px;color:var(--gold);letter-spacing:.08em;text-transform:uppercase}
+.gal-footer{text-align:center;padding:16px 20px;border:1px solid rgba(201,168,76,.1);background:rgba(201,168,76,.04)}
+.gal-footer-text{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);opacity:.6}
+
+/* ============================================
+   SLIDE 6 — WHY HECHO EN MEXICO
+   ============================================ */
+.s6 .slide-bg{
+  background-image:url('https://images.unsplash.com/photo-1520821586179-a7a385eb261a?w=1920&q=80&auto=format');
+}
+.s6 .slide-overlay{background:var(--warm)}
+.s6{padding:80px 0}
+.s6-wrap{position:relative;z-index:2;max-width:960px;width:90%;text-align:center}
+.s6-title{font-size:clamp(38px,5.5vw,64px);margin-top:4px;margin-bottom:8px}
+.s6-title em{color:var(--gold-light)}
+.s6-subtitle{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:clamp(16px,2vw,20px);color:var(--text-secondary);margin-bottom:48px;letter-spacing:.02em}
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:48px}
+.pillar{padding:32px 22px;text-align:center;transition:all .5s cubic-bezier(.16,1,.3,1)}
+.pillar:hover{transform:translateY(-4px);border-color:rgba(201,168,76,.25)}
+.pillar-icon{font-size:28px;margin-bottom:14px;display:block}
+.pillar-title{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;color:var(--gold-light);margin-bottom:10px}
+.pillar-desc{font-size:13px;line-height:1.7;color:var(--text-secondary)}
+.big-quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:clamp(24px,3.5vw,40px);color:#fff;line-height:1.3;max-width:600px;margin:0 auto;padding:32px 0;border-top:1px solid rgba(201,168,76,.15);border-bottom:1px solid rgba(201,168,76,.15)}
+.big-quote span{color:var(--gold-light);font-weight:600;font-style:normal}
+
+/* ============================================
+   SLIDE 7 — PRICING
+   ============================================ */
+.s7 .slide-bg{
+  background-image:url('https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=75&auto=format');
+  filter:brightness(.25);
+}
+.s7 .slide-overlay{background:rgba(4,20,10,.88)}
+.s7{padding:80px 0}
+.s7-wrap{position:relative;z-index:2;max-width:860px;width:90%}
+.s7-head{text-align:center;margin-bottom:44px}
+.s7-title{font-size:clamp(36px,5vw,56px);margin-top:4px}
+.s7-title em{color:var(--gold-light)}
+.price-table{width:100%;border-collapse:collapse;margin-bottom:24px}
+.price-table thead th{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);padding:16px;text-align:left;border-bottom:1px solid rgba(201,168,76,.2)}
+.price-table thead th:not(:first-child){text-align:center}
+.price-table tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .3s}
+.price-table tbody tr:hover{background:rgba(255,255,255,.02)}
+.price-table tbody td{padding:16px;font-size:14px;color:var(--text-secondary)}
+.price-table tbody td:not(:first-child){text-align:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:22px;color:var(--text-primary)}
+.highlights{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.highlight{text-align:center;padding:18px 14px;border:1px solid rgba(201,168,76,.08);background:rgba(201,168,76,.03)}
+.highlight-icon{font-size:18px;margin-bottom:8px;display:block}
+.highlight-text{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);line-height:1.5}
+.highlight-text strong{color:var(--gold);display:block;font-size:12px;margin-bottom:3px;letter-spacing:.04em}
+.delivery-note{text-align:center;font-size:11px;color:var(--text-dim);padding-top:14px;border-top:1px solid rgba(255,255,255,.04)}
+
+/* ============================================
+   SLIDE 8 — NEXT STEPS / CTA
+   ============================================ */
+.s8 .slide-bg{
+  background-image:url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1920&q=80&auto=format');
+}
+.s8 .slide-overlay{background:linear-gradient(180deg,rgba(4,20,10,.85) 0%,rgba(80,50,20,.7) 100%)}
+.s8{padding:80px 0}
+.s8-wrap{position:relative;z-index:2;max-width:900px;width:90%}
+.s8-head{text-align:center;margin-bottom:56px}
+.s8-title{font-size:clamp(36px,5vw,56px);margin-top:4px}
+.s8-title em{color:var(--gold-light)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;position:relative;margin-bottom:56px}
+.steps::before{content:'';position:absolute;top:40px;left:16%;right:16%;height:1px;background:linear-gradient(90deg,var(--gold),rgba(201,168,76,.2),var(--gold))}
+.step{display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.step-num{width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:32px;color:#fff;margin-bottom:20px;position:relative;z-index:2;border:1px solid rgba(201,168,76,.25);background:rgba(201,168,76,.08);backdrop-filter:blur(12px)}
+.step:nth-child(1) .step-num{border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.08)}
+.step:nth-child(2) .step-num{border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.1);color:var(--gold-light)}
+.step:nth-child(3) .step-num{border-color:rgba(26,107,60,.3);background:rgba(26,107,60,.15)}
+.step-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-primary);margin-bottom:8px}
+.step-desc{font-size:13px;line-height:1.6;color:var(--text-secondary);max-width:200px}
+.cta-box{text-align:center;padding:40px;position:relative;overflow:hidden;border:1px solid rgba(201,168,76,.15);background:rgba(0,0,0,.3);backdrop-filter:blur(16px)}
+.cta-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--turq-accent),var(--gold),transparent)}
+.cta-heading{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:28px;color:var(--gold-light);margin-bottom:20px}
+.cta-links{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap}
+.cta-link{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-secondary);text-decoration:none;transition:color .3s}
+.cta-link:hover{color:var(--gold-light)}
+.cta-link-icon{font-size:16px}
+.legal{text-align:center;margin-top:32px;font-size:8px;letter-spacing:.04em;color:var(--text-dim);line-height:1.7;max-width:500px;margin-left:auto;margin-right:auto;opacity:.5}
+
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;z-index:200000;background:rgba(0,0,0,.95);backdrop-filter:blur(24px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .5s cubic-bezier(.16,1,.3,1)}
+.lightbox.open{opacity:1;pointer-events:all}
+.lightbox img{max-width:78%;max-height:78vh;object-fit:contain;box-shadow:0 30px 100px rgba(0,0,0,.6);transform:scale(.92);transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.lightbox.open img{transform:scale(1)}
+.lb-close{position:absolute;top:28px;right:28px;width:48px;height:48px;background:none;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;font-family:'DM Sans',sans-serif}
+.lb-close:hover{border-color:var(--gold);color:var(--gold)}
+.lb-caption{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);font-family:'DM Sans',sans-serif}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .s2-wrap{grid-template-columns:1fr;gap:40px}
+  .s3{grid-template-columns:1fr}
+  .s3-half{min-height:50vh}
+  .s3-divider{display:none}
+  .parks-grid{grid-template-columns:repeat(2,1fr)}
+  .gallery{grid-template-columns:repeat(2,1fr)}
+  .pillars,.highlights{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr;gap:24px}
+  .steps::before{display:none}
+  .step{flex-direction:row;text-align:left;gap:16px}
+  .step-num{width:60px;height:60px;font-size:24px;flex-shrink:0}
+  .nav{display:none}
+  .cta-links{flex-direction:column;gap:14px}
+}
+@media(max-width:480px){
+  .gallery,.parks-grid,.stats-grid{grid-template-columns:1fr}
+  .s3-half{padding:40px 24px}
+}
+</style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress" id="progress"></div>
+
+<!-- Navigation Dots -->
+<nav class="nav" id="nav">
+  <div class="dot active" data-s="0" data-label="Cover"></div>
+  <div class="dot" data-s="1" data-label="Your World"></div>
+  <div class="dot" data-s="2" data-label="Opportunity"></div>
+  <div class="dot" data-s="3" data-label="Eight Worlds"></div>
+  <div class="dot" data-s="4" data-label="Showcase"></div>
+  <div class="dot" data-s="5" data-label="Hecho en MX"></div>
+  <div class="dot" data-s="6" data-label="Pricing"></div>
+  <div class="dot" data-s="7" data-label="Next Steps"></div>
+</nav>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" onclick="closeLightbox()">&times;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lb-caption" id="lbCap"></div>
+</div>
+
+<!-- ============================
+     SLIDE 1: HERO COVER
+     ============================ -->
+<section class="slide s1" id="s-0">
+  <div class="slide-bg"></div>
+  <div class="slide-overlay"></div>
+  <div class="s1-content">
+    <div class="s1-gold-bar"></div>
+    <div class="s1-sub">Custom Souvenir Collection</div>
+    <h1 class="s1-title">GRUPO<br>XCARET<strong>RIVIERA MAYA</strong></h1>
+    <div class="s1-divider"></div>
+    <p class="s1-tagline">Premium Souvenirs. <b>Hecho en M&eacute;xico.</b></p>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ============================
+     SLIDE 2: WE KNOW YOUR WORLD
+     ============================ -->
+<section class="slide s2" id="s-1">
+  <div class="slide-bg"></div>
+  <div class="slide-overlay"></div>
+  <div class="s2-wrap">
+    <div class="s2-text">
+      <div class="section-tag rv">We Know Your World</div>
+      <h2 class="mega-title s2-title rv d1">We&rsquo;ve Studied<br><em>Every Detail.</em></h2>
+      <p class="s2-body rv d2">Grupo Xcaret isn&rsquo;t just a tourism company &mdash; it&rsquo;s a <strong>living monument to Mexican culture, nature, and hospitality</strong>. From the sacred cenotes of Riviera Maya to the stages of M&eacute;xico Espectacular, every experience celebrates what makes Mexico extraordinary. Your souvenirs should do the same.</p>
+      <div class="s2-accent-line rv d3"></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card glass rv d2"><div class="stat-num">35+</div><div class="stat-label">Years of Mexican Excellence</div></div>
+      <div class="stat-card glass rv d3"><div class="stat-num">6M+</div><div class="stat-label">Annual Visitors</div></div>
+      <div class="stat-card glass rv d4"><div class="stat-num">8 + 3</div><div class="stat-label">Parks &amp; Luxury Hotels</div></div>
+      <div class="stat-card glass rv d5"><div class="stat-num">#1</div><div class="stat-label">Best Park in World &mdash; IAAPA 2018</div></div>
+      <div class="stat-card glass rv d6"><div class="stat-num">14,000+</div><div class="stat-label">Team Members</div></div>
+      <div class="stat-card glass rv d7"><div class="stat-num">100%</div><div class="stat-label">Mexican Company</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     SLIDE 3: THE OPPORTUNITY
+     ============================ -->
+<section class="slide s3" id="s-2">
+  <div class="s3-half s3-old">
+    <div class="slide-bg"></div>
+    <div class="slide-overlay"></div>
+    <div class="s3-content rv">
+      <div class="s3-badge">The Old Way</div>
+      <div class="s3-col-title">Imported<br>from China</div>
+      <ul class="s3-list">
+        <li>Generic circular &amp; rectangular shapes</li>
+        <li>No organic silhouettes matching park identity</li>
+        <li>Long international shipping times</li>
+        <li>Zero local production control</li>
+        <li>Disconnected from &ldquo;Hecho en M&eacute;xico&rdquo; promise</li>
+      </ul>
+    </div>
+    <div class="s3-divider"></div>
+  </div>
+  <div class="s3-half s3-new">
+    <div class="slide-bg"></div>
+    <div class="slide-overlay"></div>
+    <div class="s3-content rv d3">
+      <div class="s3-badge">The New Way</div>
+      <div class="s3-col-title">100% Made<br>in M&eacute;xico</div>
+      <ul class="s3-list">
+        <li>Custom organic laser-cut shapes per park</li>
+        <li>Premium MDF with glossy protective film</li>
+        <li>100% manufactured in Mexico</li>
+        <li>Designs celebrating each park&rsquo;s identity</li>
+        <li>Faster turnaround &amp; local quality control</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     SLIDE 4: EIGHT WORLDS
+     ============================ -->
+<section class="slide s4" id="s-3">
+  <div class="slide-bg"></div>
+  <div class="slide-overlay"></div>
+  <div class="s4-wrap">
+    <div class="s4-head">
+      <div class="section-tag rv">The Concept</div>
+      <h2 class="mega-title s4-title rv d1">One Collection.<br><em>Eight Worlds.</em></h2>
+    </div>
+    <div class="parks-grid">
+      <div class="park glass rv d1"><span class="park-emoji">&#127795;</span><div class="park-name">Xcaret</div><div class="park-sub">Jungle Kingdom</div></div>
+      <div class="park glass rv d2"><span class="park-emoji">&#128034;</span><div class="park-name">Xel-H&aacute;</div><div class="park-sub">Hidden Wonder</div></div>
+      <div class="park glass rv d3"><span class="park-emoji">&#129415;</span><div class="park-name">Xplor</div><div class="park-sub">Underground Epic</div></div>
+      <div class="park glass rv d4"><span class="park-emoji">&#128293;</span><div class="park-name">Xplor Fuego</div><div class="park-sub">Night Fire</div></div>
+      <div class="park glass rv d5"><span class="park-emoji">&#127912;</span><div class="park-name">Xenses</div><div class="park-sub">Sensory Overload</div></div>
+      <div class="park glass rv d6"><span class="park-emoji">&#127930;</span><div class="park-name">Xoximilco</div><div class="park-sub">Mexican Fiesta</div></div>
+      <div class="park glass rv d7"><span class="park-emoji">&#128062;</span><div class="park-name">Xavage</div><div class="park-sub">Wild Adrenaline</div></div>
+      <div class="park glass rv d8"><span class="park-emoji">&#128167;</span><div class="park-name">Xenotes</div><div class="park-sub">Sacred Waters</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     SLIDE 5: PRODUCT SHOWCASE
+     ============================ -->
+<section class="slide s5" id="s-4">
+  <div class="slide-bg"></div>
+  <div class="slide-overlay"></div>
+  <div class="s5-wrap">
+    <div class="s5-head">
+      <div class="section-tag rv">Product Showcase</div>
+      <h2 class="mega-title s5-title rv d1">Your Custom<br><em>Collection.</em></h2>
+    </div>
+    <div class="gallery">
+      <div class="gal-item glass rv d1" onclick="openLightbox('mockups/01-xcaret-jaguar.png','Xcaret — Jungle Jaguar')">
+        <div class="gal-img"><img src="mockups/01-xcaret-jaguar.png" alt="Xcaret Jaguar" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">Xcaret</span><span class="gal-type">Magnet</span></div>
+      </div>
+      <div class="gal-item glass rv d2" onclick="openLightbox('mockups/02-xelha-sea-turtle.png','Xel-Há — Sea Turtle')">
+        <div class="gal-img"><img src="mockups/02-xelha-sea-turtle.png" alt="Xel-Ha Turtle" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">Xel-H&aacute;</span><span class="gal-type">Magnet</span></div>
+      </div>
+      <div class="gal-item glass rv d3" onclick="openLightbox('mockups/03-xplor-adventure.png','Xplor — Cave Adventure')">
+        <div class="gal-img"><img src="mockups/03-xplor-adventure.png" alt="Xplor" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">Xplor</span><span class="gal-type">Magnet</span></div>
+      </div>
+      <div class="gal-item glass rv d4" onclick="openLightbox('mockups/04-xplor-fuego.png','Xplor Fuego — Night Fire')">
+        <div class="gal-img"><img src="mockups/04-xplor-fuego.png" alt="Xplor Fuego" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">Xplor Fuego</span><span class="gal-type">Magnet</span></div>
+      </div>
+      <div class="gal-item glass rv d5" onclick="openLightbox('mockups/05-xenses-surreal.png','Xenses — Sensory Swirl')">
+        <div class="gal-img"><img src="mockups/05-xenses-surreal.png" alt="Xenses" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">Xenses</span><span class="gal-type">Magnet</span></div>
+      </div>
+      <div class="gal-item glass rv d1" onclick="openLightbox('mockups/06-xoximilco-fiesta.png','Xoximilco — Fiesta')">
+        <div class="gal-img"><img src="mockups/06-xoximilco-fiesta.png" alt="Xoximilco" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">Xoximilco</span><span class="gal-type">Magnet</span></div>
+      </div>
+      <div class="gal-item glass rv d2" onclick="openLightbox('mockups/07-xavage-wild.png','Xavage — Wild Puma')">
+        <div class="gal-img"><img src="mockups/07-xavage-wild.png" alt="Xavage" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">Xavage</span><span class="gal-type">Magnet</span></div>
+      </div>
+      <div class="gal-item glass rv d3" onclick="openLightbox('mockups/08-xcaret-mexico-espectacular.png','México Espectacular')">
+        <div class="gal-img"><img src="mockups/08-xcaret-mexico-espectacular.png" alt="Mexico Espectacular" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">M&eacute;xico Espectacular</span><span class="gal-type">Magnet</span></div>
+      </div>
+      <div class="gal-item glass rv d4" onclick="openLightbox('mockups/09-xenotes-cenote.png','Xenotes — Sacred Cenote')">
+        <div class="gal-img"><img src="mockups/09-xenotes-cenote.png" alt="Xenotes" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">Xenotes</span><span class="gal-type">Magnet</span></div>
+      </div>
+      <div class="gal-item glass rv d5" onclick="openLightbox('mockups/10-collection-lifestyle.png','The Complete Collection')">
+        <div class="gal-img"><img src="mockups/10-collection-lifestyle.png" alt="Collection" loading="lazy"></div>
+        <div class="gal-label"><span class="gal-name">Full Collection</span><span class="gal-type">Lifestyle</span></div>
+      </div>
+    </div>
+    <div class="gal-footer rv">
+      <div class="gal-footer-text">MDF 3mm &bull; Precision Laser Cut &bull; Glossy Protective Film &bull; Organic Custom Shapes &bull; 100% Hecho en M&eacute;xico</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     SLIDE 6: WHY HECHO EN MEXICO
+     ============================ -->
+<section class="slide s6" id="s-5">
+  <div class="slide-bg"></div>
+  <div class="slide-overlay"></div>
+  <div class="s6-wrap">
+    <div class="section-tag rv" style="justify-content:center">Why It Matters</div>
+    <h2 class="mega-title s6-title rv d1">Why <em>Hecho</em><br>en M&eacute;xico</h2>
+    <p class="s6-subtitle rv d2">Xcaret celebrates Mexico. Your souvenirs should be born here too.</p>
+    <div class="pillars">
+      <div class="pillar glass rv d3">
+        <span class="pillar-icon">&#127466;&#127474;</span>
+        <div class="pillar-title">Cultural Authenticity</div>
+        <div class="pillar-desc">Designed and crafted in Mexico by artisans who understand your brand&rsquo;s deep connection to Mexican heritage.</div>
+      </div>
+      <div class="pillar glass rv d4">
+        <span class="pillar-icon">&#9889;</span>
+        <div class="pillar-title">Faster Turnaround</div>
+        <div class="pillar-desc">No overseas shipping delays. Local production means faster delivery, flexible reorders, and real-time quality oversight.</div>
+      </div>
+      <div class="pillar glass rv d5">
+        <span class="pillar-icon">&#9745;&#65039;</span>
+        <div class="pillar-title">Local Quality Control</div>
+        <div class="pillar-desc">Every piece inspected locally. Reduced carbon footprint. Complete supply chain transparency from start to finish.</div>
+      </div>
+    </div>
+    <div class="big-quote rv d6">&ldquo;A <span>100% Mexican</span> souvenir<br>for a <span>100% Mexican</span> brand.&rdquo;</div>
+  </div>
+</section>
+
+<!-- ============================
+     SLIDE 7: PRICING
+     ============================ -->
+<section class="slide s7" id="s-6">
+  <div class="slide-bg"></div>
+  <div class="slide-overlay"></div>
+  <div class="s7-wrap">
+    <div class="s7-head">
+      <div class="section-tag rv" style="justify-content:center">Investment</div>
+      <h2 class="mega-title s7-title rv d1" style="text-align:center">Transparent<br><em>Pricing.</em></h2>
+    </div>
+    <table class="price-table glass rv d2">
+      <thead><tr><th>Product</th><th>Unit (50&ndash;999)</th><th>Wholesale (1,000+)</th></tr></thead>
+      <tbody>
+        <tr><td>Magnets &mdash; Small</td><td>$8 MXN</td><td>$6 MXN</td></tr>
+        <tr><td>Magnets &mdash; Medium</td><td>$11 MXN</td><td>$8 MXN</td></tr>
+        <tr><td>Magnets &mdash; Large</td><td>$15 MXN</td><td>$12 MXN</td></tr>
+        <tr><td>Keychains</td><td>$10 MXN</td><td>$7 MXN</td></tr>
+        <tr><td>Bottle Openers</td><td>$20 MXN</td><td>$17 MXN</td></tr>
+        <tr><td>Metal Buttons</td><td>$8 MXN</td><td>$6 MXN</td></tr>
+      </tbody>
+    </table>
+    <div class="highlights">
+      <div class="highlight glass rv d3"><span class="highlight-icon">&#9998;</span><div class="highlight-text"><strong>15 Designs / Park</strong>Custom per park identity</div></div>
+      <div class="highlight glass rv d4"><span class="highlight-icon">&#8635;</span><div class="highlight-text"><strong>2 Revision Rounds</strong>Perfect every detail</div></div>
+      <div class="highlight glass rv d5"><span class="highlight-icon">&#128666;</span><div class="highlight-text"><strong>Free Shipping 300+</strong>On orders over 300 pcs</div></div>
+    </div>
+    <div class="delivery-note rv d6">Delivery: 8&ndash;14 business days depending on quantity</div>
+  </div>
+</section>
+
+<!-- ============================
+     SLIDE 8: NEXT STEPS
+     ============================ -->
+<section class="slide s8" id="s-7">
+  <div class="slide-bg"></div>
+  <div class="slide-overlay"></div>
+  <div class="s8-wrap">
+    <div class="s8-head">
+      <div class="section-tag rv" style="justify-content:center">Let&rsquo;s Begin</div>
+      <h2 class="mega-title s8-title rv d1" style="text-align:center">Three Simple<br><em>Steps.</em></h2>
+    </div>
+    <div class="steps">
+      <div class="step rv d2">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">50% Advance</div>
+          <div class="step-desc">Kick off the creative process. Your deposit starts 15 custom designs per park.</div>
+        </div>
+      </div>
+      <div class="step rv d3">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">15 Custom Designs</div>
+          <div class="step-desc">Tailored to each park identity with 2 revision rounds until every piece is perfect.</div>
+        </div>
+      </div>
+      <div class="step rv d4">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Production &amp; Delivery</div>
+          <div class="step-desc">Balance payment + delivery in 8&ndash;14 business days. Your collection, ready to sell.</div>
+        </div>
+      </div>
+    </div>
+    <div class="cta-box glass rv d5">
+      <div class="cta-heading">Ready to Create Something Extraordinary?</div>
+      <div class="cta-links">
+        <a href="mailto:informacion@axkan.art" class="cta-link"><span class="cta-link-icon">&#9993;</span> informacion@axkan.art</a>
+        <a href="https://wa.me/5538253251" class="cta-link" target="_blank"><span class="cta-link-icon">&#128172;</span> WhatsApp: 55 3825 3251</a>
+      </div>
+    </div>
+    <div class="legal rv d6">This document does not constitute a formal quote for legal purposes. Its content is solely representative and informational. This document is CONFIDENTIAL and may not be shared, distributed, or reproduced without prior authorization.</div>
+  </div>
+</section>
+
+<script>
+/* Reveal animations */
+const revealEls = document.querySelectorAll('.rv');
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
+}, { threshold: 0.1 });
+revealEls.forEach(el => revealObs.observe(el));
+
+/* Slide tracking */
+const slides = document.querySelectorAll('.slide');
+const dots = document.querySelectorAll('.dot');
+const progress = document.getElementById('progress');
+let current = 0;
+
+const slideObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const idx = [...slides].indexOf(e.target);
+      dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+      progress.style.width = ((idx + 1) / slides.length * 100) + '%';
+      current = idx;
+    }
+  });
+}, { threshold: 0.5 });
+slides.forEach(s => slideObs.observe(s));
+
+/* Nav dot click */
+dots.forEach(d => d.addEventListener('click', () => {
+  slides[+d.dataset.s].scrollIntoView({ behavior: 'smooth' });
+}));
+
+/* Keyboard navigation */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    current = Math.min(current + 1, slides.length - 1);
+    slides[current].scrollIntoView({ behavior: 'smooth' });
+  } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+    e.preventDefault();
+    current = Math.max(current - 1, 0);
+    slides[current].scrollIntoView({ behavior: 'smooth' });
+  } else if (e.key === 'Escape') {
+    closeLightbox();
+  }
+});
+
+/* Lightbox */
+function openLightbox(src, caption) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lbImg').src = src;
+  document.getElementById('lbCap').textContent = caption;
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('lightbox').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeLightbox();
+});
+</script>
+</body>
+</html>

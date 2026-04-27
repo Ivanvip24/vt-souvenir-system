@@ -1,0 +1,9 @@
+node_modules/
+uploads/
+*.log
+.DS_Store
+tmp/
+tmp-ref/
+.puppeteer-profile*/
+.server.pid
+.reboot.lock

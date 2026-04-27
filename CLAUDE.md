@@ -17,6 +17,9 @@ The complete AXKAN ecosystem — a custom souvenir production business automatio
 | `tools/printing/` | Auto-print & archive system | AppleScript, JSX | `osascript pdf_autoprint_ondemand.scpt` |
 | `tools/assembly-prep/` | Illustrator prep scripts | Adobe JSX | Run from Illustrator |
 | `tools/arduino-button/` | Physical button order trigger | Arduino C, Python | `python3 button_listener.py` |
+| `tools/learning-tutor/` | AI tutoring system guides | Markdown | Read-only reference |
+| `tools/spelling-checker/` | Claude-powered document spell checker | Python, Bash | `python claude_check.py` |
+| `tools/design-prompts/` | AI design prompt system + web app | Node.js, Markdown, assets | `npm start` (design-prompt-app/) |
 | `automation/facebook-bot/` | Marketplace listing bot | Python, Selenium | `python main.py` |
 | `automation/social-media/` | Social content management | Sanity Studio | `npm run dev` |
 | `automation/backup/` | Scheduled backups & health checks | Bash, launchd | launchd plists |
