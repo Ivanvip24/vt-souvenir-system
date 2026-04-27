@@ -59,6 +59,24 @@ temp/
 *.ai
 *.psd
 *.sketch
+*.mp4
+*.mov
+*.wasm
+
+# Puppeteer browser profiles
+.puppeteer-profile*/
+
+# Frontend build output
+frontend/public/
+
+# Generated receipts & catalogs
+backend/branded-receipts/*.pdf
+backend/catalogs/*.pdf
+
+# Design prompt app runtime
+tools/design-prompts/design-prompt-app/uploads/
+tools/design-prompts/design-prompt-app/tmp/
+tools/design-prompts/design-prompt-app/tmp-ref/
 
 # Secrets & credentials
 credentials.json

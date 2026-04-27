@@ -3,7 +3,12 @@
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
-        "hook": "echo 'Reminder: Follow CLAUDE.md rules — pin deps, no hardcoded URLs, no console.log, use fetchWithTimeout for external calls.'"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Reminder: Follow CLAUDE.md rules — pin deps, no hardcoded URLs, no console.log, use fetchWithTimeout for external calls.'"
+          }
+        ]
       }
     ]
   }

@@ -2272,7 +2272,7 @@ def _poll_until(condition_js: str, expected: str, max_polls: int, interval: floa
     return False
 
 
-def _run_envato_videogen_v2(prompt_text: str, ref_url: str, is_loop: bool) -> None:
+def _run_envato_videogen_v2(prompt_text: str, ref_url: str, is_loop: bool, end_ref_url: str = "") -> None:
     """Orchestrate the new Envato video-gen flow step-by-step.
 
     Sequence (validated by test harness):
@@ -2433,9 +2433,10 @@ def _run_envato_videogen_v2(prompt_text: str, ref_url: str, is_loop: bool) -> No
                     time.sleep(1)
 
                     log("upload end frame")
+                    end_frame_src = end_ref_url if end_ref_url else ref_url
                     end_upload_js = (
                         "(async function(){try{"
-                        f"var resp=await fetch('{ref_url}');"
+                        f"var resp=await fetch('{end_frame_src}');"
                         "var blob=await resp.blob();"
                         "var file=new File([blob],'end.jpg',{type:'image/jpeg'});"
                         "var dt=new DataTransfer();dt.items.add(file);"
@@ -2617,6 +2618,15 @@ def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str)
         ):
             log("ref dialog file input never appeared — skipping refs")
         else:
+            # Count existing tiles BEFORE upload so we can detect new ones
+            log("counting existing tiles before upload")
+            _osa_js(
+                "(function(){var t=document.querySelectorAll('[role=dialog] "
+                "button[aria-label=\"Seleccionar imagen como referencia\"]');"
+                "window.__axkanTilesBefore=t.length;})();",
+                tab_ref=tab_ref,
+            )
+
             log(f"upload {len(ref_urls)} ref images")
             urls_json = json.dumps(ref_urls)
             upload_js = (
@@ -2653,14 +2663,16 @@ def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str)
                 status = _osa_js("window.__axkanRefUp||''", tab_ref=tab_ref)
                 log(f"ref upload status: {status!r} — continuing")
 
-            # Wait for tiles to show envatousercontent URL (Envato CDN resize)
-            log("wait for tiles with CDN URLs")
+            # Wait for NEW tiles to appear (more than what existed before)
+            n = min(len(ref_urls), 3)
+            log(f"wait for {n} NEW tiles (beyond pre-existing count)")
             _poll_until(
                 condition_js=(
-                    "(function(){var t=document.querySelectorAll('[role=dialog] "
+                    "(function(){var before=window.__axkanTilesBefore||0;"
+                    "var t=document.querySelectorAll('[role=dialog] "
                     "button[aria-label=\"Seleccionar imagen como referencia\"]');"
-                    "if(!t.length)return 'n';var img=t[0].querySelector('img');"
-                    "return (img && /envatousercontent|user-uploads/.test(img.src||''))?'y':'n';})();"
+                    "var newCount=t.length-before;"
+                    f"return newCount>={n}?'y':'n';}})();"
                 ),
                 expected="y",
                 max_polls=80,
@@ -2668,13 +2680,14 @@ def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str)
                 tab_ref=tab_ref,
             )
 
-            # Click the first N tiles (most recent uploads)
-            log("click tiles to commit as references")
-            n = min(len(ref_urls), 3)
+            # Click only the NEWLY uploaded tiles (first N tiles — newest appear first)
+            log("click only NEW tiles to commit as references")
             click_tiles_js = (
-                f"(function(){{var t=document.querySelectorAll('[role=dialog] "
+                f"(function(){{var before=window.__axkanTilesBefore||0;"
+                f"var t=document.querySelectorAll('[role=dialog] "
                 f"button[aria-label=\"Seleccionar imagen como referencia\"]');"
-                f"var n=Math.min(t.length,{n});"
+                f"var n=Math.min(t.length-before,{n});"
+                f"if(n<=0)n=Math.min(t.length,{n});"
                 f"var i=0;var tick=function(){{if(i>=n){{window.__axkanTiles='done';return;}}"
                 f"t[i].click();i++;setTimeout(tick,250);}};tick();}})();"
             )
@@ -2805,6 +2818,18 @@ def envato_send_video():
     if ref_filenames:
         ref_url = f"http://localhost:{STUDIO_PORT}/tmp-ref/{ref_filenames[0]}"
 
+    # Support separate end frame image (different from start frame)
+    end_ref_url = ""
+    end_frame_path = data.get("endFramePath")
+    if end_frame_path:
+        src = SESSIONS_DIR.parent / end_frame_path.lstrip("/")
+        if src.exists():
+            fname = "vid-end-frame-0.jpg"
+            _resize_image_for_envato(str(src), str(TMP_REF_DIR / fname))
+            end_ref_url = f"http://localhost:{STUDIO_PORT}/tmp-ref/{fname}"
+            # If end frame provided, force loop mode so both frames get uploaded
+            is_loop = True
+
     sanitized_prompt = _sanitize_video_prompt(combined)
 
     # Fire the automation in a background thread so the HTTP response returns fast.
@@ -2814,12 +2839,13 @@ def envato_send_video():
                 prompt_text=sanitized_prompt,
                 ref_url=ref_url,
                 is_loop=is_loop,
+                end_ref_url=end_ref_url,
             )
         except Exception as e:
             print(f"[Envato Video] automation error: {e}")
 
     threading.Thread(target=_run, daemon=True).start()
-    print(f"[Envato Video] New flow (v2): prompt={len(combined)} chars, refs={len(ref_filenames)}, loop={is_loop}")
+    print(f"[Envato Video] New flow (v2): prompt={len(combined)} chars, refs={len(ref_filenames)}, loop={is_loop}, end_frame={'yes' if end_ref_url else 'no'}")
     return jsonify({"success": True, "message": "Sending to Envato Video Gen (new app.envato.com flow)..."})
 
 
