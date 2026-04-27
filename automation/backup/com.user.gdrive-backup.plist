@@ -8,7 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/RESPALDO/gdrive_backup.sh</string>
+        <string>/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2/automation/backup/gdrive_backup.sh</string>
     </array>
 
     <!-- Run daily at 6:30 PM -->

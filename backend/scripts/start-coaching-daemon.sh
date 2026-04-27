@@ -5,7 +5,7 @@
 #   bash backend/scripts/start-coaching-daemon.sh uninstall — stop & remove
 #   bash backend/scripts/start-coaching-daemon.sh run       — run once now (for testing)
 
-PROJECT_DIR="/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan_brain_system"
+PROJECT_DIR="/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2"
 PLIST_NAME="com.axkan.sales-coaching"
 PLIST_PATH="$HOME/Library/LaunchAgents/${PLIST_NAME}.plist"
 LOG_DIR="$PROJECT_DIR/backend/logs"

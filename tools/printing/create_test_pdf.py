@@ -14,7 +14,7 @@ except ImportError:
     from reportlab.lib.units import cm
 
 # Create test PDF with correct ADHESIVE paper size
-output_path = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/PRINTING_PJ/test_33x48_with_30x39_rect.pdf"
+output_path = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2/tools/printing/test_33x48_with_30x39_rect.pdf"
 
 # Define page size: 33cm x 48cm (ADHESIVE paper)
 page_width = 33 * cm

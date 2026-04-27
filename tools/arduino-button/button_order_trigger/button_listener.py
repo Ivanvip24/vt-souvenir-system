@@ -37,7 +37,7 @@ from pathlib import Path
 BUTTON_ACTION = "open_axkan"
 
 # Path to your AXKAN order system
-AXKAN_SYSTEM_PATH = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/ORDERS_GENERATOR/axkan_order_system.py"
+AXKAN_SYSTEM_PATH = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2/tools/orders-generator/axkan_order_system.py"
 
 # Sound notification (macOS)
 PLAY_SOUND = True
@@ -154,7 +154,7 @@ def handle_button_press():
 
     elif BUTTON_ACTION == "open_folder":
         # Open the orders folder in Finder
-        orders_folder = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/ORDERS_GENERATOR"
+        orders_folder = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2/tools/orders-generator"
         subprocess.run(['open', orders_folder])
         print(f"📂 Opened folder: {orders_folder}")
 

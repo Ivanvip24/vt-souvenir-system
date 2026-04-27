@@ -8,8 +8,8 @@ import os
 import csv
 
 # Configuration
-PHOTOS_DIR = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/facebook-marketplace-bot/fotos-axkan"
-OUTPUT_CSV = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/facebook-marketplace-bot/csvs/items.csv"
+PHOTOS_DIR = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2/automation/facebook-bot/fotos-axkan"
+OUTPUT_CSV = "/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2/automation/facebook-bot/csvs/items.csv"
 
 # Description template
 DESCRIPTION_TEMPLATE = """🎁 SOUVENIRS PERSONALIZADOS AXKAN - SOUVENIRS ÚNICOS 🎁

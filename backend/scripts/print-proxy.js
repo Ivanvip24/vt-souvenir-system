@@ -151,8 +151,7 @@ app.post('/generate-pdf', async (req, res) => {
 
     // Find the Python script
     const scriptPaths = [
-      '/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/ORDERS_GENERATOR/generate_axkan.py',
-      '/Users/ivanvalenciaperez/Desktop/CLAUDE/READY/ORDERS_GENERATOR/generate_axkan.py'
+      '/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2/tools/orders-generator/generate_axkan.py'
     ];
 
     let scriptPath = null;

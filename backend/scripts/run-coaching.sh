@@ -4,7 +4,7 @@
 
 set -e
 
-PROJECT_DIR="/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan_brain_system"
+PROJECT_DIR="/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2"
 cd "$PROJECT_DIR"
 
 # Ensure claude is on PATH

@@ -7,7 +7,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/RESPALDO/backup_notification.sh</string>
+        <string>/Users/ivanvalenciaperez/Desktop/CLAUDE/BETA_PHASE/axkan-brain-v2/automation/backup/backup_notification.sh</string>
     </array>
 
     <key>RunAtLoad</key>
