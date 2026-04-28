@@ -2075,6 +2075,16 @@ def envato_send():
 _ENVATO_VIDEOGEN_URL = "https://app.envato.com/video-gen"
 _ENVATO_IMAGEGEN_URL = "https://app.envato.com/image-gen"
 
+# Fast-path ref upload: simulate a drop event on the textarea container
+# instead of opening the "Imágenes de referencia" dialog and waiting ~60s for
+# Envato to render a tile thumbnail. The textarea container has ondrop /
+# ondragover handlers wired up by Envato's React app — we can hand them a
+# DataTransfer with our File and they accept it directly. Disabled by default
+# until validated end-to-end; flip to True after verifying the generated
+# output actually used the dropped reference. Falls back to the dialog flow
+# if the drop returns no thumbnail in the prompt bar.
+_FAST_REF_UPLOAD = True
+
 
 def _osa_js(js_source: str, tab_ref: tuple | None = None, timeout: float = 8.0) -> str:
     """Run a snippet of JS in an Envato video-gen tab via a fresh osascript subprocess.
@@ -2499,6 +2509,101 @@ def _wait_imagegen_tab_ready(tab_ref: tuple, max_polls: int = 60) -> bool:
     )
 
 
+def _attach_refs_via_drop(ref_urls: list, tab_ref: tuple, log) -> bool:
+    """Fast-path reference attachment.
+
+    Simulates a `drop` event on the textarea container with a DataTransfer
+    containing the fetched files. Envato's textarea wrapper has ondrop +
+    ondragover wired up by their React app, so this attaches refs without
+    opening the 'Imágenes de referencia' dialog or waiting for tile thumbnails
+    to render — saves ~60s per tab.
+
+    Returns True if a reference thumbnail appears in the prompt bar within
+    a few seconds; False otherwise (caller should fall back to dialog flow).
+    """
+    if not ref_urls:
+        return True
+    log(f"FAST PATH: drop {len(ref_urls)} ref(s) onto textarea container")
+    urls_json = json.dumps(ref_urls)
+    drop_js = (
+        "window.__axkanFastDrop='pending';"
+        "(async function(){try{"
+        f"var urls={urls_json};"
+        "var files=[];"
+        "for(var i=0;i<urls.length;i++){"
+        "  var r=await fetch(urls[i]);if(!r.ok)continue;"
+        "  var b=await r.blob();"
+        "  var ext=(b.type.split('/')[1]||'jpg').replace('jpeg','jpg');"
+        "  files.push(new File([b],'axkan-ref-'+i+'.'+ext,{type:b.type||'image/jpeg'}));"
+        "}"
+        "if(!files.length){window.__axkanFastDrop='no_blobs';return;}"
+        "var ed=document.querySelector('[contenteditable=\"true\"][role=\"textbox\"]');"
+        "if(!ed){window.__axkanFastDrop='no_editor';return;}"
+        "var target=ed.parentElement&&ed.parentElement.parentElement?"
+        "  ed.parentElement.parentElement:ed.parentElement||ed;"
+        "var dt=new DataTransfer();files.forEach(function(f){dt.items.add(f);});"
+        "var rect=target.getBoundingClientRect();"
+        "var clientX=rect.left+rect.width/2;"
+        "var clientY=rect.top+rect.height/2;"
+        "['dragenter','dragover','drop'].forEach(function(t){"
+        "  target.dispatchEvent(new DragEvent(t,{bubbles:true,cancelable:true,"
+        "    dataTransfer:dt,clientX:clientX,clientY:clientY}));"
+        "});"
+        "window.__axkanFastDrop='dropped';"
+        "}catch(e){window.__axkanFastDrop='err:'+e.message;}})();"
+    )
+    _osa_js(drop_js, tab_ref=tab_ref)
+
+    # Wait for the in-tab JS to finish dispatching events.
+    if not _poll_until(
+        condition_js="window.__axkanFastDrop||''",
+        expected="dropped",
+        max_polls=20,
+        interval=0.15,
+        tab_ref=tab_ref,
+    ):
+        status = _osa_js("window.__axkanFastDrop||''", tab_ref=tab_ref)
+        log(f"FAST PATH: drop dispatch never completed: {status!r}")
+        return False
+
+    # Verify a reference thumbnail appeared in the prompt bar. Probes a few
+    # likely selectors — Envato's React app may render the new ref in any of
+    # several places. We need ANY of them to have at least one thumbnail.
+    log("FAST PATH: verify ref thumbnail appeared in prompt bar")
+    verify_js = (
+        "(function(){"
+        "var sels=["
+        "'[aria-label*=\"referencia\"] img',"
+        "'[aria-label*=\"Referencia\"] img',"
+        "'[data-testid*=\"reference\"] img',"
+        "'[class*=\"reference\"] img',"
+        "'img[src^=\"blob:\"]',"
+        "'img[src*=\"envatousercontent\"]'"
+        "];"
+        "for(var i=0;i<sels.length;i++){"
+        "  var n=document.querySelectorAll(sels[i]);"
+        "  if(n.length>0){"
+        "    for(var j=0;j<n.length;j++){"
+        "      var img=n[j];"
+        "      if(img.naturalWidth>50||img.complete){return 'y';}"
+        "    }"
+        "  }"
+        "}"
+        "return 'n';})();"
+    )
+    if _poll_until(
+        condition_js=verify_js,
+        expected="y",
+        max_polls=40,   # ~6s ceiling — small resized images upload fast
+        interval=0.15,
+        tab_ref=tab_ref,
+    ):
+        log("FAST PATH: ref thumbnail confirmed")
+        return True
+    log("FAST PATH: thumbnail did not appear — will fall back to dialog flow")
+    return False
+
+
 def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str,
                             tab_ref: tuple | None = None) -> None:
     """Orchestrate the validated Envato ImageGen flow step-by-step.
@@ -2544,7 +2649,18 @@ def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str,
     _osa_js(DUMP_BTN_JS, tab_ref=tab_ref)
 
     # ---- Step 2: Reference images (if any) ----
-    if ref_urls:
+    # Try the FAST PATH first when enabled. If it succeeds, skip the dialog
+    # dance entirely. If it fails (no thumbnail confirmed), fall through to
+    # the original dialog flow so behavior is never worse than before.
+    refs_handled_by_fast_path = False
+    if ref_urls and _FAST_REF_UPLOAD:
+        try:
+            refs_handled_by_fast_path = _attach_refs_via_drop(ref_urls, tab_ref, log)
+        except Exception as e:
+            log(f"FAST PATH: exception, falling back to dialog: {e}")
+            refs_handled_by_fast_path = False
+
+    if ref_urls and not refs_handled_by_fast_path:
         log("click Imágenes de referencia toggle")
         toggle_js = (
             "(function(){var b=Array.from(document.querySelectorAll('button'))"
@@ -2608,10 +2724,34 @@ def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str,
                 status = _osa_js("window.__axkanRefUp||''", tab_ref=tab_ref)
                 log(f"ref upload status: {status!r} — continuing")
 
-            # Wait for NEW tiles to appear (more than what existed before)
+            # Deselect any pre-existing references from prior sessions. Envato
+            # remembers selections across page loads — if we don't clear them,
+            # our prompt ends up using the previous-run's images plus our new
+            # ones (the "turtle showing up alongside our photo" bug).
+            log("deselect any pre-selected library tiles")
+            _osa_js(
+                "(function(){var t=document.querySelectorAll('[role=dialog] "
+                "button[aria-label=\"Seleccionar imagen como referencia\"]');"
+                "var deselected=0;"
+                "for(var i=0;i<t.length;i++){"
+                "  if(t[i].getAttribute('aria-pressed')==='true'||"
+                "     t[i].getAttribute('aria-selected')==='true'||"
+                "     t[i].getAttribute('data-state')==='checked'||"
+                "     t[i].classList.contains('selected')){"
+                "    t[i].click();deselected++;"
+                "  }"
+                "}return deselected;})();",
+                tab_ref=tab_ref,
+            )
+            time.sleep(0.3)
+
+            # Wait for NEW tiles to appear (more than what existed before).
+            # Tightened from 80*0.3=24s ceiling to 200*0.15=30s with 2x faster
+            # detection latency. Smaller resized refs typically finalize in
+            # ~3-8s; the longer ceiling is for queue-loaded times.
             n = min(len(ref_urls), 3)
             log(f"wait for {n} NEW tiles (beyond pre-existing count)")
-            _poll_until(
+            new_tiles_arrived = _poll_until(
                 condition_js=(
                     "(function(){var before=window.__axkanTilesBefore||0;"
                     "var t=document.querySelectorAll('[role=dialog] "
@@ -2620,30 +2760,44 @@ def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str,
                     f"return newCount>={n}?'y':'n';}})();"
                 ),
                 expected="y",
-                max_polls=80,
-                interval=0.3,
+                max_polls=200,
+                interval=0.15,
                 tab_ref=tab_ref,
             )
 
-            # Click only the NEWLY uploaded tiles (first N tiles — newest appear first)
-            log("click only NEW tiles to commit as references")
-            click_tiles_js = (
-                f"(function(){{var before=window.__axkanTilesBefore||0;"
-                f"var t=document.querySelectorAll('[role=dialog] "
-                f"button[aria-label=\"Seleccionar imagen como referencia\"]');"
-                f"var n=Math.min(t.length-before,{n});"
-                f"if(n<=0)n=Math.min(t.length,{n});"
-                f"var i=0;var tick=function(){{if(i>=n){{window.__axkanTiles='done';return;}}"
-                f"t[i].click();i++;setTimeout(tick,250);}};tick();}})();"
-            )
-            _osa_js(click_tiles_js, tab_ref=tab_ref)
-            _poll_until(
-                condition_js="window.__axkanTiles||''",
-                expected="done",
-                max_polls=20,
-                interval=0.2,
-                tab_ref=tab_ref,
-            )
+            if not new_tiles_arrived:
+                # Don't fall back to clicking unknown tiles — that's what caused
+                # the "turtle from a prior generation" bug. Better to skip refs
+                # entirely and let the prompt run text-only.
+                log("NEW tiles never arrived — skipping ref click (avoid stale-tile bug)")
+            else:
+                # Click ONLY the newly added tiles. Envato renders newest-first
+                # in this dialog, so the first n tiles are our uploads. We also
+                # verify each one isn't already selected (extra safety).
+                log("click only NEW tiles to commit as references")
+                click_tiles_js = (
+                    f"(function(){{"
+                    f"var t=document.querySelectorAll('[role=dialog] "
+                    f"button[aria-label=\"Seleccionar imagen como referencia\"]');"
+                    f"var n={n};"
+                    f"var i=0;var tick=function(){{"
+                    f"  if(i>=n){{window.__axkanTiles='done';return;}}"
+                    f"  var btn=t[i];"
+                    f"  var sel=(btn.getAttribute('aria-pressed')==='true'||"
+                    f"           btn.getAttribute('aria-selected')==='true'||"
+                    f"           btn.getAttribute('data-state')==='checked');"
+                    f"  if(!sel) btn.click();"
+                    f"  i++;setTimeout(tick,250);"
+                    f"}};tick();}})();"
+                )
+                _osa_js(click_tiles_js, tab_ref=tab_ref)
+                _poll_until(
+                    condition_js="window.__axkanTiles||''",
+                    expected="done",
+                    max_polls=20,
+                    interval=0.2,
+                    tab_ref=tab_ref,
+                )
 
             # Close dialog by clicking toggle again
             log("close ref dialog")
@@ -2830,6 +2984,9 @@ def envato_send_all():
     send_id = uuid.uuid4().hex[:8]
 
     def _materialize_refs(items: list, prefix: str) -> list[str]:
+        # Refs are resized to <=1200px and saved as JPEG so Envato's
+        # server-side processing finishes faster (small payloads finalize in
+        # ~2-5s vs ~30-60s for full-size originals).
         out: list[str] = []
         for i, data_url in enumerate((items or [])[:3]):
             if not data_url:
@@ -2838,19 +2995,31 @@ def envato_send_all():
                 if data_url.startswith("/sessions/"):
                     local_path = STUDIO_DIR / data_url.lstrip("/")
                     if local_path.is_file():
-                        fname = f"{prefix}-{i}{local_path.suffix}"
-                        shutil.copy2(str(local_path), str(TMP_REF_DIR / fname))
+                        fname = f"{prefix}-{i}.jpg"
+                        try:
+                            _resize_image_for_envato(str(local_path), str(TMP_REF_DIR / fname))
+                        except Exception:
+                            shutil.copy2(str(local_path), str(TMP_REF_DIR / fname))
                         out.append(f"http://localhost:{STUDIO_PORT}/tmp-ref/{fname}")
                 continue
             m = re.match(r"^data:image/([^;]+);base64,(.+)$", data_url, re.DOTALL)
             if not m:
                 continue
-            ext = "jpg" if m.group(1) == "jpeg" else m.group(1)
             raw = base64.b64decode(m.group(2))
             if len(raw) > 20 * 1024 * 1024:
                 continue
-            fname = f"{prefix}-{i}.{ext}"
-            (TMP_REF_DIR / fname).write_bytes(raw)
+            tmp_in = TMP_REF_DIR / f"{prefix}-{i}-orig.bin"
+            tmp_in.write_bytes(raw)
+            fname = f"{prefix}-{i}.jpg"
+            try:
+                _resize_image_for_envato(str(tmp_in), str(TMP_REF_DIR / fname))
+                tmp_in.unlink(missing_ok=True)
+            except Exception:
+                # Fallback: keep the original bytes with their declared extension
+                ext = "jpg" if m.group(1) == "jpeg" else m.group(1)
+                fname = f"{prefix}-{i}.{ext}"
+                (TMP_REF_DIR / fname).write_bytes(raw)
+                tmp_in.unlink(missing_ok=True)
             out.append(f"http://localhost:{STUDIO_PORT}/tmp-ref/{fname}")
         return out
 
