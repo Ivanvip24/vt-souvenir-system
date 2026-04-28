@@ -63,59 +63,16 @@ TMP_REF_DIR.mkdir(exist_ok=True)
 ABORT_FILE = Path(tempfile.gettempdir()) / "axkan-abort-automation"
 STUDIO_PORT = 8080
 
-# Floating DUMP button — injected alongside the blocker. Scans the page on click and
-# POSTs a DOM snapshot to the studio at /api/test/receive-dump, which stores it in
-# memory so the test harness can display it without needing Accessibility/keystroke permissions.
-DUMP_BTN_JS = (
-    "if(!document.getElementById('axkan-dump-btn')){"
-    "var db=document.createElement('div');"
-    "db.id='axkan-dump-btn';"
-    "db.style.cssText='position:fixed;bottom:20px;left:20px;z-index:99999;padding:14px 24px;"
-    "background:#09adc2;color:white;border-radius:12px;font-size:14px;font-weight:bold;"
-    "font-family:sans-serif;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.3);"
-    "transition:all 0.2s;user-select:none;';"
-    "db.textContent='AXKAN: DUMP';"
-    "db.onclick=function(){"
-    "db.textContent='...dumping...';"
-    "var out=[];"
-    "var els=document.querySelectorAll('div,span,button,a,svg,path');"
-    "for(var i=0;i<els.length;i++){"
-    "var e=els[i];"
-    "var r=e.getBoundingClientRect();"
-    "if(r.width<20||r.height<20||r.width>500||r.height>500)continue;"
-    "var tx=(e.textContent||'').trim();"
-    "if(tx.length>40)continue;"
-    "var aria=(e.getAttribute&&e.getAttribute('aria-label'))||'';"
-    "var role=(e.getAttribute&&e.getAttribute('role'))||'';"
-    "var cls=(typeof e.className==='string'?e.className:'')||'';"
-    "if(cls.length>80)cls=cls.substring(0,80);"
-    "out.push({tag:e.tagName,w:Math.round(r.width),h:Math.round(r.height),x:Math.round(r.left),y:Math.round(r.top),text:tx.substring(0,30),aria:aria.substring(0,40),role:role,cls:cls});"
-    "}"
-    "fetch('http://localhost:8080/api/test/receive-dump',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:window.location.href,elements:out.slice(0,400),title:document.title})}).then(function(r){return r.json();}).then(function(j){db.textContent='DUMPED '+j.count+' els';setTimeout(function(){db.textContent='AXKAN: DUMP';},2000);}).catch(function(e){db.textContent='ERR: '+e.message.substring(0,15);setTimeout(function(){db.textContent='AXKAN: DUMP';},3000);});"
-    "};"
-    "document.body.appendChild(db);}"
-)
-
-# Blocker button JS — injected into every Envato tab
-BLOCKER_JS = (
-    "if(!document.getElementById('axkan-block-btn')){"
-    "var d=document.createElement('div');"
-    "d.id='axkan-block-btn';"
-    "d.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;padding:14px 24px;"
-    "background:#8ab73b;color:white;border-radius:12px;font-size:14px;font-weight:bold;"
-    "font-family:sans-serif;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.3);"
-    "transition:all 0.2s;user-select:none;';"
-    "d.textContent='AXKAN: ACTIVO';"
-    "d.onclick=function(){window.__axkanBlocked=!window.__axkanBlocked;"
-    "d.textContent=window.__axkanBlocked?'AXKAN: BLOQUEADO':'AXKAN: ACTIVO';"
-    "d.style.background=window.__axkanBlocked?'#e72a88':'#8ab73b';};"
-    "document.body.appendChild(d);}"
-)
+# No-op stubs — the AXKAN: DUMP and AXKAN: ACTIVO floating buttons were removed.
+# Kept as empty strings so existing _osa_js(BLOCKER_JS) / _osa_js(DUMP_BTN_JS) call
+# sites stay valid without needing to be edited out individually.
+DUMP_BTN_JS = ""
+BLOCKER_JS = ""
 
 
 def _inject_blocker_applescript(tab_ref):
-    """Return AppleScript lines to inject the blocker button into a tab."""
-    return f'  execute {tab_ref} javascript "{BLOCKER_JS}"\n'
+    """No-op — blocker button has been removed."""
+    return ""
 
 
 # Ensure claude CLI is findable in subprocess calls
@@ -1736,48 +1693,7 @@ def _envato_watchdog_loop():
 
     js_check_and_retry = """
 (function(){
-  // Inject floating toggle button if not present
-  if (!document.getElementById('axkan-block-btn')) {
-    var d = document.createElement('div');
-    d.id = 'axkan-block-btn';
-    d.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:99999;padding:14px 24px;background:#8ab73b;color:white;border-radius:12px;font-size:14px;font-weight:bold;font-family:sans-serif;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:all 0.2s;user-select:none;';
-    d.textContent = 'AXKAN: ACTIVO';
-    d.onclick = function(){ window.__axkanBlocked = !window.__axkanBlocked; d.textContent = window.__axkanBlocked ? 'AXKAN: BLOQUEADO' : 'AXKAN: ACTIVO'; d.style.background = window.__axkanBlocked ? '#e72a88' : '#8ab73b'; };
-    document.body.appendChild(d);
-  } else {
-    var d = document.getElementById('axkan-block-btn');
-    d.textContent = window.__axkanBlocked ? 'AXKAN: BLOQUEADO' : 'AXKAN: ACTIVO';
-    d.style.background = window.__axkanBlocked ? '#e72a88' : '#8ab73b';
-  }
-  // Inject floating DUMP button (bottom-left) if not present — lets us snapshot the DOM without Chrome focus
-  if (!document.getElementById('axkan-dump-btn')) {
-    var db = document.createElement('div');
-    db.id = 'axkan-dump-btn';
-    db.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:99999;padding:14px 24px;background:#09adc2;color:white;border-radius:12px;font-size:14px;font-weight:bold;font-family:sans-serif;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:all 0.2s;user-select:none;';
-    db.textContent = 'AXKAN: DUMP';
-    db.onclick = function(){
-      db.textContent = '...dumping...';
-      var out = [];
-      var els = document.querySelectorAll('div,span,button,a,svg,path');
-      for (var i = 0; i < els.length; i++) {
-        var e = els[i]; var r = e.getBoundingClientRect();
-        if (r.width < 20 || r.height < 20 || r.width > 500 || r.height > 500) continue;
-        var tx = (e.textContent || '').trim();
-        if (tx.length > 40) continue;
-        var aria = (e.getAttribute && e.getAttribute('aria-label')) || '';
-        var role = (e.getAttribute && e.getAttribute('role')) || '';
-        var cls = (typeof e.className === 'string' ? e.className : '') || '';
-        if (cls.length > 80) cls = cls.substring(0, 80);
-        out.push({tag: e.tagName, w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.left), y: Math.round(r.top), text: tx.substring(0, 30), aria: aria.substring(0, 40), role: role, cls: cls});
-      }
-      fetch('http://localhost:8080/api/test/receive-dump', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({url: window.location.href, elements: out.slice(0, 400), title: document.title})})
-        .then(function(r){return r.json();})
-        .then(function(j){db.textContent = 'DUMPED ' + j.count + ' els'; setTimeout(function(){db.textContent = 'AXKAN: DUMP';}, 2000);})
-        .catch(function(e){db.textContent = 'ERR: ' + e.message.substring(0, 15); setTimeout(function(){db.textContent = 'AXKAN: DUMP';}, 3000);});
-    };
-    document.body.appendChild(db);
-  }
-  // Skip blocked tabs
+  // Skip blocked tabs (flag is set programmatically via /api/watchdog/block-tab)
   if (window.__axkanBlocked) return 'BLOCKED';
   var results = [];
   // Check if this is a Queue Full page
@@ -2562,11 +2478,37 @@ def _run_envato_videogen_v2(prompt_text: str, ref_url: str, is_loop: bool, end_r
 #   4. Set aspect ratio via combobox → option button.
 #   5. Click the VISIBLE "Generar" button (two exist in DOM — filter by rect).
 # ---------------------------------------------------------------------------
-def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str) -> None:
+def _open_imagegen_tab() -> tuple | None:
+    """Open a fresh ImageGen tab WITHOUT waiting for it to be ready.
+
+    Returns the (window_id, tab_id) tuple or None on failure.
+    Use this when you want to open many tabs in parallel and wait on
+    them as a batch via _wait_imagegen_tab_ready().
+    """
+    return _osa_open_tab(_ENVATO_IMAGEGEN_URL)
+
+
+def _wait_imagegen_tab_ready(tab_ref: tuple, max_polls: int = 60) -> bool:
+    """Poll an already-open ImageGen tab until its prompt contenteditable mounts."""
+    return _poll_until(
+        condition_js="document.querySelector('[contenteditable=\"true\"][role=\"textbox\"]')?'y':'n'",
+        expected="y",
+        max_polls=max_polls,
+        interval=0.2,
+        tab_ref=tab_ref,
+    )
+
+
+def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str,
+                            tab_ref: tuple | None = None) -> None:
     """Orchestrate the validated Envato ImageGen flow step-by-step.
 
     aspect_ratio: one of "1:1" / "1:2" / "2:1" (maps to square / portrait / landscape).
     ref_urls: list of HTTP URLs for reference images (served by Flask /tmp-ref/).
+    tab_ref: optional pre-opened tab (window_id, tab_id). If None, opens a new one.
+             When provided, the tab is assumed to already be page-ready (caller used
+             _wait_imagegen_tab_ready). This lets bulk batches open all tabs first,
+             wait for all to load, then fill each one in turn without re-opening.
     """
     start_time = time.time()
 
@@ -2576,24 +2518,27 @@ def _run_envato_imagegen_v2(prompt_text: str, ref_urls: list, aspect_ratio: str)
     aspect_map = {"1:1": "Cuadrado", "1:2": "Vertical", "2:1": "Horizontal"}
     target_aspect_label = aspect_map.get(aspect_ratio, "Vertical")
 
-    # ---- Step 1: open tab + wait page ready ----
-    log(f"open tab, aspect={target_aspect_label}, refs={len(ref_urls)}")
-    tab_ref = _osa_open_tab(_ENVATO_IMAGEGEN_URL)
+    # ---- Step 1: open tab + wait page ready (skipped if caller pre-opened) ----
     if tab_ref is None:
-        log("failed to open tab — aborting")
-        return
-    log(f"tab_ref={tab_ref}")
+        log(f"open tab, aspect={target_aspect_label}, refs={len(ref_urls)}")
+        tab_ref = _osa_open_tab(_ENVATO_IMAGEGEN_URL)
+        if tab_ref is None:
+            log("failed to open tab — aborting")
+            return
+        log(f"tab_ref={tab_ref}")
 
-    if not _poll_until(
-        condition_js="document.querySelector('[contenteditable=\"true\"][role=\"textbox\"]')?'y':'n'",
-        expected="y",
-        max_polls=40,
-        interval=0.2,
-        tab_ref=tab_ref,
-    ):
-        log("contenteditable never appeared — aborting")
-        return
-    log("page ready")
+        if not _poll_until(
+            condition_js="document.querySelector('[contenteditable=\"true\"][role=\"textbox\"]')?'y':'n'",
+            expected="y",
+            max_polls=40,
+            interval=0.2,
+            tab_ref=tab_ref,
+        ):
+            log("contenteditable never appeared — aborting")
+            return
+        log("page ready")
+    else:
+        log(f"reusing pre-opened tab_ref={tab_ref}, aspect={target_aspect_label}, refs={len(ref_urls)}")
 
     _osa_js(BLOCKER_JS, tab_ref=tab_ref)
     _osa_js(DUMP_BTN_JS, tab_ref=tab_ref)
@@ -2854,124 +2799,165 @@ def envato_send_video():
 # ---------------------------------------------------------------------------
 @app.route("/api/envato/send-all", methods=["POST"])
 def envato_send_all():
+    """Bulk Envato ImageGen — batched flow.
+
+    For each batch of 10 prompts:
+      1. Open all 10 Chrome tabs at once (parallel page loads).
+      2. Wait for all 10 to finish loading (contenteditable mounts).
+      3. Fill tab 1 — refs + prompt + aspect + Generar. Move to tab 2. Etc.
+      4. After all 10 are submitted, sleep 10s, then start the next batch.
+
+    Builds on _open_imagegen_tab(), _wait_imagegen_tab_ready(), and the
+    extended _run_envato_imagegen_v2(tab_ref=...) which skips its own tab-open
+    step when given a pre-opened tab. Each step uses _osa_js (no pbcopy, no
+    Cmd+V keystroke) so the user's keyboard isn't hijacked during a long run.
+    Press double-ESC (or Cmd+. in v2 UI) to abort — both call /api/abort which
+    killalls osascript.
+    """
     data = request.get_json() or {}
     prompts = data.get("prompts", [])
     if not prompts:
         return jsonify({"error": "No prompts provided"}), 400
 
+    # Aspect ratios — use the same "1:1" / "1:2" / "2:1" tags the v2 orchestrator expects.
     aspect_ratios = data.get("aspectRatios", [])
-    aspect_map = {"1:2": "Portrait", "2:1": "Landscape"}
+    aspects = list(aspect_ratios) if aspect_ratios else ["1:1"] * len(prompts)
+    while len(aspects) < len(prompts):
+        aspects.append("1:1")
 
-    def map_aspect(r):
-        return aspect_map.get(r, "Square")
+    # Materialize a list of data URLs / server paths into HTTP URLs the in-tab
+    # JS will fetch. Returns the new list of public /tmp-ref/ URLs (max 3).
+    send_id = uuid.uuid4().hex[:8]
 
-    aspects = [map_aspect(r) for r in aspect_ratios] if aspect_ratios else ["Square"] * len(prompts)
+    def _materialize_refs(items: list, prefix: str) -> list[str]:
+        out: list[str] = []
+        for i, data_url in enumerate((items or [])[:3]):
+            if not data_url:
+                continue
+            if not data_url.startswith("data:"):
+                if data_url.startswith("/sessions/"):
+                    local_path = STUDIO_DIR / data_url.lstrip("/")
+                    if local_path.is_file():
+                        fname = f"{prefix}-{i}{local_path.suffix}"
+                        shutil.copy2(str(local_path), str(TMP_REF_DIR / fname))
+                        out.append(f"http://localhost:{STUDIO_PORT}/tmp-ref/{fname}")
+                continue
+            m = re.match(r"^data:image/([^;]+);base64,(.+)$", data_url, re.DOTALL)
+            if not m:
+                continue
+            ext = "jpg" if m.group(1) == "jpeg" else m.group(1)
+            raw = base64.b64decode(m.group(2))
+            if len(raw) > 20 * 1024 * 1024:
+                continue
+            fname = f"{prefix}-{i}.{ext}"
+            (TMP_REF_DIR / fname).write_bytes(raw)
+            out.append(f"http://localhost:{STUDIO_PORT}/tmp-ref/{fname}")
+        return out
 
-    reference_images = data.get("referenceImages", [])
-    ref_filenames = _write_ref_images(reference_images) if reference_images else []
+    # Per-prompt refs (preferred): each tab gets its own list of references.
+    # Fall back to a shared `referenceImages` array if per-prompt isn't given.
+    per_prompt_refs_input = data.get("referenceImagesPerPrompt")
+    ref_urls_per_prompt: list[list[str]] = []
+    if isinstance(per_prompt_refs_input, list) and per_prompt_refs_input:
+        for idx, refs_for_one in enumerate(per_prompt_refs_input):
+            ref_urls_per_prompt.append(
+                _materialize_refs(refs_for_one or [], f"ig-bulk-{send_id}-{idx}")
+            )
+        # Pad with empty lists if shorter than prompts
+        while len(ref_urls_per_prompt) < len(prompts):
+            ref_urls_per_prompt.append([])
+    else:
+        shared = _materialize_refs(data.get("referenceImages", []), f"ig-bulk-{send_id}")
+        ref_urls_per_prompt = [shared] * len(prompts)
 
-    tmp = tempfile.mkdtemp(prefix="envato-bulk-")
-    prompt_files = []
-    for i, p in enumerate(prompts):
-        pf = os.path.join(tmp, f"prompt-{i}.txt")
-        with open(pf, "w") as f:
-            f.write(_sanitize_prompt(p))
-        prompt_files.append(pf)
-
-    ref_js_file = ""
-    bulk_ref_section = ""
-    if ref_filenames:
-        ref_js_file = os.path.join(tmp, "ref-upload.js")
-        with open(ref_js_file, "w") as f:
-            f.write(_generate_ref_upload_js(ref_filenames))
-        bulk_ref_section = f"""
-  -- Upload reference images
-  set refJS to do shell script "cat " & quoted form of "{ref_js_file}"
-  execute active tab of w javascript refJS
-  repeat 60 times
-    set isDone to (execute active tab of w javascript "window.__refUploadDone ? 'yes' : 'no'")
-    if isDone is "yes" then exit repeat
-    delay 0.1
-  end repeat"""
-
-    tab_count = len(prompts)
+    sanitized = [_sanitize_prompt(p) for p in prompts]
+    total = len(sanitized)
     batch_size = 10
+    inter_batch_delay = 10  # seconds between batches
 
-    script = '''
-tell application "Google Chrome"
-  activate
-  set w to front window
-end tell
-'''
-    for batch_start in range(0, tab_count, batch_size):
-        batch_end = min(batch_start + batch_size, tab_count)
-        bs = batch_end - batch_start
+    # Clear any stale abort sentinel from a previous run before starting.
+    try:
+        ABORT_FILE.unlink(missing_ok=True)
+    except Exception:
+        pass
 
-        script += f'\ntell application "Google Chrome"\n  set w to front window\n'
-        for _ in range(bs):
-            script += '  tell w to make new tab with properties {URL:"https://app.envato.com/image-gen"}\n'
-        script += f"""
-  set tabTotal to count of tabs of w
-  repeat 60 times
-    set allDone to true
-    repeat with i from (tabTotal - {bs - 1}) to tabTotal
-      if (loading of tab i of w) then set allDone to false
-    end repeat
-    if allDone then exit repeat
-    delay 0.1
-  end repeat
-  delay 0.3
-end tell
-"""
-        for i in range(batch_start, batch_end):
-            idx_in_batch = i - batch_start
-            pf = prompt_files[i]
-            asp = aspects[i] if i < len(aspects) else "Square"
+    def _aborted() -> bool:
+        return ABORT_FILE.exists()
 
-            script += f"""
-tell application "Google Chrome"
-  set w to front window
-  set tabTotal to count of tabs of w
-  set active tab index of w to (tabTotal - {bs - 1 - idx_in_batch})
-  repeat 40 times
-    set inputReady to (execute active tab of w javascript "(document.querySelector('textarea')||document.querySelector('[contenteditable=\\"true\\"],[contenteditable=\\"\\"],div[role=textbox],[role=textbox]')||document.querySelector('input[type=text]'))?'1':'0'")
-    if inputReady is "1" then exit repeat
-    delay 0.15
-  end repeat
-  execute active tab of w javascript "window.__promptFocused=0;(function(){{try{{var el=document.querySelector('textarea');if(!el)el=document.querySelector('[contenteditable=\\"true\\"],[contenteditable=\\"\\"],div[role=textbox],[role=textbox]');if(!el)el=document.querySelector('input[type=text]');if(!el){{window.__promptFocused=1;return;}}window.__promptEl=el;el.scrollIntoView({{block:'center'}});el.focus();el.click();window.__promptFocused=1;}}catch(e){{window.__promptFocused=1;}}}})();"
-  repeat 20 times
-    set isFocused to (execute active tab of w javascript "window.__promptFocused?'yes':'no'")
-    if isFocused is "yes" then exit repeat
-    delay 0.1
-  end repeat
-  delay 0.3
-end tell
-do shell script "cat " & quoted form of "{pf}" & " | pbcopy"
-tell application "System Events" to keystroke "v" using command down
-delay 0.3
-tell application "Google Chrome"
-  execute active tab of w javascript "(function(){{var el=document.querySelector('textarea')||document.querySelector('[contenteditable=\\"true\\"],[contenteditable=\\"\\"],div[role=textbox]')||document.querySelector('input[type=text]');if(el){{el.dispatchEvent(new Event('input',{{bubbles:true}}));el.dispatchEvent(new Event('change',{{bubbles:true}}));}}}})();"
-{bulk_ref_section}
-  delay 0.3
-  execute active tab of w javascript "(function(){{var map={{'square':['square','cuadrado'],'portrait':['portrait','vertical','retrato'],'landscape':['landscape','horizontal','paisaje']}};var targets=map['{asp}'.toLowerCase()]||['{asp}'.toLowerCase()];function clickMatch(){{var items=document.querySelectorAll('li,label,button,div[role=option],[role=menuitem],span');for(var i=0;i<items.length;i++){{var t=(items[i].textContent||'').trim().toLowerCase();if(t.length===0||t.length>20)continue;for(var k=0;k<targets.length;k++){{if(t===targets[k]){{items[i].click();return true;}}}}}}return false;}}if(clickMatch())return'ok';return'nf';}})();"
-  delay 0.4
-  execute active tab of w javascript "(function(){{var map={{'square':['square','cuadrado'],'portrait':['portrait','vertical','retrato'],'landscape':['landscape','horizontal','paisaje']}};var targets=map['{asp}'.toLowerCase()]||['{asp}'.toLowerCase()];var items=document.querySelectorAll('li,label,button,div[role=option],[role=menuitem],span');for(var i=0;i<items.length;i++){{var t=(items[i].textContent||'').trim().toLowerCase();if(t.length===0||t.length>20)continue;for(var k=0;k<targets.length;k++){{if(t===targets[k]){{items[i].click();return'ok';}}}}}}return'skip';}})();"
-  delay 0.3
-  set genResult to "not-found"
-  repeat 20 times
-    set genResult to (execute active tab of w javascript "(function(){{var btns=document.querySelectorAll('button');for(var i=0;i<btns.length;i++){{var t=(btns[i].textContent||'').trim().toLowerCase();if(t==='generate'||t==='generar'){{if(btns[i].disabled)return'disabled';btns[i].click();return'clicked';}}}}return'not-found';}})();")
-    if genResult is "clicked" then exit repeat
-    delay 0.2
-  end repeat
-end tell
-delay 0.2
-"""
+    def _run_bulk():
+        for batch_start in range(0, total, batch_size):
+            if _aborted():
+                print("[Envato Bulk] ABORTED before next batch")
+                return
+            batch_end = min(batch_start + batch_size, total)
+            batch_n = batch_start // batch_size + 1
+            total_batches = (total + batch_size - 1) // batch_size
+            print(f"[Envato Bulk] === BATCH {batch_n}/{total_batches} ({batch_end - batch_start} tabs) ===")
 
-    script += '\nreturn "done"\n'
+            # Phase A — open all tabs in this batch back-to-back.
+            tab_refs: list[tuple | None] = []
+            for i in range(batch_start, batch_end):
+                if _aborted():
+                    print("[Envato Bulk] ABORTED during tab open")
+                    return
+                tab_refs.append(_open_imagegen_tab())
+                time.sleep(0.25)  # tiny stagger so Chrome doesn't drop tabs
 
-    _run_applescript(script, timeout=tab_count * 15)
-    print(f"[Envato Bulk] Sending: {tab_count} prompts, refs={len(ref_filenames)}")
-    return jsonify({"success": True, "message": f"Opening {tab_count} Envato tabs...", "count": tab_count})
+            # Phase B — wait for every tab in the batch to be page-ready.
+            for idx, tr in enumerate(tab_refs):
+                if _aborted():
+                    print("[Envato Bulk] ABORTED during page-ready wait")
+                    return
+                if tr is None:
+                    print(f"[Envato Bulk] tab {batch_start + idx + 1} failed to open")
+                    continue
+                ready = _wait_imagegen_tab_ready(tr, max_polls=80)
+                if not ready:
+                    print(f"[Envato Bulk] tab {batch_start + idx + 1} never became page-ready")
+
+            # Phase C — fill each tab in turn (serial, so the user can watch
+            # the flow tab-by-tab and DOM state stays stable per tab).
+            for offset, tr in enumerate(tab_refs):
+                if _aborted():
+                    print("[Envato Bulk] ABORTED during fill phase")
+                    return
+                idx = batch_start + offset
+                if tr is None:
+                    continue
+                refs_for_tab = ref_urls_per_prompt[idx] if idx < len(ref_urls_per_prompt) else []
+                print(f"[Envato Bulk] filling tab {idx + 1}/{total} (refs={len(refs_for_tab)})")
+                try:
+                    _run_envato_imagegen_v2(
+                        prompt_text=sanitized[idx],
+                        ref_urls=refs_for_tab,
+                        aspect_ratio=aspects[idx],
+                        tab_ref=tr,
+                    )
+                except Exception as e:
+                    print(f"[Envato Bulk] tab {idx + 1} fill error: {e}")
+
+            # Phase D — pause before next batch (skip after final batch).
+            # Sleep in 0.5s increments so abort is responsive during the wait.
+            if batch_end < total:
+                print(f"[Envato Bulk] batch done — sleeping {inter_batch_delay}s before next batch")
+                slept = 0.0
+                while slept < inter_batch_delay:
+                    if _aborted():
+                        print("[Envato Bulk] ABORTED during inter-batch pause")
+                        return
+                    time.sleep(0.5)
+                    slept += 0.5
+
+        print(f"[Envato Bulk] === ALL {total} PROMPTS DISPATCHED ===")
+
+    threading.Thread(target=_run_bulk, daemon=True).start()
+    total_refs = sum(len(r) for r in ref_urls_per_prompt)
+    print(f"[Envato Bulk] queued: {total} prompts, total refs={total_refs}, batch_size={batch_size}")
+    return jsonify({
+        "success": True,
+        "message": f"Bulk dispatch started: {total} prompts in batches of {batch_size}",
+        "count": total,
+    })
 
 
 # ---------------------------------------------------------------------------

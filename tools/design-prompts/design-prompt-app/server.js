@@ -4060,7 +4060,7 @@ app.post('/api/send-to-envato-video', async (req, res) => {
     const appleScript = `
 tell application "Google Chrome"
   set w to front window
-  tell w to make new tab with properties {URL:"https://labs.envato.com/video-gen"}
+  tell w to make new tab with properties {URL:"https://app.envato.com/video-gen"}
   set myTab to (count of tabs of w)
 
   -- Wait for page to load (no tab switch needed)
@@ -4222,7 +4222,7 @@ tell application "Google Chrome"
   -- Open ALL tabs at once
 `;
     for (let i = 0; i < tabCount; i++) {
-      script += `  tell w to make new tab with properties {URL:"https://labs.envato.com/video-gen"}\n`;
+      script += `  tell w to make new tab with properties {URL:"https://app.envato.com/video-gen"}\n`;
     }
     script += `
   -- Wait for all tabs to load
