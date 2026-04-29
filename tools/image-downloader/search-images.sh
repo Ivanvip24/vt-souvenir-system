@@ -33,7 +33,7 @@ ENCODED_QUERY=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${QUE
 # Fetch Bing Images page and extract image URLs using Python
 URLS=$(python3 << PYEOF
 import urllib.request
-import json
+import html as htmlmod
 import re
 import ssl
 
@@ -43,19 +43,23 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
 query = "${ENCODED_QUERY}"
-url = f"https://www.bing.com/images/search?q={query}&first=1&count=100"
+url = f"https://www.bing.com/images/search?q={query}&first=1&count=100&FORM=HDRSC2"
 
 headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
 }
 
 req = urllib.request.Request(url, headers=headers)
 response = urllib.request.urlopen(req, context=ctx)
-html = response.read().decode("utf-8", errors="ignore")
+raw = response.read().decode("utf-8", errors="ignore")
 
-# Extract image URLs from Bing's 'm' attribute JSON
-pattern = r'"murl":"(https?://[^"]+)"'
-matches = re.findall(pattern, html)
+# Bing now HTML-escapes the JSON inside the 'm' attribute (&quot; instead of ").
+# Match both shapes so the script keeps working if they switch back.
+matches = re.findall(r'&quot;murl&quot;:&quot;(https?://[^&"]+)&quot;', raw)
+if not matches:
+    matches = re.findall(r'"murl":"(https?://[^"]+)"', raw)
+matches = [htmlmod.unescape(m) for m in matches]
 
 # Deduplicate while preserving order
 seen = set()
@@ -117,7 +121,8 @@ echo ""
 echo -e "${GREEN}📁 Download complete. Results:${NC}"
 total=0
 failed=0
-for f in "${OUTPUT_DIR}"/img_*.{jpg,png,webp,gif,jpeg} 2>/dev/null; do
+shopt -s nullglob 2>/dev/null || true
+for f in "${OUTPUT_DIR}"/img_*.jpg "${OUTPUT_DIR}"/img_*.png "${OUTPUT_DIR}"/img_*.webp "${OUTPUT_DIR}"/img_*.gif "${OUTPUT_DIR}"/img_*.jpeg; do
     [ -f "$f" ] || continue
     size=$(stat -f%z "$f" 2>/dev/null || stat -c%s "$f" 2>/dev/null || echo 0)
     if [ "$size" -lt 1000 ]; then
