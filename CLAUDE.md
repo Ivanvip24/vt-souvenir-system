@@ -20,10 +20,19 @@ The complete AXKAN ecosystem — a custom souvenir production business automatio
 | `tools/learning-tutor/` | AI tutoring system guides | Markdown | Read-only reference |
 | `tools/spelling-checker/` | Claude-powered document spell checker | Python, Bash | `python claude_check.py` |
 | `tools/design-prompts/` | AI design prompt system + web app | Node.js, Markdown, assets | `npm start` (design-prompt-app/) |
+| `tools/image-downloader/` | Web image search & bulk download (Bing) | Bash, Python | `./search-images.sh "query" 10 ./out` |
+| `tools/envato-history-downloader/` | Bulk download Envato ImageGen history + batch-classify via contact sheets | Bash, AppleScript, Python | `./envato_download_all.sh` |
 | `automation/facebook-bot/` | Marketplace listing bot | Python, Selenium | `python main.py` |
 | `automation/social-media/` | Social content management | Sanity Studio | `npm run dev` |
 | `automation/backup/` | Scheduled backups & health checks | Bash, launchd | launchd plists |
 | `docs/` | System docs, module guides, plans | Markdown | Read |
+
+## Search this repo before writing new code
+
+For any request that fits an existing tool, use it instead of writing a new script. In particular:
+- **Web image search / download** ("search the internet for X images", "download photos of Y") → use `tools/image-downloader/search-images.sh` (Bing-backed, parallel curl, see its `METHODOLOGY.md`). Do not write a new downloader.
+- **Bulk download Envato ImageGen history** ("download all my Envato designs", "pull my generation history") → use `tools/envato-history-downloader/envato_download_all.sh` (drives logged-in Chrome via AppleScript, parallel curl, see its `METHODOLOGY.md`). Includes contact-sheet classification helper for batch-labeling images via Claude.
+- If no existing tool fits, say so and ask before scaffolding new code.
 
 ## Rules (from the AXKAN Master Playbook)
 
