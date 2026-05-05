@@ -511,8 +511,8 @@ app.use('/api/facebook', authMiddleware, facebookRoutes);
 // /api/* route registered after them.
 // ========================================
 // Employee Performance Analytics (employee auth, not admin)
-import { anyEmployeeAuth } from './middleware/employee-auth.js';
-app.get('/api/analytics/employee-performance', anyEmployeeAuth, async (req, res) => {
+import { employeeAuth as empAuthAnalytics } from './middleware/employee-auth.js';
+app.get('/api/analytics/employee-performance', empAuthAnalytics, async (req, res) => {
     try {
         const days = parseInt(req.query.days) || 90;
         const [designers, dayOfWeek, weeklyTrend, dailyTrend, taskStats, heatmap, summary] = await Promise.all([
