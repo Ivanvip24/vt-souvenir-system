@@ -510,6 +510,27 @@ app.use('/api/facebook', authMiddleware, facebookRoutes);
 // mount at /api with authMiddleware, which would block any
 // /api/* route registered after them.
 // ========================================
+// Employee Performance Analytics (employee auth, not admin)
+import { anyEmployeeAuth } from './middleware/employee-auth.js';
+app.get('/api/analytics/employee-performance', anyEmployeeAuth, async (req, res) => {
+    try {
+        const days = parseInt(req.query.days) || 90;
+        const [designers, dayOfWeek, weeklyTrend, dailyTrend, taskStats, heatmap, summary] = await Promise.all([
+            query(`SELECT d.id, d.name, COALESCE(SUM(dl.designs_completed),0)::int AS total_designs, COALESCE(SUM(dl.armados_completed),0)::int AS total_armados, COALESCE(SUM(dl.corrections_made),0)::int AS total_corrections, COUNT(dl.id)::int AS days_worked, ROUND(AVG(dl.designs_completed)::numeric,1) AS avg_designs_per_day, ROUND(AVG(dl.armados_completed)::numeric,1) AS avg_armados_per_day, MAX(dl.designs_completed)::int AS best_day_designs, MAX(dl.armados_completed)::int AS best_day_armados, CASE WHEN SUM(dl.designs_completed+dl.armados_completed)>0 THEN ROUND(SUM(dl.corrections_made)::numeric/SUM(dl.designs_completed+dl.armados_completed)*100,1) ELSE 0 END AS correction_rate_pct FROM designers d LEFT JOIN designer_daily_logs dl ON dl.designer_id=d.id AND dl.log_date>=CURRENT_DATE-$1::int WHERE d.is_active=true GROUP BY d.id,d.name ORDER BY total_designs+total_armados DESC`, [days]),
+            query(`SELECT EXTRACT(DOW FROM dl.log_date)::int AS dow, TRIM(TO_CHAR(dl.log_date,'Day')) AS day_name, ROUND(AVG(dl.designs_completed+dl.armados_completed)::numeric,1) AS avg_output, SUM(dl.designs_completed+dl.armados_completed)::int AS total_output, COUNT(*)::int AS sample_days FROM designer_daily_logs dl WHERE dl.log_date>=CURRENT_DATE-$1::int GROUP BY EXTRACT(DOW FROM dl.log_date),TO_CHAR(dl.log_date,'Day') ORDER BY avg_output DESC`, [days]),
+            query(`SELECT DATE_TRUNC('week',dl.log_date)::date AS week_start, SUM(dl.designs_completed)::int AS designs, SUM(dl.armados_completed)::int AS armados, SUM(dl.corrections_made)::int AS corrections, COUNT(DISTINCT dl.designer_id)::int AS active_designers FROM designer_daily_logs dl WHERE dl.log_date>=CURRENT_DATE-$1::int GROUP BY DATE_TRUNC('week',dl.log_date) ORDER BY week_start DESC`, [days]),
+            query(`SELECT dl.log_date::date AS date, SUM(dl.designs_completed)::int AS designs, SUM(dl.armados_completed)::int AS armados, SUM(dl.corrections_made)::int AS corrections FROM designer_daily_logs dl WHERE dl.log_date>=CURRENT_DATE-30 GROUP BY dl.log_date ORDER BY dl.log_date DESC`),
+            query(`SELECT d.id, d.name, COUNT(dt.id)::int AS total_tasks, COUNT(dt.id) FILTER(WHERE dt.status='done')::int AS completed, ROUND(AVG(EXTRACT(EPOCH FROM(dt.completed_at-dt.assigned_at))/3600.0) FILTER(WHERE dt.completed_at IS NOT NULL)::numeric,1) AS avg_hours, ROUND(MIN(EXTRACT(EPOCH FROM(dt.completed_at-dt.assigned_at))/3600.0) FILTER(WHERE dt.completed_at IS NOT NULL)::numeric,1) AS fastest_hours FROM designers d LEFT JOIN designer_tasks dt ON dt.designer_id=d.id AND dt.assigned_at>=CURRENT_DATE-$1::int WHERE d.is_active=true GROUP BY d.id,d.name ORDER BY completed DESC`, [days]),
+            query(`SELECT d.name AS designer, dl.log_date::date AS date, (dl.designs_completed+dl.armados_completed)::int AS output FROM designer_daily_logs dl JOIN designers d ON d.id=dl.designer_id WHERE dl.log_date>=CURRENT_DATE-30 ORDER BY d.name,dl.log_date`),
+            query(`SELECT SUM(designs_completed)::int AS total_designs, SUM(armados_completed)::int AS total_armados, SUM(corrections_made)::int AS total_corrections, COUNT(DISTINCT designer_id)::int AS active_designers, COUNT(DISTINCT log_date)::int AS days_with_data, ROUND(AVG(designs_completed+armados_completed)::numeric,1) AS avg_daily_output, MAX(designs_completed+armados_completed)::int AS peak_day_output FROM designer_daily_logs WHERE log_date>=CURRENT_DATE-$1::int`, [days]),
+        ]);
+        res.json({ success: true, period: { days }, summary: summary.rows[0], designers: designers.rows, dayOfWeek: dayOfWeek.rows, weeklyTrend: weeklyTrend.rows, dailyTrend: dailyTrend.rows, taskStats: taskStats.rows, heatmap: heatmap.rows });
+    } catch (err) {
+        console.error('analytics.employee-performance-error', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.use('/api', authMiddleware, clientAdminRoutes);
 app.use('/api', authMiddleware, analyticsRoutes);
 app.use('/api', authMiddleware, salespersonRoutes);
